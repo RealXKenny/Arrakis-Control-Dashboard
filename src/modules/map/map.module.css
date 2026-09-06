@@ -1,0 +1,1393 @@
+/* MAP MARKERS */
+
+:global(.live-map-marker) {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: none;
+  border-radius: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  cursor: pointer;
+  z-index: 5;
+  transition: filter .15s, width .15s, height .15s;
+  appearance: none;
+}
+
+:global(.live-map-marker.hag-map-marker) {
+  position: absolute;
+}
+
+:global(.live-map-marker:hover) {
+  filter:
+    brightness(1.25)
+    drop-shadow(0 0 6px rgba(216, 167, 95, .9))
+    drop-shadow(0 2px 5px rgba(0, 0, 0, .9));
+  z-index: 10 !important;
+}
+
+:global(.live-map-marker:focus-visible) {
+  outline: 1px solid #d8a75f;
+  outline-offset: 2px;
+}
+
+
+/* MAIN TYPES */
+
+:global(.live-map-marker.marker-player) {
+  background-image: url("/maps/Characters.webp");
+}
+
+:global(.live-map-marker.marker-base) {
+  background-image: url("/maps/Base.webp");
+}
+
+:global(.live-map-marker.marker-player.offline) {
+  filter: grayscale(1) brightness(.65);
+  opacity: .75;
+}
+
+:global(.live-map-marker.marker-player[data-online="false"]) {
+  filter: grayscale(1) brightness(.65);
+}
+
+/* SPICE */
+
+:global(.live-map-marker.marker-spice),
+:global(.live-map-marker.marker-spice_active) {
+  background-image: url("/maps/spicefieldlarge.webp");
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:global(.live-map-marker.marker-spice_active) {
+  filter: drop-shadow(0 0 5px rgba(232, 135, 30, .85));
+}
+
+:global(.live-map-marker.marker-spice.spice-size-large),
+:global(.live-map-marker.marker-spice_active.spice-size-large) {
+  width: 40px;
+  height: 40px;
+}
+
+:global(.live-map-marker.marker-spice.spice-size-medium),
+:global(.live-map-marker.marker-spice_active.spice-size-medium) {
+  width: 34px;
+  height: 34px;
+}
+
+:global(.live-map-marker.marker-spice.spice-size-small),
+:global(.live-map-marker.marker-spice_active.spice-size-small) {
+  width: 24px;
+  height: 24px;
+}
+
+:global(.live-map-marker.marker-spice) {
+  opacity: 0.65;
+}
+
+:global(.live-map-marker.marker-spice.spice-size-medium:hover),
+:global(.live-map-marker.marker-spice_active.spice-size-medium:hover) {
+  width: 44px;
+  height: 44px;
+}
+
+:global(.live-map-marker.marker-spice.spice-size-small:hover),
+:global(.live-map-marker.marker-spice_active.spice-size-small:hover) {
+  width: 32px;
+  height: 32px;
+}
+
+
+/* FLOUR SAND */
+
+:global(.live-map-marker.marker-flour_sand) {
+  background-image: url("/maps/floursand.webp");
+  width: 24px;
+  height: 24px;
+}
+
+:global(.live-map-marker.marker-flour_sand:hover) {
+  width: 32px;
+  height: 32px;
+}
+
+
+/* FLORA */
+
+:global(.live-map-marker.marker-flora) {
+  background-image: url("/maps/plantfiber.webp");
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:global(.live-map-marker.subtype-saguaroseed) {
+  background-image: url("/maps/resourcesaguarorawr.webp");
+}
+
+:global(.live-map-marker.subtype-primrosefield) {
+  background-image: url("/maps/PrimroseField.png");
+}
+
+
+/* POI */
+
+:global(.live-map-marker.subtype-cave) {
+  background-image: url("/maps/cave.webp");
+}
+
+:global(.live-map-marker.subtype-ecolab) {
+  background-image: url("/maps/ecolab.webp");
+}
+
+:global(.live-map-marker.subtype-shipwreck) {
+  background-image: url("/maps/shipwreck.webp");
+}
+
+:global(.live-map-marker.subtype-sietch) {
+  background-image: url("/maps/sietch.webp");
+}
+
+:global(.live-map-marker.subtype-tradingpost) {
+  background-image: url("/maps/tradingpost.webp");
+}
+
+:global(.live-map-marker.subtype-taxiservice) {
+  background-image: url("/maps/taxiservice.webp");
+}
+
+
+/* TRAINERS */
+
+:global(.live-map-marker.subtype-trainerbenegesserit) {
+  background-image: url("/maps/trainerbenegesserit.webp");
+}
+
+:global(.live-map-marker.subtype-trainermentat) {
+  background-image: url("/maps/trainermentat.webp");
+}
+
+:global(.live-map-marker.subtype-trainerplanetologist) {
+  background-image: url("/maps/trainerplanetologist.webp");
+}
+
+:global(.live-map-marker.subtype-trainerswordmaster) {
+  background-image: url("/maps/trainerswordmaster.webp");
+}
+
+:global(.live-map-marker.subtype-trainertrooper) {
+  background-image: url("/maps/trainertrooper.webp");
+}
+
+
+/* HOUSE REPRESENTATIVES */
+
+:global(.live-map-marker.subtype-houserepresentativeargosaz) {
+  background-image: url("/maps/houserepresentativeargosaz.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativedyvetz) {
+  background-image: url("/maps/houserepresentativedyvetz.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativeecaz) {
+  background-image: url("/maps/houserepresentativeecaz.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativehagal) {
+  background-image: url("/maps/houserepresentativehagal.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativehurata) {
+  background-image: url("/maps/houserepresentativehurata.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativeimota) {
+  background-image: url("/maps/houserepresentativeimota.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativekenola) {
+  background-image: url("/maps/houserepresentativekenola.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativelindaren) {
+  background-image: url("/maps/houserepresentativelindaren.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativemaros) {
+  background-image: url("/maps/houserepresentativemaros.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativemikarrol) {
+  background-image: url("/maps/houserepresentativemikarrol.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativemoritani) {
+  background-image: url("/maps/houserepresentativemoritani.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativenovebruns) {
+  background-image: url("/maps/houserepresentativenovebruns.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativerichese) {
+  background-image: url("/maps/houserepresentativerichese.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativesor) {
+  background-image: url("/maps/houserepresentativesor.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativetaligari) {
+  background-image: url("/maps/houserepresentativetaligari.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativethorvald) {
+  background-image: url("/maps/houserepresentativethorvald.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativevernius) {
+  background-image: url("/maps/houserepresentativevernius.webp");
+}
+
+
+/* VEHICLES */
+
+:global(.live-map-marker.marker-vehicle) {
+  z-index: 3;
+}
+
+:global(.live-map-marker.subtype-sandbike) {
+  background-image: url("/maps/sandbikevehicle.webp");
+}
+
+:global(.live-map-marker.subtype-buggy) {
+  background-image: url("/maps/buggyvehicle.webp");
+}
+
+:global(.live-map-marker.subtype-sandcrawler) {
+  background-image: url("/maps/sandcrawlervehicle.webp");
+}
+
+:global(.live-map-marker.subtype-treadwheel) {
+  background-image: url("/maps/treadwheelvehicle.webp");
+}
+
+:global(.live-map-marker.subtype-assaultornithopter) {
+  background-image: url("/maps/assaultornivehicle.webp");
+}
+
+:global(.live-map-marker.subtype-ornithopter),
+:global(.live-map-marker.subtype-lightornithopter),
+:global(.live-map-marker.subtype-mediumornithopter),
+:global(.live-map-marker.subtype-transportornithopter) {
+  background-image: url("/maps/ornithoptervehicle.webp");
+}
+
+:global(.live-map-marker.subtype-containervehicle) {
+  background-image: url("/maps/cargocontainervehicle.webp");
+}
+
+
+/* ORES */
+
+:global(.live-map-marker.marker-ore) {
+  color: #9ca3af;
+  background-color: #9ca3af;
+}
+
+:global(.live-map-marker.subtype-azuriteore) {
+  background-image: url("/maps/azuriteore.webp");
+}
+
+:global(.live-map-marker.subtype-basaltore) {
+  background-image: url("/maps/basaltore.webp");
+}
+
+:global(.live-map-marker.subtype-bauxiteore) {
+  background-image: url("/maps/bauxiteore.webp");
+}
+
+:global(.live-map-marker.subtype-dolomiterock) {
+  background-image: url("/maps/dolomiterock.webp");
+}
+
+:global(.live-map-marker.subtype-erythriteore) {
+  background-image: url("/maps/erythriteore.webp");
+}
+
+:global(.live-map-marker.subtype-jasmiumore) {
+  background-image: url("/maps/jasmiumore.webp");
+}
+
+:global(.live-map-marker.subtype-magnetiteore) {
+  background-image: url("/maps/magnetiteore.webp");
+}
+
+:global(.live-map-marker.subtype-rhyoliteore) {
+  background-image: url("/maps/rhyoliteore.webp");
+}
+
+:global(.live-map-marker.subtype-stravidiumore) {
+  background-image: url("/maps/stravidiumore.webp");
+}
+
+:global(.live-map-marker.subtype-titaniumore) {
+  background-image: url("/maps/titaniumore.webp");
+}
+
+
+/* ORE PICKUPS */
+
+:global(.live-map-marker.subtype-azuritepickup) {
+  background-image: url("/maps/azuriteore.webp");
+}
+
+:global(.live-map-marker.subtype-basaltpickup) {
+  background-image: url("/maps/basaltore.webp");
+}
+
+:global(.live-map-marker.subtype-bauxitepickup) {
+  background-image: url("/maps/bauxiteore.webp");
+}
+
+:global(.live-map-marker.subtype-dolomitepickup) {
+  background-image: url("/maps/dolomiterock.webp");
+}
+
+:global(.live-map-marker.subtype-erythritepickup) {
+  background-image: url("/maps/erythriteore.webp");
+}
+
+:global(.live-map-marker.subtype-jasiumpickup) {
+  background-image: url("/maps/jasmiumore.webp");
+}
+
+:global(.live-map-marker.subtype-magnetitepickup) {
+  background-image: url("/maps/magnetiteore.webp");
+}
+
+:global(.live-map-marker.subtype-rhyolitepickup) {
+  background-image: url("/maps/rhyoliteore.webp");
+}
+
+:global(.live-map-marker.subtype-stravidiumpickup) {
+  background-image: url("/maps/stravidiumore.webp");
+}
+
+:global(.live-map-marker.subtype-titaniumpickup) {
+  background-image: url("/maps/titaniumore.webp");
+}
+
+
+/* SCRAP / WRECKS */
+
+:global(.live-map-marker.marker-scrap) {
+  color: #b45309;
+  background-color: #b45309;
+}
+
+
+/* FORTRESSES */
+
+:global(.live-map-marker.marker-fortress) {
+  color: #a78bfa;
+  background-color: #a78bfa;
+}
+
+:global(.live-map-marker.subtype-atreidesfortress) {
+  background-image: url("/maps/atreidesfortress.webp");
+}
+
+:global(.live-map-marker.subtype-harkonnenfortress) {
+  background-image: url("/maps/harkonnenfortress.webp");
+}
+
+
+/* ENEMY */
+
+:global(.live-map-marker.marker-enemy) {
+  color: #f97316;
+  background-color: #f97316;
+}
+
+:global(.live-map-marker.subtype-enemylaboroutpost) {
+  background-image: url("/maps/enemylaboroutpost.webp");
+}
+
+:global(.live-map-marker.subtype-enemyoutpost) {
+  background-image: url("/maps/enemyoutpost.webp");
+}
+
+
+/* HAZARD */
+
+:global(.live-map-marker.marker-hazard) {
+  border: none;
+  box-shadow: none;
+  background: rgba(239, 68, 68, .5);
+  width: 24px;
+  height: 24px;
+}
+
+:global(.live-map-marker.marker-hazard:hover) {
+  width: 32px;
+  height: 32px;
+}
+
+
+/* GENERIC SUBTYPE ICON SIZING */
+
+:global(.live-map-marker[class*="subtype-"]:not(.marker-spice):not(.marker-spice_active):not(.marker-hazard)) {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  width: 20px;
+  height: 20px;
+}
+
+:global(.live-map-marker[class*="subtype-"]:not(.marker-spice):not(.marker-spice_active):not(.marker-hazard):hover) {
+  width: 26px;
+  height: 26px;
+  z-index: 14;
+}
+
+
+/* VEHICLE / POI / TRAINER / HOUSE ICON SIZE */
+
+:global(.live-map-marker.marker-vehicle[class*="subtype-"]) {
+  width: 32px;
+  height: 32px;
+}
+
+:global(.live-map-marker.marker-vehicle[class*="subtype-"]:hover) {
+  width: 40px;
+  height: 40px;
+}
+
+:global(.live-map-marker.marker-poi[class*="subtype-"]),
+:global(.live-map-marker.marker-house_representative[class*="subtype-"]),
+:global(.live-map-marker.marker-trainer[class*="subtype-"]) {
+  width: 28px;
+  height: 28px;
+}
+
+:global(.live-map-marker.marker-poi[class*="subtype-"]:hover),
+:global(.live-map-marker.marker-house_representative[class*="subtype-"]:hover),
+:global(.live-map-marker.marker-trainer[class*="subtype-"]:hover) {
+  width: 36px;
+  height: 36px;
+}
+
+
+/* MARKER LABEL */
+
+:global(.hag-map-marker > span) {
+  display: none !important;
+}
+
+:global(.live-map-marker > span) {
+  display: none !important;
+}
+
+:global(.live-map-marker span) {
+  display: none !important;
+}
+
+/* TERMINAL */
+
+.terminal {
+  position: fixed;
+  background: #17110b;
+  border: 1px solid #6f4e2d;
+  box-shadow:
+    0 25px 80px rgba(0,0,0,.75),
+    0 0 0 1px rgba(218,178,116,.08);
+  color: #e5d2b3;
+  font-family:
+    "Cascadia Code",
+    "Cascadia Mono",
+    Consolas,
+    "Courier New",
+    monospace;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+}
+
+.titleBar {
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(
+    180deg,
+    #332416 0%,
+    #24180f 100%
+  );
+  border-bottom: 1px solid #6b4929;
+  user-select: none;
+}
+
+.titleIcon {
+  width: 42px;
+  text-align: center;
+  color: #d8a75f;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: #ead8ba;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.windowButton {
+  width: 44px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #bda987;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  transition:
+    background .12s,
+    color .12s;
+}
+
+.toolbar {
+  height: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  background: #1d140c;
+  border-bottom: 1px solid #4b331e;
+  overflow: hidden;
+}
+
+.terminalButton {
+  height: 25px;
+  background: #24180e;
+  border: 1px solid #624324;
+  color: #d9c19c;
+  padding: 0 9px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.statusBar {
+  height: 26px;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: #21160d;
+  border-top: 1px solid #4b331e;
+  color: #806d55;
+  font-size: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* MAP MARKERS */
+
+:global(.live-map-marker) {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: none;
+  border-radius: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  cursor: pointer;
+  z-index: 5;
+  transition: filter .15s, width .15s, height .15s, opacity .15s;
+  appearance: none;
+}
+
+:global(.live-map-marker.hag-map-marker) {
+  position: absolute;
+}
+
+:global(.live-map-marker:hover) {
+  filter:
+    brightness(1.25)
+    drop-shadow(0 0 6px rgba(216, 167, 95, .9))
+    drop-shadow(0 2px 5px rgba(0, 0, 0, .9));
+  z-index: 10 !important;
+}
+
+:global(.live-map-marker:focus-visible) {
+  outline: 1px solid #d8a75f;
+  outline-offset: 2px;
+}
+
+/* MAIN TYPES */
+
+:global(.live-map-marker.marker-player) {
+  background-image: url("/maps/Characters.webp");
+}
+
+:global(.live-map-marker.marker-base) {
+  background-image: url("/maps/Base.webp");
+}
+
+:global(.live-map-marker.marker-player.offline) {
+  filter: grayscale(1) brightness(.65);
+  opacity: .75;
+}
+
+:global(.live-map-marker.marker-player[data-online="false"]) {
+  filter: grayscale(1) brightness(.65);
+}
+
+/* SPICE */
+
+:global(.live-map-marker.marker-spice),
+:global(.live-map-marker.marker-spice_active) {
+  background-image: url("/maps/spicefieldlarge.webp");
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:global(.live-map-marker.marker-spice_active) {
+  filter: drop-shadow(0 0 5px rgba(232, 135, 30, .85));
+}
+
+:global(.live-map-marker.marker-spice.spice-size-large),
+:global(.live-map-marker.marker-spice_active.spice-size-large) {
+  width: 40px;
+  height: 40px;
+}
+
+:global(.live-map-marker.marker-spice.spice-size-medium),
+:global(.live-map-marker.marker-spice_active.spice-size-medium) {
+  width: 34px;
+  height: 34px;
+}
+
+:global(.live-map-marker.marker-spice.spice-size-small),
+:global(.live-map-marker.marker-spice_active.spice-size-small) {
+  width: 24px;
+  height: 24px;
+}
+
+:global(.live-map-marker.marker-spice) {
+  opacity: .65;
+}
+
+:global(.live-map-marker.marker-spice.spice-size-medium:hover),
+:global(.live-map-marker.marker-spice_active.spice-size-medium:hover) {
+  width: 44px;
+  height: 44px;
+}
+
+:global(.live-map-marker.marker-spice.spice-size-small:hover),
+:global(.live-map-marker.marker-spice_active.spice-size-small:hover) {
+  width: 32px;
+  height: 32px;
+}
+
+/* FLOUR SAND */
+
+:global(.live-map-marker.marker-flour_sand) {
+  background-image: url("/maps/floursand.webp");
+  width: 24px;
+  height: 24px;
+}
+
+:global(.live-map-marker.marker-flour_sand:hover) {
+  width: 32px;
+  height: 32px;
+}
+
+/* FLORA */
+
+:global(.live-map-marker.marker-flora) {
+  background-image: url("/maps/plantfiber.webp");
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:global(.live-map-marker.subtype-saguaroseed) {
+  background-image: url("/maps/resourcesaguarorawr.webp");
+}
+
+:global(.live-map-marker.subtype-primrosefield) {
+  background-image: url("/maps/PrimroseField.png");
+}
+
+/* POI */
+
+:global(.live-map-marker.subtype-cave) {
+  background-image: url("/maps/cave.webp");
+}
+
+:global(.live-map-marker.subtype-ecolab) {
+  background-image: url("/maps/ecolab.webp");
+}
+
+:global(.live-map-marker.subtype-shipwreck) {
+  background-image: url("/maps/shipwreck.webp");
+}
+
+:global(.live-map-marker.subtype-sietch) {
+  background-image: url("/maps/sietch.webp");
+}
+
+:global(.live-map-marker.subtype-tradingpost) {
+  background-image: url("/maps/tradingpost.webp");
+}
+
+:global(.live-map-marker.subtype-taxiservice) {
+  background-image: url("/maps/taxiservice.webp");
+}
+
+/* TRAINERS */
+
+:global(.live-map-marker.subtype-trainerbenegesserit) {
+  background-image: url("/maps/trainerbenegesserit.webp");
+}
+
+:global(.live-map-marker.subtype-trainermentat) {
+  background-image: url("/maps/trainermentat.webp");
+}
+
+:global(.live-map-marker.subtype-trainerplanetologist) {
+  background-image: url("/maps/trainerplanetologist.webp");
+}
+
+:global(.live-map-marker.subtype-trainerswordmaster) {
+  background-image: url("/maps/trainerswordmaster.webp");
+}
+
+:global(.live-map-marker.subtype-trainertrooper) {
+  background-image: url("/maps/trainertrooper.webp");
+}
+
+/* HOUSE REPRESENTATIVES */
+
+:global(.live-map-marker.subtype-houserepresentativeargosaz) {
+  background-image: url("/maps/houserepresentativeargosaz.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativedyvetz) {
+  background-image: url("/maps/houserepresentativedyvetz.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativeecaz) {
+  background-image: url("/maps/houserepresentativeecaz.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativehagal) {
+  background-image: url("/maps/houserepresentativehagal.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativehurata) {
+  background-image: url("/maps/houserepresentativehurata.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativeimota) {
+  background-image: url("/maps/houserepresentativeimota.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativekenola) {
+  background-image: url("/maps/houserepresentativekenola.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativelindaren) {
+  background-image: url("/maps/houserepresentativelindaren.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativemaros) {
+  background-image: url("/maps/houserepresentativemaros.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativemikarrol) {
+  background-image: url("/maps/houserepresentativemikarrol.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativemoritani) {
+  background-image: url("/maps/houserepresentativemoritani.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativenovebruns) {
+  background-image: url("/maps/houserepresentativenovebruns.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativerichese) {
+  background-image: url("/maps/houserepresentativerichese.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativesor) {
+  background-image: url("/maps/houserepresentativesor.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativetaligari) {
+  background-image: url("/maps/houserepresentativetaligari.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativethorvald) {
+  background-image: url("/maps/houserepresentativethorvald.webp");
+}
+
+:global(.live-map-marker.subtype-houserepresentativevernius) {
+  background-image: url("/maps/houserepresentativevernius.webp");
+}
+
+/* VEHICLES */
+
+:global(.live-map-marker.marker-vehicle) {
+  z-index: 3;
+}
+
+:global(.live-map-marker.subtype-sandbike) {
+  background-image: url("/maps/sandbikevehicle.webp");
+}
+
+:global(.live-map-marker.subtype-buggy) {
+  background-image: url("/maps/buggyvehicle.webp");
+}
+
+:global(.live-map-marker.subtype-sandcrawler) {
+  background-image: url("/maps/sandcrawlervehicle.webp");
+}
+
+:global(.live-map-marker.subtype-treadwheel) {
+  background-image: url("/maps/treadwheelvehicle.webp");
+}
+
+:global(.live-map-marker.subtype-assaultornithopter) {
+  background-image: url("/maps/assaultornivehicle.webp");
+}
+
+:global(.live-map-marker.subtype-ornithopter),
+:global(.live-map-marker.subtype-lightornithopter),
+:global(.live-map-marker.subtype-mediumornithopter),
+:global(.live-map-marker.subtype-transportornithopter) {
+  background-image: url("/maps/ornithoptervehicle.webp");
+}
+
+:global(.live-map-marker.subtype-containervehicle) {
+  background-image: url("/maps/cargocontainervehicle.webp");
+}
+
+/* ORES */
+
+:global(.live-map-marker.marker-ore) {
+  color: #9ca3af;
+  background-color: #9ca3af;
+}
+
+:global(.live-map-marker.subtype-azuriteore) {
+  background-image: url("/maps/azuriteore.webp");
+}
+
+:global(.live-map-marker.subtype-basaltore) {
+  background-image: url("/maps/basaltore.webp");
+}
+
+:global(.live-map-marker.subtype-bauxiteore) {
+  background-image: url("/maps/bauxiteore.webp");
+}
+
+:global(.live-map-marker.subtype-dolomiterock) {
+  background-image: url("/maps/dolomiterock.webp");
+}
+
+:global(.live-map-marker.subtype-erythriteore) {
+  background-image: url("/maps/erythriteore.webp");
+}
+
+:global(.live-map-marker.subtype-jasmiumore) {
+  background-image: url("/maps/jasmiumore.webp");
+}
+
+:global(.live-map-marker.subtype-magnetiteore) {
+  background-image: url("/maps/magnetiteore.webp");
+}
+
+:global(.live-map-marker.subtype-rhyoliteore) {
+  background-image: url("/maps/rhyoliteore.webp");
+}
+
+:global(.live-map-marker.subtype-stravidiumore) {
+  background-image: url("/maps/stravidiumore.webp");
+}
+
+:global(.live-map-marker.subtype-titaniumore) {
+  background-image: url("/maps/titaniumore.webp");
+}
+
+/* ORE PICKUPS */
+
+:global(.live-map-marker.subtype-azuritepickup) {
+  background-image: url("/maps/azuriteore.webp");
+}
+
+:global(.live-map-marker.subtype-basaltpickup) {
+  background-image: url("/maps/basaltore.webp");
+}
+
+:global(.live-map-marker.subtype-bauxitepickup) {
+  background-image: url("/maps/bauxiteore.webp");
+}
+
+:global(.live-map-marker.subtype-dolomitepickup) {
+  background-image: url("/maps/dolomiterock.webp");
+}
+
+:global(.live-map-marker.subtype-erythritepickup) {
+  background-image: url("/maps/erythriteore.webp");
+}
+
+:global(.live-map-marker.subtype-jasiumpickup) {
+  background-image: url("/maps/jasmiumore.webp");
+}
+
+:global(.live-map-marker.subtype-magnetitepickup) {
+  background-image: url("/maps/magnetiteore.webp");
+}
+
+:global(.live-map-marker.subtype-rhyolitepickup) {
+  background-image: url("/maps/rhyoliteore.webp");
+}
+
+:global(.live-map-marker.subtype-stravidiumpickup) {
+  background-image: url("/maps/stravidiumore.webp");
+}
+
+:global(.live-map-marker.subtype-titaniumpickup) {
+  background-image: url("/maps/titaniumore.webp");
+}
+
+/* SCRAP / WRECKS */
+
+:global(.live-map-marker.marker-scrap) {
+  color: #b45309;
+  background-color: #b45309;
+}
+
+/* FORTRESSES */
+
+:global(.live-map-marker.marker-fortress) {
+  color: #a78bfa;
+  background-color: #a78bfa;
+}
+
+:global(.live-map-marker.subtype-atreidesfortress) {
+  background-image: url("/maps/atreidesfortress.webp");
+}
+
+:global(.live-map-marker.subtype-harkonnenfortress) {
+  background-image: url("/maps/harkonnenfortress.webp");
+}
+
+/* ENEMY */
+
+:global(.live-map-marker.marker-enemy) {
+  color: #f97316;
+  background-color: #f97316;
+}
+
+:global(.live-map-marker.subtype-enemylaboroutpost) {
+  background-image: url("/maps/enemylaboroutpost.webp");
+}
+
+:global(.live-map-marker.subtype-enemyoutpost) {
+  background-image: url("/maps/enemyoutpost.webp");
+}
+
+/* HAZARD */
+
+:global(.live-map-marker.marker-hazard) {
+  border: none;
+  box-shadow: none;
+  background: rgba(239, 68, 68, .5);
+  width: 24px;
+  height: 24px;
+}
+
+:global(.live-map-marker.marker-hazard:hover) {
+  width: 32px;
+  height: 32px;
+}
+
+/* GENERIC SUBTYPE ICON SIZING */
+
+:global(.live-map-marker[class*="subtype-"]:not(.marker-spice):not(.marker-spice_active):not(.marker-hazard)) {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  width: 20px;
+  height: 20px;
+}
+
+:global(.live-map-marker[class*="subtype-"]:not(.marker-spice):not(.marker-spice_active):not(.marker-hazard):hover) {
+  width: 26px;
+  height: 26px;
+  z-index: 14;
+}
+
+/* VEHICLE / POI / TRAINER / HOUSE ICON SIZE */
+
+:global(.live-map-marker.marker-vehicle[class*="subtype-"]) {
+  width: 32px;
+  height: 32px;
+}
+
+:global(.live-map-marker.marker-vehicle[class*="subtype-"]:hover) {
+  width: 40px;
+  height: 40px;
+}
+
+:global(.live-map-marker.marker-poi[class*="subtype-"]),
+:global(.live-map-marker.marker-house_representative[class*="subtype-"]),
+:global(.live-map-marker.marker-trainer[class*="subtype-"]) {
+  width: 28px;
+  height: 28px;
+}
+
+:global(.live-map-marker.marker-poi[class*="subtype-"]:hover),
+:global(.live-map-marker.marker-house_representative[class*="subtype-"]:hover),
+:global(.live-map-marker.marker-trainer[class*="subtype-"]:hover) {
+  width: 36px;
+  height: 36px;
+}
+
+/* MARKER LABELS ARE DISABLED */
+
+:global(.hag-map-marker > span) {
+  display: none !important;
+}
+
+:global(.live-map-marker > span) {
+  display: none !important;
+}
+
+:global(.live-map-marker span) {
+  display: none !important;
+}
+
+/* TERMINAL */
+
+.terminal {
+  position: fixed;
+  background: #17110b;
+  border: 1px solid #6f4e2d;
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, .75),
+    0 0 0 1px rgba(218, 178, 116, .08);
+  color: #e5d2b3;
+  font-family:
+    "Cascadia Code",
+    "Cascadia Mono",
+    Consolas,
+    "Courier New",
+    monospace;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+}
+
+.titleBar {
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(
+    180deg,
+    #332416 0%,
+    #24180f 100%
+  );
+  border-bottom: 1px solid #6b4929;
+  user-select: none;
+}
+
+.titleIcon {
+  width: 42px;
+  text-align: center;
+  color: #d8a75f;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: #ead8ba;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.windowButton {
+  width: 44px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #bda987;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  transition:
+    background .12s,
+    color .12s;
+}
+
+.toolbar {
+  height: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  background: #1d140c;
+  border-bottom: 1px solid #4b331e;
+  overflow: hidden;
+}
+
+.terminalButton {
+  height: 25px;
+  background: #24180e;
+  border: 1px solid #624324;
+  color: #d9c19c;
+  padding: 0 9px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.statusBar {
+  height: 26px;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: #21160d;
+  border-top: 1px solid #4b331e;
+  color: #806d55;
+  font-size: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* MAP LEGEND */
+
+.mapLegend {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #17110b;
+  border: 1px solid #6f4e2d;
+  border-left: 0;
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, .75),
+    0 0 0 1px rgba(218, 178, 116, .08);
+  color: #e5d2b3;
+  font-family:
+    "Cascadia Code",
+    "Cascadia Mono",
+    Consolas,
+    "Courier New",
+    monospace;
+}
+
+.mapLegendHeader {
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 1px solid #6b4929;
+  background: linear-gradient(
+    180deg,
+    #332416 0%,
+    #24180f 100%
+  );
+  color: #d8a75f;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mapLegendHeader:hover {
+  background: linear-gradient(
+    180deg,
+    #3a2818 0%,
+    #291b10 100%
+  );
+}
+
+.mapLegendBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #17110b;
+}
+
+.mapLegendCategory {
+  border-bottom: 1px solid #38281a;
+}
+
+.mapLegendCategoryRow {
+  display: flex;
+  width: 100%;
+  min-height: 47px;
+}
+
+.mapLegendCategoryButton {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: #d9c19c;
+  font: inherit;
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mapLegendCategoryButton:hover {
+  background: rgba(216, 167, 95, .055);
+  color: #ead8ba;
+}
+
+.mapLegendCategoryName,
+.mapLegendSubtypeName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mapLegendExpandButton {
+  width: 34px;
+  flex: 0 0 34px;
+  border: 0;
+  border-left: 1px solid #38281a;
+  background: transparent;
+  color: #806d55;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.mapLegendExpandButton:hover {
+  background: rgba(216, 167, 95, .055);
+  color: #d8a75f;
+}
+
+.mapLegendSubtypes {
+  padding: 0 0 5px 32px;
+  background: rgba(0, 0, 0, .08);
+}
+
+.mapLegendSubtype {
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px 0 0;
+  border: 0;
+  background: transparent;
+  color: #a99578;
+  font: inherit;
+  font-size: 9px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mapLegendSubtype:hover {
+  background: rgba(216, 167, 95, .045);
+  color: #d9c19c;
+}
+
+.mapLegendIconSmall {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: grid;
+  place-items: center;
+}
+
+:global(.mapLegendIconSmall .live-map-marker) {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  width: 22px !important;
+  height: 22px !important;
+  transform: none !important;
+  pointer-events: none !important;
+}
+
+.mapLegendEnabledIcon,
+.mapLegendDisabledIcon {
+  margin-left: auto;
+  width: 14px;
+  text-align: center;
+  font-size: 8px;
+}
+
+.mapLegendEnabledIcon {
+  color: #6f8b55;
+}
+
+.mapLegendDisabledIcon {
+  color: #7c2f20;
+}
+
+.mapLegendCollapsed {
+  height: 38px !important;
+}
+:global(.live-map-marker.subtype-brittlebush) { background-image: url('/maps/plantfiber.webp'); }
+:global(.live-map-marker.subtype-enemycamp) { background-image: url('/maps/enemycamp.webp'); }
+:global(.live-map-marker.subtype-fuelcellwreckage) { background-image: url('/maps/fuelcellwreckage.webp'); }
+:global(.live-map-marker.subtype-scrapmetalwreckage),
+:global(.live-map-marker.subtype-scrapmetalpart),
+:global(.live-map-marker.subtype-fuelcellpart) { background-image: url('/maps/scrapmetalwreckage.webp'); }
+:global(.live-map-marker.subtype-hazard_quicksand) { background: rgba(194, 142, 64, .65); }
+:global(.live-map-marker.subtype-hazard_radiation) { background: rgba(104, 214, 112, .65); }
+:global(.live-map-marker.marker-storage) { background: #8b6a42; border: 1px solid #d8a75f; border-radius: 3px; }
