@@ -186,8 +186,7 @@ export const logger = createLogger("DASHBOARD");
 
 export function createRequestLogger(context: LogContext): Logger {
   const requestLogger = createLogger("DASHBOARD");
-  const mergeDetails = (details: unknown): LogContext =>
-    details && typeof details === "object" && !Array.isArray(details) ? { ...context, ...(details as LogContext) } : { ...context, details };
+  const mergeDetails = (details: unknown): LogContext => (details && typeof details === "object" && !Array.isArray(details) ? { ...context, ...(details as LogContext) } : { ...context, details });
 
   return {
     header: requestLogger.header,

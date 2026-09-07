@@ -6,7 +6,7 @@ Copy `.env.example` to `.env` and provide the server-only Dune, Discord, and Ups
 
 ## Request handling
 
-Pages API routes are wrapped by `runPagesApiHandler`. It assigns an `X-Request-ID`, applies method checks and rate limits, logs duration and status with secret redaction, and returns safe error envelopes. Unexpected errors are reported to Sentry when configured.
+Pages API routes are wrapped by `runPagesApiHandler`. It assigns an `X-Request-ID`, applies method checks and rate limits, writes compact route-aware logs with secret redaction, and returns safe error envelopes. Unexpected errors are reported to Sentry when configured.
 
 Rate limits use Upstash Redis fixed-window counters, hashed keys, and fail closed with HTTP 503 when Redis is unavailable in production. Development and tests use a bounded local fallback only when `NODE_ENV` is not `production` and Redis credentials are absent.
 
