@@ -2,6 +2,37 @@
 
 All notable changes to Arrakis Control Dashboard are documented here.
 
+## [1.0.2] - 2026-09-07
+
+### Added
+
+- Original Crimson Skies portal redesign with a responsive shared shell, character dossier, searchable storage, guild and holdings views.
+- Embedded Hagga Basin and Deep Desert maps, clear marker checkboxes, possible/live spice badges and owned-resource details.
+- Redis-backed population history, a 24-hour graph, Landsraad crests, Discord avatars and an index of 1,514 item images.
+- Private blueprint import beneath My bases with JSON validation, verified character targeting and operation deduplication.
+- Thirty-second client/server read caches, session-scoped browser restoration and a protected session bootstrap endpoint.
+- Sanitized opt-in API snapshots, isolated provider transport, runtime environment validation and bounded Redis requests.
+
+### Changed
+
+- Preserve clean /portal navigation with back/forward and reload support; redirect legacy /map links into the portal.
+- Keep global market metrics available with personal-listing filters, and display seller price ladders and safe partial failures.
+- Consolidate feature, infrastructure and system ownership while preserving Pages Router and runPagesApiHandler protections.
+- Display the package version automatically in the footer and isolate browser CI from deployment credentials.
+
+### Removed
+
+- RabbitMQ live-intel collection and obsolete diagnostic code. Community base gallery and separate Solido tabs remain deferred.
+
+### Verification and release limits
+
+- Typecheck, zero-warning lint, formatting, 102 unit tests, production build/smoke and 22 Chromium browser tests verified during release preparation.
+- Live local checks covered Discord sign-in, session persistence across restart, real telemetry, markets, maps, storage, owned blueprint export and population history.
+- Real in-game blueprint delivery was not performed. Continuous 24-hour collection, full 12-hour elapsed session testing and non-Chromium browser coverage remain outside this validation.
+- Publishing this source release does not deploy the website. Configure the target environment and keep API_DEBUG_ENABLED=false for normal operation.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.0.1...v1.0.2)
+
 ## [1.0.1] - 2026-09-07
 
 ### Added

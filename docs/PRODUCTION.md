@@ -41,7 +41,7 @@ Logout requires POST; GET and Next data prefetch requests must never revoke a se
 
 ## Current release preparation
 
-The footer displays the package version automatically (currently v1.0.1). My bases keeps the import form after the holdings cards, with its Upload JSON input always visible and separated by 28px of vertical margin. Empty community/live/Solido directory stubs were removed; the catalogued item and marker assets remain supported.
+The footer displays the package version automatically (currently v1.0.2). My bases keeps the import form after the holdings cards, with its Upload JSON input always visible and separated by 28px of vertical margin. Empty community/live/Solido directory stubs were removed; the catalogued item and marker assets remain supported.
 
 ### Thirty-second cache contract
 
