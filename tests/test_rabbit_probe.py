@@ -26,6 +26,30 @@ class FakeClient:
             return [{'exchange': 'chat.intercept', 'payload': base64.b64encode(json.dumps({'Type': 'TextChat', 'content': json.dumps({'m_Message': 'private message', 'accountId': 'private-id'})}).encode()).decode()}]
 
 class ProbeTests(unittest.TestCase):
+    def test_discovery_binds_topics_and_exact_direct_keys_without_auth_traffic(self):
+        class Inventory:
+            def request(self, method, path):
+                if path.startswith('/exchanges'):
+                    return [{'name': 'chat.map', 'type': 'direct'}, {'name': 'notifications', 'type': 'topic'},
+                            {'name': 'status.test', 'type': 'fanout'}, {'name': 'login_request', 'type': 'direct'},
+                            {'name': 'rpc', 'type': 'direct'}, {'name': '', 'type': 'direct'}]
+                return [{'source': 'chat.map', 'routing_key': 'HaggaBasin.0'},
+                        {'source': 'login_request', 'routing_key': 'secret-route'}]
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            found = probe.discover(Inventory())
+        self.assertEqual(found, [('chat.map', 'direct', 'HaggaBasin.0'),
+                                 ('notifications', 'topic', '#'), ('status.test', 'fanout', '')])
+        self.assertNotIn('secret-route', output.getvalue())
+
+    def test_raw_payload_requires_separate_file_and_stays_out_of_report(self):
+        raw, report = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(report), patch.object(probe.time, 'sleep'):
+            probe.capture(FakeClient(), message_limit=1, raw_file=raw)
+        payload = json.loads(raw.getvalue())['message']['payload']
+        self.assertIn('private message', base64.b64decode(payload).decode())
+        self.assertNotIn(payload, report.getvalue())
+
     def test_nested_payload_values_are_not_printed(self):
         result = probe.shape({'content': json.dumps({'message': 'private', 'online': True}), 'FEE168EC4DE4F158': 'id'})
         self.assertNotIn('private', json.dumps(result))

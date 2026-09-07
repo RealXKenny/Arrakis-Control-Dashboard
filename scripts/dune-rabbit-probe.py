@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Bounded RabbitMQ schema discovery. Standard library only; no game-message publishing."""
 import base64
+import argparse
+import contextlib
 import collections
 import getpass
 import json
+import os
 import re
 import sys
 import time
@@ -73,7 +76,35 @@ class Client:
             return json.loads(raw) if raw else None
 
 
-def capture(client, duration=120, message_limit=1000):
+def discover(client):
+    exchanges = client.request('GET', '/exchanges/%2F')
+    bindings = client.request('GET', '/bindings/%2F')
+    if not isinstance(exchanges, list) or not isinstance(bindings, list):
+        raise ValueError('Unexpected broker inventory format')
+    selected = []
+    for entry in exchanges:
+        name, kind = entry.get('name', ''), entry.get('type', '')
+        gameplay = name.startswith(('chat.', 'status.')) or name in (
+            'notifications', 'travel_queue_status', 'director_respawned', 'heartbeats')
+        keys = {b.get('routing_key', '') for b in bindings if b.get('source_name', b.get('source')) == name}
+        print(json.dumps({'exchange': name, 'type': kind, 'existing_binding_keys': len(keys),
+                          'capture': bool(gameplay and kind in ('fanout', 'topic', 'direct'))}), flush=True)
+        if not gameplay:
+            continue
+        if kind == 'fanout':
+            selected.append((name, kind, ''))
+        elif kind == 'topic':
+            selected.append((name, kind, '#'))
+        elif kind == 'direct':
+            selected.extend((name, kind, key) for key in sorted(keys))
+    if len(selected) > 256:
+        raise ValueError('Inventory exceeds 256 binding safety limit')
+    print('Inventory is vhost /. Login, RPC, default and tracing exchanges are not captured.', flush=True)
+    print('Direct routing keys are sampled from current bindings; newly created routes require another run.', flush=True)
+    return selected
+
+
+def capture(client, duration=120, message_limit=1000, discovery=False, raw_file=None):
     queue = 'arrakis.probe.' + uuid.uuid4().hex
     path = '/queues/%2F/' + queue
     counts = collections.Counter()
@@ -82,7 +113,8 @@ def capture(client, duration=120, message_limit=1000):
     received = 0
     try:
         verified = []
-        for exchange, expected_type, routing in BINDINGS:
+        candidates = discover(client) if discovery else BINDINGS
+        for exchange, expected_type, routing in candidates:
             try:
                 data = client.request('GET', '/exchanges/%2F/' + urllib.parse.quote(exchange, safe=''))
             except urllib.error.HTTPError as error:
@@ -105,7 +137,7 @@ def capture(client, duration=120, message_limit=1000):
             client.request('POST', '/bindings/%2F/e/' + urllib.parse.quote(exchange, safe='') + '/q/' + queue,
                            {'routing_key': routing, 'arguments': {}})
         print('CAPTURE READY: send normal map chat and log your character out/in.', flush=True)
-        print('Observing up to 120 seconds / 1000 messages. Only field structures are printed.', flush=True)
+        print(f'Observing up to {duration} seconds / {message_limit} messages. Only field structures are printed.', flush=True)
         deadline = time.monotonic() + duration
         while time.monotonic() < deadline and received < message_limit:
             batch = client.request('POST', path + '/get', {'count': min(25, message_limit - received),
@@ -116,6 +148,9 @@ def capture(client, duration=120, message_limit=1000):
                 if exchange not in dict(verified):
                     continue
                 counts[exchange] += 1
+                if raw_file is not None:
+                    raw_file.write(json.dumps({'observed_at': time.time(), 'message': message}) + '\n')
+                    raw_file.flush()
                 try:
                     raw = base64.b64decode(message.get('payload', ''), validate=True)
                     structure = shape(json.loads(raw))
@@ -139,11 +174,38 @@ def capture(client, duration=120, message_limit=1000):
                 print('Cleanup not confirmed; the probe queue expires after five idle minutes.', flush=True)
 
 
+def private_file(path):
+    return os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'w', encoding='utf-8')
+
+
+class Tee:
+    def __init__(self, *targets):
+        self.targets = targets
+    def write(self, text):
+        for target in self.targets:
+            target.write(text)
+        return len(text)
+    def flush(self):
+        for target in self.targets:
+            target.flush()
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--discover', action='store_true', help='Inventory vhost / and sample gameplay exchanges')
+    parser.add_argument('--seconds', type=int, default=120, choices=range(10, 601), metavar='10..600')
+    parser.add_argument('--report', help='New sanitized report file; existing files are never overwritten')
+    parser.add_argument('--raw-file', help='Optional PRIVATE payload file, including chat and identifiers; do not share')
+    args = parser.parse_args()
     user = input('RabbitMQ management username [guest]: ').strip() or 'guest'
     password = getpass.getpass('RabbitMQ password (not displayed): ')
     try:
-        capture(Client(user, password))
+        with contextlib.ExitStack() as stack:
+            raw = stack.enter_context(private_file(args.raw_file)) if args.raw_file else None
+            if args.report:
+                report = stack.enter_context(private_file(args.report))
+                stack.enter_context(contextlib.redirect_stdout(Tee(sys.stdout, report)))
+            capture(Client(user, password), duration=args.seconds, discovery=args.discover, raw_file=raw)
     except urllib.error.HTTPError as error:
         print('Management HTTP error:', error.code, '(check broker credentials and permissions)')
         return 1
