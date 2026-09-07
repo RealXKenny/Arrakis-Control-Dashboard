@@ -1,8 +1,8 @@
-import { getCoordinate } from "./mapData";
+import { getCoordinate } from './mapData';
 
 export function worldToMapPoint(marker, map) {
-  const x = getCoordinate(marker, "x");
-  const y = getCoordinate(marker, "y");
+  const x = getCoordinate(marker, 'x');
+  const y = getCoordinate(marker, 'y');
 
   if (!Number.isFinite(x) || !Number.isFinite(y) || !map) {
     return null;
@@ -15,7 +15,18 @@ export function worldToMapPoint(marker, map) {
   const minY = Number(map.minY);
   const maxY = Number(map.maxY);
 
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0 || !Number.isFinite(minX) || !Number.isFinite(maxX) || !Number.isFinite(minY) || !Number.isFinite(maxY) || maxX === minX || maxY === minY) {
+  if (
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0 ||
+    !Number.isFinite(minX) ||
+    !Number.isFinite(maxX) ||
+    !Number.isFinite(minY) ||
+    !Number.isFinite(maxY) ||
+    maxX === minX ||
+    maxY === minY
+  ) {
     return null;
   }
 

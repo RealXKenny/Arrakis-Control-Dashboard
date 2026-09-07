@@ -7,5 +7,11 @@ export function formatMarketNumber(value: unknown): string {
 }
 
 export function getBuybackPercent(config) {
-  return config?.buyback?.buybackPercent ?? config?.buybackSchedule?.buybackPercent ?? config?.schedule?.buybackPercent ?? config?.buybackPercent ?? null;
+  return (
+    config?.buyback?.buybackPercent ??
+    config?.buybackSchedule?.buybackPercent ??
+    config?.schedule?.buybackPercent ??
+    config?.buybackPercent ??
+    null
+  );
 }

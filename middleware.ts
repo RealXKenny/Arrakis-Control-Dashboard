@@ -18,7 +18,7 @@ export function middleware(request: NextRequest) {
       "form-action 'self'",
       "frame-ancestors 'none'",
       "object-src 'none'",
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https://cdn.discordapp.com",
       ["connect-src 'self' https://discord.com", monitoringOrigin].filter(Boolean).join(" "),
       "style-src 'self' 'unsafe-inline'",
       process.env.NODE_ENV === "development" ? "script-src 'self' 'unsafe-eval'" : "script-src 'self'",

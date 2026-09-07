@@ -2,7 +2,7 @@ import { globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 
 const eslintConfig = [
-  globalIgnores([".next/**", "node_modules/**", "debug/**", "coverage/**"]),
+  globalIgnores([".next/**", "node_modules/**", "debug/**", "coverage/**", "test-results/**", "playwright-report/**"]),
   ...nextVitals,
   {
     rules: {

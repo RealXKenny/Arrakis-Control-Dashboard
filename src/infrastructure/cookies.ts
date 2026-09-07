@@ -1,10 +1,10 @@
-import "../lib/assert-server";
+import '../lib/assert-server';
 type CookieOptions = {
   maxAge?: number;
   expires?: Date;
   httpOnly?: boolean;
   secure?: boolean;
-  sameSite?: "lax" | "strict" | "none";
+  sameSite?: 'lax' | 'strict' | 'none';
   path?: string;
 };
 
@@ -20,11 +20,11 @@ function serializeCookie(name: string, value: string, options: CookieOptions = {
   }
 
   if (options.httpOnly) {
-    parts.push("HttpOnly");
+    parts.push('HttpOnly');
   }
 
   if (options.secure) {
-    parts.push("Secure");
+    parts.push('Secure');
   }
 
   if (options.sameSite) {
@@ -35,17 +35,17 @@ function serializeCookie(name: string, value: string, options: CookieOptions = {
     parts.push(`Path=${options.path}`);
   }
 
-  return parts.join("; ");
+  return parts.join('; ');
 }
 
 export function getRequestCookie(req, name) {
-  const cookies = req.headers.cookie || "";
+  const cookies = req.headers.cookie || '';
 
-  for (const entry of cookies.split(";")) {
-    const [key, ...valueParts] = entry.trim().split("=");
+  for (const entry of cookies.split(';')) {
+    const [key, ...valueParts] = entry.trim().split('=');
 
     if (key === name) {
-      return decodeURIComponent(valueParts.join("="));
+      return decodeURIComponent(valueParts.join('='));
     }
   }
 
@@ -59,10 +59,10 @@ export function cookies(req, res) {
       return value === undefined ? undefined : { value };
     },
     set(name: string, value: string, options: CookieOptions) {
-      const existing = res.getHeader("Set-Cookie");
+      const existing = res.getHeader('Set-Cookie');
       const nextCookie = serializeCookie(name, value, options);
       const values = existing ? (Array.isArray(existing) ? existing : [existing]) : [];
-      res.setHeader("Set-Cookie", [...values, nextCookie]);
+      res.setHeader('Set-Cookie', [...values, nextCookie]);
     },
   };
 }

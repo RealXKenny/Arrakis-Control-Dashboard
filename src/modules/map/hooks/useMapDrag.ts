@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react';
 
 export default function useMapDrag({ frameRef }) {
   const [drag, setDrag] = useState(null);
@@ -11,7 +11,7 @@ export default function useMapDrag({ frameRef }) {
         return;
       }
 
-      if (event.target.closest(".hag-map-marker")) {
+      if (event.target.closest('.hag-map-marker')) {
         return;
       }
 

@@ -1,37 +1,37 @@
-"use client";
+'use client';
 
 function friendlyMarkerType(type) {
   return (
     {
-      player: "Player",
-      vehicle: "Vehicle",
-      base: "Base",
-      spice: "Static Spice Spawns",
-      spice_active: "Active Spice Blows",
-      flour_sand: "Flour Sand",
+      player: 'Player',
+      vehicle: 'Vehicle',
+      base: 'Base',
+      spice: 'Possible Spice Locations',
+      spice_active: 'Active Spice Fields',
+      flour_sand: 'Flour Sand',
       poi: "POI's",
-      house_representative: "House Representative",
-      trainer: "Trainer",
-    }[String(type || "").toLowerCase()] || "Marker"
+      house_representative: 'House Representative',
+      trainer: 'Trainer',
+    }[String(type || '').toLowerCase()] || 'Marker'
   );
 }
 
 function getMarkerName(marker, index) {
-  const type = String(marker?.type || "")
+  const type = String(marker?.type || '')
     .trim()
     .toLowerCase();
 
-  if (type === "vehicle" && marker?.subtype) {
+  if (type === 'vehicle' && marker?.subtype) {
     return String(marker.subtype)
-      .replace(/([a-z])([A-Z])/g, "$1 $2")
-      .replace(/_/g, " ")
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/_/g, ' ')
       .trim();
   }
 
-  if (type === "house_representative" && marker?.subtype) {
+  if (type === 'house_representative' && marker?.subtype) {
     return String(marker.subtype)
-      .replace(/([a-z])([A-Z])/g, "$1 $2")
-      .replace(/_/g, " ")
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/_/g, ' ')
       .trim();
   }
 
@@ -39,31 +39,31 @@ function getMarkerName(marker, index) {
 }
 
 function getMarkerClass(marker) {
-  const type = String(marker?.type || "marker")
+  const type = String(marker?.type || 'marker')
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, "");
+    .replace(/[^a-z0-9_-]/g, '');
 
-  const subtype = String(marker?.subtype || "")
+  const subtype = String(marker?.subtype || '')
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, "");
+    .replace(/[^a-z0-9_-]/g, '');
 
-  const classes = ["live-map-marker", `marker-${type || "marker"}`];
+  const classes = ['live-map-marker', `marker-${type || 'marker'}`];
 
   if (subtype) {
     classes.push(`subtype-${subtype}`);
   }
 
-  if ((type === "spice" || type === "spice_active") && subtype) {
+  if ((type === 'spice' || type === 'spice_active') && subtype) {
     classes.push(`spice-size-${subtype}`);
   }
 
-  return classes.join(" ");
+  return classes.join(' ');
 }
 
 export default function MapMarker({ marker, index, point, zoom, onSelect }) {
-  const type = String(marker?.type || "marker")
+  const type = String(marker?.type || 'marker')
     .trim()
     .toLowerCase();
 
@@ -75,7 +75,7 @@ export default function MapMarker({ marker, index, point, zoom, onSelect }) {
     <button
       type="button"
       className={`${markerClass} hag-map-marker`}
-      data-online={marker?.online === false ? "false" : "true"}
+      data-online={marker?.online === false ? 'false' : 'true'}
       onClick={(event) => {
         event.stopPropagation();
         onSelect(marker);
@@ -83,38 +83,43 @@ export default function MapMarker({ marker, index, point, zoom, onSelect }) {
       title={`${friendlyMarkerType(type)}: ${name} — X: ${point.x.toFixed(0)}, Y: ${point.y.toFixed(0)}`}
       aria-label={`${friendlyMarkerType(type)}: ${name}`}
       style={{
-        position: "absolute",
+        position: 'absolute',
         left: point.px * zoom,
         top: point.py * zoom,
-        transform: "translate(-50%, -50%)",
+        transform: 'translate(-50%, -50%)',
         padding: 0,
         margin: 0,
         border: 0,
-        outline: "none",
-        backgroundColor: "transparent",
-        color: "inherit",
-        cursor: "pointer",
-        appearance: "none",
-        font: "inherit",
+        outline: 'none',
+        backgroundColor: 'transparent',
+        color: 'inherit',
+        cursor: 'pointer',
+        appearance: 'none',
+        font: 'inherit',
         zIndex: 5,
       }}
     >
+      {(type === 'spice' || type === 'spice_active') && (
+        <span className="spice-status-badge" aria-hidden="true">
+          {type === 'spice_active' ? 'LIVE' : '?'}
+        </span>
+      )}
       <span
         style={{
-          position: "absolute",
-          left: "50%",
-          top: "calc(100% + 3px)",
-          transform: "translateX(-50%)",
-          whiteSpace: "nowrap",
-          pointerEvents: "none",
+          position: 'absolute',
+          left: '50%',
+          top: 'calc(100% + 3px)',
+          transform: 'translateX(-50%)',
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
           fontSize: 10,
           lineHeight: 1.1,
-          color: "#f2dfbd",
-          background: "rgba(8, 6, 4, 0.88)",
-          border: "1px solid rgba(216, 167, 95, 0.45)",
-          padding: "2px 5px",
+          color: '#f2dfbd',
+          background: 'rgba(8, 6, 4, 0.88)',
+          border: '1px solid rgba(216, 167, 95, 0.45)',
+          padding: '2px 5px',
           borderRadius: 1,
-          textShadow: "0 1px 2px #000",
+          textShadow: '0 1px 2px #000',
           zIndex: 20,
         }}
       >

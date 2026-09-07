@@ -1,7 +1,7 @@
-import { COLORS } from "../config/colors";
-import { clampPercent, getNumber } from "../utils/formatting";
-import { getVehicleName, getVehicleType, getVehicleOwner, isOwnedVehicle } from "../utils/vehicles";
-import TelemetryMetric from "./TelemetryMetric";
+import { COLORS } from '../config/colors';
+import { clampPercent, getNumber } from '../utils/formatting';
+import { getVehicleName, getVehicleType, getVehicleOwner, isOwnedVehicle } from '../utils/vehicles';
+import TelemetryMetric from './TelemetryMetric';
 
 export default function VehicleCard({ vehicle, index, playerName }) {
   const vehicleName = getVehicleName(vehicle, index);
@@ -12,7 +12,7 @@ export default function VehicleCard({ vehicle, index, playerName }) {
 
   const owned = isOwnedVehicle(vehicle, playerName);
 
-  const relationship = owned ? "Owned" : "Shared";
+  const relationship = owned ? 'Owned' : 'Shared';
 
   const condition = getNumber(vehicle?.condition_percent, vehicle?.conditionPercent, vehicle?.condition);
 
@@ -33,20 +33,20 @@ export default function VehicleCard({ vehicle, index, playerName }) {
           ),
           ${COLORS.panel}
         `,
-        border: `1px solid ${owned ? "rgba(210,168,90,0.22)" : "rgba(125,184,232,0.18)"}`,
+        border: `1px solid ${owned ? 'rgba(210,168,90,0.22)' : 'rgba(125,184,232,0.18)'}`,
         borderRadius: 14,
         padding: 22,
         minWidth: 0,
-        boxSizing: "border-box",
-        boxShadow: "0 8px 28px rgba(0,0,0,0.2)",
+        boxSizing: 'border-box',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.2)',
         minHeight: 260,
       }}
     >
       <div
         style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
           gap: 12,
           paddingBottom: 16,
           marginBottom: 17,
@@ -61,8 +61,8 @@ export default function VehicleCard({ vehicle, index, playerName }) {
         >
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 10,
             }}
           >
@@ -72,7 +72,7 @@ export default function VehicleCard({ vehicle, index, playerName }) {
                 width: 8,
                 height: 8,
                 flexShrink: 0,
-                borderRadius: "50%",
+                borderRadius: '50%',
                 backgroundColor: accent,
                 boxShadow: `
                   0 0 4px ${accent},
@@ -86,11 +86,11 @@ export default function VehicleCard({ vehicle, index, playerName }) {
             <strong
               style={{
                 color: COLORS.text,
-                fontSize: "1.05rem",
+                fontSize: '1.05rem',
                 fontWeight: 650,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
               title={vehicleName}
             >
@@ -101,7 +101,7 @@ export default function VehicleCard({ vehicle, index, playerName }) {
           <div
             style={{
               color: COLORS.dim,
-              fontSize: "0.72rem",
+              fontSize: '0.72rem',
               marginTop: 5,
               paddingLeft: 18,
             }}
@@ -113,15 +113,15 @@ export default function VehicleCard({ vehicle, index, playerName }) {
         <span
           style={{
             flexShrink: 0,
-            padding: "5px 9px",
+            padding: '5px 9px',
             borderRadius: 999,
-            backgroundColor: owned ? "rgba(210,168,90,0.08)" : "rgba(125,184,232,0.08)",
-            border: `1px solid ${owned ? "rgba(210,168,90,0.2)" : "rgba(125,184,232,0.2)"}`,
-            color: owned ? "#e3c27f" : "#8fc6ee",
-            fontSize: "0.63rem",
+            backgroundColor: owned ? 'rgba(210,168,90,0.08)' : 'rgba(125,184,232,0.08)',
+            border: `1px solid ${owned ? 'rgba(210,168,90,0.2)' : 'rgba(125,184,232,0.2)'}`,
+            color: owned ? '#e3c27f' : '#8fc6ee',
+            fontSize: '0.63rem',
             fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
           }}
         >
           {relationship}
@@ -131,8 +131,8 @@ export default function VehicleCard({ vehicle, index, playerName }) {
       <div
         style={{
           marginBottom: 20,
-          padding: "11px 13px",
-          backgroundColor: "#ffffff04",
+          padding: '11px 13px',
+          backgroundColor: '#ffffff04',
           border: `1px solid ${COLORS.borderLight}`,
           borderRadius: 8,
         }}
@@ -140,10 +140,10 @@ export default function VehicleCard({ vehicle, index, playerName }) {
         <div
           style={{
             color: COLORS.dim,
-            fontSize: "0.62rem",
+            fontSize: '0.62rem',
             fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             marginBottom: 3,
           }}
         >
@@ -153,7 +153,7 @@ export default function VehicleCard({ vehicle, index, playerName }) {
         <div
           style={{
             color: COLORS.textSoft,
-            fontSize: "0.8rem",
+            fontSize: '0.8rem',
           }}
         >
           {owner}
@@ -162,25 +162,36 @@ export default function VehicleCard({ vehicle, index, playerName }) {
 
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
           gap: 18,
         }}
       >
-        <TelemetryMetric label="Condition" percent={condition === null ? null : clampPercent(condition)} color={condition !== null && condition <= 25 ? COLORS.red : COLORS.gold} value={condition === null ? "No data" : `${condition.toFixed(0)}%`} />
+        <TelemetryMetric
+          label="Condition"
+          percent={condition === null ? null : clampPercent(condition)}
+          color={condition !== null && condition <= 25 ? COLORS.red : COLORS.gold}
+          value={condition === null ? 'No data' : `${condition.toFixed(0)}%`}
+        />
 
         <TelemetryMetric
           label="Fuel"
           percent={fuel === null ? null : clampPercent(fuel)}
           color={fuel !== null && fuel <= 25 ? COLORS.red : COLORS.gold}
-          value={currentFuel !== undefined && currentFuel !== null ? Number(currentFuel).toFixed(2).replace(/\.00$/, "") : fuel === null ? "No data" : `${fuel.toFixed(0)}%`}
+          value={
+            currentFuel !== undefined && currentFuel !== null
+              ? Number(currentFuel).toFixed(2).replace(/\.00$/, '')
+              : fuel === null
+                ? 'No data'
+                : `${fuel.toFixed(0)}%`
+          }
         />
       </div>
 
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
           gap: 13,
           marginTop: 18,
         }}
@@ -190,7 +201,7 @@ export default function VehicleCard({ vehicle, index, playerName }) {
             key={label}
             style={{
               padding: 12,
-              backgroundColor: "#ffffff04",
+              backgroundColor: '#ffffff04',
               border: `1px solid ${COLORS.borderLight}`,
               borderRadius: 8,
               minWidth: 0,
@@ -199,10 +210,10 @@ export default function VehicleCard({ vehicle, index, playerName }) {
             <div
               style={{
                 color: COLORS.dim,
-                fontSize: "0.6rem",
+                fontSize: '0.6rem',
                 fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
                 marginBottom: 4,
               }}
             >
@@ -212,10 +223,10 @@ export default function VehicleCard({ vehicle, index, playerName }) {
             <div
               style={{
                 color: COLORS.textSoft,
-                fontSize: "0.72rem",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                fontSize: '0.72rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
               title={String(value)}
             >
