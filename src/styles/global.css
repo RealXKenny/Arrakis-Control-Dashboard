@@ -17,6 +17,11 @@ body {
   min-height: 100vh;
 }
 
+#__next {
+  width: 100%;
+  min-width: 0;
+}
+
 body {
   padding: 24px;
   display: grid;

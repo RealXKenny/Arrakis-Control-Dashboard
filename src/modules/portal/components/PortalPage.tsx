@@ -1,12 +1,14 @@
 'use client';
 
 import PortalTabs from './PortalTabs';
+import layout from '../portal.module.css';
 import CharacterHeader from './CharacterHeader';
 import CharacterVitals from './CharacterVitals';
 import InventoryAssets from './InventoryAssets';
 import BaseSection from './BaseSection';
 import VehicleSection from './VehicleSection';
 import LoadingState from './LoadingState';
+import PlayerDataError from './PlayerDataError';
 import UnlinkedState from './UnlinkedState';
 import MarketBoard from './MarketBoard';
 import { styles } from '../config/colors';
@@ -20,6 +22,8 @@ import { extractVehicles } from '../utils/vehicles';
 export default function PlayerPortal() {
   const {
     player,
+    error,
+    retry,
     loading,
     basesTelemetry,
     basesLoading,
@@ -31,6 +35,10 @@ export default function PlayerPortal() {
 
   if (loading) {
     return <LoadingState />;
+  }
+
+  if (!player && error) {
+    return <PlayerDataError message={error} onRetry={retry} />;
   }
 
   if (!player?.linked) {
@@ -188,7 +196,7 @@ export default function PlayerPortal() {
       : sharedBases;
 
   return (
-    <main className="portal-page" style={styles.page}>
+    <main className={`portal-page ${layout.page}`} style={styles.page}>
       <PortalTabs />
 
       <div style={styles.container}>

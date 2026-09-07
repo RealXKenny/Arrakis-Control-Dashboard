@@ -12,6 +12,8 @@ export function usePlayerData() {
   const [loading, setLoading] =
     useState(true);
 
+  const [error, setError] = useState('');
+
   const [statusLoading, setStatusLoading] =
     useState(false);
 
@@ -93,6 +95,7 @@ export function usePlayerData() {
 
       if (!res.ok) {
         captureException(new Error(`Player API returned ${res.status}`));
+        setError('Your profile is temporarily unavailable. Please try again.');
         return;
       }
 
@@ -105,10 +108,12 @@ export function usePlayerData() {
       * during refresh.
       */
       setPlayer(data);
+      setError('');
 
       await loadBaseTelemetry(bases);
     } catch (error) {
       captureException(error);
+      setError('Unable to reach the server. Please try again.');
     } finally {
       setStatusLoading(false);
       refreshInProgress.current = false;
@@ -145,6 +150,8 @@ export function usePlayerData() {
   }, []);
   return {
     player,
+    error,
+    retry: () => loadPlayerData(true),
     loading,
     statusLoading,
     basesTelemetry,

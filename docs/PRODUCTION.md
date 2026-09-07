@@ -10,7 +10,7 @@ Pages API routes are wrapped by `runPagesApiHandler`. It assigns an `X-Request-I
 
 Rate limits use Upstash Redis fixed-window counters, hashed keys, and fail closed with HTTP 503 when Redis is unavailable in production. Development and tests use a bounded local fallback only when `NODE_ENV` is not `production` and Redis credentials are absent.
 
-OAuth sessions use Redis JSON records with a 24-hour TTL. Cookies contain only a random session identifier; OAuth access tokens are never persisted. Logout deletes the Redis record and expires the cookie.
+OAuth sessions and their browser cookies have a fixed 12-hour lifetime from login. Redis records use the session's remaining lifetime, capped at 12 hours. Cookies contain only a random session identifier; OAuth access tokens are never persisted. Logout deletes the Redis record and expires the cookie. Redis sessions survive app restarts. Without Redis in development, the process-wide fallback survives module reloads, but ends when the server process stops. Temporary profile-fetch errors offer retry instead of displaying the sign-in screen.
 
 ## Monitoring
 

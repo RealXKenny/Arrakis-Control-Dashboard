@@ -23,7 +23,7 @@ export default function PortalTabs() {
         width: "100%",
         display: "flex",
         justifyContent: "center",
-        padding: "0 16px",
+        padding: "0 clamp(12px, 2vw, 48px)",
         marginBottom: "30px",
         boxSizing: "border-box",
       }}
@@ -31,7 +31,7 @@ export default function PortalTabs() {
       <div
         style={{
           width: "100%",
-          maxWidth: "900px",
+          maxWidth: "100%",
           display: "flex",
           gap: "6px",
           padding: "6px",

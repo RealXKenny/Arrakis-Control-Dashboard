@@ -24,6 +24,8 @@ export const styles = {
   page: {
     minHeight: "100vh",
     width: "100%",
+    maxWidth: 2880,
+    margin: "0 auto",
     boxSizing: "border-box",
     padding: "40px 0 70px",
     background: `
@@ -39,8 +41,7 @@ export const styles = {
   },
 
   container: {
-    width: "calc(100% - 64px)",
-    maxWidth: 1600,
+    width: "calc(100% - clamp(24px, 4vw, 96px))",
     margin: "0 auto",
   },
 

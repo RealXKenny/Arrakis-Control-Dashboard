@@ -16,6 +16,6 @@ export function getRedisClient(): Redis | null {
     return redisClient;
   }
 
-  redisClient = Redis.fromEnv();
+  redisClient = new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN });
   return redisClient;
 }

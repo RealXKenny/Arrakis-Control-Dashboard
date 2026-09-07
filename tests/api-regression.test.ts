@@ -15,7 +15,7 @@ import { checkRateLimit } from "../src/lib/rate-limit";
 import { responseMock } from "./helpers/response";
 
 vi.mock("../src/infrastructure/dune", () => ({ getDuneClient: vi.fn(), getDiscordPlayer: vi.fn() }));
-vi.mock("../src/lib/session-store", () => ({ getSession: vi.fn(), saveSession: vi.fn(), deleteSession: vi.fn(), sessionTtlSeconds: () => 86400 }));
+vi.mock("../src/lib/session-store", () => ({ getSession: vi.fn(), saveSession: vi.fn(), deleteSession: vi.fn(), sessionTtlSeconds: () => 43200 }));
 vi.mock("../src/lib/rate-limit", () => ({ checkRateLimit: vi.fn(), getClientAddress: () => "test" }));
 vi.mock("../src/config/env", () => ({ getServerEnv: () => ({ NODE_ENV: "test", LOG_LEVEL: "INFO", DISCORD_CLIENT_ID: "client", DISCORD_CLIENT_SECRET: "secret", DISCORD_GUILD_ID: "guild", DISCORD_REDIRECT_URI: "https://dashboard.test/auth/callback", DISCORD_APP_URL: "https://dashboard.test" }) }));
 
@@ -103,6 +103,7 @@ describe("route contracts after extraction", () => {
     const cookies = res.getHeader("Set-Cookie") as string[];
     expect(cookies[0]).toMatch(/^dashboard_session=[a-f0-9]{64};/);
     expect(cookies[0]).toContain("HttpOnly");
+    expect(cookies[0]).toContain("Max-Age=43200");
     expect(cookies[1]).toContain("oauth_state=; Max-Age=0");
     expect(JSON.stringify([cookies, vi.mocked(saveSession).mock.calls])).not.toContain("provider-secret");
   });
