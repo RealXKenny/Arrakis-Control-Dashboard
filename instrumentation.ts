@@ -1,15 +1,4 @@
 export async function register() {
-  if (process.env.SENTRY_DSN) {
-    const Sentry = await import("@sentry/nextjs");
-    Sentry.init({
-      dsn: process.env.SENTRY_DSN,
-      environment: process.env.NODE_ENV,
-      enabled: process.env.NODE_ENV === "production" || process.env.SENTRY_ENABLED === "true",
-      tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1,
-      sendDefaultPii: false,
-    });
-  }
-
   if (process.env.NEXT_RUNTIME !== "nodejs") {
     return;
   }
@@ -19,16 +8,7 @@ export async function register() {
     await warmupDuneClient();
     const { logger } = await import("./src/lib/logger");
     console.clear();
-    const banner = [
-      "  ██████╗██████╗ ██╗███╗   ███╗███████╗ ██████╗ ███╗   ██╗    ███████╗██╗  ██╗██╗███████╗███████╗ ",
-      " ██╔════╝██╔══██╗██║████╗ ████║██╔════╝██╔═══██╗████╗  ██║    ██╔════╝██║ ██╔╝██║██╔════╝██╔════╝ ",
-      " ██║     ██████╔╝██║██╔████╔██║███████╗██║   ██║██╔██╗ ██║    ███████╗█████╔╝ ██║█████╗  ███████╗ ",
-      " ██║     ██╔══██╗██║██║╚██╔╝██║╚════██║██║   ██║██║╚██╗██║    ╚════██║██╔═██╗ ██║██╔══╝  ╚════██║ ",
-      " ╚██████╗██║  ██║██║██║ ╚═╝ ██║███████║╚██████╔╝██║ ╚████║    ███████║██║  ██╗██║███████╗███████║ ",
-      "  ╚═════╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═══╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝ ",
-    ].join("\n");
-
-    logger.header("ARRAKIS CONTROL", "Dune: Awakening Dashboard", banner);
+    logger.header("ARRAKIS CONTROL", "Dune: Awakening Dashboard");
   } catch (error) {
     const { logger } = await import("./src/lib/logger");
     logger.error("Dune startup authentication failed.", { error });
