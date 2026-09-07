@@ -11,10 +11,18 @@ export function rows(value: unknown): DataRow[] | null {
 export function label(value: unknown, fallback = '—'): string {
   return typeof value === 'string' && value.trim() ? value : typeof value === 'number' ? String(value) : fallback;
 }
-export type InventoryItem = { id: string; name: string; group: string; quantity: string; grade: string };
+export type InventoryItem = {
+  id: string;
+  name: string;
+  group: string;
+  quantity: string;
+  grade: string;
+  source: DataRow;
+};
 export function inventoryItems(value: unknown): InventoryItem[] | null {
   return (
     rows(value)?.map((item, index) => ({
+      source: item,
       id: label(item.item_id ?? item.id, String(index)),
       name: label(item.display_name ?? item.item_name ?? item.name ?? item.template_id, 'Unknown item'),
       group:

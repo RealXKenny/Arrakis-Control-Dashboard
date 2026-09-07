@@ -1,3 +1,4 @@
+import '../../../lib/assert-server';
 export function getVehicleOwner(vehicle) {
   return String(
     vehicle?.owner_name ??

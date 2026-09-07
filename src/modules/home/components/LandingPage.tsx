@@ -12,7 +12,8 @@ export default function LandingPage() {
       navigation={[
         { label: 'Dashboard', group: 'Command', href: '/', active: true },
         { label: 'Character', group: 'Holdings', href: '/portal' },
-        { label: 'Live map', group: 'Desert', href: '/map' },
+        { label: 'Hagga Basin', group: 'Desert', href: '/portal?view=hagga' },
+        { label: 'Deep Desert', group: 'Desert', href: '/portal?view=deep-desert' },
         { label: 'Exchange', group: 'Economy', href: '/portal?view=market' },
       ]}
       actions={<a href="/auth/login">Connect Discord</a>}
@@ -69,7 +70,7 @@ export default function LandingPage() {
           ['01', 'Character & resources', 'Health, hydration, progression and balances.', '/portal'],
           ['02', 'Territory & fleet', 'Inspect your owned and shared bases and vehicles.', '/portal?view=bases'],
           ['03', 'CHOAM Exchange', 'Read active listings and search market prices.', '/portal?view=market'],
-          ['04', 'Desert reconnaissance', 'Explore Hagga Basin and the Deep Desert.', '/map'],
+          ['04', 'Desert reconnaissance', 'Explore Hagga Basin and the Deep Desert.', '/portal?view=hagga'],
         ].map(([number, title, description, href]) => (
           <Link href={href} key={number}>
             <small>{number} / FIELD INSTRUMENT</small>

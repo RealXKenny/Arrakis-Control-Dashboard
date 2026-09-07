@@ -1,3 +1,4 @@
+import '../../../lib/assert-server';
 import { getMarkerBaseId } from './bases';
 
 import { isCurrentPlayerMarker } from './players';

@@ -1,4 +1,5 @@
 'use client';
+import { cachedFetch } from '../../../lib/client-cache';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -45,37 +46,53 @@ export default function useMapData(mapName = 'HaggaBasin') {
   const [markers, setMarkers] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const expired = useRef(false);
   const active = useRef<AbortController | null>(null);
-  const loadMap = useCallback(async () => {
-    if (active.current) return;
-    const controller = new AbortController();
-    active.current = controller;
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/map?map=${encodeURIComponent(mapName)}`, {
-        cache: 'no-store',
-        signal: controller.signal,
-      });
-      if (response.status === 401) throw new Error('Session ended. Return to the portal to sign in again.');
-      if (!response.ok) throw new Error('Map telemetry is temporarily unavailable.');
-      const data = await response.json();
-      const map = getMapConfig(data);
-      if (!data?.ok || !map) throw new Error('Map configuration is unavailable.');
-      if (controller.signal.aborted) return;
-      setMapConfig(map);
-      setMarkers(getMarkerArray(data));
-      setError('');
-    } catch (reason) {
-      if (active.current === controller) setError(reason instanceof Error ? reason.message : 'Unable to load map.');
-    } finally {
-      clearTimeout(timeout);
-      if (active.current === controller) {
-        active.current = null;
-        setLoading(false);
+  const loadMap = useCallback(
+    async (force = false) => {
+      if (active.current || expired.current) return;
+      const controller = new AbortController();
+      active.current = controller;
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      setLoading(true);
+      try {
+        const response = await cachedFetch(`/api/map?map=${encodeURIComponent(mapName)}`, {
+          force,
+          onCached: async (cached) => {
+            const data = await cached.json();
+            if (!controller.signal.aborted) {
+              setMapConfig(getMapConfig(data));
+              setMarkers(getMarkerArray(data));
+            }
+          },
+          signal: controller.signal,
+        });
+        if (response.status === 401 || response.status === 403) {
+          expired.current = true;
+          setMarkers([]);
+          setMapConfig(null);
+          throw new Error('Session ended. Return to the portal to sign in again.');
+        }
+        if (!response.ok) throw new Error('Map telemetry is temporarily unavailable.');
+        const data = await response.json();
+        const map = getMapConfig(data);
+        if (!data?.ok || !map) throw new Error('Map configuration is unavailable.');
+        if (controller.signal.aborted) return;
+        setMapConfig(map);
+        setMarkers(getMarkerArray(data));
+        setError('');
+      } catch (reason) {
+        if (active.current === controller) setError(reason instanceof Error ? reason.message : 'Unable to load map.');
+      } finally {
+        clearTimeout(timeout);
+        if (active.current === controller) {
+          active.current = null;
+          setLoading(false);
+        }
       }
-    }
-  }, [mapName]);
+    },
+    [mapName],
+  );
   useEffect(() => {
     setMapConfig(null);
     setMarkers([]);
@@ -93,5 +110,5 @@ export default function useMapData(mapName = 'HaggaBasin') {
       controller?.abort();
     };
   }, [loadMap]);
-  return { mapConfig, markers, error, loading, loadMap, reload: loadMap };
+  return { mapConfig, markers, error, loading, loadMap, reload: () => loadMap(true) };
 }

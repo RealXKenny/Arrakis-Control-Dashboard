@@ -7,8 +7,10 @@ import { readFileSync } from "node:fs";
 
 // Isolated transport fixture: no real Redis, Discord, or Dune credentials are used.
 let revoked = false;
+let upstreamReads = 0;
 const redis = createServer(async (req, res) => {
   if (req.url.startsWith("/api/")) {
+    if (!req.url.startsWith("/api/1/envelope/")) upstreamReads++;
     res.setHeader("Content-Type", "application/json");
     if (req.url === "/api/auth/login") res.setHeader("Set-Cookie", "asc_session=fixture; Path=/; HttpOnly");
     const payload = req.url === "/api/auth/state" ? { csrfToken: "fixture-csrf" }
@@ -23,6 +25,8 @@ const redis = createServer(async (req, res) => {
   const command = JSON.parse(body || "[]");
   const reply = entry => {
     const operation = String(entry[0]).toUpperCase();
+    if (operation === 'EVAL') return { result: [1, 60000] };
+    if (operation === 'HGETALL') return { result: [] };
     if (operation === 'DEL') { revoked = true; return { result: 1 }; }
     return { result: operation === 'GET' ? (revoked ? null : Buffer.from(JSON.stringify({ user: { id: "user" }, guildId: "guild", roleIds: [], expiresAt: Date.now() + 3600000 })).toString("base64")) : "OK" };
   };
@@ -36,6 +40,7 @@ const reservation = createServer();
 reservation.listen(0, "127.0.0.1");
 await once(reservation, "listening");
 const port = reservation.address().port;
+const base = `http://127.0.0.1:${port}`;
 await new Promise(resolve => reservation.close(resolve));
 
 const require = createRequire(import.meta.url);
@@ -48,11 +53,11 @@ const child = spawn(process.execPath, ["--trace-warnings", require.resolve("next
   windowsHide: true,
   stdio: ["ignore", "pipe", "pipe"],
   env: {
-    ...process.env, POPULATION_HISTORY_ENABLED: "false", LIVE_EVENTS_ENABLED: "false",
+    ...process.env, API_DEBUG_ENABLED: "false", POPULATION_HISTORY_ENABLED: "false",
     NODE_ENV: mode === "dev" ? "development" : "production",
     CONSOLE_URL: `http://127.0.0.1:${redisPort}`, CONSOLE_PASSWORD: "fixture-password", ADAPTER_TOKEN: "fixture-token",
-    DISCORD_CLIENT_ID: "", DISCORD_CLIENT_SECRET: "", DISCORD_GUILD_ID: "",
-    DISCORD_REDIRECT_URI: "", DISCORD_APP_URL: "", APP_URL: "",
+    DISCORD_CLIENT_ID: "fixture-client", DISCORD_CLIENT_SECRET: "fixture-secret", DISCORD_GUILD_ID: "fixture-guild",
+    DISCORD_REDIRECT_URI: `${base}/auth/callback`, DISCORD_APP_URL: base, APP_URL: base,
     SENTRY_DSN: `http://fixture@127.0.0.1:${redisPort}/1`, NEXT_PUBLIC_SENTRY_DSN: "", SENTRY_AUTH_TOKEN: "",
     UPSTASH_REDIS_REST_URL: `http://127.0.0.1:${redisPort}`,
     UPSTASH_REDIS_REST_TOKEN: "local-smoke-fixture",
@@ -64,7 +69,6 @@ child.stderr.on("data", chunk => { logs += chunk; });
 const childDone = new Promise(resolve => { child.once("exit", resolve); child.once("error", resolve); });
 
 try {
-  const base = `http://127.0.0.1:${port}`;
   let ready = false;
   for (let attempt = 0; attempt < 100; attempt++) {
     if (child.exitCode !== null) throw new Error("Production server exited before becoming ready");
@@ -77,9 +81,9 @@ try {
     await new Promise(resolve => setTimeout(resolve, 200));
   }
   assert.ok(ready, "Production server must serve /portal");
-  const routes = ["auth/login", "auth/callback", "auth/logout", "map", "player", "market", "market/config", "market/listings", "portal/world", "bases/test/export", "server/status", "live"];
+  const routes = ["auth/login", "auth/callback", "auth/logout", "map", "player", "market", "market/config", "market/listings", "portal/world", "bases/test/export", "server/status", "bases/import", "session"];
   for (const route of routes) {
-    const response = await fetch(`${base}/api/${route}`, { method: route === 'auth/logout' ? 'GET' : 'POST', signal: AbortSignal.timeout(5000) });
+    const response = await fetch(`${base}/api/${route}`, { method: route === 'auth/logout' || route === 'bases/import' ? 'GET' : 'POST', signal: AbortSignal.timeout(5000) });
     assert.equal(response.status, 405, route);
     assert.equal((await response.json()).code, "METHOD_NOT_ALLOWED", route);
   }
@@ -108,6 +112,12 @@ try {
   assert.equal(prefetch.status, 405, 'prefetched logout must not revoke login');
   assert.equal(prefetch.headers.get('set-cookie'), null);
   await prefetch.text();
+  const readingBefore = upstreamReads;
+  const cachedPlayer = await fetch(`${base}/api/player`, {headers});
+  assert.equal(cachedPlayer.status,200);
+  assert.ok(cachedPlayer.headers.get('X-Data-Captured-At'));
+  await cachedPlayer.text();
+  assert.equal(upstreamReads,readingBefore,'warm player cache avoids provider calls');
   const market = await fetch(`${base}/api/market`, { headers });
   assert.equal(market.status, 200, 'market remains authenticated after prefetch');
   await market.text();
@@ -123,7 +133,10 @@ try {
   await monitoringResponse.text();
   if (logs.includes("MaxListenersExceededWarning")) console.error(logs.slice(logs.indexOf("MaxListenersExceededWarning"), logs.indexOf("MaxListenersExceededWarning") + 2500));
   assert.doesNotMatch(logs, /Failed to load external module|MaxListenersExceededWarning|This module cannot be imported from a Client Component/);
-  console.log("Runtime smoke passed: portal, 12 API modules, 100 unauthorized requests, authenticated telemetry and market, safe logout prefetch, POST session revocation; no import or listener warnings.");
+  const deniedImport = await fetch(`${base}/api/bases/import`, {method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:'{}'});
+  assert.equal(deniedImport.status,401);
+  await deniedImport.text();
+  console.log('Runtime smoke passed: 13 API modules, protected base import, telemetry, market and logout.');
 } finally {
   child.kill();
   await childDone;

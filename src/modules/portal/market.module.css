@@ -306,3 +306,12 @@
     padding: 16px;
   }
 }
+.workspace > div {
+  border-radius: 14px;
+  border-color: #65482f;
+  background: linear-gradient(140deg, #291b12, #19100b);
+}
+.board tr {
+  border-radius: 10px;
+  border-color: #65482f;
+}

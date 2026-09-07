@@ -1,3 +1,4 @@
+import { cachedFetch } from '../../../lib/client-cache';
 import { useEffect, useState } from 'react';
 import type { WorldReading } from '../utils/world';
 
@@ -15,7 +16,12 @@ export function useWorldReading(map: string) {
       request = new AbortController();
       const timeout = setTimeout(() => request?.abort(), 15000);
       try {
-        const response = await fetch(`/api/portal/world?map=${map}`, { signal: request.signal, cache: 'no-store' });
+        const response = await cachedFetch(`/api/portal/world?map=${map}`, {
+          signal: request.signal,
+          onCached: async (cached) => {
+            if (!disposed) setReading(await cached.json());
+          },
+        });
         if (response.status === 401) unauthorized = true;
         if (!response.ok) throw new Error('World reading unavailable');
         const data: WorldReading = await response.json();

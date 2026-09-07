@@ -1,3 +1,4 @@
+import { cachedFetch } from '../../../lib/client-cache';
 import { useEffect, useState } from 'react';
 
 export function useServerStatus() {
@@ -13,7 +14,16 @@ export function useServerStatus() {
       request = controller;
       const timeout = setTimeout(() => controller.abort(), 10000);
       try {
-        const response = await fetch('/api/server/status', { cache: 'no-store', signal: controller.signal });
+        const response = await cachedFetch('/api/server/status', {
+          signal: controller.signal,
+          onCached: async (cached) => {
+            const data = await cached.json();
+            if (!disposed) {
+              setActivePlayers(data.activePlayers ?? null);
+              setTotalPlayers(data.totalPlayers ?? null);
+            }
+          },
+        });
         if (!response.ok) throw new Error('Status unavailable');
         const data = await response.json();
         if (disposed) return;

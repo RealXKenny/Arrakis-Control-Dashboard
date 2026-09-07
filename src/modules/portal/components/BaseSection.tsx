@@ -1,3 +1,4 @@
+import BaseImport from '../../bases/components/BaseImport';
 import { COLORS, styles } from '../config/colors';
 
 import { getBaseId } from '../utils/bases';
@@ -232,6 +233,7 @@ export default function BaseSection({
 
         <BaseGrid bases={visibleBases} telemetry={basesTelemetry} />
       </section>
+      <BaseImport />
     </>
   );
 }

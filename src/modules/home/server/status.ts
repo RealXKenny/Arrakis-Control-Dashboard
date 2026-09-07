@@ -1,3 +1,5 @@
+import '../../../lib/assert-server';
+import { record } from '../../../lib/value';
 import { NextResponse } from '../../../infrastructure/pages-api';
 
 import { getDuneClient } from '../../../infrastructure/dune';
@@ -7,19 +9,21 @@ export async function GET() {
   try {
     const duneClient = await getDuneClient();
 
-    const [onlinePlayers, playersData] = await Promise.all([
+    const [onlineRaw, playersRaw] = await Promise.all([
       duneClient.request('GET', '/api/players/online?page=0&pageSize=100'),
       duneClient.request('GET', '/api/players?page=1&pageSize=1'),
     ]);
 
+    const onlinePlayers = record(onlineRaw),
+      playersData = record(playersRaw);
     const activePlayers = Number(
       onlinePlayers?.totalCount ??
         onlinePlayers?.totalPlayers ??
         onlinePlayers?.count ??
-        onlinePlayers?.pagination?.total ??
-        onlinePlayers?.pagination?.totalCount ??
-        onlinePlayers?.meta?.total ??
-        onlinePlayers?.meta?.totalCount ??
+        record(onlinePlayers.pagination).total ??
+        record(onlinePlayers.pagination).totalCount ??
+        record(onlinePlayers.meta).total ??
+        record(onlinePlayers.meta).totalCount ??
         0,
     );
 
@@ -27,10 +31,10 @@ export async function GET() {
       playersData?.totalCount ??
         playersData?.totalPlayers ??
         playersData?.count ??
-        playersData?.pagination?.total ??
-        playersData?.pagination?.totalCount ??
-        playersData?.meta?.total ??
-        playersData?.meta?.totalCount ??
+        record(playersData.pagination).total ??
+        record(playersData.pagination).totalCount ??
+        record(playersData.meta).total ??
+        record(playersData.meta).totalCount ??
         0,
     );
 

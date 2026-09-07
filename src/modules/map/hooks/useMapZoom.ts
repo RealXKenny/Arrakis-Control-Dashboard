@@ -42,7 +42,7 @@ export default function useMapZoom({ mapConfig, frameRef, canvasRef }) {
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame || !mapConfig) return;
-    // Measure after terminal sizing; avoid the old fixed 10% initial map.
+    // Recalculate the minimum when the responsive map frame changes size.
     const resize = () => setZoom((current) => clampZoom(current, getMinimumZoom()));
     const observer = new ResizeObserver(resize);
     observer.observe(frame);

@@ -1,3 +1,4 @@
+import { clearApiReadCache } from '../src/infrastructure/api-read-cache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import login from '../src/pages/api/auth/login';
 import callback from '../src/pages/api/auth/callback';
@@ -10,7 +11,6 @@ import marketConfig from '../src/pages/api/market/config';
 import exportBase from '../src/pages/api/bases/[baseId]/export';
 import status from '../src/pages/api/server/status';
 import world from '../src/pages/api/portal/world';
-import live from '../src/pages/api/live';
 import { runPagesApiHandler, NextResponse } from '../src/infrastructure/pages-api';
 import { getDuneClient, getDiscordPlayer } from '../src/infrastructure/dune';
 import { getSession, saveSession, deleteSession } from '../src/lib/session-store';
@@ -49,17 +49,78 @@ const routes = [
   ['/api/bases/base/export', exportBase],
   ['/api/server/status', status],
   ['/api/portal/world', world],
-  ['/api/live', live],
 ] as const;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearApiReadCache();
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 29, retryAfter: 60 });
   vi.mocked(getSession).mockResolvedValue(null);
 });
 afterEach(() => vi.unstubAllGlobals());
 
 describe('route contracts after extraction', () => {
+  it('scopes My listings to the authenticated character and rejects missing seller IDs', async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: 'discord-user' },
+      guildId: 'guild',
+      roleIds: [],
+      expiresAt: Date.now() + 60000,
+    });
+    vi.mocked(getDiscordPlayer).mockResolvedValue({ linked: true, pawnId: 'own-player' });
+    let identified = true;
+    const request = vi.fn().mockImplementation(async (_method, path) => {
+      if (path === '/api/exchange/stats') return { totalListings: 5500 };
+      if (path === '/api/exchange/market') return { buybackPercent: 60 };
+      if (path.startsWith('/api/exchange/items?'))
+        return { rows: [{ template_id: 'Spice', quality_level: 0 }], totalCount: 1 };
+      if (path.startsWith('/api/exchange/listings?'))
+        return {
+          rows: identified
+            ? [
+                { owner_id: 'own-player', owner_type: 'player', price: '9007199254740993', stock: 2 },
+                { owner_id: 'another-player', owner_type: 'player', price: 1, stock: 999 },
+              ]
+            : [{ owner_name: 'Same name', price: 1, stock: 999 }],
+        };
+      return {};
+    });
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
+    const req = {
+      method: 'GET',
+      url: '/api/market?owner=player&ownerId=another-player',
+      headers: { cookie: 'dashboard_session=session' },
+    };
+    const response = responseMock();
+    await market(req, response);
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(String(response.body));
+    expect(body.items.rows[0]).toMatchObject({ listing_count: 1, total_stock: '2', lowest_price: '9007199254740993' });
+    expect(body.stats.totalListings).toBe(5500);
+    expect(body.matchingItems).toBe(1);
+    expect(getDiscordPlayer).toHaveBeenCalledWith(expect.objectContaining({ userId: 'discord-user', roleIds: [] }));
+    clearApiReadCache();
+    identified = false;
+    vi.mocked(getDiscordPlayer).mockRejectedValue(new Error('Adapter unavailable'));
+    const unavailable = responseMock();
+    await market(req, unavailable);
+    expect(unavailable.statusCode).toBe(200);
+    expect(JSON.parse(String(unavailable.body))).toMatchObject({
+      ok: true,
+      stats: { totalListings: 5500 },
+      matchingItems: 1,
+      marketConfig: { buybackPercent: 60 },
+      items: { totalCount: null, rows: [], capabilities: { personalListings: false } },
+    });
+    expect(getDiscordPlayer).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(unavailable.body)).not.toContain('Same name');
+    request.mockResolvedValue({ supported: false });
+    clearApiReadCache();
+    const missingData = responseMock();
+    await market(req, missingData);
+    expect(missingData.statusCode).toBe(502);
+    expect(missingData.body).toMatchObject({ code: 'INVALID_MARKET' });
+  });
   it('authenticates world readings, validates maps, and tolerates a partial provider outage', async () => {
     const denied = responseMock();
     await world({ method: 'GET', url: '/api/portal/world', headers: {} }, denied);
@@ -80,7 +141,7 @@ describe('route contracts after extraction', () => {
       if (route.includes('/landsraad')) throw new Error('offline');
       return { totalListings: 12 };
     });
-    vi.mocked(getDuneClient).mockReturnValue({ request });
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
     const headers = { cookie: 'dashboard_session=session' };
     const invalid = responseMock();
     await world({ method: 'GET', url: '/api/portal/world?map=Other', headers }, invalid);
@@ -108,7 +169,7 @@ describe('route contracts after extraction', () => {
       expiresAt: Date.now() + 60000,
     });
     const request = vi.fn().mockResolvedValue({ rows: [{ id: 'order', stock: '10' }] });
-    vi.mocked(getDuneClient).mockReturnValue({ request });
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
     const invalid = responseMock();
     await marketListings(
       {
@@ -130,7 +191,7 @@ describe('route contracts after extraction', () => {
       valid,
     );
     expect(valid.statusCode).toBe(200);
-    expect(request).toHaveBeenCalledWith('GET', '/api/exchange/listings?templateId=Spice&quality=0');
+    expect(request).toHaveBeenCalledWith('GET', '/api/exchange/listings?templateId=Spice&owner=all&quality=0');
   });
   it('scopes vehicles and inventory to the linked player and tolerates optional telemetry failures', async () => {
     vi.mocked(getSession).mockResolvedValue({
@@ -144,7 +205,7 @@ describe('route contracts after extraction', () => {
       if (path.endsWith('/journey')) throw new Error('Unavailable');
       return { rows: [] };
     });
-    vi.mocked(getDuneClient).mockReturnValue({ request });
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
     const res = responseMock();
     await player(
       { method: 'GET', url: '/api/player?playerId=another-user', headers: { cookie: 'dashboard_session=session' } },
@@ -167,7 +228,7 @@ describe('route contracts after extraction', () => {
     });
     vi.mocked(getDiscordPlayer).mockResolvedValue({ linked: true, pawnId: 'player' });
     const request = vi.fn().mockResolvedValue({ rows: [{ id: 'someone-else', relationship: 'shared' }] });
-    vi.mocked(getDuneClient).mockReturnValue({ request });
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
     const res = responseMock();
     await exportBase(
       {
@@ -241,7 +302,7 @@ describe('route contracts after extraction', () => {
       .mockResolvedValueOnce({ rows: [{ display_name: 'Spice' }], totalCount: 101 })
       .mockResolvedValueOnce({ totalListings: 500 })
       .mockRejectedValueOnce(new Error('Forbidden'));
-    vi.mocked(getDuneClient).mockReturnValue({ request });
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
     const res = responseMock();
     await market(
       { method: 'GET', url: '/api/market?q=Spice%20Melange&page=1', headers: { cookie: 'dashboard_session=session' } },
@@ -313,7 +374,7 @@ describe('route contracts after extraction', () => {
       expiresAt: Date.now() + 60000,
     });
     vi.mocked(getDiscordPlayer).mockResolvedValue({ linked: true, pawnId: 'player' });
-    vi.mocked(getDuneClient).mockReturnValue({
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({
       request: vi
         .fn()
         .mockResolvedValueOnce({ rows: [{ id: 'base', relationship: 'owner' }] })
@@ -341,7 +402,9 @@ describe('route contracts after extraction', () => {
       roleIds: [],
       expiresAt: Date.now() + 60000,
     });
-    vi.mocked(getDuneClient).mockReturnValue({ request: vi.fn().mockRejectedValue(new Error('provider-secret')) });
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({
+      request: vi.fn().mockRejectedValue(new Error('provider-secret')),
+    });
     const res = responseMock();
     await market({ method: 'GET', url: '/api/market', headers: { cookie: 'dashboard_session=session' } }, res);
     expect(res.statusCode).toBe(502);

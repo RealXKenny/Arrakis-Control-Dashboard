@@ -1,3 +1,4 @@
+import './assert-server';
 import { getServerEnv } from '../config/env';
 import * as Sentry from '@sentry/nextjs';
 

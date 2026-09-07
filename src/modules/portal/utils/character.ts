@@ -13,6 +13,7 @@ export function buildCharacter(player) {
   const solarisCoin = details['solaris-coin'] || {};
 
   const character = {
+    avatarUrl: typeof player.avatarUrl === 'string' ? player.avatarUrl : null,
     name: player.characterName || 'Unknown Character',
 
     status: player.onlineStatus || 'Offline',

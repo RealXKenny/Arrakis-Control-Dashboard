@@ -1,3 +1,5 @@
+import { cachedApiReading, invalidateApiReads } from './api-read-cache';
+import { captureApiSnapshot } from '../lib/api-debug';
 import '../lib/assert-server';
 import { randomUUID } from 'node:crypto';
 import { createRequestLogger } from '../lib/logger';
@@ -68,7 +70,9 @@ export async function runPagesApiHandler(req, res, method, handler) {
   try {
     if (req.method !== method) {
       res.setHeader('Allow', method);
-      res.status(405).json({ ok: false, error: 'Method Not Allowed', code: 'METHOD_NOT_ALLOWED', requestId });
+      const payload = { ok: false, error: 'Method Not Allowed', code: 'METHOD_NOT_ALLOWED', requestId };
+      await captureApiSnapshot(route, 405, payload, 'portal', req.method);
+      res.status(405).json(payload);
       log.warn('Request rejected', { status: 405 });
       return;
     }
@@ -83,17 +87,20 @@ export async function runPagesApiHandler(req, res, method, handler) {
     if (!limit.allowed) {
       res.setHeader('Retry-After', String(limit.retryAfter));
       const status = limit.storageUnavailable ? 503 : 429;
-      res.status(status).json({
+      const payload = {
         ok: false,
         error: status === 429 ? 'Too many requests' : 'Request protection is temporarily unavailable',
         code: status === 429 ? 'RATE_LIMITED' : 'RATE_LIMIT_UNAVAILABLE',
         requestId,
-      });
+      };
+      await captureApiSnapshot(route, status, payload, 'portal', req.method);
+      res.status(status).json(payload);
       log.warn('Request protection rejected request', { status });
       return;
     }
 
-    const response: NextResponse = await handler(req, res);
+    const response: NextResponse = await cachedApiReading(req, res, () => handler(req, res));
+    if (req.method !== 'GET' && response.status < 400) invalidateApiReads(req, res);
     if (response.status >= 400) {
       // Features supply safe messages and may retain domain-specific fallback fields.
       const payload = response.body ? JSON.parse(response.body) : {};
@@ -115,12 +122,21 @@ export async function runPagesApiHandler(req, res, method, handler) {
     } else {
       log.info('Request completed', { status: response.status });
     }
+    let snapshot: unknown = response.body;
+    try {
+      snapshot = response.body ? JSON.parse(response.body) : null;
+    } catch {
+      /* Preserve non-JSON responses. */
+    }
+    await captureApiSnapshot(route, response.status, snapshot, 'portal', req.method);
     sendNextResponse(res, response);
   } catch (error) {
     const safeError = getSafeError(error);
     log.error('Failed to load data', error);
     if (!res.headersSent) {
-      res.status(safeError.statusCode).json({ ok: false, error: safeError.message, code: safeError.code, requestId });
+      const payload = { ok: false, error: safeError.message, code: safeError.code, requestId };
+      await captureApiSnapshot(route, safeError.statusCode, payload, 'portal', req.method);
+      res.status(safeError.statusCode).json(payload);
     }
   }
 }

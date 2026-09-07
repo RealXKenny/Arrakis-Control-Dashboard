@@ -23,21 +23,50 @@ it('rejects invalid settings without echoing their values', async () => {
   expect(getServerEnv).toThrow('Invalid server environment configuration: CONSOLE_URL');
 });
 
-it('accepts the environment template with RabbitMQ safely disabled', async () => {
+it('accepts the portal environment template', async () => {
   vi.resetModules();
   const template = parse(readFileSync('.env.example'));
   for (const [key, value] of Object.entries(template)) vi.stubEnv(key, value);
   const { getServerEnv } = await import('../src/config/env');
   const env = getServerEnv();
-  expect(env.LIVE_EVENTS_ENABLED).toBe('false');
-  expect(env.RABBITMQ_URL).toBeUndefined();
-  expect(env.RABBITMQ_MANAGEMENT_URL).toBeUndefined();
-  expect(env.LIVE_EVENTS_ADMIN_ROLE_IDS).toBe('');
+  expect(env.LOG_LEVEL).toBe('INFO');
+  expect(env.POPULATION_HISTORY_ENABLED).toBe('true');
 });
 
-it('rejects plaintext AMQP without exposing credentials', async () => {
+function productionFixture() {
+  const values = {
+    NODE_ENV: 'production',
+    CONSOLE_URL: 'http://127.0.0.1:4000',
+    CONSOLE_PASSWORD: 'test',
+    ADAPTER_TOKEN: 'test',
+    DISCORD_CLIENT_ID: 'test',
+    DISCORD_CLIENT_SECRET: 'test',
+    DISCORD_GUILD_ID: 'guild',
+    DISCORD_REDIRECT_URI: 'https://portal.test/auth/callback',
+    APP_URL: 'https://portal.test',
+    DISCORD_APP_URL: 'https://portal.test',
+    UPSTASH_REDIS_REST_URL: 'https://redis.test',
+    UPSTASH_REDIS_REST_TOKEN: 'test',
+  };
+  for (const [key, value] of Object.entries(values)) vi.stubEnv(key, value);
+}
+it('requires credentials and matching secure public origins at production startup', async () => {
   vi.resetModules();
-  vi.stubEnv('RABBITMQ_URL', 'amqp://observer:private-password@broker:5672/%2F');
-  const { getServerEnv } = await import('../src/config/env');
-  expect(getServerEnv).toThrow('Invalid server environment configuration: RABBITMQ_URL');
+  productionFixture();
+  const { validateProductionEnv } = await import('../src/config/env');
+  expect(validateProductionEnv().NODE_ENV).toBe('production');
+});
+it('rejects a production Redis URL without HTTPS and does not disclose its token', async () => {
+  vi.resetModules();
+  productionFixture();
+  vi.stubEnv('UPSTASH_REDIS_REST_URL', 'http://redis.test');
+  const { validateProductionEnv } = await import('../src/config/env');
+  expect(validateProductionEnv).toThrow('Production HTTPS is required: UPSTASH_REDIS_REST_URL');
+});
+it('rejects missing production credentials before accepting requests', async () => {
+  vi.resetModules();
+  productionFixture();
+  vi.stubEnv('DISCORD_CLIENT_SECRET', '');
+  const { validateProductionEnv } = await import('../src/config/env');
+  expect(validateProductionEnv).toThrow('Missing server environment configuration: DISCORD_CLIENT_SECRET');
 });

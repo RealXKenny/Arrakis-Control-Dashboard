@@ -1,4 +1,4 @@
-export const REFRESH_INTERVAL = 60000;
+export const REFRESH_INTERVAL = 30000;
 
 export const FUEL_BURN_SECONDS = {
   fuel: 3600,

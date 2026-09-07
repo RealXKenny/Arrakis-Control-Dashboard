@@ -1,10 +1,15 @@
 import type { PortalView } from './navigation';
 
 export const portalPageCopy: Record<PortalView, { section: string; title: string; description: string }> = {
-  live: {
-    section: 'Server observations',
-    title: 'Live Intel',
-    description: 'Instance readings and observed activity from the Dune message broker.',
+  hagga: {
+    section: 'Desert atlas',
+    title: 'Hagga Basin',
+    description: 'Explore resources, holdings and the latest readings from your starting region.',
+  },
+  'deep-desert': {
+    section: 'Desert atlas',
+    title: 'Deep Desert',
+    description: 'Explore spice fields, resources and the latest desert readings.',
   },
   overview: {
     section: 'Arrakis | Field report',

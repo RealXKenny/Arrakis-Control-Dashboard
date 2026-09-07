@@ -1,3 +1,4 @@
+import '../../../lib/assert-server';
 function firstNumber(...values) {
   for (const value of values) {
     const number = Number(value);

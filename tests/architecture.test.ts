@@ -59,9 +59,11 @@ describe('module boundaries', () => {
 
   it('keeps every API route behind the common handler', () => {
     const routes = files.filter((p) => normalize(p).startsWith('pages/api/'));
-    expect(routes).toHaveLength(12);
+    expect(routes).toHaveLength(13);
     for (const route of routes) {
-      const method = normalize(route).includes('/auth/logout/') ? 'POST' : 'GET';
+      const method = /\/auth\/logout\/|\/blueprints\/(publish|remove)\.ts$|\/bases\/import\.ts$/.test(normalize(route))
+        ? 'POST'
+        : 'GET';
       expect(fs.readFileSync(route, 'utf8').replaceAll("'", '"')).toContain(
         `return runPagesApiHandler(req, res, "${method}", ${method})`,
       );

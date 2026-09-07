@@ -297,7 +297,7 @@
 }
 .itemList li {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) minmax(60px, 0.6fr) 65px 60px;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(60px, 0.6fr) 65px 60px;
   align-items: center;
 }
 .itemList .itemSymbol {
@@ -333,7 +333,7 @@
     margin-left: 0;
   }
   .itemList li {
-    grid-template-columns: 24px minmax(0, 1fr) 55px;
+    grid-template-columns: 56px minmax(0, 1fr) 55px;
   }
   .itemList li > span:not(.itemSymbol),
   .itemList small {
@@ -417,4 +417,23 @@
     700 31px/1.2 'Saira Condensed',
     sans-serif;
   letter-spacing: 0.01em;
+}
+.avatar img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+.panel {
+  border-radius: 14px;
+  background: linear-gradient(140deg, #291b12, #19100b);
+  border-color: #65482f;
+}
+.panel::before,
+.panel::after {
+  display: none;
+}
+.containerArt {
+  font-size: 48px;
+  padding: 16px;
 }

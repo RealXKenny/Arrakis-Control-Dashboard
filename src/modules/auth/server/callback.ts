@@ -1,3 +1,4 @@
+import '../../../lib/assert-server';
 import { exchangeDiscordIdentity } from '../../../infrastructure/discord';
 import { AppError } from '../../../lib/errors';
 import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';

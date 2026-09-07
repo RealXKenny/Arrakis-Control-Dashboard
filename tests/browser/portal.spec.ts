@@ -1,12 +1,21 @@
+import { version } from '../../package.json';
 import { test, expect } from '@playwright/test';
 import { summarizePopulation } from '../../src/modules/portal/utils/population';
 
 const player = {
+  avatarUrl: 'https://cdn.discordapp.com/avatars/12345/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png?size=128',
   linked: true,
   pawnId: 'tester',
   characterName: 'Desert Navigator',
   onlineStatus: 'online',
   details: {
+    factions: {
+      rows: [
+        { faction_name: 'Atreides', reputation_amount: 120 },
+        { faction_name: 'Harkonnen', reputation_amount: 0 },
+        { faction_name: 'Smuggler', reputation_amount: 75 },
+      ],
+    },
     progression: { level: 100, xp: 100000 },
     vitals: { currentHealth: 150, maxHealth: 150, hydration: 82 },
     guild: { name: 'Crimson Skies' },
@@ -33,30 +42,11 @@ const player = {
 };
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/api/live', (route) =>
-    route.fulfill({
-      json: {
-        enabled: true,
-        connectedAt: Date.now(),
-        admin: true,
-        events: [
-          {
-            id: 'status',
-            source: 'status.Survival_1.dim_0',
-            kind: 'status',
-            receivedAt: Date.now(),
-            fields: { state: 4, map: null },
-          },
-          {
-            id: 'chat',
-            source: 'chat.intercept',
-            kind: 'chat',
-            receivedAt: Date.now(),
-            fields: { channel: 'Map', message: 'Welcome to Arrakis', sender: 'test-player' },
-          },
-        ],
-      },
-    }),
+  await page.route('**/api/session', (route) =>
+    route.fulfill({ json: { ok: true, cacheScope: 'a'.repeat(64), expiresAt: Date.now() + 43200000 } }),
+  );
+  await page.route('https://cdn.discordapp.com/avatars/**', (route) =>
+    route.fulfill({ path: 'public/maps/atreides.webp', contentType: 'image/webp' }),
   );
   await page.route('**/api/portal/world?*', (route) =>
     route.fulfill({
@@ -149,6 +139,15 @@ test('navigation and market refresh do not reload player data or request logout'
   await page.screenshot({ path: 'test-results/portal-overview.png', fullPage: true });
   await page.getByRole('link', { name: 'Exchange', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Spice', exact: true })).toBeVisible();
+  await page.locator('img[src$="/items/MelangeSpice.png"]').first().scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      page
+        .locator('img[src$="/items/MelangeSpice.png"]')
+        .first()
+        .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
+    )
+    .toBe(true);
   await expect(page.getByRole('cell', { name: '9,007,199,254,740,993' })).toBeVisible();
   await page.screenshot({ path: 'test-results/portal-market.png', fullPage: true });
   await page.getByRole('button', { name: 'Spice', exact: true }).click();
@@ -174,12 +173,25 @@ test('dashboard briefing switches maps and keeps compact mobile panels', async (
   await expect(page.locator('output')).toContainText('online');
   const pulse = await page.locator('[aria-labelledby="pulse-summary"]').boundingBox();
   const council = await page.locator('#landsraad').boundingBox();
-  expect(pulse!.width).toBe(council!.width);
-  expect(council!.y).toBeGreaterThan(pulse!.y + pulse!.height);
-  await page.getByRole('button', { name: 'Hagga Basin', exact: true }).click();
-  await expect(page.getByText('Reading Hagga Basin.', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Spice.*Hagga Basin/ })).toHaveAttribute('href', '/map?map=HaggaBasin');
+  expect(pulse!.width).toBeGreaterThan(council!.width);
+  expect(Math.abs(council!.y - pulse!.y)).toBeLessThan(2);
+  expect(council!.x).toBeGreaterThan(pulse!.x + pulse!.width);
+  for (const house of ['Atreides', 'Harkonnen']) {
+    const crest = page.getByRole('img', { name: `House ${house} crest` });
+    await expect(crest).toBeVisible();
+    await expect(crest).toHaveAttribute('src', `/maps/${house.toLowerCase()}.webp`);
+    await expect
+      .poll(() => crest.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0))
+      .toBe(true);
+  }
+  await expect(page.getByRole('button', { name: 'Hagga Basin', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Deep Desert', exact: true }).click();
+  await expect(page.getByText('Reading Deep Desert.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Spice.*Deep Desert/ })).toHaveAttribute('href', '/portal');
   await page.setViewportSize({ width: 390, height: 844 });
+  const mobilePulse = await page.locator('[aria-labelledby="pulse-summary"]').boundingBox();
+  const mobileCouncil = await page.locator('#landsraad').boundingBox();
+  expect(mobileCouncil!.y).toBeGreaterThan(mobilePulse!.y + mobilePulse!.height);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/portal-overview-mobile.png', fullPage: true });
 });
@@ -247,36 +259,134 @@ test('four vehicles form two equal rows', async ({ page }) => {
   expect(boxes[0].width).toBe(boxes[3].width);
 });
 
+test('unavailable personal listings are not shown as zero or a request failure', async ({ page }) => {
+  await page.route('**/api/market?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        stats: { totalListings: 5500 },
+        matchingItems: 240,
+        marketConfig: { buybackPercent: 60 },
+        items: { rows: [], totalCount: null, capabilities: { exchange: true, personalListings: false } },
+        availabilityMessage: 'No listings found.',
+      },
+    }),
+  );
+  await page.goto('/portal?view=market');
+  await expect(page.getByText('No listings found.', { exact: true })).toBeVisible();
+  await expect(page.getByText('5,500', { exact: true })).toBeVisible();
+  await expect(page.getByText('240', { exact: true })).toBeVisible();
+  await expect(page.getByText('60%', { exact: true })).toHaveCount(2);
+  await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toHaveCount(0);
+  await expect(page.getByText('No matching listings found.', { exact: true })).toHaveCount(0);
+});
+
 test('map survives stylesheet extraction and refreshes independently', async ({ page }) => {
   await page.route('**/api/map?*', (route) =>
     route.fulfill({
       json: {
         ok: true,
         map: { width: 1000, height: 1000, minX: 0, maxX: 1000, minY: 0, maxY: 1000, label: 'Hagga Basin' },
-        markers: [{ id: 'spice', type: 'spice', x: 500, y: 500, name: 'Spice field' }],
+        markers: [
+          { id: 'spice', type: 'spice', x: 400, y: 500, name: 'Possible spice' },
+          { id: 'active-spice', type: 'spice_active', x: 600, y: 500, name: 'Active spice' },
+        ],
       },
     }),
   );
   await page.goto('/map');
+  await expect(page.getByRole('checkbox', { name: 'Player', exact: true })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Storage', exact: true })).not.toBeChecked();
+  const possibleSpice = page.getByRole('checkbox', { name: 'Possible Spice Locations', exact: true });
+  await possibleSpice.uncheck();
+  await expect(page.locator('button.marker-spice')).toHaveCount(0);
+  await possibleSpice.focus();
+  await page.keyboard.press('Space');
+  await expect(possibleSpice).toBeChecked();
+  await expect(page.locator('.marker-spice > .spice-status-badge')).toHaveText('?');
+  await expect(page.locator('.marker-spice > .spice-status-badge')).toBeVisible();
+  await expect(page.locator('.marker-spice_active > .spice-status-badge')).toHaveText('LIVE');
+  await expect(page.locator('.marker-spice_active > .spice-status-badge')).toBeVisible();
+  for (const category of [
+    'Player',
+    'Vehicle',
+    'Base',
+    'Possible Spice Locations',
+    'Active Spice Fields',
+    'Flour Sand',
+    "POI's",
+    'House Representative',
+    'Trainer',
+  ]) {
+    await expect(page.getByTitle(`Hide ${category}`, { exact: true })).toHaveCount(1);
+  }
+  for (const category of [
+    'Storage',
+    'Ore & Pickups',
+    'Wreckage & Scrap',
+    'Flora',
+    'Fortresses',
+    'Hazards',
+    'Enemies',
+  ]) {
+    await expect(page.getByTitle(`Show ${category}`, { exact: true })).toHaveCount(1);
+  }
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .getByRole('img', { name: 'Hagga Basin' })
+        .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
+    )
+    .toBe(true);
   await expect
     .poll(async () => (await page.getByRole('img', { name: 'Hagga Basin' }).boundingBox())?.width ?? 0)
     .toBeGreaterThan(400);
   await expect(page.locator('button.live-map-marker').first()).toBeVisible();
-  await page.getByRole('button', { name: 'REFRESH', exact: true }).click();
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
   await page.screenshot({ path: 'test-results/map-desktop.png', fullPage: true });
+  await expect(page).toHaveURL(/\/portal$/);
+  await expect(page.getByRole('link', { name: 'Hagga Basin', exact: true })).toHaveAttribute('aria-current', 'page');
+  const desertLinks = page.locator('nav a').filter({ hasText: /Hagga Basin|Deep Desert/ });
+  await expect(desertLinks).toHaveText(['Hagga Basin', 'Deep Desert']);
+  await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Deep Desert', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByTitle('Hide Storage', { exact: true })).toHaveCount(1);
+  await expect(page).toHaveURL(/\/portal$/);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect
+    .poll(() =>
+      page
+        .locator('img[src$="/maps/deep-desert.png"]')
+        .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
+    )
+    .toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/map-mobile.png', fullPage: true });
 });
 
 test('character and storage use player data, support filters, and fit mobile', async ({ page }) => {
   await page.goto('/portal?view=character');
   await expect(page.getByRole('heading', { name: 'Character', exact: true })).toBeVisible();
+  await expect(page.getByRole('img', { name: "Desert Navigator's Discord avatar" })).toBeVisible();
+  await expect(page.getByText('Atreides', { exact: true }).locator('..')).toContainText('120');
+  await expect(page.getByText('Harkonnen', { exact: true }).locator('..')).toContainText('0');
+  await expect(page.getByText('Smuggler', { exact: true }).locator('..')).toContainText('75');
   await expect(page.getByText('Stillsuit', { exact: true })).toBeVisible();
   await expect(page.getByText('1 / 2', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/portal-character.png', fullPage: true });
   await page.getByRole('link', { name: 'Storage', exact: true }).click();
   const inventory = page.getByRole('list', { name: 'Inventory items' });
   await expect(inventory.getByRole('listitem')).toHaveCount(3);
+  await inventory.locator('img[src$="/items/MelangeSpice.png"]').scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      inventory
+        .locator('img[src$="/items/MelangeSpice.png"]')
+        .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
+    )
+    .toBe(true);
   await page.getByRole('button', { name: 'Backpack 1', exact: true }).click();
   await expect(inventory.getByRole('listitem')).toHaveCount(1);
   await expect(inventory).toContainText('Spice Melange');
@@ -293,13 +403,171 @@ test('character and storage use player data, support filters, and fit mobile', a
   await page.screenshot({ path: 'test-results/portal-storage-mobile.png', fullPage: true });
 });
 
-test('live intel renders retained observations on desktop and mobile', async ({ page }) => {
-  await page.goto('/portal?view=live');
-  await expect(page.getByText('Collector connected', { exact: true })).toBeVisible();
-  await expect(page.getByText('Welcome to Arrakis', { exact: true })).toBeVisible();
-  await page.screenshot({ path: 'test-results/live-desktop.png', fullPage: true });
+test('item images fail gracefully without losing item names', async ({ page }) => {
+  await page.route('**/items/Crysknife.png', (route) => route.fulfill({ status: 404, body: '' }));
+  await page.goto('/portal?view=storage');
+  const item = page.getByRole('listitem').filter({ hasText: 'Crysknife' });
+  await expect(item.locator('[title="Item image unavailable"]')).toBeVisible();
+  await expect(item).toContainText('Crysknife');
+  await expect(item.locator('img')).toHaveCount(0);
+});
+
+test('portal navigation keeps clean URLs through history and refresh', async ({ page }) => {
+  await page.goto('/portal');
+  await page.getByRole('link', { name: 'Exchange', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Exchange', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/portal$/);
+  await page.getByRole('link', { name: 'Storage', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Storage', exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Exchange', exact: true })).toBeVisible();
+  await page.goForward();
+  await expect(page.getByRole('heading', { name: 'Storage', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Storage', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/portal$/);
+  await page.getByRole('link', { name: 'Dashboard', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Make Arrakis yours.' })).toBeVisible();
+});
+
+test('player rate limiting respects Retry-After without signing out', async ({ page }) => {
+  let calls = 0;
+  await page.route('**/api/player', (route) => {
+    calls++;
+    return route.fulfill({ status: 429, headers: { 'Retry-After': '60' }, json: { error: 'Too many requests' } });
+  });
+  await page.goto('/portal?view=character');
+  await expect(page.getByRole('alert').filter({ hasText: 'Refresh paused' })).toContainText(
+    'Refresh paused for 60 seconds',
+  );
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  expect(calls).toBe(1);
+  await expect(page.getByText('Your session has ended.', { exact: false })).toHaveCount(0);
+});
+
+test('private base import is under My bases without community tabs', async ({ page }) => {
+  await page.goto('/portal?view=bases');
+  await expect(page.getByRole('link', { name: 'Solido', exact: true })).toHaveCount(0);
+
+  await expect(page.getByLabel('Upload JSON')).toBeVisible();
+  await page.screenshot({ path: 'test-results/base-import-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByText('Welcome to Arrakis', { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.screenshot({ path: 'test-results/live-mobile.png', fullPage: true });
+  await expect(page.getByLabel('Upload JSON')).toBeVisible();
+  await page.screenshot({ path: 'test-results/base-import-mobile.png', fullPage: true });
+});
+
+test('reload restores a fresh private reading without refetching player data', async ({ page }) => {
+  let calls = 0;
+  await page.route('**/api/player', (route) => {
+    calls++;
+    return route.fulfill({ json: player });
+  });
+  await page.goto('/portal?view=character');
+  await expect(page.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
+  expect(calls).toBe(1);
+  await expect(page.locator('footer')).toContainText(`v${version}`);
+});
+
+test('base upload is always visible below the last holdings card', async ({ page }) => {
+  await page.goto('/portal?view=bases');
+  const upload = page.getByLabel('Upload JSON');
+  await expect(upload).toBeVisible();
+  const last = await page.locator('.base-grid > div').last().boundingBox();
+  const form = await page.getByRole('heading', { name: 'Import Blueprint', exact: true }).boundingBox();
+  expect(form!.y).toBeGreaterThan(last!.y + last!.height + 20);
+  const action = await page.getByRole('button', { name: 'Import to my character', exact: true }).boundingBox();
+  const input = await upload.boundingBox();
+  expect(input!.y).toBeGreaterThan(action!.y + action!.height);
+  await page.screenshot({ path: 'test-results/release-bases-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(upload).toBeVisible();
+  await page.screenshot({ path: 'test-results/release-bases-mobile.png', fullPage: true });
+});
+
+test('account changes do not restore another character from browser storage', async ({ page }) => {
+  await page.goto('/portal?view=character');
+  await expect(page.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
+  await page.route('**/api/session', (route) =>
+    route.fulfill({ json: { ok: true, cacheScope: 'b'.repeat(64), expiresAt: Date.now() + 43200000 } }),
+  );
+  await page.route('**/api/player', (route) =>
+    route.fulfill({ json: { ...player, characterName: 'Second Explorer' } }),
+  );
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Second Explorer', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Desert Navigator', exact: true })).toHaveCount(0);
+});
+test('player telemetry refreshes after its 30-second stale time', async ({ page }) => {
+  let calls = 0;
+  await page.clock.install();
+  await page.route('**/api/player', (route) => {
+    calls++;
+    return route.fulfill({ json: player });
+  });
+  await page.goto('/portal?view=character');
+  await expect(page.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
+  expect(calls).toBe(1);
+  await page.clock.fastForward(31000);
+  await expect.poll(() => calls).toBe(2);
+});
+
+test('blueprint upload rejects invalid files before sending an import', async ({ page }) => {
+  let imports = 0;
+  await page.route('**/api/bases/import', (route) => {
+    imports++;
+    return route.fulfill({ status: 500, json: { error: 'Unexpected call' } });
+  });
+  await page.goto('/portal?view=bases');
+  const upload = page.getByLabel('Upload JSON');
+  await upload.setInputFiles({ name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{}') });
+  await expect(page.getByRole('status')).toContainText('Invalid blueprint JSON');
+  await expect(page.getByRole('button', { name: 'Import to my character', exact: true })).toBeDisabled();
+  await upload.setInputFiles({
+    name: 'oversized.json',
+    mimeType: 'application/json',
+    buffer: Buffer.alloc(512 * 1024 + 1, ' '),
+  });
+  await expect(page.getByRole('status')).toContainText('Invalid blueprint JSON');
+  expect(imports).toBe(0);
+});
+
+test('blueprint import handles uncertain delivery and success without duplicate requests', async ({ page }) => {
+  const requests: Array<{ requestId: string; blueprint: unknown }> = [];
+  await page.route('**/api/bases/import', async (route) => {
+    requests.push(route.request().postDataJSON());
+    await route.fulfill(
+      requests.length === 1
+        ? { status: 502, json: { error: 'fixture-private-provider-error' } }
+        : { json: { record: { status: 'imported', message: 'Blueprint delivered to your backpack.' } } },
+    );
+  });
+  await page.goto('/portal?view=bases');
+  await page.getByLabel('Upload JSON').setInputFiles({
+    name: 'test-base.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({ instances: [{ instance_id: 1, building_type: 'Foundation', x: 0, y: 0, z: 0, rotation: 0 }] }),
+    ),
+  });
+  await expect(page.getByText('1 building pieces · 0 placeables')).toBeVisible();
+  const action = page.getByRole('button', { name: 'Import to my character', exact: true });
+  await action.click();
+  await expect(page.getByRole('status')).toContainText('Import could not be confirmed');
+  await expect(page.getByText('fixture-private-provider-error')).toHaveCount(0);
+  expect(requests).toHaveLength(1);
+  await action.click();
+  await expect(page.getByRole('status')).toContainText('Blueprint delivered');
+  await expect(action).toBeDisabled();
+  expect(requests).toHaveLength(2);
+  expect(requests[1].requestId).toBe(requests[0].requestId);
+});
+
+test('guild view renders reported membership without inventing a rank', async ({ page }) => {
+  await page.goto('/portal?view=guild');
+  await expect(page.getByRole('heading', { name: 'Guild membership', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Crimson Skies', exact: true })).toBeVisible();
+  await expect(page.getByText('Your rank: Not reported')).toBeVisible();
 });

@@ -2,13 +2,14 @@ import type { NavigationItem } from '../../../components/DashboardShell';
 
 export const portalViews = [
   'overview',
+  'hagga',
+  'deep-desert',
   'character',
   'storage',
   'market',
   'bases',
   'vehicles',
   'guild',
-  'live',
 ] as const;
 export type PortalView = (typeof portalViews)[number];
 export function getPortalView(value: string | string[] | undefined): PortalView {
@@ -16,13 +17,13 @@ export function getPortalView(value: string | string[] | undefined): PortalView 
 }
 export function portalNavigation(view: PortalView): NavigationItem[] {
   return [
-    { label: 'Dashboard', group: 'Home', href: '/portal', active: view === 'overview' },
-    { label: 'Live map', group: 'Desert', href: '/map' },
-    { label: 'Live intel', group: 'Desert', href: '/portal?view=live', active: view === 'live' },
+    { label: 'Dashboard', group: 'Home', href: '/portal?view=overview', active: view === 'overview' },
+    { label: 'Hagga Basin', group: 'Desert', href: '/portal?view=hagga', active: view === 'hagga' },
+    { label: 'Deep Desert', group: 'Desert', href: '/portal?view=deep-desert', active: view === 'deep-desert' },
     { label: 'Exchange', group: 'Economy', href: '/portal?view=market', active: view === 'market' },
     { label: 'Character', group: 'Holdings', href: '/portal?view=character', active: view === 'character' },
     { label: 'Storage', group: 'Holdings', href: '/portal?view=storage', active: view === 'storage' },
-    { label: 'Bases', group: 'Holdings', href: '/portal?view=bases', active: view === 'bases' },
+    { label: 'My bases', group: 'Holdings', href: '/portal?view=bases', active: view === 'bases' },
     { label: 'Vehicles', group: 'Holdings', href: '/portal?view=vehicles', active: view === 'vehicles' },
     { label: 'Guild', group: 'Sietch', href: '/portal?view=guild', active: view === 'guild' },
   ];

@@ -1,3 +1,4 @@
+import '../../../lib/assert-server';
 export function extractOnlinePlayers(data) {
   if (Array.isArray(data)) {
     return data;

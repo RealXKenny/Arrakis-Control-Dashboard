@@ -66,12 +66,12 @@
 }
 
 .live-map-marker.marker-player.offline {
-  filter: grayscale(1) brightness(0.65);
-  opacity: 0.75;
+  filter: none;
+  opacity: 1;
 }
 
 .live-map-marker.marker-player[data-online='false'] {
-  filter: grayscale(1) brightness(0.65);
+  filter: none;
 }
 
 .live-map-marker.marker-spice,
@@ -105,7 +105,35 @@
 }
 
 .live-map-marker.marker-spice {
-  opacity: 0.65;
+  opacity: 1;
+}
+
+.live-map-marker.hag-map-marker > .spice-status-badge {
+  display: inline-flex !important;
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 17px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 1px solid #202a32;
+  border-radius: 9px;
+  background: #50616f;
+  color: #fff;
+  font:
+    700 10px/1 Arial,
+    sans-serif;
+  box-shadow: 0 1px 3px #0009;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.live-map-marker.marker-spice_active > .spice-status-badge {
+  background: #bd5b00;
+  border-color: #763900;
 }
 
 .live-map-marker.marker-spice.spice-size-medium:hover,

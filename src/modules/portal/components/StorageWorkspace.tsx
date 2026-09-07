@@ -3,6 +3,8 @@ import { inventoryItems } from '../utils/inventory';
 import type { buildCharacter } from '../utils/character';
 import { formatNumber } from '../utils/formatting';
 import css from '../dossier.module.css';
+import ItemImage from './ItemImage';
+import { itemImage } from '../utils/item-image';
 
 export default function StorageWorkspace({
   inventory,
@@ -82,7 +84,7 @@ export default function StorageWorkspace({
           {visible.map((item, index) => (
             <li key={`${item.group}-${item.id}-${index}`}>
               <span className={css.itemSymbol} aria-hidden="true">
-                ◇
+                <ItemImage src={itemImage(item.source)} />
               </span>
               <strong>{item.name}</strong>
               <span>{item.group}</span>

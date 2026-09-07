@@ -15,11 +15,11 @@ export default function MapStatusBar({ loading, error, markerCount, zoomPercent,
         fontSize: 10,
       }}
     >
-      <span>{loading ? 'LOADING MAP...' : error ? `ERROR: ${error}` : 'MAP ONLINE'}</span>
+      <span>{loading ? 'Updating map…' : error ? 'Reading unavailable' : 'Latest map reading'}</span>
 
-      <span>MARKERS: {markerCount}</span>
+      <span>{markerCount} visible markers</span>
 
-      <span>ZOOM: {zoomPercent}%</span>
+      <span>{zoomPercent}% zoom</span>
 
       {target && (
         <span>

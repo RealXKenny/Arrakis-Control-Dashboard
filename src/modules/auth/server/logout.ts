@@ -1,3 +1,4 @@
+import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
 import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';

@@ -1,3 +1,5 @@
+import '../../../lib/assert-server';
+import { record } from '../utils/inventory';
 import { createHash } from 'node:crypto';
 import { getServerEnv } from '../../../config/env';
 import { getRedisClient } from '../../../lib/redis';
@@ -18,7 +20,7 @@ export async function recordPopulation(now = Date.now()): Promise<void> {
   const lease = await redis.set(`${key}:sample:${Math.floor(now / 60000)}`, '1', { nx: true, ex: 120 });
   if (!lease) return;
   const response = await getDuneClient().request('GET', '/api/players/online?page=0&pageSize=1');
-  const count = response?.totalCount;
+  const count = record(response).totalCount;
   if (count == null || count === '' || typeof count === 'boolean') return;
   const online = Number(count);
   if (!Number.isSafeInteger(online) || online < 0) return;

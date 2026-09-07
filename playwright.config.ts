@@ -8,7 +8,7 @@ export default defineConfig({
   use: { baseURL: 'http://127.0.0.1:3100', trace: 'retain-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    env: { POPULATION_HISTORY_ENABLED: 'false', LIVE_EVENTS_ENABLED: 'false' },
+    env: { POPULATION_HISTORY_ENABLED: 'false', API_DEBUG_ENABLED: 'false' },
     command: 'npx next start --hostname 127.0.0.1 --port 3100',
     url: 'http://127.0.0.1:3100',
     reuseExistingServer: !process.env.CI,

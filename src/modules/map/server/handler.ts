@@ -1,8 +1,10 @@
+import '../../../lib/assert-server';
+import { getLinkedPlayer } from '../../player/server/linked-player';
 import { getServerEnv } from '../../../config/env';
 import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 
-import { getDuneClient, getDiscordPlayer } from '../../../infrastructure/dune';
+import { getDuneClient } from '../../../infrastructure/dune';
 import { logger } from '../../../lib/logger';
 import { getSession } from '../../../lib/session-store';
 
@@ -75,7 +77,7 @@ export async function GET(request, res) {
       commandName: 'portal',
     };
 
-    const playerData = await getDiscordPlayer(actor);
+    const playerData = await getLinkedPlayer(actor);
 
     if (playerData?.linked !== true) {
       return emptyMapResponse('Your Discord account is not linked to a Dune player.', 403);

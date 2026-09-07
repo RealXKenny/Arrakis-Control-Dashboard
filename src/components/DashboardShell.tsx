@@ -1,3 +1,4 @@
+import { APP_VERSION } from '../config/version';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import css from './dashboard-shell.module.css';
@@ -12,6 +13,7 @@ export default function DashboardShell({
   navigation,
   actions,
   children,
+  onNavigate,
 }: {
   brand: string;
   brandHref?: string;
@@ -19,6 +21,7 @@ export default function DashboardShell({
   navigation: NavigationItem[];
   actions?: ReactNode;
   children: ReactNode;
+  onNavigate?: (href: string) => boolean;
 }) {
   return (
     <div className={css.shell}>
@@ -27,7 +30,15 @@ export default function DashboardShell({
       </a>
       <div className={css.masthead}>
         <header className={css.header}>
-          <Link href={brandHref} className={css.brand}>
+          <Link
+            href={brandHref}
+            onClick={(event) => {
+              if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && onNavigate?.(brandHref))
+                event.preventDefault();
+            }}
+            as={brandHref.startsWith('/portal?view=') ? '/portal' : undefined}
+            className={css.brand}
+          >
             <span className={css.mark} aria-hidden="true">
               ◈
             </span>
@@ -49,6 +60,18 @@ export default function DashboardShell({
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={(event) => {
+                        if (
+                          !event.metaKey &&
+                          !event.ctrlKey &&
+                          !event.shiftKey &&
+                          !event.altKey &&
+                          onNavigate?.(item.href)
+                        )
+                          event.preventDefault();
+                      }}
+                      as={item.href.startsWith('/portal?view=') ? '/portal' : undefined}
+                      shallow={item.href.startsWith('/portal?view=')}
                       aria-current={item.active ? 'page' : undefined}
                       className={item.active ? css.active : undefined}
                     >
@@ -64,7 +87,9 @@ export default function DashboardShell({
         {children}
       </main>
       <footer className={css.footer}>
-        <span>{brand} · Dune: Awakening</span>
+        <span>
+          {brand} · Dune: Awakening · v{APP_VERSION}
+        </span>
         <span>Explore. Prepare. Endure.</span>
       </footer>
     </div>

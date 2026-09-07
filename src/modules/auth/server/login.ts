@@ -1,3 +1,4 @@
+import '../../../lib/assert-server';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { randomBytes } from 'node:crypto';
 import { cookies } from '../../../infrastructure/cookies';

@@ -1,8 +1,11 @@
-import Link from 'next/link';
+import Link from './PortalLink';
 import { inventoryItems, journeySummary, label, record, rows } from '../utils/inventory';
 import type { buildCharacter } from '../utils/character';
 import { formatNumber } from '../utils/formatting';
 import css from '../dossier.module.css';
+import ItemImage from './ItemImage';
+import { itemImage } from '../utils/item-image';
+import CharacterAvatar from './CharacterAvatar';
 
 export default function CharacterDossier({
   character,
@@ -26,9 +29,7 @@ export default function CharacterDossier({
   return (
     <>
       <div className={`${css.panel} ${css.identity}`}>
-        <span className={css.avatar} aria-hidden="true">
-          ◈
-        </span>
+        <CharacterAvatar src={character.avatarUrl} name={character.name} />
         <div>
           <h2>{character.name}</h2>
           <p>
@@ -54,7 +55,7 @@ export default function CharacterDossier({
             title="Faction standing"
             data={details.factions}
             nameKeys={['faction_name', 'name', 'faction_id']}
-            valueKeys={['reputation', 'value']}
+            valueKeys={['reputation_amount', 'reputation', 'value']}
           />
           <RecordPanel
             title="Specializations"
@@ -93,7 +94,7 @@ export default function CharacterDossier({
               <ul className={css.equipment}>
                 {equipment.map((item, index) => (
                   <li key={`${item.id}-${index}`}>
-                    <span aria-hidden="true">◇</span>
+                    <ItemImage src={itemImage(item.source)} />
                     <div>
                       <strong>{item.name}</strong>
                       <small>{item.group}</small>

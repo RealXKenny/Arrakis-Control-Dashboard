@@ -2,11 +2,27 @@
 
 ## Design direction
 
-Reference inspected: https://portal.lastsietch.com/ and its public field manual, September 6, 2026. After the user signed in, inspected and scrolled Dashboard, Character, Storage, Exchange, Bases and Settings in their main Edge browser. Only read-only navigation was used. Adopted grouped navigation, condensed headings, corner rules, instrument cards, a two-column dossier and a three-column storage workspace. Restored the original brown surfaces, cream text and gold accents at the user’s request. Saira, Saira Condensed and JetBrains Mono is bundled locally through Fontsource. Crimson Skies retains its own branding and content. No reference assets or private implementation were copied.
+The dashboard now follows an original Crimson Skies direction: a desert-horizon command header, a personal character panel, warm brown and crimson surfaces, cream typography, gold population readings, and rounded asset cards. Population and Landsraad reports sit side by side on desktop and stack on mobile; guild and holdings follow below. The dashboard no longer targets visual parity with another portal. Saira, Saira Condensed and JetBrains Mono remain bundled locally through Fontsource.
 
-The portal has Dashboard, Character, Storage, Exchange, Bases, Vehicles and Guild views at `/portal?view=...`; the live map remains `/map`. URLs preserve back/forward navigation and can be bookmarked. Base and vehicle grids are two columns above 900px: an odd final card spans the last row. The shell now uses the reference’s measured 1080px frame with 16px inner gutters; this supersedes the previous 2280px width after the user requested an exact visual match. Mobile navigation scrolls within its own container.
+The Landsraad panel uses the supplied transparent WebP crests at public/maps/atreides.webp and public/maps/harkonnen.webp with descriptive alternative text and fixed dimensions. Browser tests verify both files decode successfully. All displayed values still come from existing Console-backed readings; no new backend systems or fabricated telemetry were added.
+
+The portal has Dashboard, Character, Storage, Exchange, Bases, Vehicles and Guild views with a clean /portal address; Hagga Basin and Deep Desert are also portal views. Legacy /map bookmarks redirect into /portal. Tab history preserves Back/Forward and session storage restores the selected view on refresh. Legacy /portal?view=... links still select their view and then clean the address. A copied /portal address does not identify a specific tab. Base and vehicle grids retain two columns above 900px, with an odd final card spanning the last row. The centered 1080px shell remains for readability. Mobile navigation scrolls within its own container.
+
+Validation for the latest design and navigation changes: 73 unit/API tests, 12 browser tests, typecheck, zero-warning lint, formatting, production build and runtime smoke passed. Desktop and mobile screenshots were reviewed using test fixtures. Runtime smoke found no server-only import or listener warnings. This is local validation, not confirmation of deployment or live provider availability.
+
+Character identity now displays the authenticated Discord account's avatar beside the character name, with an initial fallback. The server constructs the CDN URL from validated session identity fields; the browser CSP allows Discord's avatar CDN without broadening other external image access.
+
+Live map uses the portal shell and brown/crimson/gold panels, with Hagga Basin and Deep Desert tabs. Hagga Basin is the default for both map and dashboard readings. Removed the simulated desktop window controls and their obsolete positioning hook/styles. Zoom, pan, marker filters and manual refresh remain available; the legend stacks beneath the map on mobile.
+
+My listings uses server-verified linked-character IDs and excludes other players. The inspected Console version omits owner_id from exchange listing responses, so personal listings are unavailable on that version. Display names are not used as proof of ownership. The portal reports this limitation instead of presenting all player listings as personal. Compatible responses must include stable seller IDs; searches exceeding 100 item types require narrowing, and incomplete or malformed reads return explicit errors. The server-wide All and Bot views remain available. No Console fork changes were made.
 
 ## Signed-in screen adaptation
+
+Hagga Basin's default legend enables Player, Vehicle, Base, Possible Spice Locations, Active Spice Fields, Flour Sand, POI's, House Representative and Trainer. Other categories start hidden. The Hagga legend preference key is versioned so the new preset applies once to existing browsers; subsequent manual choices are remembered. Deep Desert's defaults and saved preferences are unchanged.
+
+Latest API inspection: the configured Console returned HTTP 200 for player-filtered item aggregates, individual listings and filter config. Individual listings have owner_type/owner_name but no owner_id, matching the supplied API reference. Personal listing checks now detect this capability before invoking the identity adapter, returning SELLER_ID_UNAVAILABLE rather than a generic lookup failure. This does not make seller-name matching safe or enable unsupported personal filtering.
+
+Set API_DEBUG_ENABLED=true and restart to capture redacted market responses under debug/ on the server filesystem. Capture is disabled by default and restricted to items, listings, stats and config reads. Authentication responses, request headers and query strings are excluded; credential and identity fields are redacted. Each endpoint overwrites its latest snapshot, capped at 1 MiB, 200 array entries and 12 levels. Filesystem failures do not fail API requests. The entire debug/ directory is gitignored and is not served under public/. Local live samples are saved in debug/exchange-items.json and debug/exchange-listings.json. Disable capture again after diagnosis; samples are diagnostic, not an audit/history store.
 
 - Dashboard: server population, personal currency and holdings counts, guild and character shortcuts, vitals.
 - Character: identity banner, progression, faction and specialization records, equipment/loadout, grouped journey completion.
@@ -42,7 +58,7 @@ This is a tested rebuild, not a guarantee of universal production readiness. Bef
 
 The repository still has legacy permissive TypeScript (`strict: false`) and flexible provider payload handling. A full strict-mode/validated-DTO migration remains separate work; do not describe this repository as fully strictly typed. Player guild lookup still scans upstream guild membership and should be replaced by a verified direct lookup or bounded cache before large-scale deployment.
 
-The reference's rewards, bank transfers, trading writes, messaging, events, Landsraad and storm histories are not implemented here. They require additional server contracts, authorization, persistence and transaction semantics. No placeholder navigation or invented live values are shipped for them. The existing map keeps its terminal interactions rather than duplicating the reference's separate map engine.
+The reference's rewards, bank transfers, trading writes, messaging, events, Landsraad and storm histories are not implemented here. They require additional server contracts, authorization, persistence and transaction semantics. No placeholder navigation or invented live values are shipped for them. The map keeps the existing coordinate and marker engine with the portal's updated presentation.
 
 Redeploy the built application to see changes on `dev.crimson-skies.org`; this work does not itself publish to that host. Keep the previous deployment available for rollback.
 
@@ -69,3 +85,15 @@ World Pulse records an aggregate online-player count once per minute using the d
 The graph starts with real observations after deployment; it cannot reconstruct the preceding day from the current-population API. Missing intervals longer than 90 seconds remain gaps. Estimated play-hours integrate only observed adjacent readings, and the UI labels the observed coverage. Individual samples can be inspected with a keyboard-accessible slider. Fixture history is used only in browser tests, never production.
 
 Validation: 65 unit/API tests, 10 browser tests, typecheck, zero-warning lint, format, production build and runtime smoke passed. Desktop and mobile screenshots reviewed. Live Console login succeeds, but the Redis hostname in the local `.env` returns DNS `ENOTFOUND`; real history persistence could not be verified locally. Correct the Redis connection on the running deployment before expecting samples. Do not describe the fixture graph as historical live-server data.
+
+
+### API diagnostics and rate-limit repair
+
+`API_DEBUG_ENABLED=true` writes the latest response per source, HTTP method and endpoint into gitignored `debug/`. Portal responses (including errors), Console JSON/multipart responses and Discord adapter responses are captured as APIs are used. Arrays and strings are retained without the old market-only truncation. Query strings, request headers and request bodies are omitted; credentials and identity fields are redacted, and authentication response bodies are omitted. Files overwrite atomically, contain private operational data, and must stay outside public hosting. Diagnostics require a writable server filesystem; failures never block API behavior. Disable the setting after troubleshooting.
+
+Rate-limit increment and expiry now run in one Redis operation, repairing existing counters without expiry. Player polling observes Retry-After on 429 and preserves the previous reading. This does not bypass Console API-key scopes or upstream rate limits. Bases gallery and Solido work is paused and is not release-approved.
+
+
+### Current integration cleanup and base-import scope
+
+See `DUNEDOCKER_INTEGRATION.md` for the current tracing, retry and validation contract. Latest snapshots now live under `debug/api/`; old dumps were purged. Community Bases and separate Solido routes were removed at the user's request. Private JSON import is restored under My bases and stays scoped to the signed-in character. This supersedes earlier gallery/Solido implementation notes.

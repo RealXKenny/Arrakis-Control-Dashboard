@@ -58,7 +58,7 @@ export default function MapCanvas({
         width,
         height,
         flexShrink: 0,
-        margin: 0,
+        margin: '0 auto',
       }}
     >
       {/* MAP IMAGE */}

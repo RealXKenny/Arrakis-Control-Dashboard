@@ -5,6 +5,8 @@ import { formatMarketNumber, getBuybackPercent } from '../utils/market';
 import layout from '../market.module.css';
 import dossier from '../dossier.module.css';
 import PriceLadder from './PriceLadder';
+import ItemImage from './ItemImage';
+import { itemImage } from '../utils/item-image';
 
 export default function MarketBoard() {
   const [query, setQuery] = useState('');
@@ -12,7 +14,7 @@ export default function MarketBoard() {
   const [sort, setSort] = useState('listed');
   const [owner, setOwner] = useState('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { data, loading, error, refresh } = useMarketData(query, page, sort, owner);
+  const { data, loading, error, stale, refresh } = useMarketData(query, page, sort, owner);
   const items = Array.isArray(data?.items?.rows) ? data.items.rows : [];
   const total = Number(data?.items?.totalCount ?? items.length);
   const pages = Math.max(1, Math.ceil(total / 100));
@@ -24,6 +26,7 @@ export default function MarketBoard() {
   );
   return (
     <section className={layout.board} aria-busy={loading}>
+      {stale && data && <p role="status">Showing a cached market reading while refreshing.</p>}
       <div className={layout.header}>
         <div>
           <p className={layout.eyebrow}>Current sell orders</p>
@@ -52,7 +55,7 @@ export default function MarketBoard() {
         </div>
         <div>
           <span>Matching items</span>
-          <strong>{data ? formatMarketNumber(total) : '—'}</strong>
+          <strong>{formatMarketNumber(data?.matchingItems)}</strong>
         </div>
         <div>
           <span>Buyback rate</span>
@@ -78,7 +81,7 @@ export default function MarketBoard() {
             <div role="group" aria-label="Listing owner">
               {[
                 ['all', 'All'],
-                ['player', 'Players'],
+                ['player', 'My listings'],
                 ['bot', 'Bot'],
               ].map(([value, name]) => (
                 <button
@@ -133,7 +136,7 @@ export default function MarketBoard() {
                           )
                         }
                       >
-                        {item.display_name ?? item.name ?? item.template_id}
+                        <ItemImage src={itemImage(item)} /> {item.display_name ?? item.name ?? item.template_id}
                       </button>
                     </td>
                     <td>{formatMarketNumber(item.quality_level ?? item.quality)}</td>
@@ -149,9 +152,11 @@ export default function MarketBoard() {
                         ? 'Loading market…'
                         : error
                           ? 'Market data could not be loaded.'
-                          : !supported
-                            ? 'Exchange data is unavailable on this server.'
-                            : 'No matching listings found.'}
+                          : data?.availabilityMessage
+                            ? data.availabilityMessage
+                            : !supported
+                              ? 'Exchange data is unavailable on this server.'
+                              : 'No matching listings found.'}
                     </td>
                   </tr>
                 )}
@@ -164,6 +169,7 @@ export default function MarketBoard() {
             <h2>Item intelligence</h2>
             {selected ? (
               <>
+                <ItemImage src={itemImage(selected)} large />
                 <h3>{selected.display_name ?? selected.name ?? selected.template_id}</h3>
                 <dl className={dossier.facts}>
                   <div>
@@ -191,7 +197,8 @@ export default function MarketBoard() {
           {selected && (
             <section className={dossier.panel}>
               <PriceLadder
-                key={selectedId}
+                key={`${owner}-${selectedId}`}
+                owner={owner}
                 templateId={String(selected.template_id ?? selected.templateId)}
                 quality={String(selected.quality_level ?? selected.quality ?? '')}
               />

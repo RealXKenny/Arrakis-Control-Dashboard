@@ -1,3 +1,4 @@
+import '../../../lib/assert-server';
 import { cookies } from '../../../infrastructure/cookies';
 import { getDuneClient } from '../../../infrastructure/dune';
 import { NextResponse } from '../../../infrastructure/pages-api';
@@ -14,7 +15,7 @@ export async function GET(req, res) {
   const session = id ? await getSession(id) : null;
   if (!session || session.expiresAt <= Date.now())
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  const map = new URL(req.url, 'http://localhost').searchParams.get('map') ?? 'DeepDesert';
+  const map = new URL(req.url, 'http://localhost').searchParams.get('map') ?? 'HaggaBasin';
   if (!['DeepDesert', 'HaggaBasin'].includes(map)) throw new AppError('Invalid map', 400, 'INVALID_MAP', true);
   let reading = cache.get(map);
   if (!reading || reading.expires <= Date.now()) {

@@ -1,7 +1,10 @@
+import '../../../lib/assert-server';
+import { record } from '../utils/inventory';
+import { getLinkedPlayer } from '../../player/server/linked-player';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 
-import { getDuneClient, getDiscordPlayer } from '../../../infrastructure/dune';
+import { getDuneClient } from '../../../infrastructure/dune';
 import { getServerEnv } from '../../../config/env';
 import { getSession } from '../../../lib/session-store';
 
@@ -19,7 +22,7 @@ export async function GET(request, res) {
       return NextResponse.json({ ok: false, error: 'Missing base ID' }, { status: 400 });
     }
 
-    const linkedPlayer = await getDiscordPlayer({
+    const linkedPlayer = await getLinkedPlayer({
       guildId: session.guildId,
       channelId: 'dashboard',
       userId: session.user.id,
@@ -33,7 +36,7 @@ export async function GET(request, res) {
       return NextResponse.json({ error: 'Character not linked' }, { status: 403 });
     const client = getDuneClient();
     const response = await client.request('GET', `/api/players/${encodeURIComponent(playerId)}/bases`);
-    const bases = Array.isArray(response) ? response : (response?.rows ?? response?.data ?? []);
+    const bases = Array.isArray(response) ? response : (record(response).rows ?? record(response).data ?? []);
     // Scope the administrative export endpoint to this linked player's own bases.
     const owned =
       Array.isArray(bases) &&

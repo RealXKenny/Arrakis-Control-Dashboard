@@ -1,3 +1,5 @@
+import '../../../lib/assert-server';
+import { record } from '../utils/inventory';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { getDuneClient } from '../../../infrastructure/dune';
@@ -11,11 +13,11 @@ export async function GET(req, res) {
   }
 
   try {
-    const market = await getDuneClient().request('GET', '/api/exchange/market');
+    const market = record(await getDuneClient().request('GET', '/api/exchange/market'));
     const buybackPercent =
-      market?.buyback?.buybackPercent ??
-      market?.buybackSchedule?.buybackPercent ??
-      market?.schedule?.buybackPercent ??
+      record(market.buyback).buybackPercent ??
+      record(market.buybackSchedule).buybackPercent ??
+      record(market.schedule).buybackPercent ??
       market?.buybackPercent ??
       null;
     return NextResponse.json({ ok: true, buybackPercent }, { headers: { 'Cache-Control': 'no-store' } });

@@ -1,4 +1,5 @@
-import { useRouter } from 'next/router';
+import { clearClientReadCache } from '../../../lib/client-cache';
+import { usePortalView, navigatePortal } from '../hooks/usePortalView';
 import DashboardShell from '../../../components/DashboardShell';
 import layout from '../portal.module.css';
 import PortalSummary from './PortalSummary';
@@ -9,17 +10,16 @@ import { usePlayerData } from '../hooks/usePlayerData';
 import { extractBases, isOwnedBase } from '../utils/bases';
 import { extractVehicles } from '../utils/vehicles';
 import { buildCharacter } from '../utils/character';
-import { getPortalView, portalNavigation } from '../config/navigation';
+import { portalNavigation } from '../config/navigation';
 import CharacterDossier from './CharacterDossier';
 import StorageWorkspace from './StorageWorkspace';
 import dossier from '../dossier.module.css';
 import { label, record } from '../utils/inventory';
 import { portalPageCopy } from '../config/page-copy';
-import LiveIntel from '../../live/components/LiveIntel';
+import MapWindow from '../../map/components/MapWindow';
 
 export default function PlayerPortal() {
-  const { query } = useRouter();
-  const view = getPortalView(query.view);
+  const view = usePortalView();
   const copy = portalPageCopy[view];
   const {
     player,
@@ -46,9 +46,10 @@ export default function PlayerPortal() {
   return (
     <DashboardShell
       brand="Crimson Skies"
-      brandHref="/portal"
+      brandHref="/portal?view=overview"
       subtitle="Arrakis field companion"
       navigation={portalNavigation(view)}
+      onNavigate={navigatePortal}
       actions={
         sessionExpired ? (
           <a href="/auth/login">Connect Discord</a>
@@ -58,7 +59,7 @@ export default function PlayerPortal() {
             <button onClick={retry} disabled={statusLoading} aria-label="Refresh telemetry">
               ↻
             </button>
-            <form method="post" action="/api/auth/logout">
+            <form method="post" action="/api/auth/logout" onSubmit={() => clearClientReadCache()}>
               <button type="submit">Sign out</button>
             </form>
           </>
@@ -97,7 +98,6 @@ export default function PlayerPortal() {
             <button onClick={retry}>Check connection</button>
           </section>
         )}
-        {view === 'live' && <LiveIntel />}
         {character && (
           <>
             {view === 'overview' && (
@@ -109,6 +109,9 @@ export default function PlayerPortal() {
               />
             )}
             {view === 'market' && <MarketBoard />}
+            {(view === 'hagga' || view === 'deep-desert') && (
+              <MapWindow key={view} mapName={view === 'hagga' ? 'HaggaBasin' : 'DeepDesert'} />
+            )}
             {view === 'character' && <CharacterDossier character={character} details={player.details ?? {}} />}
             {view === 'storage' && <StorageWorkspace character={character} inventory={player.details?.inventory} />}
             {view === 'guild' && (

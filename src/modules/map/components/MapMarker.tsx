@@ -6,8 +6,8 @@ function friendlyMarkerType(type) {
       player: 'Player',
       vehicle: 'Vehicle',
       base: 'Base',
-      spice: 'Static Spice Spawns',
-      spice_active: 'Active Spice Blows',
+      spice: 'Possible Spice Locations',
+      spice_active: 'Active Spice Fields',
       flour_sand: 'Flour Sand',
       poi: "POI's",
       house_representative: 'House Representative',
@@ -99,6 +99,11 @@ export default function MapMarker({ marker, index, point, zoom, onSelect }) {
         zIndex: 5,
       }}
     >
+      {(type === 'spice' || type === 'spice_active') && (
+        <span className="spice-status-badge" aria-hidden="true">
+          {type === 'spice_active' ? 'LIVE' : '?'}
+        </span>
+      )}
       <span
         style={{
           position: 'absolute',

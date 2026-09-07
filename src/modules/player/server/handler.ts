@@ -1,10 +1,14 @@
+import '../../../lib/assert-server';
+import { record } from '../../../lib/value';
+import { getLinkedPlayer } from './linked-player';
 import { getServerEnv } from '../../../config/env';
-import { getDuneClient, getDiscordPlayer } from '../../../infrastructure/dune';
+import { getDuneClient } from '../../../infrastructure/dune';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { getBaseId, normalizeBaseStorage, normalizeBaseWater } from './helpers';
 import { logger } from '../../../lib/logger';
 import { getSession } from '../../../lib/session-store';
+import { discordAvatar } from './avatar';
 
 async function loadBaseTelemetry(base, duneClient) {
   const baseId = getBaseId(base);
@@ -177,7 +181,7 @@ export async function GET(request, res) {
     };
 
     const duneClient = getDuneClient();
-    const data = await getDiscordPlayer(actor);
+    const data = await getLinkedPlayer(actor);
 
     if (data?.linked !== true) {
       return NextResponse.json(data, {
@@ -230,15 +234,17 @@ export async function GET(request, res) {
           if (name === 'bases') {
             const bases = Array.isArray(resData)
               ? resData
-              : Array.isArray(resData?.rows)
-                ? resData.rows
-                : Array.isArray(resData?.data)
-                  ? resData.data
-                  : Array.isArray(resData?.bases)
-                    ? resData.bases
+              : Array.isArray(record(resData).rows)
+                ? record(resData).rows
+                : Array.isArray(record(resData).data)
+                  ? record(resData).data
+                  : Array.isArray(record(resData).bases)
+                    ? record(resData).bases
                     : [];
 
-            const enrichedBases = await Promise.all(bases.map(async (base) => loadBaseTelemetry(base, duneClient)));
+            const enrichedBases = await Promise.all(
+              (Array.isArray(bases) ? bases : []).map(async (base) => loadBaseTelemetry(base, duneClient)),
+            );
 
             let result;
 
@@ -250,11 +256,11 @@ export async function GET(request, res) {
                 rows: enrichedBases,
               };
 
-              if (Array.isArray(resData.data)) {
+              if (Array.isArray(record(resData).data)) {
                 result.data = enrichedBases;
               }
 
-              if (Array.isArray(resData.bases)) {
+              if (Array.isArray(record(resData).bases)) {
                 result.bases = enrichedBases;
               }
             } else {
@@ -282,6 +288,7 @@ export async function GET(request, res) {
      */
     const responseData = {
       ...data,
+      avatarUrl: discordAvatar(session.user),
       details: {
         ...Object.fromEntries(details),
         guild,

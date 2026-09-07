@@ -1,9 +1,12 @@
+import '../../../lib/assert-server';
+import { record } from '../utils/inventory';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { getDuneClient } from '../../../infrastructure/dune';
 import { getSession } from '../../../lib/session-store';
 import { AppError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
+import { ownMarketItems } from './my-listings';
 
 export async function GET(req, res) {
   try {
@@ -36,21 +39,45 @@ export async function GET(req, res) {
       sortDirection: sorts[sort][1],
     });
     const client = getDuneClient();
-    const [itemsResult, statsResult, marketResult] = await Promise.allSettled([
-      client.request('GET', `/api/exchange/items?${query}`),
+    const globalQuery = new URLSearchParams(query);
+    globalQuery.set('owner', 'all');
+    const globalItems = client.request('GET', `/api/exchange/items?${globalQuery}`);
+    const [itemsResult, statsResult, marketResult, globalResult] = await Promise.allSettled([
+      owner === 'player'
+        ? ownMarketItems(session, query)
+        : owner === 'all'
+          ? globalItems
+          : client.request('GET', `/api/exchange/items?${query}`),
       client.request('GET', '/api/exchange/stats'),
       client.request('GET', '/api/exchange/market'),
+      globalItems,
     ]);
-    if (itemsResult.status === 'rejected') throw itemsResult.reason;
-    const items = itemsResult.value;
+    const personalUnavailable =
+      itemsResult.status === 'rejected' &&
+      itemsResult.reason instanceof AppError &&
+      itemsResult.reason.code === 'SELLER_ID_UNAVAILABLE';
+    if (itemsResult.status === 'rejected' && !personalUnavailable) throw itemsResult.reason;
+    const items =
+      itemsResult.status === 'fulfilled'
+        ? itemsResult.value
+        : { rows: [], totalCount: null, capabilities: { exchange: true, personalListings: false } };
     const stats = statsResult.status === 'fulfilled' ? statsResult.value : null;
+    const matchingItems = globalResult.status === 'fulfilled' ? (record(globalResult.value).totalCount ?? null) : null;
     const marketConfig = marketResult.status === 'fulfilled' ? marketResult.value : null;
     const warnings = [];
+    if (globalResult.status === 'rejected') warnings.push('Global matching item count is temporarily unavailable.');
     if (statsResult.status === 'rejected') warnings.push('Market totals are temporarily unavailable.');
     if (marketResult.status === 'rejected')
       warnings.push('Buyback configuration is unavailable; listings are still shown.');
 
-    const payload = { stats, items, marketConfig, warnings };
+    const payload = {
+      stats,
+      items,
+      matchingItems,
+      marketConfig,
+      warnings,
+      availabilityMessage: personalUnavailable ? 'No listings found.' : undefined,
+    };
     return NextResponse.json({ ok: true, ...payload }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     if (error instanceof AppError) throw error;
