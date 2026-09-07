@@ -47,6 +47,9 @@ export const logger = {
   debug: (message: string, context?: LogContext) => write("debug", message, context),
   info: (message: string, context?: LogContext) => write("info", message, context),
   warn: (message: string, context?: LogContext) => write("warn", message, context),
+  header: (title: string, subtitle: string, banner = "") => {
+    console.info([banner, title, subtitle].filter(Boolean).join("\n"));
+  },
   error: (message: string, context: LogContext = {}) => {
     write("error", message, context);
     const error = context.error;

@@ -18,7 +18,17 @@ export async function register() {
     const { warmupDuneClient } = await import("./src/infrastructure/dune");
     await warmupDuneClient();
     const { logger } = await import("./src/lib/logger");
-    logger.info("Dune console session ready before serving requests.");
+    console.clear();
+    const banner = [
+      "  ██████╗██████╗ ██╗███╗   ███╗███████╗ ██████╗ ███╗   ██╗    ███████╗██╗  ██╗██╗███████╗███████╗ ",
+      " ██╔════╝██╔══██╗██║████╗ ████║██╔════╝██╔═══██╗████╗  ██║    ██╔════╝██║ ██╔╝██║██╔════╝██╔════╝ ",
+      " ██║     ██████╔╝██║██╔████╔██║███████╗██║   ██║██╔██╗ ██║    ███████╗█████╔╝ ██║█████╗  ███████╗ ",
+      " ██║     ██╔══██╗██║██║╚██╔╝██║╚════██║██║   ██║██║╚██╗██║    ╚════██║██╔═██╗ ██║██╔══╝  ╚════██║ ",
+      " ╚██████╗██║  ██║██║██║ ╚═╝ ██║███████║╚██████╔╝██║ ╚████║    ███████║██║  ██╗██║███████╗███████║ ",
+      "  ╚═════╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═══╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝ ",
+    ].join("\n");
+
+    logger.header("ARRAKIS CONTROL", "Dune: Awakening Dashboard", banner);
   } catch (error) {
     const { logger } = await import("./src/lib/logger");
     logger.error("Dune startup authentication failed.", { error });
