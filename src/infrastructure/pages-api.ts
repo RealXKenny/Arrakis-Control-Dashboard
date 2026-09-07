@@ -1,4 +1,4 @@
-import "server-only";
+import "../lib/assert-server";
 import { randomUUID } from "node:crypto";
 import { createRequestLogger } from "../lib/logger";
 import { getSafeError } from "../lib/errors";

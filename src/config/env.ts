@@ -1,4 +1,4 @@
-import "server-only";
+import "../lib/assert-server";
 import { z } from "zod";
 
 const serverEnvSchema = z.object({

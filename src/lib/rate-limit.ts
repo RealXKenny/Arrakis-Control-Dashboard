@@ -1,4 +1,4 @@
-import "server-only";
+import "./assert-server";
 import { createHash } from "node:crypto";
 import { getServerEnv } from "../config/env";
 import { getRedisClient } from "./redis";

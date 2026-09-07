@@ -1,4 +1,4 @@
-import "server-only";
+import "../lib/assert-server";
 import { AppError } from "../lib/errors";
 
 export async function exchangeDiscordIdentity(code: string, config: { clientId: string; clientSecret: string; guildId: string; redirectUri: string }) {

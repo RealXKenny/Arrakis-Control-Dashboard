@@ -1,4 +1,4 @@
-import "server-only";
+import "./assert-server";
 import { Redis } from "@upstash/redis";
 import { getServerEnv } from "../config/env";
 

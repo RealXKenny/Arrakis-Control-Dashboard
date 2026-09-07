@@ -54,7 +54,7 @@ Portal owns its navigation, market board, market configuration, and base-export 
 - Redis stores rate-limit counters and expiring OAuth sessions in production.
 - Session cookies contain only random opaque identifiers.
 - Dune credentials, Discord client secrets, adapter tokens, Redis tokens, and Sentry upload credentials are server-only.
-- Server configuration, provider clients, cookies, and server storage carry `server-only` guards. Browser code must never import these modules, including transitively through a barrel.
+- Server configuration, provider clients, cookies, and server storage import `src/lib/assert-server.ts`, a browser-rejecting guard compatible with ordinary Node execution in Pages Router and instrumentation. Browser code must never import these modules, including transitively through a barrel. Do not use the React Server Component `server-only` package here: its default Node export throws when externalized by the server runtime.
 - Only `NEXT_PUBLIC_SENTRY_DSN` is read by browser monitoring. Server and Edge monitoring read the validated `SENTRY_DSN` setting. Empty optional environment settings are treated as absent.
 - Development-only in-memory fallbacks are available when `NODE_ENV` is not `production` and shared Redis credentials are absent.
 
@@ -68,4 +68,6 @@ Portal owns its navigation, market board, market configuration, and base-export 
 
 ## Verification
 
-`npm run typecheck` performs TypeScript checking with unused-local and unused-parameter checks enabled. `npm test` covers the API boundary, all route method checks, protected-route session checks, OAuth cookies, blueprint downloads, safe provider failures, environment validation, and portal currency shapes. Architecture tests walk browser imports transitively and enforce API wrapping. Vitest mocks the `server-only` marker in its Node setup; the Next.js build enforces the real marker.
+`npm run typecheck` performs TypeScript checking with unused-local and unused-parameter checks enabled. `npm test` covers the API boundary, all route method checks, protected-route session checks, OAuth cookies, blueprint downloads, safe provider failures, environment validation, and portal currency shapes. Architecture tests walk browser imports transitively and enforce API wrapping. Guard tests exercise both Node and browser behavior without mocking the guard.
+
+After `npm run build`, run `npm run test:production`. It starts the built Next.js server with isolated provider configuration and a local Redis transport fixture, exercises every API module and 100 protected requests, and rejects import failures or listener warnings. No live credentials or accounts are used.

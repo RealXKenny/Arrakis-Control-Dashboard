@@ -1,4 +1,4 @@
-import "server-only";
+import "../lib/assert-server";
 import { getServerEnv, requireServerEnv } from "../config/env";
 import { URL } from "node:url";
 import { logger } from "../lib/logger";

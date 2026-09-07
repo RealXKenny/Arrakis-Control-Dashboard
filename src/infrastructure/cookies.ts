@@ -1,4 +1,4 @@
-import "server-only";
+import "../lib/assert-server";
 type CookieOptions = {
   maxAge?: number;
   expires?: Date;

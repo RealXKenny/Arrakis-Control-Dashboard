@@ -27,7 +27,7 @@ describe("module boundaries", () => {
     function visit(file: string) {
       if (visited.has(file)) return;
       visited.add(file);
-      expect(normalize(file)).not.toMatch(/(^infrastructure\/|^config\/env\.ts$|\/server\/|^lib\/(logger|redis|session-store|rate-limit)\.ts$)/);
+      expect(normalize(file)).not.toMatch(/(^infrastructure\/|^config\/env\.ts$|\/server\/|^lib\/(assert-server|logger|redis|session-store|rate-limit)\.ts$)/);
       for (const spec of imports(file)) {
         expect(spec).not.toBe("server-only");
         if (!spec.startsWith(".")) continue;
