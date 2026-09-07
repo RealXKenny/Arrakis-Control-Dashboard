@@ -10,6 +10,8 @@ describe("Pages API boundary", () => {
     const res = responseMock();
     await runPagesApiHandler(req, res, "GET", async () => NextResponse.json({ ok: true, data: "value" }));
     expect(res.statusCode).toBe(200);
+    expect(res.getHeader("Cache-Control")).toBe("private, no-store, max-age=0");
+    expect(res.getHeader("Cloudflare-CDN-Cache-Control")).toBe("no-store");
     expect(res.body).toContain('"ok":true');
   });
 

@@ -16,6 +16,10 @@ OAuth sessions and their browser cookies have a fixed 12-hour lifetime from logi
 
 Set `SENTRY_DSN` for server and Edge reporting and `NEXT_PUBLIC_SENTRY_DSN` for browser reporting. Browser configuration does not fall back to server environment values. Startup is consolidated in `src/instrumentation.ts`, which initializes monitoring and warms the Dune client on Node.js. No market response snapshots are written to disk.
 
+Browser monitoring sends directly to the configured Sentry ingestion origin, which middleware includes in `connect-src`. The `/monitoring` external rewrite is intentionally removed: its Next.js proxy listeners combined with Sentry reproduce `MaxListenersExceededWarning` on Next 16.3. Do not raise the global listener limit to mask this warning.
+
+API responses explicitly prevent browser/CDN caching, including authentication failures. For repeated logins, correlate `Login established`, `Login cookie missing`, and `Login record unavailable` logs. The latter reports `expired` versus `not_found` and the storage backend, without recording cookie values, session identifiers, or user profiles. A 401 alone does not establish that the 12-hour lifetime expired.
+
 Server logs are structured JSON in production and readable context logs in development. Sensitive keys are redacted before logging or sending error context to Sentry. Source maps are uploaded by the Sentry Next.js plugin only when the deployment provides `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT`.
 
 ## Verification

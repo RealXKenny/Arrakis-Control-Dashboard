@@ -1,6 +1,7 @@
 import "./assert-server";
 import { createHash } from "node:crypto";
 import { getRedisClient } from "./redis";
+import { logger } from "./logger";
 
 export type DashboardSession = {
   user: { id: string; username?: string; global_name?: string; avatar?: string | null };
@@ -24,6 +25,7 @@ function sessionKey(sessionId: string): string {
 function getDevelopmentSession(sessionId: string): DashboardSession | null {
   const session = developmentSessions.get(sessionId);
   if (!session || session.expiresAt <= Date.now()) {
+    logger.warn("Login record unavailable", { reason: session ? "expired" : "not_found", storage: "development_memory" });
     developmentSessions.delete(sessionId);
     return null;
   }
@@ -52,6 +54,7 @@ export async function getSession(sessionId: string): Promise<DashboardSession | 
   if (!redis) return getDevelopmentSession(sessionId);
   const session = await redis.get<DashboardSession>(sessionKey(sessionId));
   if (!session || session.expiresAt <= Date.now()) {
+    logger.warn("Login record unavailable", { reason: session ? "expired" : "not_found", storage: "redis" });
     if (session) await deleteSession(sessionId);
     return null;
   }

@@ -24,7 +24,7 @@ export const styles = {
   page: {
     minHeight: "100vh",
     width: "100%",
-    maxWidth: "none",
+    maxWidth: 2280,
     margin: "0 auto",
     boxSizing: "border-box",
     padding: "40px 0 70px",

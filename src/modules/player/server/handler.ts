@@ -121,6 +121,7 @@ export async function GET(request, res) {
     const sessionId = cookieStore.get("dashboard_session")?.value;
 
     if (!sessionId) {
+      logger.warn("Login cookie missing", { route: "/api/player" });
       return NextResponse.json(
         {
           error: "Unauthorized",
@@ -277,4 +278,3 @@ export async function GET(request, res) {
     );
   }
 }
-

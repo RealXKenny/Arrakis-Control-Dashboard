@@ -85,6 +85,12 @@ export async function GET(request, res) {
       path: "/",
     });
 
+    logger.info("Login established", {
+      lifetimeSeconds: sessionTtlSeconds(),
+      secureCookie: env.NODE_ENV === "production",
+      redirectOrigin: new URL(appUrl).origin,
+    });
+
     return NextResponse.redirect(new URL("/portal", appUrl));
   } catch (error) {
     if (error instanceof AppError) throw error;
@@ -97,4 +103,3 @@ export async function GET(request, res) {
     );
   }
 }
-

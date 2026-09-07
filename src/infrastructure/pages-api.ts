@@ -60,6 +60,10 @@ export async function runPagesApiHandler(req, res, method, handler) {
   const route = req.url?.split("?")[0] || "unknown";
   const log = createRequestLogger({ requestId, route, method: req.method });
   res.setHeader("X-Request-ID", requestId);
+  // Authentication and user-specific telemetry must never be cached by a CDN.
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.setHeader("CDN-Cache-Control", "no-store");
+  res.setHeader("Cloudflare-CDN-Cache-Control", "no-store");
 
   try {
     if (req.method !== method) {
