@@ -1,1 +1,1 @@
-export { default } from "../modules/map/components/MapPage";
+export { default } from '../modules/map/components/MapPage';

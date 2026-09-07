@@ -1,9 +1,20 @@
-import type { CSSProperties } from "react";
-import { COLORS } from "../config/colors";
-import { clampPercent, formatStorage, formatVolume } from "../utils/formatting";
-import { getBaseId, getBaseName, getBaseOwner, getBaseRelationship, getBaseType, getGeneratorSeconds, getMaxGeneratorUptimeSeconds, getStorageData, getWaterData, isOwnedBase } from "../utils/bases";
-import { getPowerColor, getStorageColor, getWaterColor } from "../utils/progression";
-import TelemetryMetric from "./TelemetryMetric";
+import type { CSSProperties } from 'react';
+import { COLORS } from '../config/colors';
+import { clampPercent, formatStorage, formatVolume } from '../utils/formatting';
+import {
+  getBaseId,
+  getBaseName,
+  getBaseOwner,
+  getBaseRelationship,
+  getBaseType,
+  getGeneratorSeconds,
+  getMaxGeneratorUptimeSeconds,
+  getStorageData,
+  getWaterData,
+  isOwnedBase,
+} from '../utils/bases';
+import { getPowerColor, getStorageColor, getWaterColor } from '../utils/progression';
+import TelemetryMetric from './TelemetryMetric';
 
 export default function BaseCard({ base, index, telemetry }) {
   const baseId = getBaseId(base);
@@ -63,21 +74,21 @@ export default function BaseCard({ base, index, telemetry }) {
           ),
           ${COLORS.panel}
         `,
-        border: `1px solid ${isOwned ? "rgba(210, 168, 90, 0.22)" : "rgba(125, 184, 232, 0.18)"}`,
+        border: `1px solid ${isOwned ? 'rgba(210, 168, 90, 0.22)' : 'rgba(125, 184, 232, 0.18)'}`,
         borderRadius: 14,
         padding: 22,
         minWidth: 0,
-        boxSizing: "border-box",
-        boxShadow: "0 8px 28px rgba(0,0,0,0.2)",
+        boxSizing: 'border-box',
+        boxShadow: '0 8px 28px rgba(0,0,0,0.2)',
         minHeight: 260,
       }}
     >
       {/* Base header */}
       <div
         style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
           gap: 12,
           paddingBottom: 16,
           marginBottom: 17,
@@ -92,8 +103,8 @@ export default function BaseCard({ base, index, telemetry }) {
         >
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 10,
               minWidth: 0,
             }}
@@ -101,30 +112,32 @@ export default function BaseCard({ base, index, telemetry }) {
             {/* GLOWING BASE DOT */}
             <span
               className="portal-glow-dot"
-              style={{
-                width: 8,
-                height: 8,
-                flexShrink: 0,
-                borderRadius: "50%",
-                backgroundColor: dotColor,
-                boxShadow: `
+              style={
+                {
+                  width: 8,
+                  height: 8,
+                  flexShrink: 0,
+                  borderRadius: '50%',
+                  backgroundColor: dotColor,
+                  boxShadow: `
                   0 0 4px ${dotColor},
                   0 0 9px ${dotColor},
                   0 0 18px ${dotColor},
                   0 0 28px ${dotColor}
                 `,
-                "--dot-color": dotColor,
-              } as CSSProperties & { "--dot-color": string }}
+                  '--dot-color': dotColor,
+                } as CSSProperties & { '--dot-color': string }
+              }
             />
 
             <strong
               style={{
                 color: COLORS.text,
-                fontSize: "1.05rem",
+                fontSize: '1.05rem',
                 fontWeight: 650,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
               title={baseName}
             >
@@ -135,13 +148,13 @@ export default function BaseCard({ base, index, telemetry }) {
           <div
             style={{
               color: COLORS.dim,
-              fontSize: "0.72rem",
+              fontSize: '0.72rem',
               marginTop: 5,
               paddingLeft: 18,
-              textAlign: "left",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              textAlign: 'left',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
             title={baseType}
           >
@@ -154,20 +167,20 @@ export default function BaseCard({ base, index, telemetry }) {
               href={`/api/bases/${encodeURIComponent(baseId)}/export`}
               download
               style={{
-                display: "block",
-                width: "fit-content",
+                display: 'block',
+                width: 'fit-content',
                 marginTop: 10,
                 marginLeft: 0,
-                padding: "7px 11px",
+                padding: '7px 11px',
                 border: `1px solid ${COLORS.border}`,
                 borderRadius: 7,
-                backgroundColor: "rgba(210,168,90,0.08)",
+                backgroundColor: 'rgba(210,168,90,0.08)',
                 color: COLORS.goldLight,
-                fontSize: "0.62rem",
+                fontSize: '0.62rem',
                 fontWeight: 700,
-                textDecoration: "none",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                textDecoration: 'none',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
               }}
             >
               Download Blueprint ↓
@@ -178,15 +191,15 @@ export default function BaseCard({ base, index, telemetry }) {
         <span
           style={{
             flexShrink: 0,
-            padding: "5px 9px",
+            padding: '5px 9px',
             borderRadius: 999,
-            backgroundColor: isOwned ? "rgba(210,168,90,0.08)" : "rgba(125,184,232,0.08)",
-            border: `1px solid ${isOwned ? "rgba(210,168,90,0.2)" : "rgba(125,184,232,0.2)"}`,
-            color: isOwned ? "#e3c27f" : "#8fc6ee",
-            fontSize: "0.63rem",
+            backgroundColor: isOwned ? 'rgba(210,168,90,0.08)' : 'rgba(125,184,232,0.08)',
+            border: `1px solid ${isOwned ? 'rgba(210,168,90,0.2)' : 'rgba(125,184,232,0.2)'}`,
+            color: isOwned ? '#e3c27f' : '#8fc6ee',
+            fontSize: '0.63rem',
             fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
           }}
         >
           {relationship}
@@ -197,8 +210,8 @@ export default function BaseCard({ base, index, telemetry }) {
       <div
         style={{
           marginBottom: 20,
-          padding: "11px 13px",
-          backgroundColor: "#ffffff04",
+          padding: '11px 13px',
+          backgroundColor: '#ffffff04',
           border: `1px solid ${COLORS.borderLight}`,
           borderRadius: 8,
         }}
@@ -206,10 +219,10 @@ export default function BaseCard({ base, index, telemetry }) {
         <div
           style={{
             color: COLORS.dim,
-            fontSize: "0.62rem",
+            fontSize: '0.62rem',
             fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
             marginBottom: 3,
           }}
         >
@@ -219,10 +232,10 @@ export default function BaseCard({ base, index, telemetry }) {
         <div
           style={{
             color: COLORS.textSoft,
-            fontSize: "0.8rem",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            fontSize: '0.8rem',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}
           title={owner}
         >
@@ -232,22 +245,39 @@ export default function BaseCard({ base, index, telemetry }) {
 
       {/* Telemetry */}
       <div
+        className="base-metrics"
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
           gap: 18,
         }}
       >
-        <TelemetryMetric label="Runtime" percent={generatorAvailable ? powerPercent : null} color={getPowerColor(powerPercent)} value={generatorAvailable ? `${fullDays}d ${remainingHours}h remaining` : "Unavailable"} />
+        <TelemetryMetric
+          label="Runtime"
+          percent={generatorAvailable ? powerPercent : null}
+          color={getPowerColor(powerPercent)}
+          value={generatorAvailable ? `${fullDays}d ${remainingHours}h remaining` : 'Unavailable'}
+        />
 
         <TelemetryMetric
           label="Water"
           percent={waterPercent}
           color={getWaterColor(waterPercent)}
-          value={waterAvailable ? `${formatVolume(waterCurrent)} / ${formatVolume(waterMax)}` : waterMax !== null ? `— / ${formatVolume(waterMax)}` : "No data"}
+          value={
+            waterAvailable
+              ? `${formatVolume(waterCurrent)} / ${formatVolume(waterMax)}`
+              : waterMax !== null
+                ? `— / ${formatVolume(waterMax)}`
+                : 'No data'
+          }
         />
 
-        <TelemetryMetric label="Storage" percent={storagePercent} color={getStorageColor(storagePercent)} value={storageAvailable ? `${formatStorage(storageUsed)} / ${formatStorage(storageMax)}` : "No data"} />
+        <TelemetryMetric
+          label="Storage"
+          percent={storagePercent}
+          color={getStorageColor(storagePercent)}
+          value={storageAvailable ? `${formatStorage(storageUsed)} / ${formatStorage(storageMax)}` : 'No data'}
+        />
       </div>
 
       {/* API warning */}
@@ -257,8 +287,8 @@ export default function BaseCard({ base, index, telemetry }) {
             marginTop: 15,
             paddingTop: 11,
             borderTop: `1px solid ${COLORS.borderLight}`,
-            color: "#9b7462",
-            fontSize: "0.65rem",
+            color: '#9b7462',
+            fontSize: '0.65rem',
             lineHeight: 1.5,
           }}
         >
@@ -271,9 +301,9 @@ export default function BaseCard({ base, index, telemetry }) {
         <div
           style={{
             marginTop: 14,
-            color: "#5f4d3d",
-            fontSize: "0.58rem",
-            fontFamily: "monospace",
+            color: '#5f4d3d',
+            fontSize: '0.58rem',
+            fontFamily: 'monospace',
           }}
         />
       )}

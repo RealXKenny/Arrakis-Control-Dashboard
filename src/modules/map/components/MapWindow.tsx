@@ -1,154 +1,160 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 
-import MapToolbar from "./MapToolbar";
-import MapCanvas from "./MapCanvas";
-import MarkerDetails from "./MarkerDetails";
-import MapStatusBar from "./MapStatusBar";
+import MapToolbar from './MapToolbar';
+import MapCanvas from './MapCanvas';
+import MarkerDetails from './MarkerDetails';
+import MapStatusBar from './MapStatusBar';
 
-import useMapData from "../hooks/useMapData";
-import useMapZoom from "../hooks/useMapZoom";
-import useMapDrag from "../hooks/useMapDrag";
-import useMapWindow from "../hooks/useMapWindow";
+import useMapData from '../hooks/useMapData';
+import useMapZoom from '../hooks/useMapZoom';
+import useMapDrag from '../hooks/useMapDrag';
+import useMapWindow from '../hooks/useMapWindow';
 
-import styles from "../map.module.css";
+import styles from '../map.module.css';
 
-const LEGEND_STORAGE_KEY_PREFIX = "map-legend";
+const LEGEND_STORAGE_KEY_PREFIX = 'map-legend';
 
 const LEGEND_CATEGORIES = [
   {
-    type: "player",
-    label: "Player",
+    type: 'player',
+    label: 'Player',
   },
   {
-    type: "vehicle",
-    label: "Vehicle",
+    type: 'vehicle',
+    label: 'Vehicle',
     subtypes: [
-      ["sandbike", "Sandbike"],
-      ["buggy", "Buggy"],
-      ["sandcrawler", "Sandcrawler"],
-      ["treadwheel", "Treadwheel"],
-      ["assaultornithopter", "Assault Ornithopter"],
-      ["ornithopter", "Ornithopter"],
-      ["lightornithopter", "Light Ornithopter"],
-      ["mediumornithopter", "Medium Ornithopter"],
-      ["transportornithopter", "Transport Ornithopter"],
-      ["containervehicle", "Container Vehicle"],
+      ['sandbike', 'Sandbike'],
+      ['buggy', 'Buggy'],
+      ['sandcrawler', 'Sandcrawler'],
+      ['treadwheel', 'Treadwheel'],
+      ['assaultornithopter', 'Assault Ornithopter'],
+      ['ornithopter', 'Ornithopter'],
+      ['lightornithopter', 'Light Ornithopter'],
+      ['mediumornithopter', 'Medium Ornithopter'],
+      ['transportornithopter', 'Transport Ornithopter'],
+      ['containervehicle', 'Container Vehicle'],
     ],
   },
   {
-    type: "base",
-    label: "Base",
+    type: 'base',
+    label: 'Base',
   },
   {
-    type: "storage",
-    label: "Storage",
+    type: 'storage',
+    label: 'Storage',
   },
   {
-    type: "spice",
-    label: "Static Spice Spawns",
+    type: 'spice',
+    label: 'Static Spice Spawns',
   },
   {
-    type: "spice_active",
-    label: "Active Spice Blows",
+    type: 'spice_active',
+    label: 'Active Spice Blows',
   },
   {
-    type: "flour_sand",
-    label: "Flour Sand",
+    type: 'flour_sand',
+    label: 'Flour Sand',
   },
   {
-    type: "ore",
-    label: "Ore & Pickups",
+    type: 'ore',
+    label: 'Ore & Pickups',
   },
   {
-    type: "scrap",
-    label: "Wreckage & Scrap",
+    type: 'scrap',
+    label: 'Wreckage & Scrap',
   },
   {
-    type: "flora",
-    label: "Flora",
+    type: 'flora',
+    label: 'Flora',
   },
   {
-    type: "poi",
+    type: 'poi',
     label: "POI's",
     subtypes: [
-      ["cave", "Cave"],
-      ["ecolab", "Ecolab"],
-      ["shipwreck", "Shipwreck"],
-      ["sietch", "Sietch"],
-      ["tradingpost", "Trading Post"],
-      ["taxiservice", "Taxi Service"],
+      ['cave', 'Cave'],
+      ['ecolab', 'Ecolab'],
+      ['shipwreck', 'Shipwreck'],
+      ['sietch', 'Sietch'],
+      ['tradingpost', 'Trading Post'],
+      ['taxiservice', 'Taxi Service'],
     ],
   },
   {
-    type: "house_representative",
-    label: "House Representative",
+    type: 'house_representative',
+    label: 'House Representative',
     subtypes: [
-      ["houserepresentativeargosaz", "Argosaz"],
-      ["houserepresentativedyvetz", "Dyvetz"],
-      ["houserepresentativeecaz", "Ecaz"],
-      ["houserepresentativehagal", "Hagal"],
-      ["houserepresentativehurata", "Hurata"],
-      ["houserepresentativeimota", "Imota"],
-      ["houserepresentativekenola", "Kenola"],
-      ["houserepresentativelindaren", "Lindaren"],
-      ["houserepresentativemaros", "Maros"],
-      ["houserepresentativemikarrol", "Mikarrol"],
-      ["houserepresentativemoritani", "Moritani"],
-      ["houserepresentativenovebruns", "Novebruns"],
-      ["houserepresentativerichese", "Richese"],
-      ["houserepresentativesor", "Sor"],
-      ["houserepresentativetaligari", "Taligari"],
-      ["houserepresentativethorvald", "Thorvald"],
-      ["houserepresentativevernius", "Vernius"],
+      ['houserepresentativeargosaz', 'Argosaz'],
+      ['houserepresentativedyvetz', 'Dyvetz'],
+      ['houserepresentativeecaz', 'Ecaz'],
+      ['houserepresentativehagal', 'Hagal'],
+      ['houserepresentativehurata', 'Hurata'],
+      ['houserepresentativeimota', 'Imota'],
+      ['houserepresentativekenola', 'Kenola'],
+      ['houserepresentativelindaren', 'Lindaren'],
+      ['houserepresentativemaros', 'Maros'],
+      ['houserepresentativemikarrol', 'Mikarrol'],
+      ['houserepresentativemoritani', 'Moritani'],
+      ['houserepresentativenovebruns', 'Novebruns'],
+      ['houserepresentativerichese', 'Richese'],
+      ['houserepresentativesor', 'Sor'],
+      ['houserepresentativetaligari', 'Taligari'],
+      ['houserepresentativethorvald', 'Thorvald'],
+      ['houserepresentativevernius', 'Vernius'],
     ],
   },
   {
-    type: "trainer",
-    label: "Trainer",
+    type: 'trainer',
+    label: 'Trainer',
     subtypes: [
-      ["trainerbenegesserit", "Bene Gesserit"],
-      ["trainermentat", "Mentat"],
-      ["trainerplanetologist", "Planetologist"],
-      ["trainerswordmaster", "Swordmaster"],
-      ["trainertrooper", "Trooper"],
+      ['trainerbenegesserit', 'Bene Gesserit'],
+      ['trainermentat', 'Mentat'],
+      ['trainerplanetologist', 'Planetologist'],
+      ['trainerswordmaster', 'Swordmaster'],
+      ['trainertrooper', 'Trooper'],
     ],
   },
   {
-    type: "fortress",
-    label: "Fortresses",
+    type: 'fortress',
+    label: 'Fortresses',
   },
   {
-    type: "hazard",
-    label: "Hazards",
+    type: 'hazard',
+    label: 'Hazards',
   },
   {
-    type: "enemy",
-    label: "Enemies",
+    type: 'enemy',
+    label: 'Enemies',
   },
 ];
 
 function normalizeSubtype(value) {
-  return String(value || "")
+  return String(value || '')
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, "");
+    .replace(/[^a-z0-9_-]/g, '');
 }
 
 function getLegendIconClass(category, subtype) {
   if (subtype) {
-    return ["live-map-marker", `marker-${category.type}`, `subtype-${subtype}`].join(" ");
+    return ['live-map-marker', `marker-${category.type}`, `subtype-${subtype}`].join(' ');
   }
 
   if (category.subtypes?.length) {
-    return ["live-map-marker", `marker-${category.type}`, `subtype-${category.subtypes[0][0]}`].join(" ");
+    return ['live-map-marker', `marker-${category.type}`, `subtype-${category.subtypes[0][0]}`].join(' ');
   }
 
-  return ["live-map-marker", `marker-${category.type}`].join(" ");
+  return ['live-map-marker', `marker-${category.type}`].join(' ');
 }
 
-export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN", offset = { x: 0, y: 0 }, split = false, onMapChange }) {
+export default function MapWindow({
+  mapName = 'HaggaBasin',
+  title = 'HAGGA BASIN',
+  offset = { x: 0, y: 0 },
+  split = false,
+  onMapChange,
+}) {
   const { mapConfig, markers, error, loading, loadMap } = useMapData(mapName);
 
   const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${mapName}`;
@@ -172,7 +178,11 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
 
   const canvasRef = React.useRef(null);
 
-  const { windowState, windowDrag, handleWindowMouseDown, minimize, restore, toggleMaximize, close } = useMapWindow(mapConfig, offset, split);
+  const { windowState, windowDrag, handleWindowMouseDown, minimize, restore, toggleMaximize, close } = useMapWindow(
+    mapConfig,
+    offset,
+    split,
+  );
 
   const { zoom, setZoomAround, fitMap, zoomPercent } = useMapZoom({
     mapConfig,
@@ -194,26 +204,26 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
 
       const parsed = JSON.parse(saved);
 
-      if (parsed && typeof parsed === "object") {
-        if (parsed.disabled && typeof parsed.disabled === "object") {
+      if (parsed && typeof parsed === 'object') {
+        if (parsed.disabled && typeof parsed.disabled === 'object') {
           setLegendDisabled(parsed.disabled);
         }
 
-        if (parsed.expanded && typeof parsed.expanded === "object") {
+        if (parsed.expanded && typeof parsed.expanded === 'object') {
           setLegendExpanded((current) => ({
             ...current,
             ...parsed.expanded,
           }));
         }
 
-        if (typeof parsed.open === "boolean") {
+        if (typeof parsed.open === 'boolean') {
           setLegendOpen(parsed.open);
         }
       }
     } catch {
       // Ignore invalid cached legend state.
     }
-  }, []);
+  }, [legendStorageKey]);
 
   const saveLegendState = React.useCallback(
     (disabled, expanded, open) => {
@@ -284,7 +294,7 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
 
   const visibleMarkers = React.useMemo(() => {
     return markers.filter((marker) => {
-      const type = String(marker?.type || "")
+      const type = String(marker?.type || '')
         .trim()
         .toLowerCase();
 
@@ -307,49 +317,47 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
 
     top: windowState.maximized ? 0 : windowState.y,
 
-    width: windowState.maximized ? "calc(100vw - 270px)" : windowState.width,
+    width: windowState.maximized ? 'calc(100vw - 270px)' : windowState.width,
 
-    height: windowState.maximized ? "100vh" : windowState.height,
+    height: windowState.maximized ? '100vh' : windowState.height,
 
     zIndex: 100,
 
-    borderRadius: windowState.maximized ? 0 : "8px 0 0 8px",
+    borderRadius: windowState.maximized ? 0 : '8px 0 0 8px',
 
-    borderRight: "1px solid #6f4e2d",
+    borderRight: '1px solid #6f4e2d',
 
-    overflow: "hidden",
+    overflow: 'hidden',
   };
 
   const legendStyle = {
-    left: windowState.maximized ? "auto" : windowState.x + windowState.width,
+    left: windowState.maximized ? 'auto' : windowState.x + windowState.width,
 
-    right: windowState.maximized ? 0 : "auto",
+    right: windowState.maximized ? 0 : 'auto',
 
     top: windowState.maximized ? 0 : windowState.y,
 
     width: 270,
 
-    height: windowState.maximized ? "100vh" : windowState.height,
+    height: windowState.maximized ? '100vh' : windowState.height,
 
     zIndex: 99,
 
-    borderRadius: windowState.maximized ? 0 : "0 8px 8px 0",
+    borderRadius: windowState.maximized ? 0 : '0 8px 8px 0',
   };
 
-  const refreshMap = () => {
-    const controller = new AbortController();
-
-    void loadMap(controller.signal);
-  };
+  const refreshMap = React.useCallback(() => {
+    void loadMap();
+  }, [loadMap]);
 
   const handleKeyDown = React.useCallback(
     (event) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         setSelected(null);
         return;
       }
 
-      if (event.key === "+" || event.key === "=") {
+      if (event.key === '+' || event.key === '=') {
         event.preventDefault();
 
         setZoomAround(zoom * 1.18);
@@ -357,7 +365,7 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
         return;
       }
 
-      if (event.key === "-") {
+      if (event.key === '-') {
         event.preventDefault();
 
         setZoomAround(zoom * 0.84);
@@ -365,38 +373,38 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
         return;
       }
 
-      if (event.key.toLowerCase() === "f") {
+      if (event.key.toLowerCase() === 'f') {
         event.preventDefault();
         fitMap();
         return;
       }
 
-      if (event.key.toLowerCase() === "r") {
+      if (event.key.toLowerCase() === 'r') {
         event.preventDefault();
         refreshMap();
       }
     },
-    [zoom, setZoomAround, fitMap],
+    [zoom, setZoomAround, fitMap, refreshMap],
   );
 
   React.useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleKeyDown]);
 
   return (
     <main
       style={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-        background: "radial-gradient(circle at 50% 40%, #392717 0%, #1a1109 45%, #080604 100%)",
-        color: "#e5d2b3",
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+        background: 'radial-gradient(circle at 50% 40%, #392717 0%, #1a1109 45%, #080604 100%)',
+        color: '#e5d2b3',
         fontFamily: '"Cascadia Code", "Cascadia Mono", Consolas, "Courier New", monospace',
       }}
     >
@@ -408,7 +416,7 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
               onMouseDown={handleWindowMouseDown}
               onDoubleClick={toggleMaximize}
               style={{
-                cursor: windowState.maximized ? "default" : windowDrag ? "grabbing" : "grab",
+                cursor: windowState.maximized ? 'default' : windowDrag ? 'grabbing' : 'grab',
               }}
             >
               <div className={styles.titleIcon}>▸_</div>
@@ -423,12 +431,12 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
                   title="Select map"
                   style={{
                     marginRight: 8,
-                    background: "#24180e",
-                    border: "1px solid #624324",
-                    color: "#d9c19c",
-                    fontFamily: "inherit",
+                    background: '#24180e',
+                    border: '1px solid #624324',
+                    color: '#d9c19c',
+                    fontFamily: 'inherit',
                     fontSize: 10,
-                    padding: "3px 5px",
+                    padding: '3px 5px',
                   }}
                 >
                   <option value="HaggaBasin">Hagga Basin</option>
@@ -443,10 +451,10 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={minimize}
                 onMouseEnter={(event) => {
-                  event.currentTarget.style.background = "#4a311c";
+                  event.currentTarget.style.background = '#4a311c';
                 }}
                 onMouseLeave={(event) => {
-                  event.currentTarget.style.background = "transparent";
+                  event.currentTarget.style.background = 'transparent';
                 }}
               >
                 −
@@ -459,13 +467,13 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={toggleMaximize}
                 onMouseEnter={(event) => {
-                  event.currentTarget.style.background = "#4a311c";
+                  event.currentTarget.style.background = '#4a311c';
                 }}
                 onMouseLeave={(event) => {
-                  event.currentTarget.style.background = "transparent";
+                  event.currentTarget.style.background = 'transparent';
                 }}
               >
-                {windowState.maximized ? "❐" : "□"}
+                {windowState.maximized ? '❐' : '□'}
               </button>
 
               <button
@@ -475,21 +483,27 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
                 onMouseDown={(event) => event.stopPropagation()}
                 onClick={close}
                 onMouseEnter={(event) => {
-                  event.currentTarget.style.background = "#7c2f20";
+                  event.currentTarget.style.background = '#7c2f20';
 
-                  event.currentTarget.style.color = "#fff";
+                  event.currentTarget.style.color = '#fff';
                 }}
                 onMouseLeave={(event) => {
-                  event.currentTarget.style.background = "transparent";
+                  event.currentTarget.style.background = 'transparent';
 
-                  event.currentTarget.style.color = "#bda987";
+                  event.currentTarget.style.color = '#bda987';
                 }}
               >
                 ×
               </button>
             </div>
 
-            <MapToolbar zoomPercent={zoomPercent} onZoomOut={() => setZoomAround(zoom * 0.84)} onZoomIn={() => setZoomAround(zoom * 1.18)} onFit={fitMap} onRefresh={refreshMap} />
+            <MapToolbar
+              zoomPercent={zoomPercent}
+              onZoomOut={() => setZoomAround(zoom * 0.84)}
+              onZoomIn={() => setZoomAround(zoom * 1.18)}
+              onFit={fitMap}
+              onRefresh={refreshMap}
+            />
 
             <div
               ref={frameRef}
@@ -499,46 +513,54 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
               onMouseUp={stopDragging}
               onMouseLeave={stopDragging}
               style={{
-                position: "relative",
+                position: 'relative',
                 flex: 1,
                 minHeight: 0,
                 minWidth: 0,
-                overflow: "auto",
-                cursor: drag ? "grabbing" : "grab",
-                background: "#0c0804",
-                scrollbarWidth: "thin",
-                scrollbarColor: "#594127 #100b07",
-                WebkitOverflowScrolling: "touch",
+                overflow: 'auto',
+                cursor: drag ? 'grabbing' : 'grab',
+                background: '#0c0804',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#594127 #100b07',
+                WebkitOverflowScrolling: 'touch',
               }}
             >
               {mapConfig ? (
-                <MapCanvas mapName={mapName} mapConfig={mapConfig} markers={visibleMarkers} zoom={zoom} canvasRef={canvasRef} target={target} onSelectMarker={setSelected} />
+                <MapCanvas
+                  mapName={mapName}
+                  mapConfig={mapConfig}
+                  markers={visibleMarkers}
+                  zoom={zoom}
+                  canvasRef={canvasRef}
+                  target={target}
+                  onSelectMarker={setSelected}
+                />
               ) : (
                 <div
                   style={{
-                    position: "absolute",
+                    position: 'absolute',
                     inset: 0,
-                    display: "grid",
-                    placeItems: "center",
-                    color: "#806d55",
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: '#806d55',
                     fontSize: 12,
                   }}
                 >
                   <div
                     style={{
-                      textAlign: "center",
+                      textAlign: 'center',
                     }}
                   >
                     <div
                       style={{
-                        color: "#d8a75f",
+                        color: '#d8a75f',
                         marginBottom: 8,
                       }}
                     >
                       C:\HAGGA\MAP&gt;
                     </div>
 
-                    {loading ? "Loading map..." : "Map unavailable"}
+                    {loading ? 'Loading map...' : 'Map unavailable'}
                   </div>
                 </div>
               )}
@@ -549,10 +571,10 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
             {error && (
               <div
                 style={{
-                  padding: "5px 10px",
-                  color: "#c76b55",
-                  background: "rgba(80,20,10,.35)",
-                  borderTop: "1px solid rgba(124,47,32,.5)",
+                  padding: '5px 10px',
+                  color: '#c76b55',
+                  background: 'rgba(80,20,10,.35)',
+                  borderTop: '1px solid rgba(124,47,32,.5)',
                   fontSize: 10,
                 }}
               >
@@ -560,14 +582,25 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
               </div>
             )}
 
-            <MapStatusBar loading={loading} error={error} markerCount={markers.length} zoomPercent={zoomPercent} target={target} />
+            <MapStatusBar
+              loading={loading}
+              error={error}
+              markerCount={markers.length}
+              zoomPercent={zoomPercent}
+              target={target}
+            />
           </div>
 
-          <aside className={`${styles.mapLegend} ${legendOpen ? "" : styles.mapLegendCollapsed}`} style={legendStyle}>
-            <button type="button" className={styles.mapLegendHeader} onClick={toggleLegendOpen} title={legendOpen ? "Collapse map legend" : "Expand map legend"}>
+          <aside className={`${styles.mapLegend} ${legendOpen ? '' : styles.mapLegendCollapsed}`} style={legendStyle}>
+            <button
+              type="button"
+              className={styles.mapLegendHeader}
+              onClick={toggleLegendOpen}
+              title={legendOpen ? 'Collapse map legend' : 'Expand map legend'}
+            >
               <span>MAP LEGEND</span>
 
-              <span>{legendOpen ? "−" : "+"}</span>
+              <span>{legendOpen ? '−' : '+'}</span>
             </button>
 
             {legendOpen && (
@@ -582,13 +615,23 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
                   return (
                     <div key={category.type} className={styles.mapLegendCategory}>
                       <div className={styles.mapLegendCategoryRow}>
-                        <button type="button" className={styles.mapLegendCategoryButton} onClick={() => toggleLegendCategory(category.type)} title={categoryDisabled ? `Show ${category.label}` : `Hide ${category.label}`}>
+                        <button
+                          type="button"
+                          className={styles.mapLegendCategoryButton}
+                          onClick={() => toggleLegendCategory(category.type)}
+                          title={categoryDisabled ? `Show ${category.label}` : `Hide ${category.label}`}
+                        >
                           <span className={styles.mapLegendCategoryName}>{category.label}</span>
                         </button>
 
                         {hasSubtypes && (
-                          <button type="button" className={styles.mapLegendExpandButton} onClick={() => toggleLegendExpanded(category.type)} title={expanded ? `Collapse ${category.label}` : `Expand ${category.label}`}>
-                            {expanded ? "⌄" : "›"}
+                          <button
+                            type="button"
+                            className={styles.mapLegendExpandButton}
+                            onClick={() => toggleLegendExpanded(category.type)}
+                            title={expanded ? `Collapse ${category.label}` : `Expand ${category.label}`}
+                          >
+                            {expanded ? '⌄' : '›'}
                           </button>
                         )}
                       </div>
@@ -603,14 +646,22 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
                             const disabled = !!legendDisabled[key];
 
                             return (
-                              <button type="button" key={key} className={styles.mapLegendSubtype} onClick={() => toggleLegendItem(key)} title={disabled ? `Show ${label}` : `Hide ${label}`}>
+                              <button
+                                type="button"
+                                key={key}
+                                className={styles.mapLegendSubtype}
+                                onClick={() => toggleLegendItem(key)}
+                                title={disabled ? `Show ${label}` : `Hide ${label}`}
+                              >
                                 <span className={styles.mapLegendIconSmall}>
                                   <span className={getLegendIconClass(category, normalized)} />
                                 </span>
 
                                 <span className={styles.mapLegendSubtypeName}>{label}</span>
 
-                                <span className={disabled ? styles.mapLegendDisabledIcon : styles.mapLegendEnabledIcon}>{disabled ? "×" : "●"}</span>
+                                <span className={disabled ? styles.mapLegendDisabledIcon : styles.mapLegendEnabledIcon}>
+                                  {disabled ? '×' : '●'}
+                                </span>
                               </button>
                             );
                           })}
@@ -630,17 +681,17 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
           type="button"
           onClick={restore}
           style={{
-            position: "fixed",
+            position: 'fixed',
             left: 15,
             bottom: 15,
             zIndex: 200,
             height: 38,
-            padding: "0 16px",
-            background: "#24180e",
-            border: "1px solid #6f4e2d",
-            color: "#ead8ba",
-            boxShadow: "0 10px 30px rgba(0,0,0,.7)",
-            cursor: "pointer",
+            padding: '0 16px',
+            background: '#24180e',
+            border: '1px solid #6f4e2d',
+            color: '#ead8ba',
+            boxShadow: '0 10px 30px rgba(0,0,0,.7)',
+            cursor: 'pointer',
             fontFamily: '"Cascadia Code", Consolas, monospace',
             fontSize: 11,
             borderRadius: 5,
@@ -648,7 +699,7 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
         >
           <span
             style={{
-              color: "#d8a75f",
+              color: '#d8a75f',
               marginRight: 8,
             }}
           >

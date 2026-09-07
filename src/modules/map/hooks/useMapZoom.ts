@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 const DEFAULT_ZOOM = 0.1;
 const MAX_ZOOM = 2;
@@ -39,6 +39,17 @@ export default function useMapZoom({ mapConfig, frameRef, canvasRef }) {
     return Math.min(1, Math.max(DEFAULT_ZOOM, Math.min(horizontal, vertical)));
   }, [frameRef, mapConfig]);
 
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || !mapConfig) return;
+    // Measure after terminal sizing; avoid the old fixed 10% initial map.
+    const resize = () => setZoom((current) => clampZoom(current, getMinimumZoom()));
+    const observer = new ResizeObserver(resize);
+    observer.observe(frame);
+    resize();
+    return () => observer.disconnect();
+  }, [frameRef, mapConfig, getMinimumZoom]);
+
   const setZoomAround = useCallback(
     (nextZoom, point = null) => {
       const frame = frameRef.current;
@@ -49,7 +60,7 @@ export default function useMapZoom({ mapConfig, frameRef, canvasRef }) {
       const next = clampZoom(nextZoom, minimum);
 
       if (frame && canvas && point) {
-        const rect = canvas.getBoundingClientRect();
+        const rect = frame.getBoundingClientRect();
 
         const viewportX = point.clientX - rect.left;
 
@@ -105,7 +116,11 @@ export default function useMapZoom({ mapConfig, frameRef, canvasRef }) {
 
       const rect = canvas.getBoundingClientRect();
 
-      const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+      const inside =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
 
       if (!inside) {
         return;
@@ -119,10 +134,10 @@ export default function useMapZoom({ mapConfig, frameRef, canvasRef }) {
       });
     };
 
-    frame.addEventListener("wheel", handleWheel, { passive: false });
+    frame.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
-      frame.removeEventListener("wheel", handleWheel);
+      frame.removeEventListener('wheel', handleWheel);
     };
   }, [canvasRef, frameRef, setZoomAround, zoom]);
 

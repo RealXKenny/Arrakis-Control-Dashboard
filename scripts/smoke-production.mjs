@@ -48,7 +48,7 @@ const child = spawn(process.execPath, ["--trace-warnings", require.resolve("next
   windowsHide: true,
   stdio: ["ignore", "pipe", "pipe"],
   env: {
-    ...process.env,
+    ...process.env, POPULATION_HISTORY_ENABLED: "false",
     NODE_ENV: mode === "dev" ? "development" : "production",
     CONSOLE_URL: `http://127.0.0.1:${redisPort}`, CONSOLE_PASSWORD: "fixture-password", ADAPTER_TOKEN: "fixture-token",
     DISCORD_CLIENT_ID: "", DISCORD_CLIENT_SECRET: "", DISCORD_GUILD_ID: "",
@@ -77,7 +77,7 @@ try {
     await new Promise(resolve => setTimeout(resolve, 200));
   }
   assert.ok(ready, "Production server must serve /portal");
-  const routes = ["auth/login", "auth/callback", "auth/logout", "map", "player", "market", "market/config", "bases/test/export", "server/status"];
+  const routes = ["auth/login", "auth/callback", "auth/logout", "map", "player", "market", "market/config", "market/listings", "portal/world", "bases/test/export", "server/status"];
   for (const route of routes) {
     const response = await fetch(`${base}/api/${route}`, { method: route === 'auth/logout' ? 'GET' : 'POST', signal: AbortSignal.timeout(5000) });
     assert.equal(response.status, 405, route);
@@ -98,6 +98,12 @@ try {
   }
   const buildId = readFileSync('.next/BUILD_ID', 'utf8').trim();
   const headers = { cookie: 'dashboard_session=fixture-session' };
+  const world = await fetch(`${base}/api/portal/world?map=DeepDesert`, { headers });
+  assert.equal(world.status, 200, 'authenticated world briefing');
+  const worldReading = await world.json();
+  assert.equal(worldReading.map, 'DeepDesert');
+  assert.equal(worldReading.spice, null, 'unsupported spice data must not become zero');
+  assert.equal(worldReading.rows, undefined, 'raw provider rows must stay server-side');
   const prefetch = await fetch(`${base}/_next/data/${buildId}/api/auth/logout.json`, { headers: { ...headers, purpose: 'prefetch', 'x-nextjs-data': '1' }, redirect: 'manual' });
   assert.equal(prefetch.status, 405, 'prefetched logout must not revoke login');
   assert.equal(prefetch.headers.get('set-cookie'), null);
@@ -117,7 +123,7 @@ try {
   await monitoringResponse.text();
   if (logs.includes("MaxListenersExceededWarning")) console.error(logs.slice(logs.indexOf("MaxListenersExceededWarning"), logs.indexOf("MaxListenersExceededWarning") + 2500));
   assert.doesNotMatch(logs, /Failed to load external module|MaxListenersExceededWarning|This module cannot be imported from a Client Component/);
-  console.log("Runtime smoke passed: portal, 9 API modules, 100 unauthorized requests, authenticated telemetry and market, safe logout prefetch, POST session revocation; no import or listener warnings.");
+  console.log("Runtime smoke passed: portal, 11 API modules, 100 unauthorized requests, authenticated telemetry and market, safe logout prefetch, POST session revocation; no import or listener warnings.");
 } finally {
   child.kill();
   await childDone;

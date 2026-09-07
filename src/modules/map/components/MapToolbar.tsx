@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import styles from "../map.module.css";
+import styles from '../map.module.css';
 
 export default function MapToolbar({ zoomPercent, onZoomOut, onZoomIn, onFit, onRefresh }) {
   return (
     <div className={styles.toolbar}>
       <span
         style={{
-          color: "#d8a75f",
+          color: '#d8a75f',
           fontSize: 11,
           marginRight: 4,
         }}
@@ -22,9 +22,9 @@ export default function MapToolbar({ zoomPercent, onZoomOut, onZoomIn, onFit, on
       <span
         style={{
           minWidth: 62,
-          textAlign: "center",
+          textAlign: 'center',
           fontSize: 10,
-          color: "#d8a75f",
+          color: '#d8a75f',
         }}
       >
         ZOOM {zoomPercent}%
@@ -45,8 +45,8 @@ export default function MapToolbar({ zoomPercent, onZoomOut, onZoomIn, onFit, on
       <span
         className="desktop-hints"
         style={{
-          marginLeft: "auto",
-          color: "#6f5b43",
+          marginLeft: 'auto',
+          color: '#6f5b43',
           fontSize: 10,
         }}
       >

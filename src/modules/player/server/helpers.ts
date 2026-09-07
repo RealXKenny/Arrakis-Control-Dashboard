@@ -1,4 +1,3 @@
-
 function firstNumber(...values) {
   for (const value of values) {
     const number = Number(value);
@@ -13,11 +12,7 @@ function firstNumber(...values) {
 
 function firstValue(...values) {
   for (const value of values) {
-    if (
-      value !== undefined &&
-      value !== null &&
-      value !== ''
-    ) {
+    if (value !== undefined && value !== null && value !== '') {
       return value;
     }
   }
@@ -37,12 +32,7 @@ function clampPercent(value) {
  * Extract base ID.
  */
 export function getBaseId(base) {
-  return firstValue(
-    base?.base_id,
-    base?.baseId,
-    base?.id,
-    base?.uuid
-  );
+  return firstValue(base?.base_id, base?.baseId, base?.id, base?.uuid);
 }
 
 /**
@@ -65,7 +55,7 @@ export function normalizeBaseStorage(inventory) {
     inventory.totalUsed,
     inventory.usedSlots,
     inventory.occupied,
-    inventory.current
+    inventory.current,
   );
 
   const directMax = firstNumber(
@@ -77,7 +67,7 @@ export function normalizeBaseStorage(inventory) {
     inventory.maxCapacity,
     inventory.totalCapacity,
     inventory.slots,
-    inventory.maxSlots
+    inventory.maxSlots,
   );
 
   const storage = inventory.storage || {};
@@ -88,7 +78,7 @@ export function normalizeBaseStorage(inventory) {
     storage.usedStorage,
     storage.storageUsed,
     storage.current,
-    storage.occupied
+    storage.occupied,
   );
 
   const storageMax = firstNumber(
@@ -100,7 +90,7 @@ export function normalizeBaseStorage(inventory) {
     storage.maxCapacity,
     storage.totalCapacity,
     storage.slots,
-    storage.maxSlots
+    storage.maxSlots,
   );
 
   const containers = Array.isArray(inventory.containers)
@@ -115,16 +105,9 @@ export function normalizeBaseStorage(inventory) {
   let containerMax = null;
 
   for (const container of containers) {
-    const type = String(
-      container?.type ||
-        container?.containerType ||
-        container?.category ||
-        ''
-    ).toLowerCase();
+    const type = String(container?.type || container?.containerType || container?.category || '').toLowerCase();
 
-    const isStorage =
-      type.includes('storage') ||
-      type.includes('inventory');
+    const isStorage = type.includes('storage') || type.includes('inventory');
 
     if (!isStorage) {
       continue;
@@ -135,7 +118,7 @@ export function normalizeBaseStorage(inventory) {
       container?.usedSlots,
       container?.occupied,
       container?.current,
-      container?.itemCount
+      container?.itemCount,
     );
 
     const max = firstNumber(
@@ -143,7 +126,7 @@ export function normalizeBaseStorage(inventory) {
       container?.maxSlots,
       container?.capacity,
       container?.slots,
-      container?.maxCapacity
+      container?.maxCapacity,
     );
 
     if (used !== null) {
@@ -155,23 +138,13 @@ export function normalizeBaseStorage(inventory) {
     }
   }
 
-  const used =
-    storageUsed !== null
-      ? storageUsed
-      : containerUsed;
+  const used = storageUsed !== null ? storageUsed : containerUsed;
 
-  const max =
-    storageMax !== null
-      ? storageMax
-      : containerMax;
+  const max = storageMax !== null ? storageMax : containerMax;
 
   let percent = null;
 
-  if (
-    used !== null &&
-    max !== null &&
-    max > 0
-  ) {
+  if (used !== null && max !== null && max > 0) {
     percent = clampPercent((used / max) * 100);
   }
 
@@ -183,23 +156,16 @@ export function normalizeBaseStorage(inventory) {
       inventory.usedPercent,
       storage.percent,
       storage.fillPercent,
-      storage.usedPercent
+      storage.usedPercent,
     );
 
     if (suppliedPercent !== null) {
-      percent = clampPercent(
-        suppliedPercent > 1
-          ? suppliedPercent
-          : suppliedPercent * 100
-      );
+      percent = clampPercent(suppliedPercent > 1 ? suppliedPercent : suppliedPercent * 100);
     }
   }
 
   return {
-    available:
-      used !== null ||
-      max !== null ||
-      percent !== null,
+    available: used !== null || max !== null || percent !== null,
     used,
     max,
     percent,
@@ -233,33 +199,16 @@ export function normalizeBaseWater(water) {
           ? water.data
           : [];
 
-  const directVolume = firstNumber(
-    water.volume,
-    water.currentVolume,
-    water.totalVolume,
-    water.waterVolume
-  );
+  const directVolume = firstNumber(water.volume, water.currentVolume, water.totalVolume, water.waterVolume);
 
-  const directMaxVolume = firstNumber(
-    water.maxVolume,
-    water.capacity,
-    water.maxCapacity,
-    water.totalCapacity
-  );
+  const directMaxVolume = firstNumber(water.maxVolume, water.capacity, water.maxCapacity, water.totalCapacity);
 
   let volume = directVolume;
   let maxVolume = directMaxVolume;
 
-  let bloodVolume = firstNumber(
-    water.bloodVolume,
-    water.currentBloodVolume
-  );
+  let bloodVolume = firstNumber(water.bloodVolume, water.currentBloodVolume);
 
-  let bloodMaxVolume = firstNumber(
-    water.bloodMaxVolume,
-    water.bloodCapacity,
-    water.maxBloodVolume
-  );
+  let bloodMaxVolume = firstNumber(water.bloodMaxVolume, water.bloodCapacity, water.maxBloodVolume);
 
   if (containers.length > 0) {
     let summedVolume = 0;
@@ -277,26 +226,19 @@ export function normalizeBaseWater(water) {
         container?.volume,
         container?.currentVolume,
         container?.waterVolume,
-        container?.currentWaterVolume
+        container?.currentWaterVolume,
       );
 
       const max = firstNumber(
         container?.maxVolume,
         container?.capacity,
         container?.maxCapacity,
-        container?.waterCapacity
+        container?.waterCapacity,
       );
 
-      const blood = firstNumber(
-        container?.bloodVolume,
-        container?.currentBloodVolume
-      );
+      const blood = firstNumber(container?.bloodVolume, container?.currentBloodVolume);
 
-      const bloodMax = firstNumber(
-        container?.bloodMaxVolume,
-        container?.bloodCapacity,
-        container?.maxBloodVolume
-      );
+      const bloodMax = firstNumber(container?.bloodMaxVolume, container?.bloodCapacity, container?.maxBloodVolume);
 
       if (current !== null) {
         summedVolume += current;
@@ -331,74 +273,41 @@ export function normalizeBaseWater(water) {
       bloodVolume = summedBloodVolume;
     }
 
-    if (
-      bloodMaxVolume === null &&
-      foundBloodMaxVolume
-    ) {
+    if (bloodMaxVolume === null && foundBloodMaxVolume) {
       bloodMaxVolume = summedBloodMaxVolume;
     }
   }
 
   let percent = null;
 
-  if (
-    volume !== null &&
-    maxVolume !== null &&
-    maxVolume > 0
-  ) {
-    percent = clampPercent(
-      (volume / maxVolume) * 100
-    );
+  if (volume !== null && maxVolume !== null && maxVolume > 0) {
+    percent = clampPercent((volume / maxVolume) * 100);
   }
 
   let bloodPercent = null;
 
-  if (
-    bloodVolume !== null &&
-    bloodMaxVolume !== null &&
-    bloodMaxVolume > 0
-  ) {
-    bloodPercent = clampPercent(
-      (bloodVolume / bloodMaxVolume) * 100
-    );
+  if (bloodVolume !== null && bloodMaxVolume !== null && bloodMaxVolume > 0) {
+    bloodPercent = clampPercent((bloodVolume / bloodMaxVolume) * 100);
   }
 
   if (percent === null) {
-    const suppliedPercent = firstNumber(
-      water.percent,
-      water.fillPercent,
-      water.waterPercent
-    );
+    const suppliedPercent = firstNumber(water.percent, water.fillPercent, water.waterPercent);
 
     if (suppliedPercent !== null) {
-      percent = clampPercent(
-        suppliedPercent > 1
-          ? suppliedPercent
-          : suppliedPercent * 100
-      );
+      percent = clampPercent(suppliedPercent > 1 ? suppliedPercent : suppliedPercent * 100);
     }
   }
 
   if (bloodPercent === null) {
-    const suppliedBloodPercent = firstNumber(
-      water.bloodPercent,
-      water.bloodFillPercent
-    );
+    const suppliedBloodPercent = firstNumber(water.bloodPercent, water.bloodFillPercent);
 
     if (suppliedBloodPercent !== null) {
-      bloodPercent = clampPercent(
-        suppliedBloodPercent > 1
-          ? suppliedBloodPercent
-          : suppliedBloodPercent * 100
-      );
+      bloodPercent = clampPercent(suppliedBloodPercent > 1 ? suppliedBloodPercent : suppliedBloodPercent * 100);
     }
   }
 
   return {
-    available:
-      containers.length > 0 ||
-      volume !== null ||
-      maxVolume !== null,
+    available: containers.length > 0 || volume !== null || maxVolume !== null,
     containers: containers.length,
     volume,
     maxVolume,

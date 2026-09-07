@@ -1,8 +1,8 @@
-import "../lib/assert-server";
-import { randomUUID } from "node:crypto";
-import { createRequestLogger } from "../lib/logger";
-import { getSafeError } from "../lib/errors";
-import { checkRateLimit, getClientAddress } from "../lib/rate-limit";
+import '../lib/assert-server';
+import { randomUUID } from 'node:crypto';
+import { createRequestLogger } from '../lib/logger';
+import { getSafeError } from '../lib/errors';
+import { checkRateLimit, getClientAddress } from '../lib/rate-limit';
 
 type ResponseInit = { status?: number; headers?: Record<string, string> };
 
@@ -21,7 +21,7 @@ export class NextResponse {
     return new NextResponse(JSON.stringify(body), {
       ...init,
       headers: {
-        "Content-Type": "application/json; charset=utf-8",
+        'Content-Type': 'application/json; charset=utf-8',
         ...(init.headers || {}),
       },
     });
@@ -50,38 +50,46 @@ function sendNextResponse(res, response: NextResponse) {
 }
 
 export function getRequestOrigin(req) {
-  const protocol = req.headers["x-forwarded-proto"] || "http";
-  const host = req.headers.host || "localhost";
+  const protocol = req.headers['x-forwarded-proto'] || 'http';
+  const host = req.headers.host || 'localhost';
   return `${protocol}://${host}`;
 }
 
 export async function runPagesApiHandler(req, res, method, handler) {
-  const requestId = req.headers["x-request-id"]?.toString() || randomUUID();
-  const route = req.url?.split("?")[0] || "unknown";
+  const requestId = req.headers['x-request-id']?.toString() || randomUUID();
+  const route = req.url?.split('?')[0] || 'unknown';
   const log = createRequestLogger({ requestId, route, method: req.method });
-  res.setHeader("X-Request-ID", requestId);
+  res.setHeader('X-Request-ID', requestId);
   // Authentication and user-specific telemetry must never be cached by a CDN.
-  res.setHeader("Cache-Control", "private, no-store, max-age=0");
-  res.setHeader("CDN-Cache-Control", "no-store");
-  res.setHeader("Cloudflare-CDN-Cache-Control", "no-store");
+  res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+  res.setHeader('CDN-Cache-Control', 'no-store');
+  res.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
 
   try {
     if (req.method !== method) {
-      res.setHeader("Allow", method);
-      res.status(405).json({ ok: false, error: "Method Not Allowed", code: "METHOD_NOT_ALLOWED", requestId });
-      log.warn("Request rejected", { status: 405 });
+      res.setHeader('Allow', method);
+      res.status(405).json({ ok: false, error: 'Method Not Allowed', code: 'METHOD_NOT_ALLOWED', requestId });
+      log.warn('Request rejected', { status: 405 });
       return;
     }
 
-    const isSensitive = route.includes("/auth/") || route.includes("/export") || req.method !== "GET";
-    const limit = await checkRateLimit(`${getClientAddress(req)}:${route}`, isSensitive ? { limit: 30, windowMs: 60_000 } : { limit: 120, windowMs: 60_000 });
-    res.setHeader("X-RateLimit-Limit", isSensitive ? "30" : "120");
-    res.setHeader("X-RateLimit-Remaining", String(limit.remaining));
+    const isSensitive = route.includes('/auth/') || route.includes('/export') || req.method !== 'GET';
+    const limit = await checkRateLimit(
+      `${getClientAddress(req)}:${route}`,
+      isSensitive ? { limit: 30, windowMs: 60_000 } : { limit: 120, windowMs: 60_000 },
+    );
+    res.setHeader('X-RateLimit-Limit', isSensitive ? '30' : '120');
+    res.setHeader('X-RateLimit-Remaining', String(limit.remaining));
     if (!limit.allowed) {
-      res.setHeader("Retry-After", String(limit.retryAfter));
+      res.setHeader('Retry-After', String(limit.retryAfter));
       const status = limit.storageUnavailable ? 503 : 429;
-      res.status(status).json({ ok: false, error: status === 429 ? "Too many requests" : "Request protection is temporarily unavailable", code: status === 429 ? "RATE_LIMITED" : "RATE_LIMIT_UNAVAILABLE", requestId });
-      log.warn("Request protection rejected request", { status });
+      res.status(status).json({
+        ok: false,
+        error: status === 429 ? 'Too many requests' : 'Request protection is temporarily unavailable',
+        code: status === 429 ? 'RATE_LIMITED' : 'RATE_LIMIT_UNAVAILABLE',
+        requestId,
+      });
+      log.warn('Request protection rejected request', { status });
       return;
     }
 
@@ -89,16 +97,28 @@ export async function runPagesApiHandler(req, res, method, handler) {
     if (response.status >= 400) {
       // Features supply safe messages and may retain domain-specific fallback fields.
       const payload = response.body ? JSON.parse(response.body) : {};
-      const codes = { 400: "BAD_REQUEST", 401: "UNAUTHORIZED", 403: "FORBIDDEN", 404: "NOT_FOUND", 502: "UPSTREAM_ERROR" };
-      response.body = JSON.stringify({ ...payload, ok: false, error: payload.error || "Request failed", code: payload.code || codes[response.status] || "INTERNAL_ERROR", requestId });
-      log.warn("Request failed", { status: response.status });
+      const codes = {
+        400: 'BAD_REQUEST',
+        401: 'UNAUTHORIZED',
+        403: 'FORBIDDEN',
+        404: 'NOT_FOUND',
+        502: 'UPSTREAM_ERROR',
+      };
+      response.body = JSON.stringify({
+        ...payload,
+        ok: false,
+        error: payload.error || 'Request failed',
+        code: payload.code || codes[response.status] || 'INTERNAL_ERROR',
+        requestId,
+      });
+      log.warn('Request failed', { status: response.status });
     } else {
-      log.info("Request completed", { status: response.status });
+      log.info('Request completed', { status: response.status });
     }
     sendNextResponse(res, response);
   } catch (error) {
     const safeError = getSafeError(error);
-    log.error("Failed to load data", error);
+    log.error('Failed to load data', error);
     if (!res.headersSent) {
       res.status(safeError.statusCode).json({ ok: false, error: safeError.message, code: safeError.code, requestId });
     }

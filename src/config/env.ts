@@ -1,9 +1,10 @@
-import "../lib/assert-server";
-import { z } from "zod";
+import '../lib/assert-server';
+import { z } from 'zod';
 
 const serverEnvSchema = z.object({
-  LOG_LEVEL: z.enum(["DEBUG", "INFO", "WARN", "ERROR", "FATAL"]).default("INFO"),
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  LOG_LEVEL: z.enum(['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']).default('INFO'),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  POPULATION_HISTORY_ENABLED: z.enum(['true', 'false']).default('true'),
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_PASSWORD: z.string().min(1).optional(),
   ADAPTER_TOKEN: z.string().min(1).optional(),
@@ -19,7 +20,7 @@ const serverEnvSchema = z.object({
   SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
   SENTRY_ORG: z.string().min(1).optional(),
   SENTRY_PROJECT: z.string().min(1).optional(),
-  SENTRY_ENABLED: z.enum(["true", "false"]).default("false"),
+  SENTRY_ENABLED: z.enum(['true', 'false']).default('false'),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 });
@@ -33,9 +34,11 @@ export function getServerEnv(): ServerEnv {
     return cachedEnv;
   }
 
-  const parsed = serverEnvSchema.safeParse(Object.fromEntries(Object.entries(process.env).map(([key, value]) => [key, value === "" ? undefined : value])));
+  const parsed = serverEnvSchema.safeParse(
+    Object.fromEntries(Object.entries(process.env).map(([key, value]) => [key, value === '' ? undefined : value])),
+  );
   if (!parsed.success) {
-    const fields = parsed.error.issues.map((issue) => issue.path.join(".")).join(", ");
+    const fields = parsed.error.issues.map((issue) => issue.path.join('.')).join(', ');
     throw new Error(`Invalid server environment configuration: ${fields}`);
   }
 
@@ -47,7 +50,7 @@ export function requireServerEnv(...keys: Array<keyof ServerEnv>): ServerEnv {
   const env = getServerEnv();
   const missing = keys.filter((key) => !env[key]);
   if (missing.length > 0) {
-    throw new Error(`Missing server environment configuration: ${missing.join(", ")}`);
+    throw new Error(`Missing server environment configuration: ${missing.join(', ')}`);
   }
   return env;
 }

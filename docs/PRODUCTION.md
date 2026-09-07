@@ -33,3 +33,7 @@ npm run build
 ```
 
 Vitest covers the shared hardening utilities and API boundary behavior. External provider integration and browser workflows still require environment-backed integration or end-to-end tests before a high-risk production launch.
+
+## Portal release checks
+
+Logout requires POST; GET and Next data prefetch requests must never revoke a session. Blueprint export requires server-verified ownership. Before deploying the rebuilt portal, follow [Portal rebuild acceptance](PORTAL_REBUILD.md), including the browser tests and live-provider acceptance checks. Automated browser tests use fixture responses; they do not replace staging validation.

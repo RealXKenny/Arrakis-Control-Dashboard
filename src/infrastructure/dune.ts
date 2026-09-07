@@ -1,7 +1,7 @@
-import "../lib/assert-server";
-import { getServerEnv, requireServerEnv } from "../config/env";
-import { URL } from "node:url";
-import { logger } from "../lib/logger";
+import '../lib/assert-server';
+import { getServerEnv, requireServerEnv } from '../config/env';
+import { URL } from 'node:url';
+import { logger } from '../lib/logger';
 
 /**
  * Dune Console API Client
@@ -25,7 +25,7 @@ class DuneConsoleApiError extends Error {
   constructor(message, status = 0, details = null) {
     super(message);
 
-    this.name = "DuneConsoleApiError";
+    this.name = 'DuneConsoleApiError';
     this.status = status;
     this.details = details;
 
@@ -39,7 +39,7 @@ class DiscordAdapterApiError extends Error {
   constructor(message, status = 0, details = null) {
     super(message);
 
-    this.name = "DiscordAdapterApiError";
+    this.name = 'DiscordAdapterApiError';
     this.status = status;
     this.details = details;
 
@@ -57,7 +57,7 @@ class DuneConsoleClient {
   initialAuthPromise: Promise<unknown> | null;
   constructor(baseUrl, adapterToken = null) {
     if (!baseUrl) {
-      throw new Error("CONSOLE_URL is required to create a Dune console client.");
+      throw new Error('CONSOLE_URL is required to create a Dune console client.');
     }
 
     this.baseUrl = new URL(baseUrl).toString();
@@ -78,7 +78,7 @@ class DuneConsoleClient {
    */
 
   async getAuthState() {
-    const response = await this.request("GET", "/api/auth/state", {
+    const response = await this.request('GET', '/api/auth/state', {
       waitForReady: false,
     });
 
@@ -95,12 +95,12 @@ class DuneConsoleClient {
 
   async login(password) {
     if (!password) {
-      throw new Error("A Dune console password is required to log in.");
+      throw new Error('A Dune console password is required to log in.');
     }
 
     this.password = password;
 
-    const response = await this.request("POST", "/api/auth/login", {
+    const response = await this.request('POST', '/api/auth/login', {
       authenticate: false,
       body: {
         password,
@@ -111,13 +111,13 @@ class DuneConsoleClient {
     });
 
     if (!this.sessionCookie) {
-      throw new Error("Login succeeded without returning an asc_session cookie.");
+      throw new Error('Login succeeded without returning an asc_session cookie.');
     }
 
     await this.getAuthState();
 
     if (!this.csrfToken) {
-      throw new Error("The console did not provide a CSRF token after login.");
+      throw new Error('The console did not provide a CSRF token after login.');
     }
 
     return response;
@@ -125,7 +125,7 @@ class DuneConsoleClient {
 
   async logout() {
     try {
-      return await this.request("POST", "/api/auth/logout", {
+      return await this.request('POST', '/api/auth/logout', {
         body: {},
         retryAuth: false,
       });
@@ -148,7 +148,7 @@ class DuneConsoleClient {
     const { retry = true, timeout = 30000 } = options;
 
     if (!this.adapterToken) {
-      throw new DiscordAdapterApiError("ADAPTER_TOKEN is not configured.", 0);
+      throw new DiscordAdapterApiError('ADAPTER_TOKEN is not configured.', 0);
     }
 
     const url = new URL(route, this.baseUrl);
@@ -160,18 +160,18 @@ class DuneConsoleClient {
     for (let attempt = 1; attempt <= (retry ? 3 : 1); attempt += 1) {
       try {
         response = await fetch(url, {
-          method: "POST",
+          method: 'POST',
 
           headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
 
             Authorization: `Bearer ${this.adapterToken}`,
           },
 
           body: JSON.stringify(body),
 
-          cache: "no-store",
+          cache: 'no-store',
 
           signal: AbortSignal.timeout(timeout),
         });
@@ -188,10 +188,15 @@ class DuneConsoleClient {
           break;
         }
 
-        logger.warn(`Discord Adapter ${route} returned temporary HTTP ${response.status}; ` + `retrying (${attempt}/3).`);
+        logger.warn(
+          `Discord Adapter ${route} returned temporary HTTP ${response.status}; ` + `retrying (${attempt}/3).`,
+        );
       } catch (error) {
         if (attempt === (retry ? 3 : 1)) {
-          logger.error(`Discord Adapter ${route} network request failed ` + `after ${Date.now() - startedAt}ms.`, error);
+          logger.error(
+            `Discord Adapter ${route} network request failed ` + `after ${Date.now() - startedAt}ms.`,
+            error,
+          );
 
           throw new DiscordAdapterApiError(`Discord Adapter network request failed: ${getErrorMessage(error)}`, 0, {
             cause: getErrorCause(error),
@@ -217,9 +222,12 @@ class DuneConsoleClient {
     if (!response.ok) {
       const message = getResponseMessage(data) || `Discord Adapter request failed with status: ${response.status}`;
 
-      logger.warn(`Discord Adapter POST ${route} failed with HTTP ${response.status} ` + `after ${Date.now() - startedAt}ms.`, {
-        response: data,
-      });
+      logger.warn(
+        `Discord Adapter POST ${route} failed with HTTP ${response.status} ` + `after ${Date.now() - startedAt}ms.`,
+        {
+          response: data,
+        },
+      );
 
       /*
        * Give the caller enough information to distinguish:
@@ -236,27 +244,27 @@ class DuneConsoleClient {
   }
 
   async linkPlayer(actor, characterName) {
-    return this.discordAdapterRequest("/api/integrations/discord/players/link", {
+    return this.discordAdapterRequest('/api/integrations/discord/players/link', {
       actor,
       characterName,
     });
   }
 
   async verifyPlayerLink(actor, code) {
-    return this.discordAdapterRequest("/api/integrations/discord/players/link/verify", {
+    return this.discordAdapterRequest('/api/integrations/discord/players/link/verify', {
       actor,
       code,
     });
   }
 
   async unlinkPlayer(actor) {
-    return this.discordAdapterRequest("/api/integrations/discord/players/unlink", {
+    return this.discordAdapterRequest('/api/integrations/discord/players/unlink', {
       actor,
     });
   }
 
   async getCurrentPlayer(actor) {
-    return this.discordAdapterRequest("/api/integrations/discord/players/me", {
+    return this.discordAdapterRequest('/api/integrations/discord/players/me', {
       actor,
     });
   }
@@ -269,20 +277,20 @@ class DuneConsoleClient {
 
   async uploadBlueprint(playerId, attachment) {
     if (!attachment || !attachment.url || !attachment.name) {
-      throw new Error("A valid blueprint attachment is required.");
+      throw new Error('A valid blueprint attachment is required.');
     }
 
     if (!Number.isFinite(Number(playerId)) || Number(playerId) <= 0) {
-      throw new Error("A valid linked player ID is required.");
+      throw new Error('A valid linked player ID is required.');
     }
 
     if (attachment.size !== undefined && attachment.size > MAX_BLUEPRINT_BYTES) {
-      throw new Error("Blueprint files must be 32 MB or smaller.");
+      throw new Error('Blueprint files must be 32 MB or smaller.');
     }
 
     const attachmentUrl = new URL(attachment.url);
-    if (attachmentUrl.protocol !== "https:") {
-      throw new Error("Blueprint attachment URLs must use HTTPS.");
+    if (attachmentUrl.protocol !== 'https:') {
+      throw new Error('Blueprint attachment URLs must use HTTPS.');
     }
 
     const fileResponse = await fetch(attachmentUrl, {
@@ -296,22 +304,22 @@ class DuneConsoleClient {
     const fileBuffer = Buffer.from(await fileResponse.arrayBuffer());
 
     if (fileBuffer.length > MAX_BLUEPRINT_BYTES) {
-      throw new Error("Blueprint files must be 32 MB or smaller.");
+      throw new Error('Blueprint files must be 32 MB or smaller.');
     }
 
     const form = new FormData();
 
-    form.set("player_id", String(playerId));
+    form.set('player_id', String(playerId));
 
     form.set(
-      "file",
+      'file',
       new Blob([fileBuffer], {
-        type: "application/json",
+        type: 'application/json',
       }),
       attachment.name,
     );
 
-    return this.requestMultipart("POST", "/api/blueprints/import", form);
+    return this.requestMultipart('POST', '/api/blueprints/import', form);
   }
 
   /**
@@ -320,19 +328,23 @@ class DuneConsoleClient {
    * --------------------------------------------------------------------------
    */
 
-  async request(method, route, options: {
-    authenticate?: boolean;
-    includeCsrf?: boolean;
-    query?: Record<string, unknown>;
-    body?: unknown;
-    captureSession?: boolean;
-    retryAuth?: boolean;
-    waitForReady?: boolean;
-  } = {}) {
+  async request(
+    method,
+    route,
+    options: {
+      authenticate?: boolean;
+      includeCsrf?: boolean;
+      query?: Record<string, unknown>;
+      body?: unknown;
+      captureSession?: boolean;
+      retryAuth?: boolean;
+      waitForReady?: boolean;
+    } = {},
+  ) {
     const {
       authenticate = true,
 
-      includeCsrf = method !== "GET" && method !== "HEAD",
+      includeCsrf = method !== 'GET' && method !== 'HEAD',
 
       query,
 
@@ -358,11 +370,11 @@ class DuneConsoleClient {
     }
 
     const headers: Record<string, string> = {
-      Accept: "application/json",
+      Accept: 'application/json',
     };
 
     if (body !== undefined) {
-      headers["Content-Type"] = "application/json";
+      headers['Content-Type'] = 'application/json';
     }
 
     if (authenticate && this.sessionCookie) {
@@ -370,7 +382,7 @@ class DuneConsoleClient {
     }
 
     if (includeCsrf && this.csrfToken) {
-      headers["x-csrf-token"] = this.csrfToken;
+      headers['x-csrf-token'] = this.csrfToken;
     }
 
     const startedAt = Date.now();
@@ -455,7 +467,7 @@ class DuneConsoleClient {
 
   async reauthenticate() {
     if (!this.password) {
-      throw new Error("Cannot re-authenticate without the configured console password.");
+      throw new Error('Cannot re-authenticate without the configured console password.');
     }
 
     if (!this.reauthPromise) {
@@ -477,7 +489,7 @@ class DuneConsoleClient {
     const url = new URL(route, this.baseUrl);
 
     const headers: Record<string, string> = {
-      Accept: "application/json",
+      Accept: 'application/json',
     };
 
     if (this.sessionCookie) {
@@ -485,7 +497,7 @@ class DuneConsoleClient {
     }
 
     if (this.csrfToken) {
-      headers["x-csrf-token"] = this.csrfToken;
+      headers['x-csrf-token'] = this.csrfToken;
     }
 
     const startedAt = Date.now();
@@ -511,7 +523,10 @@ class DuneConsoleClient {
     const data = await this.readResponse(response);
 
     if ((response.status === 401 || response.status === 403) && retryAuth && this.password) {
-      logger.warn(`${method} ${route} lost its Console session during multipart upload; ` + `re-authenticating and retrying once.`);
+      logger.warn(
+        `${method} ${route} lost its Console session during multipart upload; ` +
+          `re-authenticating and retrying once.`,
+      );
 
       await this.reauthenticate();
 
@@ -536,12 +551,15 @@ class DuneConsoleClient {
   captureSessionCookie(response) {
     const getSetCookie = response.headers.getSetCookie;
 
-    const cookies = typeof getSetCookie === "function" ? getSetCookie.call(response.headers) : [response.headers.get("set-cookie")].filter(Boolean);
+    const cookies =
+      typeof getSetCookie === 'function'
+        ? getSetCookie.call(response.headers)
+        : [response.headers.get('set-cookie')].filter(Boolean);
 
-    const session = cookies.find((cookie) => cookie.startsWith("asc_session="));
+    const session = cookies.find((cookie) => cookie.startsWith('asc_session='));
 
     if (session) {
-      this.sessionCookie = session.split(";", 1)[0];
+      this.sessionCookie = session.split(';', 1)[0];
     }
   }
 
@@ -556,9 +574,9 @@ class DuneConsoleClient {
       return null;
     }
 
-    const contentType = response.headers.get("content-type") || "";
+    const contentType = response.headers.get('content-type') || '';
 
-    if (contentType.includes("application/json")) {
+    if (contentType.includes('application/json')) {
       return response.json();
     }
 
@@ -573,11 +591,11 @@ class DuneConsoleClient {
  */
 
 function isRecord(value) {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function getString(value) {
-  return typeof value === "string" ? value : undefined;
+  return typeof value === 'string' ? value : undefined;
 }
 
 function getResponseMessage(value) {
@@ -585,15 +603,15 @@ function getResponseMessage(value) {
     return undefined;
   }
 
-  if (typeof value.error === "string") {
+  if (typeof value.error === 'string') {
     return value.error;
   }
 
-  if (typeof value.reason === "string") {
+  if (typeof value.reason === 'string') {
     return value.reason;
   }
 
-  if (typeof value.message === "string") {
+  if (typeof value.message === 'string') {
     return value.message;
   }
 
@@ -614,16 +632,16 @@ function getErrorMessage(error) {
 
 function getErrorCause(error) {
   if (isRecord(error)) {
-    if (typeof error.code === "string") {
+    if (typeof error.code === 'string') {
       return error.code;
     }
 
-    if (typeof error.name === "string") {
+    if (typeof error.name === 'string') {
       return error.name;
     }
   }
 
-  return error instanceof Error ? error.name : "UnknownError";
+  return error instanceof Error ? error.name : 'UnknownError';
 }
 
 function sleep(ms) {
@@ -646,15 +664,15 @@ function getDuneClient() {
   const adapterToken = getServerEnv().ADAPTER_TOKEN;
 
   if (!consoleUrl) {
-    throw new Error("CONSOLE_URL is not configured.");
+    throw new Error('CONSOLE_URL is not configured.');
   }
 
   if (!consolePassword) {
-    throw new Error("CONSOLE_PASSWORD is not configured.");
+    throw new Error('CONSOLE_PASSWORD is not configured.');
   }
 
   if (!adapterToken) {
-    throw new Error("ADAPTER_TOKEN is not configured.");
+    throw new Error('ADAPTER_TOKEN is not configured.');
   }
 
   if (!duneConsoleClientInstance) {
@@ -667,7 +685,7 @@ function getDuneClient() {
      * login() is responsible for creating the Console session.
      */
     duneConsoleClientInstance.initialAuthPromise = duneConsoleClientInstance.login(consolePassword).catch((error) => {
-      logger.error("Initial Dune console login failed.", error);
+      logger.error('Initial Dune console login failed.', error);
 
       duneConsoleClientInstance.initialAuthPromise = null;
       throw error;
@@ -691,13 +709,18 @@ export { DuneConsoleClient, DuneConsoleApiError, DiscordAdapterApiError, getDune
 
 /** Transport only; callers own actor construction and domain response handling. */
 export async function getDiscordPlayer(actor: unknown) {
-  const env = requireServerEnv("CONSOLE_URL", "ADAPTER_TOKEN");
+  const env = requireServerEnv('CONSOLE_URL', 'ADAPTER_TOKEN');
   const response = await fetch(`${env.CONSOLE_URL}/api/integrations/discord/players/me`, {
-    method: "POST",
+    method: 'POST',
     body: JSON.stringify({ actor }),
-    headers: { Accept: "application/json", "Content-Type": "application/json", Authorization: `Bearer ${env.ADAPTER_TOKEN}` },
-    cache: "no-store",
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.ADAPTER_TOKEN}`,
+    },
+    cache: 'no-store',
+    signal: AbortSignal.timeout(15000),
   });
-  if (!response.ok) throw new DiscordAdapterApiError("Discord adapter request failed", response.status);
+  if (!response.ok) throw new DiscordAdapterApiError('Discord adapter request failed', response.status);
   return response.json();
 }

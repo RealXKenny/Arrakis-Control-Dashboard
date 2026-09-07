@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 
 export default function useMapWindow(mapConfig, offset = { x: 0, y: 0 }, split = false) {
+  const router = useRouter();
   const [windowState, setWindowState] = useState({
     x: 0,
     y: 0,
@@ -31,7 +33,10 @@ export default function useMapWindow(mapConfig, offset = { x: 0, y: 0 }, split =
 
     const verticalPadding = viewportHeight <= 600 ? 16 : 36;
 
-    const maxWidth = Math.max(280, split ? (viewportWidth - horizontalPadding - 12) / 2 : viewportWidth - horizontalPadding);
+    const maxWidth = Math.max(
+      280,
+      split ? (viewportWidth - horizontalPadding - 12) / 2 : viewportWidth - horizontalPadding,
+    );
 
     const maxHeight = Math.max(240, viewportHeight - verticalPadding);
 
@@ -63,15 +68,15 @@ export default function useMapWindow(mapConfig, offset = { x: 0, y: 0 }, split =
       width: Math.round(terminalWidth),
       height: Math.round(terminalHeight),
     }));
-  }, [mapConfig, windowState.maximized]);
+  }, [mapConfig, windowState.maximized, split]);
 
   useEffect(() => {
     resizeTerminal();
 
-    window.addEventListener("resize", resizeTerminal);
+    window.addEventListener('resize', resizeTerminal);
 
     return () => {
-      window.removeEventListener("resize", resizeTerminal);
+      window.removeEventListener('resize', resizeTerminal);
     };
   }, [resizeTerminal]);
 
@@ -92,10 +97,10 @@ export default function useMapWindow(mapConfig, offset = { x: 0, y: 0 }, split =
 
     center();
 
-    window.addEventListener("resize", center);
+    window.addEventListener('resize', center);
 
     return () => {
-      window.removeEventListener("resize", center);
+      window.removeEventListener('resize', center);
     };
   }, [windowState.width, windowState.height, windowState.maximized, offset.x, offset.y, split]);
 
@@ -109,7 +114,7 @@ export default function useMapWindow(mapConfig, offset = { x: 0, y: 0 }, split =
         return;
       }
 
-      if (event.target.closest("button")) {
+      if (event.target.closest('button')) {
         return;
       }
 
@@ -140,14 +145,14 @@ export default function useMapWindow(mapConfig, offset = { x: 0, y: 0 }, split =
       setWindowDrag(null);
     };
 
-    window.addEventListener("mousemove", move);
+    window.addEventListener('mousemove', move);
 
-    window.addEventListener("mouseup", up);
+    window.addEventListener('mouseup', up);
 
     return () => {
-      window.removeEventListener("mousemove", move);
+      window.removeEventListener('mousemove', move);
 
-      window.removeEventListener("mouseup", up);
+      window.removeEventListener('mouseup', up);
     };
   }, [windowDrag]);
 
@@ -174,8 +179,8 @@ export default function useMapWindow(mapConfig, offset = { x: 0, y: 0 }, split =
   }, []);
 
   const close = useCallback(() => {
-    window.location.href = "/portal";
-  }, []);
+    void router.push('/portal');
+  }, [router]);
 
   return {
     windowState,

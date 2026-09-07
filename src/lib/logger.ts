@@ -1,5 +1,5 @@
-import { getServerEnv } from "../config/env";
-import * as Sentry from "@sentry/nextjs";
+import { getServerEnv } from '../config/env';
+import * as Sentry from '@sentry/nextjs';
 
 const LEVELS = Object.freeze({
   DEBUG: 10,
@@ -12,21 +12,21 @@ const LEVELS = Object.freeze({
 type LogLevel = keyof typeof LEVELS;
 
 const COLORS = Object.freeze({
-  reset: "\u001B[0m",
-  dim: "\u001B[2m",
-  cyan: "\u001B[36m",
-  green: "\u001B[32m",
-  yellow: "\u001B[33m",
-  red: "\u001B[31m",
-  magenta: "\u001B[35m",
-  blue: "\u001B[34m",
-  brightCyan: "\u001B[96m",
-  brightGreen: "\u001B[92m",
-  brightYellow: "\u001B[93m",
-  brightMagenta: "\u001B[95m",
-  brightBlue: "\u001B[94m",
-  brightOrange: "\u001B[38;5;208m",
-  white: "\u001B[37m",
+  reset: '\u001B[0m',
+  dim: '\u001B[2m',
+  cyan: '\u001B[36m',
+  green: '\u001B[32m',
+  yellow: '\u001B[33m',
+  red: '\u001B[31m',
+  magenta: '\u001B[35m',
+  blue: '\u001B[34m',
+  brightCyan: '\u001B[96m',
+  brightGreen: '\u001B[92m',
+  brightYellow: '\u001B[93m',
+  brightMagenta: '\u001B[95m',
+  brightBlue: '\u001B[94m',
+  brightOrange: '\u001B[38;5;208m',
+  white: '\u001B[37m',
 });
 
 const LEVEL_COLORS: Record<LogLevel, string> = Object.freeze({
@@ -40,17 +40,17 @@ const LEVEL_COLORS: Record<LogLevel, string> = Object.freeze({
 const SCOPE_COLORS: Record<string, string> = Object.freeze({
   BOT: COLORS.brightYellow,
   DISCORD: COLORS.brightCyan,
-  "SHARD MANAGER": COLORS.brightMagenta,
-  "PLAYER PANEL": COLORS.brightGreen,
-  "BLUEPRINT PANEL": COLORS.yellow,
+  'SHARD MANAGER': COLORS.brightMagenta,
+  'PLAYER PANEL': COLORS.brightGreen,
+  'BLUEPRINT PANEL': COLORS.yellow,
   COMMANDS: COLORS.brightBlue,
   COMPONENTS: COLORS.magenta,
   EVENTS: COLORS.green,
   INTERACTIONS: COLORS.cyan,
-  "DUNE API": COLORS.yellow,
-  "DISCORD ADAPTER": COLORS.brightCyan,
-  "DISCORD AUDIT": COLORS.brightGreen,
-  "DISCORD AUDIT LOG": COLORS.brightMagenta,
+  'DUNE API': COLORS.yellow,
+  'DISCORD ADAPTER': COLORS.brightCyan,
+  'DISCORD AUDIT': COLORS.brightGreen,
+  'DISCORD AUDIT LOG': COLORS.brightMagenta,
   DASHBOARD: COLORS.brightOrange,
   default: COLORS.white,
 });
@@ -65,31 +65,37 @@ export type LogContext = {
 
 const secretKeyPattern = /(password|token|secret|cookie|authorization|session|api[-_]?key|access[-_]?token)/i;
 
-function redact(value: unknown, key = ""): unknown {
+function redact(value: unknown, key = ''): unknown {
   if (secretKeyPattern.test(key)) {
-    return "[REDACTED]";
+    return '[REDACTED]';
   }
   if (value instanceof Error) {
-    return { name: value.name, message: value.message, stack: getServerEnv().NODE_ENV === "production" ? undefined : value.stack };
+    return {
+      name: value.name,
+      message: value.message,
+      stack: getServerEnv().NODE_ENV === 'production' ? undefined : value.stack,
+    };
   }
   if (Array.isArray(value)) {
     return value.map((item) => redact(item));
   }
-  if (value && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).map(([entryKey, entryValue]) => [entryKey, redact(entryValue, entryKey)]));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([entryKey, entryValue]) => [entryKey, redact(entryValue, entryKey)]),
+    );
   }
   return value;
 }
 
 function formatTimestamp(date: Date): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
     hour12: true,
   }).formatToParts(date);
 
@@ -100,10 +106,10 @@ function formatTimestamp(date: Date): string {
 
 function formatDetails(details: unknown): string {
   if (details === undefined) {
-    return "";
+    return '';
   }
 
-  if (typeof details === "string") {
+  if (typeof details === 'string') {
     return details;
   }
 
@@ -133,61 +139,73 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
       return;
     }
 
-    const output = `${COLORS.dim}[${formatTimestamp(new Date())}]${COLORS.reset} ` + `${LEVEL_COLORS[level]}[${level}]${COLORS.reset} ` + `${scopeColor}[${scope}]${COLORS.reset} ` + message;
+    const output =
+      `${COLORS.dim}[${formatTimestamp(new Date())}]${COLORS.reset} ` +
+      `${LEVEL_COLORS[level]}[${level}]${COLORS.reset} ` +
+      `${scopeColor}[${scope}]${COLORS.reset} ` +
+      message;
     const safeDetails = redact(details);
     const line = formatDetails(safeDetails);
     const formattedOutput = line ? `${output} ${line}` : output;
 
-    if (level === "ERROR" || level === "FATAL") {
+    if (level === 'ERROR' || level === 'FATAL') {
       console.error(formattedOutput);
 
-      const error = details instanceof Error ? details : details && typeof details === "object" && "error" in details ? details.error : undefined;
+      const error =
+        details instanceof Error
+          ? details
+          : details && typeof details === 'object' && 'error' in details
+            ? details.error
+            : undefined;
       if (error instanceof Error) {
         Sentry.captureException(error, { extra: (redact(details) || {}) as Record<string, unknown> });
       }
       return;
     }
 
-    if (level === "WARN") {
+    if (level === 'WARN') {
       console.warn(formattedOutput);
       return;
     }
 
-    const method = level === "DEBUG" ? console.debug : console.info;
+    const method = level === 'DEBUG' ? console.debug : console.info;
     method(formattedOutput);
   }
 
   return Object.freeze({
-    header(title: string, subtitle = "Dune: Awakening Dashboard"): void {
+    header(title: string, subtitle = 'Dune: Awakening Dashboard'): void {
       if (LEVELS.INFO < threshold) {
         return;
       }
 
       const banner = [
-        "  ██████╗██████╗ ██╗███╗   ███╗███████╗ ██████╗ ███╗   ██╗    ███████╗██╗  ██╗██╗███████╗███████╗ ",
-        " ██╔════╝██╔══██╗██║████╗ ████║██╔════╝██╔═══██╗████╗  ██║    ██╔════╝██║ ██╔╝██║██╔════╝██╔════╝ ",
-        " ██║     ██████╔╝██║██╔████╔██║███████╗██║   ██║██╔██╗ ██║    ███████╗█████╔╝ ██║█████╗  ███████╗ ",
-        " ██║     ██╔══██╗██║██║╚██╔╝██║╚════██║██║   ██║██║╚██╗██║    ╚════██║██╔═██╗ ██║██╔══╝  ╚════██║ ",
-        " ╚██████╗██║  ██║██║██║ ╚═╝ ██║███████║╚██████╔╝██║ ╚████║    ███████║██║  ██╗██║███████╗███████║ ",
-        "  ╚═════╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═══╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝ ",
-      ].join("\n");
+        '  ██████╗██████╗ ██╗███╗   ███╗███████╗ ██████╗ ███╗   ██╗    ███████╗██╗  ██╗██╗███████╗███████╗ ',
+        ' ██╔════╝██╔══██╗██║████╗ ████║██╔════╝██╔═══██╗████╗  ██║    ██╔════╝██║ ██╔╝██║██╔════╝██╔════╝ ',
+        ' ██║     ██████╔╝██║██╔████╔██║███████╗██║   ██║██╔██╗ ██║    ███████╗█████╔╝ ██║█████╗  ███████╗ ',
+        ' ██║     ██╔══██╗██║██║╚██╔╝██║╚════██║██║   ██║██║╚██╗██║    ╚════██║██╔═██╗ ██║██╔══╝  ╚════██║ ',
+        ' ╚██████╗██║  ██║██║██║ ╚═╝ ██║███████║╚██████╔╝██║ ╚████║    ███████║██║  ██╗██║███████╗███████║ ',
+        '  ╚═════╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═══╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝ ',
+      ].join('\n');
 
       console.log(`\n${COLORS.yellow}${banner}${COLORS.reset}`);
       console.log(`${COLORS.cyan}${title}${COLORS.reset} ${COLORS.dim}- ${subtitle}${COLORS.reset}\n`);
     },
-    debug: (message: string, details?: unknown) => write("DEBUG", message, details),
-    info: (message: string, details?: unknown) => write("INFO", message, details),
-    warn: (message: string, details?: unknown) => write("WARN", message, details),
-    error: (message: string, error?: unknown) => write("ERROR", message, error),
-    fatal: (message: string, error?: unknown) => write("FATAL", message, error),
+    debug: (message: string, details?: unknown) => write('DEBUG', message, details),
+    info: (message: string, details?: unknown) => write('INFO', message, details),
+    warn: (message: string, details?: unknown) => write('WARN', message, details),
+    error: (message: string, error?: unknown) => write('ERROR', message, error),
+    fatal: (message: string, error?: unknown) => write('FATAL', message, error),
   });
 }
 
-export const logger = createLogger("DASHBOARD");
+export const logger = createLogger('DASHBOARD');
 
 export function createRequestLogger(context: LogContext): Logger {
-  const requestLogger = createLogger("DASHBOARD");
-  const mergeDetails = (details: unknown): LogContext => (details && typeof details === "object" && !Array.isArray(details) ? { ...context, ...(details as LogContext) } : { ...context, details });
+  const requestLogger = createLogger('DASHBOARD');
+  const mergeDetails = (details: unknown): LogContext =>
+    details && typeof details === 'object' && !Array.isArray(details)
+      ? { ...context, ...(details as LogContext) }
+      : { ...context, details };
 
   return {
     header: requestLogger.header,

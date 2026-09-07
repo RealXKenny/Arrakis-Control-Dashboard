@@ -9,3 +9,8 @@ npm-debug.log*
 # Sentry Config File
 .env.sentry-build-plugin
 tsconfig.tsbuildinfo
+test-results/
+playwright-report/
+
+# Python diagnostic tools
+__pycache__/

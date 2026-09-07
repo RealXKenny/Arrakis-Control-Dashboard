@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const REFRESH_INTERVAL = 30_000;
 
@@ -17,7 +17,7 @@ function getMarkerArray(data) {
 }
 
 function getMapConfig(data) {
-  if (data?.map && typeof data.map === "object") {
+  if (data?.map && typeof data.map === 'object') {
     return data.map;
   }
 
@@ -25,7 +25,7 @@ function getMapConfig(data) {
     return data.maps[data.defaultMap];
   }
 
-  if (data?.maps && typeof data.maps === "object") {
+  if (data?.maps && typeof data.maps === 'object') {
     const firstMap = Object.values(data.maps)[0];
 
     if (firstMap) {
@@ -33,108 +33,65 @@ function getMapConfig(data) {
     }
   }
 
-  if (data?.config && typeof data.config === "object") {
+  if (data?.config && typeof data.config === 'object') {
     return data.config;
   }
 
   return null;
 }
 
-export default function useMapData(mapName = "HaggaBasin") {
+export default function useMapData(mapName = 'HaggaBasin') {
   const [mapConfig, setMapConfig] = useState(null);
   const [markers, setMarkers] = useState([]);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-
-  const loadMap = useCallback(
-    async (signal) => {
-      try {
-        setLoading(true);
-
-        const response = await fetch(`/api/map?map=${encodeURIComponent(mapName)}`, {
-          method: "GET",
-          cache: "no-store",
-          headers: {
-            Accept: "application/json",
-          },
-          signal,
-        });
-
-        if (response.status === 401) {
-          window.location.href = "/auth/login";
-          return;
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
-
-          throw new Error(errorData?.error || `Map API returned ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (!data?.ok) {
-          throw new Error(data?.error || "Map API returned an error.");
-        }
-
-        const map = getMapConfig(data);
-        const rows = getMarkerArray(data);
-
-        if (!map) {
-          throw new Error("Map API did not return a map configuration.");
-        }
-
-        setMapConfig(map);
-        setMarkers(rows);
-        setError("");
-      } catch (err) {
-        if (err?.name === "AbortError") {
-          return;
-        }
-
-        setError(err?.message || "Unable to load map data.");
-      } finally {
+  const active = useRef<AbortController | null>(null);
+  const loadMap = useCallback(async () => {
+    if (active.current) return;
+    const controller = new AbortController();
+    active.current = controller;
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/map?map=${encodeURIComponent(mapName)}`, {
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      if (response.status === 401) throw new Error('Session ended. Return to the portal to sign in again.');
+      if (!response.ok) throw new Error('Map telemetry is temporarily unavailable.');
+      const data = await response.json();
+      const map = getMapConfig(data);
+      if (!data?.ok || !map) throw new Error('Map configuration is unavailable.');
+      if (controller.signal.aborted) return;
+      setMapConfig(map);
+      setMarkers(getMarkerArray(data));
+      setError('');
+    } catch (reason) {
+      if (active.current === controller) setError(reason instanceof Error ? reason.message : 'Unable to load map.');
+    } finally {
+      clearTimeout(timeout);
+      if (active.current === controller) {
+        active.current = null;
         setLoading(false);
       }
-    },
-    [mapName],
-  );
-
+    }
+  }, [mapName]);
   useEffect(() => {
-    const controller = new AbortController();
-
-    void loadMap(controller.signal);
-
-    const interval = window.setInterval(() => {
-      const refreshController = new AbortController();
-
-      void loadMap(refreshController.signal);
-
-      window.setTimeout(() => {
-        refreshController.abort();
-      }, 15_000);
-    }, REFRESH_INTERVAL);
-
+    setMapConfig(null);
+    setMarkers([]);
+    void loadMap();
+    const refresh = () => {
+      if (document.visibilityState === 'visible') void loadMap();
+    };
+    const timer = setInterval(refresh, REFRESH_INTERVAL);
+    document.addEventListener('visibilitychange', refresh);
     return () => {
-      controller.abort();
-      window.clearInterval(interval);
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+      const controller = active.current;
+      active.current = null;
+      controller?.abort();
     };
   }, [loadMap]);
-
-  const reload = useCallback(() => {
-    const controller = new AbortController();
-
-    void loadMap(controller.signal);
-
-    return () => controller.abort();
-  }, [loadMap]);
-
-  return {
-    mapConfig,
-    markers,
-    error,
-    loading,
-    loadMap,
-    reload,
-  };
+  return { mapConfig, markers, error, loading, loadMap, reload: loadMap };
 }

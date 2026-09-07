@@ -1,7 +1,7 @@
-import { NextResponse } from "../../../infrastructure/pages-api";
-import { randomBytes } from "node:crypto";
-import { cookies } from "../../../infrastructure/cookies";
-import { getServerEnv } from "../../../config/env";
+import { NextResponse } from '../../../infrastructure/pages-api';
+import { randomBytes } from 'node:crypto';
+import { cookies } from '../../../infrastructure/cookies';
+import { getServerEnv } from '../../../config/env';
 
 export async function GET(req, res) {
   try {
@@ -10,27 +10,33 @@ export async function GET(req, res) {
     const redirectUri = env.DISCORD_REDIRECT_URI;
 
     if (!clientId) {
-      return NextResponse.json({ ok: false, error: "Authentication is temporarily unavailable.", code: "AUTH_CONFIG_MISSING" }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: 'Authentication is temporarily unavailable.', code: 'AUTH_CONFIG_MISSING' },
+        { status: 500 },
+      );
     }
 
     if (!redirectUri) {
-      return NextResponse.json({ ok: false, error: "Authentication is temporarily unavailable.", code: "AUTH_CONFIG_MISSING" }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: 'Authentication is temporarily unavailable.', code: 'AUTH_CONFIG_MISSING' },
+        { status: 500 },
+      );
     }
 
-    const state = randomBytes(32).toString("hex");
-    cookies(req, res).set("oauth_state", state, {
+    const state = randomBytes(32).toString('hex');
+    cookies(req, res).set('oauth_state', state, {
       httpOnly: true,
-      secure: getServerEnv().NODE_ENV === "production",
-      sameSite: "lax",
+      secure: getServerEnv().NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 600,
-      path: "/",
+      path: '/',
     });
 
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri,
-      response_type: "code",
-      scope: "identify guilds.members.read",
+      response_type: 'code',
+      scope: 'identify guilds.members.read',
       state,
     });
 
@@ -38,7 +44,9 @@ export async function GET(req, res) {
 
     return NextResponse.redirect(discordAuthUrl);
   } catch (error) {
-    return NextResponse.json({ ok: false, error: "Unable to start authentication.", code: "AUTH_START_FAILED" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: 'Unable to start authentication.', code: 'AUTH_START_FAILED' },
+      { status: 500 },
+    );
   }
 }
-
