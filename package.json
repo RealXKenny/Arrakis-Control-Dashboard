@@ -1,6 +1,6 @@
 {
   "name": "Arrakis-Control-Dashboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "dev": "node scripts/run-next.mjs dev",
     "build": "next build",

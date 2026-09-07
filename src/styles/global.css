@@ -20,6 +20,7 @@ body {
 #__next {
   width: 100%;
   min-width: 0;
+  justify-self: stretch;
 }
 
 body {

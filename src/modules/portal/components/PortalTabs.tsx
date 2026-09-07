@@ -23,7 +23,7 @@ export default function PortalTabs() {
         width: "100%",
         display: "flex",
         justifyContent: "center",
-        padding: "0 clamp(12px, 2vw, 48px)",
+        padding: "0 clamp(12px, 1.5vw, 32px)",
         marginBottom: "30px",
         boxSizing: "border-box",
       }}
