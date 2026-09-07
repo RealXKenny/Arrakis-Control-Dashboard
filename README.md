@@ -22,6 +22,8 @@ npm run dev
 
 The development server listens on `http://127.0.0.1:2008`.
 
+Set `DASHBOARD_HOSTNAME` and `DASHBOARD_PORT` in `.env` to bind the dashboard to a different interface and port. You can also override them for a single run with Next.js options, for example `npm run dev -- --hostname 0.0.0.0 --port 3000`.
+
 Fill in `.env` before using authentication or server-backed features. Never commit `.env` or place server secrets in variables beginning with `NEXT_PUBLIC_`.
 
 ## Environment
