@@ -97,6 +97,22 @@ function formatTimestamp(date: Date): string {
   return `${values.month}/${values.day}/${values.year} ${values.hour}:${values.minute}:${values.second} ${values.dayPeriod}`;
 }
 
+function formatDetails(details: unknown): string {
+  if (details === undefined) {
+    return "";
+  }
+
+  if (typeof details === "string") {
+    return details;
+  }
+
+  try {
+    return JSON.stringify(details);
+  } catch {
+    return String(details);
+  }
+}
+
 export interface Logger {
   header(title: string, subtitle?: string): void;
   debug(message: string, details?: unknown): void;
@@ -118,10 +134,11 @@ export function createLogger(scope: string, minimumLevel: string = process.env.L
 
     const output = `${COLORS.dim}[${formatTimestamp(new Date())}]${COLORS.reset} ` + `${LEVEL_COLORS[level]}[${level}]${COLORS.reset} ` + `${scopeColor}[${scope}]${COLORS.reset} ` + message;
     const safeDetails = redact(details);
+    const line = formatDetails(safeDetails);
+    const formattedOutput = line ? `${output} ${line}` : output;
 
     if (level === "ERROR" || level === "FATAL") {
-      if (safeDetails === undefined) console.error(output);
-      else console.error(output, safeDetails instanceof Error ? safeDetails.message : safeDetails);
+      console.error(formattedOutput);
 
       const error = details instanceof Error ? details : details && typeof details === "object" && "error" in details ? details.error : undefined;
       if (error instanceof Error) {
@@ -131,14 +148,12 @@ export function createLogger(scope: string, minimumLevel: string = process.env.L
     }
 
     if (level === "WARN") {
-      if (safeDetails === undefined) console.warn(output);
-      else console.warn(output, safeDetails);
+      console.warn(formattedOutput);
       return;
     }
 
     const method = level === "DEBUG" ? console.debug : console.info;
-    if (safeDetails === undefined) method(output);
-    else method(output, safeDetails);
+    method(formattedOutput);
   }
 
   return Object.freeze({
@@ -171,11 +186,14 @@ export const logger = createLogger("DASHBOARD");
 
 export function createRequestLogger(context: LogContext): Logger {
   const requestLogger = createLogger("DASHBOARD");
+  const mergeDetails = (details: unknown): LogContext =>
+    details && typeof details === "object" && !Array.isArray(details) ? { ...context, ...(details as LogContext) } : { ...context, details };
+
   return {
     header: requestLogger.header,
-    debug: (message, details) => requestLogger.debug(message, { ...context, details }),
-    info: (message, details) => requestLogger.info(message, { ...context, details }),
-    warn: (message, details) => requestLogger.warn(message, { ...context, details }),
+    debug: (message, details) => requestLogger.debug(message, mergeDetails(details)),
+    info: (message, details) => requestLogger.info(message, mergeDetails(details)),
+    warn: (message, details) => requestLogger.warn(message, mergeDetails(details)),
     error: (message, error) => requestLogger.error(message, { ...context, error }),
     fatal: (message, error) => requestLogger.fatal(message, { ...context, error }),
   };

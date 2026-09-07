@@ -9,6 +9,7 @@ export async function register() {
     const { logger } = await import("./src/lib/logger");
     console.clear();
     logger.header("ARRAKIS CONTROL", "Dune: Awakening Dashboard");
+    logger.info("Dashboard loaded");
   } catch (error) {
     const { logger } = await import("./src/lib/logger");
     logger.error("Dune startup authentication failed.", { error });

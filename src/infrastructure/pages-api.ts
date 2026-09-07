@@ -131,13 +131,13 @@ export async function runPagesApiHandler(req, res, method, handler) {
     return;
   }
 
-  const startedAt = Date.now();
   try {
     await sendNextResponse(res, await handler(req, res));
-    log.info("API request completed", { statusCode: res.statusCode, durationMs: Date.now() - startedAt });
+    const dataTarget = route.replace(/^\/api\//, "").replaceAll("/", " ") || "dashboard";
+    log.info(`Grabbed data for ${dataTarget}`);
   } catch (error) {
     const safeError = getSafeError(error);
-    log.error("API request failed", { statusCode: safeError.statusCode, durationMs: Date.now() - startedAt, error });
+    log.error("Failed to load data", error);
     if (!res.headersSent) {
       res.status(safeError.statusCode).json({ ok: false, error: safeError.message, code: safeError.code, requestId });
     }

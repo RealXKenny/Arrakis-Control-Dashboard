@@ -26,11 +26,12 @@ describe("shared production hardening", () => {
   it("redacts secrets from development logs", () => {
     const output = vi.spyOn(console, "info").mockImplementation(() => undefined);
     logger.info("test", { token: "secret-value", route: "/api/test" });
-    const [message, details] = output.mock.calls[0];
+    const [message] = output.mock.calls[0];
     const plainMessage = message.replace(/\u001B\[[0-9;]*m/g, "");
     expect(plainMessage).toContain("[INFO]");
     expect(plainMessage).toContain("[DASHBOARD] test");
-    expect(details).toEqual({ token: "[REDACTED]", route: "/api/test" });
+    expect(plainMessage).toContain('"token":"[REDACTED]"');
+    expect(plainMessage).toContain('"route":"/api/test"');
   });
 
   it("does not expose unexpected server errors", () => {
