@@ -1,11 +1,11 @@
 import { COLORS, styles } from "../config/colors";
-import PortalTabs from "../../../components/tabs/PortalTabs";
+import PortalTabs from "./PortalTabs";
 import Link from "next/link";
 
 export default function UnlinkedState() {
   return (
     <main style={styles.page}>
-      <PortalTabs activeTab="Character" />
+      <PortalTabs />
 
       <div style={styles.container}>
         <div

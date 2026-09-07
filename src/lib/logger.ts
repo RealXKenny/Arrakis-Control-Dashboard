@@ -1,3 +1,4 @@
+import { getServerEnv } from "../config/env";
 import * as Sentry from "@sentry/nextjs";
 
 const LEVELS = Object.freeze({
@@ -69,7 +70,7 @@ function redact(value: unknown, key = ""): unknown {
     return "[REDACTED]";
   }
   if (value instanceof Error) {
-    return { name: value.name, message: value.message, stack: process.env.NODE_ENV === "production" ? undefined : value.stack };
+    return { name: value.name, message: value.message, stack: getServerEnv().NODE_ENV === "production" ? undefined : value.stack };
   }
   if (Array.isArray(value)) {
     return value.map((item) => redact(item));
@@ -122,7 +123,7 @@ export interface Logger {
   fatal(message: string, error?: unknown): void;
 }
 
-export function createLogger(scope: string, minimumLevel: string = process.env.LOG_LEVEL ?? "INFO"): Logger {
+export function createLogger(scope: string, minimumLevel: string = getServerEnv().LOG_LEVEL): Logger {
   const normalizedLevel = minimumLevel.toUpperCase() as LogLevel;
   const threshold = LEVELS[normalizedLevel] ?? LEVELS.INFO;
   const scopeColor = SCOPE_COLORS[scope] ?? SCOPE_COLORS.default;
@@ -197,5 +198,3 @@ export function createRequestLogger(context: LogContext): Logger {
     fatal: (message, error) => requestLogger.fatal(message, { ...context, error }),
   };
 }
-
-export { formatTimestamp };

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { COLORS } from "../config/colors";
 import { clampPercent, formatStorage, formatVolume } from "../utils/formatting";
 import { getBaseId, getBaseName, getBaseOwner, getBaseRelationship, getBaseType, getGeneratorSeconds, getMaxGeneratorUptimeSeconds, getStorageData, getWaterData, isOwnedBase } from "../utils/bases";
@@ -113,7 +114,7 @@ export default function BaseCard({ base, index, telemetry }) {
                   0 0 28px ${dotColor}
                 `,
                 "--dot-color": dotColor,
-              }}
+              } as CSSProperties & { "--dot-color": string }}
             />
 
             <strong

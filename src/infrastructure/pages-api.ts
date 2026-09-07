@@ -1,76 +1,23 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import "server-only";
 import { randomUUID } from "node:crypto";
 import { createRequestLogger } from "../lib/logger";
 import { getSafeError } from "../lib/errors";
 import { checkRateLimit, getClientAddress } from "../lib/rate-limit";
 
-function serializeCookie(name, value, options = {}) {
-  const parts = [`${name}=${encodeURIComponent(value)}`];
-
-  if (options.maxAge !== undefined) {
-    parts.push(`Max-Age=${options.maxAge}`);
-  }
-
-  if (options.expires) {
-    parts.push(`Expires=${options.expires.toUTCString()}`);
-  }
-
-  if (options.httpOnly) {
-    parts.push("HttpOnly");
-  }
-
-  if (options.secure) {
-    parts.push("Secure");
-  }
-
-  if (options.sameSite) {
-    parts.push(`SameSite=${options.sameSite}`);
-  }
-
-  if (options.path) {
-    parts.push(`Path=${options.path}`);
-  }
-
-  return parts.join("; ");
-}
-
-export function getRequestCookie(req, name) {
-  const cookies = req.headers.cookie || "";
-
-  for (const entry of cookies.split(";")) {
-    const [key, ...valueParts] = entry.trim().split("=");
-
-    if (key === name) {
-      return decodeURIComponent(valueParts.join("="));
-    }
-  }
-
-  return undefined;
-}
-
-export function cookies(req, res) {
-  return {
-    get(name) {
-      const value = getRequestCookie(req, name);
-      return value === undefined ? undefined : { value };
-    },
-    set(name, value, options) {
-      const existing = res.getHeader("Set-Cookie");
-      const nextCookie = serializeCookie(name, value, options);
-      const values = existing ? (Array.isArray(existing) ? existing : [existing]) : [];
-      res.setHeader("Set-Cookie", [...values, nextCookie]);
-    },
-  };
-}
+type ResponseInit = { status?: number; headers?: Record<string, string> };
 
 export class NextResponse {
-  constructor(body = null, init = {}) {
+  body: string | null;
+  readonly status: number;
+  readonly headers: Record<string, string>;
+
+  constructor(body: string | null = null, init: ResponseInit = {}) {
     this.body = body;
     this.status = init.status || 200;
     this.headers = init.headers || {};
   }
 
-  static json(body, init = {}) {
+  static json(body: unknown, init: ResponseInit = {}) {
     return new NextResponse(JSON.stringify(body), {
       ...init,
       headers: {
@@ -88,7 +35,7 @@ export class NextResponse {
   }
 }
 
-export function sendNextResponse(res, response) {
+function sendNextResponse(res, response: NextResponse) {
   for (const [name, value] of Object.entries(response.headers || {})) {
     res.setHeader(name, value);
   }
@@ -114,27 +61,37 @@ export async function runPagesApiHandler(req, res, method, handler) {
   const log = createRequestLogger({ requestId, route, method: req.method });
   res.setHeader("X-Request-ID", requestId);
 
-  if (req.method !== method) {
-    res.setHeader("Allow", method);
-    res.status(405).json({ ok: false, error: "Method Not Allowed", code: "METHOD_NOT_ALLOWED", requestId });
-    return;
-  }
-
-  const isSensitive = route.includes("/auth/") || route.includes("/export") || req.method !== "GET";
-  const limit = await checkRateLimit(`${getClientAddress(req)}:${route}`, isSensitive ? { limit: 30, windowMs: 60_000 } : { limit: 120, windowMs: 60_000 });
-  res.setHeader("X-RateLimit-Limit", isSensitive ? "30" : "120");
-  res.setHeader("X-RateLimit-Remaining", String(limit.remaining));
-  if (!limit.allowed) {
-    res.setHeader("Retry-After", String(limit.retryAfter));
-    const status = limit.storageUnavailable ? 503 : 429;
-    res.status(status).json({ ok: false, error: status === 429 ? "Too many requests" : "Request protection is temporarily unavailable", code: status === 429 ? "RATE_LIMITED" : "RATE_LIMIT_UNAVAILABLE", requestId });
-    return;
-  }
-
   try {
-    await sendNextResponse(res, await handler(req, res));
-    const dataTarget = route.replace(/^\/api\//, "").replaceAll("/", " ") || "dashboard";
-    log.info(`Grabbed data for ${dataTarget}`);
+    if (req.method !== method) {
+      res.setHeader("Allow", method);
+      res.status(405).json({ ok: false, error: "Method Not Allowed", code: "METHOD_NOT_ALLOWED", requestId });
+      log.warn("Request rejected", { status: 405 });
+      return;
+    }
+
+    const isSensitive = route.includes("/auth/") || route.includes("/export") || req.method !== "GET";
+    const limit = await checkRateLimit(`${getClientAddress(req)}:${route}`, isSensitive ? { limit: 30, windowMs: 60_000 } : { limit: 120, windowMs: 60_000 });
+    res.setHeader("X-RateLimit-Limit", isSensitive ? "30" : "120");
+    res.setHeader("X-RateLimit-Remaining", String(limit.remaining));
+    if (!limit.allowed) {
+      res.setHeader("Retry-After", String(limit.retryAfter));
+      const status = limit.storageUnavailable ? 503 : 429;
+      res.status(status).json({ ok: false, error: status === 429 ? "Too many requests" : "Request protection is temporarily unavailable", code: status === 429 ? "RATE_LIMITED" : "RATE_LIMIT_UNAVAILABLE", requestId });
+      log.warn("Request protection rejected request", { status });
+      return;
+    }
+
+    const response: NextResponse = await handler(req, res);
+    if (response.status >= 400) {
+      // Features supply safe messages and may retain domain-specific fallback fields.
+      const payload = response.body ? JSON.parse(response.body) : {};
+      const codes = { 400: "BAD_REQUEST", 401: "UNAUTHORIZED", 403: "FORBIDDEN", 404: "NOT_FOUND", 502: "UPSTREAM_ERROR" };
+      response.body = JSON.stringify({ ...payload, ok: false, error: payload.error || "Request failed", code: payload.code || codes[response.status] || "INTERNAL_ERROR", requestId });
+      log.warn("Request failed", { status: response.status });
+    } else {
+      log.info("Request completed", { status: response.status });
+    }
+    sendNextResponse(res, response);
   } catch (error) {
     const safeError = getSafeError(error);
     log.error("Failed to load data", error);

@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/nextjs";
 import { useEffect, useRef, useState } from 'react';
 
 import { REFRESH_INTERVAL } from '../config/progression';
@@ -91,10 +92,7 @@ export function usePlayerData() {
       }
 
       if (!res.ok) {
-        console.error(
-          'Player API returned:',
-          res.status
-        );
+        captureException(new Error(`Player API returned ${res.status}`));
         return;
       }
 
@@ -110,10 +108,7 @@ export function usePlayerData() {
 
       await loadBaseTelemetry(bases);
     } catch (error) {
-      console.error(
-        'Failed to fetch player data:',
-        error
-      );
+      captureException(error);
     } finally {
       setStatusLoading(false);
       refreshInProgress.current = false;

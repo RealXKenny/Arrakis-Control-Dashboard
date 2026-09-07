@@ -1,5 +1,5 @@
 
-export function firstNumber(...values) {
+function firstNumber(...values) {
   for (const value of values) {
     const number = Number(value);
 
@@ -11,7 +11,7 @@ export function firstNumber(...values) {
   return null;
 }
 
-export function firstValue(...values) {
+function firstValue(...values) {
   for (const value of values) {
     if (
       value !== undefined &&
@@ -25,128 +25,12 @@ export function firstValue(...values) {
   return null;
 }
 
-export function clampPercent(value) {
+function clampPercent(value) {
   if (!Number.isFinite(value)) {
     return null;
   }
 
   return Math.max(0, Math.min(100, value));
-}
-
-/**
- * Normalize currency.
- */
-export function normalizeCurrency(currency) {
-  if (!currency) {
-    return {
-      available: false,
-      rows: [],
-      solariCredit: null,
-      scrip: null,
-    };
-  }
-
-  const rows = Array.isArray(currency)
-    ? currency
-    : Array.isArray(currency.rows)
-      ? currency.rows
-      : Array.isArray(currency.data)
-        ? currency.data
-        : [];
-
-  const normalizedRows = rows.map((row) => ({
-    ...row,
-    currency_id: firstNumber(
-      row?.currency_id,
-      row?.currencyId,
-      row?.id
-    ),
-    balance: firstNumber(row?.balance) ?? 0,
-    label: row?.label ?? null,
-  }));
-
-  const solariRow = normalizedRows.find((row) => {
-    const label = String(row.label ?? '').toLowerCase();
-
-    return (
-      label.includes('solari') ||
-      label.includes('solar')
-    );
-  });
-
-  const scripRow = normalizedRows.find((row) => {
-    const label = String(row.label ?? '').toLowerCase();
-
-    return label.includes('scrip');
-  });
-
-  return {
-    ...currency,
-    available:
-      currency?.capabilities?.currency === true ||
-      normalizedRows.length > 0,
-    rows: normalizedRows,
-
-    // Convenient values for the frontend.
-    solariCredit: solariRow?.balance ?? null,
-    scrip: scripRow?.balance ?? null,
-
-    // Keep the original API naming available too.
-    solarisCoin: solariRow?.balance ?? null,
-  };
-}
-
-/**
- * Extract vehicle rows from common API response wrappers.
- */
-export function extractVehicleRows(response) {
-  if (Array.isArray(response)) {
-    return response;
-  }
-
-  const queue = [response];
-  const seen = new Set();
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-
-    if (!current || typeof current !== 'object') {
-      continue;
-    }
-
-    if (seen.has(current)) {
-      continue;
-    }
-
-    seen.add(current);
-
-    if (Array.isArray(current)) {
-      return current;
-    }
-
-    for (const key of [
-      'rows',
-      'vehicles',
-      'data',
-      'results',
-      'items',
-    ]) {
-      const value = current[key];
-
-      if (Array.isArray(value)) {
-        return value;
-      }
-
-      if (
-        value &&
-        typeof value === 'object'
-      ) {
-        queue.push(value);
-      }
-    }
-  }
-
-  return [];
 }
 
 /**

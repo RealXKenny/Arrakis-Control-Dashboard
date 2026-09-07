@@ -1,5 +1,4 @@
 import { COLORS, styles } from '../config/colors';
-import PortalTabs from '../../../components/tabs/PortalTabs';
 
 export default function LoadingState() {
   return (

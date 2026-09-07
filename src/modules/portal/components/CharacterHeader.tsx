@@ -1,7 +1,7 @@
 import { COLORS } from "../config/colors";
 import Link from "next/link";
 
-export default function CharacterHeader({ character, isOnline, statusLoading }) {
+export default function CharacterHeader({ character, isOnline }) {
   return (
     <>
       {/* Top status bar */}

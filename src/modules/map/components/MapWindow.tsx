@@ -155,7 +155,7 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
 
   const [selected, setSelected] = React.useState(null);
 
-  const [target, setTarget] = React.useState(null);
+  const target = null;
 
   const [legendDisabled, setLegendDisabled] = React.useState({});
 
@@ -512,7 +512,7 @@ export default function MapWindow({ mapName = "HaggaBasin", title = "HAGGA BASIN
               }}
             >
               {mapConfig ? (
-                <MapCanvas mapName={mapName} mapConfig={mapConfig} markers={visibleMarkers} zoom={zoom} canvasRef={canvasRef} target={target} onSelectMarker={setSelected} onSetTarget={setTarget} />
+                <MapCanvas mapName={mapName} mapConfig={mapConfig} markers={visibleMarkers} zoom={zoom} canvasRef={canvasRef} target={target} onSelectMarker={setSelected} />
               ) : (
                 <div
                   style={{

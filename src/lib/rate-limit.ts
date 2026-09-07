@@ -1,3 +1,4 @@
+import "server-only";
 import { createHash } from "node:crypto";
 import { getServerEnv } from "../config/env";
 import { getRedisClient } from "./redis";

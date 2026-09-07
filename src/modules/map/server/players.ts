@@ -69,20 +69,6 @@ export function getPlayerName(
     );
 }
 
-export function normalizePlayerName(
-    playerData,
-    session
-) {
-    return String(
-        getPlayerName(
-            playerData,
-            session
-        )
-    )
-        .trim()
-        .toLowerCase();
-}
-
 export function isCurrentPlayerMarker(
     marker,
     playerId,

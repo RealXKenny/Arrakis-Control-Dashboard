@@ -12,39 +12,3 @@ export function getCoordinate(marker, axis) {
 
   return toNumber(value);
 }
-
-export function getMarkerArray(data) {
-  if (Array.isArray(data?.markers)) {
-    return data.markers;
-  }
-
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  return [];
-}
-
-export function getMapConfig(data) {
-  if (data?.map) {
-    return data.map;
-  }
-
-  if (data?.maps && data?.defaultMap && data.maps[data.defaultMap]) {
-    return data.maps[data.defaultMap];
-  }
-
-  if (data?.maps) {
-    const firstMap = Object.values(data.maps)[0];
-
-    if (firstMap) {
-      return firstMap;
-    }
-  }
-
-  if (data?.config) {
-    return data.config;
-  }
-
-  return null;
-}

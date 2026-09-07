@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
 
 export default function PortalTabs() {
-  const pathname = usePathname();
+  const { pathname } = useRouter();
 
   const tabs = [
     {

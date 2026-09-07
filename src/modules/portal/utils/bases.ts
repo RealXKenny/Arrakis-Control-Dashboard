@@ -1,4 +1,4 @@
-import { clampPercent } from './formatting';
+import { clampPercent, getNumber } from './formatting';
 import { FUEL_BURN_SECONDS, GENERATOR_FUEL_CAP, generatorUptimePolicy } from '../config/progression';
 
 export function getBaseId(base) {
@@ -9,18 +9,6 @@ export function getBaseId(base) {
     base?.uuid ??
     null
   );
-}
-
-export function getNumber(...values) {
-  for (const value of values) {
-    const number = Number(value);
-
-    if (Number.isFinite(number)) {
-      return number;
-    }
-  }
-
-  return null;
 }
 
 export function getGeneratorSeconds(base) {
@@ -344,4 +332,3 @@ export function getBaseOwner(base) {
     'Unknown'
   );
 }
-

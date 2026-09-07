@@ -14,6 +14,8 @@ OAuth sessions use Redis JSON records with a 24-hour TTL. Cookies contain only a
 
 ## Monitoring
 
+Set `SENTRY_DSN` for server and Edge reporting and `NEXT_PUBLIC_SENTRY_DSN` for browser reporting. Browser configuration does not fall back to server environment values. Startup is consolidated in `src/instrumentation.ts`, which initializes monitoring and warms the Dune client on Node.js. No market response snapshots are written to disk.
+
 Server logs are structured JSON in production and readable context logs in development. Sensitive keys are redacted before logging or sending error context to Sentry. Source maps are uploaded by the Sentry Next.js plugin only when the deployment provides `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT`.
 
 ## Verification

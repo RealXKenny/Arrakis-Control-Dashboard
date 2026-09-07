@@ -1,4 +1,4 @@
-export const MAX_POWER_SECONDS = 20 * 19 * 60 * 60;
+
 export const REFRESH_INTERVAL = 60000;
 
 export const FUEL_BURN_SECONDS = {

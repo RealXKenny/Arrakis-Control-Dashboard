@@ -1,3 +1,4 @@
+import "server-only";
 import { Redis } from "@upstash/redis";
 import { getServerEnv } from "../config/env";
 

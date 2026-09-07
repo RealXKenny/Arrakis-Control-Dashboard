@@ -1,10 +1,5 @@
 import Document, { Head, Html, Main, NextScript } from "next/document";
 
-export const metadata = {
-  title: "Arrakis Control Dashboard",
-  description: "Modular Discord bot interface for the Dune: Awakening Console",
-};
-
 export default class RootDocument extends Document {
   render() {
     return (

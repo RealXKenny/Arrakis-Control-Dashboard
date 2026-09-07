@@ -8,16 +8,6 @@ export function clampPercent(value) {
   return Math.max(0, Math.min(100, number));
 }
 
-export function getBaseId(base) {
-  return (
-    base?.base_id ??
-    base?.baseId ??
-    base?.id ??
-    base?.uuid ??
-    null
-  );
-}
-
 export function getNumber(...values) {
   for (const value of values) {
     const number = Number(value);

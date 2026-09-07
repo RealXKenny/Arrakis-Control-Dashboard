@@ -1,37 +1,8 @@
+import { responseMock } from "./helpers/response";
 import { describe, expect, it } from "vitest";
 import { NextResponse, runPagesApiHandler } from "../src/infrastructure/pages-api";
 import authCallback from "../src/pages/api/auth/callback/index";
 import marketConfig from "../src/pages/api/market/config/index";
-
-function responseMock() {
-  const headers = new Map<string, unknown>();
-  return {
-    statusCode: 200,
-    headersSent: false,
-    body: undefined as unknown,
-    setHeader(name: string, value: unknown) {
-      headers.set(name, value);
-    },
-    getHeader(name: string) {
-      return headers.get(name);
-    },
-    status(code: number) {
-      this.statusCode = code;
-      return this;
-    },
-    json(body: unknown) {
-      this.body = body;
-      return this;
-    },
-    send(body: unknown) {
-      this.body = body;
-      return this;
-    },
-    end() {
-      return this;
-    },
-  };
-}
 
 describe("Pages API boundary", () => {
   it("returns successful responses with a request ID", async () => {

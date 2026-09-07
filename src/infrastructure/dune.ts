@@ -1,3 +1,5 @@
+import "server-only";
+import { getServerEnv, requireServerEnv } from "../config/env";
 import { URL } from "node:url";
 import { logger } from "../lib/logger";
 
@@ -18,6 +20,8 @@ const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
 const MAX_BLUEPRINT_BYTES = 32 * 1024 * 1024;
 
 class DuneConsoleApiError extends Error {
+  readonly status: number;
+  readonly details: unknown;
   constructor(message, status = 0, details = null) {
     super(message);
 
@@ -30,6 +34,8 @@ class DuneConsoleApiError extends Error {
 }
 
 class DiscordAdapterApiError extends Error {
+  readonly status: number;
+  readonly details: unknown;
   constructor(message, status = 0, details = null) {
     super(message);
 
@@ -42,6 +48,13 @@ class DiscordAdapterApiError extends Error {
 }
 
 class DuneConsoleClient {
+  readonly baseUrl: string;
+  readonly adapterToken: string | null;
+  sessionCookie: string | null;
+  csrfToken: string | null;
+  password: string | null;
+  reauthPromise: Promise<unknown> | null;
+  initialAuthPromise: Promise<unknown> | null;
   constructor(baseUrl, adapterToken = null) {
     if (!baseUrl) {
       throw new Error("CONSOLE_URL is required to create a Dune console client.");
@@ -49,7 +62,7 @@ class DuneConsoleClient {
 
     this.baseUrl = new URL(baseUrl).toString();
 
-    this.adapterToken = adapterToken || process.env.ADAPTER_TOKEN || null;
+    this.adapterToken = adapterToken || getServerEnv().ADAPTER_TOKEN || null;
 
     this.sessionCookie = null;
     this.csrfToken = null;
@@ -131,7 +144,7 @@ class DuneConsoleClient {
    * ADAPTER_TOKEN instead of the browser session cookie.
    */
 
-  async discordAdapterRequest(route, body = {}, options = {}) {
+  async discordAdapterRequest(route, body = {}, options: { retry?: number; timeout?: number } = {}) {
     const { retry = true, timeout = 30000 } = options;
 
     if (!this.adapterToken) {
@@ -307,7 +320,15 @@ class DuneConsoleClient {
    * --------------------------------------------------------------------------
    */
 
-  async request(method, route, options = {}) {
+  async request(method, route, options: {
+    authenticate?: boolean;
+    includeCsrf?: boolean;
+    query?: Record<string, unknown>;
+    body?: unknown;
+    captureSession?: boolean;
+    retryAuth?: boolean;
+    waitForReady?: boolean;
+  } = {}) {
     const {
       authenticate = true,
 
@@ -336,7 +357,7 @@ class DuneConsoleClient {
       }
     }
 
-    const headers = {
+    const headers: Record<string, string> = {
       Accept: "application/json",
     };
 
@@ -455,7 +476,7 @@ class DuneConsoleClient {
   async requestMultipart(method, route, form, retryAuth = true) {
     const url = new URL(route, this.baseUrl);
 
-    const headers = {
+    const headers: Record<string, string> = {
       Accept: "application/json",
     };
 
@@ -618,11 +639,11 @@ function sleep(ms) {
 let duneConsoleClientInstance = null;
 
 function getDuneClient() {
-  const consoleUrl = process.env.CONSOLE_URL;
+  const consoleUrl = getServerEnv().CONSOLE_URL;
 
-  const consolePassword = process.env.CONSOLE_PASSWORD;
+  const consolePassword = getServerEnv().CONSOLE_PASSWORD;
 
-  const adapterToken = process.env.ADAPTER_TOKEN;
+  const adapterToken = getServerEnv().ADAPTER_TOKEN;
 
   if (!consoleUrl) {
     throw new Error("CONSOLE_URL is not configured.");
@@ -666,46 +687,17 @@ async function warmupDuneClient() {
   return client;
 }
 
-/**
- * --------------------------------------------------------------------------
- * NEXT.JS TEST ROUTE
- * --------------------------------------------------------------------------
- *
- * GET /api/dune
- *
- * This verifies the Console authentication state.
- */
-
-export async function GET() {
-  try {
-    const client = getDuneClient();
-
-    const result = await client.getAuthState();
-
-    return Response.json(result);
-  } catch (error) {
-    if (error instanceof DuneConsoleApiError) {
-      return Response.json(
-        {
-          error: error.message,
-          status: error.status,
-          details: error.details,
-        },
-        {
-          status: error.status >= 400 ? error.status : 500,
-        },
-      );
-    }
-
-    return Response.json(
-      {
-        error: error instanceof Error ? error.message : String(error),
-      },
-      {
-        status: 500,
-      },
-    );
-  }
-}
-
 export { DuneConsoleClient, DuneConsoleApiError, DiscordAdapterApiError, getDuneClient, warmupDuneClient };
+
+/** Transport only; callers own actor construction and domain response handling. */
+export async function getDiscordPlayer(actor: unknown) {
+  const env = requireServerEnv("CONSOLE_URL", "ADAPTER_TOKEN");
+  const response = await fetch(`${env.CONSOLE_URL}/api/integrations/discord/players/me`, {
+    method: "POST",
+    body: JSON.stringify({ actor }),
+    headers: { Accept: "application/json", "Content-Type": "application/json", Authorization: `Bearer ${env.ADAPTER_TOKEN}` },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new DiscordAdapterApiError("Discord adapter request failed", response.status);
+  return response.json();
+}

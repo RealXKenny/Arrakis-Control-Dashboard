@@ -1,3 +1,5 @@
+import { getNumber } from "./formatting";
+
 export function getCurrencyValue(...values) {
   for (const value of values) {
     if (value === null || value === undefined) {

@@ -220,15 +220,3 @@ export function isVehicleAccessible(vehicle, playerName) {
     );
   });
 }
-
-export function getVehicleRelationship(
-  vehicle,
-  playerName
-) {
-  return isOwnedVehicle(
-    vehicle,
-    playerName
-  )
-    ? 'Owned'
-    : 'Shared';
-}

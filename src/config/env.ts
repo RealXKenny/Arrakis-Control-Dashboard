@@ -1,6 +1,8 @@
+import "server-only";
 import { z } from "zod";
 
 const serverEnvSchema = z.object({
+  LOG_LEVEL: z.enum(["DEBUG", "INFO", "WARN", "ERROR", "FATAL"]).default("INFO"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_PASSWORD: z.string().min(1).optional(),
@@ -30,7 +32,7 @@ export function getServerEnv(): ServerEnv {
     return cachedEnv;
   }
 
-  const parsed = serverEnvSchema.safeParse(process.env);
+  const parsed = serverEnvSchema.safeParse(Object.fromEntries(Object.entries(process.env).map(([key, value]) => [key, value === "" ? undefined : value])));
   if (!parsed.success) {
     const fields = parsed.error.issues.map((issue) => issue.path.join(".")).join(", ");
     throw new Error(`Invalid server environment configuration: ${fields}`);
