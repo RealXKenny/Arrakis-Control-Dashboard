@@ -5,6 +5,15 @@ const serverEnvSchema = z.object({
   LOG_LEVEL: z.enum(['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']).default('INFO'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   POPULATION_HISTORY_ENABLED: z.enum(['true', 'false']).default('true'),
+  LIVE_EVENTS_ENABLED: z.enum(['true', 'false']).default('false'),
+  RABBITMQ_URL: z.string().url().startsWith('amqps://').optional(),
+  RABBITMQ_MANAGEMENT_URL: z.string().url().optional(),
+  RABBITMQ_CA_PEM: z.string().optional(),
+  RABBITMQ_TLS_SERVERNAME: z.string().optional(),
+  LIVE_EVENTS_ADMIN_ROLE_IDS: z
+    .string()
+    .regex(/^(\d+(,\d+)*)?$/)
+    .default(''),
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_PASSWORD: z.string().min(1).optional(),
   ADAPTER_TOKEN: z.string().min(1).optional(),

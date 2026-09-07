@@ -26,6 +26,36 @@ class FakeClient:
             return [{'exchange': 'chat.intercept', 'payload': base64.b64encode(json.dumps({'Type': 'TextChat', 'content': json.dumps({'m_Message': 'private message', 'accountId': 'private-id'})}).encode()).decode()}]
 
 class ProbeTests(unittest.TestCase):
+    def test_output_limit_preserves_complete_records(self):
+        target = io.StringIO()
+        writer = probe.LimitedWriter(target, 6, 'test')
+        with contextlib.redirect_stderr(io.StringIO()):
+            writer.write('one\n')
+            writer.write('two\n')
+            writer.write('x')
+        self.assertEqual(target.getvalue(), 'one\n')
+        self.assertTrue(writer.full)
+
+    def test_overnight_reconnects_and_stops_at_deadline(self):
+        clock = [0]
+        attempts = [0]
+        def sleep(seconds):
+            clock[0] += seconds
+        def segment(client, duration, **kwargs):
+            attempts[0] += 1
+            if attempts[0] == 1:
+                raise probe.urllib.error.URLError('offline')
+            clock[0] += duration
+        with contextlib.redirect_stdout(io.StringIO()), patch.object(probe.time, 'monotonic', side_effect=lambda: clock[0]), patch.object(probe.time, 'sleep', side_effect=sleep), patch.object(probe, 'capture', side_effect=segment):
+            probe.overnight(object(), 1)
+        self.assertEqual(clock[0], 3600)
+        self.assertEqual(attempts[0], 13)
+
+    def test_overnight_stops_on_rejected_credentials(self):
+        error = probe.urllib.error.HTTPError('local', 401, 'denied', {}, None)
+        with contextlib.redirect_stdout(io.StringIO()), patch.object(probe, 'capture', side_effect=error), self.assertRaises(probe.urllib.error.HTTPError):
+            probe.overnight(object(), 1)
+
     def test_discovery_binds_topics_and_exact_direct_keys_without_auth_traffic(self):
         class Inventory:
             def request(self, method, path):

@@ -59,7 +59,7 @@ describe('module boundaries', () => {
 
   it('keeps every API route behind the common handler', () => {
     const routes = files.filter((p) => normalize(p).startsWith('pages/api/'));
-    expect(routes).toHaveLength(11);
+    expect(routes).toHaveLength(12);
     for (const route of routes) {
       const method = normalize(route).includes('/auth/logout/') ? 'POST' : 'GET';
       expect(fs.readFileSync(route, 'utf8').replaceAll("'", '"')).toContain(

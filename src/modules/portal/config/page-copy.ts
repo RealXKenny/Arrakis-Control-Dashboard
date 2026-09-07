@@ -1,6 +1,11 @@
 import type { PortalView } from './navigation';
 
 export const portalPageCopy: Record<PortalView, { section: string; title: string; description: string }> = {
+  live: {
+    section: 'Server observations',
+    title: 'Live Intel',
+    description: 'Instance readings and observed activity from the Dune message broker.',
+  },
   overview: {
     section: 'Arrakis | Field report',
     title: 'Dashboard',

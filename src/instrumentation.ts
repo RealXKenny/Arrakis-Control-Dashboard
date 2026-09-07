@@ -16,6 +16,8 @@ export async function register() {
     if (process.env.NEXT_PHASE !== 'phase-production-build') {
       const { startPopulationRecorder } = await import('./modules/portal/server/population');
       startPopulationRecorder();
+      const { startLiveCollector } = await import('./modules/live/server/collector');
+      startLiveCollector();
     }
   }
 

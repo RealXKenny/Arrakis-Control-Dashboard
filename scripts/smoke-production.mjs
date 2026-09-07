@@ -48,7 +48,7 @@ const child = spawn(process.execPath, ["--trace-warnings", require.resolve("next
   windowsHide: true,
   stdio: ["ignore", "pipe", "pipe"],
   env: {
-    ...process.env, POPULATION_HISTORY_ENABLED: "false",
+    ...process.env, POPULATION_HISTORY_ENABLED: "false", LIVE_EVENTS_ENABLED: "false",
     NODE_ENV: mode === "dev" ? "development" : "production",
     CONSOLE_URL: `http://127.0.0.1:${redisPort}`, CONSOLE_PASSWORD: "fixture-password", ADAPTER_TOKEN: "fixture-token",
     DISCORD_CLIENT_ID: "", DISCORD_CLIENT_SECRET: "", DISCORD_GUILD_ID: "",
@@ -77,7 +77,7 @@ try {
     await new Promise(resolve => setTimeout(resolve, 200));
   }
   assert.ok(ready, "Production server must serve /portal");
-  const routes = ["auth/login", "auth/callback", "auth/logout", "map", "player", "market", "market/config", "market/listings", "portal/world", "bases/test/export", "server/status"];
+  const routes = ["auth/login", "auth/callback", "auth/logout", "map", "player", "market", "market/config", "market/listings", "portal/world", "bases/test/export", "server/status", "live"];
   for (const route of routes) {
     const response = await fetch(`${base}/api/${route}`, { method: route === 'auth/logout' ? 'GET' : 'POST', signal: AbortSignal.timeout(5000) });
     assert.equal(response.status, 405, route);
@@ -123,7 +123,7 @@ try {
   await monitoringResponse.text();
   if (logs.includes("MaxListenersExceededWarning")) console.error(logs.slice(logs.indexOf("MaxListenersExceededWarning"), logs.indexOf("MaxListenersExceededWarning") + 2500));
   assert.doesNotMatch(logs, /Failed to load external module|MaxListenersExceededWarning|This module cannot be imported from a Client Component/);
-  console.log("Runtime smoke passed: portal, 11 API modules, 100 unauthorized requests, authenticated telemetry and market, safe logout prefetch, POST session revocation; no import or listener warnings.");
+  console.log("Runtime smoke passed: portal, 12 API modules, 100 unauthorized requests, authenticated telemetry and market, safe logout prefetch, POST session revocation; no import or listener warnings.");
 } finally {
   child.kill();
   await childDone;

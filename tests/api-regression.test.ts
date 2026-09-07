@@ -10,6 +10,7 @@ import marketConfig from '../src/pages/api/market/config';
 import exportBase from '../src/pages/api/bases/[baseId]/export';
 import status from '../src/pages/api/server/status';
 import world from '../src/pages/api/portal/world';
+import live from '../src/pages/api/live';
 import { runPagesApiHandler, NextResponse } from '../src/infrastructure/pages-api';
 import { getDuneClient, getDiscordPlayer } from '../src/infrastructure/dune';
 import { getSession, saveSession, deleteSession } from '../src/lib/session-store';
@@ -48,6 +49,7 @@ const routes = [
   ['/api/bases/base/export', exportBase],
   ['/api/server/status', status],
   ['/api/portal/world', world],
+  ['/api/live', live],
 ] as const;
 
 beforeEach(() => {

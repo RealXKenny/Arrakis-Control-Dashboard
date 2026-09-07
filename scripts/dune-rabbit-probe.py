@@ -5,6 +5,7 @@ import argparse
 import contextlib
 import collections
 import getpass
+import http.client
 import json
 import os
 import re
@@ -28,7 +29,7 @@ BASE = 'http://127.0.0.1:15672/api'
 
 def shape(value, depth=0):
     """Report structure, never scalar message values or raw message bodies."""
-    if depth >= 7:
+    if depth >= 12:
         return '<depth limit>'
     if isinstance(value, dict):
         result = {}
@@ -190,10 +191,59 @@ class Tee:
             target.flush()
 
 
+class LimitedWriter:
+    """Bound output without writing partial JSON records. Keep discovery running at the limit."""
+    def __init__(self, target, limit, label):
+        self.target, self.limit, self.label = target, limit, label
+        self.used = 0
+        self.full = False
+    def write(self, text):
+        size = len(text.encode('utf-8'))
+        if self.full or self.used + size > self.limit:
+            if not self.full:
+                print(self.label + ' size limit reached; further file output omitted.', file=sys.stderr, flush=True)
+            self.full = True
+            return len(text)
+        self.target.write(text)
+        self.used += size
+        return len(text)
+    def flush(self):
+        self.target.flush()
+
+
+def overnight(client, hours, raw_file=None):
+    deadline = time.monotonic() + hours * 3600
+    backoff = 5
+    while time.monotonic() < deadline:
+        remaining = deadline - time.monotonic()
+        if remaining < 1:
+            break
+        print(json.dumps({'segment_started_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                          'remaining_seconds': round(remaining),
+                          'note': 'Bindings refresh each segment; reconnect/rebind gaps are not captured.'}), flush=True)
+        try:
+            capture(client, duration=min(300, remaining), message_limit=10000,
+                    discovery=True, raw_file=raw_file)
+            backoff = 5
+        except urllib.error.HTTPError as error:
+            if error.code in (401, 403):
+                raise
+            print(json.dumps({'capture_gap': True, 'http_status': error.code}), flush=True)
+            time.sleep(min(backoff, max(0, deadline - time.monotonic())))
+            backoff = min(60, backoff * 2)
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException):
+            print(json.dumps({'capture_gap': True, 'reason': 'connection unavailable'}), flush=True)
+            time.sleep(min(backoff, max(0, deadline - time.monotonic())))
+            backoff = min(60, backoff * 2)
+    print('Overnight capture completed. Review segment counts and gaps before interpreting totals.', flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--discover', action='store_true', help='Inventory vhost / and sample gameplay exchanges')
-    parser.add_argument('--seconds', type=int, default=120, choices=range(10, 601), metavar='10..600')
+    duration = parser.add_mutually_exclusive_group()
+    duration.add_argument('--seconds', type=int, default=120, choices=range(10, 601), metavar='10..600')
+    duration.add_argument('--hours', type=int, choices=range(1, 25), metavar='1..24', help='Bounded overnight discovery with periodic rebind/reconnect')
     parser.add_argument('--report', help='New sanitized report file; existing files are never overwritten')
     parser.add_argument('--raw-file', help='Optional PRIVATE payload file, including chat and identifiers; do not share')
     args = parser.parse_args()
@@ -201,11 +251,15 @@ def main():
     password = getpass.getpass('RabbitMQ password (not displayed): ')
     try:
         with contextlib.ExitStack() as stack:
-            raw = stack.enter_context(private_file(args.raw_file)) if args.raw_file else None
+            raw = LimitedWriter(stack.enter_context(private_file(args.raw_file)), 256 * 1024 * 1024, 'Private capture') if args.raw_file else None
             if args.report:
-                report = stack.enter_context(private_file(args.report))
+                report = LimitedWriter(stack.enter_context(private_file(args.report)), 16 * 1024 * 1024, 'Report')
                 stack.enter_context(contextlib.redirect_stdout(Tee(sys.stdout, report)))
-            capture(Client(user, password), duration=args.seconds, discovery=args.discover, raw_file=raw)
+            client = Client(user, password)
+            if args.hours:
+                overnight(client, args.hours, raw_file=raw)
+            else:
+                capture(client, duration=args.seconds, discovery=args.discover, raw_file=raw)
     except urllib.error.HTTPError as error:
         print('Management HTTP error:', error.code, '(check broker credentials and permissions)')
         return 1

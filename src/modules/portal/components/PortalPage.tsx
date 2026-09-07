@@ -15,6 +15,7 @@ import StorageWorkspace from './StorageWorkspace';
 import dossier from '../dossier.module.css';
 import { label, record } from '../utils/inventory';
 import { portalPageCopy } from '../config/page-copy';
+import LiveIntel from '../../live/components/LiveIntel';
 
 export default function PlayerPortal() {
   const { query } = useRouter();
@@ -96,6 +97,7 @@ export default function PlayerPortal() {
             <button onClick={retry}>Check connection</button>
           </section>
         )}
+        {view === 'live' && <LiveIntel />}
         {character && (
           <>
             {view === 'overview' && (

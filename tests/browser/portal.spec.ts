@@ -33,6 +33,31 @@ const player = {
 };
 
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/live', (route) =>
+    route.fulfill({
+      json: {
+        enabled: true,
+        connectedAt: Date.now(),
+        admin: true,
+        events: [
+          {
+            id: 'status',
+            source: 'status.Survival_1.dim_0',
+            kind: 'status',
+            receivedAt: Date.now(),
+            fields: { state: 4, map: null },
+          },
+          {
+            id: 'chat',
+            source: 'chat.intercept',
+            kind: 'chat',
+            receivedAt: Date.now(),
+            fields: { channel: 'Map', message: 'Welcome to Arrakis', sender: 'test-player' },
+          },
+        ],
+      },
+    }),
+  );
   await page.route('**/api/portal/world?*', (route) =>
     route.fulfill({
       json: {
@@ -266,4 +291,15 @@ test('character and storage use player data, support filters, and fit mobile', a
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/portal-storage-mobile.png', fullPage: true });
+});
+
+test('live intel renders retained observations on desktop and mobile', async ({ page }) => {
+  await page.goto('/portal?view=live');
+  await expect(page.getByText('Collector connected', { exact: true })).toBeVisible();
+  await expect(page.getByText('Welcome to Arrakis', { exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/live-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByText('Welcome to Arrakis', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/live-mobile.png', fullPage: true });
 });
