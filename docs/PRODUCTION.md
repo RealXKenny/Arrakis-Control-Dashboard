@@ -14,6 +14,10 @@ OAuth sessions and their browser cookies have a fixed 12-hour lifetime from logi
 
 ## Monitoring
 
+Production startup clears the terminal viewport and scrollback, silences dotenv's tip, and filters Next.js startup information. Application logs and stderr remain visible. Set `DASHBOARD_CLEAN_CONSOLE=false` to retain the full startup output and disable clearing.
+
+For Pterodactyl, use `npm run --silent build && npm run --silent start` to avoid npm's script headings. Build output remains visible during the build; the start command sends ANSI clear sequences before launching the application. Whether previous output disappears depends on the panel's terminal handling; stored server logs are not erased. Deploy the updated `scripts/run-next.mjs` and restart the server to apply this change.
+
 Set `SENTRY_DSN` for server and Edge reporting and `NEXT_PUBLIC_SENTRY_DSN` for browser reporting. Browser configuration does not fall back to server environment values. Startup is consolidated in `src/instrumentation.ts`, which initializes monitoring and warms the Dune client on Node.js. No market response snapshots are written to disk.
 
 Browser monitoring sends directly to the configured Sentry ingestion origin, which middleware includes in `connect-src`. The `/monitoring` external rewrite is intentionally removed: its Next.js proxy listeners combined with Sentry reproduce `MaxListenersExceededWarning` on Next 16.3. Do not raise the global listener limit to mask this warning.
