@@ -1,1 +1,1 @@
-export { default } from "../modules/portal/components/PortalPage";
+export { default } from '../modules/portal/components/PortalPage';

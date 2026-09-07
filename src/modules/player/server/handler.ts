@@ -1,16 +1,20 @@
-import { getServerEnv } from "../../../config/env";
-import { getDuneClient, getDiscordPlayer } from "../../../infrastructure/dune";
-import { NextResponse } from "../../../infrastructure/pages-api";
-import { cookies } from "../../../infrastructure/cookies";
-import { getBaseId, normalizeBaseStorage, normalizeBaseWater } from "./helpers";
-import { logger } from "../../../lib/logger";
-import { getSession } from "../../../lib/session-store";
+import '../../../lib/assert-server';
+import { record } from '../../../lib/value';
+import { getLinkedPlayer } from './linked-player';
+import { getServerEnv } from '../../../config/env';
+import { getDuneClient } from '../../../infrastructure/dune';
+import { NextResponse } from '../../../infrastructure/pages-api';
+import { cookies } from '../../../infrastructure/cookies';
+import { getBaseId, normalizeBaseStorage, normalizeBaseWater } from './helpers';
+import { logger } from '../../../lib/logger';
+import { getSession } from '../../../lib/session-store';
+import { discordAvatar } from './avatar';
 
 async function loadBaseTelemetry(base, duneClient) {
   const baseId = getBaseId(base);
 
   if (!baseId) {
-    logger.warn("Cannot load water/inventory: no base ID found", { baseId });
+    logger.warn('Cannot load water/inventory: no base ID found', { baseId });
 
     return {
       ...base,
@@ -33,18 +37,21 @@ async function loadBaseTelemetry(base, duneClient) {
 
   const inventoryEndpoint = `/api/bases/${encodedBaseId}/inventory`;
 
-  const [waterResult, inventoryResult] = await Promise.allSettled([duneClient.request("GET", waterEndpoint), duneClient.request("GET", inventoryEndpoint)]);
+  const [waterResult, inventoryResult] = await Promise.allSettled([
+    duneClient.request('GET', waterEndpoint),
+    duneClient.request('GET', inventoryEndpoint),
+  ]);
 
   let water = null;
   let inventory = null;
 
-  if (waterResult.status === "fulfilled") {
+  if (waterResult.status === 'fulfilled') {
     water = waterResult.value;
   } else {
     logger.error(`Failed to load base water`, { baseId, error: waterResult.reason });
   }
 
-  if (inventoryResult.status === "fulfilled") {
+  if (inventoryResult.status === 'fulfilled') {
     inventory = inventoryResult.value;
   } else {
     logger.error(`Failed to load base inventory`, { baseId, error: inventoryResult.reason });
@@ -67,29 +74,47 @@ async function loadBaseTelemetry(base, duneClient) {
 
 async function loadPlayerGuild(playerId, playerName, duneClient) {
   try {
-    const guildResponse = await duneClient.request("GET", "/api/guilds?page=0&pageSize=100");
+    const guildResponse = await duneClient.request('GET', '/api/guilds?page=0&pageSize=100');
 
-    const guilds = Array.isArray(guildResponse) ? guildResponse : Array.isArray(guildResponse?.rows) ? guildResponse.rows : Array.isArray(guildResponse?.data) ? guildResponse.data : [];
+    const guilds = Array.isArray(guildResponse)
+      ? guildResponse
+      : Array.isArray(guildResponse?.rows)
+        ? guildResponse.rows
+        : Array.isArray(guildResponse?.data)
+          ? guildResponse.data
+          : [];
 
     for (const guild of guilds) {
       const guildId = guild?.id ?? guild?.guildId ?? guild?.guild_id;
 
       if (!guildId) continue;
 
-      const memberResponse = await duneClient.request("GET", `/api/guilds/${encodeURIComponent(guildId)}/members`);
+      const memberResponse = await duneClient.request('GET', `/api/guilds/${encodeURIComponent(guildId)}/members`);
 
-      const members = Array.isArray(memberResponse) ? memberResponse : Array.isArray(memberResponse?.rows) ? memberResponse.rows : Array.isArray(memberResponse?.data) ? memberResponse.data : [];
+      const members = Array.isArray(memberResponse)
+        ? memberResponse
+        : Array.isArray(memberResponse?.rows)
+          ? memberResponse.rows
+          : Array.isArray(memberResponse?.data)
+            ? memberResponse.data
+            : [];
 
       const member = members.find((entry) => {
-        const memberId = entry?.player_id ?? entry?.playerId ?? entry?.pawnId ?? entry?.pawn_id ?? entry?.controllerId ?? entry?.controller_id;
-        const memberName = String(entry?.character_name ?? entry?.characterName ?? entry?.name ?? "")
+        const memberId =
+          entry?.player_id ??
+          entry?.playerId ??
+          entry?.pawnId ??
+          entry?.pawn_id ??
+          entry?.controllerId ??
+          entry?.controller_id;
+        const memberName = String(entry?.character_name ?? entry?.characterName ?? entry?.name ?? '')
           .trim()
           .toLowerCase();
         return (
-          String(memberId ?? "") === String(playerId) ||
+          String(memberId ?? '') === String(playerId) ||
           (memberName &&
             memberName ===
-              String(playerName ?? "")
+              String(playerName ?? '')
                 .trim()
                 .toLowerCase())
         );
@@ -98,14 +123,14 @@ async function loadPlayerGuild(playerId, playerName, duneClient) {
       if (member) {
         return {
           id: guildId,
-          name: guild?.name ?? guild?.guildName ?? guild?.guild_name ?? "Unknown Guild",
+          name: guild?.name ?? guild?.guildName ?? guild?.guild_name ?? 'Unknown Guild',
           tag: guild?.tag ?? guild?.abbreviation ?? null,
           rank: member?.rank ?? member?.role ?? member?.memberRole ?? null,
         };
       }
     }
   } catch (error) {
-    logger.error("Failed to load player guild", { error });
+    logger.error('Failed to load player guild', { error });
   }
 
   return null;
@@ -118,13 +143,13 @@ export async function GET(request, res) {
   try {
     const cookieStore = cookies(request, res);
 
-    const sessionId = cookieStore.get("dashboard_session")?.value;
+    const sessionId = cookieStore.get('dashboard_session')?.value;
 
     if (!sessionId) {
-      logger.warn("Login cookie missing", { route: "/api/player" });
+      logger.warn('Login cookie missing', { route: '/api/player' });
       return NextResponse.json(
         {
-          error: "Unauthorized",
+          error: 'Unauthorized',
         },
         {
           status: 401,
@@ -137,7 +162,7 @@ export async function GET(request, res) {
     if (!session || session.expiresAt < Date.now()) {
       return NextResponse.json(
         {
-          error: "Session expired or invalid",
+          error: 'Session expired or invalid',
         },
         {
           status: 401,
@@ -147,16 +172,16 @@ export async function GET(request, res) {
 
     const actor = {
       guildId: session.guildId,
-      channelId: "dashboard",
+      channelId: 'dashboard',
       userId: session.user.id,
       username: session.user.username,
       roleIds: [...(session.roleIds || []), getServerEnv().VERIFIED_MEMBER_ROLE_ID].filter(Boolean),
       interactionId: `dashboard-${Date.now()}`,
-      commandName: "portal",
+      commandName: 'portal',
     };
 
     const duneClient = getDuneClient();
-    const data = await getDiscordPlayer(actor);
+    const data = await getLinkedPlayer(actor);
 
     if (data?.linked !== true) {
       return NextResponse.json(data, {
@@ -171,7 +196,7 @@ export async function GET(request, res) {
         {
           ...data,
           linked: false,
-          error: "Unable to determine your Dune player ID.",
+          error: 'Unable to determine your Dune player ID.',
         },
         {
           status: 200,
@@ -182,51 +207,60 @@ export async function GET(request, res) {
     /**
      * Core player endpoints.
      */
-    const coreEndpoints = ["currency", "solaris-coin", "factions", "intel", "specs", "progression", "vitals", "bases", "vehicles"];
+    const coreEndpoints = [
+      'currency',
+      'solaris-coin',
+      'factions',
+      'intel',
+      'specs',
+      'progression',
+      'vitals',
+      'bases',
+      'vehicles',
+      'inventory',
+      'journey',
+    ];
 
     const details = await Promise.all(
       coreEndpoints.map(async (name) => {
         try {
-          const playerEndpoint = name === "vehicles" ? "/api/vehicles" : `/api/players/${encodeURIComponent(playerId)}/${name}`;
+          const playerEndpoint = `/api/players/${encodeURIComponent(playerId)}/${name}`;
 
-          const resData = await duneClient.request("GET", playerEndpoint);
-
-          if (name === "vehicles") {
-            const allVehicles = Array.isArray(resData?.rows) ? resData.rows : [];
-
-            return [
-              name,
-              {
-                ...resData,
-                rows: allVehicles,
-                totalCount: allVehicles.length,
-              },
-            ];
-          }
+          const resData = await duneClient.request('GET', playerEndpoint);
 
           /**
            * Bases
            */
-          if (name === "bases") {
-            const bases = Array.isArray(resData) ? resData : Array.isArray(resData?.rows) ? resData.rows : Array.isArray(resData?.data) ? resData.data : Array.isArray(resData?.bases) ? resData.bases : [];
+          if (name === 'bases') {
+            const bases = Array.isArray(resData)
+              ? resData
+              : Array.isArray(record(resData).rows)
+                ? record(resData).rows
+                : Array.isArray(record(resData).data)
+                  ? record(resData).data
+                  : Array.isArray(record(resData).bases)
+                    ? record(resData).bases
+                    : [];
 
-            const enrichedBases = await Promise.all(bases.map(async (base) => loadBaseTelemetry(base, duneClient)));
+            const enrichedBases = await Promise.all(
+              (Array.isArray(bases) ? bases : []).map(async (base) => loadBaseTelemetry(base, duneClient)),
+            );
 
             let result;
 
             if (Array.isArray(resData)) {
               result = enrichedBases;
-            } else if (resData && typeof resData === "object") {
+            } else if (resData && typeof resData === 'object') {
               result = {
                 ...resData,
                 rows: enrichedBases,
               };
 
-              if (Array.isArray(resData.data)) {
+              if (Array.isArray(record(resData).data)) {
                 result.data = enrichedBases;
               }
 
-              if (Array.isArray(resData.bases)) {
+              if (Array.isArray(record(resData).bases)) {
                 result.bases = enrichedBases;
               }
             } else {
@@ -254,6 +288,7 @@ export async function GET(request, res) {
      */
     const responseData = {
       ...data,
+      avatarUrl: discordAvatar(session.user),
       details: {
         ...Object.fromEntries(details),
         guild,
@@ -264,13 +299,13 @@ export async function GET(request, res) {
       status: 200,
     });
   } catch (error) {
-    logger.error("Error inside player route telemetry processor", { error });
+    logger.error('Error inside player route telemetry processor', { error });
 
     return NextResponse.json(
       {
         ok: false,
         linked: false,
-        error: "Unable to load your Dune player profile right now.",
+        error: 'Unable to load your Dune player profile right now.',
       },
       {
         status: 500,

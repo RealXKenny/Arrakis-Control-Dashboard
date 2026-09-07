@@ -1,6 +1,6 @@
-import { runPagesApiHandler } from "../../../../infrastructure/pages-api";
-import { GET } from "../../../../modules/portal/server/market-config";
+import { runPagesApiHandler } from '../../../../infrastructure/pages-api';
+import { GET } from '../../../../modules/portal/server/market-config';
 
 export default function handler(req, res) {
-  return runPagesApiHandler(req, res, "GET", GET);
+  return runPagesApiHandler(req, res, 'GET', GET);
 }
