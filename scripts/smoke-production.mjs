@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 
 // Isolated transport fixture: no real Redis, Discord, or Dune credentials are used.
+let revoked = false;
 const redis = createServer(async (req, res) => {
   if (req.url.startsWith("/api/")) {
     res.setHeader("Content-Type", "application/json");
@@ -20,7 +21,11 @@ const redis = createServer(async (req, res) => {
   let body = "";
   for await (const chunk of req) body += chunk;
   const command = JSON.parse(body || "[]");
-  const reply = entry => ({ result: String(entry[0]).toUpperCase() === "GET" ? Buffer.from(JSON.stringify({ user: { id: "user" }, guildId: "guild", roleIds: [], expiresAt: Date.now() + 3600000 })).toString("base64") : "OK" });
+  const reply = entry => {
+    const operation = String(entry[0]).toUpperCase();
+    if (operation === 'DEL') { revoked = true; return { result: 1 }; }
+    return { result: operation === 'GET' ? (revoked ? null : Buffer.from(JSON.stringify({ user: { id: "user" }, guildId: "guild", roleIds: [], expiresAt: Date.now() + 3600000 })).toString("base64")) : "OK" };
+  };
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(Array.isArray(command[0]) ? command.map(reply) : reply(command)));
 });
@@ -74,7 +79,7 @@ try {
   assert.ok(ready, "Production server must serve /portal");
   const routes = ["auth/login", "auth/callback", "auth/logout", "map", "player", "market", "market/config", "bases/test/export", "server/status"];
   for (const route of routes) {
-    const response = await fetch(`${base}/api/${route}`, { method: "POST", signal: AbortSignal.timeout(5000) });
+    const response = await fetch(`${base}/api/${route}`, { method: route === 'auth/logout' ? 'GET' : 'POST', signal: AbortSignal.timeout(5000) });
     assert.equal(response.status, 405, route);
     assert.equal((await response.json()).code, "METHOD_NOT_ALLOWED", route);
   }
@@ -91,12 +96,28 @@ try {
     assert.equal(response.status, 200, "authenticated player telemetry");
     assert.equal((await response.json()).linked, true);
   }
+  const buildId = readFileSync('.next/BUILD_ID', 'utf8').trim();
+  const headers = { cookie: 'dashboard_session=fixture-session' };
+  const prefetch = await fetch(`${base}/_next/data/${buildId}/api/auth/logout.json`, { headers: { ...headers, purpose: 'prefetch', 'x-nextjs-data': '1' }, redirect: 'manual' });
+  assert.equal(prefetch.status, 405, 'prefetched logout must not revoke login');
+  assert.equal(prefetch.headers.get('set-cookie'), null);
+  await prefetch.text();
+  const market = await fetch(`${base}/api/market`, { headers });
+  assert.equal(market.status, 200, 'market remains authenticated after prefetch');
+  await market.text();
+  const logout = await fetch(`${base}/api/auth/logout`, { method: 'POST', headers: { ...headers, origin: base }, redirect: 'manual' });
+  assert.equal(logout.status, 303);
+  assert.match(logout.headers.get('set-cookie'), /Max-Age=0/);
+  await logout.text();
+  const expired = await fetch(`${base}/api/player`, { headers });
+  assert.equal(expired.status, 401, 'intentional logout revokes the Redis session');
+  await expired.text();
   const monitoringResponse = await fetch(`${base}/monitoring?o=1&p=1`, { method: "POST", body: "fixture" });
   assert.equal(monitoringResponse.status, 404);
   await monitoringResponse.text();
   if (logs.includes("MaxListenersExceededWarning")) console.error(logs.slice(logs.indexOf("MaxListenersExceededWarning"), logs.indexOf("MaxListenersExceededWarning") + 2500));
   assert.doesNotMatch(logs, /Failed to load external module|MaxListenersExceededWarning|This module cannot be imported from a Client Component/);
-  console.log("Runtime smoke passed: portal, 9 API modules, 100 unauthorized requests, 3 authenticated telemetry requests, monitoring route; no import or listener warnings.");
+  console.log("Runtime smoke passed: portal, 9 API modules, 100 unauthorized requests, authenticated telemetry and market, safe logout prefetch, POST session revocation; no import or listener warnings.");
 } finally {
   child.kill();
   await childDone;

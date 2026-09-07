@@ -1,6 +1,6 @@
 import { runPagesApiHandler } from "../../../../infrastructure/pages-api";
-import { GET } from "../../../../modules/auth/server/logout";
+import { POST } from "../../../../modules/auth/server/logout";
 
 export default function handler(req, res) {
-  return runPagesApiHandler(req, res, "GET", GET);
+  return runPagesApiHandler(req, res, "POST", POST);
 }

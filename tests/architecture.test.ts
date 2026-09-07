@@ -43,7 +43,8 @@ describe("module boundaries", () => {
     const routes = files.filter(p => normalize(p).startsWith("pages/api/"));
     expect(routes).toHaveLength(9);
     for (const route of routes) {
-      expect(fs.readFileSync(route, "utf8")).toContain('return runPagesApiHandler(req, res, "GET", GET)');
+      const method = normalize(route).includes('/auth/logout/') ? 'POST' : 'GET';
+      expect(fs.readFileSync(route, "utf8")).toContain(`return runPagesApiHandler(req, res, "${method}", ${method})`);
       expect(imports(route).some(spec => spec.includes("/modules/"))).toBe(true);
     }
   });

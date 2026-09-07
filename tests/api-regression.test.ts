@@ -10,7 +10,7 @@ import exportBase from "../src/pages/api/bases/[baseId]/export";
 import status from "../src/pages/api/server/status";
 import { runPagesApiHandler, NextResponse } from "../src/infrastructure/pages-api";
 import { getDuneClient } from "../src/infrastructure/dune";
-import { getSession, saveSession } from "../src/lib/session-store";
+import { getSession, saveSession, deleteSession } from "../src/lib/session-store";
 import { checkRateLimit } from "../src/lib/rate-limit";
 import { responseMock } from "./helpers/response";
 
@@ -33,11 +33,49 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("route contracts after extraction", () => {
+  it.each(['/api/auth/logout', '/_next/data/build/api/auth/logout.json'])('does not revoke sessions on a prefetched GET %s', async url => {
+    const res = responseMock();
+    await logout({ method: 'GET', url, headers: { cookie: 'dashboard_session=session', purpose: 'prefetch' } }, res);
+    expect(res.statusCode).toBe(405);
+    expect(deleteSession).not.toHaveBeenCalled();
+    expect(res.getHeader('Set-Cookie')).toBeUndefined();
+  });
+
+  it('revokes sessions only on intentional same-origin POST', async () => {
+    const res = responseMock();
+    await logout({ method: 'POST', url: '/api/auth/logout', headers: { host: 'dashboard.test', origin: 'https://dashboard.test', 'x-forwarded-proto': 'https', cookie: 'dashboard_session=session' } }, res);
+    expect(deleteSession).toHaveBeenCalledWith('session');
+    expect(res.statusCode).toBe(303);
+    expect(res.getHeader('Location')).toBe('https://dashboard.test/');
+    expect(String(res.getHeader('Set-Cookie'))).toContain('Max-Age=0');
+  });
+
+  it('rejects cross-origin logout without deleting the session', async () => {
+    const res = responseMock();
+    await logout({ method: 'POST', url: '/api/auth/logout', headers: { host: 'dashboard.test', origin: 'https://other.test', cookie: 'dashboard_session=session' } }, res);
+    expect(res.statusCode).toBe(403);
+    expect(deleteSession).not.toHaveBeenCalled();
+    expect(res.getHeader('Set-Cookie')).toBeUndefined();
+  });
+
+  it('searches upstream and tolerates unavailable optional market configuration', async () => {
+    vi.mocked(getSession).mockResolvedValue({ user: { id: 'user' }, guildId: 'guild', roleIds: [], expiresAt: Date.now() + 60000 });
+    const request = vi.fn().mockResolvedValueOnce({ rows: [{ display_name: 'Spice' }], totalCount: 101 }).mockResolvedValueOnce({ totalListings: 500 }).mockRejectedValueOnce(new Error('Forbidden'));
+    vi.mocked(getDuneClient).mockReturnValue({ request });
+    const res = responseMock();
+    await market({ method: 'GET', url: '/api/market?q=Spice%20Melange&page=1', headers: { cookie: 'dashboard_session=session' } }, res);
+    expect(res.statusCode).toBe(200);
+    const query = new URL(request.mock.calls[0][1], 'http://test').searchParams;
+    expect(query.get('q')).toBe('Spice Melange');
+    expect(query.get('page')).toBe('1');
+    expect(JSON.parse(res.body as string)).toMatchObject({ items: { totalCount: 101 }, marketConfig: null, warnings: [expect.any(String)] });
+  });
+
   it.each(routes)("rejects unsupported methods at %s before accessing providers", async (url, handler) => {
     const res = responseMock();
-    await handler({ method: "POST", url, headers: { "x-request-id": "trace" } }, res);
+    await handler({ method: url.endsWith('/logout') ? "GET" : "POST", url, headers: { "x-request-id": "trace" } }, res);
     expect(res.statusCode).toBe(405);
-    expect(res.getHeader("Allow")).toBe("GET");
+    expect(res.getHeader("Allow")).toBe(url.endsWith('/logout') ? "POST" : "GET");
     expect(res.body).toMatchObject({ requestId: "trace", code: "METHOD_NOT_ALLOWED" });
     expect(getDuneClient).not.toHaveBeenCalled();
   });

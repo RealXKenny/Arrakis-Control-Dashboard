@@ -1,5 +1,4 @@
 import { COLORS } from "../config/colors";
-import Link from "next/link";
 
 export default function CharacterHeader({ character, isOnline }) {
   return (
@@ -64,8 +63,9 @@ export default function CharacterHeader({ character, isOnline }) {
           </span>
         </div>
 
-        <Link
-          href="/api/auth/logout"
+        <form method="post" action="/api/auth/logout">
+        <button
+          type="submit"
           style={{
             backgroundColor: COLORS.panel,
             color: COLORS.goldLight,
@@ -78,7 +78,8 @@ export default function CharacterHeader({ character, isOnline }) {
           }}
         >
           Sign out
-        </Link>
+        </button>
+        </form>
       </div>
 
       {/* Character heading */}

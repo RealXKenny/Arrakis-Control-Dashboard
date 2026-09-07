@@ -1,7 +1,6 @@
 "use client";
 
 import { useServerStatus } from "../hooks/useServerStatus";
-import Link from "next/link";
 
 export default function LandingPage() {
   const { activePlayers, totalPlayers, serverStatusError } = useServerStatus();
@@ -333,7 +332,9 @@ export default function LandingPage() {
               Authenticate with Discord to access your character telemetry, player portal, and authorized Arrakis systems.
             </p>
 
-            <Link
+            {/* OAuth starts a full browser navigation; Next Link prefetch can replace login state. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
               href="/api/auth/login"
               style={{
                 width: "100%",
@@ -366,7 +367,7 @@ export default function LandingPage() {
             >
               <span>Continue with Discord</span>
               <span style={{ fontSize: "1.1rem" }}>→</span>
-            </Link>
+            </a>
 
             <a
               href="https://discord.gg/crimsonskies"

@@ -3,31 +3,13 @@
 }
 
 /* These grids live in child components, so scope them through the portal root. */
-@media (min-width: 1200px) {
-  .page :global(.base-grid),
-  .page :global(.vehicle-grid) {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-
-  .page :global(.base-grid) > div,
-  .page :global(.vehicle-grid) > div {
-    grid-column: auto !important;
-  }
-
-  .page :global(.currency-grid) {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  }
+.page :global(.base-grid),
+.page :global(.vehicle-grid) {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 
-@media (min-width: 1920px) {
-  .page :global(.base-grid),
-  .page :global(.vehicle-grid) {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)) !important;
-  }
-
-  /* Four columns maximum, with fewer cards sharing the available width. */
-  .page :global(.base-grid):has(> :nth-child(4)),
-  .page :global(.vehicle-grid):has(> :nth-child(4)) {
+@media (min-width: 1200px) {
+  .page :global(.currency-grid) {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
