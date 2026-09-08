@@ -1,11 +1,11 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { DuneConsoleClient } from '../src/infrastructure/dune';
-import { parseProviderResponse, providerUrl } from '../src/infrastructure/dunedocker/transport';
-import { captureApiSnapshot } from '../src/lib/api-debug';
-import { normalizeLinkedPlayer } from '../src/modules/player/server/linked-player';
-import { getSafeError } from '../src/lib/errors';
-vi.mock('../src/lib/api-debug', () => ({ captureApiSnapshot: vi.fn() }));
-vi.mock('../src/config/env', () => ({ getServerEnv: () => ({ LOG_LEVEL: 'ERROR', NODE_ENV: 'test' }) }));
+import { DuneConsoleClient } from '../../src/infrastructure/dune';
+import { parseProviderResponse, providerUrl } from '../../src/infrastructure/dunedocker/transport';
+import { captureApiSnapshot } from '../../src/lib/api-debug';
+import { normalizeLinkedPlayer } from '../../src/modules/player/server/linked-player';
+import { getSafeError } from '../../src/lib/errors';
+vi.mock('../../src/lib/api-debug', () => ({ captureApiSnapshot: vi.fn() }));
+vi.mock('../../src/config/env', () => ({ getServerEnv: () => ({ LOG_LEVEL: 'ERROR', NODE_ENV: 'test' }) }));
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();

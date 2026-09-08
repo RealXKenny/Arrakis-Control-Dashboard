@@ -1,31 +1,31 @@
-import { clearApiReadCache } from '../src/infrastructure/api-read-cache';
+import { clearApiReadCache } from '../../src/infrastructure/api-read-cache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import login from '../src/pages/api/auth/login';
-import callback from '../src/pages/api/auth/callback';
-import logout from '../src/pages/api/auth/logout';
-import map from '../src/pages/api/map';
-import player from '../src/pages/api/player';
-import market from '../src/pages/api/market';
-import marketListings from '../src/pages/api/market/listings';
-import marketConfig from '../src/pages/api/market/config';
-import exportBase from '../src/pages/api/bases/[baseId]/export';
-import status from '../src/pages/api/server/status';
-import world from '../src/pages/api/portal/world';
-import { runPagesApiHandler, NextResponse } from '../src/infrastructure/pages-api';
-import { getDuneClient, getDiscordPlayer } from '../src/infrastructure/dune';
-import { getSession, saveSession, deleteSession } from '../src/lib/session-store';
-import { checkRateLimit } from '../src/lib/rate-limit';
-import { responseMock } from './helpers/response';
+import login from '../../src/pages/api/auth/login';
+import callback from '../../src/pages/api/auth/callback';
+import logout from '../../src/pages/api/auth/logout';
+import map from '../../src/pages/api/map';
+import player from '../../src/pages/api/player';
+import market from '../../src/pages/api/market';
+import marketListings from '../../src/pages/api/market/listings';
+import marketConfig from '../../src/pages/api/market/config';
+import exportBase from '../../src/pages/api/bases/[baseId]/export';
+import status from '../../src/pages/api/server/status';
+import world from '../../src/pages/api/portal/world';
+import { runPagesApiHandler, NextResponse } from '../../src/infrastructure/pages-api';
+import { getDuneClient, getDiscordPlayer } from '../../src/infrastructure/dune';
+import { getSession, saveSession, deleteSession } from '../../src/lib/session-store';
+import { checkRateLimit } from '../../src/lib/rate-limit';
+import { responseMock } from '../helpers/response';
 
-vi.mock('../src/infrastructure/dune', () => ({ getDuneClient: vi.fn(), getDiscordPlayer: vi.fn() }));
-vi.mock('../src/lib/session-store', () => ({
+vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: vi.fn(), getDiscordPlayer: vi.fn() }));
+vi.mock('../../src/lib/session-store', () => ({
   getSession: vi.fn(),
   saveSession: vi.fn(),
   deleteSession: vi.fn(),
   sessionTtlSeconds: () => 43200,
 }));
-vi.mock('../src/lib/rate-limit', () => ({ checkRateLimit: vi.fn(), getClientAddress: () => 'test' }));
-vi.mock('../src/config/env', () => ({
+vi.mock('../../src/lib/rate-limit', () => ({ checkRateLimit: vi.fn(), getClientAddress: () => 'test' }));
+vi.mock('../../src/config/env', () => ({
   getServerEnv: () => ({
     NODE_ENV: 'test',
     LOG_LEVEL: 'INFO',

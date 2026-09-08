@@ -15,6 +15,7 @@ Arrakis Control is a Next.js Pages Router application. Server-only integrations 
 │   ├── modules/
 │   │   ├── auth/            OAuth login, callback, and logout server handlers
 │   │   ├── home/            Landing UI, telemetry hook, and server status handler
+│   │   ├── guilds/          Authenticated guild and member API handlers
 │   │   ├── map/             Map UI, hooks, normalization, and server access
 │   │   ├── player/          Player server handler and normalization helpers
 │   │   └── portal/          Portal UI, hooks, utilities, market access, base export
@@ -22,7 +23,12 @@ Arrakis Control is a Next.js Pages Router application. Server-only integrations 
 │   ├── instrumentation.ts  Server startup, Dune warmup, and Sentry initialization
 │   ├── instrumentation-client.ts  Browser monitoring using public configuration
 │   └── styles/              Global CSS
-├── tests/                   Vitest unit and API-boundary tests
+├── tests/
+│   ├── api/                API boundary, hardening, and route regression tests
+│   ├── architecture/      Import-boundary and structural checks
+│   ├── browser/            Playwright browser tests
+│   ├── helpers/            Shared test fixtures
+│   └── unit/               Focused transformation and service tests
 ├── middleware.ts            Request IDs and security headers
 ├── sentry.*.config.ts       Server and Edge monitoring setup
 ├── next.config.ts           Next.js and Sentry build configuration
@@ -69,6 +75,8 @@ Portal owns its navigation, market board, market configuration, and base-export 
 ## Verification
 
 `npm run typecheck` performs TypeScript checking with unused-local and unused-parameter checks enabled. `npm test` covers the API boundary, all route method checks, protected-route session checks, OAuth cookies, blueprint downloads, safe provider failures, environment validation, and portal currency shapes. Architecture tests walk browser imports transitively and enforce API wrapping. Guard tests exercise both Node and browser behavior without mocking the guard.
+
+Generated output such as `.next/`, `coverage/`, `debug/`, `test-results/`, and `tsconfig.tsbuildinfo` is intentionally kept outside the source tree and ignored by Git. It can be removed and regenerated when a clean workspace is needed.
 
 After `npm run build`, run `npm run test:production`. It starts the built Next.js server with isolated provider configuration and a local Redis transport fixture, exercises every API module and 100 protected requests, and rejects import failures or listener warnings. No live credentials or accounts are used.
 

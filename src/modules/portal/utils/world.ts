@@ -8,6 +8,7 @@ export type WorldReading = {
   spice: { count: number; sectors: string[] } | null;
   nextCycleAt: string | null;
   population?: PopulationHistory | null;
+  totalPlayHours?: number | null;
   market: { listings: number | null; items: number | null; playerListings: number | null } | null;
   council: {
     term: string;

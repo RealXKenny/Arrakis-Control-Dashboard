@@ -16,7 +16,7 @@ import {
 import { getPowerColor, getStorageColor, getWaterColor } from '../utils/progression';
 import TelemetryMetric from './TelemetryMetric';
 
-export default function BaseCard({ base, index, telemetry }) {
+export default function BaseCard({ base, index, telemetry, selected = false, onSelect }) {
   const baseId = getBaseId(base);
   const baseName = getBaseName(base, index);
   const baseType = getBaseType(base);
@@ -65,6 +65,16 @@ export default function BaseCard({ base, index, telemetry }) {
 
   return (
     <article
+      role={onSelect ? 'button' : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-expanded={onSelect ? selected : undefined}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (onSelect && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
       style={{
         background: `
           linear-gradient(
@@ -81,6 +91,9 @@ export default function BaseCard({ base, index, telemetry }) {
         boxSizing: 'border-box',
         boxShadow: '0 8px 28px rgba(0,0,0,0.2)',
         minHeight: 260,
+        cursor: onSelect ? 'pointer' : undefined,
+        outline: selected ? `1px solid ${COLORS.gold}` : undefined,
+        outlineOffset: selected ? 2 : undefined,
       }}
     >
       {/* Base header */}
@@ -166,6 +179,7 @@ export default function BaseCard({ base, index, telemetry }) {
               className="base-export-button"
               href={`/api/bases/${encodeURIComponent(baseId)}/export`}
               download
+              onClick={(event) => event.stopPropagation()}
               style={{
                 display: 'block',
                 width: 'fit-content',

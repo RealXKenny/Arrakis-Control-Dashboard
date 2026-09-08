@@ -8,6 +8,8 @@ import PriceLadder from './PriceLadder';
 import ItemImage from './ItemImage';
 import { itemImage } from '../utils/item-image';
 
+const MARKET_PAGE_SIZE = 24;
+
 export default function MarketBoard() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
@@ -17,7 +19,7 @@ export default function MarketBoard() {
   const { data, loading, error, stale, refresh } = useMarketData(query, page, sort, owner);
   const items = Array.isArray(data?.items?.rows) ? data.items.rows : [];
   const total = Number(data?.items?.totalCount ?? items.length);
-  const pages = Math.max(1, Math.ceil(total / 100));
+  const pages = Math.max(1, Math.ceil(total / MARKET_PAGE_SIZE));
   const buybackPercent = getBuybackPercent(data?.marketConfig);
   const supported = data?.items?.capabilities?.exchange !== false;
   const selected = items.find(
@@ -165,7 +167,7 @@ export default function MarketBoard() {
           </div>
         </div>
         <aside className={layout.sidebar}>
-          <section className={dossier.panel}>
+          <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
             <h2>Item intelligence</h2>
             {selected ? (
               <>
@@ -195,7 +197,7 @@ export default function MarketBoard() {
             )}
           </section>
           {selected && (
-            <section className={dossier.panel}>
+            <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
               <PriceLadder
                 key={`${owner}-${selectedId}`}
                 owner={owner}
@@ -204,12 +206,12 @@ export default function MarketBoard() {
               />
             </section>
           )}
-          <section className={dossier.panel}>
+          <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
             <h2>CHOAM buyback</h2>
             <p className={dossier.balance}>{buybackPercent == null ? '—' : `${buybackPercent}%`}</p>
             <p>Reported buyback rate. Item-specific caps and availability can vary.</p>
           </section>
-          <section className={dossier.panel}>
+          <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
             <h2>Market access</h2>
             <p>
               Browse current listings here. Complete purchases and manage listings through your server’s supported

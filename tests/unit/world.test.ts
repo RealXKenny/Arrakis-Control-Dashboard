@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { timeRemaining, worldReading } from '../src/modules/portal/utils/world';
+import { timeRemaining, worldReading } from '../../src/modules/portal/utils/world';
 
 describe('dashboard world readings', () => {
   it('only exposes public aggregates and ignores non-spice actors', () => {

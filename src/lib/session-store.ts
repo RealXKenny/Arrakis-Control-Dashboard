@@ -7,6 +7,8 @@ export type DashboardSession = {
   user: { id: string; username?: string; global_name?: string; avatar?: string | null };
   guildId: string;
   roleIds: string[];
+  linkedPlayerId?: string;
+  linkedPlayerName?: string;
   expiresAt: number;
 };
 

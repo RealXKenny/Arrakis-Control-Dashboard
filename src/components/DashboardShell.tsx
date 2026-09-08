@@ -1,5 +1,6 @@
 import { APP_VERSION } from '../config/version';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 import css from './dashboard-shell.module.css';
 
@@ -39,9 +40,7 @@ export default function DashboardShell({
             as={brandHref.startsWith('/portal?view=') ? '/portal' : undefined}
             className={css.brand}
           >
-            <span className={css.mark} aria-hidden="true">
-              ◈
-            </span>
+            <Image className={css.mark} src="/favicon.ico" alt="" width={32} height={32} priority unoptimized />
             <span>
               {brand}
               <small className={css.visuallyHidden}>{subtitle}</small>

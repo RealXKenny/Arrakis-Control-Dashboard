@@ -1,13 +1,13 @@
 import { expect, it, vi } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { captureApiSnapshot, redactApiSnapshot } from '../src/lib/api-debug';
+import { captureApiSnapshot, redactApiSnapshot } from '../../src/lib/api-debug';
 vi.mock('node:fs/promises', () => ({
   mkdir: vi.fn(),
   writeFile: vi.fn(),
   rename: vi.fn(),
   unlink: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock('../src/config/env', () => ({ getServerEnv: () => ({ API_DEBUG_ENABLED: 'true' }) }));
+vi.mock('../../src/config/env', () => ({ getServerEnv: () => ({ API_DEBUG_ENABLED: 'true' }) }));
 
 it('redacts credentials and identity recursively and preserves complete arrays', () => {
   expect(

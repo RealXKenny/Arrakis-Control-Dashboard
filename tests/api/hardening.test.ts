@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AppError, getSafeError } from '../src/lib/errors';
-import { logger } from '../src/lib/logger';
-import { checkRateLimit } from '../src/lib/rate-limit';
-import { deleteSession, getSession, saveSession } from '../src/lib/session-store';
+import { AppError, getSafeError } from '../../src/lib/errors';
+import { logger } from '../../src/lib/logger';
+import { checkRateLimit } from '../../src/lib/rate-limit';
+import { deleteSession, getSession, saveSession } from '../../src/lib/session-store';
 
 describe('shared production hardening', () => {
   afterEach(() => vi.restoreAllMocks());
