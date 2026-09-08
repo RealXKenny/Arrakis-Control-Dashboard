@@ -77,7 +77,10 @@
   font-weight: 700;
   border: 1px solid #e0ad58;
   border-radius: 3px;
-  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
 }
 .actions a:hover {
   transform: translateY(-2px);
@@ -138,12 +141,17 @@
 .signalCard span,
 .signalCard small {
   color: #b8ab8c;
-  font: 10px/1.5 'JetBrains Mono', ui-monospace, monospace;
+  font:
+    10px/1.5 'JetBrains Mono',
+    ui-monospace,
+    monospace;
   letter-spacing: 1.5px;
 }
 .signalCard strong {
   color: #ffe2a9;
-  font: 700 42px/1 'Saira Condensed', sans-serif;
+  font:
+    700 42px/1 'Saira Condensed',
+    sans-serif;
   letter-spacing: 0.08em;
 }
 .signalCard small {
@@ -162,7 +170,9 @@
   background: linear-gradient(135deg, #1b1a14, #11120e);
   padding: 26px;
   border-radius: 4px;
-  transition: transform 160ms ease, border-color 160ms ease;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease;
 }
 .stats article:hover {
   transform: translateY(-3px);
@@ -181,7 +191,9 @@
   max-width: 520px;
   margin: 16px 0;
   color: #ffe2a9;
-  font: 700 clamp(32px, 4vw, 56px)/1.05 'Segoe UI', sans-serif;
+  font:
+    700 clamp(32px, 4vw, 56px)/1.05 'Segoe UI',
+    sans-serif;
   letter-spacing: -2px;
 }
 .communityCopy > p:not(.eyebrow) {
@@ -201,7 +213,9 @@
   text-decoration: none;
   font-size: 13px;
   font-weight: 700;
-  transition: transform 160ms ease, background 160ms ease;
+  transition:
+    transform 160ms ease,
+    background 160ms ease;
 }
 .discordButton:hover {
   transform: translateY(-2px);
