@@ -10,6 +10,7 @@ export function clampPercent(value) {
 
 export function getNumber(...values) {
   for (const value of values) {
+    if (value == null || value === '' || typeof value === 'boolean') continue;
     const number = Number(value);
 
     if (Number.isFinite(number)) {
@@ -21,6 +22,7 @@ export function getNumber(...values) {
 }
 
 export function formatNumber(value, maximumFractionDigits = 1) {
+  if (value == null || value === '') return '—';
   const number = Number(value);
 
   if (!Number.isFinite(number)) {

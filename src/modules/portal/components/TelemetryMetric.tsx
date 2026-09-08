@@ -1,12 +1,7 @@
 import { COLORS } from '../config/colors';
 import ProgressBar from './ProgressBar';
 
-export default function TelemetryMetric({
-  label,
-  percent,
-  value,
-  color,
-}) {
+export default function TelemetryMetric({ label, percent, value, color }) {
   return (
     <div style={{ minWidth: 0 }}>
       <div
@@ -37,16 +32,11 @@ export default function TelemetryMetric({
             whiteSpace: 'nowrap',
           }}
         >
-          {percent === null
-            ? 'N/A'
-            : `${percent.toFixed(0)}%`}
+          {percent === null ? 'N/A' : `${percent.toFixed(0)}%`}
         </strong>
       </div>
 
-      <ProgressBar
-        percent={percent ?? 0}
-        color={color}
-      />
+      <ProgressBar percent={percent ?? 0} color={color} />
 
       <div
         style={{

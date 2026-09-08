@@ -2,13 +2,7 @@ import { clampPercent, getNumber } from './formatting';
 import { FUEL_BURN_SECONDS, GENERATOR_FUEL_CAP, generatorUptimePolicy } from '../config/progression';
 
 export function getBaseId(base) {
-  return (
-    base?.base_id ??
-    base?.baseId ??
-    base?.id ??
-    base?.uuid ??
-    null
-  );
+  return base?.base_id ?? base?.baseId ?? base?.id ?? base?.uuid ?? null;
 }
 
 export function getGeneratorSeconds(base) {
@@ -20,8 +14,8 @@ export function getGeneratorSeconds(base) {
       base?.generatorRuntime,
       base?.generator_runtime,
       base?.powerSeconds,
-      base?.power_seconds
-    ) ?? 0
+      base?.power_seconds,
+    ) ?? 0,
   );
 }
 
@@ -51,31 +45,20 @@ export function getStorageData(data) {
     totals.current_volume,
     root.currentVolume,
     root.current_volume,
-    storage.used
+    storage.used,
   );
 
-  const max = getNumber(
-    totals.maxVolume,
-    totals.max_volume,
-    root.maxVolume,
-    root.max_volume,
-    storage.max
-  );
+  const max = getNumber(totals.maxVolume, totals.max_volume, root.maxVolume, root.max_volume, storage.max);
 
   let percent = getNumber(
     totals.volumePercent,
     totals.volume_percent,
     root.volumePercent,
     root.volume_percent,
-    storage.percent
+    storage.percent,
   );
 
-  if (
-    percent === null &&
-    used !== null &&
-    max !== null &&
-    max > 0
-  ) {
+  if (percent === null && used !== null && max !== null && max > 0) {
     percent = (used / max) * 100;
   }
 
@@ -83,26 +66,16 @@ export function getStorageData(data) {
     used,
     max,
     percent: percent === null ? null : clampPercent(percent),
-    available:
-      storage.available !== false &&
-      (used !== null || max !== null),
+    available: storage.available !== false && (used !== null || max !== null),
   };
 }
 
 export function getWaterData(data) {
   const root = data?.data ?? data ?? {};
 
-  const summary =
-    root.waterSummary ??
-    root.water_summary ??
-    {};
+  const summary = root.waterSummary ?? root.water_summary ?? {};
 
-  const containers =
-    root.containers ??
-    root.waterContainers ??
-    root.water_containers ??
-    root.rows ??
-    [];
+  const containers = root.containers ?? root.waterContainers ?? root.water_containers ?? root.rows ?? [];
 
   let current = getNumber(
     summary.volume,
@@ -116,7 +89,7 @@ export function getWaterData(data) {
     root.waterVolume,
     root.water_volume,
     root.stored,
-    root.current
+    root.current,
   );
 
   let max = getNumber(
@@ -128,7 +101,7 @@ export function getWaterData(data) {
     root.maxCapacity,
     root.max_capacity,
     root.totalCapacity,
-    root.total_capacity
+    root.total_capacity,
   );
 
   let percent = getNumber(
@@ -140,7 +113,7 @@ export function getWaterData(data) {
     root.fill_percentage,
     root.fillPercentage,
     root.percent,
-    root.percentage
+    root.percentage,
   );
 
   let containerCount = getNumber(
@@ -149,7 +122,7 @@ export function getWaterData(data) {
     summary.container_count,
     root.count,
     root.containerCount,
-    root.container_count
+    root.container_count,
   );
 
   if (Array.isArray(containers)) {
@@ -168,7 +141,7 @@ export function getWaterData(data) {
           container?.current_volume,
           container?.stored,
           container?.current,
-          container?.amount
+          container?.amount,
         );
 
         if (value !== null) {
@@ -192,7 +165,7 @@ export function getWaterData(data) {
           container?.max_volume,
           container?.capacity,
           container?.maxCapacity,
-          container?.max_capacity
+          container?.max_capacity,
         );
 
         if (value !== null) {
@@ -207,12 +180,7 @@ export function getWaterData(data) {
     }
   }
 
-  if (
-    percent === null &&
-    current !== null &&
-    max !== null &&
-    max > 0
-  ) {
+  if (percent === null && current !== null && max !== null && max > 0) {
     percent = (current / max) * 100;
   }
 
@@ -244,21 +212,11 @@ export function extractBases(player) {
 }
 
 export function isOwnedBase(base) {
-  const relationship = String(
-    base?.relationship ??
-      base?.relation ??
-      base?.access ??
-      ''
-  )
+  const relationship = String(base?.relationship ?? base?.relation ?? base?.access ?? '')
     .trim()
     .toLowerCase();
 
-  if (
-    relationship === 'owner' ||
-    relationship === 'owned' ||
-    relationship === 'self' ||
-    relationship === 'own'
-  ) {
+  if (relationship === 'owner' || relationship === 'owned' || relationship === 'self' || relationship === 'own') {
     return true;
   }
 
@@ -272,16 +230,9 @@ export function isOwnedBase(base) {
     return false;
   }
 
-  const owned =
-    base?.owned ??
-    base?.isOwner ??
-    base?.is_owner;
+  const owned = base?.owned ?? base?.isOwner ?? base?.is_owner;
 
-  if (
-    owned === true ||
-    owned === 1 ||
-    owned === 'true'
-  ) {
+  if (owned === true || owned === 1 || owned === 'true') {
     return true;
   }
 
@@ -293,10 +244,7 @@ export function getBaseRelationship(base) {
     return 'Owned';
   }
 
-  const relationship =
-    base?.relationship ??
-    base?.relation ??
-    base?.access;
+  const relationship = base?.relationship ?? base?.relation ?? base?.access;
 
   if (relationship) {
     return relationship;
@@ -306,29 +254,13 @@ export function getBaseRelationship(base) {
 }
 
 export function getBaseName(base, index) {
-  return (
-    base?.name ??
-    base?.baseName ??
-    base?.base_name ??
-    base?.title ??
-    `Base ${index + 1}`
-  );
+  return base?.name ?? base?.baseName ?? base?.base_name ?? base?.title ?? `Base ${index + 1}`;
 }
 
 export function getBaseType(base) {
-  return (
-    base?.base_type ??
-    base?.baseType ??
-    base?.type ??
-    'Unknown'
-  );
+  return base?.base_type ?? base?.baseType ?? base?.type ?? 'Unknown';
 }
 
 export function getBaseOwner(base) {
-  return (
-    base?.owner_name ??
-    base?.ownerName ??
-    base?.owner ??
-    'Unknown'
-  );
+  return base?.owner_name ?? base?.ownerName ?? base?.owner ?? 'Unknown';
 }

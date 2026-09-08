@@ -45,7 +45,7 @@ Browser
 
 `runPagesApiHandler` supplies request IDs, method checks, shared rate limits, safe error envelopes, and request logging. API routes should keep domain-specific authorization and response shaping local to the feature.
 
-Each API entry point imports its feature's `GET` handler and explicitly calls `runPagesApiHandler`. The boundary also normalizes returned failure responses and catches rate-limit failures. Successful JSON, redirects, and blueprint attachments retain their existing shapes. Feature handlers must supply safe public error messages, never raw upstream errors.
+Each API entry point imports its feature's handler (GET for reads, POST for logout) and explicitly calls `runPagesApiHandler`. The boundary also normalizes returned failure responses and catches rate-limit failures. Successful JSON, redirects, and blueprint attachments retain their existing shapes. Feature handlers must supply safe public error messages, never raw upstream errors.
 
 Portal owns its navigation, market board, market configuration, and base-export workflow. Shared UI belongs in `src/components/` only when it is feature-agnostic; no placeholder shared component or barrel is needed. Module-local imports remain relative, and tests import routes or focused utilities directly.
 
@@ -71,3 +71,5 @@ Portal owns its navigation, market board, market configuration, and base-export 
 `npm run typecheck` performs TypeScript checking with unused-local and unused-parameter checks enabled. `npm test` covers the API boundary, all route method checks, protected-route session checks, OAuth cookies, blueprint downloads, safe provider failures, environment validation, and portal currency shapes. Architecture tests walk browser imports transitively and enforce API wrapping. Guard tests exercise both Node and browser behavior without mocking the guard.
 
 After `npm run build`, run `npm run test:production`. It starts the built Next.js server with isolated provider configuration and a local Redis transport fixture, exercises every API module and 100 protected requests, and rejects import failures or listener warnings. No live credentials or accounts are used.
+
+The rebuilt portal uses a feature-agnostic DashboardShell in src/components, with feature navigation in the portal module. See [Portal rebuild](PORTAL_REBUILD.md) for the current design, browser checks, and remaining production acceptance criteria.

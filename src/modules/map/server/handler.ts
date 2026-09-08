@@ -1,25 +1,26 @@
-import { getServerEnv } from "../../../config/env";
-import { NextResponse, getRequestOrigin } from "../../../infrastructure/pages-api";
-import { cookies } from "../../../infrastructure/cookies";
+import '../../../lib/assert-server';
+import { getLinkedPlayer } from '../../player/server/linked-player';
+import { getServerEnv } from '../../../config/env';
+import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
+import { cookies } from '../../../infrastructure/cookies';
 
-import { getDuneClient, getDiscordPlayer } from "../../../infrastructure/dune";
-import { logger } from "../../../lib/logger";
-import { getSession } from "../../../lib/session-store";
+import { getDuneClient } from '../../../infrastructure/dune';
+import { logger } from '../../../lib/logger';
+import { getSession } from '../../../lib/session-store';
 
-import { extractBaseRows, normalizeBase, getBaseId } from "./bases";
+import { extractBaseRows, normalizeBase, getBaseId } from './bases';
 
-import { extractOnlinePlayers, getOnlinePlayerId, extractPlayerId, getPlayerName } from "./players";
+import { extractOnlinePlayers, getOnlinePlayerId, extractPlayerId, getPlayerName } from './players';
 
-import { extractVehicleRows, isVehicleAccessible, normalizeVehicle } from "./vehicles";
+import { extractVehicleRows, isVehicleAccessible, normalizeVehicle } from './vehicles';
 
-import { extractRows, extractMapConfig, filterMapMarkers, addOnlineStatus } from "./markers";
-
+import { extractRows, extractMapConfig, filterMapMarkers, addOnlineStatus } from './markers';
 
 const NO_STORE_HEADERS = {
-  "Cache-Control": "no-store",
+  'Cache-Control': 'no-store',
 };
 
-function unauthorizedResponse(error = "Unauthorized", status = 401) {
+function unauthorizedResponse(error = 'Unauthorized', status = 401) {
   return NextResponse.json(
     {
       ok: false,
@@ -54,7 +55,7 @@ export async function GET(request, res) {
 
   try {
     const cookieStore = cookies(request, res);
-    const sessionId = cookieStore.get("dashboard_session")?.value;
+    const sessionId = cookieStore.get('dashboard_session')?.value;
 
     if (!sessionId) {
       return unauthorizedResponse();
@@ -63,45 +64,45 @@ export async function GET(request, res) {
     const session = await getSession(sessionId);
 
     if (!session || !session.expiresAt || session.expiresAt < Date.now()) {
-      return unauthorizedResponse("Session expired or invalid");
+      return unauthorizedResponse('Session expired or invalid');
     }
 
     const actor = {
       guildId: session.guildId,
-      channelId: "dashboard",
+      channelId: 'dashboard',
       userId: session.user.id,
       username: session.user.username,
       roleIds: [...(session.roleIds || []), getServerEnv().VERIFIED_MEMBER_ROLE_ID].filter(Boolean),
       interactionId: `map - ${Date.now()} `,
-      commandName: "portal",
+      commandName: 'portal',
     };
 
-    const playerData = await getDiscordPlayer(actor);
+    const playerData = await getLinkedPlayer(actor);
 
     if (playerData?.linked !== true) {
-      return emptyMapResponse("Your Discord account is not linked to a Dune player.", 403);
+      return emptyMapResponse('Your Discord account is not linked to a Dune player.', 403);
     }
 
     const playerId = extractPlayerId(playerData);
 
     if (!playerId) {
-      return emptyMapResponse("Unable to determine your Dune player ID.", 403);
+      return emptyMapResponse('Unable to determine your Dune player ID.', 403);
     }
 
     const duneClient = getDuneClient();
     const url = new URL(request.url, getRequestOrigin(request));
-    const mapName = url.searchParams.get("map")?.trim();
+    const mapName = url.searchParams.get('map')?.trim();
 
-    const markerEndpoint = mapName ? `/api/map/markers?map=${encodeURIComponent(mapName)} ` : "/api/map/markers";
+    const markerEndpoint = mapName ? `/api/map/markers?map=${encodeURIComponent(mapName)} ` : '/api/map/markers';
 
     const [basesData, mapData, vehiclesData, onlinePlayersData] = await Promise.all([
-      duneClient.request("GET", `/api/players/${encodeURIComponent(playerId)}/bases`),
+      duneClient.request('GET', `/api/players/${encodeURIComponent(playerId)}/bases`),
 
-      duneClient.request("GET", markerEndpoint),
+      duneClient.request('GET', markerEndpoint),
 
-      duneClient.request("GET", "/api/vehicles"),
+      duneClient.request('GET', '/api/vehicles'),
 
-      duneClient.request("GET", "/api/players/online"),
+      duneClient.request('GET', '/api/players/online'),
     ]);
 
     // BASES
@@ -140,7 +141,7 @@ export async function GET(request, res) {
     const map = extractMapConfig(mapData);
 
     if (!map) {
-      logger.warn("No map configuration returned", {
+      logger.warn('No map configuration returned', {
         mapName: mapName || null,
       });
     }
@@ -165,12 +166,12 @@ export async function GET(request, res) {
   } catch (error) {
     const durationMs = Date.now() - started;
 
-    logger.error("Failed to load map data", { error });
+    logger.error('Failed to load map data', { error });
 
     return NextResponse.json(
       {
         ok: false,
-        error: "Unable to load map data.",
+        error: 'Unable to load map data.',
         bases: [],
         markers: [],
         map: null,
@@ -185,4 +186,3 @@ export async function GET(request, res) {
     );
   }
 }
-
