@@ -7,7 +7,7 @@ import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { getBaseId, normalizeBaseStorage, normalizeBaseWater } from './helpers';
 import { logger } from '../../../lib/logger';
-import { getSession } from '../../../lib/session-store';
+import { getSession, saveSession } from '../../../lib/session-store';
 import { discordAvatar } from './avatar';
 
 async function loadBaseTelemetry(base, duneClient) {
@@ -125,7 +125,8 @@ async function loadPlayerGuild(playerId, playerName, duneClient) {
           id: guildId,
           name: guild?.name ?? guild?.guildName ?? guild?.guild_name ?? 'Unknown Guild',
           tag: guild?.tag ?? guild?.abbreviation ?? null,
-          rank: member?.rank ?? member?.role ?? member?.memberRole ?? null,
+          faction: guild?.faction_name ?? guild?.guild_faction_name ?? guild?.faction ?? guild?.guild_faction ?? null,
+          rank: member?.rank ?? member?.role ?? member?.memberRole ?? member?.role_id ?? member?.roleId ?? null,
         };
       }
     }
@@ -202,6 +203,16 @@ export async function GET(request, res) {
           status: 200,
         },
       );
+    }
+
+    try {
+      await saveSession(sessionId, {
+        ...session,
+        linkedPlayerId: String(playerId),
+        linkedPlayerName: data.characterName,
+      });
+    } catch (error) {
+      logger.warn('Unable to cache linked player identity for dashboard features', { error });
     }
 
     /**

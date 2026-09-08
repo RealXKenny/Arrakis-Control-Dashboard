@@ -8,6 +8,20 @@ export type PopulationHistory = {
   coverageHours: number;
 };
 
+/** Sum the provider's accumulated playtime across every player row. */
+export function totalPlayHours(players: unknown): number | null {
+  if (!players || typeof players !== 'object' || Array.isArray(players)) return null;
+  const rows = (players as { rows?: unknown }).rows;
+  if (!Array.isArray(rows)) return null;
+  let seconds = 0;
+  for (const row of rows) {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
+    const value = Number((row as { total_playtime_seconds?: unknown }).total_playtime_seconds);
+    if (Number.isFinite(value) && value >= 0) seconds += value;
+  }
+  return seconds / 3600;
+}
+
 export const DAY_MS = 86400000;
 export const MAX_SAMPLE_GAP_MS = 90000;
 
