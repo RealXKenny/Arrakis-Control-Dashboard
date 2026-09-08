@@ -14,6 +14,7 @@ export function buildCharacter(player) {
 
   const character = {
     avatarUrl: typeof player.avatarUrl === 'string' ? player.avatarUrl : null,
+    playerId: player.pawnId ?? player.playerId ?? player.controllerId ?? null,
     name: player.characterName || 'Unknown Character',
 
     status: player.onlineStatus || 'Offline',

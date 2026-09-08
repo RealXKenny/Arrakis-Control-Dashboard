@@ -1,6 +1,11 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { DAY_MS, summarizePopulation, populationSegments } from '../src/modules/portal/utils/population';
-import { recordPopulation, readPopulationHistory } from '../src/modules/portal/server/population';
+import {
+  DAY_MS,
+  summarizePopulation,
+  populationSegments,
+  totalPlayHours,
+} from '../../src/modules/portal/utils/population';
+import { recordPopulation, readPopulationHistory } from '../../src/modules/portal/server/population';
 
 const mocks = vi.hoisted(() => ({
   set: vi.fn(),
@@ -10,9 +15,9 @@ const mocks = vi.hoisted(() => ({
   zrange: vi.fn(),
   request: vi.fn(),
 }));
-vi.mock('../src/lib/redis', () => ({ getRedisClient: () => mocks }));
-vi.mock('../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
-vi.mock('../src/config/env', () => ({
+vi.mock('../../src/lib/redis', () => ({ getRedisClient: () => mocks }));
+vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
+vi.mock('../../src/config/env', () => ({
   getServerEnv: () => ({ CONSOLE_URL: 'https://console.test', POPULATION_HISTORY_ENABLED: 'true', LOG_LEVEL: 'INFO' }),
 }));
 
@@ -23,6 +28,19 @@ beforeEach(() => {
 });
 
 describe('population history', () => {
+  it('totals accumulated playtime from every player row', () => {
+    expect(
+      totalPlayHours({
+        rows: [
+          { total_playtime_seconds: '22983' },
+          { total_playtime_seconds: 3617 },
+          { total_playtime_seconds: 'bad' },
+        ],
+      }),
+    ).toBeCloseTo(7.3888889);
+    expect(totalPlayHours({ rows: [] })).toBe(0);
+    expect(totalPlayHours({ totalCount: 2 })).toBeNull();
+  });
   it('computes observed peak and player-hours without filling gaps', () => {
     const now = DAY_MS;
     const result = summarizePopulation(

@@ -5,6 +5,7 @@ import { NextResponse } from '../../../infrastructure/pages-api';
 import { getSession } from '../../../lib/session-store';
 import { AppError } from '../../../lib/errors';
 import { worldReading, type WorldReading } from '../utils/world';
+import { totalPlayHours } from '../utils/population';
 import { readPopulationHistory } from './population';
 
 // Shared, sanitized world readings only. Authentication is checked on every request.
@@ -24,9 +25,12 @@ export async function GET(req, res) {
       client.request('GET', `/api/map/markers?map=${map}&static=0`),
       client.request('GET', '/api/exchange/stats'),
       client.request('GET', '/api/admin/landsraad'),
+      client.request('GET', '/api/players'),
     ]).then((results) => {
-      const [markers, market, council] = results.map((result) => (result.status === 'fulfilled' ? result.value : null));
-      return worldReading(map, markers, market, council);
+      const [markers, market, council, players] = results.map((result) =>
+        result.status === 'fulfilled' ? result.value : null,
+      );
+      return { ...worldReading(map, markers, market, council), totalPlayHours: totalPlayHours(players) };
     });
     reading = { expires: Date.now() + 30000, value };
     cache.set(map, reading);

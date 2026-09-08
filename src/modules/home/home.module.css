@@ -17,8 +17,17 @@
 .hero {
   position: relative;
   overflow: hidden;
-  padding: 70px 0 64px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  align-items: center;
+  gap: 48px;
+  min-height: 540px;
+  padding: 64px 0 72px;
   border-bottom: 1px solid #503521;
+}
+.heroCopy {
+  position: relative;
+  z-index: 2;
 }
 .eyebrow {
   color: #e0b66e;
@@ -31,9 +40,10 @@
 }
 .hero h1 {
   font:
-    750 clamp(42px, 5.5vw, 92px)/1.04 'Segoe UI',
+    750 clamp(46px, 5.5vw, 82px)/1.02 'Segoe UI',
     sans-serif;
-  letter-spacing: -3px;
+  letter-spacing: -4px;
+  margin: 18px 0 24px;
   color: #ffe2a9;
   position: relative;
   z-index: 1;
@@ -45,8 +55,8 @@
 .description {
   color: #b9a185;
   max-width: 560px;
-  font-size: 15px;
-  line-height: 1.85;
+  font-size: 16px;
+  line-height: 1.8;
   position: relative;
   z-index: 1;
 }
@@ -66,19 +76,40 @@
   font-size: 13px;
   font-weight: 700;
   border: 1px solid #e0ad58;
+  border-radius: 3px;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+.actions a:hover {
+  transform: translateY(-2px);
 }
 .actions a:last-child {
   color: #dfb36b;
   background: #15140f;
   border-color: #625032;
 }
+.heroVisual {
+  position: relative;
+  min-height: 390px;
+  display: grid;
+  place-items: center;
+}
+.visualGlow {
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: #8e471e40;
+  filter: blur(45px);
+}
 .contours {
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: min(520px, 100%);
+  height: min(520px, 100%);
   border-radius: 50%;
-  right: -70px;
-  top: -30px;
+  inset: 0;
   background: repeating-radial-gradient(
     ellipse at center,
     transparent 0 26px,
@@ -95,17 +126,115 @@
   font-size: 210px;
   color: #ca9d4350;
 }
+.signalCard {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  width: min(290px, 82%);
+  padding: 28px;
+  background: #15150fdd;
+  border: 1px solid #c4974b66;
+  box-shadow: 0 24px 70px #00000066;
+  transform: rotate(-4deg);
+}
+.signalCard span,
+.signalCard small {
+  color: #b8ab8c;
+  font:
+    10px/1.5 'JetBrains Mono',
+    ui-monospace,
+    monospace;
+  letter-spacing: 1.5px;
+}
+.signalCard strong {
+  color: #ffe2a9;
+  font:
+    700 42px/1 'Saira Condensed',
+    sans-serif;
+  letter-spacing: 0.08em;
+}
+.signalCard small {
+  color: #73c9cb;
+  letter-spacing: 0;
+}
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
-  margin: 30px 0 52px;
+  margin: 30px 0 0;
 }
 .stats article,
 .cards a {
   border: 1px solid #503521;
   background: linear-gradient(135deg, #1b1a14, #11120e);
   padding: 26px;
+  border-radius: 4px;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease;
+}
+.stats article:hover {
+  transform: translateY(-3px);
+  border-color: #c4974b66;
+}
+.community {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 350px);
+  align-items: center;
+  gap: 56px;
+  margin-top: 96px;
+  padding: 64px 0;
+  border-top: 1px solid #503521;
+}
+.communityCopy h2 {
+  max-width: 520px;
+  margin: 16px 0;
+  color: #ffe2a9;
+  font:
+    700 clamp(32px, 4vw, 56px)/1.05 'Segoe UI',
+    sans-serif;
+  letter-spacing: -2px;
+}
+.communityCopy > p:not(.eyebrow) {
+  max-width: 470px;
+  color: #b9a185;
+  font-size: 16px;
+  line-height: 1.8;
+}
+.discordButton {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 13px 20px;
+  color: #18150e;
+  background: #e0ad58;
+  border: 1px solid #e0ad58;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    transform 160ms ease,
+    background 160ms ease;
+}
+.discordButton:hover {
+  transform: translateY(-2px);
+  background: #f0c879;
+}
+.discordWidget {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: #11120e;
+  border: 1px solid #503521;
+  border-radius: 6px;
+  box-shadow: 0 24px 70px #00000044;
+}
+.discordWidget iframe {
+  display: block;
+  width: 100%;
+  max-width: 350px;
+  border-radius: 3px;
 }
 .stats span,
 .cards small {
@@ -164,18 +293,28 @@
 }
 @media (max-width: 700px) {
   .hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
     padding: 40px 0;
   }
   .hero h1 {
     letter-spacing: -2px;
   }
   .contours {
-    right: -340px;
     opacity: 0.25;
+  }
+  .heroVisual {
+    min-height: 280px;
   }
   .stats,
   .cards {
     grid-template-columns: 1fr;
+  }
+  .community {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    margin-top: 64px;
+    padding: 48px 0;
   }
   .stats article {
     padding: 20px;

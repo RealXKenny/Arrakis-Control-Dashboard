@@ -63,7 +63,100 @@
 .identity p {
   margin: 6px 0 0;
 }
+.guildFacts {
+  display: flex;
+  gap: 28px;
+  margin: 24px 0 0;
+}
+.guildFacts div {
+  min-width: 120px;
+}
+.guildFacts dt {
+  color: var(--theme-muted);
+  font:
+    10px/1.5 'JetBrains Mono',
+    monospace;
+  text-transform: uppercase;
+}
+.guildFacts dd {
+  margin: 6px 0 0;
+  color: var(--theme-text);
+  font-size: 18px;
+}
+.factionValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.factionValue img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.rankGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 28px;
+}
+.rankCard {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--theme-border);
+  background: #120b0790;
+}
+.rankHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--theme-border);
+}
+.rankHeader h3 {
+  margin: 0;
+  color: var(--theme-gold);
+  font:
+    11px 'JetBrains Mono',
+    monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.rankHeader > span {
+  color: var(--theme-muted);
+  font:
+    11px 'JetBrains Mono',
+    monospace;
+}
+.rankMembers {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.rankMembers li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0 4px;
+  border-bottom: 1px solid var(--theme-border);
+}
+.rankMembers li + li {
+  padding-top: 10px;
+}
+.rankMembers li:last-child {
+  border-bottom: 0;
+}
+.rankMembers strong {
+  color: var(--theme-text);
+  font-size: 13px;
+}
+.emptyRank {
+  margin: 13px 0 4px;
+  color: var(--theme-muted);
+  font-size: 12px;
+}
 .avatar {
+  position: relative;
   width: 72px;
   height: 72px;
   display: grid;
@@ -72,6 +165,39 @@
   border: 1px solid var(--theme-border);
   background: #120b06;
   color: var(--theme-gold);
+}
+.avatarEditable {
+  cursor: pointer;
+}
+.avatarEditable:hover,
+.avatarEditable:focus-within {
+  border-color: var(--theme-gold);
+}
+.uploadOverlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #080503b8;
+  color: var(--theme-gold);
+  font:
+    28px 'JetBrains Mono',
+    monospace;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.avatarEditable:hover .uploadOverlay,
+.avatarEditable:focus-within .uploadOverlay {
+  opacity: 1;
+}
+.logoInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 .badge {
   margin-left: auto;
@@ -326,6 +452,12 @@
   .identity {
     flex-wrap: wrap;
   }
+  .guildFacts {
+    gap: 18px;
+  }
+  .rankGrid {
+    grid-template-columns: 1fr;
+  }
   .identity h2 {
     font-size: 20px;
   }
@@ -436,4 +568,196 @@
 .containerArt {
   font-size: 48px;
   padding: 16px;
+}
+
+.guildPanel {
+  padding: 30px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 92% 8%, #c9993a14, transparent 28%),
+    linear-gradient(135deg, #2c1b11 0%, #1b100a 58%, #140b07 100%);
+  box-shadow: 0 18px 45px #08050355;
+}
+.guildPanel > h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.guildPanel > h2::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, var(--theme-border), transparent);
+}
+.guildPanel .identity {
+  align-items: center;
+  gap: 22px;
+  padding: 22px;
+  border: 1px solid #d2a85a2e;
+  border-radius: 10px;
+  background: linear-gradient(110deg, #120b08aa, #2b1b1028);
+}
+.guildPanel .avatar {
+  flex: 0 0 96px;
+  width: 96px;
+  height: 96px;
+  border-color: #d2a85a70;
+  border-radius: 12px;
+  background: radial-gradient(circle, #d2a85a18, #0f0906 70%);
+  box-shadow:
+    inset 0 0 22px #00000055,
+    0 0 0 5px #0d080533;
+}
+.guildPanel .avatar img {
+  width: 82px;
+  height: 82px;
+  border-radius: 8px;
+}
+.guildPanel .identity > div {
+  min-width: 0;
+}
+.guildPanel .identity h3 {
+  margin: 0;
+  color: var(--theme-text);
+  font:
+    700 clamp(24px, 3vw, 38px)/1.05 'Saira Condensed',
+    sans-serif;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+.guildPanel .identity p {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 5px 9px;
+  border: 1px solid #d2a85a35;
+  border-radius: 999px;
+  color: var(--theme-gold);
+  background: #d2a85a0d;
+  font:
+    10px 'JetBrains Mono',
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.guildPanel .identity p.guildDescription {
+  display: block;
+  max-width: 680px;
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  color: #b9a185;
+  background: transparent;
+  font:
+    14px/1.65 'Saira',
+    sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.guildMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px 18px;
+  flex-wrap: wrap;
+}
+.guildPanel .guildFacts {
+  gap: 12px;
+  margin-top: 18px;
+}
+.guildPanel .guildFacts > div {
+  flex: 1;
+  padding: 14px 16px;
+  border: 1px solid #d2a85a22;
+  border-radius: 8px;
+  background: #0e0805aa;
+}
+.guildPanel .guildFacts dd {
+  font:
+    600 22px/1.2 'Saira Condensed',
+    sans-serif;
+}
+.guildPanel .rankGrid {
+  gap: 16px;
+  margin-top: 24px;
+}
+.guildPanel .rankCard {
+  min-height: 142px;
+  padding: 18px;
+  border-color: #d2a85a2e;
+  border-radius: 9px;
+  background: linear-gradient(160deg, #21140d, #100906);
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+}
+.guildPanel .rankCard:hover {
+  transform: translateY(-2px);
+  border-color: #d2a85a68;
+  background: linear-gradient(160deg, #29190f, #130a06);
+}
+.guildPanel .rankCard:nth-child(1) {
+  border-top: 2px solid #e0b568;
+}
+.guildPanel .rankCard:nth-child(2) {
+  border-top: 2px solid #b9c5c4;
+}
+.guildPanel .rankCard:nth-child(3) {
+  border-top: 2px solid #9c6f48;
+}
+.guildPanel .rankHeader {
+  padding-bottom: 14px;
+  border-bottom-color: #d2a85a2e;
+}
+.guildPanel .rankHeader h3 {
+  color: var(--theme-text);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+}
+.guildPanel .rankHeader > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid #d2a85a35;
+  border-radius: 50%;
+  color: var(--theme-gold);
+  background: #d2a85a0d;
+}
+.guildPanel .rankMembers li {
+  padding: 14px 0 6px;
+}
+.guildPanel .rankMembers strong {
+  font-size: 14px;
+}
+.guildPanel .emptyRank {
+  padding-top: 6px;
+  color: #907d69;
+  font-style: italic;
+}
+.guildFooter {
+  margin: 24px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid #d2a85a22;
+  color: #a89176 !important;
+}
+@media (max-width: 700px) {
+  .guildPanel {
+    padding: 20px;
+  }
+  .guildPanel .identity {
+    padding: 16px;
+  }
+  .guildPanel .avatar {
+    flex-basis: 76px;
+    width: 76px;
+    height: 76px;
+  }
+  .guildPanel .avatar img {
+    width: 64px;
+    height: 64px;
+  }
+  .guildPanel .identity h3 {
+    font-size: 28px;
+  }
 }

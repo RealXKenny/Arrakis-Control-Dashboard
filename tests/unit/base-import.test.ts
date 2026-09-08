@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { POST } from '../src/modules/bases/server/import';
+import { POST } from '../../src/modules/bases/server/import';
 const state = vi.hoisted(() => ({
   session: vi.fn(),
   player: vi.fn(),
@@ -8,15 +8,17 @@ const state = vi.hoisted(() => ({
   finish: vi.fn(),
   upload: vi.fn(),
 }));
-vi.mock('../src/infrastructure/cookies', () => ({ cookies: () => ({ get: () => ({ value: 'session' }) }) }));
-vi.mock('../src/lib/session-store', () => ({ getSession: state.session }));
-vi.mock('../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: state.player }));
-vi.mock('../src/modules/bases/server/history', () => ({
+vi.mock('../../src/infrastructure/cookies', () => ({ cookies: () => ({ get: () => ({ value: 'session' }) }) }));
+vi.mock('../../src/lib/session-store', () => ({ getSession: state.session }));
+vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: state.player }));
+vi.mock('../../src/modules/bases/server/history', () => ({
   importHistory: async () => [],
   reserveImport: state.reserve,
   finishImport: state.finish,
 }));
-vi.mock('../src/infrastructure/dune', () => ({ warmupDuneClient: async () => ({ requestMultipart: state.upload }) }));
+vi.mock('../../src/infrastructure/dune', () => ({
+  warmupDuneClient: async () => ({ requestMultipart: state.upload }),
+}));
 const req = () =>
   ({
     headers: { host: 'portal.test', origin: 'http://portal.test' },

@@ -59,7 +59,7 @@ describe('module boundaries', () => {
 
   it('keeps every API route behind the common handler', () => {
     const routes = files.filter((p) => normalize(p).startsWith('pages/api/'));
-    expect(routes).toHaveLength(13);
+    expect(routes).toHaveLength(16);
     for (const route of routes) {
       const method = /\/auth\/logout\/|\/blueprints\/(publish|remove)\.ts$|\/bases\/import\.ts$/.test(normalize(route))
         ? 'POST'

@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
-import { discordAvatar } from '../src/modules/player/server/avatar';
-import { filterOwnedListings } from '../src/modules/portal/server/my-listings';
+import { discordAvatar } from '../../src/modules/player/server/avatar';
+import { filterOwnedListings } from '../../src/modules/portal/server/my-listings';
 
 it('constructs Discord avatar URLs only from valid session fields', () => {
   expect(discordAvatar({ id: '12345', avatar: 'a'.repeat(32) })).toBe(

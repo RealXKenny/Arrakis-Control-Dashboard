@@ -1,10 +1,13 @@
 import BaseImport from '../../bases/components/BaseImport';
 import { COLORS, styles } from '../config/colors';
+import { useEffect, useState } from 'react';
 
 import { getBaseId } from '../utils/bases';
+import { getBaseName } from '../utils/bases';
 import BaseCard from './BaseCard';
+import BaseInventory from './BaseInventory';
 
-function BaseGrid({ bases, telemetry }) {
+function BaseGrid({ bases, telemetry, selectedBaseId, onSelectBase }) {
   if (bases.length === 0) {
     return (
       <div
@@ -61,7 +64,13 @@ function BaseGrid({ bases, telemetry }) {
               gridColumn: isOddFinalBase ? '1 / -1' : 'auto',
             }}
           >
-            <BaseCard base={base} index={index} telemetry={baseId ? telemetry[baseId] : null} />
+            <BaseCard
+              base={base}
+              index={index}
+              telemetry={baseId ? telemetry[baseId] : null}
+              selected={String(selectedBaseId) === String(baseId)}
+              onSelect={() => onSelectBase(baseId)}
+            />
           </div>
         );
       })}
@@ -79,6 +88,13 @@ export default function BaseSection({
   baseTab,
   setBaseTab,
 }) {
+  const [selectedBaseId, setSelectedBaseId] = useState(null);
+  const selectedBase = visibleBases.find((base) => String(getBaseId(base)) === String(selectedBaseId));
+
+  useEffect(() => {
+    if (selectedBaseId && !selectedBase) setSelectedBaseId(null);
+  }, [selectedBase, selectedBaseId]);
+
   return (
     <>
       {/* BASES */}
@@ -231,7 +247,23 @@ export default function BaseSection({
           </div>
         )}
 
-        <BaseGrid bases={visibleBases} telemetry={basesTelemetry} />
+        <BaseGrid
+          bases={visibleBases}
+          telemetry={basesTelemetry}
+          selectedBaseId={selectedBaseId}
+          onSelectBase={(baseId) =>
+            setSelectedBaseId((current) => (String(current) === String(baseId) ? null : baseId))
+          }
+        />
+        {selectedBase && (
+          <BaseInventory
+            baseName={getBaseName(selectedBase, visibleBases.indexOf(selectedBase))}
+            inventory={
+              basesTelemetry[getBaseId(selectedBase)]?.inventory ?? selectedBase.inventory ?? selectedBase.inventoryData
+            }
+            onClose={() => setSelectedBaseId(null)}
+          />
+        )}
       </section>
       <BaseImport />
     </>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inventoryItems, journeySummary } from '../src/modules/portal/utils/inventory';
+import { inventoryItems, journeySummary } from '../../src/modules/portal/utils/inventory';
 
 describe('player dossier transformations', () => {
   it('distinguishes unavailable inventory from an empty inventory', () => {

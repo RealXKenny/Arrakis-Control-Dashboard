@@ -1,8 +1,8 @@
-import { responseMock } from './helpers/response';
+import { responseMock } from '../helpers/response';
 import { describe, expect, it } from 'vitest';
-import { NextResponse, runPagesApiHandler } from '../src/infrastructure/pages-api';
-import authCallback from '../src/pages/api/auth/callback/index';
-import marketConfig from '../src/pages/api/market/config/index';
+import { NextResponse, runPagesApiHandler } from '../../src/infrastructure/pages-api';
+import authCallback from '../../src/pages/api/auth/callback/index';
+import marketConfig from '../../src/pages/api/market/config/index';
 
 describe('Pages API boundary', () => {
   it('returns successful responses with a request ID', async () => {
