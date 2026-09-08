@@ -45,8 +45,7 @@ function productionFixture() {
     DISCORD_REDIRECT_URI: 'https://portal.test/auth/callback',
     APP_URL: 'https://portal.test',
     DISCORD_APP_URL: 'https://portal.test',
-    UPSTASH_REDIS_REST_URL: 'https://redis.test',
-    UPSTASH_REDIS_REST_TOKEN: 'test',
+    REDIS_URL: 'redis://default:test@redis.test:6379/0',
   };
   for (const [key, value] of Object.entries(values)) vi.stubEnv(key, value);
 }
@@ -56,12 +55,12 @@ it('requires credentials and matching secure public origins at production startu
   const { validateProductionEnv } = await import('../../src/config/env');
   expect(validateProductionEnv().NODE_ENV).toBe('production');
 });
-it('rejects a production Redis URL without HTTPS and does not disclose its token', async () => {
+it('rejects an HTTP Redis URL without disclosing credentials', async () => {
   vi.resetModules();
   productionFixture();
-  vi.stubEnv('UPSTASH_REDIS_REST_URL', 'http://redis.test');
+  vi.stubEnv('REDIS_URL', 'http://default:secret@redis.test');
   const { validateProductionEnv } = await import('../../src/config/env');
-  expect(validateProductionEnv).toThrow('Production HTTPS is required: UPSTASH_REDIS_REST_URL');
+  expect(validateProductionEnv).toThrow('Invalid server environment configuration: REDIS_URL');
 });
 it('rejects missing production credentials before accepting requests', async () => {
   vi.resetModules();
@@ -69,4 +68,27 @@ it('rejects missing production credentials before accepting requests', async () 
   vi.stubEnv('DISCORD_CLIENT_SECRET', '');
   const { validateProductionEnv } = await import('../../src/config/env');
   expect(validateProductionEnv).toThrow('Missing server environment configuration: DISCORD_CLIENT_SECRET');
+});
+
+it.each(['not-a-url', 'redis://host/not-a-database', 'redis://host/0?password=secret', 'redis://host/0#secret'])(
+  'rejects malformed Redis settings without exposing their values (%s)',
+  async (value) => {
+    vi.stubEnv('REDIS_URL', value);
+    const { getServerEnv } = await import('../../src/config/env');
+    expect(getServerEnv).toThrow('Invalid server environment configuration: REDIS_URL');
+  },
+);
+
+it('accepts TLS and nonstandard Redis allocation ports', async () => {
+  productionFixture();
+  vi.stubEnv('REDIS_URL', 'rediss://default:password@redis.test:25432/2');
+  const { validateProductionEnv } = await import('../../src/config/env');
+  expect(validateProductionEnv().REDIS_URL).toBe('rediss://default:password@redis.test:25432/2');
+});
+
+it('requires REDIS_URL in production', async () => {
+  productionFixture();
+  vi.stubEnv('REDIS_URL', '');
+  const { validateProductionEnv } = await import('../../src/config/env');
+  expect(validateProductionEnv).toThrow('Missing server environment configuration: REDIS_URL');
 });
