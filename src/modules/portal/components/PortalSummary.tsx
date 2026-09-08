@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useServerStatus } from '../../home/hooks/useServerStatus';
 import { formatNumber } from '../utils/formatting';
 import { label, record } from '../utils/inventory';
+import { guildRoleLabel } from '../utils/guild';
 import type { buildCharacter } from '../utils/character';
 import { timeRemaining } from '../utils/world';
 import { useWorldReading } from '../hooks/useWorldReading';
@@ -25,7 +26,10 @@ export default function PortalSummary({
   const { reading, error, expired, now } = useWorldReading(map);
   const { activePlayers } = useServerStatus();
   const mapName = map === 'DeepDesert' ? 'Deep Desert' : 'Hagga Basin';
-  const guildName = label(record(character.guild).name, 'No guild reported');
+  const guild = record(character.guild);
+  const guildName = label(guild.name, 'No guild reported');
+  const guildFaction = label(guild.faction, 'Not reported');
+  const guildRank = guildRoleLabel(guild.rank);
   const age = reading ? Math.max(0, Math.floor((now - Date.parse(reading.observedAt)) / 1000)) : null;
   const stale = error || (age !== null && age > 90);
   const headline = reading?.spice
@@ -57,28 +61,28 @@ export default function PortalSummary({
           <div className={css.dispatch}>
             <p className={css.kicker}>Your world. Your next move.</p>
             <h1>Make Arrakis yours.</h1>
-            <div className={css.readingLine}>
-              <strong>Reading {mapName}.</strong>
-              <span className={css.micro}>
-                {character.name} is {character.status}
-              </span>
+            <div className={css.dispatchMeta}>
+              <div className={css.readingLine}>
+                <strong>Reading {mapName}.</strong>
+                <span className={css.micro}>
+                  {character.name} is {character.status}
+                </span>
+              </div>
+              <p className={css.micro}>
+                {formatNumber(activePlayers, 0)} online <span className={css.accent}>Across the server</span>
+              </p>
             </div>
-            <p className={css.micro}>
-              {formatNumber(activePlayers, 0)} online <span className={css.accent}>Across the server</span>
-            </p>
-            <h2 className={css.conditions}>{headline}</h2>
-            <ul className={css.notes}>
-              <li>
-                {character.name} · Level {formatNumber(character.level, 0)} · {guildName}
-              </li>
-              <li>
+            <div className={css.conditionPanel}>
+              <span className={css.conditionLabel}>Current field conditions</span>
+              <h2 className={css.conditions}>{headline}</h2>
+              <p className={css.conditionDetail}>
                 {reading?.spice
                   ? reading.spice.sectors.length
                     ? `Spice reported in ${reading.spice.sectors.slice(0, 8).join(', ')}${reading.spice.sectors.length > 8 ? ' and more' : ''}.`
                     : 'Sector coordinates were not reported.'
                   : 'Live spice conditions are not available yet.'}
-              </li>
-            </ul>
+              </p>
+            </div>
             <p className={css.freshness} role="status">
               {expired ? (
                 <>
@@ -95,8 +99,18 @@ export default function PortalSummary({
           </div>
           <aside className={css.identity} aria-label="Your character at a glance">
             <span className={css.kicker}>Your presence on Arrakis</span>
-            <div className={css.monogram} aria-hidden="true">
-              {character.name.slice(0, 1).toUpperCase()}
+            <div className={css.monogram}>
+              {character.avatarUrl ? (
+                <Image
+                  src={character.avatarUrl}
+                  alt={`${character.name}'s Discord avatar`}
+                  width={56}
+                  height={56}
+                  unoptimized
+                />
+              ) : (
+                <span aria-hidden="true">{character.name.slice(0, 1).toUpperCase()}</span>
+              )}
             </div>
             <h2>{character.name}</h2>
             <p>{guildName}</p>
@@ -106,6 +120,12 @@ export default function PortalSummary({
               </span>
               <span>
                 <strong>{character.status}</strong>Character status
+              </span>
+              <span>
+                <strong>{label(record(character.guild).faction, 'Not reported')}</strong>Faction
+              </span>
+              <span>
+                <strong>{guildRoleLabel(record(character.guild).rank)}</strong>Guild rank
               </span>
             </div>
             <Link href="/portal?view=character">
@@ -149,15 +169,29 @@ export default function PortalSummary({
       <div className={css.panels}>
         <section className={css.panel} aria-labelledby="guild-summary">
           <h2 id="guild-summary">Guild</h2>
-          <div className={css.inset}>
+          <div className={`${css.inset} ${css.guildSummary}`}>
             <h3>{guildName}</h3>
-            <p>
+            <p className={css.guildDescription}>
               {character.guild
-                ? `Your rank: ${label(record(character.guild).rank, 'Not reported')}. Your place in the sietch.`
+                ? 'Your place in the sietch.'
                 : 'Your character has no reported guild membership. Join a guild in game to see it here.'}
             </p>
+            {character.guild && (
+              <div className={css.guildFacts}>
+                <div>
+                  <span>Faction</span>
+                  <strong>{guildFaction}</strong>
+                </div>
+                <div>
+                  <span>Your rank</span>
+                  <strong>{guildRank}</strong>
+                </div>
+              </div>
+            )}
           </div>
-          <Link href="/portal?view=guild">View guild ↗</Link>
+          <Link className={css.panelAction} href="/portal?view=guild">
+            View guild <span aria-hidden="true">↗</span>
+          </Link>
         </section>
         <section className={css.panel} aria-labelledby="holdings-summary">
           <h2 id="holdings-summary">Your holdings</h2>
@@ -179,7 +213,7 @@ export default function PortalSummary({
         <h2 className={css.sectionTitle} id="pulse-summary">
           Server rhythm <span>Last 24 hours</span>
         </h2>
-        <PopulationChart history={reading?.population} />
+        <PopulationChart history={reading?.population} totalPlayHours={reading?.totalPlayHours} />
       </section>
       <section className={`${css.wideSection} ${css.councilSection}`} id="landsraad" aria-labelledby="council-summary">
         <h2 className={css.sectionTitle} id="council-summary">

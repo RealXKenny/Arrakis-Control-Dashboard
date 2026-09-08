@@ -8,6 +8,8 @@ import { AppError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
 import { ownMarketItems } from './my-listings';
 
+const MARKET_PAGE_SIZE = 24;
+
 export async function GET(req, res) {
   try {
     const sessionId = cookies(req, res).get('dashboard_session')?.value;
@@ -32,7 +34,7 @@ export async function GET(req, res) {
       throw new AppError('Invalid market search or page', 400, 'INVALID_MARKET_QUERY', true);
     const query = new URLSearchParams({
       page,
-      pageSize: '100',
+      pageSize: String(MARKET_PAGE_SIZE),
       q,
       owner,
       sortColumn: sorts[sort][0],

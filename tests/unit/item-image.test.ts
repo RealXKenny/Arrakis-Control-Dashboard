@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import files from '../src/modules/portal/config/item-images.json';
-import { itemImage } from '../src/modules/portal/utils/item-image';
+import files from '../../src/modules/portal/config/item-images.json';
+import { itemImage } from '../../src/modules/portal/utils/item-image';
 
 it('indexes every supplied item image and resolves its exact template name', () => {
   expect(files).toEqual(

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { cachedFetch, clearClientReadCache } from '../src/lib/client-cache';
+import { cachedFetch, clearClientReadCache } from '../../src/lib/client-cache';
 let storage: Record<string, string>;
 const identity = (scope = 'a') =>
   Response.json({ ok: true, cacheScope: scope.repeat(64), expiresAt: Date.now() + 60000 });

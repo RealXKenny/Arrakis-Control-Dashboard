@@ -1,7 +1,7 @@
-import { withSentryConfig } from "@sentry/nextjs/config";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import type { NextConfig } from "next";
+import { withSentryConfig } from '@sentry/nextjs/config';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type { NextConfig } from 'next';
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
@@ -9,22 +9,26 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  images: {
+    remotePatterns: [{ protocol: 'https', hostname: 'cdn.discordapp.com', pathname: '/avatars/**' }],
+  },
+
   // Keep Next.js file tracing rooted at the workspace.
   outputFileTracingRoot: projectRoot,
 
   async rewrites() {
     return [
       {
-        source: "/auth/callback",
-        destination: "/api/auth/callback",
+        source: '/auth/callback',
+        destination: '/api/auth/callback',
       },
       {
-        source: "/auth/login",
-        destination: "/api/auth/login",
+        source: '/auth/login',
+        destination: '/api/auth/login',
       },
       {
-        source: "/auth/logout",
-        destination: "/api/auth/logout",
+        source: '/auth/logout',
+        destination: '/api/auth/logout',
       },
     ];
   },
@@ -34,9 +38,9 @@ export default withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: "packetnodes-1a",
+  org: 'packetnodes-1a',
 
-  project: "crimson-skies-dune-awakening-production-dashboard",
+  project: 'crimson-skies-dune-awakening-production-dashboard',
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
@@ -64,3 +68,7 @@ export default withSentryConfig(nextConfig, {
     },
   },
 });
+
+module.exports = {
+  allowedDevOrigins: ['127.0.0.1'],
+};

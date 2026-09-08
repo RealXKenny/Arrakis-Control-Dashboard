@@ -1,7 +1,7 @@
 .board {
   width: 100%;
   min-width: 0;
-  padding: 24px;
+  padding: 0;
   margin-bottom: 20px;
 }
 .header,
@@ -11,6 +11,10 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+}
+.header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #6b452d66;
 }
 .eyebrow {
   color: #cda26b;
@@ -40,6 +44,10 @@
   margin-top: 20px;
 }
 .summary > div {
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 16px;
   border: 1px solid #3c2415;
   border-radius: 6px;
@@ -112,9 +120,16 @@
   padding: 32px;
 }
 .pagination {
-  margin-top: 16px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid #65482f;
+  border-radius: 10px;
+  background: #18100c;
   color: #a08568;
   font-size: 0.78rem;
+}
+.pagination button {
+  min-width: 88px;
 }
 @media (max-width: 620px) {
   .summary {
@@ -128,7 +143,7 @@
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(250px, 1fr);
-  gap: 24px;
+  gap: 18px;
   margin-top: 24px;
   align-items: start;
 }
@@ -173,6 +188,11 @@
 }
 .sidebar {
   min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+.sidebarPanel {
+  margin-bottom: 0;
 }
 @media (max-width: 900px) {
   .workspace {
@@ -185,7 +205,9 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #65482f66;
   font:
     11px 'JetBrains Mono',
     monospace;
@@ -228,6 +250,7 @@
 .board tbody {
   display: grid;
   gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .board tr {
   display: grid;
@@ -285,8 +308,17 @@
   grid-column: 1/-1;
 }
 @media (max-width: 600px) {
+  .board tbody {
+    grid-template-columns: 1fr;
+  }
   .board tr {
     gap: 5px 8px;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 1050px) {
+  .board tbody {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -294,7 +326,7 @@
   padding: 0;
 }
 .workspace > div {
-  padding: 24px;
+  padding: 20px;
   border: 1px solid var(--theme-border);
   background: linear-gradient(145deg, #2b1c12, #180f09);
 }
@@ -314,4 +346,7 @@
 .board tr {
   border-radius: 10px;
   border-color: #65482f;
+}
+.board tr:has(td.empty) {
+  grid-column: 1 / -1;
 }

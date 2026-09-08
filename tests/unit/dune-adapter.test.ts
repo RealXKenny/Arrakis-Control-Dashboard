@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { getDiscordPlayer } from '../src/infrastructure/dune';
+import { getDiscordPlayer } from '../../src/infrastructure/dune';
 
-vi.mock('../src/config/env', () => ({
+vi.mock('../../src/config/env', () => ({
   getServerEnv: () => ({ NODE_ENV: 'test', LOG_LEVEL: 'INFO' }),
   requireServerEnv: () => ({ CONSOLE_URL: 'https://console.test/prefix', ADAPTER_TOKEN: 'test-adapter-token' }),
 }));

@@ -3,7 +3,13 @@ import { populationSegments, type PopulationHistory } from '../utils/population'
 import { formatNumber } from '../utils/formatting';
 import css from '../overview.module.css';
 
-export default function PopulationChart({ history }: { history: PopulationHistory | null | undefined }) {
+export default function PopulationChart({
+  history,
+  totalPlayHours,
+}: {
+  history: PopulationHistory | null | undefined;
+  totalPlayHours?: number | null;
+}) {
   const [selected, setSelected] = useState<number | null>(null);
   const points = history?.points ?? [];
   const width = 960;
@@ -20,8 +26,8 @@ export default function PopulationChart({ history }: { history: PopulationHistor
           <span>Peak online</span>
         </div>
         <div>
-          <strong>{formatNumber(history?.playHours, 1)}</strong>
-          <span>Est. play-hours</span>
+          <strong>{formatNumber(totalPlayHours, 1)}</strong>
+          <span>Total play-hours</span>
         </div>
       </div>
       {history && points.length > 0 ? (
@@ -84,7 +90,7 @@ export default function PopulationChart({ history }: { history: PopulationHistor
       )}
       <p className={css.chartCaption}>
         Online, last 24h · peak {formatNumber(history?.peak, 0)} · {formatNumber(history?.coverageHours, 1)}h observed.
-        Gaps are unrecorded time; play-hours estimate covers observed intervals only.
+        Actual accumulated playtime across all reported players.
       </p>
     </div>
   );

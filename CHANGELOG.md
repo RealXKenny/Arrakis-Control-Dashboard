@@ -2,6 +2,27 @@
 
 All notable changes to Arrakis Control Dashboard are documented here.
 
+## [1.0.3] - 2026-09-08
+
+### Added
+
+- Guild discovery, guild logos, member data, and character-to-guild presentation in the portal.
+- A refreshed landing page with community links, Discord widget, live status summary, and authenticated actions.
+- Shared inventory presentation and expanded portal overview, dossier, market, and population components.
+
+### Changed
+
+- Reorganized API, architecture, and unit tests into focused directories while preserving the existing route contracts.
+- Improved portal layout, responsive styling, market and population presentation, and session handling.
+- Allowed Discord avatar image sources and cleaned production startup console output.
+
+### Verification
+
+- TypeScript validation, zero-warning lint, 109 Vitest tests, production build/smoke checks, dependency audit, and diff validation pass.
+- This pull request prepares the source for the v1.0.3 release; deployment and production restart remain separate operations.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.0.2...v1.0.3)
+
 ## [1.0.2] - 2026-09-07
 
 ### Added

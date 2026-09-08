@@ -1,5 +1,7 @@
 import { clearClientReadCache } from '../../../lib/client-cache';
 import { usePortalView, navigatePortal } from '../hooks/usePortalView';
+import Image from 'next/image';
+import { useState } from 'react';
 import DashboardShell from '../../../components/DashboardShell';
 import layout from '../portal.module.css';
 import PortalSummary from './PortalSummary';
@@ -17,6 +19,8 @@ import dossier from '../dossier.module.css';
 import { label, record } from '../utils/inventory';
 import { portalPageCopy } from '../config/page-copy';
 import MapWindow from '../../map/components/MapWindow';
+import { useGuildData } from '../hooks/useGuildData';
+import { guildRoleLabel } from '../utils/guild';
 
 export default function PlayerPortal() {
   const view = usePortalView();
@@ -38,10 +42,72 @@ export default function PlayerPortal() {
     setVehicleTab,
   } = usePlayerData();
   const character = player?.linked ? buildCharacter(player) : null;
+  const guildData = useGuildData(character, view === 'guild');
   const bases = extractBases(player);
   const vehicles = extractVehicles(player);
   const ownedBases = bases.filter(isOwnedBase);
   const sharedBases = bases.filter((base) => !isOwnedBase(base));
+  const [logoMessage, setLogoMessage] = useState('');
+  const [logoUploading, setLogoUploading] = useState(false);
+  const guildId = guildData.currentGuild?.guild_id ?? record(character?.guild).id;
+  const guildName = label(guildData.currentGuild?.guild_name ?? record(character?.guild).name, 'No guild reported');
+  const factionName = label(
+    guildData.currentGuild?.guild_faction_name ?? guildData.currentGuild?.guild_faction,
+    'Not reported',
+  );
+  const factionIcon = /atreides/i.test(factionName)
+    ? '/maps/atreides.webp'
+    : /harkonnen/i.test(factionName)
+      ? '/maps/harkonnen.webp'
+      : null;
+  const guildDescription =
+    typeof guildData.currentGuild?.guild_description === 'string' ? guildData.currentGuild.guild_description : '';
+  const rankGroups = [
+    { label: 'Leader', roleId: '100' },
+    { label: 'Officer', roleId: '50' },
+    { label: 'Member', roleId: '1' },
+  ].map((group) => ({
+    ...group,
+    members: guildData.members
+      .filter((member) => String(member.role_id) === group.roleId)
+      .sort((a, b) =>
+        String(a.character_name ?? '').localeCompare(String(b.character_name ?? ''), undefined, {
+          sensitivity: 'base',
+        }),
+      ),
+  }));
+  const guildOwner = guildData.members.find((member) => String(member.role_id) === '100');
+  const canEditLogo = guildData.currentMember?.role_id != null && String(guildData.currentMember.role_id) === '100';
+
+  async function uploadGuildLogo(file: File) {
+    if (!guildId || file.type !== 'image/png' || file.size > 512 * 1024) {
+      setLogoMessage('Choose a PNG logo no larger than 512 KiB.');
+      return;
+    }
+    setLogoUploading(true);
+    setLogoMessage('');
+    try {
+      const logo = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => (typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('read')));
+        reader.onerror = () => reject(new Error('read'));
+        reader.readAsDataURL(file);
+      });
+      const response = await fetch(`/api/guilds/${encodeURIComponent(String(guildId))}/logo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logo }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || 'Unable to save logo');
+      guildData.setLogo(body.data.logo);
+      setLogoMessage('Guild logo saved.');
+    } catch (error) {
+      setLogoMessage(error instanceof Error ? error.message : 'Unable to save guild logo.');
+    } finally {
+      setLogoUploading(false);
+    }
+  }
 
   return (
     <DashboardShell
@@ -115,22 +181,100 @@ export default function PlayerPortal() {
             {view === 'character' && <CharacterDossier character={character} details={player.details ?? {}} />}
             {view === 'storage' && <StorageWorkspace character={character} inventory={player.details?.inventory} />}
             {view === 'guild' && (
-              <section className={dossier.panel}>
+              <section className={`${dossier.panel} ${dossier.guildPanel}`}>
                 <h2>Guild membership</h2>
                 <div className={dossier.identity}>
-                  <span className={dossier.avatar} aria-hidden="true">
-                    ◈
-                  </span>
+                  {canEditLogo ? (
+                    <label className={`${dossier.avatar} ${dossier.avatarEditable}`} title="Upload guild logo">
+                      {guildData.logo ? (
+                        <Image src={guildData.logo} alt={`${guildName} logo`} width={64} height={64} unoptimized />
+                      ) : (
+                        <span aria-hidden="true">◈</span>
+                      )}
+                      <span className={dossier.uploadOverlay} aria-hidden="true">
+                        ⇧
+                      </span>
+                      <input
+                        className={dossier.logoInput}
+                        type="file"
+                        accept="image/png"
+                        disabled={logoUploading}
+                        aria-label="Upload guild logo PNG"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) void uploadGuildLogo(file);
+                          event.target.value = '';
+                        }}
+                      />
+                    </label>
+                  ) : (
+                    <span className={dossier.avatar} aria-hidden="true">
+                      {guildData.logo ? <Image src={guildData.logo} alt="" width={64} height={64} unoptimized /> : '◈'}
+                    </span>
+                  )}
                   <div>
-                    <h3>{label(record(character.guild).name, 'No guild reported')}</h3>
-                    <p>
-                      {character.guild
-                        ? `Your rank: ${label(record(character.guild).rank, 'Not reported')}`
-                        : 'No membership was returned by the server. Refresh telemetry after joining a guild in game.'}
-                    </p>
+                    <h3>{guildName}</h3>
+                    <div className={dossier.guildMeta}>
+                      {guildOwner && <p>Guild owner: {label(guildOwner.character_name, 'Not reported')}</p>}
+                      <p>
+                        {character.guild
+                          ? `Your rank: ${
+                              guildData.currentMember
+                                ? guildRoleLabel(guildData.currentMember.role_id)
+                                : label(record(character.guild).rank, 'Not reported')
+                            }`
+                          : 'No membership was returned by the server. Refresh telemetry after joining a guild in game.'}
+                      </p>
+                    </div>
+                    {guildDescription && <p className={dossier.guildDescription}>{guildDescription}</p>}
                   </div>
                 </div>
-                <p>Manage your guild and membership in game.</p>
+                {guildData.currentGuild && (
+                  <dl className={dossier.guildFacts}>
+                    <div>
+                      <dt>Faction</dt>
+                      <dd className={dossier.factionValue}>
+                        {factionIcon && <Image src={factionIcon} alt="" aria-hidden="true" width={24} height={24} />}
+                        <span>{factionName}</span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Members</dt>
+                      <dd>
+                        {label(guildData.currentGuild.member_count, String(guildData.members.length || 'Not reported'))}
+                      </dd>
+                    </div>
+                  </dl>
+                )}
+                {logoMessage && <p role="status">{logoMessage}</p>}
+                {guildData.loading && <p role="status">Loading guild members…</p>}
+                {guildData.error && <p role="alert">{guildData.error}</p>}
+                <div className={dossier.rankGrid}>
+                  {rankGroups.map((group) => (
+                    <section
+                      className={dossier.rankCard}
+                      key={group.roleId}
+                      aria-labelledby={`guild-rank-${group.roleId}`}
+                    >
+                      <div className={dossier.rankHeader}>
+                        <h3 id={`guild-rank-${group.roleId}`}>{group.label}</h3>
+                        <span>{group.members.length}</span>
+                      </div>
+                      {group.members.length > 0 ? (
+                        <ul className={dossier.rankMembers} aria-label={`${group.label} members`}>
+                          {group.members.map((member, index) => (
+                            <li key={String(member.player_id ?? index)}>
+                              <strong>{label(member.character_name, 'Unknown member')}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className={dossier.emptyRank}>No members reported</p>
+                      )}
+                    </section>
+                  ))}
+                </div>
+                <p className={dossier.guildFooter}>Manage your guild and membership in game.</p>
               </section>
             )}
             {view === 'bases' && (
