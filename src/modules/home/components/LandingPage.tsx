@@ -9,9 +9,7 @@ export default function LandingPage({ isAuthenticated = false }: { isAuthenticat
     <DashboardShell
       brand="Crimson Skies"
       subtitle="Arrakis field companion"
-      navigation={[
-        { label: 'Dashboard', group: 'Command', href: '/', active: true },
-      ]}
+      navigation={[{ label: 'Dashboard', group: 'Command', href: '/', active: true }]}
       actions={
         <>
           {!isAuthenticated && <a href="/auth/login">Connect Discord</a>}
@@ -80,9 +78,7 @@ export default function LandingPage({ isAuthenticated = false }: { isAuthenticat
         <div className={css.communityCopy}>
           <p className={css.eyebrow}>The Crimson Skies community</p>
           <h2>Find your crew before you find the spice.</h2>
-          <p>
-            Join the conversation, share your next run, and stay close to the people shaping life across Arrakis.
-          </p>
+          <p>Join the conversation, share your next run, and stay close to the people shaping life across Arrakis.</p>
           <a className={css.discordButton} href="https://discord.gg/crimsonskies" target="_blank" rel="noreferrer">
             Join Discord ↗
           </a>
