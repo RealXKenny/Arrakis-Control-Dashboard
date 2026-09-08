@@ -1,6 +1,8 @@
 {
   "file_hashes": {
-    "AGENTS.md": "ad6803aca42f860bd11416dd7286b79ed503e90510265443dad437ab6b6f526b",
+    ".codex/vexp-hint.sh": "3d2d3bf4a4cbc3517b62c4b9c76538a667527cc83f32758931bce54502d545cb",
+    ".github/copilot-instructions.md": "798558a49eebc7701ca150a625a129136506dd25d878766186a991d9e27ce10e",
+    "AGENTS.md": "f8f8e48e5a8f4e1f94a754216bb7050d16dce7ddd3ce5d3aeb004db5ea51436b",
     "CHANGELOG.md": "8bdcba9ce519a0ccb2a0fabbcb576d1bf89a00c62bfabb330307cea7c826891f",
     "CLAUDE.md": "eb5f48bc10e0c22ebc0d90b72401142f812ff998d8107c18dc572adc562fde08",
     "README.md": "6628bb708f16be38f4d18776be8bc00624c305dd0295edefa5a1fb72939b4d30",
@@ -174,7 +176,7 @@
     "vitest.config.mjs": "d53cd6bc54cbe0bf5b0e54dc1338a97e41ec2471fa51a4e6c3088870fed6434d"
   },
   "indexed_at_commit": "85f12cf2512a37cb0cf51cb97a3ede7945eb68c7",
-  "indexed_at_timestamp": "2026-09-08T01:31:45.060416100+00:00",
+  "indexed_at_timestamp": "2026-09-08T01:32:07.803509900+00:00",
   "languages": {
     "css": {
       "calls": 0,
@@ -186,7 +188,7 @@
     },
     "markdown": {
       "calls": 0,
-      "nodes": 86
+      "nodes": 93
     },
     "typescript": {
       "calls": 409,
@@ -195,9 +197,9 @@
   },
   "schema_version": 3,
   "stats": {
-    "total_edges": 957,
-    "total_files": 172,
-    "total_nodes": 1004
+    "total_edges": 963,
+    "total_files": 174,
+    "total_nodes": 1011
   },
   "vexp_version": "3.1.2"
 }
