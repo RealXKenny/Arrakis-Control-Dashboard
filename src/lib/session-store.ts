@@ -1,7 +1,7 @@
-import "./assert-server";
-import { createHash } from "node:crypto";
-import { getRedisClient } from "./redis";
-import { logger } from "./logger";
+import './assert-server';
+import { createHash } from 'node:crypto';
+import { getRedisClient } from './redis';
+import { logger } from './logger';
 
 export type DashboardSession = {
   user: { id: string; username?: string; global_name?: string; avatar?: string | null };
@@ -16,16 +16,19 @@ const SESSION_TTL_SECONDS = 12 * 60 * 60;
 const sessionGlobals = globalThis as typeof globalThis & {
   arrakisDevelopmentSessions?: Map<string, DashboardSession>;
 };
-const developmentSessions = sessionGlobals.arrakisDevelopmentSessions ??= new Map<string, DashboardSession>();
+const developmentSessions = (sessionGlobals.arrakisDevelopmentSessions ??= new Map<string, DashboardSession>());
 
 function sessionKey(sessionId: string): string {
-  return `arrakis:session:${createHash("sha256").update(sessionId).digest("hex")}`;
+  return `arrakis:session:${createHash('sha256').update(sessionId).digest('hex')}`;
 }
 
 function getDevelopmentSession(sessionId: string): DashboardSession | null {
   const session = developmentSessions.get(sessionId);
   if (!session || session.expiresAt <= Date.now()) {
-    logger.warn("Login record unavailable", { reason: session ? "expired" : "not_found", storage: "development_memory" });
+    logger.warn('Login record unavailable', {
+      reason: session ? 'expired' : 'not_found',
+      storage: 'development_memory',
+    });
     developmentSessions.delete(sessionId);
     return null;
   }
@@ -54,7 +57,7 @@ export async function getSession(sessionId: string): Promise<DashboardSession | 
   if (!redis) return getDevelopmentSession(sessionId);
   const session = await redis.get<DashboardSession>(sessionKey(sessionId));
   if (!session || session.expiresAt <= Date.now()) {
-    logger.warn("Login record unavailable", { reason: session ? "expired" : "not_found", storage: "redis" });
+    logger.warn('Login record unavailable', { reason: session ? 'expired' : 'not_found', storage: 'redis' });
     if (session) await deleteSession(sessionId);
     return null;
   }

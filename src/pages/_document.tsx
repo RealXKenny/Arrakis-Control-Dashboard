@@ -1,4 +1,4 @@
-import Document, { Head, Html, Main, NextScript } from "next/document";
+import Document, { Head, Html, Main, NextScript } from 'next/document';
 
 export default class RootDocument extends Document {
   render() {
@@ -6,18 +6,10 @@ export default class RootDocument extends Document {
       <Html lang="en">
         <Head>
           <meta charSet="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="referrer" content="same-origin" />
           <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         </Head>
-        <body
-          style={{
-            backgroundColor: "#120a06",
-            color: "#f3d39b",
-            margin: 0,
-            padding: 0,
-          }}
-        >
+        <body>
           <Main />
           <NextScript />
         </body>

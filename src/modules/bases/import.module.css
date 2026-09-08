@@ -1,0 +1,45 @@
+.panel {
+  margin-top: 28px;
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid #61452f;
+  border-radius: 18px;
+  background: linear-gradient(125deg, #2b1e14, #17100c);
+}
+.panel p {
+  color: #bca88e;
+  line-height: 1.6;
+}
+.field {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  color: #e1c59e;
+}
+.field input {
+  padding: 12px;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #765434;
+  border-radius: 8px;
+  background: #150f0b;
+  color: #f3dfbf;
+  font: inherit;
+}
+.panel button {
+  padding: 10px 16px;
+  border: 1px solid #a77b47;
+  border-radius: 8px;
+  color: #ffe5ba;
+  background: #68402b;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.panel button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.panel :focus-visible {
+  outline: 2px solid #ffe1b3;
+  outline-offset: 3px;
+}

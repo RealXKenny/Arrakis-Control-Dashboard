@@ -1,0 +1,26 @@
+.frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  vertical-align: middle;
+  border-radius: 8px;
+  background: radial-gradient(circle, #d4a86918, #100b0780);
+}
+.frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.large {
+  width: 112px;
+  height: 112px;
+  flex-basis: 112px;
+}
+.fallback {
+  color: #a78c69;
+  font-size: 28px;
+}

@@ -1,4 +1,4 @@
-import { getNumber } from "./formatting";
+import { getNumber } from './formatting';
 
 export function getCurrencyValue(...values) {
   for (const value of values) {
@@ -12,10 +12,7 @@ export function getCurrencyValue(...values) {
         for (const row of value.rows) {
           const label = String(row?.label ?? '').toLowerCase();
 
-          if (
-            label.includes('solari') ||
-            label.includes('credit')
-          ) {
+          if (label.includes('solari') || label.includes('credit')) {
             const balance = Number(row?.balance);
 
             if (Number.isFinite(balance)) {
@@ -34,7 +31,7 @@ export function getCurrencyValue(...values) {
         value.credits,
         value.credit,
         value.solarisCredit,
-        value.solaris_credit
+        value.solaris_credit,
       );
 
       if (nested !== null) {
@@ -51,5 +48,5 @@ export function getCurrencyValue(...values) {
     }
   }
 
-  return 0;
+  return null;
 }

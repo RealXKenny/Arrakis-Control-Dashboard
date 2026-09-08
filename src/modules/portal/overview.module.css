@@ -1,0 +1,585 @@
+.chartMetrics {
+  display: flex;
+  gap: 36px;
+}
+.chartMetrics > div {
+  display: flex;
+  flex-direction: column;
+}
+.chartMetrics strong {
+  color: var(--theme-text);
+  font:
+    600 28px/1.1 'Saira Condensed',
+    sans-serif;
+}
+.chartMetrics span,
+.chartAxis,
+.chartInspect,
+.chartCaption {
+  font:
+    9px/1.6 'JetBrains Mono',
+    monospace;
+}
+.chartMetrics span {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 3px;
+}
+.chart {
+  width: 100%;
+  height: 90px;
+  display: block;
+  margin-top: 16px;
+  overflow: visible;
+}
+.chartLine {
+  stroke: #55b9c6;
+  stroke-width: 1.5;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.chartFill {
+  fill: #55b9c61c;
+}
+.chartDot {
+  fill: #77d4df;
+}
+.chartBaseline {
+  stroke: #55b9c625;
+  stroke-width: 1;
+}
+.chartAxis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--theme-muted);
+}
+.chartInspect {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.chartInspect input {
+  flex: 1;
+  min-width: 70px;
+  accent-color: #55b9c6;
+  height: 12px;
+}
+.chartInspect output {
+  min-width: 110px;
+  color: #75c5cf;
+}
+.widePanel .chartCaption {
+  margin: 10px 0 0;
+  font-size: 9px;
+}
+.chartEmpty {
+  display: flex;
+  align-items: center;
+  min-height: 112px;
+  font-size: 12px;
+}
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 26px;
+  color: var(--theme-muted);
+}
+.briefing {
+  grid-column: 1 / -1;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 28px;
+  border: 1px solid #73503a;
+  border-radius: 22px;
+  background: radial-gradient(ellipse at 55% 0, #8e473433, transparent 65%), linear-gradient(120deg, #372116, #180f0c);
+}
+.horizon {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.horizon::before {
+  content: '';
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  top: 80px;
+  left: 28%;
+  border: 1px solid #d3a66a22;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 36px #d3a66a08,
+    0 0 0 72px #d3a66a06;
+  background: radial-gradient(circle at 40% 35%, #db91672a, #8d352417 65%, transparent 66%);
+}
+.horizon::after {
+  content: '';
+  position: absolute;
+  width: 120%;
+  height: 210px;
+  bottom: -175px;
+  left: -10%;
+  border-radius: 50%;
+  transform: rotate(-9deg);
+  background: #7e3b2530;
+  box-shadow:
+    0 -22px 0 #b27a4710,
+    0 -46px 0 #d9a75c08;
+}
+.serverLine {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #bc926827;
+}
+.serverName,
+.kicker {
+  font:
+    500 10px/1.6 'JetBrains Mono',
+    monospace;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #d9b580;
+}
+.serverName {
+  margin-right: auto;
+}
+.micro {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.micro b {
+  color: #e4c493;
+  font-weight: 500;
+}
+.mapSwitch {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: #0c080680;
+  border: 1px solid #71513a;
+  border-radius: 9px;
+}
+.mapSwitch button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #c6b299;
+  padding: 8px 10px;
+  cursor: pointer;
+  font:
+    500 11px 'Saira',
+    sans-serif;
+}
+.mapSwitch button[aria-pressed='true'] {
+  color: #ffecd0;
+  background: #794536;
+}
+.briefingBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  gap: 32px;
+  padding-top: 28px;
+}
+.dispatch {
+  min-width: 0;
+  padding: 14px 0;
+}
+.kicker {
+  display: block;
+  margin: 0;
+}
+.briefing h1 {
+  font:
+    600 clamp(38px, 4.5vw, 58px)/1.08 'Saira Condensed',
+    sans-serif;
+  letter-spacing: -1px;
+  color: #ffe7bd;
+  margin: 12px 0 26px;
+}
+.readingLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.readingLine strong {
+  color: #dfc6a2;
+  font-weight: 500;
+  font-size: 13px;
+}
+.accent {
+  padding-left: 12px;
+  color: #a78e75;
+}
+.conditions {
+  color: #ecbb87;
+  font:
+    500 24px/1.3 'Saira Condensed',
+    sans-serif;
+  margin: 20px 0 12px;
+}
+.notes {
+  list-style: none;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.notes li:first-child {
+  display: none;
+}
+.freshness {
+  font:
+    10px/1.6 'JetBrains Mono',
+    monospace;
+  color: #c1ab8e;
+  margin: 18px 0 0;
+}
+.freshness::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c79c67;
+  margin-right: 8px;
+}
+.identity {
+  min-width: 0;
+  background: #110c09a6;
+  border: 1px solid #d6ad762b;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+}
+.monogram {
+  margin: 20px auto 12px;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c18c61;
+  border-radius: 18px 4px 18px 4px;
+  color: #ffe1b3;
+  background: linear-gradient(140deg, #884a38, #372218);
+  font:
+    500 30px 'Saira Condensed',
+    sans-serif;
+}
+.identity h2 {
+  color: #ffe1b3;
+  font:
+    600 25px/1.2 'Saira Condensed',
+    sans-serif;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.identity p {
+  font-size: 11px;
+}
+.identityStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 18px 0;
+  padding: 14px 0;
+  border-block: 1px solid #d6ad7622;
+}
+.identityStats > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+}
+.identityStats strong {
+  font-size: 17px;
+  color: #e3c5a0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.identity a {
+  display: flex;
+  justify-content: space-between;
+  color: #ebc99a;
+  text-decoration: none;
+  font-size: 12px;
+}
+.cards {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.card {
+  position: relative;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--theme-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid #64462e;
+  border-radius: 12px;
+  background: #21160f;
+}
+.card strong {
+  color: #f2d5ab;
+  font:
+    600 clamp(25px, 2.8vw, 34px)/1.1 'Saira Condensed',
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+.card small {
+  font:
+    11px 'Saira',
+    sans-serif;
+  color: #ae987d;
+}
+.card > span:not(.kicker) {
+  font-size: 11px;
+  padding-right: 16px;
+}
+.card > b {
+  position: absolute;
+  bottom: 16px;
+  right: 15px;
+  font-weight: 400;
+  color: #d0a779;
+}
+.card:hover {
+  background: #302016;
+  border-color: #c38b5b;
+}
+.overview a:focus-visible,
+.overview button:focus-visible {
+  outline: 2px solid #f2c68d;
+  outline-offset: 4px;
+}
+.panels {
+  grid-column: 1 / -1;
+  order: 5;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.panel {
+  min-width: 0;
+  padding: 24px;
+  background: linear-gradient(135deg, #251a12, #18100c);
+  border: 1px solid #65482f;
+  border-radius: 14px;
+}
+.panel h2 {
+  font:
+    500 11px 'JetBrains Mono',
+    monospace;
+  letter-spacing: 1.5px;
+  color: #d9b580;
+  margin: 0 0 18px;
+  text-transform: uppercase;
+}
+.panel h3 {
+  font:
+    600 24px 'Saira Condensed',
+    sans-serif;
+  color: #f2d5ab;
+  margin: 0 0 8px;
+}
+.panel p {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.panel a {
+  color: #e1b886;
+  text-decoration: none;
+  font-size: 12px;
+}
+.panel a:hover,
+.identity a:hover {
+  text-decoration: underline;
+}
+.inset {
+  padding: 4px 0;
+}
+.holdings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.holdings a {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.holdings strong {
+  font:
+    600 32px 'Saira Condensed',
+    sans-serif;
+}
+.wideSection {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  scroll-margin-top: 140px;
+}
+.wideSection > .panel {
+  flex: 1;
+}
+.sectionTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font:
+    500 22px 'Saira Condensed',
+    sans-serif;
+  color: #efcea0;
+  margin: 4px 0 14px;
+}
+.sectionTitle span {
+  font:
+    10px 'JetBrains Mono',
+    monospace;
+  color: #a38a6d;
+}
+.chart {
+  height: 124px;
+}
+.chartLine {
+  stroke: #d6ac71;
+}
+.chartFill {
+  fill: #d6ac711a;
+}
+.chartDot {
+  fill: #f0c98c;
+}
+.chartInspect input {
+  accent-color: #d6ac71;
+}
+.chartInspect output {
+  color: #e2bd88;
+}
+.factions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+.factions > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #76533344;
+  border-radius: 12px;
+  padding: 15px 8px;
+  background: #140e0a;
+}
+.crest {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 9px #d6b17d25);
+}
+.factions strong {
+  font:
+    600 32px/1 'Saira Condensed',
+    sans-serif;
+  color: #f3d7ad;
+}
+.factions span {
+  font-size: 11px;
+}
+.factions .leading {
+  border-color: #b8834e;
+  background: linear-gradient(160deg, #493122, #21160e);
+}
+.versus {
+  text-align: center;
+  color: #a48a6b;
+}
+.streaming {
+  color: #dfb67d;
+}
+.footnote {
+  grid-column: 1 / -1;
+  order: 6;
+  font-size: 10px;
+  line-height: 1.8;
+  margin: 0;
+}
+.footnote a {
+  color: #e2bd88;
+  margin-left: 8px;
+}
+@media (max-width: 850px) {
+  .overview {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .briefingBody {
+    gap: 20px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .briefing {
+    padding: 20px;
+  }
+  .briefingBody,
+  .panels {
+    grid-template-columns: 1fr;
+  }
+  .briefingBody {
+    padding-top: 16px;
+  }
+  .identity {
+    padding: 20px;
+  }
+  .identity .monogram {
+    margin-top: 14px;
+  }
+  .serverLine {
+    gap: 12px;
+  }
+  .mapSwitch {
+    width: 100%;
+  }
+  .mapSwitch button {
+    flex: 1;
+  }
+  .card {
+    padding: 16px;
+  }
+  .kicker {
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .panel {
+    padding: 20px;
+  }
+  .sectionTitle {
+    font-size: 21px;
+  }
+  .chartInspect output {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card {
+    transition:
+      background 0.18s,
+      border-color 0.18s;
+  }
+}
