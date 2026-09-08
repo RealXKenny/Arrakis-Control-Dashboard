@@ -2,6 +2,34 @@
 
 All notable changes to Arrakis Control Dashboard are documented here.
 
+## [1.0.4] - 2026-09-08
+
+### Changed
+
+- Replaced Upstash REST storage with a shared Redis TCP client for sessions, rate limits, guild logos, population history, and import tracking.
+- Added `REDIS_URL` configuration with custom allocation ports, optional TLS, bounded connections, and Pterodactyl deployment instructions.
+- Preserved existing storage key formats, JSON encoding, session lifetimes, atomic rate limits, and import reservations.
+
+### Fixed
+
+- Restored login, callback, and logout rewrites by removing a configuration export that overwrote the main Next.js settings.
+- Fixed homepage failures with a session cookie by awaiting the session-store module import.
+- Clear stale session cookies when their login record is missing, while preserving cookies during storage outages.
+- Added a static 404 page to resolve the custom error-page optimization warning.
+
+### Upgrade
+
+- Replace `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` with `REDIS_URL` before restarting production. Use `redis://default:PASSWORD@HOST:PORT/0` for the selected non-TLS Pterodactyl deployment.
+- This deployment starts with an empty Redis database; Upstash data is neither copied nor deleted. Users must sign in again, and logos, population history, and import tracking start empty.
+
+### Verification
+
+- Added Redis protocol transport, connection recovery, environment validation, stale-cookie, and authenticated homepage regression checks.
+- Production build and smoke checks, typecheck, zero-warning lint, formatting, 120 unit tests, 22 Chromium browser tests, and dependency audit pass.
+- Live self-hosted Redis connectivity and deployment remain separate from the automated fixture checks.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.0.3...v1.0.4)
+
 ## [1.0.3] - 2026-09-08
 
 ### Added

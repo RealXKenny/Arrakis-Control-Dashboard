@@ -11,10 +11,27 @@ const files = fs
   .map((p) => path.join(root, p));
 const normalize = (file: string) => path.relative(root, file).replaceAll('\\', '/');
 
-function imports(file: string): string[] {
-  const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+function imports(file: string, text = fs.readFileSync(file, 'utf8')): string[] {
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   const result: string[] = [];
   function visit(node: ts.Node) {
+    // Pages Router strips exported getServerSideProps from the browser bundle.
+    // Ignore only that function's body, not imports elsewhere in the page.
+    if (/^pages\/(?!api\/)/.test(normalize(file))) {
+      const declaration = ts.isVariableDeclaration(node) ? node.parent.parent : node;
+      const isServerProps =
+        (ts.isVariableDeclaration(node) || ts.isFunctionDeclaration(node)) &&
+        node.name &&
+        ts.isIdentifier(node.name) &&
+        node.name.text === 'getServerSideProps';
+      if (
+        isServerProps &&
+        declaration.parent === source &&
+        ts.canHaveModifiers(declaration) &&
+        ts.getModifiers(declaration)?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)
+      )
+        return;
+    }
     if (
       (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
       node.moduleSpecifier &&
@@ -35,6 +52,14 @@ function imports(file: string): string[] {
 }
 
 describe('module boundaries', () => {
+  it('excludes page server props while retaining browser and non-page dynamic imports', () => {
+    const text = `
+      export const getServerSideProps = async () => { await import('../lib/session-store'); return { props: {} }; };
+      export default function Page() { import('../lib/redis'); return null; }
+    `;
+    expect(imports(path.join(root, 'pages/index.tsx'), text)).toEqual(['../lib/redis']);
+    expect(imports(path.join(root, 'components/Example.tsx'), text)).toEqual(['../lib/session-store', '../lib/redis']);
+  });
   it('keeps server modules out of the transitive browser import graph', () => {
     const visited = new Set<string>();
     function visit(file: string) {

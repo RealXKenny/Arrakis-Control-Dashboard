@@ -1,6 +1,7 @@
 import { clearApiReadCache } from '../../src/infrastructure/api-read-cache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import login from '../../src/pages/api/auth/login';
+import session from '../../src/pages/api/session';
 import callback from '../../src/pages/api/auth/callback';
 import logout from '../../src/pages/api/auth/logout';
 import map from '../../src/pages/api/map';
@@ -60,6 +61,25 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('route contracts after extraction', () => {
+  it('clears a stale login cookie when its session record is missing', async () => {
+    const response = responseMock();
+    await session({ method: 'GET', url: '/api/session', headers: { cookie: 'dashboard_session=stale' } }, response);
+    expect(response.statusCode).toBe(401);
+    expect(response.getHeader('Set-Cookie')).toEqual([
+      expect.stringContaining(
+        'dashboard_session=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=lax; Path=/',
+      ),
+    ]);
+  });
+
+  it('preserves the login cookie when session storage is unavailable', async () => {
+    vi.mocked(getSession).mockRejectedValueOnce(new Error('storage unavailable'));
+    const response = responseMock();
+    await session({ method: 'GET', url: '/api/session', headers: { cookie: 'dashboard_session=valid' } }, response);
+    expect(response.statusCode).toBe(500);
+    expect(response.getHeader('Set-Cookie')).toBeUndefined();
+  });
+
   it('scopes My listings to the authenticated character and rejects missing seller IDs', async () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: 'discord-user' },

@@ -10,7 +10,7 @@ The application uses the Next.js Pages Router and keeps external service credent
 - npm
 - A Dune Console instance and adapter token
 - A Discord application configured for OAuth2
-- Upstash Redis for production deployments
+- A self-hosted Redis server for production deployments
 
 ## Quick Start
 
@@ -33,7 +33,7 @@ Required production variables include:
 - `CONSOLE_URL`, `CONSOLE_PASSWORD`, and `ADAPTER_TOKEN` for Dune Console access.
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`, `DISCORD_REDIRECT_URI`, and `DISCORD_APP_URL` for Discord OAuth.
 - `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization.
-- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for shared rate limits and persistent sessions.
+- `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits and persistent sessions.
 
 Sentry variables are optional. Configure `SENTRY_DSN` for runtime monitoring and `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT` for production source-map upload. See [.env.example](.env.example) for the complete template.
 

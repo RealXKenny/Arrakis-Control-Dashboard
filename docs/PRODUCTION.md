@@ -2,13 +2,27 @@
 
 ## Configuration
 
-Copy `.env.example` to `.env` and provide the server-only Dune, Discord, and Upstash Redis values. `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are required in production. Discord also requires `DISCORD_GUILD_ID`, `DISCORD_REDIRECT_URI`, and `DISCORD_APP_URL`; `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` should be set for stable redirects and role authorization. `CONSOLE_PASSWORD`, `ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, and the Redis token must never use a `NEXT_PUBLIC_` prefix. Sentry is optional; when `SENTRY_DSN` is absent, the application continues without reporting.
+Copy `.env.example` to `.env` and provide the server-only Dune, Discord, and self-hosted Redis values. `REDIS_URL` is required in production. Discord also requires `DISCORD_GUILD_ID`, `DISCORD_REDIRECT_URI`, and `DISCORD_APP_URL`; `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` should be set for stable redirects and role authorization. `CONSOLE_PASSWORD`, `ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, and `REDIS_URL` must never use a `NEXT_PUBLIC_` prefix. Sentry is optional; when `SENTRY_DSN` is absent, the application continues without reporting.
 
 ## Request handling
 
+### Self-hosted Redis on Pterodactyl
+
+Set the dashboard's server-only environment variable to the Redis server's reachable allocation address and assigned port:
+
+```dotenv
+REDIS_URL=redis://default:YOUR_PASSWORD@REDIS_ALLOCATION_HOST:ALLOCATED_PORT/0
+```
+
+Use `redis://` for this deployment without TLS. Replace the port with the actual Redis allocation; it need not be 6379. `localhost` inside the dashboard container points to that container, so use the Redis allocation host for a separate Redis server. Percent-encode special characters in the password. Configure Redis authentication and restrict network access to the dashboard host/private network. The connection format and TLS support follow [the Redis Node.js connection documentation](https://redis.io/docs/latest/develop/clients/nodejs/connect/).
+
+Enable Redis persistence (AOF or snapshots) in the persistent server directory configured by your Pterodactyl egg so sessions and logos survive Redis restarts. Keep backups of that directory. All dashboard replicas must use the same Redis URL and database number.
+
+This cutover starts with an empty database: no Upstash data is copied or deleted. Existing logins will require signing in again; logos, population history, and import tracking begin empty. Remove `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from deployment settings, set `REDIS_URL`, install dependencies, build, and restart the dashboard. Verify Discord login, session survival after a dashboard restart, and logout. Old Upstash settings are no longer read by the application.
+
 Pages API routes are wrapped by `runPagesApiHandler`. It assigns an `X-Request-ID`, applies method checks and rate limits, writes compact route-aware logs with secret redaction, and returns safe error envelopes. Unexpected errors are reported to Sentry when configured.
 
-Rate limits use Upstash Redis fixed-window counters, hashed keys, and fail closed with HTTP 503 when Redis is unavailable in production. Development and tests use a bounded local fallback only when `NODE_ENV` is not `production` and Redis credentials are absent.
+Rate limits use Redis fixed-window counters, hashed keys, and fail closed with HTTP 503 when Redis is unavailable in production. Development and tests use a bounded local fallback only when `NODE_ENV` is not `production` and Redis credentials are absent.
 
 OAuth sessions and their browser cookies have a fixed 12-hour lifetime from login. Redis records use the session's remaining lifetime, capped at 12 hours. Cookies contain only a random session identifier; OAuth access tokens are never persisted. Logout deletes the Redis record and expires the cookie. Redis sessions survive app restarts. Without Redis in development, the process-wide fallback survives module reloads, but ends when the server process stops. Temporary profile-fetch errors offer retry instead of displaying the sign-in screen.
 
@@ -45,7 +59,7 @@ Logout requires POST; GET and Next data prefetch requests must never revoke a se
 
 ## Current release preparation
 
-The footer displays the package version automatically (currently v1.0.2). My bases keeps the import form after the holdings cards, with its Upload JSON input always visible and separated by 28px of vertical margin. Empty community/live/Solido directory stubs were removed; the catalogued item and marker assets remain supported.
+The footer displays the package version automatically (currently v1.0.4). My bases keeps the import form after the holdings cards, with its Upload JSON input always visible and separated by 28px of vertical margin. Empty community/live/Solido directory stubs were removed; the catalogued item and marker assets remain supported.
 
 ### Thirty-second cache contract
 
@@ -55,7 +69,7 @@ The browser uses a bounded memory/sessionStorage cache, partitioned by a server-
 
 ### Runtime configuration and deployment
 
-Production startup validates required Console/adapter/Discord/Redis settings before serving requests. Public app/callback and Redis URLs require HTTPS (loopback HTTP is allowed for local fixtures or tunnels); callback and app origins must match. Console HTTP is supported for a trusted private deployment network. URL credentials and fragments are rejected. Redis requests have a five-second timeout and no automatic write retries. Builds can run without deployment credentials; runtime startup requires them.
+Production startup validates required Console/adapter/Discord/Redis settings before serving requests. Public app/callback URLs require HTTPS (loopback HTTP is allowed for local fixtures or tunnels); callback and app origins must match. Console HTTP is supported for a trusted private deployment network. HTTP URL credentials and fragments are rejected. Redis accepts `redis://` (plain TCP) or `rediss://` (TLS), credentials, and a database number. Redis connections and socket inactivity time out after five seconds, with no automatic write retries; later requests reconnect when needed. Builds can run without deployment credentials; runtime startup requires them.
 
 Build and check the exact release with:
 

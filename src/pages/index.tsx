@@ -4,7 +4,7 @@ import LandingPage from '../modules/home/components/LandingPage';
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   // Next.js keeps getServerSideProps in the server bundle; avoid pulling the
   // server session store into the browser page graph.
-  const { getSession } = require('../lib/session-store') as typeof import('../lib/session-store');
+  const { getSession } = await import('../lib/session-store');
   const sessionId = req.headers.cookie
     ?.split(';')
     .map((entry) => entry.trim().split('='))

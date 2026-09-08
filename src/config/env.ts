@@ -22,8 +22,21 @@ const serverEnvSchema = z.object({
   SENTRY_ORG: z.string().min(1).optional(),
   SENTRY_PROJECT: z.string().min(1).optional(),
   SENTRY_ENABLED: z.enum(['true', 'false']).default('false'),
-  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+  REDIS_URL: z
+    .string()
+    .url()
+    .refine((value) => {
+      if (!URL.canParse(value)) return false;
+      const url = new URL(value);
+      return (
+        ['redis:', 'rediss:'].includes(url.protocol) &&
+        Boolean(url.hostname) &&
+        !url.hash &&
+        !url.search &&
+        /^\/(\d+)?$|^$/.test(url.pathname)
+      );
+    })
+    .optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -68,17 +81,10 @@ export function validateProductionEnv(): ServerEnv {
     'DISCORD_CLIENT_SECRET',
     'DISCORD_GUILD_ID',
     'DISCORD_REDIRECT_URI',
-    'UPSTASH_REDIS_REST_URL',
-    'UPSTASH_REDIS_REST_TOKEN',
+    'REDIS_URL',
   );
   if (!env.APP_URL && !env.DISCORD_APP_URL) throw new Error('Missing server environment configuration: APP_URL');
-  const names: Array<keyof ServerEnv> = [
-    'CONSOLE_URL',
-    'UPSTASH_REDIS_REST_URL',
-    'APP_URL',
-    'DISCORD_APP_URL',
-    'DISCORD_REDIRECT_URI',
-  ];
+  const names: Array<keyof ServerEnv> = ['CONSOLE_URL', 'APP_URL', 'DISCORD_APP_URL', 'DISCORD_REDIRECT_URI'];
   for (const name of names) {
     const value = env[name];
     if (!value) continue;
