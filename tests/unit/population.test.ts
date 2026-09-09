@@ -8,22 +8,26 @@ import {
 import { recordPopulation, readPopulationHistory } from '../../src/modules/portal/server/population';
 
 const mocks = vi.hoisted(() => ({
-  set: vi.fn(),
-  zadd: vi.fn(),
-  zremrangebyscore: vi.fn(),
-  expire: vi.fn(),
-  zrange: vi.fn(),
+  acquireLease: vi.fn(),
+  addPopulationSample: vi.fn(),
+  readPopulationSamples: vi.fn(),
   request: vi.fn(),
 }));
-vi.mock('../../src/lib/redis', () => ({ getRedisClient: () => mocks }));
+vi.mock('../../src/infrastructure/storage', () => ({ getStateStore: () => mocks }));
 vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
 vi.mock('../../src/config/env', () => ({
-  getServerEnv: () => ({ CONSOLE_URL: 'https://console.test', POPULATION_HISTORY_ENABLED: 'true', LOG_LEVEL: 'INFO' }),
+  getServerEnv: () => ({
+    CONSOLE_URL: 'https://console.test',
+    POPULATION_HISTORY_ENABLED: 'true',
+    POPULATION_RETENTION_SECONDS: 172800,
+    SITE_POLL_INTERVAL_MS: 30000,
+    LOG_LEVEL: 'INFO',
+  }),
 }));
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.set.mockResolvedValue('OK');
+  mocks.acquireLease.mockResolvedValue(true);
   mocks.request.mockResolvedValue({ totalCount: 3 });
 });
 
@@ -78,28 +82,23 @@ describe('population history', () => {
   });
   it('claims one sample per minute across replicas and persists bounded aggregates', async () => {
     await recordPopulation();
-    expect(mocks.set).toHaveBeenCalledWith(expect.stringContaining(':sample:'), '1', { nx: true, ex: 120 });
+    expect(mocks.acquireLease).toHaveBeenCalledWith(expect.stringContaining(':sample:'), expect.any(Number));
     expect(mocks.request).toHaveBeenCalledWith('GET', '/api/players/online?page=0&pageSize=1');
-    expect(mocks.zadd).toHaveBeenCalledWith(expect.any(String), {
-      score: expect.any(Number),
-      member: { at: expect.any(Number), online: 3 },
-    });
-    expect(mocks.zremrangebyscore).toHaveBeenCalled();
-    expect(mocks.expire).toHaveBeenCalledWith(expect.any(String), 172800);
-    mocks.set.mockResolvedValue(null);
+    expect(mocks.addPopulationSample).toHaveBeenCalledWith(expect.any(String), expect.any(Number), 3, 172800);
+    mocks.acquireLease.mockResolvedValue(false);
     await recordPopulation();
     expect(mocks.request).toHaveBeenCalledTimes(1);
   });
   it('does not turn invalid provider responses into zero samples', async () => {
     mocks.request.mockResolvedValue({ rows: [] });
     await recordPopulation();
-    expect(mocks.zadd).not.toHaveBeenCalled();
+    expect(mocks.addPopulationSample).not.toHaveBeenCalled();
     mocks.request.mockRejectedValue(new Error('offline'));
     await expect(recordPopulation()).rejects.toThrow('offline');
-    expect(mocks.zadd).not.toHaveBeenCalled();
+    expect(mocks.addPopulationSample).not.toHaveBeenCalled();
   });
   it('returns an unavailable reading when Redis fails', async () => {
-    mocks.zrange.mockRejectedValue(new Error('offline'));
+    mocks.readPopulationSamples.mockRejectedValue(new Error('offline'));
     expect(await readPopulationHistory()).toBeNull();
   });
 });

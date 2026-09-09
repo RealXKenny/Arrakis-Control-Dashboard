@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { formatMarketNumber } from '../utils/market';
 import { label, record, rows, type DataRow } from '../utils/inventory';
 import css from '../dossier.module.css';
+import { useSiteConfig } from '../../../components/SiteConfigProvider';
 
 export default function PriceLadder({
   templateId,
@@ -13,6 +14,7 @@ export default function PriceLadder({
   quality: string;
   owner?: string;
 }) {
+  const site = useSiteConfig();
   const [state, setState] = useState<{ items: DataRow[] | null; error: string; loading: boolean }>({
     items: null,
     error: '',
@@ -30,7 +32,7 @@ export default function PriceLadder({
         return;
       const controller = new AbortController();
       active = controller;
-      const timer = setTimeout(() => controller.abort(), 15000);
+      const timer = setTimeout(() => controller.abort(), site.requestTimeoutMs);
       try {
         const query = new URLSearchParams({ templateId, quality, owner });
         const response = await cachedFetch(`/api/market/listings?${query}`, {
@@ -65,7 +67,7 @@ export default function PriceLadder({
     }
     void load(revision > 0);
     const poll = () => void load();
-    const interval = setInterval(poll, 30000);
+    const interval = setInterval(poll, site.pollIntervalMs);
     document.addEventListener('visibilitychange', poll);
     return () => {
       disposed = true;
@@ -73,7 +75,7 @@ export default function PriceLadder({
       document.removeEventListener('visibilitychange', poll);
       active?.abort();
     };
-  }, [templateId, quality, owner, revision]);
+  }, [templateId, quality, owner, revision, site.pollIntervalMs, site.requestTimeoutMs]);
   return (
     <section aria-label="Price ladder" aria-busy={state.loading}>
       <h2>Price ladder</h2>

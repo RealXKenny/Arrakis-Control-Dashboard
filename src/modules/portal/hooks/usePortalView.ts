@@ -2,11 +2,47 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getPortalView, type PortalView } from '../config/navigation';
 
+let portalDestination = '';
+
+export function getPortalDestination(): string {
+  if (portalDestination) return portalDestination;
+  try {
+    return sessionStorage.getItem('map-destination') ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export function selectPortalDestination(destination: string) {
+  portalDestination = destination;
+  try {
+    sessionStorage.setItem('map-destination', destination);
+  } catch {
+    /* Storage is optional. */
+  }
+  window.dispatchEvent(new CustomEvent('portal-destination-change', { detail: destination }));
+}
+
+export function usePortalDestination() {
+  const [destination, setDestination] = useState('');
+  useEffect(() => {
+    setDestination(getPortalDestination());
+    const changed = (event: Event) => setDestination(String((event as CustomEvent).detail ?? ''));
+    window.addEventListener('portal-destination-change', changed);
+    return () => window.removeEventListener('portal-destination-change', changed);
+  }, []);
+  return [destination, selectPortalDestination] as const;
+}
+
 export function navigatePortal(href: string): boolean {
   if (window.location.pathname !== '/portal' || !href.startsWith('/portal')) return false;
   const url = new URL(href, window.location.origin);
   if (url.pathname !== '/portal') return false;
   const view = getPortalView(url.searchParams.get('view') ?? undefined);
+  const destination = url.searchParams.get('destination');
+  if (destination) {
+    selectPortalDestination(destination);
+  }
   if (window.history.state?.portalView !== view)
     window.history.pushState(
       { ...window.history.state, url: '/portal', as: '/portal', portalView: view },

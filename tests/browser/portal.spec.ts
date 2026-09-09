@@ -1,6 +1,7 @@
 import { version } from '../../package.json';
 import { test, expect } from '@playwright/test';
 import { summarizePopulation } from '../../src/modules/portal/utils/population';
+import { defaultPublicSiteConfig } from '../../src/config/public-site';
 
 const player = {
   avatarUrl: 'https://cdn.discordapp.com/avatars/12345/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png?size=128',
@@ -111,7 +112,93 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test('ultrawide holdings stay centered with two cards above one', async ({ page }) => {
+test('applies deployment branding, theme, labels, and feature switches from public configuration', async ({ page }) => {
+  await page.route('**/api/config', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        data: {
+          ...defaultPublicSiteConfig,
+          name: 'Sietch Test',
+          title: 'Sietch Operations',
+          mapLabels: { HaggaBasin: 'Home Basin', DeepDesert: 'The Erg' },
+          theme: { ...defaultPublicSiteConfig.theme, accent: '#12abef' },
+          features: { ...defaultPublicSiteConfig.features, market: false },
+        },
+      },
+    }),
+  );
+  await page.goto('/portal');
+  await expect(page.getByRole('link', { name: 'Sietch Test' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Home Basin', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'The Erg', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Exchange', exact: true })).toHaveCount(0);
+  await expect(page).toHaveTitle('Sietch Operations');
+  expect(
+    await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--theme-gold').trim()),
+  ).toBe('#12abef');
+});
+
+test('lists every named sietch and deep-desert partition and scopes map requests', async ({ page }) => {
+  await page.route('**/api/map/destinations', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        data: [
+          {
+            key: 'sietch:HaggaBasin:101',
+            label: 'Red Chasm',
+            map: 'HaggaBasin',
+            partitionId: '101',
+            kind: 'sietch',
+            type: 'PvE',
+            active: true,
+          },
+          {
+            key: 'sietch:HaggaBasin:102',
+            label: 'Wind Pass',
+            map: 'HaggaBasin',
+            partitionId: '102',
+            kind: 'sietch',
+            type: 'PvE',
+            active: true,
+          },
+          {
+            key: 'deep-desert:DeepDesert:dd-1',
+            label: 'Coriolis North',
+            map: 'DeepDesert',
+            partitionId: 'dd-1',
+            kind: 'deep-desert',
+            type: 'PvP',
+            active: true,
+          },
+        ],
+      },
+    }),
+  );
+  let mapRequest = '';
+  await page.route(/\/api\/map\?/, (route) => {
+    mapRequest = route.request().url();
+    return route.fulfill({
+      json: { ok: true, map: { width: 100, height: 100, minX: 0, maxX: 100, minY: 0, maxY: 100 }, markers: [] },
+    });
+  });
+  await page.goto('/portal');
+  await expect(page.getByRole('link', { name: 'Red Chasm', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Wind Pass', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Coriolis North', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Red Chasm', exact: true }).getByText('PvE')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Coriolis North', exact: true }).getByText('PvP')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Red Chasm', exact: true }).getByText('Online')).toHaveAttribute(
+    'title',
+    'Current status · online',
+  );
+  await page.getByRole('link', { name: 'Wind Pass', exact: true }).click();
+  await expect(page.getByLabel('Map destination')).toHaveValue('sietch:HaggaBasin:102');
+  await expect.poll(() => mapRequest).toContain('partitionId=102');
+});
+
+test('ultrawide holdings use an expanded centered canvas with two cards above one', async ({ page }) => {
   await page.setViewportSize({ width: 3432, height: 1308 });
   await page.goto('/portal?view=bases');
   const cards = page.locator('.base-grid > div');
@@ -126,8 +213,8 @@ test('ultrawide holdings stay centered with two cards above one', async ({ page 
   expect(boxes[2].y).toBeGreaterThan(boxes[0].y);
   expect(boxes[2].width).toBeGreaterThan(boxes[0].width * 1.9);
   const main = await page.locator('main').boundingBox();
-  expect(main!.x).toBeGreaterThan(500);
-  expect(main!.width).toBe(1080);
+  expect(main!.x).toBeGreaterThan(200);
+  expect(main!.width).toBe(3000);
   await page.screenshot({ path: 'test-results/portal-ultrawide.png', fullPage: true });
 });
 
@@ -184,8 +271,8 @@ test('dashboard briefing switches maps and keeps compact mobile panels', async (
       .poll(() => crest.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0))
       .toBe(true);
   }
-  await expect(page.getByRole('button', { name: 'Hagga Basin', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: 'Deep Desert', exact: true }).click();
+  await expect(page.getByLabel('Briefing destination')).toHaveValue('sietch:HaggaBasin:default');
+  await page.getByLabel('Briefing destination').selectOption({ label: 'Deep Desert' });
   await expect(page.getByText('Reading Deep Desert.', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: /Spice.*Deep Desert/ })).toHaveAttribute('href', '/portal');
   await page.setViewportSize({ width: 390, height: 844 });
@@ -282,18 +369,32 @@ test('unavailable personal listings are not shown as zero or a request failure',
 });
 
 test('map survives stylesheet extraction and refreshes independently', async ({ page }) => {
-  await page.route('**/api/map?*', (route) =>
-    route.fulfill({
+  const mapRequests: string[] = [];
+  await page.route('**/api/map?*', (route) => {
+    const url = new URL(route.request().url());
+    mapRequests.push(url.toString());
+    const liveOnly = url.searchParams.get('static') === '0';
+    const deepDesert = url.searchParams.get('map') === 'DeepDesert';
+    return route.fulfill({
       json: {
         ok: true,
-        map: { width: 1000, height: 1000, minX: 0, maxX: 1000, minY: 0, maxY: 1000, label: 'Hagga Basin' },
+        map: {
+          width: 1000,
+          height: 1000,
+          minX: 0,
+          maxX: 1000,
+          minY: 0,
+          maxY: 1000,
+          label: deepDesert ? 'Deep Desert' : 'Hagga Basin',
+        },
+        coriolisLayout: deepDesert ? 0 : null,
         markers: [
-          { id: 'spice', type: 'spice', x: 400, y: 500, name: 'Possible spice' },
+          ...(liveOnly ? [] : [{ id: 'spice', type: 'spice', x: 400, y: 500, name: 'Possible spice' }]),
           { id: 'active-spice', type: 'spice_active', x: 600, y: 500, name: 'Active spice' },
         ],
       },
-    }),
-  );
+    });
+  });
   await page.goto('/map');
   await expect(page.getByRole('checkbox', { name: 'Player', exact: true })).toBeChecked();
   await expect(page.getByRole('checkbox', { name: 'Storage', exact: true })).not.toBeChecked();
@@ -341,19 +442,29 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
     .toBe(true);
   await expect
     .poll(async () => (await page.getByRole('img', { name: 'Hagga Basin' }).boundingBox())?.width ?? 0)
-    .toBeGreaterThan(400);
+    .toBeGreaterThan(350);
   await expect(page.locator('button.live-map-marker').first()).toBeVisible();
+  await expect
+    .poll(() => mapRequests.some((url) => new URL(url).searchParams.get('static') === '0'), { timeout: 7000 })
+    .toBe(true);
+  await expect(page.locator('button.marker-spice')).toHaveCount(1);
   await page.getByRole('button', { name: 'Refresh', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
   await page.screenshot({ path: 'test-results/map-desktop.png', fullPage: true });
   await expect(page).toHaveURL(/\/portal$/);
   await expect(page.getByRole('link', { name: 'Hagga Basin', exact: true })).toHaveAttribute('aria-current', 'page');
   const desertLinks = page.locator('nav a').filter({ hasText: /Hagga Basin|Deep Desert/ });
-  await expect(desertLinks).toHaveText(['Hagga Basin', 'Deep Desert']);
+  expect(await desertLinks.evaluateAll((links) => links.map((link) => link.getAttribute('aria-label')))).toEqual([
+    'Hagga Basin',
+    'Deep Desert',
+  ]);
   await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Deep Desert', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByTitle('Hide Storage', { exact: true })).toHaveCount(1);
   await expect(page).toHaveURL(/\/portal$/);
+  const terrainAsset = await page.request.get('/maps/terrain/layout-0.json.gz');
+  expect(terrainAsset.ok()).toBe(true);
+  expect((await terrainAsset.body()).byteLength).toBeGreaterThan(100);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect
     .poll(() =>

@@ -13,7 +13,7 @@ export default defineConfig({
       POPULATION_HISTORY_ENABLED: 'false',
       API_DEBUG_ENABLED: 'false',
       CONSOLE_URL: 'http://127.0.0.1:9',
-      CONSOLE_PASSWORD: 'browser-test-placeholder',
+      CONSOLE_API_KEY: 'browser-test-placeholder',
       ADAPTER_TOKEN: 'browser-test-placeholder',
       DISCORD_CLIENT_ID: 'browser-test-client',
       DISCORD_CLIENT_SECRET: 'browser-test-placeholder',

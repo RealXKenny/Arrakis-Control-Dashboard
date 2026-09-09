@@ -10,7 +10,7 @@ The application uses the Next.js Pages Router and keeps external service credent
 - npm
 - A Dune Console instance and adapter token
 - A Discord application configured for OAuth2
-- A self-hosted Redis server for production deployments
+- PostgreSQL or a self-hosted Redis server for production deployments
 
 ## Quick Start
 
@@ -30,10 +30,14 @@ Fill in `.env` before using authentication or server-backed features. Never comm
 
 Required production variables include:
 
-- `CONSOLE_URL`, `CONSOLE_PASSWORD`, and `ADAPTER_TOKEN` for Dune Console access.
+- `CONSOLE_URL`, a full-access `CONSOLE_API_KEY`, and `ADAPTER_TOKEN` for Dune Console access.
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`, `DISCORD_REDIRECT_URI`, and `DISCORD_APP_URL` for Discord OAuth.
 - `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization.
-- `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits and persistent sessions.
+- `STORAGE_BACKEND=redis` with `REDIS_URL`, or `STORAGE_BACKEND=postgres` with `DATABASE_URL`, for shared state.
+
+Branding, community links, map labels, theme colors, feature switches, polling, retention, quotas, and upload limits are configured in `.env`. Browser-safe values are served through `/api/config`; secrets are never included. PostgreSQL deployments must run `npm run db:migrate` before the first start.
+
+The atlas discovers all named sietches and Deep Desert partitions from the Console. Navigation and selectors use returned display names, while marker and world-reading requests retain both map and partition IDs. `SITE_DEFAULT_DESTINATION` may select one discovered destination key.
 
 Sentry variables are optional. Configure `SENTRY_DSN` for runtime monitoring and `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT` for production source-map upload. See [.env.example](.env.example) for the complete template.
 
@@ -68,7 +72,7 @@ Important boundaries:
 
 - `src/pages/` contains Next.js pages and API routes.
 - `src/modules/` contains feature-specific UI, hooks, normalization, and server helpers.
-- `src/infrastructure/` contains the Dune client, cookie helpers, and API boundary utilities.
+- `src/infrastructure/` contains provider clients, API boundaries, and Redis/PostgreSQL storage adapters.
 - `src/lib/` contains shared logging, errors, Redis, rate limiting, and session storage.
 - `src/config/env.ts` validates server environment configuration.
 - `middleware.ts` adds request correlation and security headers.
@@ -79,8 +83,8 @@ See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for the full reposito
 ## Security and Reliability
 
 - API routes receive request IDs, method checks, structured logging, safe error responses, and shared rate limiting.
-- Production rate limits use Upstash Redis and fail closed if the storage service is unavailable.
-- OAuth sessions use Redis TTL records; cookies contain only random opaque session IDs.
+- Production rate limits use the selected shared backend and fail closed if storage is unavailable.
+- OAuth sessions use expiring shared-storage records; cookies contain only random opaque session IDs.
 - OAuth access tokens are not persisted.
 - Logs and Sentry context redact passwords, tokens, cookies, authorization headers, and session values.
 - Security headers are applied by middleware, including CSP, frame protection, referrer policy, and HSTS in production.
@@ -88,7 +92,7 @@ See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for the full reposito
 
 ## Production Deployment
 
-1. Provision an Upstash Redis database and configure its REST URL and token.
+1. Provision PostgreSQL or Redis. For PostgreSQL, configure `DATABASE_URL` and run `npm run db:migrate`.
 2. Configure Discord OAuth redirect URI as `<APP_URL>/auth/callback`.
 3. Set all required server-only variables from `.env.example` in the deployment platform.
 4. Run the verification commands locally or in CI:
@@ -102,7 +106,7 @@ npm run build
 
 5. Start with `npm start` and monitor application logs and Sentry.
 
-Do not deploy with placeholder environment values, disabled HTTPS, or missing Redis credentials. Redis is required in production because sessions and rate limits must work across instances and survive restarts.
+Do not deploy with placeholder values, disabled HTTPS, or missing shared-storage credentials. PostgreSQL or Redis is required in production so sessions and rate limits work across instances and survive restarts.
 
 ## Operational Notes
 

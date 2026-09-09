@@ -15,7 +15,7 @@ export async function register() {
       logger.info('Dashboard loaded');
     } catch (error) {
       const { logger } = await import('./lib/logger');
-      logger.error('Dune startup authentication failed.', { error });
+      logger.error('Dune startup configuration failed.', { error });
     }
     if (process.env.NEXT_PHASE !== 'phase-production-build') {
       const { startPopulationRecorder } = await import('./modules/portal/server/population');

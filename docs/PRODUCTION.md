@@ -2,7 +2,29 @@
 
 ## Configuration
 
-Copy `.env.example` to `.env` and provide the server-only Dune, Discord, and self-hosted Redis values. `REDIS_URL` is required in production. Discord also requires `DISCORD_GUILD_ID`, `DISCORD_REDIRECT_URI`, and `DISCORD_APP_URL`; `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` should be set for stable redirects and role authorization. `CONSOLE_PASSWORD`, `ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, and `REDIS_URL` must never use a `NEXT_PUBLIC_` prefix. Sentry is optional; when `SENTRY_DSN` is absent, the application continues without reporting.
+Copy `.env.example` to `.env` and provide Dune, Discord, and shared-storage values. Select `STORAGE_BACKEND=redis` with `REDIS_URL`, or `STORAGE_BACKEND=postgres` with `DATABASE_URL`. Secrets must never use a `NEXT_PUBLIC_` prefix. Sentry is optional.
+
+`CONSOLE_API_KEY` is sent as a bearer credential and must have full access to every enabled player, guild, base, vehicle, map, and exchange feature. It is the only Console credential used by the dashboard. `ADAPTER_TOKEN` remains separate for Discord-linked player identity.
+
+### Multiple sietches and Deep Deserts
+
+The dashboard combines `/api/sietches`, `/api/sietches/dimensions`, `/api/deepdesert`, and `/api/map/partitions` into its authenticated destination catalog. Sietch display names are used in navigation and map selectors. Each marker/world request carries the selected map and `partitionId`, so identically typed destinations do not share readings or cached map state. Offline destinations remain listed and are marked as offline. Set `SITE_DEFAULT_DESTINATION` to a discovered key when one instance should open by default; `SITE_DEFAULT_MAP` remains the fallback for older Console responses.
+
+### PostgreSQL
+
+Create an empty database, configure it, and apply the idempotent schema before the first start:
+
+```dotenv
+STORAGE_BACKEND=postgres
+DATABASE_URL=postgresql://arrakis:password@postgres-host:5432/arrakis
+DATABASE_SSL_MODE=require
+```
+
+```text
+npm run db:migrate
+```
+
+SSL mode accepts `disable`, `require`, or `verify-full`. The migration creates tables for sessions, rate limits, base-import reservations, leases, population samples, and guild logos. Use normal PostgreSQL backups; the dashboard does not create database backups.
 
 ## Request handling
 
@@ -22,9 +44,9 @@ This cutover starts with an empty database: no Upstash data is copied or deleted
 
 Pages API routes are wrapped by `runPagesApiHandler`. It assigns an `X-Request-ID`, applies method checks and rate limits, writes compact route-aware logs with secret redaction, and returns safe error envelopes. Unexpected errors are reported to Sentry when configured.
 
-Rate limits use Redis fixed-window counters, hashed keys, and fail closed with HTTP 503 when Redis is unavailable in production. Development and tests use a bounded local fallback only when `NODE_ENV` is not `production` and Redis credentials are absent.
+Rate limits use atomic fixed-window counters in the selected backend and fail closed with HTTP 503 when shared storage is unavailable in production. Development and tests use a bounded local fallback only when storage is not configured.
 
-OAuth sessions and their browser cookies have a fixed 12-hour lifetime from login. Redis records use the session's remaining lifetime, capped at 12 hours. Cookies contain only a random session identifier; OAuth access tokens are never persisted. Logout deletes the Redis record and expires the cookie. Redis sessions survive app restarts. Without Redis in development, the process-wide fallback survives module reloads, but ends when the server process stops. Temporary profile-fetch errors offer retry instead of displaying the sign-in screen.
+OAuth session lifetime is controlled by `SESSION_TTL_SECONDS` (12 hours by default). Records use the session's remaining lifetime. Cookies contain only a random session identifier; OAuth access tokens are never persisted. Logout deletes the shared record and expires the cookie. Without configured storage in development, the process-wide fallback survives module reloads but ends when the server process stops.
 
 ## Monitoring
 
@@ -56,7 +78,6 @@ Vitest covers the shared hardening utilities and API boundary behavior. External
 
 Logout requires POST; GET and Next data prefetch requests must never revoke a session. Blueprint export requires server-verified ownership. Before deploying the rebuilt portal, follow [Portal rebuild acceptance](PORTAL_REBUILD.md), including the browser tests and live-provider acceptance checks. Automated browser tests use fixture responses; they do not replace staging validation.
 
-
 ## Current release preparation
 
 The footer displays the package version automatically (currently v1.0.4). My bases keeps the import form after the holdings cards, with its Upload JSON input always visible and separated by 28px of vertical margin. Empty community/live/Solido directory stubs were removed; the catalogued item and marker assets remain supported.
@@ -69,7 +90,7 @@ The browser uses a bounded memory/sessionStorage cache, partitioned by a server-
 
 ### Runtime configuration and deployment
 
-Production startup validates required Console/adapter/Discord/Redis settings before serving requests. Public app/callback URLs require HTTPS (loopback HTTP is allowed for local fixtures or tunnels); callback and app origins must match. Console HTTP is supported for a trusted private deployment network. HTTP URL credentials and fragments are rejected. Redis accepts `redis://` (plain TCP) or `rediss://` (TLS), credentials, and a database number. Redis connections and socket inactivity time out after five seconds, with no automatic write retries; later requests reconnect when needed. Builds can run without deployment credentials; runtime startup requires them.
+Production startup validates required Console, adapter, Discord, and selected-storage settings before serving requests. Public app/callback URLs require HTTPS (loopback HTTP is allowed for local fixtures or tunnels); callback and app origins must match. Console HTTP is supported for a trusted private deployment network. Builds can run without deployment credentials; runtime startup requires them.
 
 Build and check the exact release with:
 

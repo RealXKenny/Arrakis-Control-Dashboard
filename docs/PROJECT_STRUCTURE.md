@@ -10,7 +10,7 @@ Arrakis Control is a Next.js Pages Router application. Server-only integrations 
 ├── src/
 │   ├── components/          Shared UI components
 │   ├── config/              Validated server configuration
-│   ├── infrastructure/      Dune and Discord clients, cookies, API boundary helpers
+│   ├── infrastructure/      Provider clients, API boundaries, Redis/PostgreSQL storage
 │   ├── lib/                 Logger, errors, Redis, rate limits, sessions
 │   ├── modules/
 │   │   ├── auth/            OAuth login, callback, and logout server handlers
@@ -55,12 +55,14 @@ Each API entry point imports its feature's handler (GET for reads, POST for logo
 
 Portal owns its navigation, market board, market configuration, and base-export workflow. Shared UI belongs in `src/components/` only when it is feature-agnostic; no placeholder shared component or barrel is needed. Module-local imports remain relative, and tests import routes or focused utilities directly.
 
+Map destinations are discovered from the Console sietch, dimension, Deep Desert, and partition endpoints. UI labels use the returned display names; transport and caches use stable map-plus-partition identities.
+
 ## State Boundaries
 
-- Redis stores rate-limit counters and expiring OAuth sessions in production.
+- The selected Redis or PostgreSQL backend stores rate limits, sessions, population history, guild logos, and import reservations.
 - Session cookies contain only random opaque identifiers.
 - Dune credentials, Discord client secrets, adapter tokens, Redis tokens, and Sentry upload credentials are server-only.
-- Server configuration, provider clients, cookies, and server storage import `src/lib/assert-server.ts`, a browser-rejecting guard compatible with ordinary Node execution in Pages Router and instrumentation. Browser code must never import these modules, including transitively through a barrel. Do not use the React Server Component `server-only` package here: its default Node export throws when externalized by the server runtime.
+- Server configuration, provider clients, cookies, and server storage import `src/lib/assert-server.ts`, a browser-rejecting guard compatible with ordinary Node execution in Pages Router and instrumentation. Browser code must never import these modules, including transitively through a barrel. Public site configuration is sanitized and served through `/api/config`.
 - Only `NEXT_PUBLIC_SENTRY_DSN` is read by browser monitoring. Server and Edge monitoring read the validated `SENTRY_DSN` setting. Empty optional environment settings are treated as absent.
 - Development-only in-memory fallbacks are available when `NODE_ENV` is not `production` and shared Redis credentials are absent.
 

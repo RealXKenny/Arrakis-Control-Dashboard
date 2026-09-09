@@ -64,7 +64,8 @@ export type LogContext = {
   [key: string]: unknown;
 };
 
-const secretKeyPattern = /(password|token|secret|cookie|authorization|session|api[-_]?key|access[-_]?token)/i;
+const secretKeyPattern =
+  /(password|token|secret|cookie|authorization|session|api[-_]?key|access[-_]?token|database[-_]?url|redis[-_]?url)/i;
 
 function redact(value: unknown, key = ''): unknown {
   if (secretKeyPattern.test(key)) {

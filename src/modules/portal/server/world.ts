@@ -17,12 +17,18 @@ export async function GET(req, res) {
   if (!session || session.expiresAt <= Date.now())
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
   const map = new URL(req.url, 'http://localhost').searchParams.get('map') ?? 'HaggaBasin';
-  if (!['DeepDesert', 'HaggaBasin'].includes(map)) throw new AppError('Invalid map', 400, 'INVALID_MAP', true);
-  let reading = cache.get(map);
+  const partitionId = new URL(req.url, 'http://localhost').searchParams.get('partitionId')?.trim() || null;
+  if (!/^[a-zA-Z0-9_.:-]{1,128}$/.test(map) || (partitionId && !/^[a-zA-Z0-9_.:-]{1,128}$/.test(partitionId)))
+    throw new AppError('Invalid map', 400, 'INVALID_MAP', true);
+  const cacheKey = `${map}:${partitionId ?? ''}`;
+  let reading = cache.get(cacheKey);
   if (!reading || reading.expires <= Date.now()) {
     const client = getDuneClient();
     const value = Promise.allSettled([
-      client.request('GET', `/api/map/markers?map=${map}&static=0`),
+      client.request(
+        'GET',
+        `/api/map/markers?map=${encodeURIComponent(map)}${partitionId ? `&partitionId=${encodeURIComponent(partitionId)}` : ''}&static=0`,
+      ),
       client.request('GET', '/api/exchange/stats'),
       client.request('GET', '/api/admin/landsraad'),
       client.request('GET', '/api/players'),
@@ -30,10 +36,14 @@ export async function GET(req, res) {
       const [markers, market, council, players] = results.map((result) =>
         result.status === 'fulfilled' ? result.value : null,
       );
-      return { ...worldReading(map, markers, market, council), totalPlayHours: totalPlayHours(players) };
+      return {
+        ...worldReading(map, markers, market, council),
+        partitionId,
+        totalPlayHours: totalPlayHours(players),
+      };
     });
     reading = { expires: Date.now() + 30000, value };
-    cache.set(map, reading);
+    cache.set(cacheKey, reading);
   }
   const [world, population] = await Promise.all([reading.value, readPopulationHistory()]);
   return NextResponse.json({ ...world, population }, { headers: { 'Cache-Control': 'no-store' } });

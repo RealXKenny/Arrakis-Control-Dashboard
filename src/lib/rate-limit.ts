@@ -1,7 +1,7 @@
 import './assert-server';
 import { createHash } from 'node:crypto';
 import { getServerEnv } from '../config/env';
-import { getRedisClient } from './redis';
+import { getStateStore } from '../infrastructure/storage';
 
 type Bucket = { count: number; resetAt: number };
 const developmentBuckets = new Map<string, Bucket>();
@@ -44,27 +44,11 @@ function checkDevelopmentLimit(key: string, rule: RateLimitRule): RateLimitResul
 export async function checkRateLimit(key: string, rule: RateLimitRule): Promise<RateLimitResult> {
   const env = getServerEnv();
   try {
-    const redis = getRedisClient();
-    if (!redis) return checkDevelopmentLimit(key, rule);
-
-    // Increment and expiry must be atomic: INCR after an expired SET NX bucket
-    // otherwise recreates a key without a TTL and permanently locks out clients.
-    const result = await redis.eval(
-      `
-      local count = redis.call('INCR', KEYS[1])
-      local ttl = redis.call('PTTL', KEYS[1])
-      if ttl < 0 then
-        redis.call('PEXPIRE', KEYS[1], ARGV[1])
-        ttl = tonumber(ARGV[1])
-      end
-      return {count, ttl}
-    `,
-      [storageKey(key, rule)],
-      [rule.windowMs],
-    );
-    if (!Array.isArray(result)) throw new Error('Invalid rate limit response');
-    const count = Number(result[0]);
-    const ttlMs = Number(result[1]);
+    const store = getStateStore();
+    if (!store) return checkDevelopmentLimit(key, rule);
+    const result = await store.incrementRateLimit(storageKey(key, rule), rule.windowMs);
+    const count = result.count;
+    const ttlMs = result.resetAt - Date.now();
     if (!Number.isFinite(count) || !Number.isFinite(ttlMs)) throw new Error('Invalid rate limit response');
     return {
       allowed: count <= rule.limit,

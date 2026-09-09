@@ -7,13 +7,13 @@ const { request, session, linkedPlayer, redis } = vi.hoisted(() => ({
   request: vi.fn(),
   session: vi.fn(),
   linkedPlayer: vi.fn(),
-  redis: { get: vi.fn(), set: vi.fn() },
+  redis: { getGuildLogo: vi.fn(), setGuildLogo: vi.fn() },
 }));
 
 vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request }) }));
 vi.mock('../../src/lib/session-store', () => ({ getSession: session }));
 vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
-vi.mock('../../src/lib/redis', () => ({ getRedisClient: () => redis }));
+vi.mock('../../src/infrastructure/storage', () => ({ getStateStore: () => redis }));
 
 const req = (url: string, query = {}) => ({
   method: 'GET',
@@ -31,8 +31,8 @@ beforeEach(() => {
     expiresAt: Date.now() + 60_000,
   });
   linkedPlayer.mockResolvedValue({ linked: true, pawnId: '4', characterName: 'Leader' });
-  redis.get.mockResolvedValue(null);
-  redis.set.mockResolvedValue('OK');
+  redis.getGuildLogo.mockResolvedValue(null);
+  redis.setGuildLogo.mockResolvedValue(undefined);
 });
 
 describe('guild API handlers', () => {
@@ -67,7 +67,7 @@ describe('guild API handlers', () => {
       {},
     );
     expect(response.status).toBe(200);
-    expect(redis.set).toHaveBeenCalledWith('arrakis:guild-logo:2', `data:image/png;base64,${png}`);
+    expect(redis.setGuildLogo).toHaveBeenCalledWith('2', `data:image/png;base64,${png}`);
 
     request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '1' }] });
     const denied = await expect(
@@ -77,7 +77,7 @@ describe('guild API handlers', () => {
   });
 
   it('returns the saved logo for authenticated guild members', async () => {
-    redis.get.mockResolvedValue('data:image/png;base64,stored');
+    redis.getGuildLogo.mockResolvedValue('data:image/png;base64,stored');
     const response = await getLogo(req('/api/guilds/2/logo'), {});
     expect(JSON.parse(response.body).data.logo).toBe('data:image/png;base64,stored');
   });

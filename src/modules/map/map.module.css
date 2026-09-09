@@ -826,19 +826,25 @@
   flex-direction: column;
   position: relative;
   min-width: 0;
-  height: clamp(480px, 70vh, 840px);
+  height: clamp(560px, calc(100vh - 245px), 1200px);
   border: 1px solid #725034;
   border-radius: 16px;
   overflow: hidden;
   background: #160e09;
 }
+:global(.live-map-terrain) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
 .workspace .mapLegend {
   position: static;
   width: auto;
   height: auto;
-  max-height: 840px;
-  max-height: 70vh;
-  min-height: 480px;
+  max-height: min(1200px, calc(100vh - 245px));
+  min-height: 560px;
   border: 0;
   border-radius: 16px;
   background: transparent;

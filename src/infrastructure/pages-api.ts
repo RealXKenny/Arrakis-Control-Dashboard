@@ -77,26 +77,30 @@ export async function runPagesApiHandler(req, res, method, handler) {
       return;
     }
 
-    const isSensitive = route.includes('/auth/') || route.includes('/export') || req.method !== 'GET';
-    const limit = await checkRateLimit(
-      `${getClientAddress(req)}:${route}`,
-      isSensitive ? { limit: 30, windowMs: 60_000 } : { limit: 120, windowMs: 60_000 },
-    );
-    res.setHeader('X-RateLimit-Limit', isSensitive ? '30' : '120');
-    res.setHeader('X-RateLimit-Remaining', String(limit.remaining));
-    if (!limit.allowed) {
-      res.setHeader('Retry-After', String(limit.retryAfter));
-      const status = limit.storageUnavailable ? 503 : 429;
-      const payload = {
-        ok: false,
-        error: status === 429 ? 'Too many requests' : 'Request protection is temporarily unavailable',
-        code: status === 429 ? 'RATE_LIMITED' : 'RATE_LIMIT_UNAVAILABLE',
-        requestId,
-      };
-      await captureApiSnapshot(route, status, payload, 'portal', req.method);
-      res.status(status).json(payload);
-      log.warn('Request protection rejected request', { status });
-      return;
+    // Public, non-sensitive bootstrap configuration must remain readable when
+    // shared storage is down so the branded error/recovery UI can still load.
+    if (route !== '/api/config') {
+      const isSensitive = route.includes('/auth/') || route.includes('/export') || req.method !== 'GET';
+      const limit = await checkRateLimit(
+        `${getClientAddress(req)}:${route}`,
+        isSensitive ? { limit: 30, windowMs: 60_000 } : { limit: 120, windowMs: 60_000 },
+      );
+      res.setHeader('X-RateLimit-Limit', isSensitive ? '30' : '120');
+      res.setHeader('X-RateLimit-Remaining', String(limit.remaining));
+      if (!limit.allowed) {
+        res.setHeader('Retry-After', String(limit.retryAfter));
+        const status = limit.storageUnavailable ? 503 : 429;
+        const payload = {
+          ok: false,
+          error: status === 429 ? 'Too many requests' : 'Request protection is temporarily unavailable',
+          code: status === 429 ? 'RATE_LIMITED' : 'RATE_LIMIT_UNAVAILABLE',
+          requestId,
+        };
+        await captureApiSnapshot(route, status, payload, 'portal', req.method);
+        res.status(status).json(payload);
+        log.warn('Request protection rejected request', { status });
+        return;
+      }
     }
 
     const response: NextResponse = await cachedApiReading(req, res, () => handler(req, res));
