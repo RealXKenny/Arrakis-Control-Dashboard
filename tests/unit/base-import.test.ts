@@ -43,7 +43,7 @@ it('imports only to the verified character and ignores a supplied target', async
   expect(JSON.parse(response.body!).record.status).toBe('imported');
   const form = state.upload.mock.calls[0][2] as FormData;
   expect(form.get('player_id')).toBe('42');
-  expect(state.upload.mock.calls[0][3]).toBe(false);
+  expect(state.upload.mock.calls[0]).toHaveLength(3);
 });
 it('rejects cross-origin and signed-out imports', async () => {
   const request = req();

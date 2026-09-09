@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { cachedFetch } from '../../../lib/client-cache';
+import { useSiteConfig } from '../../../components/SiteConfigProvider';
 export function useMarketData(query: string, page: number, sort = 'name', owner = 'all') {
+  const site = useSiteConfig();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -16,7 +18,7 @@ export function useMarketData(query: string, page: number, sort = 'name', owner 
         return;
       const controller = new AbortController();
       active = controller;
-      const deadline = setTimeout(() => controller.abort(), 30000);
+      const deadline = setTimeout(() => controller.abort(), site.requestTimeoutMs);
       setLoading(true);
       setError('');
       const apply = async (response: Response, cached: boolean) => {
@@ -58,7 +60,7 @@ export function useMarketData(query: string, page: number, sort = 'name', owner 
     }
     const debounce = setTimeout(() => void load(revision > 0), 250);
     const poll = () => void load();
-    const interval = setInterval(poll, 30000);
+    const interval = setInterval(poll, site.pollIntervalMs);
     document.addEventListener('visibilitychange', poll);
     return () => {
       disposed = true;
@@ -67,7 +69,7 @@ export function useMarketData(query: string, page: number, sort = 'name', owner 
       document.removeEventListener('visibilitychange', poll);
       active?.abort();
     };
-  }, [query, page, sort, owner, revision]);
+  }, [query, page, sort, owner, revision, site.pollIntervalMs, site.requestTimeoutMs]);
   const currentData =
     data?.requestedQuery === query &&
     data?.requestedPage === page &&

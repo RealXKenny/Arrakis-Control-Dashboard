@@ -1,8 +1,10 @@
 import { cachedFetch } from '../../../lib/client-cache';
 import { useEffect, useState } from 'react';
 import type { WorldReading } from '../utils/world';
+import { useSiteConfig } from '../../../components/SiteConfigProvider';
 
-export function useWorldReading(map: string) {
+export function useWorldReading(map: string, partitionId: string | null = null) {
+  const site = useSiteConfig();
   const [reading, setReading] = useState<WorldReading | null>(null);
   const [error, setError] = useState(false);
   const [expired, setExpired] = useState(false);
@@ -14,9 +16,11 @@ export function useWorldReading(map: string) {
     async function load() {
       if (disposed || request || unauthorized || document.visibilityState === 'hidden') return;
       request = new AbortController();
-      const timeout = setTimeout(() => request?.abort(), 15000);
+      const timeout = setTimeout(() => request?.abort(), site.requestTimeoutMs);
       try {
-        const response = await cachedFetch(`/api/portal/world?map=${map}`, {
+        const query = new URLSearchParams({ map });
+        if (partitionId) query.set('partitionId', partitionId);
+        const response = await cachedFetch(`/api/portal/world?${query}`, {
           signal: request.signal,
           onCached: async (cached) => {
             if (!disposed) setReading(await cached.json());
@@ -42,7 +46,7 @@ export function useWorldReading(map: string) {
       }
     }
     void load();
-    const polling = setInterval(load, 30000);
+    const polling = setInterval(load, site.pollIntervalMs);
     const clock = setInterval(() => {
       if (document.visibilityState !== 'hidden') setNow(Date.now());
     }, 10000);
@@ -54,6 +58,11 @@ export function useWorldReading(map: string) {
       document.removeEventListener('visibilitychange', load);
       request?.abort();
     };
-  }, [map]);
-  return { reading: reading?.map === map ? reading : null, error, expired, now };
+  }, [map, partitionId, site.pollIntervalMs, site.requestTimeoutMs]);
+  return {
+    reading: reading?.map === map && (reading.partitionId ?? null) === partitionId ? reading : null,
+    error,
+    expired,
+    now,
+  };
 }

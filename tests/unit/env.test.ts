@@ -37,7 +37,7 @@ function productionFixture() {
   const values = {
     NODE_ENV: 'production',
     CONSOLE_URL: 'http://127.0.0.1:4000',
-    CONSOLE_PASSWORD: 'test',
+    CONSOLE_API_KEY: 'full-access-test-key',
     ADAPTER_TOKEN: 'test',
     DISCORD_CLIENT_ID: 'test',
     DISCORD_CLIENT_SECRET: 'test',
@@ -91,4 +91,38 @@ it('requires REDIS_URL in production', async () => {
   vi.stubEnv('REDIS_URL', '');
   const { validateProductionEnv } = await import('../../src/config/env');
   expect(validateProductionEnv).toThrow('Missing server environment configuration: REDIS_URL');
+});
+
+it('allows PostgreSQL to replace Redis in production', async () => {
+  productionFixture();
+  vi.stubEnv('STORAGE_BACKEND', 'postgres');
+  vi.stubEnv('REDIS_URL', '');
+  vi.stubEnv('DATABASE_URL', 'postgresql://arrakis:secret@postgres.test:5432/arrakis');
+  const { validateProductionEnv } = await import('../../src/config/env');
+  expect(validateProductionEnv().STORAGE_BACKEND).toBe('postgres');
+});
+
+it('requires Console API key authentication', async () => {
+  productionFixture();
+  vi.stubEnv('CONSOLE_API_KEY', 'full-access-test-key');
+  const { validateProductionEnv } = await import('../../src/config/env');
+  expect(validateProductionEnv().CONSOLE_API_KEY).toBe('full-access-test-key');
+});
+
+it('rejects a missing Console API key in production', async () => {
+  productionFixture();
+  vi.stubEnv('CONSOLE_API_KEY', '');
+  const { validateProductionEnv } = await import('../../src/config/env');
+  expect(validateProductionEnv).toThrow('Missing server environment configuration: CONSOLE_API_KEY');
+});
+
+it('parses browser-safe branding and theme values from the environment template', async () => {
+  const template = parse(readFileSync('.env.example'));
+  for (const [key, value] of Object.entries(template)) vi.stubEnv(key, value);
+  const { loadPublicSiteConfig } = await import('../../src/config/public-site-server');
+  const site = loadPublicSiteConfig();
+  expect(site.name).toBe('Crimson Skies');
+  expect(site.theme.accent).toBe('#d2a85a');
+  expect(site).not.toHaveProperty('DATABASE_URL');
+  expect(site).not.toHaveProperty('CONSOLE_API_KEY');
 });

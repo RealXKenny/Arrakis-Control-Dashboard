@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-const storage = vi.hoisted(() => ({ enabled: false, set: vi.fn(), get: vi.fn(), del: vi.fn() }));
-vi.mock('../../src/lib/redis', () => ({ getRedisClient: () => (storage.enabled ? storage : null) }));
+const storage = vi.hoisted(() => ({
+  enabled: false,
+  saveSession: vi.fn(),
+  getSession: vi.fn(),
+  deleteSession: vi.fn(),
+}));
+vi.mock('../../src/infrastructure/storage', () => ({ getStateStore: () => (storage.enabled ? storage : null) }));
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -40,9 +45,13 @@ it('writes the twelve-hour lifetime to Redis and preserves logout revocation', a
   const store = await import('../../src/lib/session-store');
   const value = session();
   await store.saveSession('redis-test', value);
-  expect(storage.set).toHaveBeenCalledWith(expect.stringMatching(/^arrakis:session:/), value, { ex: 43200 });
+  expect(storage.saveSession).toHaveBeenCalledWith(
+    expect.stringMatching(/^[a-f0-9]{64}$/),
+    value,
+    Date.now() + 43200 * 1000,
+  );
   await store.deleteSession('redis-test');
-  expect(storage.del).toHaveBeenCalledWith(storage.set.mock.calls[0][0]);
+  expect(storage.deleteSession).toHaveBeenCalledWith(storage.saveSession.mock.calls[0][0]);
 });
 
 it('uses remaining lifetime when saving an already-running session', async () => {
@@ -51,12 +60,12 @@ it('uses remaining lifetime when saving an already-running session', async () =>
   const value = session();
   vi.advanceTimersByTime(6 * 60 * 60 * 1000);
   await store.saveSession('remaining-test', value);
-  expect(storage.set).toHaveBeenCalledWith(expect.any(String), value, { ex: 21600 });
+  expect(storage.saveSession).toHaveBeenCalledWith(expect.any(String), value, Date.now() + 21600 * 1000);
 });
 
 it('does not treat a Redis outage as an expired login or use a local fallback', async () => {
   storage.enabled = true;
-  storage.get.mockRejectedValueOnce(new Error('storage unavailable'));
+  storage.getSession.mockRejectedValueOnce(new Error('storage unavailable'));
   const store = await import('../../src/lib/session-store');
   await expect(store.getSession('outage-test')).rejects.toThrow('storage unavailable');
 });

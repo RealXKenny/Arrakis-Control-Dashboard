@@ -164,7 +164,7 @@ describe('route contracts after extraction', () => {
     vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
     const headers = { cookie: 'dashboard_session=session' };
     const invalid = responseMock();
-    await world({ method: 'GET', url: '/api/portal/world?map=Other', headers }, invalid);
+    await world({ method: 'GET', url: '/api/portal/world?map=..%2FOther', headers }, invalid);
     expect(invalid.statusCode).toBe(400);
     expect(request).not.toHaveBeenCalled();
     const valid = responseMock();

@@ -40,17 +40,20 @@ it('does not replay mutations or disclose upstream errors', async () => {
   expect(error).toMatchObject({ message: 'Console API request failed', details: null });
   expect(getSafeError(error).message).toBe('Internal server error');
 });
-it('does not reauthenticate forbidden scopes or retry 429', async () => {
+it('does not retry forbidden scopes or rate limits', async () => {
   const fetcher = vi
     .fn()
     .mockResolvedValueOnce(Response.json({}, { status: 403 }))
     .mockResolvedValueOnce(Response.json({}, { status: 429 }));
   vi.stubGlobal('fetch', fetcher);
-  const client = new DuneConsoleClient('https://console.test');
-  client.password = 'private';
+  const client = new DuneConsoleClient('https://console.test', null, 'full-access-key');
   await expect(client.request('GET', '/api/settings')).rejects.toMatchObject({ status: 403 });
   await expect(client.request('GET', '/api/items')).rejects.toMatchObject({ status: 429 });
   expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(fetcher).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer full-access-key' }) }),
+  );
 });
 it('traces multipart and network failures through the same transport', async () => {
   const fetcher = vi

@@ -2,18 +2,20 @@ import Link from 'next/link';
 import DashboardShell from '../../../components/DashboardShell';
 import { useServerStatus } from '../hooks/useServerStatus';
 import css from '../home.module.css';
+import { useSiteConfig } from '../../../components/SiteConfigProvider';
 
 export default function LandingPage({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
+  const site = useSiteConfig();
   const { activePlayers, totalPlayers, serverStatusError } = useServerStatus();
   return (
     <DashboardShell
-      brand="Crimson Skies"
-      subtitle="Arrakis field companion"
+      brand={site.name}
+      subtitle={site.subtitle}
       navigation={[{ label: 'Dashboard', group: 'Command', href: '/', active: true }]}
       actions={
         <>
           {!isAuthenticated && <a href="/auth/login">Connect Discord</a>}
-          <a href="https://discord.gg/crimsonskies" target="_blank" rel="noreferrer">
+          <a href={site.discordInviteUrl} target="_blank" rel="noreferrer">
             Join Discord
           </a>
           <Link href="/portal">Open portal ↗</Link>
@@ -21,7 +23,7 @@ export default function LandingPage({ isAuthenticated = false }: { isAuthenticat
       }
     >
       <div className={css.reading}>
-        <span>Crimson Skies / Dune: Awakening</span>
+        <span>{site.name} / Dune: Awakening</span>
         <span>
           {serverStatusError
             ? 'Telemetry unavailable'
@@ -32,20 +34,17 @@ export default function LandingPage({ isAuthenticated = false }: { isAuthenticat
       </div>
       <section className={css.hero}>
         <div className={css.heroCopy}>
-          <p className={css.eyebrow}>Your field companion for Arrakis</p>
+          <p className={css.eyebrow}>{site.hero.eyebrow}</p>
           <h1>
-            Know the sand.
+            {site.hero.title}
             <br />
-            <em>Own your signal.</em>
+            <em>{site.hero.accent}</em>
           </h1>
-          <p className={css.description}>
-            A clear view of your character, territory, fleet, and the world around you—so every step into the desert
-            starts with better intelligence.
-          </p>
+          <p className={css.description}>{site.hero.description}</p>
           <div className={css.actions}>
             {!isAuthenticated && <a href="/auth/login">Connect with Discord →</a>}
             <Link href="/portal">Open your portal ↗</Link>
-            <a href="https://discord.gg/crimsonskies" target="_blank" rel="noreferrer">
+            <a href={site.discordInviteUrl} target="_blank" rel="noreferrer">
               Join Discord ↗
             </a>
           </div>
@@ -76,24 +75,26 @@ export default function LandingPage({ isAuthenticated = false }: { isAuthenticat
       </div>
       <section className={css.community}>
         <div className={css.communityCopy}>
-          <p className={css.eyebrow}>The Crimson Skies community</p>
-          <h2>Find your crew before you find the spice.</h2>
-          <p>Join the conversation, share your next run, and stay close to the people shaping life across Arrakis.</p>
-          <a className={css.discordButton} href="https://discord.gg/crimsonskies" target="_blank" rel="noreferrer">
+          <p className={css.eyebrow}>The {site.name} community</p>
+          <h2>{site.community.title}</h2>
+          <p>{site.community.description}</p>
+          <a className={css.discordButton} href={site.discordInviteUrl} target="_blank" rel="noreferrer">
             Join Discord ↗
           </a>
         </div>
-        <div className={css.discordWidget}>
-          <iframe
-            title="Crimson Skies Discord community"
-            src="https://discord.com/widget?id=1532230917249302588&theme=dark"
-            width="350"
-            height="500"
-            allowTransparency
-            frameBorder="0"
-            sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-          />
-        </div>
+        {site.discordWidgetEnabled && site.discordWidgetGuildId && (
+          <div className={css.discordWidget}>
+            <iframe
+              title={`${site.name} Discord community`}
+              src={`https://discord.com/widget?id=${encodeURIComponent(site.discordWidgetGuildId)}&theme=dark`}
+              width="350"
+              height="500"
+              allowTransparency
+              frameBorder="0"
+              sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+            />
+          </div>
+        )}
       </section>
     </DashboardShell>
   );

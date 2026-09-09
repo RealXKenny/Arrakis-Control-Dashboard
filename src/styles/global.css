@@ -3,12 +3,14 @@
   --theme-muted: #b9a185;
   --theme-gold: #d2a85a;
   --theme-border: #503521;
+  --theme-background: #100905;
+  --theme-surface: #54321b;
   color-scheme: dark;
   font-family: 'Saira', system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.5;
-  color: #ffe2a9;
-  background: #100905;
+  color: var(--theme-text);
+  background: var(--theme-background);
 }
 * {
   box-sizing: border-box;
@@ -19,7 +21,7 @@ body {
   min-height: 100vh;
 }
 body {
-  background: radial-gradient(ellipse at 50% 0%, #54321b, #100905 65%);
+  background: radial-gradient(ellipse at 50% 0%, var(--theme-surface), var(--theme-background) 65%);
 }
 #__next {
   width: 100%;
@@ -42,7 +44,7 @@ button:disabled {
   cursor: default;
 }
 a {
-  color: #dfb46d;
+  color: var(--theme-gold);
 }
 :focus-visible {
   outline: 2px solid #73cbd2;
@@ -50,7 +52,7 @@ a {
 }
 html {
   scrollbar-width: thin;
-  scrollbar-color: #625035 #100905;
+  scrollbar-color: var(--theme-border) var(--theme-background);
 }
 @media (prefers-reduced-motion: reduce) {
   *,

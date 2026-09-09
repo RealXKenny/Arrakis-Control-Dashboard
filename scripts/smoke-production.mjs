@@ -13,15 +13,12 @@ const redis = createServer(async (req, res) => {
   if (req.url.startsWith('/api/')) {
     if (!req.url.startsWith('/api/1/envelope/')) upstreamReads++;
     res.setHeader('Content-Type', 'application/json');
-    if (req.url === '/api/auth/login') res.setHeader('Set-Cookie', 'asc_session=fixture; Path=/; HttpOnly');
     const payload =
-      req.url === '/api/auth/state'
-        ? { csrfToken: 'fixture-csrf' }
-        : req.url === '/api/integrations/discord/players/me'
-          ? { linked: true, pawnId: 'player', characterName: 'Tester' }
-          : req.url.endsWith('/bases')
-            ? { rows: Array.from({ length: 8 }, (_, id) => ({ id: String(id) })) }
-            : { rows: [], totalCount: 0, map: { width: 1000, height: 1000 } };
+      req.url === '/api/integrations/discord/players/me'
+        ? { linked: true, pawnId: 'player', characterName: 'Tester' }
+        : req.url.endsWith('/bases')
+          ? { rows: Array.from({ length: 8 }, (_, id) => ({ id: String(id) })) }
+          : { rows: [], totalCount: 0, map: { width: 1000, height: 1000 } };
     res.end(JSON.stringify(payload));
     return;
   }
@@ -70,7 +67,7 @@ const child = spawn(
       POPULATION_HISTORY_ENABLED: 'false',
       NODE_ENV: mode === 'dev' ? 'development' : 'production',
       CONSOLE_URL: `http://127.0.0.1:${redisPort}`,
-      CONSOLE_PASSWORD: 'fixture-password',
+      CONSOLE_API_KEY: 'fixture-api-key',
       ADAPTER_TOKEN: 'fixture-token',
       DISCORD_CLIENT_ID: 'fixture-client',
       DISCORD_CLIENT_SECRET: 'fixture-secret',

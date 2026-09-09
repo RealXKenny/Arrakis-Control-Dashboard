@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "test:production": "node scripts/smoke-production.mjs",
     "test:browser": "playwright test",
+    "db:migrate": "node scripts/migrate-database.mjs",
     "format": "prettier --write src tests",
     "format:check": "prettier --check src tests",
     "prebuild": "node scripts/generate-item-images.mjs",
@@ -24,6 +25,7 @@
     "@sentry/nextjs": "^10.73.0",
     "dotenv": "^17.4.2",
     "next": "^16.3.3",
+    "pg": "^8.23.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "redis": "^6.2.1",
@@ -32,6 +34,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "26.4.1",
+    "@types/pg": "^8.23.1",
     "@types/react": "19.2.18",
     "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^9.39.5",

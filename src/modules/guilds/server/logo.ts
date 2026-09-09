@@ -1,18 +1,14 @@
 import '../../../lib/assert-server';
 import { AppError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
-import { getRedisClient } from '../../../lib/redis';
+import { getServerEnv } from '../../../config/env';
+import { getStateStore } from '../../../infrastructure/storage';
 import { getDuneClient } from '../../../infrastructure/dune';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import { getGuildSession, queryValue } from './common';
 
-const MAX_LOGO_BYTES = 512 * 1024;
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-
-function logoKey(guildId: string) {
-  return `arrakis:guild-logo:${guildId}`;
-}
 
 function guildIdFromRequest(req) {
   return queryValue(req.query?.guildId) || new URL(req.url, 'http://localhost').pathname.split('/')[3];
@@ -66,9 +62,9 @@ export async function GET(req, res) {
   const guildId = guildIdFromRequest(req);
   if (!guildId || !/^[a-zA-Z0-9_-]{1,128}$/.test(guildId))
     throw new AppError('Invalid guild ID', 400, 'INVALID_GUILD_ID', true);
-  const redis = getRedisClient();
-  if (!redis) throw new AppError('Guild logo storage is unavailable.', 503, 'STORAGE_UNAVAILABLE', true);
-  const logo = await redis.get<string>(logoKey(guildId));
+  const store = getStateStore();
+  if (!store) throw new AppError('Guild logo storage is unavailable.', 503, 'STORAGE_UNAVAILABLE', true);
+  const logo = await store.getGuildLogo(guildId);
   return NextResponse.json({ ok: true, data: { logo: logo ?? null } }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
@@ -85,13 +81,13 @@ export async function POST(req, res) {
     const bytes = Buffer.from(encoded, 'base64');
     if (
       bytes.length === 0 ||
-      bytes.length > MAX_LOGO_BYTES ||
+      bytes.length > getServerEnv().GUILD_LOGO_MAX_BYTES ||
       !bytes.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
     )
       throw new AppError('PNG logos must be no larger than 512 KiB.', 400, 'INVALID_GUILD_LOGO', true);
-    const redis = getRedisClient();
-    if (!redis) throw new AppError('Guild logo storage is unavailable.', 503, 'STORAGE_UNAVAILABLE', true);
-    await redis.set(logoKey(guildId), value);
+    const store = getStateStore();
+    if (!store) throw new AppError('Guild logo storage is unavailable.', 503, 'STORAGE_UNAVAILABLE', true);
+    await store.setGuildLogo(guildId, value);
     return NextResponse.json({ ok: true, data: { logo: value } }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     if (error instanceof AppError) throw error;
