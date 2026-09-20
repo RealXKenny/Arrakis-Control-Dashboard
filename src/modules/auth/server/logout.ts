@@ -1,12 +1,12 @@
 import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
-import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
+import { NextResponse, getRequestOrigin, isSameOriginRequest } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { deleteSession } from '../../../lib/session-store';
 
 export async function POST(req, res) {
   const requestOrigin = getRequestOrigin(req);
-  if (req.headers['sec-fetch-site'] === 'cross-site' || (req.headers.origin && req.headers.origin !== requestOrigin)) {
+  if (!isSameOriginRequest(req)) {
     return NextResponse.json({ ok: false, error: 'Invalid logout request', code: 'INVALID_ORIGIN' }, { status: 403 });
   }
   const cookieStore = cookies(req, res);
@@ -21,6 +21,7 @@ export async function POST(req, res) {
     expires: new Date(0),
     maxAge: 0,
     path: '/',
+    priority: 'high',
   });
 
   const env = getServerEnv();

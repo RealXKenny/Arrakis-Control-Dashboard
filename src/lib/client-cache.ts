@@ -1,4 +1,3 @@
-/** Browser-only transport cache; private snapshots require a server-validated session scope. */
 const PREFIX = 'arrakis:read:v1:';
 export const CLIENT_STALE_MS = 30_000;
 type Identity = { cacheScope: string; expiresAt: number; checkedAt: number };
@@ -14,9 +13,7 @@ export function clearClientReadCache(notify = false) {
   memory.clear();
   try {
     for (const key of Object.keys(sessionStorage)) if (key.startsWith(PREFIX)) sessionStorage.removeItem(key);
-  } catch {
-    /* Storage is optional. */
-  }
+  } catch {}
   if (notify && typeof window !== 'undefined') window.dispatchEvent(new Event('api-cache-invalidated'));
 }
 async function verifiedIdentity(): Promise<Identity | Response> {
@@ -45,9 +42,7 @@ async function verifiedIdentity(): Promise<Identity | Response> {
     try {
       if (sessionStorage.getItem(`${PREFIX}scope`) !== data.cacheScope) clearClientReadCache();
       sessionStorage.setItem(`${PREFIX}scope`, data.cacheScope);
-    } catch {
-      /* Storage is optional. */
-    }
+    } catch {}
     identity = { cacheScope: data.cacheScope, expiresAt: data.expiresAt, checkedAt: Date.now() };
     return identity;
   })().finally(() => {
@@ -68,9 +63,7 @@ function read(key: string): Snapshot | null {
       return value;
     memory.delete(key);
     sessionStorage.removeItem(key);
-  } catch {
-    /* Missing or malformed browser storage is a cache miss. */
-  }
+  } catch {}
   return null;
 }
 function save(key: string, value: Snapshot) {
@@ -82,9 +75,7 @@ function save(key: string, value: Snapshot) {
     const keys = Object.keys(sessionStorage).filter((entry) => entry.startsWith(PREFIX) && entry !== `${PREFIX}scope`);
     if (keys.length >= 20 && !keys.includes(key)) sessionStorage.removeItem(keys[0]);
     sessionStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* Quota failure leaves the in-memory cache available. */
-  }
+  } catch {}
 }
 const cachedResponse = (value: Snapshot) =>
   new Response(value.body, {
@@ -125,9 +116,7 @@ export async function cachedFetch(
         const timestamp = Number(response.headers.get('X-Data-Captured-At'));
         save(key, { body, capturedAt: timestamp > 0 && timestamp <= Date.now() ? timestamp : Date.now() });
       }
-    } catch {
-      /* Invalid JSON never poisons the cache. */
-    }
+    } catch {}
   }
   return response;
 }

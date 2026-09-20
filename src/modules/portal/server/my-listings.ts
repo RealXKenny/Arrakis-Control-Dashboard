@@ -36,8 +36,7 @@ export async function ownedListings(
   const response = await getDuneClient().request('GET', `/api/exchange/listings?${params}`);
   const listings = rows(response);
   if (!listings) throw new AppError('Listing data is unavailable.', 502, 'INVALID_LISTINGS', true);
-  // Check provider capability before asking the adapter for a character identity.
-  // Display names alone cannot establish ownership.
+  // Dev note: display names are charming, not legally binding proof of ownership.
   filterOwnedListings(listings, new Set());
   if (!listings.length) return [];
   const ids = verifiedIds ?? (await playerOwnerIds(session));
@@ -63,8 +62,7 @@ export function filterOwnedListings(listings: DataRow[], ids: Set<string>): Data
 }
 
 export async function ownMarketItems(session: DashboardSession, query: URLSearchParams) {
-  // No Console owner-ID filter exists: inspect a bounded complete item set and fail
-  // explicitly if it is too large, rather than silently showing partial ownership.
+  // Dev note: scan the bounded whole market; half a truth is still a bug in a fancy robe.
   const search = new URLSearchParams(query);
   search.set('page', '0');
   search.set('pageSize', '100');

@@ -31,8 +31,8 @@ Fill in `.env` before using authentication or server-backed features. Never comm
 Required production variables include:
 
 - `CONSOLE_URL`, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN` for scoped Dune Console access.
-- `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`, and `DISCORD_REDIRECT_URI` for Discord OAuth.
-- `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization.
+- `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `DISCORD_GUILD_ID` for Discord OAuth.
+- `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/auth/callback`.
 - `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits and persistent sessions.
 
 See [.env.example](.env.example) for the complete configuration template.
@@ -51,6 +51,10 @@ npm run test:coverage  Run tests with V8 coverage
 ```
 
 CI runs typecheck, lint, tests, and the production build for pushes to `main` and pull requests.
+
+## Releases
+
+To publish a release, update the `version` in `package.json` and add a matching `## [X.Y.Z] - YYYY-MM-DD` section to [CHANGELOG.md](CHANGELOG.md) in the same change. After the `main` branch CI succeeds, the release workflow creates the version tag and GitHub Release using that section. Stable semantic versions must increase; unchanged versions do not create releases.
 
 ## Architecture
 

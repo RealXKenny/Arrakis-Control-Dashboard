@@ -22,6 +22,9 @@ it('parses JSON exports and normalizes empty bodies', async () => {
   ).toEqual({ rows: [] });
   expect(await parseProviderResponse(new Response(null, { status: 204 }))).toBeNull();
   await expect(parseProviderResponse(new Response('<html>secret</html>'))).rejects.toThrow('Invalid provider JSON');
+  await expect(
+    parseProviderResponse(new Response('{}', { headers: { 'Content-Length': String(17 * 1024 * 1024) } })),
+  ).rejects.toThrow('Response body exceeded limit');
 });
 it('returns a successful console response without exposing query strings or request secrets', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ rows: [{ id: 1 }] })));

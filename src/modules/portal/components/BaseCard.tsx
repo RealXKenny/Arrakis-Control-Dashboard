@@ -29,6 +29,7 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
 
   const runtimeSeconds = getGeneratorSeconds(base);
 
+  // Dev note: generators measure uptime because “still humming” lacked precision.
   const powerPercent = clampPercent((runtimeSeconds / getMaxGeneratorUptimeSeconds(base)) * 100);
 
   const daysRemaining = runtimeSeconds / (24 * 60 * 60);
@@ -96,7 +97,6 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
         outlineOffset: selected ? 2 : undefined,
       }}
     >
-      {/* Base header */}
       <div
         style={{
           display: 'flex',
@@ -122,7 +122,6 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
               minWidth: 0,
             }}
           >
-            {/* GLOWING BASE DOT */}
             <span
               className="portal-glow-dot"
               style={
@@ -220,7 +219,6 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
         </span>
       </div>
 
-      {/* Owner */}
       <div
         style={{
           marginBottom: 20,
@@ -257,7 +255,6 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
         </div>
       </div>
 
-      {/* Telemetry */}
       <div
         className="base-metrics"
         style={{
@@ -294,8 +291,8 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
         />
       </div>
 
-      {/* API warning */}
       {(telemetry?.waterError && !waterData.available) || (telemetry?.inventoryError && !storageData.available) ? (
+        // Dev note: missing telemetry is displayed honestly; imagination is not an API.
         <div
           style={{
             marginTop: 15,
@@ -310,7 +307,6 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
         </div>
       ) : null}
 
-      {/* Base ID */}
       {baseId && (
         <div
           style={{

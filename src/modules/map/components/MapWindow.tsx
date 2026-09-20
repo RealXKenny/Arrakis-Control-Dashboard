@@ -14,8 +14,28 @@ import useMapDrag from '../hooks/useMapDrag';
 import styles from '../map.module.css';
 
 const LEGEND_STORAGE_KEY_PREFIX = 'map-legend';
+const DEFAULT_DISABLED_MARKERS = {
+  storage: true,
+  ore: true,
+  scrap: true,
+  flora: true,
+  fortress: true,
+  hazard: true,
+  enemy: true,
+};
+const DEFAULT_EXPANDED_MARKERS = {
+  vehicle: false,
+  poi: false,
+  house_representative: false,
+  trainer: false,
+};
 
 const LEGEND_CATEGORIES = [
+  {
+    type: 'sector-grid',
+    label: 'Sector Grid',
+    map: 'DeepDesert',
+  },
   {
     type: 'player',
     label: 'Player',
@@ -148,26 +168,20 @@ function getLegendIconClass(category, subtype) {
 }
 
 export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string }) {
-  const { mapConfig, markers, error, loading, loadMap } = useMapData(mapName);
+  const { mapConfig, markers, coriolisLayout, coriolisNextCycleAt, gridOverlay, error, loading, loadMap } =
+    useMapData(mapName);
 
-  const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${mapName}${mapName === 'HaggaBasin' ? '-v2' : ''}`;
+  const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${mapName}-v2`;
 
   const [selected, setSelected] = React.useState(null);
 
   const target = null;
 
-  const [legendDisabled, setLegendDisabled] = React.useState<Record<string, boolean>>(() =>
-    mapName === 'HaggaBasin'
-      ? { storage: true, ore: true, scrap: true, flora: true, fortress: true, hazard: true, enemy: true }
-      : {},
-  );
+  const [legendDisabled, setLegendDisabled] = React.useState<Record<string, boolean>>(() => ({
+    ...DEFAULT_DISABLED_MARKERS,
+  }));
 
-  const [legendExpanded, setLegendExpanded] = React.useState({
-    vehicle: false,
-    poi: false,
-    house_representative: false,
-    trainer: false,
-  });
+  const [legendExpanded, setLegendExpanded] = React.useState({ ...DEFAULT_EXPANDED_MARKERS });
 
   const [legendOpen, setLegendOpen] = React.useState(true);
 
@@ -186,34 +200,25 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
   });
 
   React.useEffect(() => {
+    let disabled = { ...DEFAULT_DISABLED_MARKERS };
+    let expanded = { ...DEFAULT_EXPANDED_MARKERS };
+    let open = true;
     try {
       const saved = window.localStorage.getItem(legendStorageKey);
-
-      if (!saved) {
-        return;
-      }
-
-      const parsed = JSON.parse(saved);
-
-      if (parsed && typeof parsed === 'object') {
-        if (parsed.disabled && typeof parsed.disabled === 'object') {
-          setLegendDisabled(parsed.disabled);
-        }
-
-        if (parsed.expanded && typeof parsed.expanded === 'object') {
-          setLegendExpanded((current) => ({
-            ...current,
-            ...parsed.expanded,
-          }));
-        }
-
-        if (typeof parsed.open === 'boolean') {
-          setLegendOpen(parsed.open);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          if (parsed.disabled && typeof parsed.disabled === 'object') disabled = parsed.disabled;
+          if (parsed.expanded && typeof parsed.expanded === 'object') expanded = { ...expanded, ...parsed.expanded };
+          if (typeof parsed.open === 'boolean') open = parsed.open;
         }
       }
     } catch {
-      // Ignore invalid cached legend state.
+      // Dev note: stale legend settings are returned to the sands.
     }
+    setLegendDisabled(disabled);
+    setLegendExpanded(expanded);
+    setLegendOpen(open);
   }, [legendStorageKey]);
 
   const saveLegendState = React.useCallback(
@@ -228,7 +233,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
           }),
         );
       } catch {
-        // Ignore localStorage failures.
+        // Dev note: the map works even when localStorage takes a personal day.
       }
     },
     [legendStorageKey],
@@ -354,10 +359,11 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
   }, [handleKeyDown]);
 
   return (
-    <div className={styles.workspace}>
-      <section className={styles.mapPanel}>
+    <div className={styles.workspace} data-map-workspace>
+      <section className={styles.mapPanel} data-map-panel>
         <MapToolbar
           zoomPercent={zoomPercent}
+          coriolisNextCycleAt={coriolisNextCycleAt}
           onZoomOut={() => setZoomAround(zoom * 0.84)}
           onZoomIn={() => setZoomAround(zoom * 1.18)}
           onFit={fitMap}
@@ -366,7 +372,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
 
         <div
           ref={frameRef}
-          className="hag-map-frame"
+          className={`${styles.mapViewport} hag-map-frame`}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={stopDragging}
@@ -378,7 +384,6 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
             minWidth: 0,
             overflow: 'auto',
             cursor: drag ? 'grabbing' : 'grab',
-            background: 'radial-gradient(ellipse at center, #382619, #1b130e)',
             scrollbarWidth: 'thin',
             scrollbarColor: '#594127 #100b07',
             WebkitOverflowScrolling: 'touch',
@@ -391,6 +396,10 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
               markers={visibleMarkers}
               zoom={zoom}
               canvasRef={canvasRef}
+              frameRef={frameRef}
+              coriolisLayout={coriolisLayout}
+              gridOverlay={gridOverlay}
+              showSectorGrid={!legendDisabled['sector-grid']}
               target={target}
               onSelectMarker={setSelected}
             />
@@ -464,7 +473,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
 
         {legendOpen && (
           <div className={styles.mapLegendBody}>
-            {LEGEND_CATEGORIES.map((category) => {
+            {LEGEND_CATEGORIES.filter((category) => !category.map || category.map === mapName).map((category) => {
               const categoryDisabled = !!legendDisabled[category.type];
 
               const hasSubtypes = Array.isArray(category.subtypes) && category.subtypes.length > 0;

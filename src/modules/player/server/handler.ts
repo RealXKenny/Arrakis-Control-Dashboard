@@ -1,7 +1,6 @@
 import '../../../lib/assert-server';
 import { record } from '../../../lib/value';
 import { getLinkedPlayer } from './linked-player';
-import { getServerEnv } from '../../../config/env';
 import { getDuneClient } from '../../../infrastructure/dune';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
@@ -42,6 +41,7 @@ async function loadBaseTelemetry(base, duneClient) {
     duneClient.request('GET', inventoryEndpoint),
   ]);
 
+  // Dev note: allSettled keeps one leaky water tank from evicting the whole base.
   let water = null;
   let inventory = null;
 
@@ -137,9 +137,6 @@ async function loadPlayerGuild(playerId, playerName, duneClient) {
   return null;
 }
 
-/**
- * GET /api/player
- */
 export async function GET(request, res) {
   try {
     const cookieStore = cookies(request, res);
@@ -176,7 +173,7 @@ export async function GET(request, res) {
       channelId: 'dashboard',
       userId: session.user.id,
       username: session.user.username,
-      roleIds: [...(session.roleIds || []), getServerEnv().VERIFIED_MEMBER_ROLE_ID].filter(Boolean),
+      roleIds: session.roleIds || [],
       interactionId: `dashboard-${Date.now()}`,
       commandName: 'portal',
     };
@@ -215,9 +212,7 @@ export async function GET(request, res) {
       logger.warn('Unable to cache linked player identity for dashboard features', { error });
     }
 
-    /**
-     * Core player endpoints.
-     */
+    // Dev note: telemetry travels as one convoy instead of eleven lonely desert trips.
     const coreEndpoints = [
       'currency',
       'solaris-coin',
@@ -239,10 +234,8 @@ export async function GET(request, res) {
 
           const resData = await duneClient.request('GET', playerEndpoint);
 
-          /**
-           * Bases
-           */
           if (name === 'bases') {
+            // Dev note: provider payloads come in layers, like onions with API keys.
             const bases = Array.isArray(resData)
               ? resData
               : Array.isArray(record(resData).rows)
@@ -285,6 +278,7 @@ export async function GET(request, res) {
 
           return [name, resData];
         } catch (error) {
+          // Dev note: optional telemetry may miss the bus; the portal still opens on time.
           logger.error(`Failed to load player telemetry`, { endpoint: name, error });
 
           return [name, null];
@@ -294,9 +288,6 @@ export async function GET(request, res) {
 
     const guild = await loadPlayerGuild(playerId, data.characterName, duneClient);
 
-    /**
-     * Final response.
-     */
     const responseData = {
       ...data,
       avatarUrl: discordAvatar(session.user),

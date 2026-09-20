@@ -29,9 +29,7 @@ export function getGeneratorType(base) {
 
 export function getMaxGeneratorUptimeSeconds(base) {
   const burnSeconds = FUEL_BURN_SECONDS[getGeneratorType(base)] ?? FUEL_BURN_SECONDS.fuel;
-  // generatorRuntimeSeconds is the lowest queued reserve for one generator,
-  // not the sum of every generator at the base. Keep the progress ceiling on
-  // the same per-generator basis as the Console's reserve calculation.
+  // Dev note: compare one generator with one generator; even watts dislike unfair math.
   return GENERATOR_FUEL_CAP * burnSeconds * generatorUptimePolicy();
 }
 

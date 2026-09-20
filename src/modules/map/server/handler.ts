@@ -1,6 +1,5 @@
 import '../../../lib/assert-server';
 import { getLinkedPlayer } from '../../player/server/linked-player';
-import { getServerEnv } from '../../../config/env';
 import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 
@@ -15,12 +14,16 @@ import { extractOnlinePlayers, getOnlinePlayerId, extractPlayerId, getPlayerName
 import { extractVehicleRows, isVehicleAccessible, normalizeVehicle } from './vehicles';
 
 import { extractRows, extractMapConfig, filterMapMarkers, addOnlineStatus } from './markers';
+import { createSectorGridOverlay, withMapSector } from '../utils/sectorGrid';
+import { normalizeMapResolution } from '../utils/mapResolution';
+import { normalizeCoriolisCycleAt } from '../utils/coriolis';
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store',
 };
 
 function unauthorizedResponse(error = 'Unauthorized', status = 401) {
+  // Dev note: this map has boundaries; cartographers call that character development.
   return NextResponse.json(
     {
       ok: false,
@@ -50,6 +53,20 @@ function emptyMapResponse(error, status) {
   );
 }
 
+function extractCoriolisLayout(value: unknown) {
+  if (!value || typeof value !== 'object' || !('coriolisLayout' in value)) return null;
+  const layout = Number(value.coriolisLayout);
+  return Number.isInteger(layout) && layout >= 0 && layout <= 11 ? layout : null;
+}
+
+function extractCoriolisCycleAt(value: unknown) {
+  if (!value || typeof value !== 'object') return null;
+  const source = value as Record<string, unknown>;
+  const coriolis =
+    source.coriolis && typeof source.coriolis === 'object' ? (source.coriolis as Record<string, unknown>) : {};
+  return normalizeCoriolisCycleAt(source.coriolisNextCycleAt ?? source.nextCoriolisCycleAt ?? coriolis.nextCycleAt);
+}
+
 export async function GET(request, res) {
   const started = Date.now();
 
@@ -72,7 +89,7 @@ export async function GET(request, res) {
       channelId: 'dashboard',
       userId: session.user.id,
       username: session.user.username,
-      roleIds: [...(session.roleIds || []), getServerEnv().VERIFIED_MEMBER_ROLE_ID].filter(Boolean),
+      roleIds: session.roleIds || [],
       interactionId: `map - ${Date.now()} `,
       commandName: 'portal',
     };
@@ -93,8 +110,9 @@ export async function GET(request, res) {
     const url = new URL(request.url, getRequestOrigin(request));
     const mapName = url.searchParams.get('map')?.trim();
 
-    const markerEndpoint = mapName ? `/api/map/markers?map=${encodeURIComponent(mapName)} ` : '/api/map/markers';
+    const markerEndpoint = mapName ? `/api/map/markers?map=${encodeURIComponent(mapName)}` : '/api/map/markers';
 
+    // Dev note: four requests share a ride because desert fuel is expensive.
     const [basesData, mapData, vehiclesData, onlinePlayersData] = await Promise.all([
       duneClient.request('GET', `/api/players/${encodeURIComponent(playerId)}/bases`),
 
@@ -105,13 +123,11 @@ export async function GET(request, res) {
       duneClient.request('GET', '/api/players/online'),
     ]);
 
-    // BASES
     const baseRows = extractBaseRows(basesData);
     const bases = baseRows.map(normalizeBase);
 
     const playerBaseIds = new Set(bases.map(getBaseId).filter(Boolean));
 
-    // MAP MARKERS
     const allMarkers = extractRows(mapData);
 
     const onlinePlayers = extractOnlinePlayers(onlinePlayersData);
@@ -125,20 +141,22 @@ export async function GET(request, res) {
       playerBaseIds,
     });
 
-    // VEHICLES
     const playerName = getPlayerName(playerData, session);
 
     const vehicleRows = extractVehicleRows(vehiclesData);
 
     const accessibleVehicles = vehicleRows.filter((vehicle) => isVehicleAccessible(vehicle, playerName, playerId));
 
+    // Dev note: vehicles become markers after passing their cartography exam.
     const playerVehicleMarkers = accessibleVehicles.map(normalizeVehicle);
 
-    // FINAL MARKERS
-    const finalMarkers = [...addOnlineStatus(markers, onlinePlayerIds), ...playerVehicleMarkers];
-
-    // MAP CONFIG
-    const map = extractMapConfig(mapData);
+    const map = normalizeMapResolution(mapName, extractMapConfig(mapData));
+    const coriolisLayout = extractCoriolisLayout(mapData);
+    const coriolisNextCycleAt = extractCoriolisCycleAt(mapData);
+    const finalMarkers = [...addOnlineStatus(markers, onlinePlayerIds), ...playerVehicleMarkers].map((marker) =>
+      withMapSector(marker, mapName),
+    );
+    const gridOverlay = createSectorGridOverlay(mapName, map);
 
     if (!map) {
       logger.warn('No map configuration returned', {
@@ -154,6 +172,9 @@ export async function GET(request, res) {
         bases,
         markers: finalMarkers,
         map,
+        coriolisLayout,
+        coriolisNextCycleAt,
+        gridOverlay,
         count: finalMarkers.length,
         timestamp: new Date().toISOString(),
         durationMs,

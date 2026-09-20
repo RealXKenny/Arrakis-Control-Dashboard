@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { COLORS } from '../config/colors';
 import { useMarketData } from '../hooks/useMarketData';
-import { formatMarketNumber, getBuybackPercent } from '../utils/market';
+import { formatMarketNumber, getBuybackPercent, getSuggestedSellPrice } from '../utils/market';
 import layout from '../market.module.css';
 import dossier from '../dossier.module.css';
 import PriceLadder from './PriceLadder';
@@ -12,6 +12,7 @@ const MARKET_PAGE_SIZE = 24;
 
 export default function MarketBoard() {
   const [query, setQuery] = useState('');
+  // Dev note: the market board has many listings but refuses to list its hobbies.
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState('listed');
   const [owner, setOwner] = useState('all');
@@ -21,7 +22,9 @@ export default function MarketBoard() {
   const total = Number(data?.items?.totalCount ?? items.length);
   const pages = Math.max(1, Math.ceil(total / MARKET_PAGE_SIZE));
   const buybackPercent = getBuybackPercent(data?.marketConfig);
+  const suggestedSellPrice = (item) => getSuggestedSellPrice(item?.lowest_price ?? item?.lowestPrice, buybackPercent);
   const supported = data?.items?.capabilities?.exchange !== false;
+  // Dev note: selection uses an ID because pointing at the screen failed code review.
   const selected = items.find(
     (item, index) =>
       `${item.template_id ?? item.templateId}-${item.quality_level ?? item.quality ?? index}` === selectedId,
@@ -123,9 +126,11 @@ export default function MarketBoard() {
                   <th>Listings</th>
                   <th>Units</th>
                   <th>Lowest ask</th>
+                  <th>Suggested sell</th>
                 </tr>
               </thead>
               <tbody>
+                {/* Dev note: every row has a price, but none will split the bill. */}
                 {items.map((item, index) => (
                   <tr key={`${item.template_id ?? item.templateId}-${item.quality_level ?? item.quality ?? index}`}>
                     <td>
@@ -145,11 +150,12 @@ export default function MarketBoard() {
                     <td>{formatMarketNumber(item.listing_count ?? item.listings)}</td>
                     <td>{formatMarketNumber(item.total_stock ?? item.stock)}</td>
                     <td>{formatMarketNumber(item.lowest_price ?? item.lowestPrice)}</td>
+                    <td>{formatMarketNumber(suggestedSellPrice(item))}</td>
                   </tr>
                 ))}
                 {!items.length && (
                   <tr>
-                    <td colSpan={5} className={layout.empty}>
+                    <td colSpan={6} className={layout.empty}>
                       {loading
                         ? 'Loading market…'
                         : error
@@ -183,6 +189,10 @@ export default function MarketBoard() {
                     <dd>{formatMarketNumber(selected.lowest_price ?? selected.lowestPrice)}</dd>
                   </div>
                   <div>
+                    <dt>Suggested sell</dt>
+                    <dd>{formatMarketNumber(suggestedSellPrice(selected))}</dd>
+                  </div>
+                  <div>
                     <dt>Available units</dt>
                     <dd>{formatMarketNumber(selected.total_stock ?? selected.stock)}</dd>
                   </div>
@@ -209,7 +219,10 @@ export default function MarketBoard() {
           <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
             <h2>CHOAM buyback</h2>
             <p className={dossier.balance}>{buybackPercent == null ? '—' : `${buybackPercent}%`}</p>
-            <p>Reported buyback rate. Item-specific caps and availability can vary.</p>
+            <p>
+              Suggested sell prices use this percentage of the current lowest ask and round down to whole Solari.
+              Item-specific caps and availability can vary.
+            </p>
           </section>
           <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
             <h2>Market access</h2>

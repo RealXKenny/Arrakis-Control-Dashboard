@@ -1,65 +1,3 @@
-/* MAP MARKERS */
-
-:global(.live-map-marker) {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  outline: none;
-  border-radius: 0;
-  background-color: transparent;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  cursor: pointer;
-  z-index: 5;
-  transition:
-    filter 0.15s,
-    width 0.15s,
-    height 0.15s;
-  appearance: none;
-}
-
-/* MAIN TYPES */
-
-/* SPICE */
-
-/* FLOUR SAND */
-
-/* FLORA */
-
-/* POI */
-
-/* TRAINERS */
-
-/* HOUSE REPRESENTATIVES */
-
-/* VEHICLES */
-
-/* ORES */
-
-/* ORE PICKUPS */
-
-/* SCRAP / WRECKS */
-
-/* FORTRESSES */
-
-/* ENEMY */
-
-/* HAZARD */
-
-/* GENERIC SUBTYPE ICON SIZING */
-
-/* VEHICLE / POI / TRAINER / HOUSE ICON SIZE */
-
-/* MARKER LABEL */
-
-/* TERMINAL */
-
-/* MAP MARKERS */
-
 :global(.live-map-marker) {
   position: absolute;
   width: 30px;
@@ -97,8 +35,6 @@
   outline-offset: 2px;
 }
 
-/* MAIN TYPES */
-
 :global(.live-map-marker.marker-player) {
   background-image: url('/maps/Characters.webp');
 }
@@ -115,8 +51,6 @@
 :global(.live-map-marker.marker-player[data-online='false']) {
   filter: none;
 }
-
-/* SPICE */
 
 :global(.live-map-marker.marker-spice),
 :global(.live-map-marker.marker-spice_active) {
@@ -152,6 +86,34 @@
   opacity: 1;
 }
 
+:global(.live-map-marker.hag-map-marker > .spice-status-badge) {
+  display: inline-flex !important;
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 17px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 1px solid #202a32;
+  border-radius: 9px;
+  background: #50616f;
+  color: #fff;
+  font:
+    700 10px/1 Arial,
+    sans-serif;
+  box-shadow: 0 1px 3px #0009;
+  pointer-events: none;
+  z-index: 2;
+}
+
+:global(.live-map-marker.marker-spice_active > .spice-status-badge) {
+  background: #bd5b00;
+  border-color: #763900;
+}
+
 :global(.live-map-marker.marker-spice.spice-size-medium:hover),
 :global(.live-map-marker.marker-spice_active.spice-size-medium:hover) {
   width: 44px;
@@ -164,8 +126,6 @@
   height: 32px;
 }
 
-/* FLOUR SAND */
-
 :global(.live-map-marker.marker-flour_sand) {
   background-image: url('/maps/floursand.webp');
   width: 24px;
@@ -176,8 +136,6 @@
   width: 32px;
   height: 32px;
 }
-
-/* FLORA */
 
 :global(.live-map-marker.marker-flora) {
   background-image: url('/maps/plantfiber.webp');
@@ -193,8 +151,6 @@
 :global(.live-map-marker.subtype-primrosefield) {
   background-image: url('/maps/PrimroseField.png');
 }
-
-/* POI */
 
 :global(.live-map-marker.subtype-cave) {
   background-image: url('/maps/cave.webp');
@@ -220,8 +176,6 @@
   background-image: url('/maps/taxiservice.webp');
 }
 
-/* TRAINERS */
-
 :global(.live-map-marker.subtype-trainerbenegesserit) {
   background-image: url('/maps/trainerbenegesserit.webp');
 }
@@ -241,8 +195,6 @@
 :global(.live-map-marker.subtype-trainertrooper) {
   background-image: url('/maps/trainertrooper.webp');
 }
-
-/* HOUSE REPRESENTATIVES */
 
 :global(.live-map-marker.subtype-houserepresentativeargosaz) {
   background-image: url('/maps/houserepresentativeargosaz.webp');
@@ -312,8 +264,6 @@
   background-image: url('/maps/houserepresentativevernius.webp');
 }
 
-/* VEHICLES */
-
 :global(.live-map-marker.marker-vehicle) {
   z-index: 3;
 }
@@ -348,8 +298,6 @@
 :global(.live-map-marker.subtype-containervehicle) {
   background-image: url('/maps/cargocontainervehicle.webp');
 }
-
-/* ORES */
 
 :global(.live-map-marker.marker-ore) {
   color: #9ca3af;
@@ -396,8 +344,6 @@
   background-image: url('/maps/titaniumore.webp');
 }
 
-/* ORE PICKUPS */
-
 :global(.live-map-marker.subtype-azuritepickup) {
   background-image: url('/maps/azuriteore.webp');
 }
@@ -438,14 +384,10 @@
   background-image: url('/maps/titaniumore.webp');
 }
 
-/* SCRAP / WRECKS */
-
 :global(.live-map-marker.marker-scrap) {
   color: #b45309;
   background-color: #b45309;
 }
-
-/* FORTRESSES */
 
 :global(.live-map-marker.marker-fortress) {
   color: #a78bfa;
@@ -460,8 +402,6 @@
   background-image: url('/maps/harkonnenfortress.webp');
 }
 
-/* ENEMY */
-
 :global(.live-map-marker.marker-enemy) {
   color: #f97316;
   background-color: #f97316;
@@ -474,8 +414,6 @@
 :global(.live-map-marker.subtype-enemyoutpost) {
   background-image: url('/maps/enemyoutpost.webp');
 }
-
-/* HAZARD */
 
 :global(.live-map-marker.marker-hazard) {
   border: none;
@@ -490,8 +428,6 @@
   height: 32px;
 }
 
-/* GENERIC SUBTYPE ICON SIZING */
-
 :global(.live-map-marker[class*='subtype-']:not(.marker-spice):not(.marker-spice_active):not(.marker-hazard)) {
   border: none;
   border-radius: 0;
@@ -505,8 +441,6 @@
   height: 26px;
   z-index: 14;
 }
-
-/* VEHICLE / POI / TRAINER / HOUSE ICON SIZE */
 
 :global(.live-map-marker.marker-vehicle[class*='subtype-']) {
   width: 32px;
@@ -532,8 +466,6 @@
   height: 36px;
 }
 
-/* MARKER LABELS ARE DISABLED */
-
 :global(.hag-map-marker > span) {
   display: none !important;
 }
@@ -545,8 +477,6 @@
 :global(.live-map-marker span) {
   display: none !important;
 }
-
-/* TERMINAL */
 
 .toolbar {
   height: 36px;
@@ -573,8 +503,6 @@
   overflow: hidden;
   white-space: nowrap;
 }
-
-/* MAP LEGEND */
 
 .mapLegend {
   position: fixed;
@@ -813,48 +741,175 @@
   color: #ffe9c5;
 }
 .workspace {
+  --map-panel-height: clamp(620px, 78vh, 920px);
+  --map-pane-width: calc(var(--map-panel-height) - 94px);
+  width: min(calc(100vw - 32px), calc(var(--map-pane-width) + 284px));
+  margin-left: 50%;
+  transform: translateX(-50%);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid #62452e;
-  border-radius: 20px;
-  background: linear-gradient(125deg, #2b1e14, #17100c);
+  grid-template-columns: minmax(0, var(--map-pane-width)) 248px;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #765134;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(141, 86, 43, 0.2), transparent 35%),
+    linear-gradient(135deg, #2a1b11 0%, #160f0a 72%);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.34),
+    inset 0 1px rgba(255, 226, 177, 0.04);
 }
 .mapPanel {
   display: flex;
   flex-direction: column;
   position: relative;
   min-width: 0;
-  height: clamp(480px, 70vh, 840px);
-  border: 1px solid #725034;
-  border-radius: 16px;
+  height: var(--map-panel-height);
+  border: 1px solid #805938;
+  border-radius: 14px;
   overflow: hidden;
   background: #160e09;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 220, 165, 0.025);
+}
+.mapViewport {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(88, 57, 34, 0.82), transparent 66%),
+    linear-gradient(145deg, #21160f, #100a06);
+  box-shadow:
+    inset 0 14px 28px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px rgba(216, 167, 95, 0.05);
 }
 .workspace .mapLegend {
   position: static;
   width: auto;
   height: auto;
-  max-height: 840px;
-  max-height: 70vh;
-  min-height: 480px;
-  border: 0;
-  border-radius: 16px;
-  background: transparent;
+  max-height: 920px;
+  max-height: 78vh;
+  min-height: 620px;
+  border: 1px solid rgba(128, 89, 56, 0.62);
+  border-radius: 14px;
+  background: rgba(20, 13, 8, 0.72);
   overflow: auto;
   font-family: 'Saira', sans-serif;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.2);
 }
 .workspace .toolbar {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 10px;
+  flex-wrap: nowrap;
   align-items: center;
   height: auto;
-  min-height: 58px;
-  padding: 12px;
-  background: #25190f;
+  min-height: 64px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, rgba(45, 30, 18, 0.98), rgba(31, 20, 12, 0.98));
+  border-bottom-color: rgba(128, 89, 56, 0.72);
   font-family: 'Saira', sans-serif;
+}
+.zoomControls,
+.mapActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zoomControls {
+  padding: 4px;
+  border: 1px solid rgba(119, 84, 54, 0.58);
+  border-radius: 10px;
+  background: rgba(13, 8, 5, 0.24);
+}
+.zoomReading {
+  min-width: 48px;
+  color: #f3c875;
+  font:
+    700 12px 'JetBrains Mono',
+    monospace;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.workspace .mapButton {
+  min-height: 38px;
+  padding: 8px 13px;
+  border-color: rgba(154, 103, 58, 0.78);
+  background: linear-gradient(180deg, #2d1d12, #1d120b);
+  box-shadow: inset 0 1px rgba(255, 226, 177, 0.04);
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+.workspace .mapButton:hover {
+  color: #ffe4b3;
+  border-color: #bf8450;
+  background: linear-gradient(180deg, #3b2718, #25170d);
+  transform: translateY(-1px);
+}
+.coriolisCountdown {
+  margin-left: auto;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid rgba(216, 167, 95, 0.4);
+  border-radius: 10px;
+  color: #d8a75f;
+  background: linear-gradient(180deg, rgba(39, 25, 14, 0.92), rgba(15, 9, 5, 0.72));
+  box-shadow: inset 0 1px rgba(255, 225, 178, 0.05);
+  white-space: nowrap;
+}
+.coriolisCountdown span {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.coriolisCountdown strong {
+  color: #f6ddb2;
+  font:
+    700 11px 'JetBrains Mono',
+    monospace;
+  font-variant-numeric: tabular-nums;
+}
+.mapStatusBar {
+  min-height: 30px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 5px 10px;
+  border-top: 1px solid rgba(216, 167, 95, 0.25);
+  color: #9f8a6c;
+  background: linear-gradient(180deg, #21160d, #171008);
+  font:
+    9px 'JetBrains Mono',
+    monospace;
+  letter-spacing: 0.02em;
+}
+.mapReadingState {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #bda987;
+}
+.mapReadingState::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8fb68d;
+  box-shadow: 0 0 8px rgba(143, 182, 141, 0.5);
+}
+.mapReadingState[data-loading='true']::before {
+  background: #d8a75f;
+}
+.mapReadingState[data-error='true']::before {
+  background: #c76b55;
+}
+.mapStatusMetric strong {
+  color: #d6bc91;
+  font-weight: 600;
 }
 .workspace button:focus-visible {
   outline: 2px solid #ebc18e;
@@ -862,24 +917,48 @@
 }
 @media (max-width: 750px) {
   .workspace {
+    width: calc(100vw - 16px);
     grid-template-columns: 1fr;
     padding: 8px;
+    gap: 10px;
+    border-radius: 16px;
   }
   .workspace .mapLegend {
     min-height: 0;
     max-height: 340px;
   }
   .mapPanel {
-    height: 65vh;
-    min-height: 420px;
+    height: auto;
+    min-height: 0;
+  }
+  .mapViewport {
+    flex: none !important;
+    width: 100%;
+    aspect-ratio: 1;
   }
   .mapTabs button {
     flex: 1;
   }
   .workspace .toolbar {
     gap: 6px;
+    flex-wrap: wrap;
+    padding: 8px;
   }
   .mapButton {
     padding: 8px 10px;
+  }
+  .coriolisCountdown {
+    order: 3;
+    width: 100%;
+    min-height: 34px;
+    justify-content: space-between;
+    border-radius: 7px;
+  }
+  .mapStatusBar {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+  .mapStatusMetric:last-of-type {
+    display: none;
   }
 }

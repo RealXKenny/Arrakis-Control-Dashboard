@@ -2,6 +2,7 @@ import './assert-server';
 import { createHash } from 'node:crypto';
 import { getServerEnv } from '../config/env';
 import { getRedisClient } from './redis';
+import { isIP } from 'node:net';
 
 type Bucket = { count: number; resetAt: number };
 const developmentBuckets = new Map<string, Bucket>();
@@ -16,7 +17,15 @@ export function getClientAddress(req: {
 }): string {
   const forwarded = req.headers['x-forwarded-for'];
   const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-  return value?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+  const candidates = [...(value?.split(',').slice(0, 10) ?? []), req.socket?.remoteAddress ?? ''];
+  for (const candidate of candidates) {
+    const address = candidate
+      .trim()
+      .replace(/^\[|\]$/g, '')
+      .replace(/^::ffff:/, '');
+    if (isIP(address)) return address;
+  }
+  return 'unknown';
 }
 
 function storageKey(key: string, rule: RateLimitRule): string {
@@ -24,6 +33,7 @@ function storageKey(key: string, rule: RateLimitRule): string {
 }
 
 function checkDevelopmentLimit(key: string, rule: RateLimitRule): RateLimitResult {
+  // Dev note: this limiter has boundaries; its therapist is very proud.
   const now = Date.now();
   const current = developmentBuckets.get(key);
   const bucket = !current || current.resetAt <= now ? { count: 0, resetAt: now + rule.windowMs } : current;
@@ -46,9 +56,6 @@ export async function checkRateLimit(key: string, rule: RateLimitRule): Promise<
   try {
     const redis = getRedisClient();
     if (!redis) return checkDevelopmentLimit(key, rule);
-
-    // Increment and expiry must be atomic: INCR after an expired SET NX bucket
-    // otherwise recreates a key without a TTL and permanently locks out clients.
     const result = await redis.eval(
       `
       local count = redis.call('INCR', KEYS[1])

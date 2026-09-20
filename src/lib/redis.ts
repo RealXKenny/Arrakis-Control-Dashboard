@@ -10,8 +10,8 @@ function decode<T>(value: string): T {
   }
 }
 
-// Preserve existing storage encoding: strings stay raw, objects are JSON.
 function encode(value: unknown): string {
+  // Dev note: strings stay strings; surprise JSON is how sandworms happen.
   return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
@@ -22,7 +22,7 @@ export function createDashboardRedis(url: string) {
     disableOfflineQueue: true,
     commandsQueueMaxLength: 1000,
   });
-  // Command promises report failures to callers; never log URLs or credentials.
+  // Dev note: errors travel upward, while credentials remain in the witness program.
   client.on('error', () => {});
   let connecting: Promise<unknown> | undefined;
   async function command(args: string[]): Promise<unknown> {
@@ -79,6 +79,6 @@ export function getRedisClient(): DashboardRedis | null {
     if (env.NODE_ENV === 'production') throw new Error('REDIS_URL is required in production.');
     return null;
   }
-  // Share one connection across Next.js API bundles and development reloads.
+  // Dev note: one Redis connection is enough spice for every Next.js bundle.
   return (globals.arrakisRedisClient ??= createDashboardRedis(env.REDIS_URL));
 }

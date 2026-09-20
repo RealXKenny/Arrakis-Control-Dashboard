@@ -10,7 +10,7 @@ export function getLevelProgress(level, xp) {
 
   const nextLevelData = LEVEL_XP.find((entry) => entry.level === numericLevel + 1);
 
-  // Level 200 is the maximum.
+  // Dev note: level 200 is the ceiling; even heroes need building codes.
   if (!nextLevelData) {
     return {
       percent: 100,

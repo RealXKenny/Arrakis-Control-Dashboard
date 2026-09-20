@@ -46,7 +46,6 @@ function VehicleGrid({ vehicles, playerName, vehicleTab, setVehicleTab }) {
 
   return (
     <>
-      {/* Own / Shared tabs */}
       <div
         style={{
           display: 'grid',
@@ -118,7 +117,6 @@ function VehicleGrid({ vehicles, playerName, vehicleTab, setVehicleTab }) {
         </button>
       </div>
 
-      {/* Vehicle cards */}
       <div
         className="vehicle-grid"
         style={{

@@ -6,10 +6,10 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { createRedisFixture } from './helpers/redis-resp.mjs';
 
-// Isolated transport fixture: no real Redis, Discord, or Dune credentials are used.
 let revoked = false;
 let upstreamReads = 0;
 const redis = createServer(async (req, res) => {
+  // Dev note: fake services only; production did not consent to this experiment.
   if (req.url.startsWith('/api/')) {
     const expectedToken = req.url === '/api/integrations/discord/players/me' ? 'fixture-token' : 'fixture-console-key';
     if (req.headers.authorization !== `Bearer ${expectedToken}`) {
@@ -65,7 +65,6 @@ const child = spawn(
     stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
-      POPULATION_HISTORY_ENABLED: 'false',
       NODE_ENV: mode === 'dev' ? 'development' : 'production',
       CONSOLE_URL: `http://127.0.0.1:${redisPort}`,
       CONSOLE_API_KEY: 'fixture-console-key',
@@ -73,7 +72,7 @@ const child = spawn(
       DISCORD_CLIENT_ID: 'fixture-client',
       DISCORD_CLIENT_SECRET: 'fixture-secret',
       DISCORD_GUILD_ID: 'fixture-guild',
-      DISCORD_REDIRECT_URI: `${base}/auth/callback`,
+      VERIFIED_MEMBER_ROLE_ID: 'fixture-role',
       APP_URL: base,
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
     },
@@ -101,7 +100,7 @@ try {
       await response.text();
       if (ready) break;
     } catch {
-      /* Startup may still be loading instrumentation. */
+      /* Dev note: instrumentation may still be putting on its stillsuit. */
     }
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
@@ -109,6 +108,7 @@ try {
   for (const [asset, contentType] of [
     ['/favicon.ico', 'image/x-icon'],
     ['/maps/atreides.webp', 'image/webp'],
+    ['/maps/hagga-basin/0-0.webp', 'image/webp'],
     ['/items/MelangeSpice.png', 'image/png'],
   ]) {
     const response = await fetch(`${base}${asset}`, { signal: AbortSignal.timeout(5000) });
@@ -116,7 +116,8 @@ try {
     assert.equal(response.headers.get('content-type'), contentType, asset);
     assert.ok((await response.arrayBuffer()).byteLength > 0, asset);
   }
-  const home = await fetch(`${base}/`, { headers: { cookie: 'dashboard_session=fixture-session' } });
+  const sessionCookie = '__Host-dashboard_session=fixture-session';
+  const home = await fetch(`${base}/`, { headers: { cookie: sessionCookie } });
   assert.equal(home.status, 200, 'homepage with a session cookie');
   assert.match(await home.text(), /"isAuthenticated":true/);
   const routes = [
@@ -152,14 +153,14 @@ try {
   }
   for (let attempt = 0; attempt < 3; attempt++) {
     const response = await fetch(`${base}/api/player`, {
-      headers: { cookie: 'dashboard_session=fixture-session' },
+      headers: { cookie: sessionCookie },
       signal: AbortSignal.timeout(10000),
     });
     assert.equal(response.status, 200, 'authenticated player telemetry');
     assert.equal((await response.json()).linked, true);
   }
   const buildId = mode === 'dev' ? 'development' : readFileSync('.next/BUILD_ID', 'utf8').trim();
-  const headers = { cookie: 'dashboard_session=fixture-session' };
+  const headers = { cookie: sessionCookie };
   const world = await fetch(`${base}/api/portal/world?map=DeepDesert`, { headers });
   assert.equal(world.status, 200, 'authenticated world briefing');
   const worldReading = await world.json();

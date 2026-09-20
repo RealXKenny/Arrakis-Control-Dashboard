@@ -7,6 +7,7 @@ import { logger } from '../../../lib/logger';
 
 export async function GET() {
   try {
+    // Dev note: the server said it felt fine, so naturally we checked its status.
     const duneClient = await getDuneClient();
 
     const [onlineRaw, playersRaw] = await Promise.all([

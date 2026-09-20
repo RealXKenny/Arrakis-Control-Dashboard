@@ -25,9 +25,9 @@ function date(value: unknown): string | null {
   return new Date(value).toISOString();
 }
 
-/** Allowlist public aggregates; never forward map actors or administrative player records. */
 export function worldReading(map: string, markers: unknown, market: unknown, landsraad: unknown): WorldReading {
   const source = record(markers);
+  // Dev note: public aggregates may pass; admin records know what they did.
   const entries = rows(markers);
   const spice = entries?.filter((entry) => entry.type === 'spice_active');
   const exchange = record(market);

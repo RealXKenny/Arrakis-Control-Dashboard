@@ -12,6 +12,7 @@ const MARKET_PAGE_SIZE = 24;
 
 export async function GET(req, res) {
   try {
+    // Dev note: the market has plenty of cache, but still asks for exact change.
     const sessionId = cookies(req, res).get('dashboard_session')?.value;
     const session = sessionId ? await getSession(sessionId) : null;
     if (!sessionId || !session || session.expiresAt < Date.now()) {

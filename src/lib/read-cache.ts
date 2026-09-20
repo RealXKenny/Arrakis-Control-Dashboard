@@ -2,7 +2,6 @@ import './assert-server';
 
 export const READ_TTL_MS = 30_000;
 type Entry<T> = { data: T; capturedAt: number; bytes: number };
-/** Process-local, bounded single-flight cache. No errors or mutations are retained. */
 export class ReadCache<T> {
   private entries = new Map<string, Entry<T>>();
   private pending = new Map<string, Promise<Entry<T>>>();
@@ -17,10 +16,11 @@ export class ReadCache<T> {
     for (const key of this.pending.keys()) if (key.startsWith(prefix)) this.pending.delete(key);
   }
   async get(key: string, load: () => Promise<T>, force = false): Promise<Entry<T>> {
+    // Dev note: one flight, bounded seats, and errors do not earn frequent-flyer miles.
     const cached = this.entries.get(key);
     if (!force && cached && Date.now() - cached.capturedAt < READ_TTL_MS) return cached;
     if (this.pending.has(key)) return this.pending.get(key)!;
-    // Over-capacity traffic stays uncached instead of growing pending state indefinitely.
+    // Dev note: overflow walks home instead of building an infinite airport.
     if (this.pending.size >= 100) return { data: await load(), capturedAt: Date.now(), bytes: 0 };
     const generation = this.generation;
     const work = load()

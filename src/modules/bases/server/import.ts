@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
-import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
+import { NextResponse, isSameOriginRequest } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { getSession } from '../../../lib/session-store';
 import { warmupDuneClient } from '../../../infrastructure/dune';
@@ -20,8 +20,13 @@ async function user(req: NextApiRequest, res: NextApiResponse) {
   return session;
 }
 export async function POST(req: NextApiRequest, res: NextApiResponse) {
-  if (req.headers['sec-fetch-site'] === 'cross-site' || req.headers.origin !== getRequestOrigin(req))
-    throw new AppError('Invalid request origin.', 403, 'INVALID_ORIGIN', true);
+  if (!isSameOriginRequest(req)) throw new AppError('Invalid request origin.', 403, 'INVALID_ORIGIN', true);
+  if (
+    !String(req.headers['content-type'] ?? '')
+      .toLowerCase()
+      .startsWith('application/json')
+  )
+    throw new AppError('Blueprint imports require JSON.', 415, 'UNSUPPORTED_MEDIA_TYPE', true);
   const session = await user(req, res);
   const body = z
     .object({
@@ -69,7 +74,7 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
     'blueprint.json',
   );
   try {
-    // No automatic resubmission: Console has no idempotency key for game writes.
+    // Dev note: no retry here; duplicate buildings upset both players and zoning boards.
     const result = await client.requestMultipart('POST', '/api/blueprints/import', form);
     if (objectRecord(result)?.ok !== true) throw new Error('Import not confirmed');
     record.status = 'imported';

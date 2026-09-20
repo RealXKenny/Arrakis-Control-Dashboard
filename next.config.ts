@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: 'https', hostname: 'cdn.discordapp.com', pathname: '/avatars/**' }],
   },
 
-  // Keep Next.js file tracing rooted at the workspace.
+  // Dev note: show the standalone build where the image spice is buried.
   outputFileTracingRoot: projectRoot,
   outputFileTracingIncludes: {
     '/api/assets/*': ['./src/assets/**/*'],

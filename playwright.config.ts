@@ -8,16 +8,14 @@ export default defineConfig({
   use: { baseURL: 'http://127.0.0.1:3100', trace: 'retain-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    // Browser tests intercept API responses; never use deployment credentials.
+    // Dev note: production credentials are not invited to this test party.
     env: {
-      POPULATION_HISTORY_ENABLED: 'false',
       CONSOLE_URL: 'http://127.0.0.1:9',
-      CONSOLE_PASSWORD: 'browser-test-placeholder',
+      CONSOLE_API_KEY: 'browser-test-placeholder',
       ADAPTER_TOKEN: 'browser-test-placeholder',
       DISCORD_CLIENT_ID: 'browser-test-client',
       DISCORD_CLIENT_SECRET: 'browser-test-placeholder',
       DISCORD_GUILD_ID: 'browser-test-guild',
-      DISCORD_REDIRECT_URI: 'http://127.0.0.1:3100/auth/callback',
       APP_URL: 'http://127.0.0.1:3100',
       REDIS_URL: 'redis://127.0.0.1:9',
     },

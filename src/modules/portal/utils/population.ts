@@ -8,9 +8,9 @@ export type PopulationHistory = {
   coverageHours: number;
 };
 
-/** Sum the provider's accumulated playtime across every player row. */
 export function totalPlayHours(players: unknown): number | null {
   if (!players || typeof players !== 'object' || Array.isArray(players)) return null;
+  // Dev note: every minute counts, even the ones spent reorganizing storage.
   const rows = (players as { rows?: unknown }).rows;
   if (!Array.isArray(rows)) return null;
   let seconds = 0;
@@ -25,9 +25,9 @@ export function totalPlayHours(players: unknown): number | null {
 export const DAY_MS = 86400000;
 export const MAX_SAMPLE_GAP_MS = 90000;
 
-/** Integrate only adjacent observations. Missing time is not zero population. */
 export function summarizePopulation(values: unknown[], now: number): PopulationHistory {
   const unique = new Map<number, PopulationPoint>();
+  // Dev note: missing samples are mysterious, not proof everyone vanished.
   for (const value of values) {
     if (!value || typeof value !== 'object') continue;
     const point = value as PopulationPoint;

@@ -32,9 +32,9 @@ const blueprintSchema = z.object({
   pentashields: z.array(z.unknown()).max(0).optional(),
 });
 
-/** Console base-export format. Strip live owner, base ID and world coordinates. */
 export function parseBlueprint(value: unknown) {
   const result = blueprintSchema.safeParse(value);
+  // Dev note: exported bases leave owner IDs and secret desert coordinates at home.
   if (!result.success)
     throw new Error(
       'Use a Console base-export JSON with instances and placeables. Unsupported blueprint formats must be converted before importing.',

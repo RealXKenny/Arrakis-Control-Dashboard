@@ -65,6 +65,8 @@ export default function MarkerDetails({ marker, onClose }) {
 
       {marker.subtype && <div>Subtype: {marker.subtype}</div>}
 
+      {marker.sector && <div>Sector: {marker.sector}</div>}
+
       {marker.x != null && <div>X: {Number(marker.x).toFixed(0)}</div>}
 
       {marker.y != null && <div>Y: {Number(marker.y).toFixed(0)}</div>}

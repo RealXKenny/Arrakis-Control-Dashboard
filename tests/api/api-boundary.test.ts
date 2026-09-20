@@ -12,7 +12,31 @@ describe('Pages API boundary', () => {
     expect(res.statusCode).toBe(200);
     expect(res.getHeader('Cache-Control')).toBe('private, no-store, max-age=0');
     expect(res.getHeader('Cloudflare-CDN-Cache-Control')).toBe('no-store');
+    expect(res.getHeader('X-Content-Type-Options')).toBe('nosniff');
+    expect(res.getHeader('X-Frame-Options')).toBe('DENY');
+    expect(res.getHeader('Cross-Origin-Resource-Policy')).toBe('same-origin');
     expect(res.body).toContain('"ok":true');
+  });
+
+  it('replaces untrusted request IDs and rejects oversized request targets', async () => {
+    const badId = responseMock();
+    await runPagesApiHandler(
+      { method: 'GET', url: '/api/test', headers: { 'x-request-id': 'bad request id' } },
+      badId,
+      'GET',
+      async () => NextResponse.json({ ok: true }),
+    );
+    expect(badId.getHeader('X-Request-ID')).toMatch(/^[a-f0-9-]{36}$/);
+
+    const oversized = responseMock();
+    await runPagesApiHandler(
+      { method: 'GET', url: `/api/test?value=${'x'.repeat(2100)}`, headers: {} },
+      oversized,
+      'GET',
+      async () => NextResponse.json({ ok: true }),
+    );
+    expect(oversized.statusCode).toBe(414);
+    expect(oversized.body).toMatchObject({ code: 'URI_TOO_LONG' });
   });
 
   it('rejects invalid methods safely', async () => {
@@ -39,6 +63,7 @@ describe('Pages API boundary', () => {
     await authCallback(req, res);
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.body as string)).toMatchObject({ ok: false, code: 'INVALID_OAUTH_STATE' });
+    expect(String(res.getHeader('Set-Cookie'))).toContain('oauth_state=; Max-Age=0');
   });
 
   it('rejects protected routes without a session', async () => {

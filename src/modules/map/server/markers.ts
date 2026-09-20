@@ -4,6 +4,7 @@ import { getMarkerBaseId } from './bases';
 import { isCurrentPlayerMarker } from './players';
 
 export function extractRows(data) {
+  // Dev note: markers like arrays because they are outstanding in their field.
   if (Array.isArray(data)) {
     return data;
   }

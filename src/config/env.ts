@@ -4,13 +4,11 @@ import { z } from 'zod';
 const serverEnvSchema = z.object({
   LOG_LEVEL: z.enum(['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']).default('INFO'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  POPULATION_HISTORY_ENABLED: z.enum(['true', 'false']).default('true'),
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_API_KEY: z.string().min(1).optional(),
   ADAPTER_TOKEN: z.string().min(1).optional(),
   DISCORD_CLIENT_ID: z.string().min(1).optional(),
   DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
-  DISCORD_REDIRECT_URI: z.string().url().optional(),
   APP_URL: z.string().url().optional(),
   DISCORD_GUILD_ID: z.string().min(1).optional(),
   VERIFIED_MEMBER_ROLE_ID: z.string().min(1).optional(),
@@ -36,6 +34,7 @@ export type ServerEnv = z.infer<typeof serverEnvSchema>;
 let cachedEnv: ServerEnv | undefined;
 
 export function getServerEnv(): ServerEnv {
+  // Dev note: environment variables avoid arguments by preferring parameters.
   if (cachedEnv) {
     return cachedEnv;
   }
@@ -61,7 +60,11 @@ export function requireServerEnv(...keys: Array<keyof ServerEnv>): ServerEnv {
   return env;
 }
 
-/** Runtime gate: builds remain possible without deployment secrets. */
+export function getDiscordRedirectUri(): string | undefined {
+  const appUrl = getServerEnv().APP_URL;
+  return appUrl ? new URL('/auth/callback', appUrl).toString() : undefined;
+}
+
 export function validateProductionEnv(): ServerEnv {
   const env = getServerEnv();
   if (env.NODE_ENV !== 'production') return env;
@@ -72,16 +75,18 @@ export function validateProductionEnv(): ServerEnv {
     'DISCORD_CLIENT_ID',
     'DISCORD_CLIENT_SECRET',
     'DISCORD_GUILD_ID',
-    'DISCORD_REDIRECT_URI',
+    'VERIFIED_MEMBER_ROLE_ID',
+    'APP_URL',
     'REDIS_URL',
   );
-  requireServerEnv('APP_URL');
-  const names: Array<keyof ServerEnv> = ['CONSOLE_URL', 'APP_URL', 'DISCORD_REDIRECT_URI'];
+  const names: Array<keyof ServerEnv> = ['CONSOLE_URL', 'APP_URL'];
   for (const name of names) {
     const value = env[name];
     if (!value) continue;
     const url = new URL(value);
     if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.hash)
+      throw new Error(`Invalid production URL configuration: ${name}`);
+    if (name === 'APP_URL' && (url.search || !['', '/'].includes(url.pathname)))
       throw new Error(`Invalid production URL configuration: ${name}`);
     if (
       name !== 'CONSOLE_URL' &&
@@ -90,7 +95,5 @@ export function validateProductionEnv(): ServerEnv {
     )
       throw new Error(`Production HTTPS is required: ${name}`);
   }
-  if (new URL(env.DISCORD_REDIRECT_URI!).origin !== new URL(env.APP_URL!).origin)
-    throw new Error('Discord callback and application origins must match');
   return env;
 }

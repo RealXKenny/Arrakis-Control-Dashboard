@@ -38,7 +38,6 @@ export async function cachedApiReading(
   if (url.pathname !== '/api/server/status') {
     const id = cookies(req, res).get('dashboard_session')?.value;
     const session = id ? await getSession(id) : null;
-    // Run the feature's normal unauthorized handling; never serve a cached private body.
     if (!id || !session || session.expiresAt <= Date.now()) return load();
     scope = cacheScope(id);
   }

@@ -1,6 +1,6 @@
 {
   "name": "Arrakis-Control-Dashboard",
-  "version": "1.0.5",
+  "version": "1.0.4",
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 2008",
     "build": "next build",

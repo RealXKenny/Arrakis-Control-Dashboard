@@ -1,6 +1,7 @@
 import '../../lib/assert-server';
 import { randomUUID } from 'node:crypto';
 import { createLogger } from '../../lib/logger';
+import { readBoundedText } from '../../lib/http-response';
 
 export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type Provider = 'console' | 'adapter';
@@ -40,9 +41,8 @@ export function providerUrl(base: string, route: string): URL {
 }
 export async function parseProviderResponse(response: Response): Promise<unknown> {
   if (response.status === 204 || response.status === 205) return null;
-  const text = await response.text();
+  const text = await readBoundedText(response, 16 * 1024 * 1024);
   if (!text.trim()) return null;
-  // Console exports may have a download content type while still containing JSON.
   try {
     return JSON.parse(text) as unknown;
   } catch {
@@ -110,8 +110,6 @@ export async function sendProviderRequest(options: {
       attempt,
       durationMs: Date.now() - started,
     });
-    // Mutations are never replayed after ambiguous failures. A 429 is returned immediately;
-    // callers must respect the upstream budget rather than repeatedly consuming it.
     if (retryRead && [408, 425, 500, 502, 503, 504].includes(response.status) && attempt < attempts) {
       await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
       continue;

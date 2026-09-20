@@ -1,6 +1,7 @@
 import { version } from '../../package.json';
 import { test, expect } from '@playwright/test';
 import { summarizePopulation } from '../../src/modules/portal/utils/population';
+import { createSectorGridOverlay } from '../../src/modules/map/utils/sectorGrid';
 
 const player = {
   avatarUrl: 'https://cdn.discordapp.com/avatars/12345/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png?size=128',
@@ -42,8 +43,23 @@ const player = {
 };
 
 test.beforeEach(async ({ page }) => {
+  // Dev note: the browser wanted cookies, but the test ordered assertions instead.
   await page.route('**/api/session', (route) =>
     route.fulfill({ json: { ok: true, cacheScope: 'a'.repeat(64), expiresAt: Date.now() + 43200000 } }),
+  );
+  await page.route('**/api/changelog', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        releases: [
+          {
+            version,
+            date: '2026-09-20',
+            sections: [{ title: 'Added', items: ['A changelog popup with no external links.'] }],
+          },
+        ],
+      },
+    }),
   );
   await page.route('https://cdn.discordapp.com/avatars/**', (route) =>
     route.fulfill({ path: 'src/assets/maps/atreides.webp', contentType: 'image/webp' }),
@@ -106,6 +122,7 @@ test.beforeEach(async ({ page }) => {
           totalCount: 1,
         },
         stats: { totalListings: 2 },
+        marketConfig: { buybackPercent: 60 },
       },
     }),
   );
@@ -149,9 +166,12 @@ test('navigation and market refresh do not reload player data or request logout'
     )
     .toBe(true);
   await expect(page.getByRole('cell', { name: '9,007,199,254,740,993' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '5,404,319,552,844,595' })).toBeVisible();
   await page.screenshot({ path: 'test-results/portal-market.png', fullPage: true });
   await page.getByRole('button', { name: 'Spice', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Spice', exact: true })).toBeVisible();
+  await expect(page.locator('dt').filter({ hasText: /^Suggested sell$/ })).toBeVisible();
+  await expect(page.getByText('5,404,319,552,844,595', { exact: true })).toHaveCount(2);
   await expect(page.getByText('Guild trader', { exact: true })).toBeVisible();
   await page.getByLabel('Sort listings').selectOption('price');
   await expect(page.getByRole('button', { name: 'Spice', exact: true })).toBeVisible();
@@ -282,20 +302,42 @@ test('unavailable personal listings are not shown as zero or a request failure',
 });
 
 test('map survives stylesheet extraction and refreshes independently', async ({ page }) => {
-  await page.route('**/api/map?*', (route) =>
-    route.fulfill({
+  await page.route('**/api/map?*', (route) => {
+    const deepDesert = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
+    const mapConfig = deepDesert
+      ? {
+          width: 8192,
+          height: 8192,
+          minX: -1177656,
+          maxX: 1072344,
+          minY: -1177066,
+          maxY: 1072934,
+          flipY: false,
+          label: 'Deep Desert',
+        }
+      : { width: 1000, height: 1000, minX: 0, maxX: 1000, minY: 0, maxY: 1000, label: 'Hagga Basin' };
+    return route.fulfill({
       json: {
         ok: true,
-        map: { width: 1000, height: 1000, minX: 0, maxX: 1000, minY: 0, maxY: 1000, label: 'Hagga Basin' },
-        markers: [
-          { id: 'spice', type: 'spice', x: 400, y: 500, name: 'Possible spice' },
-          { id: 'active-spice', type: 'spice_active', x: 600, y: 500, name: 'Active spice' },
-        ],
+        coriolisLayout: deepDesert ? 6 : null,
+        coriolisNextCycleAt: new Date(Date.now() + 90_061_000).toISOString(),
+        gridOverlay: deepDesert ? createSectorGridOverlay('DeepDesert', mapConfig) : null,
+        map: mapConfig,
+        markers: deepDesert
+          ? []
+          : [
+              { id: 'spice', type: 'spice', x: 400, y: 500, name: 'Possible spice' },
+              { id: 'active-spice', type: 'spice_active', x: 600, y: 500, name: 'Active spice' },
+            ],
       },
-    }),
-  );
+    });
+  });
   await page.goto('/map');
+  const mapPanel = page.locator('[data-map-panel]');
+  await expect.poll(async () => (await mapPanel.boundingBox())?.width ?? 0).toBeGreaterThan(500);
+  await expect.poll(async () => (await mapPanel.boundingBox())?.height ?? 0).toBeGreaterThan(600);
   await expect(page.getByRole('checkbox', { name: 'Player', exact: true })).toBeChecked();
+  await expect(page.getByRole('timer', { name: 'Coriolis cycle countdown' })).toContainText('1d 01:');
   await expect(page.getByRole('checkbox', { name: 'Storage', exact: true })).not.toBeChecked();
   const possibleSpice = page.getByRole('checkbox', { name: 'Possible Spice Locations', exact: true });
   await possibleSpice.uncheck();
@@ -332,16 +374,48 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
     await expect(page.getByTitle(`Show ${category}`, { exact: true })).toHaveCount(1);
   }
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
+  const haggaTiles = page.locator('[data-map-tiles="hagga-basin"] img');
+  await expect(haggaTiles).toHaveCount(4);
   await expect
     .poll(() =>
-      page
-        .getByRole('img', { name: 'Hagga Basin' })
-        .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
+      haggaTiles.evaluateAll((images: HTMLImageElement[]) =>
+        images.every((img) => img.complete && img.naturalWidth === 4096),
+      ),
     )
     .toBe(true);
   await expect
     .poll(async () => (await page.getByRole('img', { name: 'Hagga Basin' }).boundingBox())?.width ?? 0)
     .toBeGreaterThan(400);
+  const fittedMapWidth = await page
+    .locator('[data-map-resolution]')
+    .evaluate((map) => map.getBoundingClientRect().width);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await expect
+    .poll(() => page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width))
+    .toBeGreaterThan(fittedMapWidth * 1.1);
+  const viewport = page.viewportSize();
+  if (viewport) {
+    await page.setViewportSize({ width: viewport.width - 1, height: viewport.height });
+  }
+  await expect
+    .poll(() => page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width))
+    .toBeGreaterThan(fittedMapWidth * 1.05);
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await expect
+    .poll(() =>
+      page.locator('[data-map-resolution]').evaluate((map) => {
+        const frame = map.parentElement;
+        if (!frame) return false;
+        const bounds = map.getBoundingClientRect();
+        const fitsWidth = bounds.width <= frame.clientWidth + 2;
+        const fitsHeight = bounds.height <= frame.clientHeight + 2;
+        const touchesAnEdge =
+          Math.abs(bounds.width - frame.clientWidth) <= 2 || Math.abs(bounds.height - frame.clientHeight) <= 2;
+        const hasNoSideGutters = Math.abs(bounds.width - frame.clientWidth) <= 4;
+        return fitsWidth && fitsHeight && touchesAnEdge && hasNoSideGutters;
+      }),
+    )
+    .toBe(true);
   await expect(page.locator('button.live-map-marker').first()).toBeVisible();
   await page.getByRole('button', { name: 'Refresh', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
@@ -352,16 +426,45 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(desertLinks).toHaveText(['Hagga Basin', 'Deep Desert']);
   await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Deep Desert', exact: true })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByTitle('Hide Storage', { exact: true })).toHaveCount(1);
+  await expect(page.getByRole('checkbox', { name: 'Sector Grid', exact: true })).toBeChecked();
+  await expect(page.getByTitle('Show Storage', { exact: true })).toHaveCount(1);
   await expect(page).toHaveURL(/\/portal$/);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1);
+  const terrain = page.locator('[data-terrain-state]');
+  await expect(terrain).toHaveAttribute('data-terrain-state', 'ready', { timeout: 20_000 });
+  await expect(terrain).toHaveAttribute('data-map-resolution', '8192x8192');
+  await expect(terrain.locator('canvas')).toHaveAttribute('data-terrain-resolution', '8192x8192');
+  const sectorGrid = page.locator('svg[data-sector-grid="deep-desert"]');
+  await expect(sectorGrid).toHaveCount(1);
+  await expect(sectorGrid.locator('text')).toHaveCount(81);
+  await page.getByRole('checkbox', { name: 'Sector Grid', exact: true }).uncheck();
+  await expect(sectorGrid).toHaveCount(0);
+  await expect(page.getByRole('status')).toHaveCount(0);
   await expect
-    .poll(() =>
-      page
-        .locator('img[src$="/maps/deep-desert.png"]')
-        .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
+    .poll(() => terrain.locator('[data-map-tiles="deep-desert"]').evaluate((tiles) => getComputedStyle(tiles).opacity))
+    .toBe('0');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const desertTiles = page.locator('[data-map-tiles="deep-desert"] img');
+  await expect(desertTiles).toHaveCount(4);
+  await expect
+    .poll(
+      () =>
+        desertTiles.evaluateAll((images: HTMLImageElement[]) =>
+          images.every((img) => img.complete && img.naturalWidth === 4096),
+        ),
+      { timeout: 15_000 },
     )
     .toBe(true);
+  await expect
+    .poll(() =>
+      terrain.evaluate((map) => {
+        const frame = map.parentElement;
+        if (!frame) return Number.POSITIVE_INFINITY;
+        const bounds = map.getBoundingClientRect();
+        return Math.max(bounds.width - frame.clientWidth, bounds.height - frame.clientHeight);
+      }),
+    )
+    .toBeLessThanOrEqual(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/map-mobile.png', fullPage: true });
 });
@@ -469,6 +572,12 @@ test('reload restores a fresh private reading without refetching player data', a
   await expect(page.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
   expect(calls).toBe(1);
   await expect(page.locator('footer')).toContainText(`v${version}`);
+  await page.getByRole('button', { name: `v${version}` }).click();
+  await expect(page.getByRole('dialog', { name: 'Changelog' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: `Version ${version}` })).toBeVisible();
+  await expect(page.getByRole('dialog').getByRole('link')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Close changelog' }).click();
+  await expect(page.getByRole('dialog', { name: 'Changelog' })).toHaveCount(0);
 });
 
 test('base upload is always visible below the last holdings card', async ({ page }) => {

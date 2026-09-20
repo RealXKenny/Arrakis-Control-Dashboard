@@ -1,12 +1,11 @@
-import { APP_VERSION } from '../config/version';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
+import ChangelogDialog from '../modules/changelog/components/ChangelogDialog';
 import css from './dashboard-shell.module.css';
 
 export type NavigationItem = { label: string; href: string; group: string; active?: boolean };
 
-/** Shared presentation only: feature routes and account actions belong to callers. */
 export default function DashboardShell({
   brand,
   brandHref = '/',
@@ -86,9 +85,9 @@ export default function DashboardShell({
         {children}
       </main>
       <footer className={css.footer}>
-        <span>
-          {brand} · Dune: Awakening · v{APP_VERSION}
-        </span>
+        <div>
+          {brand} · Dune: Awakening · <ChangelogDialog />
+        </div>
         <span>Explore. Prepare. Endure.</span>
       </footer>
     </div>

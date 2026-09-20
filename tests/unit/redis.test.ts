@@ -10,6 +10,7 @@ afterEach(async () => {
 });
 
 it('rejects unavailable storage and connects on a later request after recovery', async () => {
+  // Dev note: Redis needed space, so we gave it a little cache and carry.
   const reservation = createServer();
   reservation.listen(0, '127.0.0.1');
   await once(reservation, 'listening');

@@ -6,6 +6,7 @@ import { NextResponse } from '../../../infrastructure/pages-api';
 import { requireGuildSession, queryValue } from './common';
 
 function validPage(value: string | undefined, fallback: string, max: number) {
+  // Dev note: pagination is just a book club with strict boundaries.
   const result = value ?? fallback;
   if (!/^\d{1,6}$/.test(result) || Number(result) > max)
     throw new AppError('Invalid guild query', 400, 'INVALID_GUILD_QUERY', true);

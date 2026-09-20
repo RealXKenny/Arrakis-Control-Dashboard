@@ -15,8 +15,7 @@ function imports(file: string, text = fs.readFileSync(file, 'utf8')): string[] {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   const result: string[] = [];
   function visit(node: ts.Node) {
-    // Pages Router strips exported getServerSideProps from the browser bundle.
-    // Ignore only that function's body, not imports elsewhere in the page.
+    // Dev note: Next hides server props from browsers; everything else gets frisked.
     if (/^pages\/(?!api\/)/.test(normalize(file))) {
       const declaration = ts.isVariableDeclaration(node) ? node.parent.parent : node;
       const isServerProps =
@@ -86,7 +85,7 @@ describe('module boundaries', () => {
     const routes = files.filter(
       (p) => normalize(p).startsWith('pages/api/') && normalize(p) !== 'pages/api/assets/[...path].ts',
     );
-    expect(routes).toHaveLength(16);
+    expect(routes).toHaveLength(17);
     for (const route of routes) {
       const method = /\/auth\/logout\/|\/blueprints\/(publish|remove)\.ts$|\/bases\/import\.ts$/.test(normalize(route))
         ? 'POST'
