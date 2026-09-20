@@ -49,7 +49,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Prevented React development Strict Mode from churning WebGL contexts during terrain startup and improved shader compile diagnostics.
 - Moved terrain rendering, grid projection, and marker coordinates onto the same viewport-virtualized 8192×8192 coordinate space.
 - Fixed initial map cropping, desktop side gutters, unused mobile map space, and zoom controls that previously snapped back while the user zoomed.
-- Gave the real 8K-tile and WebGL browser regression a CI-sized timeout and bounded readiness waits so slower two-worker runners do not terminate the page during terrain initialization.
+- Stabilized the real 8K-tile and WebGL browser regression for slower two-worker CI runners by using a CI-sized test budget, deterministic hidden-fallback tile checks, explicit mobile refitting, and rendering-safe geometry tolerances.
 - Muted expected Console and Redis connection noise from the browser-test server while keeping production logging unchanged.
 - Preserved exact prices above JavaScript's safe-integer limit when formatting lowest asks and calculating suggested sell prices.
 

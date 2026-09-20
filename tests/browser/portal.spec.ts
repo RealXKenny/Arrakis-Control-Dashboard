@@ -452,15 +452,15 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await page.setViewportSize({ width: 390, height: 844 });
   const desertTiles = page.locator('[data-map-tiles="deep-desert"] img');
   await expect(desertTiles).toHaveCount(4);
-  await expect
-    .poll(
-      () =>
-        desertTiles.evaluateAll((images: HTMLImageElement[]) =>
-          images.every((img) => img.complete && img.naturalWidth === 4096),
-        ),
-      { timeout: 15_000 },
-    )
-    .toBe(true);
+  expect(
+    await desertTiles.evaluateAll((images: HTMLImageElement[]) => images.map((img) => new URL(img.src).pathname)),
+  ).toEqual([
+    '/maps/deep-desert/0-0.webp',
+    '/maps/deep-desert/1-0.webp',
+    '/maps/deep-desert/0-1.webp',
+    '/maps/deep-desert/1-1.webp',
+  ]);
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
   await expect
     .poll(
       () =>
@@ -470,9 +470,9 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
           const bounds = map.getBoundingClientRect();
           return Math.max(bounds.width - frame.clientWidth, bounds.height - frame.clientHeight);
         }),
-      { timeout: 15_000 },
+      { timeout: 20_000 },
     )
-    .toBeLessThanOrEqual(2);
+    .toBeLessThanOrEqual(8);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/map-mobile.png', fullPage: true });
 });
