@@ -1,6 +1,6 @@
 import Link from './PortalLink';
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useServerStatus } from '../../home/hooks/useServerStatus';
 import { formatNumber } from '../utils/formatting';
 import { label, record } from '../utils/inventory';
@@ -10,9 +10,6 @@ import { timeRemaining } from '../utils/world';
 import { useWorldReading } from '../hooks/useWorldReading';
 import css from '../overview.module.css';
 import PopulationChart from './PopulationChart';
-import { useSiteConfig } from '../../../components/SiteConfigProvider';
-import { useMapDestinations } from '../../map/hooks/useMapDestinations';
-import { usePortalDestination } from '../hooks/usePortalView';
 
 export default function PortalSummary({
   character,
@@ -25,23 +22,10 @@ export default function PortalSummary({
   vehicleCount: number | null;
   updatedAt: number | null;
 }) {
-  const site = useSiteConfig();
-  const { destinations } = useMapDestinations();
-  const [destinationKey, setDestinationKey] = usePortalDestination();
-  const destination =
-    destinations.find((entry) => entry.key === destinationKey) ??
-    destinations.find((entry) => entry.key === site.defaultDestinationKey) ??
-    destinations.find((entry) => entry.map === site.defaultMap) ??
-    destinations[0];
-  useEffect(() => {
-    if (destinationKey && destinations.some((entry) => entry.key === destinationKey)) return;
-    const preferred = destinations.find((entry) => entry.key === site.defaultDestinationKey) ?? destination;
-    if (preferred) setDestinationKey(preferred.key);
-  }, [destination, destinationKey, destinations, setDestinationKey, site.defaultDestinationKey]);
-  const map = destination?.map ?? site.defaultMap;
-  const { reading, error, expired, now } = useWorldReading(map, destination?.partitionId ?? null);
+  const [map, setMap] = useState('HaggaBasin');
+  const { reading, error, expired, now } = useWorldReading(map);
   const { activePlayers } = useServerStatus();
-  const mapName = destination?.label ?? site.mapLabels[map as keyof typeof site.mapLabels] ?? map;
+  const mapName = map === 'DeepDesert' ? 'Deep Desert' : 'Hagga Basin';
   const guild = record(character.guild);
   const guildName = label(guild.name, 'No guild reported');
   const guildFaction = label(guild.faction, 'Not reported');
@@ -60,22 +44,17 @@ export default function PortalSummary({
       <section className={css.briefing} aria-label="World briefing">
         <div className={css.horizon} aria-hidden="true" />
         <div className={css.serverLine}>
-          <strong className={css.serverName}>{site.name} / Command</strong>
+          <strong className={css.serverName}>Crimson Skies / Command</strong>
           <span className={css.micro}>
             Coriolis cycle in <b>{timeRemaining(reading?.nextCycleAt ?? null, now)}</b>
           </span>
           <div className={css.mapSwitch} role="group" aria-label="Briefing map">
-            <select
-              aria-label="Briefing destination"
-              value={destination?.key ?? ''}
-              onChange={(event) => setDestinationKey(event.target.value)}
-            >
-              {destinations.map((entry) => (
-                <option key={entry.key} value={entry.key}>
-                  {entry.label}
-                </option>
-              ))}
-            </select>
+            <button aria-pressed={map === 'HaggaBasin'} onClick={() => setMap('HaggaBasin')}>
+              Hagga Basin
+            </button>
+            <button aria-pressed={map === 'DeepDesert'} onClick={() => setMap('DeepDesert')}>
+              Deep Desert
+            </button>
           </div>
         </div>
         <div className={css.briefingBody}>
@@ -170,10 +149,7 @@ export default function PortalSummary({
           <span>{formatNumber(reading?.market?.items, 0)} item types · Server exchange</span>
           <b aria-hidden="true">↗</b>
         </Link>
-        <Link
-          className={css.card}
-          href={`/portal?view=${destination?.kind === 'deep-desert' ? 'deep-desert' : 'hagga'}`}
-        >
+        <Link className={css.card} href={`/portal?view=${map === 'DeepDesert' ? 'deep-desert' : 'hagga'}`}>
           <span className={css.kicker}>Spice | {mapName}</span>
           <strong>
             {formatNumber(reading?.spice?.count, 0)} <small>active</small>
@@ -233,14 +209,12 @@ export default function PortalSummary({
           <Link href="/portal?view=character">Open character ↗</Link>
         </section>
       </div>
-      {site.features.population && (
-        <section className={css.wideSection} aria-labelledby="pulse-summary">
-          <h2 className={css.sectionTitle} id="pulse-summary">
-            Server rhythm <span>Last 24 hours</span>
-          </h2>
-          <PopulationChart history={reading?.population} totalPlayHours={reading?.totalPlayHours} />
-        </section>
-      )}
+      <section className={css.wideSection} aria-labelledby="pulse-summary">
+        <h2 className={css.sectionTitle} id="pulse-summary">
+          Server rhythm <span>Last 24 hours</span>
+        </h2>
+        <PopulationChart history={reading?.population} totalPlayHours={reading?.totalPlayHours} />
+      </section>
       <section className={`${css.wideSection} ${css.councilSection}`} id="landsraad" aria-labelledby="council-summary">
         <h2 className={css.sectionTitle} id="council-summary">
           Balance of power <span>Landsraad</span>
@@ -289,7 +263,7 @@ export default function PortalSummary({
         </div>
       </section>
       <p className={css.footnote}>
-        Read from the {site.name} server.{' '}
+        Read from the Crimson Skies server.{' '}
         {updatedAt ? `Character updated ${new Date(updatedAt).toLocaleTimeString()}.` : ''}{' '}
         <Link href="/portal?view=storage">Open storage ↗</Link>
       </p>

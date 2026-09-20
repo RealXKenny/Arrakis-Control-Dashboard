@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 
 import MapMarker from './MapMarker';
 
@@ -10,29 +9,15 @@ import { worldToMapPoint } from '../utils/coordinates';
 
 import { markerKey } from '../utils/markers';
 
-const DeepDesertTerrain = dynamic(() => import('../terrain/DeepDesertTerrain'), { ssr: false });
-
 export default function MapCanvas({
   mapName = 'HaggaBasin',
-  mapKind,
   mapConfig,
   markers,
   zoom,
   canvasRef,
   target,
   onSelectMarker,
-  terrainLayout,
-  frameRef,
 }) {
-  const [terrainReady, setTerrainReady] = useState(false);
-  const [terrainUnavailable, setTerrainUnavailable] = useState(false);
-  const deepDesert = mapKind === 'deep-desert' || mapName === 'DeepDesert';
-  const validTerrainLayout = Number.isInteger(terrainLayout) && terrainLayout >= 0 && terrainLayout <= 11;
-
-  useEffect(() => {
-    setTerrainReady(false);
-    setTerrainUnavailable(false);
-  }, [terrainLayout, deepDesert]);
   const plottedMarkers = useMemo(() => {
     if (!mapConfig) {
       return [];
@@ -82,8 +67,8 @@ export default function MapCanvas({
         unoptimized
         width={width}
         height={height}
-        src={deepDesert ? '/maps/deep-desert.png' : '/maps/hagga-basin.png'}
-        alt={mapConfig.label || (deepDesert ? 'Deep Desert' : 'Hagga Basin')}
+        src={mapName === 'DeepDesert' ? '/maps/deep-desert.png' : '/maps/hagga-basin.png'}
+        alt={mapConfig.label || (mapName === 'DeepDesert' ? 'Deep Desert' : 'Hagga Basin')}
         draggable={false}
         style={{
           position: 'absolute',
@@ -91,26 +76,12 @@ export default function MapCanvas({
           top: 0,
           width: '100%',
           height: '100%',
-          display: terrainReady ? 'none' : 'block',
+          display: 'block',
           objectFit: 'fill',
           userSelect: 'none',
           pointerEvents: 'none',
         }}
       />
-
-      {deepDesert && validTerrainLayout && !terrainUnavailable ? (
-        <DeepDesertTerrain
-          config={mapConfig}
-          layout={terrainLayout}
-          zoom={zoom}
-          frameRef={frameRef}
-          onReady={() => setTerrainReady(true)}
-          onUnavailable={() => {
-            setTerrainReady(false);
-            setTerrainUnavailable(true);
-          }}
-        />
-      ) : null}
 
       {/* DUNE GRID */}
 

@@ -1,5 +1,5 @@
 import { clearClientReadCache } from '../../../lib/client-cache';
-import { usePortalView, navigatePortal, usePortalDestination } from '../hooks/usePortalView';
+import { usePortalView, navigatePortal } from '../hooks/usePortalView';
 import Image from 'next/image';
 import { useState } from 'react';
 import DashboardShell from '../../../components/DashboardShell';
@@ -21,13 +21,8 @@ import { portalPageCopy } from '../config/page-copy';
 import MapWindow from '../../map/components/MapWindow';
 import { useGuildData } from '../hooks/useGuildData';
 import { guildRoleLabel } from '../utils/guild';
-import { useSiteConfig } from '../../../components/SiteConfigProvider';
-import { useMapDestinations } from '../../map/hooks/useMapDestinations';
 
 export default function PlayerPortal() {
-  const site = useSiteConfig();
-  const { destinations } = useMapDestinations();
-  const [selectedMapDestination] = usePortalDestination();
   const view = usePortalView();
   const copy = portalPageCopy[view];
   const {
@@ -85,8 +80,8 @@ export default function PlayerPortal() {
   const canEditLogo = guildData.currentMember?.role_id != null && String(guildData.currentMember.role_id) === '100';
 
   async function uploadGuildLogo(file: File) {
-    if (!guildId || file.type !== 'image/png' || file.size > site.guildLogoMaxBytes) {
-      setLogoMessage(`Choose a PNG logo no larger than ${Math.floor(site.guildLogoMaxBytes / 1024)} KiB.`);
+    if (!guildId || file.type !== 'image/png' || file.size > 512 * 1024) {
+      setLogoMessage('Choose a PNG logo no larger than 512 KiB.');
       return;
     }
     setLogoUploading(true);
@@ -116,10 +111,10 @@ export default function PlayerPortal() {
 
   return (
     <DashboardShell
-      brand={site.name}
+      brand="Crimson Skies"
       brandHref="/portal?view=overview"
-      subtitle={site.subtitle}
-      navigation={portalNavigation(view, site, destinations, selectedMapDestination)}
+      subtitle="Arrakis field companion"
+      navigation={portalNavigation(view)}
       onNavigate={navigatePortal}
       actions={
         sessionExpired ? (
@@ -140,9 +135,7 @@ export default function PlayerPortal() {
       <div className={layout.page}>
         {view !== 'overview' && (
           <header className={layout.hero}>
-            <p className={layout.eyebrow}>
-              {site.name} | {copy.section}
-            </p>
+            <p className={layout.eyebrow}>Crimson Skies | {copy.section}</p>
             <h1>{copy.title}</h1>
             <p>{copy.description}</p>
           </header>
@@ -181,17 +174,13 @@ export default function PlayerPortal() {
                 updatedAt={updatedAt}
               />
             )}
-            {view === 'market' && site.features.market && <MarketBoard />}
-            {(view === 'hagga' || view === 'deep-desert') && site.features.maps && (
-              <MapWindow
-                key={`${view}:${selectedMapDestination}`}
-                mapName={view === 'hagga' ? 'HaggaBasin' : 'DeepDesert'}
-                initialDestinationKey={selectedMapDestination}
-              />
+            {view === 'market' && <MarketBoard />}
+            {(view === 'hagga' || view === 'deep-desert') && (
+              <MapWindow key={view} mapName={view === 'hagga' ? 'HaggaBasin' : 'DeepDesert'} />
             )}
             {view === 'character' && <CharacterDossier character={character} details={player.details ?? {}} />}
             {view === 'storage' && <StorageWorkspace character={character} inventory={player.details?.inventory} />}
-            {view === 'guild' && site.features.guilds && (
+            {view === 'guild' && (
               <section className={`${dossier.panel} ${dossier.guildPanel}`}>
                 <h2>Guild membership</h2>
                 <div className={dossier.identity}>
@@ -288,7 +277,7 @@ export default function PlayerPortal() {
                 <p className={dossier.guildFooter}>Manage your guild and membership in game.</p>
               </section>
             )}
-            {view === 'bases' && site.features.bases && (
+            {view === 'bases' && (
               <BaseSection
                 visibleBases={baseTab === 'owned' ? ownedBases : sharedBases}
                 basesTelemetry={basesTelemetry}
@@ -298,10 +287,9 @@ export default function PlayerPortal() {
                 sharedBases={sharedBases}
                 baseTab={baseTab}
                 setBaseTab={setBaseTab}
-                showImport={site.features.baseImports}
               />
             )}
-            {view === 'vehicles' && site.features.vehicles && (
+            {view === 'vehicles' && (
               <VehicleSection
                 vehicles={vehicles}
                 playerName={character.name}

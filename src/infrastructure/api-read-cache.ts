@@ -13,7 +13,6 @@ const cache = new ReadCache<ApiReading>(
 const reads = new Set([
   '/api/player',
   '/api/map',
-  '/api/map/destinations',
   '/api/market',
   '/api/market/config',
   '/api/market/listings',

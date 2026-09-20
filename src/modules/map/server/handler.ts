@@ -12,6 +12,8 @@ import { extractBaseRows, normalizeBase, getBaseId } from './bases';
 
 import { extractOnlinePlayers, getOnlinePlayerId, extractPlayerId, getPlayerName } from './players';
 
+import { extractVehicleRows, isVehicleAccessible, normalizeVehicle } from './vehicles';
+
 import { extractRows, extractMapConfig, filterMapMarkers, addOnlineStatus } from './markers';
 
 const NO_STORE_HEADERS = {
@@ -90,22 +92,17 @@ export async function GET(request, res) {
     const duneClient = getDuneClient();
     const url = new URL(request.url, getRequestOrigin(request));
     const mapName = url.searchParams.get('map')?.trim();
-    const partitionId = url.searchParams.get('partitionId')?.trim();
-    const includeStatic = url.searchParams.get('static') !== '0';
-    const markerQuery = new URLSearchParams();
-    if (mapName) markerQuery.set('map', mapName);
-    if (partitionId) markerQuery.set('partitionId', partitionId);
-    if (!includeStatic) markerQuery.set('static', '0');
-    const markerEndpoint = `/api/map/markers${markerQuery.size ? `?${markerQuery}` : ''}`;
 
-    const [basesData, mapData, onlinePlayersData, capabilitiesData] = await Promise.all([
+    const markerEndpoint = mapName ? `/api/map/markers?map=${encodeURIComponent(mapName)} ` : '/api/map/markers';
+
+    const [basesData, mapData, vehiclesData, onlinePlayersData] = await Promise.all([
       duneClient.request('GET', `/api/players/${encodeURIComponent(playerId)}/bases`),
 
       duneClient.request('GET', markerEndpoint),
 
-      duneClient.request('GET', '/api/players/online'),
+      duneClient.request('GET', '/api/vehicles'),
 
-      duneClient.request('GET', '/api/map/capabilities').catch(() => null),
+      duneClient.request('GET', '/api/players/online'),
     ]);
 
     // BASES
@@ -121,17 +118,24 @@ export async function GET(request, res) {
 
     const onlinePlayerIds = new Set(onlinePlayers.map(getOnlinePlayerId).filter(Boolean));
 
-    const playerName = getPlayerName(playerData, session);
     const markers = filterMapMarkers(allMarkers, {
       playerId,
-      playerName,
       playerData,
       session,
       playerBaseIds,
     });
 
+    // VEHICLES
+    const playerName = getPlayerName(playerData, session);
+
+    const vehicleRows = extractVehicleRows(vehiclesData);
+
+    const accessibleVehicles = vehicleRows.filter((vehicle) => isVehicleAccessible(vehicle, playerName, playerId));
+
+    const playerVehicleMarkers = accessibleVehicles.map(normalizeVehicle);
+
     // FINAL MARKERS
-    const finalMarkers = addOnlineStatus(markers, onlinePlayerIds);
+    const finalMarkers = [...addOnlineStatus(markers, onlinePlayerIds), ...playerVehicleMarkers];
 
     // MAP CONFIG
     const map = extractMapConfig(mapData);
@@ -139,7 +143,6 @@ export async function GET(request, res) {
     if (!map) {
       logger.warn('No map configuration returned', {
         mapName: mapName || null,
-        partitionId: partitionId || null,
       });
     }
 
@@ -152,17 +155,6 @@ export async function GET(request, res) {
         markers: finalMarkers,
         map,
         count: finalMarkers.length,
-        capabilities: {
-          ...((capabilitiesData as Record<string, unknown>) ?? {}),
-          ...((mapData as { capabilities?: Record<string, unknown> })?.capabilities ?? {}),
-        },
-        knownSubtypes: (mapData as { knownSubtypes?: unknown })?.knownSubtypes ?? {},
-        subtypeLabels: (mapData as { subtypeLabels?: unknown })?.subtypeLabels ?? {},
-        coriolisSeed: (mapData as { coriolisSeed?: unknown })?.coriolisSeed ?? '',
-        coriolisNextCycleAt: (mapData as { coriolisNextCycleAt?: unknown })?.coriolisNextCycleAt ?? '',
-        coriolisSeedStaleSince: (mapData as { coriolisSeedStaleSince?: unknown })?.coriolisSeedStaleSince ?? '',
-        coriolisLayout: (mapData as { coriolisLayout?: unknown })?.coriolisLayout ?? null,
-        staticIncluded: includeStatic,
         timestamp: new Date().toISOString(),
         durationMs,
       },

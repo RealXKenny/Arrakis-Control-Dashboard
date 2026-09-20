@@ -1,9 +1,7 @@
 import { cachedFetch } from '../../../lib/client-cache';
 import { useEffect, useState } from 'react';
-import { useSiteConfig } from '../../../components/SiteConfigProvider';
 
 export function useServerStatus() {
-  const site = useSiteConfig();
   const [activePlayers, setActivePlayers] = useState<number | null>(null);
   const [totalPlayers, setTotalPlayers] = useState<number | null>(null);
   const [serverStatusError, setServerStatusError] = useState(false);
@@ -14,7 +12,7 @@ export function useServerStatus() {
       if (request || disposed || document.visibilityState === 'hidden') return;
       const controller = new AbortController();
       request = controller;
-      const timeout = setTimeout(() => controller.abort(), site.requestTimeoutMs);
+      const timeout = setTimeout(() => controller.abort(), 10000);
       try {
         const response = await cachedFetch('/api/server/status', {
           signal: controller.signal,
@@ -45,7 +43,7 @@ export function useServerStatus() {
       }
     }
     void load();
-    const timer = setInterval(load, site.pollIntervalMs);
+    const timer = setInterval(load, 30000);
     document.addEventListener('visibilitychange', load);
     return () => {
       disposed = true;
@@ -53,6 +51,6 @@ export function useServerStatus() {
       document.removeEventListener('visibilitychange', load);
       request?.abort();
     };
-  }, [site.pollIntervalMs, site.requestTimeoutMs]);
+  }, []);
   return { activePlayers, totalPlayers, serverStatusError };
 }

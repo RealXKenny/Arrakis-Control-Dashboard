@@ -2,7 +2,6 @@ import '../../../lib/assert-server';
 import { getMarkerBaseId } from './bases';
 
 import { isCurrentPlayerMarker } from './players';
-import { isVehicleAccessible } from './vehicles';
 
 export function extractRows(data) {
   if (Array.isArray(data)) {
@@ -64,7 +63,7 @@ export function extractMapConfig(data) {
   return null;
 }
 
-export function filterMapMarkers(allMarkers, { playerId, playerName, playerData, session, playerBaseIds }) {
+export function filterMapMarkers(allMarkers, { playerId, playerData, session, playerBaseIds }) {
   const supportedMarkerTypes = new Set([
     'player',
     'base',
@@ -98,7 +97,7 @@ export function filterMapMarkers(allMarkers, { playerId, playerName, playerData,
     }
 
     if (type === 'vehicle') {
-      return isVehicleAccessible(marker, playerName, playerId);
+      return false;
     }
 
     if (type === 'base') {
