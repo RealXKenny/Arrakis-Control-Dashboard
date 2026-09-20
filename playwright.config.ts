@@ -18,6 +18,7 @@ export default defineConfig({
       DISCORD_GUILD_ID: 'browser-test-guild',
       APP_URL: 'http://127.0.0.1:3100',
       REDIS_URL: 'redis://127.0.0.1:9',
+      LOG_LEVEL: 'FATAL',
     },
     command: 'npx next start --hostname 127.0.0.1 --port 3100',
     url: 'http://127.0.0.1:3100',
