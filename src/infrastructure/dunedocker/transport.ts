@@ -1,7 +1,6 @@
 import '../../lib/assert-server';
 import { randomUUID } from 'node:crypto';
-import { logger } from '../../lib/logger';
-import { captureApiSnapshot } from '../../lib/api-debug';
+import { createLogger } from '../../lib/logger';
 
 export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type Provider = 'console' | 'adapter';
@@ -60,6 +59,7 @@ export async function sendProviderRequest(options: {
   retryRead?: boolean;
 }): Promise<TransportResult> {
   const { provider, url, method, headers, body, timeoutMs = 30000, retryRead = false } = options;
+  const log = createLogger(provider === 'adapter' ? 'DISCORD ADAPTER' : 'DUNE API');
   const traceId = randomUUID();
   const attempts = retryRead ? 3 : 1;
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -74,7 +74,7 @@ export async function sendProviderRequest(options: {
         signal: AbortSignal.timeout(timeoutMs),
       });
     } catch {
-      logger.warn('Dunedocker network failure', {
+      log.warn('Provider network failure', {
         traceId,
         provider,
         method,
@@ -82,7 +82,6 @@ export async function sendProviderRequest(options: {
         attempt,
         durationMs: Date.now() - started,
       });
-      await captureApiSnapshot(url.pathname, 0, { error: 'Provider network failure' }, provider, method);
       if (attempt < attempts) {
         await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
         continue;
@@ -93,14 +92,7 @@ export async function sendProviderRequest(options: {
     try {
       data = await parseProviderResponse(response);
     } catch {
-      await captureApiSnapshot(
-        url.pathname,
-        response.status,
-        { error: 'Non-JSON or malformed provider response' },
-        provider,
-        method,
-      );
-      logger.warn('Dunedocker invalid response', {
+      log.warn('Provider returned invalid JSON', {
         traceId,
         provider,
         method,
@@ -110,10 +102,8 @@ export async function sendProviderRequest(options: {
       });
       throw failure(provider, response.status);
     }
-    await captureApiSnapshot(url.pathname, response.status, data, provider, method);
-    logger.debug('Dunedocker response', {
+    log.debug('Provider request completed', {
       traceId,
-      provider,
       method,
       route: url.pathname,
       status: response.status,

@@ -11,7 +11,6 @@ export default defineConfig({
     // Browser tests intercept API responses; never use deployment credentials.
     env: {
       POPULATION_HISTORY_ENABLED: 'false',
-      API_DEBUG_ENABLED: 'false',
       CONSOLE_URL: 'http://127.0.0.1:9',
       CONSOLE_PASSWORD: 'browser-test-placeholder',
       ADAPTER_TOKEN: 'browser-test-placeholder',
@@ -20,11 +19,7 @@ export default defineConfig({
       DISCORD_GUILD_ID: 'browser-test-guild',
       DISCORD_REDIRECT_URI: 'http://127.0.0.1:3100/auth/callback',
       APP_URL: 'http://127.0.0.1:3100',
-      DISCORD_APP_URL: 'http://127.0.0.1:3100',
       REDIS_URL: 'redis://127.0.0.1:9',
-      SENTRY_DSN: '',
-      NEXT_PUBLIC_SENTRY_DSN: '',
-      SENTRY_ENABLED: 'false',
     },
     command: 'npx next start --hostname 127.0.0.1 --port 3100',
     url: 'http://127.0.0.1:3100',

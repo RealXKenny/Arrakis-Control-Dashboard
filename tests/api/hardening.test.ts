@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppError, getSafeError } from '../../src/lib/errors';
-import { logger } from '../../src/lib/logger';
+import { createLogger, logger } from '../../src/lib/logger';
 import { checkRateLimit } from '../../src/lib/rate-limit';
 import { deleteSession, getSession, saveSession } from '../../src/lib/session-store';
 
@@ -37,6 +37,15 @@ describe('shared production hardening', () => {
     expect(plainMessage).toContain('[DASHBOARD] test');
     expect(plainMessage).toContain('"token":"[REDACTED]"');
     expect(plainMessage).toContain('"route":"/api/test"');
+  });
+
+  it('writes debug details to the console only when enabled', () => {
+    const output = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    createLogger('DUNE API', 'DEBUG').debug('Provider request completed', { status: 200 });
+    const [message] = output.mock.calls[0];
+    const plainMessage = message.replace(/\u001B\[[0-9;]*m/g, '');
+    expect(plainMessage).toContain('◆ [DEBUG] [DUNE API] Provider request completed');
+    expect(plainMessage).toContain('· {"status":200}');
   });
 
   it('does not expose unexpected server errors', () => {

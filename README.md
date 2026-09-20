@@ -22,7 +22,7 @@ npm run dev
 
 The development server listens on `http://127.0.0.1:2008`.
 
-Set `DASHBOARD_HOSTNAME` and `DASHBOARD_PORT` in `.env` to bind the dashboard to a different interface and port. You can also override them for a single run with Next.js options, for example `npm run dev -- --hostname 0.0.0.0 --port 3000`.
+The development server binds to `127.0.0.1:2008`. Override it for a single run with Next.js options, for example `npm run dev -- --hostname 0.0.0.0 --port 3000`.
 
 Fill in `.env` before using authentication or server-backed features. Never commit `.env` or place server secrets in variables beginning with `NEXT_PUBLIC_`.
 
@@ -30,12 +30,12 @@ Fill in `.env` before using authentication or server-backed features. Never comm
 
 Required production variables include:
 
-- `CONSOLE_URL`, `CONSOLE_PASSWORD`, and `ADAPTER_TOKEN` for Dune Console access.
-- `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`, `DISCORD_REDIRECT_URI`, and `DISCORD_APP_URL` for Discord OAuth.
+- `CONSOLE_URL`, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN` for scoped Dune Console access.
+- `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`, and `DISCORD_REDIRECT_URI` for Discord OAuth.
 - `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization.
 - `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits and persistent sessions.
 
-Sentry variables are optional. Configure `SENTRY_DSN` for runtime monitoring and `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, and `SENTRY_PROJECT` for production source-map upload. See [.env.example](.env.example) for the complete template.
+See [.env.example](.env.example) for the complete configuration template.
 
 ## Commands
 
@@ -74,15 +74,13 @@ Important boundaries:
 - `middleware.ts` adds request correlation and security headers.
 - `tests/` contains focused unit and API-boundary tests.
 
-See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) for the full repository map and [docs/PRODUCTION.md](docs/PRODUCTION.md) for deployment operations.
-
 ## Security and Reliability
 
 - API routes receive request IDs, method checks, structured logging, safe error responses, and shared rate limiting.
 - Production rate limits use Upstash Redis and fail closed if the storage service is unavailable.
 - OAuth sessions use Redis TTL records; cookies contain only random opaque session IDs.
 - OAuth access tokens are not persisted.
-- Logs and Sentry context redact passwords, tokens, cookies, authorization headers, and session values.
+- Logs redact passwords, tokens, cookies, authorization headers, and session values.
 - Security headers are applied by middleware, including CSP, frame protection, referrer policy, and HSTS in production.
 - External requests use bounded timeouts and safe retry behavior where applicable.
 
@@ -100,7 +98,7 @@ npm test
 npm run build
 ```
 
-5. Start with `npm start` and monitor application logs and Sentry.
+5. Start with `npm start` and monitor application logs.
 
 Do not deploy with placeholder environment values, disabled HTTPS, or missing Redis credentials. Redis is required in production because sessions and rate limits must work across instances and survive restarts.
 

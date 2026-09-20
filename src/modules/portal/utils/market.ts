@@ -1,4 +1,4 @@
-/** Preserve PostgreSQL bigint quantities/prices when formatting for display. */
+/** Preserve bigint quantities and prices when formatting for display. */
 export function formatMarketNumber(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
   if (typeof value === 'string' && /^-?\d+$/.test(value)) return BigInt(value).toLocaleString('en-US');

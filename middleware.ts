@@ -1,9 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getServerEnv } from "./src/config/env";
 
 export function middleware(request: NextRequest) {
-  const browserDsn = getServerEnv().NEXT_PUBLIC_SENTRY_DSN;
-  const monitoringOrigin = browserDsn ? new URL(browserDsn).origin : "";
   const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
   const response = NextResponse.next();
   response.headers.set("X-Request-ID", requestId);
@@ -19,7 +16,7 @@ export function middleware(request: NextRequest) {
       "frame-ancestors 'none'",
       "object-src 'none'",
       "img-src 'self' data: blob: https://cdn.discordapp.com",
-      ["connect-src 'self' https://discord.com", monitoringOrigin].filter(Boolean).join(" "),
+      "connect-src 'self' https://discord.com",
       "style-src 'self' 'unsafe-inline'",
       process.env.NODE_ENV === "development" ? "script-src 'self' 'unsafe-eval'" : "script-src 'self'",
     ].join("; "),

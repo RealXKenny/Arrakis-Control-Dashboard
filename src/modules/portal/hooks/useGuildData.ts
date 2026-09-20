@@ -1,5 +1,4 @@
 import { cachedFetch, clearClientReadCache } from '../../../lib/client-cache';
-import { captureException } from '@sentry/nextjs';
 import { useEffect, useRef, useState } from 'react';
 import { record, rows } from '../utils/inventory';
 
@@ -85,9 +84,8 @@ export function useGuildData(character, enabled: boolean) {
         const memberPayload = record(await memberResponse.json());
         const nextMembers = rows(record(memberPayload.data)) ?? [];
         if (!cancelled) setMembers(nextMembers);
-      } catch (reason) {
+      } catch {
         if (!cancelled) {
-          captureException(reason);
           setError('Guild data is temporarily unavailable.');
         }
       } finally {

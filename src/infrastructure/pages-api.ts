@@ -1,5 +1,4 @@
 import { cachedApiReading, invalidateApiReads } from './api-read-cache';
-import { captureApiSnapshot } from '../lib/api-debug';
 import '../lib/assert-server';
 import { randomUUID } from 'node:crypto';
 import { createRequestLogger } from '../lib/logger';
@@ -71,7 +70,6 @@ export async function runPagesApiHandler(req, res, method, handler) {
     if (req.method !== method) {
       res.setHeader('Allow', method);
       const payload = { ok: false, error: 'Method Not Allowed', code: 'METHOD_NOT_ALLOWED', requestId };
-      await captureApiSnapshot(route, 405, payload, 'portal', req.method);
       res.status(405).json(payload);
       log.warn('Request rejected', { status: 405 });
       return;
@@ -93,7 +91,6 @@ export async function runPagesApiHandler(req, res, method, handler) {
         code: status === 429 ? 'RATE_LIMITED' : 'RATE_LIMIT_UNAVAILABLE',
         requestId,
       };
-      await captureApiSnapshot(route, status, payload, 'portal', req.method);
       res.status(status).json(payload);
       log.warn('Request protection rejected request', { status });
       return;
@@ -122,20 +119,12 @@ export async function runPagesApiHandler(req, res, method, handler) {
     } else {
       log.info('Request completed', { status: response.status });
     }
-    let snapshot: unknown = response.body;
-    try {
-      snapshot = response.body ? JSON.parse(response.body) : null;
-    } catch {
-      /* Preserve non-JSON responses. */
-    }
-    await captureApiSnapshot(route, response.status, snapshot, 'portal', req.method);
     sendNextResponse(res, response);
   } catch (error) {
     const safeError = getSafeError(error);
     log.error('Failed to load data', error);
     if (!res.headersSent) {
       const payload = { ok: false, error: safeError.message, code: safeError.code, requestId };
-      await captureApiSnapshot(route, safeError.statusCode, payload, 'portal', req.method);
       res.status(safeError.statusCode).json(payload);
     }
   }
