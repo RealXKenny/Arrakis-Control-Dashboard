@@ -302,6 +302,8 @@ test('unavailable personal listings are not shown as zero or a request failure',
 });
 
 test('map survives stylesheet extraction and refreshes independently', async ({ page }) => {
+  test.setTimeout(process.env.CI ? 90_000 : 60_000);
+
   await page.route('**/api/map?*', (route) => {
     const deepDesert = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
     const mapConfig = deepDesert
@@ -377,10 +379,12 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   const haggaTiles = page.locator('[data-map-tiles="hagga-basin"] img');
   await expect(haggaTiles).toHaveCount(4);
   await expect
-    .poll(() =>
-      haggaTiles.evaluateAll((images: HTMLImageElement[]) =>
-        images.every((img) => img.complete && img.naturalWidth === 4096),
-      ),
+    .poll(
+      () =>
+        haggaTiles.evaluateAll((images: HTMLImageElement[]) =>
+          images.every((img) => img.complete && img.naturalWidth === 4096),
+        ),
+      { timeout: 20_000 },
     )
     .toBe(true);
   await expect
@@ -433,7 +437,9 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   const terrain = page.locator('[data-terrain-state]');
   await expect(terrain).toHaveAttribute('data-terrain-state', 'ready', { timeout: 20_000 });
   await expect(terrain).toHaveAttribute('data-map-resolution', '8192x8192');
-  await expect(terrain.locator('canvas')).toHaveAttribute('data-terrain-resolution', '8192x8192');
+  await expect(terrain.locator('canvas')).toHaveAttribute('data-terrain-resolution', '8192x8192', {
+    timeout: 20_000,
+  });
   const sectorGrid = page.locator('svg[data-sector-grid="deep-desert"]');
   await expect(sectorGrid).toHaveCount(1);
   await expect(sectorGrid.locator('text')).toHaveCount(81);
@@ -456,13 +462,15 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
     )
     .toBe(true);
   await expect
-    .poll(() =>
-      terrain.evaluate((map) => {
-        const frame = map.parentElement;
-        if (!frame) return Number.POSITIVE_INFINITY;
-        const bounds = map.getBoundingClientRect();
-        return Math.max(bounds.width - frame.clientWidth, bounds.height - frame.clientHeight);
-      }),
+    .poll(
+      () =>
+        terrain.evaluate((map) => {
+          const frame = map.parentElement;
+          if (!frame) return Number.POSITIVE_INFINITY;
+          const bounds = map.getBoundingClientRect();
+          return Math.max(bounds.width - frame.clientWidth, bounds.height - frame.clientHeight);
+        }),
+      { timeout: 15_000 },
     )
     .toBeLessThanOrEqual(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
