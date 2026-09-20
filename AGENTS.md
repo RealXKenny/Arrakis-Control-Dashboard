@@ -15,7 +15,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 ## Runtime
 
 - Stack: Node.js 22+, Next.js 16 Pages Router, React 19, TypeScript, npm, Redis, Vitest, and Playwright.
-- Dev: `npm run dev` at `http://127.0.0.1:2008`. Production: `npm run build`, then `npm start`.
+- Dev: `npm run dev`; defaults to `http://127.0.0.1:2008`, with `SERVER_HOSTNAME` and `SERVER_PORT` configurable in `.env`. Production: `npm run build`, then `npm start` with the same binding variables.
 - Standard checks: `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`.
 - Extra checks: `npm run test:production` for runtime/API changes; `npm run test:browser` for UI behavior.
 - `LOG_LEVEL=DEBUG` writes redacted metadata to the colored console only. There are no log files or Sentry.
@@ -27,7 +27,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/modules/<feature>/`: UI, hooks, normalization, utilities, and server handlers for `auth`, `bases`, `changelog`, `guilds`, `home`, `map`, `player`, and `portal`.
 - `src/infrastructure/`: Dune Console/adapter and Discord clients, API boundary, cookies, and API cache. Start with `dune.ts`, `dunedocker/transport.ts`, or `pages-api.ts`.
 - `src/lib/`: server guards, Redis, sessions, rate limits, logging, errors, timeouts, and shared caches.
-- `src/config/env.ts`: authoritative server environment schema and production validation.
+- `src/config/`: authoritative server environment schema, production validation, and the dev/production server launcher.
 - `src/instrumentation.ts`: runtime validation, Console warmup, startup log, and population recorder.
 - `src/assets/`: favicon, application images, and compressed Deep Desert terrain bundles. It is large; do not enumerate it unless necessary.
 - `src/modules/map/terrain/`: lazy WebGL2 terrain renderer; the flat Deep Desert image is its compatibility fallback.

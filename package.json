@@ -1,10 +1,10 @@
 {
   "name": "Arrakis-Control-Dashboard",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1 --port 2008",
+    "dev": "node src/config/server-launcher.mjs dev",
     "build": "next build",
-    "start": "next start --hostname 127.0.0.1 --port 2008",
+    "start": "node src/config/server-launcher.mjs start",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

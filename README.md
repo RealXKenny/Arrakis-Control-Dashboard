@@ -20,9 +20,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-The development server listens on `http://127.0.0.1:2008`.
-
-The development server binds to `127.0.0.1:2008`. Override it for a single run with Next.js options, for example `npm run dev -- --hostname 0.0.0.0 --port 3000`.
+The development server listens on `http://127.0.0.1:2008` by default. Set `SERVER_HOSTNAME` and `SERVER_PORT` in `.env` to choose a different bind address for both `npm run dev` and `npm start`. Next.js command-line options still override `.env` for a single run, for example `npm run dev -- --hostname 0.0.0.0 --port 3000`.
 
 Fill in `.env` before using authentication or server-backed features. Never commit `.env` or place server secrets in variables beginning with `NEXT_PUBLIC_`.
 
@@ -34,6 +32,11 @@ Required production variables include:
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `DISCORD_GUILD_ID` for Discord OAuth.
 - `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/auth/callback`.
 - `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits and persistent sessions.
+
+Optional server binding variables:
+
+- `SERVER_HOSTNAME` selects the interface or hostname to bind. It defaults to `127.0.0.1`.
+- `SERVER_PORT` selects the TCP port. It defaults to `2008` and must be between `1` and `65535`.
 
 See [.env.example](.env.example) for the complete configuration template.
 

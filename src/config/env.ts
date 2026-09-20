@@ -4,6 +4,13 @@ import { z } from 'zod';
 const serverEnvSchema = z.object({
   LOG_LEVEL: z.enum(['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']).default('INFO'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  SERVER_HOSTNAME: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((value) => !/[\s\u0000-\u001f\u007f]/u.test(value))
+    .default('127.0.0.1'),
+  SERVER_PORT: z.coerce.number().int().min(1).max(65_535).default(2008),
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_API_KEY: z.string().min(1).optional(),
   ADAPTER_TOKEN: z.string().min(1).optional(),
@@ -79,7 +86,7 @@ export function validateProductionEnv(): ServerEnv {
     'APP_URL',
     'REDIS_URL',
   );
-  const names: Array<keyof ServerEnv> = ['CONSOLE_URL', 'APP_URL'];
+  const names = ['CONSOLE_URL', 'APP_URL'] as const;
   for (const name of names) {
     const value = env[name];
     if (!value) continue;

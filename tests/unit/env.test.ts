@@ -22,6 +22,19 @@ it('accepts the portal environment template', async () => {
   const { getServerEnv } = await import('../../src/config/env');
   const env = getServerEnv();
   expect(env.LOG_LEVEL).toBe('INFO');
+  expect(env.SERVER_HOSTNAME).toBe('127.0.0.1');
+  expect(env.SERVER_PORT).toBe(2008);
+});
+
+it.each([
+  ['SERVER_HOSTNAME', 'invalid hostname'],
+  ['SERVER_PORT', '0'],
+  ['SERVER_PORT', '65536'],
+  ['SERVER_PORT', 'not-a-port'],
+])('rejects an invalid server binding in %s', async (name, value) => {
+  vi.stubEnv(name, value);
+  const { getServerEnv } = await import('../../src/config/env');
+  expect(getServerEnv).toThrow(`Invalid server environment configuration: ${name}`);
 });
 
 function productionFixture() {
