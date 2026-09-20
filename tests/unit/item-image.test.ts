@@ -5,7 +5,7 @@ import { itemImage } from '../../src/modules/portal/utils/item-image';
 
 it('indexes every supplied item image and resolves its exact template name', () => {
   expect(files).toEqual(
-    readdirSync('public/items')
+    readdirSync('src/assets/items')
       .filter((name) => /\.(png|webp|jpg|jpeg|avif)$/i.test(name))
       .sort(),
   );

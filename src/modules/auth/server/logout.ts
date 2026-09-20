@@ -24,6 +24,6 @@ export async function POST(req, res) {
   });
 
   const env = getServerEnv();
-  const appUrl = env.APP_URL || env.DISCORD_APP_URL || requestOrigin;
+  const appUrl = env.APP_URL || requestOrigin;
   return NextResponse.redirect(new URL('/', appUrl), 303);
 }

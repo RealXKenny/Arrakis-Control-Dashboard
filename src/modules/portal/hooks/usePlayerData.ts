@@ -1,5 +1,4 @@
 import { cachedFetch, capturedAt, clearClientReadCache } from '../../../lib/client-cache';
-import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { REFRESH_INTERVAL } from '../config/progression';
 import { extractBases, getBaseId } from '../utils/bases';
@@ -58,9 +57,8 @@ export function usePlayerData() {
       setPlayer(data);
       setUpdatedAt(capturedAt(response));
       setError('');
-    } catch (reason) {
+    } catch {
       if (request.current !== controller) return;
-      captureException(reason);
       setError('Telemetry is temporarily unavailable. Any displayed readings are from the last successful sync.');
     } finally {
       clearTimeout(timeout);

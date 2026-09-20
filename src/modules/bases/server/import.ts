@@ -70,7 +70,7 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
   );
   try {
     // No automatic resubmission: Console has no idempotency key for game writes.
-    const result = await client.requestMultipart('POST', '/api/blueprints/import', form, false);
+    const result = await client.requestMultipart('POST', '/api/blueprints/import', form);
     if (objectRecord(result)?.ok !== true) throw new Error('Import not confirmed');
     record.status = 'imported';
     record.message = objectRecord(result).online

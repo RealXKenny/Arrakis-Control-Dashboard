@@ -4,24 +4,27 @@ import { once } from 'node:events';
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
-import { createRedisFixture } from './fixtures/redis-resp.mjs';
+import { createRedisFixture } from './helpers/redis-resp.mjs';
 
 // Isolated transport fixture: no real Redis, Discord, or Dune credentials are used.
 let revoked = false;
 let upstreamReads = 0;
 const redis = createServer(async (req, res) => {
   if (req.url.startsWith('/api/')) {
+    const expectedToken = req.url === '/api/integrations/discord/players/me' ? 'fixture-token' : 'fixture-console-key';
+    if (req.headers.authorization !== `Bearer ${expectedToken}`) {
+      res.statusCode = 401;
+      res.end(JSON.stringify({ ok: false }));
+      return;
+    }
     if (!req.url.startsWith('/api/1/envelope/')) upstreamReads++;
     res.setHeader('Content-Type', 'application/json');
-    if (req.url === '/api/auth/login') res.setHeader('Set-Cookie', 'asc_session=fixture; Path=/; HttpOnly');
     const payload =
-      req.url === '/api/auth/state'
-        ? { csrfToken: 'fixture-csrf' }
-        : req.url === '/api/integrations/discord/players/me'
-          ? { linked: true, pawnId: 'player', characterName: 'Tester' }
-          : req.url.endsWith('/bases')
-            ? { rows: Array.from({ length: 8 }, (_, id) => ({ id: String(id) })) }
-            : { rows: [], totalCount: 0, map: { width: 1000, height: 1000 } };
+      req.url === '/api/integrations/discord/players/me'
+        ? { linked: true, pawnId: 'player', characterName: 'Tester' }
+        : req.url.endsWith('/bases')
+          ? { rows: Array.from({ length: 8 }, (_, id) => ({ id: String(id) })) }
+          : { rows: [], totalCount: 0, map: { width: 1000, height: 1000 } };
     res.end(JSON.stringify(payload));
     return;
   }
@@ -53,10 +56,6 @@ const base = `http://127.0.0.1:${port}`;
 await new Promise((resolve) => reservation.close(resolve));
 
 const require = createRequire(import.meta.url);
-const manifestPath = '.next/routes-manifest.json';
-const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-const tunnelRewrites = manifest.rewrites.afterFiles.filter((route) => route.source.startsWith('/monitoring'));
-assert.equal(tunnelRewrites.length, 0, 'Sentry must use direct transport, not the external rewrite proxy');
 const mode = process.env.SMOKE_NEXT_MODE === 'dev' ? 'dev' : 'start';
 const child = spawn(
   process.execPath,
@@ -66,21 +65,16 @@ const child = spawn(
     stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
-      API_DEBUG_ENABLED: 'false',
       POPULATION_HISTORY_ENABLED: 'false',
       NODE_ENV: mode === 'dev' ? 'development' : 'production',
       CONSOLE_URL: `http://127.0.0.1:${redisPort}`,
-      CONSOLE_PASSWORD: 'fixture-password',
+      CONSOLE_API_KEY: 'fixture-console-key',
       ADAPTER_TOKEN: 'fixture-token',
       DISCORD_CLIENT_ID: 'fixture-client',
       DISCORD_CLIENT_SECRET: 'fixture-secret',
       DISCORD_GUILD_ID: 'fixture-guild',
       DISCORD_REDIRECT_URI: `${base}/auth/callback`,
-      DISCORD_APP_URL: base,
       APP_URL: base,
-      SENTRY_DSN: `http://fixture@127.0.0.1:${redisPort}/1`,
-      NEXT_PUBLIC_SENTRY_DSN: '',
-      SENTRY_AUTH_TOKEN: '',
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
     },
   },
@@ -112,6 +106,16 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   assert.ok(ready, 'Production server must serve /portal');
+  for (const [asset, contentType] of [
+    ['/favicon.ico', 'image/x-icon'],
+    ['/maps/atreides.webp', 'image/webp'],
+    ['/items/MelangeSpice.png', 'image/png'],
+  ]) {
+    const response = await fetch(`${base}${asset}`, { signal: AbortSignal.timeout(5000) });
+    assert.equal(response.status, 200, asset);
+    assert.equal(response.headers.get('content-type'), contentType, asset);
+    assert.ok((await response.arrayBuffer()).byteLength > 0, asset);
+  }
   const home = await fetch(`${base}/`, { headers: { cookie: 'dashboard_session=fixture-session' } });
   assert.equal(home.status, 200, 'homepage with a session cookie');
   assert.match(await home.text(), /"isAuthenticated":true/);
@@ -192,9 +196,6 @@ try {
   const signedOutHome = await fetch(`${base}/`, { headers });
   assert.equal(signedOutHome.status, 200, 'homepage with a revoked session cookie');
   assert.match(await signedOutHome.text(), /"isAuthenticated":false/);
-  const monitoringResponse = await fetch(`${base}/monitoring?o=1&p=1`, { method: 'POST', body: 'fixture' });
-  assert.equal(monitoringResponse.status, 404);
-  await monitoringResponse.text();
   if (logs.includes('MaxListenersExceededWarning'))
     console.error(
       logs.slice(logs.indexOf('MaxListenersExceededWarning'), logs.indexOf('MaxListenersExceededWarning') + 2500),

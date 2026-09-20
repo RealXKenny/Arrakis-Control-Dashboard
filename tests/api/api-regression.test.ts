@@ -34,7 +34,7 @@ vi.mock('../../src/config/env', () => ({
     DISCORD_CLIENT_SECRET: 'secret',
     DISCORD_GUILD_ID: 'guild',
     DISCORD_REDIRECT_URI: 'https://dashboard.test/auth/callback',
-    DISCORD_APP_URL: 'https://dashboard.test',
+    APP_URL: 'https://dashboard.test',
   }),
 }));
 

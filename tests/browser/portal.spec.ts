@@ -46,7 +46,7 @@ test.beforeEach(async ({ page }) => {
     route.fulfill({ json: { ok: true, cacheScope: 'a'.repeat(64), expiresAt: Date.now() + 43200000 } }),
   );
   await page.route('https://cdn.discordapp.com/avatars/**', (route) =>
-    route.fulfill({ path: 'public/maps/atreides.webp', contentType: 'image/webp' }),
+    route.fulfill({ path: 'src/assets/maps/atreides.webp', contentType: 'image/webp' }),
   );
   await page.route('**/api/portal/world?*', (route) =>
     route.fulfill({

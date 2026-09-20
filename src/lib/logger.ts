@@ -1,6 +1,5 @@
 import './assert-server';
 import { getServerEnv } from '../config/env';
-import * as Sentry from '@sentry/nextjs';
 
 const LEVELS = Object.freeze({
   DEBUG: 10,
@@ -38,6 +37,14 @@ const LEVEL_COLORS: Record<LogLevel, string> = Object.freeze({
   FATAL: COLORS.red,
 });
 
+const LEVEL_ICONS: Record<LogLevel, string> = Object.freeze({
+  DEBUG: '◆',
+  INFO: '●',
+  WARN: '▲',
+  ERROR: '✖',
+  FATAL: '✖',
+});
+
 const SCOPE_COLORS: Record<string, string> = Object.freeze({
   BOT: COLORS.brightYellow,
   DISCORD: COLORS.brightCyan,
@@ -71,10 +78,11 @@ function redact(value: unknown, key = ''): unknown {
     return '[REDACTED]';
   }
   if (value instanceof Error) {
+    const operationalError = ['DuneConsoleApiError', 'DiscordAdapterApiError'].includes(value.name);
     return {
       name: value.name,
       message: value.message,
-      stack: getServerEnv().NODE_ENV === 'production' ? undefined : value.stack,
+      stack: getServerEnv().NODE_ENV === 'production' || operationalError ? undefined : value.stack,
     };
   }
   if (Array.isArray(value)) {
@@ -142,25 +150,16 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
 
     const output =
       `${COLORS.dim}[${formatTimestamp(new Date())}]${COLORS.reset} ` +
-      `${LEVEL_COLORS[level]}[${level}]${COLORS.reset} ` +
+      `${LEVEL_COLORS[level]}${LEVEL_ICONS[level]} [${level}]${COLORS.reset} ` +
       `${scopeColor}[${scope}]${COLORS.reset} ` +
       message;
     const safeDetails = redact(details);
     const line = formatDetails(safeDetails);
-    const formattedOutput = line ? `${output} ${line}` : output;
+    const formattedOutput = line ? `${output} ${COLORS.dim}·${COLORS.reset} ${line}` : output;
 
     if (level === 'ERROR' || level === 'FATAL') {
       console.error(formattedOutput);
 
-      const error =
-        details instanceof Error
-          ? details
-          : details && typeof details === 'object' && 'error' in details
-            ? details.error
-            : undefined;
-      if (error instanceof Error) {
-        Sentry.captureException(error, { extra: (redact(details) || {}) as Record<string, unknown> });
-      }
       return;
     }
 
@@ -169,8 +168,12 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
       return;
     }
 
-    const method = level === 'DEBUG' ? console.debug : console.info;
-    method(formattedOutput);
+    if (level === 'DEBUG') {
+      console.debug(formattedOutput);
+      return;
+    }
+
+    console.info(formattedOutput);
   }
 
   return Object.freeze({
@@ -179,17 +182,16 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
         return;
       }
 
-      const banner = [
-        '  ██████╗██████╗ ██╗███╗   ███╗███████╗ ██████╗ ███╗   ██╗    ███████╗██╗  ██╗██╗███████╗███████╗ ',
-        ' ██╔════╝██╔══██╗██║████╗ ████║██╔════╝██╔═══██╗████╗  ██║    ██╔════╝██║ ██╔╝██║██╔════╝██╔════╝ ',
-        ' ██║     ██████╔╝██║██╔████╔██║███████╗██║   ██║██╔██╗ ██║    ███████╗█████╔╝ ██║█████╗  ███████╗ ',
-        ' ██║     ██╔══██╗██║██║╚██╔╝██║╚════██║██║   ██║██║╚██╗██║    ╚════██║██╔═██╗ ██║██╔══╝  ╚════██║ ',
-        ' ╚██████╗██║  ██║██║██║ ╚═╝ ██║███████║╚██████╔╝██║ ╚████║    ███████║██║  ██╗██║███████╗███████║ ',
-        '  ╚═════╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═══╝    ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝ ',
-      ].join('\n');
-
-      console.log(`\n${COLORS.yellow}${banner}${COLORS.reset}`);
-      console.log(`${COLORS.cyan}${title}${COLORS.reset} ${COLORS.dim}- ${subtitle}${COLORS.reset}\n`);
+      const width = 64;
+      const border = '─'.repeat(width);
+      console.log(`\n${COLORS.brightOrange}╭${border}╮${COLORS.reset}`);
+      console.log(
+        `${COLORS.brightOrange}│${COLORS.reset} ${COLORS.brightYellow}${title.padEnd(width - 1)}${COLORS.reset}${COLORS.brightOrange}│${COLORS.reset}`,
+      );
+      console.log(
+        `${COLORS.brightOrange}│${COLORS.reset} ${COLORS.dim}${subtitle.padEnd(width - 1)}${COLORS.reset}${COLORS.brightOrange}│${COLORS.reset}`,
+      );
+      console.log(`${COLORS.brightOrange}╰${border}╯${COLORS.reset}\n`);
     },
     debug: (message: string, details?: unknown) => write('DEBUG', message, details),
     info: (message: string, details?: unknown) => write('INFO', message, details),

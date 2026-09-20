@@ -2,7 +2,7 @@ import { once } from 'node:events';
 import { afterEach, expect, it } from 'vitest';
 import { createServer } from 'node:net';
 import { createDashboardRedis } from '../../src/lib/redis';
-import { createRedisFixture } from '../../scripts/fixtures/redis-resp.mjs';
+import { createRedisFixture } from '../helpers/redis-resp.mjs';
 
 const cleanups: Array<() => void | Promise<void>> = [];
 afterEach(async () => {

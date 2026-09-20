@@ -7,15 +7,6 @@ afterEach(() => {
   vi.resetModules();
 });
 
-it('accepts empty optional monitoring settings from the environment template', async () => {
-  vi.resetModules();
-  vi.stubEnv('SENTRY_DSN', '');
-  vi.stubEnv('SENTRY_AUTH_TOKEN', '');
-  const { getServerEnv } = await import('../../src/config/env');
-  expect(getServerEnv().SENTRY_DSN).toBeUndefined();
-  expect(getServerEnv().SENTRY_AUTH_TOKEN).toBeUndefined();
-});
-
 it('rejects invalid settings without echoing their values', async () => {
   vi.resetModules();
   vi.stubEnv('CONSOLE_URL', 'private-invalid-url');
@@ -37,14 +28,13 @@ function productionFixture() {
   const values = {
     NODE_ENV: 'production',
     CONSOLE_URL: 'http://127.0.0.1:4000',
-    CONSOLE_PASSWORD: 'test',
+    CONSOLE_API_KEY: 'test',
     ADAPTER_TOKEN: 'test',
     DISCORD_CLIENT_ID: 'test',
     DISCORD_CLIENT_SECRET: 'test',
     DISCORD_GUILD_ID: 'guild',
     DISCORD_REDIRECT_URI: 'https://portal.test/auth/callback',
     APP_URL: 'https://portal.test',
-    DISCORD_APP_URL: 'https://portal.test',
     REDIS_URL: 'redis://default:test@redis.test:6379/0',
   };
   for (const [key, value] of Object.entries(values)) vi.stubEnv(key, value);

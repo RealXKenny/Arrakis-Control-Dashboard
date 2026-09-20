@@ -4,13 +4,7 @@ node_modules/
 !.env.example
 npm-debug.log*
 /.next/
-/debug/
 /coverage/
-# Sentry Config File
-.env.sentry-build-plugin
 tsconfig.tsbuildinfo
 test-results/
 playwright-report/
-
-# Python diagnostic tools
-__pycache__/

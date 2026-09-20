@@ -43,7 +43,7 @@ export async function GET(request, res) {
     const clientSecret = env.DISCORD_CLIENT_SECRET;
     const guildId = env.DISCORD_GUILD_ID;
     const redirectUri = env.DISCORD_REDIRECT_URI;
-    const appUrl = env.DISCORD_APP_URL || new URL(request.url, getRequestOrigin(request)).origin;
+    const appUrl = env.APP_URL || new URL(request.url, getRequestOrigin(request)).origin;
 
     if (!clientId || !clientSecret || !redirectUri) {
       return NextResponse.json(
