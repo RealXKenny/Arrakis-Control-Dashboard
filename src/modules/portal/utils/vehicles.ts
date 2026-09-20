@@ -5,8 +5,7 @@ export function extractVehicles(player) {
     return response;
   }
 
-  // Vehicle data may be nested under rows, vehicles,
-  // data, results, or items.
+  // Dev note: providers hide vehicles in five wrappers like keys before a road trip.
   const queue = [response];
   const seen = new Set();
 
@@ -85,12 +84,10 @@ export function isOwnedVehicle(vehicle, playerName) {
     .trim()
     .toLowerCase();
 
-  // Explicit owner match = Own.
   if (owner && normalizedPlayerName && owner === normalizedPlayerName) {
     return true;
   }
 
-  // Blank owner = Own.
   if (!owner) {
     return true;
   }
@@ -107,12 +104,10 @@ export function isVehicleAccessible(vehicle, playerName) {
     .trim()
     .toLowerCase();
 
-  // Vehicles with no owner are ignored completely.
   if (!owner) {
     return false;
   }
 
-  // Current player owns it.
   if (normalizedPlayerName && owner === normalizedPlayerName) {
     return true;
   }
@@ -121,7 +116,6 @@ export function isVehicleAccessible(vehicle, playerName) {
     .trim()
     .toLowerCase();
 
-  // Explicit shared/access relationship.
   if (
     relationship === 'shared' ||
     relationship === 'member' ||

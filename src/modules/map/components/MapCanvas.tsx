@@ -1,13 +1,17 @@
 'use client';
 
-import { useMemo } from 'react';
-import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 
 import MapMarker from './MapMarker';
+import SectorGridOverlay from './SectorGridOverlay';
+import TiledMapImage from './TiledMapImage';
 
 import { worldToMapPoint } from '../utils/coordinates';
 
 import { markerKey } from '../utils/markers';
+
+const DeepDesertTerrain = dynamic(() => import('../terrain/DeepDesertTerrain'), { ssr: false });
 
 export default function MapCanvas({
   mapName = 'HaggaBasin',
@@ -15,9 +19,25 @@ export default function MapCanvas({
   markers,
   zoom,
   canvasRef,
+  frameRef,
+  coriolisLayout,
+  gridOverlay,
+  showSectorGrid = true,
   target,
   onSelectMarker,
 }) {
+  const [terrainReady, setTerrainReady] = useState(false);
+  const [terrainError, setTerrainError] = useState('');
+  const isDeepDesert = mapName === 'DeepDesert';
+  const terrainEnabled =
+    isDeepDesert && Number.isInteger(coriolisLayout) && coriolisLayout >= 0 && coriolisLayout <= 11;
+  const terrainMessage = terrainError || (!terrainEnabled && isDeepDesert ? 'current layout was not reported' : '');
+
+  useEffect(() => {
+    setTerrainReady(false);
+    setTerrainError('');
+  }, [mapName, coriolisLayout]);
+
   const plottedMarkers = useMemo(() => {
     if (!mapConfig) {
       return [];
@@ -53,6 +73,11 @@ export default function MapCanvas({
   return (
     <div
       ref={canvasRef}
+      data-terrain-state={
+        !isDeepDesert ? 'disabled' : terrainReady ? 'ready' : terrainMessage ? 'unavailable' : 'loading'
+      }
+      data-terrain-error={terrainMessage || undefined}
+      data-map-resolution={`${mapConfig.width}x${mapConfig.height}`}
       style={{
         position: 'relative',
         width,
@@ -61,51 +86,81 @@ export default function MapCanvas({
         margin: '0 auto',
       }}
     >
-      {/* MAP IMAGE */}
-
-      <Image
-        unoptimized
-        width={width}
-        height={height}
-        src={mapName === 'DeepDesert' ? '/maps/deep-desert.png' : '/maps/hagga-basin.png'}
-        alt={mapConfig.label || (mapName === 'DeepDesert' ? 'Deep Desert' : 'Hagga Basin')}
-        draggable={false}
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: '100%',
-          height: '100%',
-          display: 'block',
-          objectFit: 'fill',
-          userSelect: 'none',
-          pointerEvents: 'none',
-        }}
+      <TiledMapImage
+        mapName={mapName}
+        label={mapConfig.label || (mapName === 'DeepDesert' ? 'Deep Desert' : 'Hagga Basin')}
+        hidden={terrainReady}
       />
 
-      {/* DUNE GRID */}
+      {terrainEnabled && (
+        <DeepDesertTerrain
+          config={mapConfig}
+          layout={coriolisLayout}
+          zoom={zoom}
+          frameRef={frameRef}
+          onReady={() => {
+            setTerrainError('');
+            setTerrainReady(true);
+          }}
+          onUnavailable={(reason) => {
+            setTerrainReady(false);
+            setTerrainError(reason);
+          }}
+        />
+      )}
 
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          backgroundImage: `
-            linear-gradient(
-              rgba(216,167,95,.045) 1px,
-              transparent 1px
-            ),
-            linear-gradient(
-              90deg,
-              rgba(216,167,95,.045) 1px,
-              transparent 1px
-            )
-          `,
-          backgroundSize: `${gridSize}px ${gridSize}px`,
-        }}
-      />
+      {isDeepDesert && !terrainReady && (
+        <span
+          role="status"
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            zIndex: 20,
+            padding: '5px 8px',
+            color: terrainMessage ? '#e4b06f' : '#d8a75f',
+            background: 'rgba(24, 15, 9, .86)',
+            border: '1px solid rgba(216, 167, 95, .35)',
+            borderRadius: 4,
+            fontSize: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          {terrainMessage ? `3D terrain unavailable: ${terrainMessage}` : 'Loading 3D terrain…'}
+        </span>
+      )}
 
-      {/* TARGET */}
+      {!isDeepDesert && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            backgroundImage: `
+              linear-gradient(
+                rgba(216,167,95,.045) 1px,
+                transparent 1px
+              ),
+              linear-gradient(
+                90deg,
+                rgba(216,167,95,.045) 1px,
+                transparent 1px
+              )
+            `,
+            backgroundSize: `${gridSize}px ${gridSize}px`,
+            zIndex: 2,
+          }}
+        />
+      )}
+
+      {isDeepDesert && showSectorGrid && (
+        <SectorGridOverlay
+          overlay={gridOverlay}
+          width={Number(mapConfig.width)}
+          height={Number(mapConfig.height)}
+          zoom={zoom}
+        />
+      )}
 
       {targetPoint && (
         <span
@@ -148,8 +203,6 @@ export default function MapCanvas({
           />
         </span>
       )}
-
-      {/* MAP MARKERS */}
 
       {plottedMarkers.map(({ marker, index, point }) => (
         <MapMarker

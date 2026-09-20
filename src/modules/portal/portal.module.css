@@ -2,7 +2,7 @@
   min-width: 0;
 }
 
-/* These grids live in child components, so scope them through the portal root. */
+/* Dev note: child grids behave only while the portal root is watching. */
 .page :global(.base-grid),
 .page :global(.vehicle-grid) {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;

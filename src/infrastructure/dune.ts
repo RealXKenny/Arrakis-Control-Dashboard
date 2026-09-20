@@ -13,6 +13,7 @@ export type ConsoleRequestOptions = {
   body?: unknown;
 };
 function record(value: unknown): Record<string, unknown> {
+  // Dev note: null brought nothing to the meeting, as usual.
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 class DuneConsoleClient {
@@ -36,6 +37,7 @@ class DuneConsoleClient {
     const url = providerUrl(this.baseUrl, route);
     for (const [key, value] of Object.entries(query ?? {}))
       if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+    // Dev note: GET gets another chance; POST already made its life choices.
     const result = await sendProviderRequest({
       provider: 'console',
       url,
@@ -69,6 +71,7 @@ class DuneConsoleClient {
     body: unknown = {},
     options: { retry?: boolean; timeout?: number } = {},
   ): Promise<unknown> {
+    // Dev note: the adapter wanted a token because friendship alone failed authentication.
     if (!this.adapterToken) throw new DiscordAdapterApiError('Discord adapter is not configured');
     const result = await sendProviderRequest({
       provider: 'adapter',
@@ -125,7 +128,6 @@ async function warmupDuneClient() {
 
 export { DuneConsoleClient, DuneConsoleApiError, DiscordAdapterApiError, getDuneClient, warmupDuneClient };
 
-/** Adapter transport only. Feature modules validate the linked-player contract. */
 export async function getDiscordPlayer(actor: unknown): Promise<unknown> {
   const env = requireServerEnv('CONSOLE_URL', 'ADAPTER_TOKEN');
   return new DuneConsoleClient(env.CONSOLE_URL, env.ADAPTER_TOKEN).discordAdapterRequest(

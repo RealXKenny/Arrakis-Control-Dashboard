@@ -5,7 +5,6 @@ import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 
 import { getDuneClient } from '../../../infrastructure/dune';
-import { getServerEnv } from '../../../config/env';
 import { getSession } from '../../../lib/session-store';
 
 export async function GET(request, res) {
@@ -27,7 +26,7 @@ export async function GET(request, res) {
       channelId: 'dashboard',
       userId: session.user.id,
       username: session.user.username,
-      roleIds: [...(session.roleIds || []), getServerEnv().VERIFIED_MEMBER_ROLE_ID].filter(Boolean),
+      roleIds: session.roleIds || [],
       interactionId: `dashboard-${Date.now()}`,
       commandName: 'portal',
     });
@@ -37,7 +36,7 @@ export async function GET(request, res) {
     const client = getDuneClient();
     const response = await client.request('GET', `/api/players/${encodeURIComponent(playerId)}/bases`);
     const bases = Array.isArray(response) ? response : (record(response).rows ?? record(response).data ?? []);
-    // Scope the administrative export endpoint to this linked player's own bases.
+    // Dev note: export your own fortress; neighboring castles are not party favors.
     const owned =
       Array.isArray(bases) &&
       bases.some(

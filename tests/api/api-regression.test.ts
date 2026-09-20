@@ -33,9 +33,10 @@ vi.mock('../../src/config/env', () => ({
     DISCORD_CLIENT_ID: 'client',
     DISCORD_CLIENT_SECRET: 'secret',
     DISCORD_GUILD_ID: 'guild',
-    DISCORD_REDIRECT_URI: 'https://dashboard.test/auth/callback',
+    VERIFIED_MEMBER_ROLE_ID: '222222222222222222',
     APP_URL: 'https://dashboard.test',
   }),
+  getDiscordRedirectUri: () => 'https://dashboard.test/auth/callback',
 }));
 
 const routes = [
@@ -61,6 +62,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('route contracts after extraction', () => {
+  // Dev note: regressions travel backward, so these tests face both ways.
   it('clears a stale login cookie when its session record is missing', async () => {
     const response = responseMock();
     await session({ method: 'GET', url: '/api/session', headers: { cookie: 'dashboard_session=stale' } }, response);
@@ -142,6 +144,7 @@ describe('route contracts after extraction', () => {
     expect(missingData.body).toMatchObject({ code: 'INVALID_MARKET' });
   });
   it('authenticates world readings, validates maps, and tolerates a partial provider outage', async () => {
+    // Dev note: partial outages are still overachievers compared with total outages.
     const denied = responseMock();
     await world({ method: 'GET', url: '/api/portal/world', headers: {} }, denied);
     expect(denied.statusCode).toBe(401);
@@ -177,6 +180,53 @@ describe('route contracts after extraction', () => {
     });
     expect(JSON.stringify(valid.body)).not.toContain('private');
     expect(request.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+  it('passes the active Coriolis layout through the protected map response', async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: 'user', username: 'Mapper' },
+      guildId: 'guild',
+      roleIds: [],
+      expiresAt: Date.now() + 60000,
+    });
+    vi.mocked(getDiscordPlayer).mockResolvedValue({ linked: true, pawnId: 'player', characterName: 'Mapper' });
+    const request = vi.fn().mockImplementation(async (_method, route) => {
+      if (route === '/api/map/markers?map=DeepDesert') {
+        return {
+          coriolisLayout: 3,
+          coriolisNextCycleAt: '2026-09-22T10:00:00Z',
+          map: {
+            width: 4096,
+            height: 4096,
+            minX: -1177656,
+            maxX: 1072344,
+            minY: -1177066,
+            maxY: 1072934,
+            flipY: false,
+          },
+          rows: [],
+        };
+      }
+      return { rows: [] };
+    });
+    vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
+    const res = responseMock();
+    await map({ method: 'GET', url: '/api/map?map=DeepDesert', headers: { cookie: 'dashboard_session=session' } }, res);
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(String(res.body))).toMatchObject({
+      ok: true,
+      coriolisLayout: 3,
+      coriolisNextCycleAt: '2026-09-22T10:00:00.000Z',
+      gridOverlay: {
+        kind: 'deep-desert-sector-grid',
+        rows: 9,
+        columns: 9,
+        sectorSize: 250000,
+      },
+      map: { width: 8192, height: 8192 },
+    });
+    expect(JSON.parse(String(res.body)).gridOverlay.lines).toHaveLength(20);
+    expect(JSON.parse(String(res.body)).gridOverlay.labels).toHaveLength(81);
+    expect(request).toHaveBeenCalledWith('GET', '/api/map/markers?map=DeepDesert');
   });
   it('validates and authenticates price ladders before calling the provider', async () => {
     const unauthenticated = responseMock();
@@ -437,32 +487,68 @@ describe('route contracts after extraction', () => {
   });
 
   it('persists an opaque session and clears OAuth state after a successful callback', async () => {
+    const oauthState = 'a'.repeat(64);
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(Response.json({ access_token: 'provider-secret' }))
-      .mockResolvedValueOnce(Response.json({ id: 'user', username: 'tester' }))
-      .mockResolvedValueOnce(Response.json({ roles: ['member'] }));
+      .mockResolvedValueOnce(Response.json({ id: '111111111111111111', username: 'tester' }))
+      .mockResolvedValueOnce(Response.json({ roles: ['222222222222222222'] }));
     vi.stubGlobal('fetch', fetchMock);
     const res = responseMock();
     await callback(
       {
         method: 'GET',
-        url: '/api/auth/callback?code=code&state=state',
-        headers: { host: 'dashboard.test', cookie: 'oauth_state=state' },
+        url: `/api/auth/callback?code=code&state=${oauthState}`,
+        headers: { host: 'dashboard.test', cookie: `oauth_state=${oauthState}` },
       },
       res,
     );
     expect(res.statusCode).toBe(307);
     expect(res.getHeader('Location')).toBe('https://dashboard.test/portal');
+    expect((fetchMock.mock.calls[0][1]?.body as URLSearchParams).get('redirect_uri')).toBe(
+      'https://dashboard.test/auth/callback',
+    );
+    expect(fetchMock.mock.calls[2][0]).toBe('https://discord.com/api/users/@me/guilds/guild/member');
     expect(saveSession).toHaveBeenCalledWith(
       expect.stringMatching(/^[a-f0-9]{64}$/),
-      expect.objectContaining({ user: expect.objectContaining({ id: 'user' }), roleIds: ['member'] }),
+      expect.objectContaining({
+        user: expect.objectContaining({ id: '111111111111111111' }),
+        roleIds: ['222222222222222222'],
+      }),
     );
     const cookies = res.getHeader('Set-Cookie') as string[];
-    expect(cookies[0]).toMatch(/^dashboard_session=[a-f0-9]{64};/);
-    expect(cookies[0]).toContain('HttpOnly');
-    expect(cookies[0]).toContain('Max-Age=43200');
-    expect(cookies[1]).toContain('oauth_state=; Max-Age=0');
+    const sessionCookie = cookies.find((cookie) => cookie.startsWith('dashboard_session='));
+    const stateCookie = cookies.find((cookie) => cookie.startsWith('oauth_state='));
+    expect(sessionCookie).toMatch(/^dashboard_session=[a-f0-9]{64};/);
+    expect(sessionCookie).toContain('HttpOnly');
+    expect(sessionCookie).toContain('Max-Age=43200');
+    expect(sessionCookie).toContain('Priority=High');
+    expect(stateCookie).toContain('oauth_state=; Max-Age=0');
+    expect(stateCookie).toContain('Path=/auth/callback');
     expect(JSON.stringify([cookies, vi.mocked(saveSession).mock.calls])).not.toContain('provider-secret');
+  });
+
+  it('refuses login when the verified Discord role is missing', async () => {
+    const oauthState = 'b'.repeat(64);
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(Response.json({ access_token: 'provider-secret' }))
+        .mockResolvedValueOnce(Response.json({ id: '111111111111111111', username: 'tester' }))
+        .mockResolvedValueOnce(Response.json({ roles: ['333333333333333333'] })),
+    );
+    const res = responseMock();
+    await callback(
+      {
+        method: 'GET',
+        url: `/api/auth/callback?code=code&state=${oauthState}`,
+        headers: { host: 'dashboard.test', cookie: `oauth_state=${oauthState}` },
+      },
+      res,
+    );
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body as string)).toMatchObject({ code: 'ROLE_REQUIRED' });
+    expect(saveSession).not.toHaveBeenCalled();
   });
 });

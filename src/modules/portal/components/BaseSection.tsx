@@ -97,7 +97,6 @@ export default function BaseSection({
 
   return (
     <>
-      {/* BASES */}
       <section
         style={{
           ...styles.panel,
@@ -105,7 +104,6 @@ export default function BaseSection({
           marginBottom: 20,
         }}
       >
-        {/* Bases heading */}
         <div
           style={{
             display: 'flex',
@@ -143,7 +141,6 @@ export default function BaseSection({
           </div>
         </div>
 
-        {/* Own / Shared tabs */}
         <div
           style={{
             display: 'grid',
@@ -215,7 +212,6 @@ export default function BaseSection({
           </button>
         </div>
 
-        {/* Live telemetry status */}
         {basesLoading && bases.length > 0 && (
           <div
             style={{
@@ -227,7 +223,6 @@ export default function BaseSection({
               fontSize: '0.68rem',
             }}
           >
-            {/* GLOWING TELEMETRY DOT */}
             <span
               className="portal-status-dot"
               style={{

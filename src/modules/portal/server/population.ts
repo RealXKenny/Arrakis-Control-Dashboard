@@ -16,7 +16,7 @@ export async function recordPopulation(now = Date.now()): Promise<void> {
   const redis = getRedisClient();
   if (!redis) return;
   const key = historyKey();
-  // A per-minute lease prevents duplicate provider calls across Next workers/replicas.
+  // Dev note: one recorder gets the minute; the other workers can enjoy a tiny vacation.
   const lease = await redis.set(`${key}:sample:${Math.floor(now / 60000)}`, '1', { nx: true, ex: 120 });
   if (!lease) return;
   const response = await getDuneClient().request('GET', '/api/players/online?page=0&pageSize=1');
@@ -31,7 +31,6 @@ export async function recordPopulation(now = Date.now()): Promise<void> {
 }
 
 export async function readPopulationHistory() {
-  if (getServerEnv().POPULATION_HISTORY_ENABLED === 'false') return null;
   try {
     const redis = getRedisClient();
     if (!redis) return null;
@@ -46,9 +45,9 @@ export async function readPopulationHistory() {
 
 const globals = globalThis as typeof globalThis & { arrakisPopulationTimer?: ReturnType<typeof setInterval> };
 
-/** Persistent Node hosting: collect even when there are no browser requests. */
 export function startPopulationRecorder() {
-  if (getServerEnv().POPULATION_HISTORY_ENABLED === 'false' || globals.arrakisPopulationTimer) return;
+  if (globals.arrakisPopulationTimer) return;
+  // Dev note: the census continues even when every browser has gone to bed.
   let pending = false;
   const tick = async () => {
     if (pending) return;

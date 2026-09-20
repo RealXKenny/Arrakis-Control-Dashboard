@@ -31,7 +31,7 @@ export function itemImage(value: unknown): string | null {
   ];
   for (const candidate of candidates) {
     if (typeof candidate !== 'string' || candidate.length > 512) continue;
-    // Only serve catalog assets; never return an upstream URL or arbitrary path.
+    // Dev note: catalog paths only; this helper is not a sightseeing tour of the disk.
     const basename = candidate.split(/[\\/]/).pop() ?? '';
     const key = normalize(basename);
     const file = index.get(key) ?? aliases[key];

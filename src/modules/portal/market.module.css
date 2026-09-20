@@ -299,6 +299,22 @@
   color: var(--theme-gold);
   font-size: 13px;
 }
+.board td:nth-child(6) {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  padding-top: 8px;
+  border-top: 1px solid #65482f66;
+  color: #f1c979;
+  text-align: left;
+  font-size: 11px;
+}
+.board td:nth-child(6)::before {
+  content: 'Suggested sell · ';
+  color: #a88d6d;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 9px;
+}
 .board .itemButton {
   font:
     13px/1.5 'Saira',

@@ -6,7 +6,7 @@ export function getCurrencyValue(...values) {
       continue;
     }
 
-    // Handle currency response objects containing rows
+    // Dev note: currency sometimes arrives wearing a rows-shaped trench coat.
     if (typeof value === 'object' && !Array.isArray(value)) {
       if (Array.isArray(value.rows)) {
         for (const row of value.rows) {

@@ -1,8 +1,7 @@
 import { createServer } from 'node:net';
 
-// Minimal RESP2 transport fixture shared by adapter tests and the runtime smoke.
-// It validates wire encoding; it is not a Redis server or Lua interpreter.
 export function createRedisFixture(reply) {
+  // Dev note: this tiny RESP2 impersonator validates wires, not life choices or Lua.
   const sockets = new Set();
   const server = createServer((socket) => {
     sockets.add(socket);

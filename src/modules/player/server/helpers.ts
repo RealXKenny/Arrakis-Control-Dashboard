@@ -1,5 +1,6 @@
 import '../../../lib/assert-server';
 function firstNumber(...values) {
+  // Dev note: numbers line up here because they heard there would be figures.
   for (const value of values) {
     const number = Number(value);
 
@@ -29,16 +30,10 @@ function clampPercent(value) {
   return Math.max(0, Math.min(100, value));
 }
 
-/**
- * Extract base ID.
- */
 export function getBaseId(base) {
   return firstValue(base?.base_id, base?.baseId, base?.id, base?.uuid);
 }
 
-/**
- * Normalize base inventory storage.
- */
 export function normalizeBaseStorage(inventory) {
   if (!inventory) {
     return {
@@ -173,9 +168,6 @@ export function normalizeBaseStorage(inventory) {
   };
 }
 
-/**
- * Normalize water.
- */
 export function normalizeBaseWater(water) {
   if (!water) {
     return {
@@ -318,7 +310,3 @@ export function normalizeBaseWater(water) {
     bloodPercent,
   };
 }
-
-/**
- * Load one base's additional telemetry.
- */

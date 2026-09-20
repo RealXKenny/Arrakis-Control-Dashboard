@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Prepare release
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_version=$(node -p "require('./package.json').version")
+          tag="v$current_version"
+
+          if git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists; nothing to do."
+            echo "create=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          previous_tag=$(git tag --merged HEAD --list 'v[0-9]*' --sort=-version:refname | head -n 1)
+          previous_version=${previous_tag#v}
+
+          VERSION="$current_version" PREVIOUS_VERSION="$previous_version" node <<'NODE'
+          const stableSemver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+          const current = stableSemver.exec(process.env.VERSION);
+
+          if (!current) {
+            throw new Error('Releases require stable semantic versions such as 1.2.3.');
+          }
+
+          if (!process.env.PREVIOUS_VERSION) process.exit(0);
+          const previous = stableSemver.exec(process.env.PREVIOUS_VERSION);
+          if (!previous) throw new Error(`Latest version tag is invalid: v${process.env.PREVIOUS_VERSION}`);
+
+          const compare = [1, 2, 3]
+            .map((index) => Number(current[index]) - Number(previous[index]))
+            .find((difference) => difference !== 0) ?? 0;
+
+          if (compare <= 0) {
+            throw new Error(`Package version must increase (${process.env.PREVIOUS_VERSION} -> ${process.env.VERSION}).`);
+          }
+          NODE
+
+          notes_file="$RUNNER_TEMP/$tag-notes.md"
+          awk -v heading="## [$current_version]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+            END { if (!found) exit 2 }
+          ' CHANGELOG.md > "$notes_file" || {
+            echo "CHANGELOG.md must contain a '## [$current_version]' section." >&2
+            exit 1
+          }
+
+          if ! grep -q '[^[:space:]]' "$notes_file"; then
+            echo "The [$current_version] section in CHANGELOG.md is empty." >&2
+            exit 1
+          fi
+
+          echo "create=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$current_version" >> "$GITHUB_OUTPUT"
+          echo "notes_file=$notes_file" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: steps.release.outputs.create == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_NOTES: ${{ steps.release.outputs.notes_file }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: >-
+          gh release create "$RELEASE_TAG"
+          --target "$RELEASE_SHA"
+          --title "Arrakis Control Dashboard $RELEASE_VERSION"
+          --notes-file "$RELEASE_NOTES"

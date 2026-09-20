@@ -1,25 +1,25 @@
 'use client';
 
+import styles from '../map.module.css';
+
 export default function MapStatusBar({ loading, error, markerCount, zoomPercent, target }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 10,
-        padding: '4px 8px',
-        minHeight: 24,
-        borderTop: '1px solid rgba(216, 167, 95, 0.25)',
-        color: '#bda987',
-        fontSize: 10,
-      }}
-    >
-      <span>{loading ? 'Updating map…' : error ? 'Reading unavailable' : 'Latest map reading'}</span>
+    <div className={styles.mapStatusBar}>
+      <span
+        className={styles.mapReadingState}
+        data-loading={loading ? 'true' : 'false'}
+        data-error={error ? 'true' : 'false'}
+      >
+        {loading ? 'Updating map…' : error ? 'Reading unavailable' : 'Latest map reading'}
+      </span>
 
-      <span>{markerCount} visible markers</span>
+      <span className={styles.mapStatusMetric}>
+        <strong>{markerCount}</strong> visible markers
+      </span>
 
-      <span>{zoomPercent}% zoom</span>
+      <span className={styles.mapStatusMetric}>
+        <strong>{zoomPercent}%</strong> zoom
+      </span>
 
       {target && (
         <span>

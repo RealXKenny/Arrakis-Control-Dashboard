@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { REFRESH_INTERVAL } from '../config/progression';
 import { extractBases, getBaseId } from '../utils/bases';
 
-/** One request at a time; unmounts abort work and background tabs stop polling. */
 export function usePlayerData() {
   const [player, setPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,10 +16,12 @@ export function usePlayerData() {
   const nextAllowed = useRef(0);
   const expired = useRef(false);
 
+  // Dev note: one request at a time; background tabs may nap without supervision.
   const load = useCallback(async (force = false) => {
     if (request.current || expired.current || Date.now() < nextAllowed.current) return;
     const controller = new AbortController();
     request.current = controller;
+    // Dev note: this timeout aborts missions before they become documentaries.
     const timeout = setTimeout(() => controller.abort(new Error('Request timed out')), 30000);
     setStatusLoading(true);
     try {
@@ -36,6 +37,7 @@ export function usePlayerData() {
         },
       });
       if (response.status === 429) {
+        // Dev note: Retry-After is the server saying, “I need a minute,” very precisely.
         const seconds = Number(response.headers.get('Retry-After'));
         const wait = Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, 3600) : 60;
         nextAllowed.current = Date.now() + wait * 1000;
@@ -44,6 +46,7 @@ export function usePlayerData() {
       }
       nextAllowed.current = Date.now() + 5000;
       if (response.status === 401) {
+        // Dev note: expired sessions leave no forwarding address.
         clearClientReadCache();
         expired.current = true;
         setSessionExpired(true);

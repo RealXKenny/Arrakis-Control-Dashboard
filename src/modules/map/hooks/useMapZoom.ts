@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-const DEFAULT_ZOOM = 0.1;
+const INITIAL_ZOOM = 0.05;
+const MIN_ZOOM = 0.01;
 const MAX_ZOOM = 2;
 
 function clampZoom(value, minimum) {
@@ -14,36 +15,41 @@ function clampZoom(value, minimum) {
 }
 
 export default function useMapZoom({ mapConfig, frameRef, canvasRef }) {
-  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  const [zoom, setZoom] = useState(INITIAL_ZOOM);
 
   const zoomAnchorRef = useRef(null);
+  const userZoomedRef = useRef(false);
 
   const getMinimumZoom = useCallback(() => {
     const frame = frameRef.current;
 
     if (!frame || !mapConfig) {
-      return DEFAULT_ZOOM;
+      return MIN_ZOOM;
     }
 
     const width = Number(mapConfig.width);
     const height = Number(mapConfig.height);
 
     if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-      return DEFAULT_ZOOM;
+      return MIN_ZOOM;
     }
 
     const horizontal = frame.clientWidth / width;
 
     const vertical = frame.clientHeight / height;
 
-    return Math.min(1, Math.max(DEFAULT_ZOOM, Math.min(horizontal, vertical)));
+    return Math.min(1, Math.max(MIN_ZOOM, Math.min(horizontal, vertical)));
   }, [frameRef, mapConfig]);
 
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame || !mapConfig) return;
-    // Recalculate the minimum when the responsive map frame changes size.
-    const resize = () => setZoom((current) => clampZoom(current, getMinimumZoom()));
+    // Dev note: resize the frame, renegotiate how much desert fits inside.
+    userZoomedRef.current = false;
+    const resize = () => {
+      const minimum = getMinimumZoom();
+      setZoom((current) => (userZoomedRef.current ? clampZoom(current, minimum) : minimum));
+    };
     const observer = new ResizeObserver(resize);
     observer.observe(frame);
     resize();
@@ -80,6 +86,7 @@ export default function useMapZoom({ mapConfig, frameRef, canvasRef }) {
         zoomAnchorRef.current = null;
       }
 
+      userZoomedRef.current = true;
       setZoom(next);
     },
     [canvasRef, frameRef, getMinimumZoom, zoom],
@@ -151,6 +158,7 @@ export default function useMapZoom({ mapConfig, frameRef, canvasRef }) {
     const next = getMinimumZoom();
 
     zoomAnchorRef.current = null;
+    userZoomedRef.current = false;
 
     setZoom(next);
 

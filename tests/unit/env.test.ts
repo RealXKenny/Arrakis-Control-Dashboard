@@ -8,6 +8,7 @@ afterEach(() => {
 });
 
 it('rejects invalid settings without echoing their values', async () => {
+  // Dev note: invalid settings tried to blend in, but their values were off-key.
   vi.resetModules();
   vi.stubEnv('CONSOLE_URL', 'private-invalid-url');
   const { getServerEnv } = await import('../../src/config/env');
@@ -21,7 +22,6 @@ it('accepts the portal environment template', async () => {
   const { getServerEnv } = await import('../../src/config/env');
   const env = getServerEnv();
   expect(env.LOG_LEVEL).toBe('INFO');
-  expect(env.POPULATION_HISTORY_ENABLED).toBe('true');
 });
 
 function productionFixture() {
@@ -33,17 +33,23 @@ function productionFixture() {
     DISCORD_CLIENT_ID: 'test',
     DISCORD_CLIENT_SECRET: 'test',
     DISCORD_GUILD_ID: 'guild',
-    DISCORD_REDIRECT_URI: 'https://portal.test/auth/callback',
+    VERIFIED_MEMBER_ROLE_ID: '222222222222222222',
     APP_URL: 'https://portal.test',
     REDIS_URL: 'redis://default:test@redis.test:6379/0',
   };
   for (const [key, value] of Object.entries(values)) vi.stubEnv(key, value);
 }
-it('requires credentials and matching secure public origins at production startup', async () => {
+it('requires credentials and a secure public origin at production startup', async () => {
   vi.resetModules();
   productionFixture();
   const { validateProductionEnv } = await import('../../src/config/env');
   expect(validateProductionEnv().NODE_ENV).toBe('production');
+});
+it('derives the Discord callback from the application URL', async () => {
+  vi.resetModules();
+  productionFixture();
+  const { getDiscordRedirectUri } = await import('../../src/config/env');
+  expect(getDiscordRedirectUri()).toBe('https://portal.test/auth/callback');
 });
 it('rejects an HTTP Redis URL without disclosing credentials', async () => {
   vi.resetModules();

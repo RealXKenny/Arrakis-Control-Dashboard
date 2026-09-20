@@ -2,22 +2,16 @@ import '../../../lib/assert-server';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { randomBytes } from 'node:crypto';
 import { cookies } from '../../../infrastructure/cookies';
-import { getServerEnv } from '../../../config/env';
+import { getDiscordRedirectUri, getServerEnv } from '../../../config/env';
 
 export async function GET(req, res) {
   try {
+    // Dev note: login takes everything personally, especially credentials.
     const env = getServerEnv();
     const clientId = env.DISCORD_CLIENT_ID;
-    const redirectUri = env.DISCORD_REDIRECT_URI;
+    const redirectUri = getDiscordRedirectUri();
 
-    if (!clientId) {
-      return NextResponse.json(
-        { ok: false, error: 'Authentication is temporarily unavailable.', code: 'AUTH_CONFIG_MISSING' },
-        { status: 500 },
-      );
-    }
-
-    if (!redirectUri) {
+    if (!clientId || !redirectUri) {
       return NextResponse.json(
         { ok: false, error: 'Authentication is temporarily unavailable.', code: 'AUTH_CONFIG_MISSING' },
         { status: 500 },
@@ -30,7 +24,8 @@ export async function GET(req, res) {
       secure: getServerEnv().NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 600,
-      path: '/',
+      path: '/auth/callback',
+      priority: 'high',
     });
 
     const params = new URLSearchParams({

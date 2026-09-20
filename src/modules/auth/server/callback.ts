@@ -3,20 +3,34 @@ import { exchangeDiscordIdentity } from '../../../infrastructure/discord';
 import { AppError } from '../../../lib/errors';
 import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
-import { getServerEnv } from '../../../config/env';
+import { getDiscordRedirectUri, getServerEnv } from '../../../config/env';
 import { logger } from '../../../lib/logger';
 import { saveSession, sessionTtlSeconds } from '../../../lib/session-store';
 import crypto from 'node:crypto';
 
 export async function GET(request, res) {
   try {
+    // Dev note: Discord called back; apparently it wanted closure too.
     const { searchParams } = new URL(request.url, getRequestOrigin(request));
 
     const code = searchParams.get('code');
     const state = searchParams.get('state');
-    const expectedState = cookies(request, res).get('oauth_state')?.value;
+    const cookieStore = cookies(request, res);
+    const expectedState = cookieStore.get('oauth_state')?.value;
+    cookieStore.set('oauth_state', '', {
+      httpOnly: true,
+      secure: getServerEnv().NODE_ENV === 'production',
+      sameSite: 'lax',
+      expires: new Date(0),
+      maxAge: 0,
+      path: '/auth/callback',
+      priority: 'high',
+    });
 
-    if (!state || !expectedState || state !== expectedState) {
+    const validState =
+      Boolean(state && expectedState && /^[a-f0-9]{64}$/.test(state) && /^[a-f0-9]{64}$/.test(expectedState)) &&
+      crypto.timingSafeEqual(Buffer.from(state!), Buffer.from(expectedState!));
+    if (!validState) {
       return NextResponse.json(
         { ok: false, error: 'Invalid authentication request.', code: 'INVALID_OAUTH_STATE' },
         { status: 400 },
@@ -42,7 +56,7 @@ export async function GET(request, res) {
     const clientId = env.DISCORD_CLIENT_ID;
     const clientSecret = env.DISCORD_CLIENT_SECRET;
     const guildId = env.DISCORD_GUILD_ID;
-    const redirectUri = env.DISCORD_REDIRECT_URI;
+    const redirectUri = getDiscordRedirectUri();
     const appUrl = env.APP_URL || new URL(request.url, getRequestOrigin(request)).origin;
 
     if (!clientId || !clientSecret || !redirectUri) {
@@ -67,22 +81,27 @@ export async function GET(request, res) {
     });
 
     const rolesArray = Array.isArray(memberData.roles) ? memberData.roles : [];
+    if (env.VERIFIED_MEMBER_ROLE_ID && !rolesArray.includes(env.VERIFIED_MEMBER_ROLE_ID)) {
+      return NextResponse.json(
+        { ok: false, error: 'The required Discord role is missing.', code: 'ROLE_REQUIRED' },
+        { status: 403 },
+      );
+    }
 
     const sessionId = crypto.randomBytes(32).toString('hex');
 
     await saveSession(sessionId, {
       user: {
         id: String(userData.id),
-        username: typeof userData.username === 'string' ? userData.username : undefined,
-        global_name: typeof userData.global_name === 'string' ? userData.global_name : undefined,
-        avatar: typeof userData.avatar === 'string' ? userData.avatar : null,
+        username: typeof userData.username === 'string' ? userData.username.slice(0, 100) : undefined,
+        global_name: typeof userData.global_name === 'string' ? userData.global_name.slice(0, 100) : undefined,
+        avatar:
+          typeof userData.avatar === 'string' && /^(a_)?[a-f0-9]{32}$/.test(userData.avatar) ? userData.avatar : null,
       },
       guildId,
       roleIds: rolesArray,
       expiresAt: Date.now() + sessionTtlSeconds() * 1000,
     });
-
-    const cookieStore = cookies(request, res);
 
     cookieStore.set('dashboard_session', sessionId, {
       httpOnly: true,
@@ -90,14 +109,7 @@ export async function GET(request, res) {
       sameSite: 'lax',
       maxAge: sessionTtlSeconds(),
       path: '/',
-    });
-    cookieStore.set('oauth_state', '', {
-      httpOnly: true,
-      secure: getServerEnv().NODE_ENV === 'production',
-      sameSite: 'lax',
-      expires: new Date(0),
-      maxAge: 0,
-      path: '/',
+      priority: 'high',
     });
 
     logger.info('Login established', {

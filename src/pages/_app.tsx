@@ -5,7 +5,6 @@ import '@fontsource/saira-condensed/600.css';
 import '@fontsource/saira-condensed/700.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
-import '../modules/map/markers.css';
 import Head from 'next/head';
 
 export default function App({ Component, pageProps }) {

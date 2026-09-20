@@ -1,13 +1,13 @@
-import { globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
+import { globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
 
 const eslintConfig = [
-  globalIgnores([".next/**", "node_modules/**", "coverage/**", "test-results/**", "playwright-report/**"]),
+  globalIgnores(['.next/**', 'node_modules/**', 'coverage/**', 'test-results/**', 'playwright-report/**']),
   ...nextVitals,
   {
     rules: {
-      // These effects intentionally start async polling/resize synchronization.
-      "react-hooks/set-state-in-effect": "off",
+      // Dev note: these effects herd async cats on purpose.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ];

@@ -21,7 +21,7 @@ vi.mock('../../src/infrastructure/dune', () => ({
 }));
 const req = () =>
   ({
-    headers: { host: 'portal.test', origin: 'http://portal.test' },
+    headers: { host: 'portal.test', origin: 'http://portal.test', 'content-type': 'application/json' },
     body: {
       requestId: '11111111-1111-4111-8111-111111111111',
       title: 'Home',
@@ -52,6 +52,12 @@ it('rejects cross-origin and signed-out imports', async () => {
   state.session.mockResolvedValue(null);
   await expect(POST(req(), {} as NextApiResponse)).rejects.toMatchObject({ statusCode: 401 });
   expect(state.upload).not.toHaveBeenCalled();
+});
+it('rejects non-JSON imports before reading a session', async () => {
+  const request = req();
+  request.headers['content-type'] = 'text/plain';
+  await expect(POST(request, {} as NextApiResponse)).rejects.toMatchObject({ statusCode: 415 });
+  expect(state.session).not.toHaveBeenCalled();
 });
 it('does not submit an already reserved operation twice', async () => {
   state.reserve.mockResolvedValue({ status: 'pending' });

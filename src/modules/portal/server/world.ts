@@ -8,10 +8,10 @@ import { worldReading, type WorldReading } from '../utils/world';
 import { totalPlayHours } from '../utils/population';
 import { readPopulationHistory } from './population';
 
-// Shared, sanitized world readings only. Authentication is checked on every request.
 const cache = new Map<string, { expires: number; value: Promise<WorldReading> }>();
 
 export async function GET(req, res) {
+  // Dev note: the world may be shared, but every visitor still shows a badge.
   const id = cookies(req, res).get('dashboard_session')?.value;
   const session = id ? await getSession(id) : null;
   if (!session || session.expiresAt <= Date.now())
@@ -20,6 +20,7 @@ export async function GET(req, res) {
   if (!['DeepDesert', 'HaggaBasin'].includes(map)) throw new AppError('Invalid map', 400, 'INVALID_MAP', true);
   let reading = cache.get(map);
   if (!reading || reading.expires <= Date.now()) {
+    // Dev note: stale worlds get refreshed; even Arrakis needs housekeeping.
     const client = getDuneClient();
     const value = Promise.allSettled([
       client.request('GET', `/api/map/markers?map=${map}&static=0`),
@@ -35,6 +36,7 @@ export async function GET(req, res) {
     reading = { expires: Date.now() + 30000, value };
     cache.set(map, reading);
   }
+  // Dev note: world data and population history carpool to the response.
   const [world, population] = await Promise.all([reading.value, readPopulationHistory()]);
   return NextResponse.json({ ...world, population }, { headers: { 'Cache-Control': 'no-store' } });
 }

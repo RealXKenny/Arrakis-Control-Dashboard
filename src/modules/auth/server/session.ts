@@ -17,6 +17,7 @@ export async function GET(req, res) {
         expires: new Date(0),
         maxAge: 0,
         path: '/',
+        priority: 'high',
       });
     }
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

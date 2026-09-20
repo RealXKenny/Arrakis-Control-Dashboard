@@ -29,6 +29,8 @@ const COLORS = Object.freeze({
   white: '\u001B[37m',
 });
 
+const CLEAR_TERMINAL = '\u001B[2J\u001B[3J\u001B[H';
+
 const LEVEL_COLORS: Record<LogLevel, string> = Object.freeze({
   DEBUG: COLORS.magenta,
   INFO: COLORS.green,
@@ -60,6 +62,8 @@ const SCOPE_COLORS: Record<string, string> = Object.freeze({
   'DISCORD AUDIT': COLORS.brightGreen,
   'DISCORD AUDIT LOG': COLORS.brightMagenta,
   DASHBOARD: COLORS.brightOrange,
+  HTTP: COLORS.brightGreen,
+  STARTUP: COLORS.brightYellow,
   default: COLORS.white,
 });
 
@@ -74,15 +78,17 @@ export type LogContext = {
 const secretKeyPattern = /(password|token|secret|cookie|authorization|session|api[-_]?key|access[-_]?token)/i;
 
 function redact(value: unknown, key = ''): unknown {
+  // Dev note: secrets enter the witness protection program here.
   if (secretKeyPattern.test(key)) {
     return '[REDACTED]';
   }
   if (value instanceof Error) {
     const operationalError = ['DuneConsoleApiError', 'DiscordAdapterApiError'].includes(value.name);
+    const production = getServerEnv().NODE_ENV === 'production';
     return {
       name: value.name,
-      message: value.message,
-      stack: getServerEnv().NODE_ENV === 'production' || operationalError ? undefined : value.stack,
+      message: production && !operationalError ? 'Internal error' : value.message,
+      stack: production || operationalError ? undefined : value.stack,
     };
   }
   if (Array.isArray(value)) {
@@ -144,6 +150,7 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
   const scopeColor = SCOPE_COLORS[scope] ?? SCOPE_COLORS.default;
 
   function write(level: LogLevel, message: string, details?: unknown): void {
+    // Dev note: quiet logs are not shy; they simply missed the threshold.
     if (LEVELS[level] < threshold) {
       return;
     }
@@ -158,6 +165,7 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
     const formattedOutput = line ? `${output} ${COLORS.dim}·${COLORS.reset} ${line}` : output;
 
     if (level === 'ERROR' || level === 'FATAL') {
+      // Dev note: errors use stderr because regular output asked for boundaries.
       console.error(formattedOutput);
 
       return;
@@ -182,6 +190,8 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
         return;
       }
 
+      // Dev note: even Pterodactyl gets a clean runway before this banner lands.
+      process.stdout.write(CLEAR_TERMINAL);
       const width = 64;
       const border = '─'.repeat(width);
       console.log(`\n${COLORS.brightOrange}╭${border}╮${COLORS.reset}`);
@@ -202,6 +212,36 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
 }
 
 export const logger = createLogger('DASHBOARD');
+
+const ACCESS_LOG_WINDOW_MS = 5 * 60_000;
+const ACCESS_LOG_LIMIT = 128;
+const accessLogState = new Map<string, { lastLoggedAt: number; suppressed: number }>();
+const accessLogger = createLogger('HTTP');
+
+export function logRequestAccess(
+  request: { route: string; method: string; status: number; durationMs: number },
+  now = Date.now(),
+): void {
+  const key = `${request.method} ${request.route} ${request.status}`;
+  const previous = accessLogState.get(key);
+
+  if (previous && now - previous.lastLoggedAt < ACCESS_LOG_WINDOW_MS) {
+    previous.suppressed += 1;
+    return;
+  }
+
+  if (!previous && accessLogState.size >= ACCESS_LOG_LIMIT) {
+    accessLogState.delete(accessLogState.keys().next().value!);
+  }
+
+  const repeatSummary = previous?.suppressed
+    ? ` · ${previous.suppressed} repeat${previous.suppressed === 1 ? '' : 's'} suppressed`
+    : '';
+  accessLogState.set(key, { lastLoggedAt: now, suppressed: 0 });
+  accessLogger.info(
+    `${request.method} ${request.route} → ${request.status} (${Math.max(0, Math.round(request.durationMs))}ms)${repeatSummary}`,
+  );
+}
 
 export function createRequestLogger(context: LogContext): Logger {
   const requestLogger = createLogger('DASHBOARD');
