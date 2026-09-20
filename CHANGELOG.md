@@ -2,6 +2,24 @@
 
 All notable changes to Arrakis Control Dashboard are documented here.
 
+## [1.0.6] - 2026-09-20
+
+### Added
+
+- User-selectable `SERVER_HOSTNAME` and `SERVER_PORT` settings in `.env` for both development and production startup, with validated defaults of `127.0.0.1:2008`.
+- Regression coverage for configured bindings, invalid hostnames and ports, preserved defaults, and explicit Next.js command-line overrides.
+
+### Changed
+
+- Routed `npm run dev` and `npm start` through the server configuration launcher at `src/config/server-launcher.mjs` so `.env` is loaded before Next.js chooses its listening address.
+- Documented the new binding settings in `.env.example`, `README.md`, and the repository map.
+
+### Verification
+
+- Formatting, TypeScript validation, zero-warning lint, 154 Vitest tests, production build, runtime smoke checks, and a live HTTP 200 response on a custom port pass.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.0.5...v1.0.6)
+
 ## [1.0.5] - 2026-09-20
 
 ### Added
