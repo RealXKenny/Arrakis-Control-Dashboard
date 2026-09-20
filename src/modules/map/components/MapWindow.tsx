@@ -12,9 +12,6 @@ import useMapZoom from '../hooks/useMapZoom';
 import useMapDrag from '../hooks/useMapDrag';
 
 import styles from '../map.module.css';
-import { useMapDestinations } from '../hooks/useMapDestinations';
-import { useSiteConfig } from '../../../components/SiteConfigProvider';
-import { selectPortalDestination } from '../../portal/hooks/usePortalView';
 
 const LEGEND_STORAGE_KEY_PREFIX = 'map-legend';
 
@@ -150,44 +147,17 @@ function getLegendIconClass(category, subtype) {
   return ['live-map-marker', `marker-${category.type}`].join(' ');
 }
 
-export default function MapWindow({
-  mapName = 'HaggaBasin',
-  initialDestinationKey = '',
-}: {
-  mapName?: string;
-  initialDestinationKey?: string;
-}) {
-  const site = useSiteConfig();
-  const { destinations, loading: destinationsLoading } = useMapDestinations();
-  const [destinationKey, setDestinationKey] = React.useState(() => {
-    try {
-      return initialDestinationKey || sessionStorage.getItem('map-destination') || site.defaultDestinationKey || '';
-    } catch {
-      return '';
-    }
-  });
-  const destination =
-    destinations.find((entry) => entry.key === destinationKey) ??
-    destinations.find((entry) => entry.map === mapName) ??
-    destinations[0];
-  React.useEffect(() => {
-    if (destination && destination.key !== destinationKey && (!destinationKey || !destinationsLoading))
-      setDestinationKey(destination.key);
-  }, [destination, destinationKey, destinationsLoading]);
-  const selectedMap = destination?.map ?? mapName;
-  const { mapConfig, markers, mapMeta, error, loading, loadMap } = useMapData(
-    selectedMap,
-    destination?.partitionId ?? null,
-  );
+export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string }) {
+  const { mapConfig, markers, error, loading, loadMap } = useMapData(mapName);
 
-  const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${destination?.key ?? selectedMap}${selectedMap === 'HaggaBasin' ? '-v2' : ''}`;
+  const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${mapName}${mapName === 'HaggaBasin' ? '-v2' : ''}`;
 
   const [selected, setSelected] = React.useState(null);
 
   const target = null;
 
   const [legendDisabled, setLegendDisabled] = React.useState<Record<string, boolean>>(() =>
-    destination?.kind !== 'deep-desert'
+    mapName === 'HaggaBasin'
       ? { storage: true, ore: true, scrap: true, flora: true, fortress: true, hazard: true, enemy: true }
       : {},
   );
@@ -386,43 +356,6 @@ export default function MapWindow({
   return (
     <div className={styles.workspace}>
       <section className={styles.mapPanel}>
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '8px 12px',
-            borderBottom: '1px solid var(--theme-border)',
-            color: 'var(--theme-muted)',
-            fontSize: 12,
-          }}
-        >
-          Destination
-          <select
-            aria-label="Map destination"
-            value={destination?.key ?? ''}
-            disabled={destinationsLoading || destinations.length < 2}
-            onChange={(event) => {
-              setDestinationKey(event.target.value);
-              setSelected(null);
-              selectPortalDestination(event.target.value);
-            }}
-          >
-            {(['sietch', 'deep-desert'] as const).map((kind) => {
-              const options = destinations.filter((entry) => entry.kind === kind);
-              return options.length ? (
-                <optgroup key={kind} label={kind === 'sietch' ? 'Sietches' : 'Deep Deserts'}>
-                  {options.map((entry) => (
-                    <option key={entry.key} value={entry.key}>
-                      {entry.label}
-                      {entry.active === false ? ' (offline)' : ''}
-                    </option>
-                  ))}
-                </optgroup>
-              ) : null;
-            })}
-          </select>
-        </label>
         <MapToolbar
           zoomPercent={zoomPercent}
           onZoomOut={() => setZoomAround(zoom * 0.84)}
@@ -453,16 +386,13 @@ export default function MapWindow({
         >
           {mapConfig ? (
             <MapCanvas
-              mapName={selectedMap}
-              mapKind={destination?.kind}
+              mapName={mapName}
               mapConfig={mapConfig}
               markers={visibleMarkers}
               zoom={zoom}
               canvasRef={canvasRef}
               target={target}
               onSelectMarker={setSelected}
-              terrainLayout={mapMeta.coriolisLayout}
-              frameRef={frameRef}
             />
           ) : (
             <div
@@ -486,7 +416,7 @@ export default function MapWindow({
                     marginBottom: 8,
                   }}
                 >
-                  {destination?.label ?? (selectedMap === 'DeepDesert' ? 'Deep Desert' : 'Hagga Basin')}
+                  {mapName === 'DeepDesert' ? 'Deep Desert' : 'Hagga Basin'}
                 </div>
 
                 {loading ? 'Loading map...' : 'Map unavailable'}

@@ -5,7 +5,6 @@ import type { PopulationHistory } from './population';
 export type WorldReading = {
   observedAt: string;
   map: string;
-  partitionId?: string | null;
   spice: { count: number; sectors: string[] } | null;
   nextCycleAt: string | null;
   population?: PopulationHistory | null;

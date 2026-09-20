@@ -7,26 +7,19 @@ import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
 import '../modules/map/markers.css';
 import Head from 'next/head';
-import { SiteConfigProvider, useSiteConfig } from '../components/SiteConfigProvider';
 
-function ConfiguredApp({ Component, pageProps }) {
-  const site = useSiteConfig();
+export default function App({ Component, pageProps }) {
   return (
     <>
       <Head>
-        <title>{site.title}</title>
-        <meta name="description" content={site.description} />
+        <title>Arrakis Control Dashboard</title>
+        <meta
+          name="description"
+          content="Crimson Skies: your Dune: Awakening character, holdings, live map and CHOAM market."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Component {...pageProps} />
     </>
-  );
-}
-
-export default function App(props) {
-  return (
-    <SiteConfigProvider>
-      <ConfiguredApp {...props} />
-    </SiteConfigProvider>
   );
 }

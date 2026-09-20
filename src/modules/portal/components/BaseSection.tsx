@@ -87,7 +87,6 @@ export default function BaseSection({
   sharedBases,
   baseTab,
   setBaseTab,
-  showImport = true,
 }) {
   const [selectedBaseId, setSelectedBaseId] = useState(null);
   const selectedBase = visibleBases.find((base) => String(getBaseId(base)) === String(selectedBaseId));
@@ -266,7 +265,7 @@ export default function BaseSection({
           />
         )}
       </section>
-      {showImport && <BaseImport />}
+      <BaseImport />
     </>
   );
 }
