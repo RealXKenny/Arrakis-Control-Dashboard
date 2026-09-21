@@ -6,7 +6,10 @@ import { deleteSession, getSession, saveSession } from '../../src/lib/session-st
 import { getRequestCookie } from '../../src/infrastructure/cookies';
 
 describe('shared production hardening', () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
 
   it('applies rate limits and reports remaining capacity', async () => {
     const key = `test-${Date.now()}-${Math.random()}`;
@@ -88,6 +91,40 @@ describe('shared production hardening', () => {
     expect(first).toContain(`[HTTP] GET ${request.route} → 200 (41ms)`);
     expect(first).not.toContain('requestId');
     expect(second).toContain('1 repeat suppressed');
+  });
+
+  it('keeps routine successful polling out of default Pterodactyl logs', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+
+    logRequestAccess({
+      method: 'GET',
+      route: '/api/server/status',
+      status: 200,
+      durationMs: 125,
+    });
+
+    expect(info).not.toHaveBeenCalled();
+    expect(debug).not.toHaveBeenCalled();
+  });
+
+  it('makes compact background polling diagnostics available at DEBUG', async () => {
+    vi.resetModules();
+    vi.stubEnv('LOG_LEVEL', 'DEBUG');
+    const output = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const debugLogger = await import('../../src/lib/logger');
+
+    debugLogger.logRequestAccess({
+      method: 'GET',
+      route: '/api/server/status',
+      status: 200,
+      durationMs: 125,
+    });
+
+    expect(output).toHaveBeenCalledTimes(1);
+    expect(output.mock.calls[0][0].replace(/\u001B\[[0-9;]*m/g, '')).toContain(
+      '[HTTP] GET /api/server/status → 200 (125ms)',
+    );
   });
 
   it('does not expose unexpected server errors', () => {

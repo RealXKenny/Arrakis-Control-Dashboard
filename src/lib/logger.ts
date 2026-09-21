@@ -215,6 +215,15 @@ export const logger = createLogger('DASHBOARD');
 
 const ACCESS_LOG_WINDOW_MS = 5 * 60_000;
 const ACCESS_LOG_LIMIT = 128;
+const BACKGROUND_POLL_ROUTES = new Set([
+  '/api/map',
+  '/api/market',
+  '/api/market/listings',
+  '/api/player',
+  '/api/portal/world',
+  '/api/server/status',
+  '/api/session',
+]);
 const accessLogState = new Map<string, { lastLoggedAt: number; suppressed: number }>();
 const accessLogger = createLogger('HTTP');
 
@@ -238,9 +247,17 @@ export function logRequestAccess(
     ? ` · ${previous.suppressed} repeat${previous.suppressed === 1 ? '' : 's'} suppressed`
     : '';
   accessLogState.set(key, { lastLoggedAt: now, suppressed: 0 });
-  accessLogger.info(
-    `${request.method} ${request.route} → ${request.status} (${Math.max(0, Math.round(request.durationMs))}ms)${repeatSummary}`,
-  );
+  const message =
+    `${request.method} ${request.route} → ${request.status} ` +
+    `(${Math.max(0, Math.round(request.durationMs))}ms)${repeatSummary}`;
+
+  // Dev note: polling can stay in the sietch until DEBUG calls the meeting.
+  if (request.method === 'GET' && BACKGROUND_POLL_ROUTES.has(request.route)) {
+    accessLogger.debug(message);
+    return;
+  }
+
+  accessLogger.info(message);
 }
 
 export function createRequestLogger(context: LogContext): Logger {
