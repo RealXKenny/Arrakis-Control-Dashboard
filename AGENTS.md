@@ -20,6 +20,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - Extra checks: `npm run test:production` for runtime/API changes; `npm run test:browser` for UI behavior.
 - `LOG_LEVEL=DEBUG` writes redacted metadata and compact background-poll diagnostics to the colored console only. Successful polling is omitted at `INFO`; warnings and failures remain visible. There are no log files or Sentry.
 - Releases: bump the stable SemVer in `package.json` and add the matching `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md`; successful `main` CI creates the tag and GitHub Release.
+- A successful `main` CI also publishes `ghcr.io/realxkenny/arrakis-control-dashboard:latest` and `sha-<commit>` images. The importable egg is `pterodactyl/egg-arrakis-control-dashboard.json`; its allocated `SERVER_PORT` comes from Wings.
 
 ## Map
 

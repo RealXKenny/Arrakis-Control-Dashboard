@@ -1,0 +1,142 @@
+{
+  "_comment": "Import this PTDL_v2 egg into a Pterodactyl nest. The dashboard is bundled in the GHCR image.",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2026-09-21T00:00:00+00:00",
+  "name": "Arrakis Control Dashboard",
+  "author": "realxkenny@users.noreply.github.com",
+  "description": "Production Arrakis Control Dashboard image. Set the required Dune Console, Discord OAuth, public URL, and Redis variables before starting.",
+  "features": null,
+  "docker_images": {
+    "Arrakis Control Dashboard (GHCR)": "ghcr.io/realxkenny/arrakis-control-dashboard:latest"
+  },
+  "file_denylist": [],
+  "startup": "cd /opt/arrakis-dashboard && exec node src/config/server-launcher.mjs start",
+  "config": {
+    "files": "{}",
+    "startup": "{\"done\":\"Ready in\"}",
+    "logs": "{}",
+    "stop": "^C"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/sh\nset -eu\nmkdir -p /mnt/server\necho 'Arrakis Control Dashboard is bundled in the Docker image. No files to install.'\n",
+      "container": "ghcr.io/pterodactyl/installers:alpine",
+      "entrypoint": "ash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Log Level",
+      "description": "Console verbosity; INFO is recommended.",
+      "env_variable": "LOG_LEVEL",
+      "default_value": "INFO",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:DEBUG,INFO,WARN,ERROR,FATAL",
+      "field_type": "text"
+    },
+    {
+      "name": "Server Bind Address",
+      "description": "Bind to all container interfaces so Wings can reach the dashboard.",
+      "env_variable": "SERVER_HOSTNAME",
+      "default_value": "0.0.0.0",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Dune Console URL",
+      "description": "URL of the Dune Console reachable from this container.",
+      "env_variable": "CONSOLE_URL",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|url",
+      "field_type": "text"
+    },
+    {
+      "name": "Dune Console API Key",
+      "description": "Scoped Dune Console API key. Treat as a secret.",
+      "env_variable": "CONSOLE_API_KEY",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Adapter Token",
+      "description": "Adapter integration token. Treat as a secret.",
+      "env_variable": "ADAPTER_TOKEN",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Discord Client ID",
+      "description": "Discord OAuth application client ID.",
+      "env_variable": "DISCORD_CLIENT_ID",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Discord Client Secret",
+      "description": "Discord OAuth application client secret. Treat as a secret.",
+      "env_variable": "DISCORD_CLIENT_SECRET",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Discord Guild ID",
+      "description": "Discord server whose members may access the dashboard.",
+      "env_variable": "DISCORD_GUILD_ID",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Public App URL",
+      "description": "Public HTTPS dashboard origin, for example https://portal.example.com/. The OAuth callback is /auth/callback.",
+      "env_variable": "APP_URL",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|url",
+      "field_type": "text"
+    },
+    {
+      "name": "Verified Member Role ID",
+      "description": "Discord role required for dashboard access.",
+      "env_variable": "VERIFIED_MEMBER_ROLE_ID",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Redis URL",
+      "description": "Redis TCP URL reachable from this container, with credentials; use rediss:// for TLS.",
+      "env_variable": "REDIS_URL",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    }
+  ]
+}
