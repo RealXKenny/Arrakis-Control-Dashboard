@@ -28,4 +28,18 @@ describe('release notes', () => {
 
     expect(section).not.toBe('');
   });
+
+  it('publishes the container only for a new version release', () => {
+    const ci = fs.readFileSync(path.resolve('.github/workflows/ci.yml'), 'utf8');
+    const release = fs.readFileSync(path.resolve('.github/workflows/release.yml'), 'utf8');
+
+    expect(ci).not.toContain('docker push');
+    expect(release).toContain('if git rev-parse --verify --quiet "refs/tags/$tag"');
+    expect(release).toMatch(/- name: Build versioned image\r?\n\s+if: steps\.release\.outputs\.create == 'true'/);
+    expect(release).toMatch(/- name: Publish versioned image\r?\n\s+if: steps\.release\.outputs\.create == 'true'/);
+    expect(release).toContain('--tag "$IMAGE:$RELEASE_TAG"');
+    expect(release.indexOf('- name: Publish versioned image')).toBeLessThan(
+      release.indexOf('- name: Create GitHub Release'),
+    );
+  });
 });

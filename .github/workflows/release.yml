@@ -6,7 +6,7 @@ on:
     types: [completed]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-main
@@ -14,8 +14,11 @@ concurrency:
 
 jobs:
   release:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,6 +84,85 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$current_version" >> "$GITHUB_OUTPUT"
           echo "notes_file=$notes_file" >> "$GITHUB_OUTPUT"
+
+      - name: Name image
+        if: steps.release.outputs.create == 'true'
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Build versioned image
+        if: steps.release.outputs.create == 'true'
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          docker build \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$RELEASE_SHA" \
+            --label "org.opencontainers.image.version=$RELEASE_TAG" \
+            --tag "$IMAGE:latest" \
+            --tag "$IMAGE:$RELEASE_TAG" \
+            --tag "$IMAGE:sha-$RELEASE_SHA" .
+
+      - name: Check image contents and Pterodactyl user
+        if: steps.release.outputs.create == 'true'
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: |
+          docker run --rm --entrypoint sh "$IMAGE:latest" -c '
+            test "$(id -un)" = container &&
+            test "$HOME" = /home/container &&
+            test "$PWD" = /home/container &&
+            test -f /opt/arrakis-dashboard/.next/BUILD_ID &&
+            test -f /opt/arrakis-dashboard/src/assets/favicon.ico &&
+            test -f /opt/arrakis-dashboard/CHANGELOG.md
+          '
+          test "$(docker run --rm -e STARTUP='printf pterodactyl-ready' "$IMAGE:latest")" = pterodactyl-ready
+
+      - name: Check image startup and asset route
+        if: steps.release.outputs.create == 'true'
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: |
+          docker run -d --name arrakis-dashboard-smoke \
+            -e SERVER_PORT=2008 \
+            -e CONSOLE_URL=http://127.0.0.1:9 \
+            -e CONSOLE_API_KEY=fixture-console-key \
+            -e ADAPTER_TOKEN=fixture-adapter-token \
+            -e DISCORD_CLIENT_ID=fixture-client-id \
+            -e DISCORD_CLIENT_SECRET=fixture-client-secret \
+            -e DISCORD_GUILD_ID=fixture-guild-id \
+            -e VERIFIED_MEMBER_ROLE_ID=fixture-role-id \
+            -e APP_URL=http://localhost:2008 \
+            -e REDIS_URL=redis://127.0.0.1:9/0 \
+            -p 127.0.0.1:2008:2008 "$IMAGE:latest"
+          trap 'docker logs arrakis-dashboard-smoke; docker rm -f arrakis-dashboard-smoke' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:2008/favicon.ico; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Log in to GitHub Container Registry
+        if: steps.release.outputs.create == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Publish versioned image
+        if: steps.release.outputs.create == 'true'
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: docker push --all-tags "$IMAGE"
 
       - name: Create GitHub Release
         if: steps.release.outputs.create == 'true'
