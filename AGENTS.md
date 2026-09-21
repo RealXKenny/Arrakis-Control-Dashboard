@@ -18,7 +18,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - Dev: `npm run dev`; defaults to `http://127.0.0.1:2008`, with `SERVER_HOSTNAME` and `SERVER_PORT` configurable in `.env`. Production: `npm run build`, then `npm start` with the same binding variables.
 - Standard checks: `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`.
 - Extra checks: `npm run test:production` for runtime/API changes; `npm run test:browser` for UI behavior.
-- `LOG_LEVEL=DEBUG` writes redacted metadata to the colored console only. There are no log files or Sentry.
+- `LOG_LEVEL=DEBUG` writes redacted metadata and compact background-poll diagnostics to the colored console only. Successful polling is omitted at `INFO`; warnings and failures remain visible. There are no log files or Sentry.
 - Releases: bump the stable SemVer in `package.json` and add the matching `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md`; successful `main` CI creates the tag and GitHub Release.
 
 ## Map

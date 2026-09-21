@@ -2,6 +2,18 @@
 
 All notable changes to Arrakis Control Dashboard are documented here.
 
+## [1.0.7] - 2026-09-20
+
+### Fixed
+
+- Removed successful 30-second browser polling from default `INFO` output so Pterodactyl logs stay focused on startup, authentication, user-triggered requests, warnings, and failures; compact polling diagnostics remain available with `LOG_LEVEL=DEBUG`.
+
+### Verification
+
+- Formatting, TypeScript validation, zero-warning lint, 156 Vitest tests, production build, and runtime smoke checks pass.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.0.6...v1.0.7)
+
 ## [1.0.6] - 2026-09-20
 
 ### Added
