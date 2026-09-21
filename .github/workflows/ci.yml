@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -29,3 +32,71 @@ jobs:
           name: browser-failure-traces
           path: test-results/
           retention-days: 7
+
+  container:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Name image
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - name: Build image
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: |
+          docker build \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --tag "$IMAGE:latest" \
+            --tag "$IMAGE:sha-$GITHUB_SHA" .
+      - name: Check image contents and Pterodactyl user
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: |
+          docker run --rm --entrypoint sh "$IMAGE:latest" -c '
+            test "$(id -un)" = container &&
+            test "$HOME" = /home/container &&
+            test "$PWD" = /home/container &&
+            test -f /opt/arrakis-dashboard/.next/BUILD_ID &&
+            test -f /opt/arrakis-dashboard/src/assets/favicon.ico &&
+            test -f /opt/arrakis-dashboard/CHANGELOG.md
+          '
+          test "$(docker run --rm -e STARTUP='printf pterodactyl-ready' "$IMAGE:latest")" = pterodactyl-ready
+      - name: Check image startup and asset route
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: |
+          docker run -d --name arrakis-dashboard-smoke \
+            -e SERVER_PORT=2008 \
+            -e CONSOLE_URL=http://127.0.0.1:9 \
+            -e CONSOLE_API_KEY=fixture-console-key \
+            -e ADAPTER_TOKEN=fixture-adapter-token \
+            -e DISCORD_CLIENT_ID=fixture-client-id \
+            -e DISCORD_CLIENT_SECRET=fixture-client-secret \
+            -e DISCORD_GUILD_ID=fixture-guild-id \
+            -e VERIFIED_MEMBER_ROLE_ID=fixture-role-id \
+            -e APP_URL=http://localhost:2008 \
+            -e REDIS_URL=redis://127.0.0.1:9/0 \
+            -p 127.0.0.1:2008:2008 "$IMAGE:latest"
+          trap 'docker logs arrakis-dashboard-smoke; docker rm -f arrakis-dashboard-smoke' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:2008/favicon.ico; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - name: Log in to GitHub Container Registry
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Publish image
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: docker push --all-tags "$IMAGE"

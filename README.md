@@ -53,7 +53,17 @@ npm run test:watch     Run Vitest in watch mode
 npm run test:coverage  Run tests with V8 coverage
 ```
 
-CI runs typecheck, lint, tests, and the production build for pushes to `main` and pull requests.
+CI runs typecheck, lint, tests, the production build, production smoke checks, and browser checks for pushes to `main` and pull requests. Successful `main` CI also publishes the Docker image.
+
+## Docker and Pterodactyl
+
+The production image is published as [`ghcr.io/realxkenny/arrakis-control-dashboard:latest`](https://github.com/RealXKenny/Arrakis-Control-Dashboard/pkgs/container/arrakis-control-dashboard). Each successful `main` build also gets an immutable `sha-<commit>` tag. The image contains the built Next.js app, bundled assets, and changelog; do not run `npm install` in the server's `/home/container` directory.
+
+Import [the dashboard egg](pterodactyl/egg-arrakis-control-dashboard.json) into a Pterodactyl nest, create a server with its GHCR image, and assign a port. Pterodactyl supplies that allocation as `SERVER_PORT`; the egg binds `SERVER_HOSTNAME` to `0.0.0.0`. Leave its startup command pointing at `/opt/arrakis-dashboard` because the app is in the image, not `/home/container`. Use the egg's Startup settings to fill every required variable before starting the server.
+
+Set `APP_URL` to the public HTTPS origin served by your reverse proxy, then configure the Discord OAuth redirect URI as `<APP_URL>/auth/callback`. The assigned port is the dashboard's internal HTTP port; terminate public HTTPS at the proxy. `CONSOLE_URL` and `REDIS_URL` must resolve and be reachable from inside the container. Use `rediss://` when Redis requires TLS. If the GHCR package is private, grant the Pterodactyl host access to pull it or make the package public.
+
+For a direct Docker deployment, supply the required production variables with `--env-file` and map the same port on the host and container; set `SERVER_HOSTNAME=0.0.0.0`. Keep the environment file outside the image and repository.
 
 ## Releases
 
@@ -84,7 +94,7 @@ Important boundaries:
 ## Security and Reliability
 
 - API routes receive request IDs, method checks, structured logging, safe error responses, and shared rate limiting.
-- Production rate limits use Upstash Redis and fail closed if the storage service is unavailable.
+- Production rate limits use Redis and fail closed if the storage service is unavailable.
 - OAuth sessions use Redis TTL records; cookies contain only random opaque session IDs.
 - OAuth access tokens are not persisted.
 - Logs redact passwords, tokens, cookies, authorization headers, and session values.
@@ -93,7 +103,7 @@ Important boundaries:
 
 ## Production Deployment
 
-1. Provision an Upstash Redis database and configure its REST URL and token.
+1. Provision a Redis server reachable over TCP and configure `REDIS_URL` with any required credentials.
 2. Configure Discord OAuth redirect URI as `<APP_URL>/auth/callback`.
 3. Set all required server-only variables from `.env.example` in the deployment platform.
 4. Run the verification commands locally or in CI:
