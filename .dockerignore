@@ -12,4 +12,3 @@ guides
 .env.*
 !.env.example
 tsconfig.tsbuildinfo
-

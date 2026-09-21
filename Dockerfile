@@ -27,4 +27,3 @@ ENV USER=container HOME=/home/container NODE_ENV=production SERVER_HOSTNAME=0.0.
 WORKDIR /home/container
 EXPOSE 2008
 CMD ["/bin/sh", "/entrypoint.sh"]
-
