@@ -9,6 +9,8 @@ RUN npm run build && npm prune --omit=dev
 
 FROM node:22-bookworm-slim
 
+LABEL org.opencontainers.image.description="Web dashboard for Dune: Awakening server operations, Discord OAuth, and live telemetry."
+
 RUN usermod --login container --home /home/container --move-home node \
     && groupmod --new-name container node
 

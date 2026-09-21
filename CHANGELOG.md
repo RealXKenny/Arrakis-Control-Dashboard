@@ -9,6 +9,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Production Docker image with dashboard assets and changelog bundled, published to GitHub Container Registry for new stable version releases after successful `main` CI.
 - Importable Pterodactyl egg with production environment settings and a no-op installer for the prebuilt image.
 - Container startup and asset-route smoke checks before publishing a new versioned image.
+- Add an OCI image description to the dashboard container metadata.
 
 ## [1.0.7] - 2026-09-20
 

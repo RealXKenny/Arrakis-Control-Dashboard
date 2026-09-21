@@ -121,6 +121,7 @@ jobs:
             test -f /opt/arrakis-dashboard/src/assets/favicon.ico &&
             test -f /opt/arrakis-dashboard/CHANGELOG.md
           '
+          test "$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.description" }}' "$IMAGE:latest")" = 'Web dashboard for Dune: Awakening server operations, Discord OAuth, and live telemetry.'
           test "$(docker run --rm -e STARTUP='printf pterodactyl-ready' "$IMAGE:latest")" = pterodactyl-ready
 
       - name: Check image startup and asset route
