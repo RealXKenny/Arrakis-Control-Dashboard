@@ -14,9 +14,8 @@ export async function GET(req, res) {
   const session = id ? await getSession(id) : null;
   if (!session || session.expiresAt <= Date.now()) return reply({ error: 'Unauthorized' }, 401);
   const env = getServerEnv();
-  if (!env.REALTIME_ROLE_ID) return reply({ error: 'Realtime Data is disabled. Configure REALTIME_ROLE_ID.' }, 403);
-  if (session.guildId !== env.DISCORD_GUILD_ID || !session.roleIds.includes(env.REALTIME_ROLE_ID))
-    return reply({ error: 'Realtime Data requires the configured Discord role.' }, 403);
+  if (session.guildId !== env.DISCORD_GUILD_ID)
+    return reply({ error: 'Your session does not belong to this dashboard guild.' }, 403);
   const url = new URL(req.url, 'http://localhost');
   const map = url.searchParams.get('map') ?? 'HaggaBasin';
   if (!['HaggaBasin', 'DeepDesert'].includes(map)) return reply({ error: 'Invalid map' }, 400);

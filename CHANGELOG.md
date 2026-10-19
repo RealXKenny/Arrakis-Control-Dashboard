@@ -4,6 +4,16 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-19
+
+### Changed
+
+- Make realtime sandworm, NPC, civilian, sandstorm, and Coriolis positions available to every signed-in dashboard member of the configured guild, without an additional staff role.
+- Remove `REALTIME_ROLE_ID` from configuration and the Pterodactyl egg; existing values are ignored.
+- Preserve signed-out access protection, per-request session checks, secure Console transport, and existing player and vehicle ownership restrictions.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.1.0...v1.1.1)
+
 ## [1.1.0] - 2026-10-19
 
 ### Added

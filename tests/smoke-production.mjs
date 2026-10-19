@@ -53,7 +53,7 @@ const storage = createRedisFixture((entry) => {
       : JSON.stringify({
           user: { id: 'user' },
           guildId: 'fixture-guild',
-          roleIds: ['123'],
+          roleIds: [],
           expiresAt: Date.now() + 3600000,
         });
   return 'OK';
@@ -85,7 +85,6 @@ const child = spawn(
       DISCORD_CLIENT_SECRET: 'fixture-secret',
       DISCORD_GUILD_ID: 'fixture-guild',
       VERIFIED_MEMBER_ROLE_ID: 'fixture-role',
-      REALTIME_ROLE_ID: '123',
       APP_URL: base,
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
     },

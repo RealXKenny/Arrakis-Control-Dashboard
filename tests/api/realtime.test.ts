@@ -5,7 +5,6 @@ import { getSession } from '../../src/lib/session-store';
 import { responseMock } from '../helpers/response';
 
 const config = vi.hoisted(() => ({
-  REALTIME_ROLE_ID: '123',
   DISCORD_GUILD_ID: 'guild',
   CONSOLE_URL: 'https://console.test',
 }));
@@ -25,43 +24,47 @@ const source = { map: 'Survival_1', partition: 2, ready: true, pid: 123456 };
 const object = { i: 1, k: 'worm', s: 0, x: 10, y: 20, z: 30, secret: 'private' };
 const call = async (url = '/api/map/realtime?map=HaggaBasin', method = 'GET') => {
   const res = responseMock();
-  await route({ method, url, headers: { cookie: 'dashboard_session=staff' } }, res);
+  await route({ method, url, headers: { cookie: 'dashboard_session=member' } }, res);
   return { status: res.statusCode, body: typeof res.body === 'string' ? JSON.parse(res.body) : res.body, res };
 };
 beforeEach(() => {
   vi.clearAllMocks();
-  config.REALTIME_ROLE_ID = '123';
   config.CONSOLE_URL = 'https://console.test';
   vi.mocked(getSession).mockResolvedValue({
     user: { id: 'user' },
     guildId: 'guild',
-    roleIds: ['123'],
+    roleIds: [],
     expiresAt: Date.now() + 60000,
   });
   vi.mocked(getDuneClient, { partial: true }).mockReturnValue({ request });
   request.mockResolvedValue({ gen: 1, t: Date.now(), sources: [source], objects: [object] });
 });
 
-it('requires a session, the configured staff role and matching guild before contacting Console', async () => {
+it('requires a valid session and matching guild before contacting Console', async () => {
   vi.mocked(getSession).mockResolvedValueOnce(null);
   expect((await call()).status).toBe(401);
   vi.mocked(getSession).mockResolvedValueOnce({
     user: { id: 'u' },
     guildId: 'guild',
     roleIds: [],
-    expiresAt: Date.now() + 60000,
+    expiresAt: Date.now() - 1,
   });
-  expect((await call()).status).toBe(403);
+  expect((await call()).status).toBe(401);
   vi.mocked(getSession).mockResolvedValueOnce({
     user: { id: 'u' },
     guildId: 'other',
-    roleIds: ['123'],
+    roleIds: [],
     expiresAt: Date.now() + 60000,
   });
   expect((await call()).status).toBe(403);
-  config.REALTIME_ROLE_ID = '';
-  expect((await call()).status).toBe(403);
   expect(request).not.toHaveBeenCalled();
+});
+
+it('allows any signed-in dashboard member without a special realtime role', async () => {
+  const result = await call();
+  expect(result.status).toBe(200);
+  expect(result.body.markers[0].type).toBe('worm');
+  expect(request).toHaveBeenCalledTimes(1);
 });
 
 it('normalizes positions and omits raw source metadata, players and vehicles', async () => {
