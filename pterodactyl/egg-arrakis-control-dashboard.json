@@ -29,16 +29,6 @@
   },
   "variables": [
     {
-      "name": "Realtime Data Role",
-      "description": "Optional trusted staff Discord role ID for realtime map positions. Blank disables access. Console API key also needs Realtime Data Read; Console URL must use HTTPS or loopback HTTP.",
-      "env_variable": "REALTIME_ROLE_ID",
-      "default_value": "",
-      "user_viewable": true,
-      "user_editable": true,
-      "rules": "nullable|string|max:25",
-      "field_type": "text"
-    },
-    {
       "name": "Log Level",
       "description": "Console verbosity; INFO is recommended.",
       "env_variable": "LOG_LEVEL",

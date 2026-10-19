@@ -19,10 +19,6 @@ const serverEnvSchema = z.object({
   APP_URL: z.string().url().optional(),
   DISCORD_GUILD_ID: z.string().min(1).optional(),
   VERIFIED_MEMBER_ROLE_ID: z.string().min(1).optional(),
-  REALTIME_ROLE_ID: z
-    .string()
-    .regex(/^\d{1,25}$/)
-    .optional(),
   REDIS_URL: z
     .string()
     .url()
