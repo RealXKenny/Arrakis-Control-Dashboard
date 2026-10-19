@@ -338,14 +338,25 @@ test('realtime layer updates, filters instances, clears failures and switches ma
             realtime: true,
           },
           { id: 'realtime:1:2', type: 'storm', name: 'Sandstorm', x: 600, y: 600, z: 0, partition: 2, realtime: true },
+          { id: 'npc', type: 'realtime_npc', name: 'Scout', x: 400, y: 400, partition: 1, realtime: true },
+          { id: 'civilian', type: 'civilian', name: 'Traveler', x: 500, y: 400, partition: 1, realtime: true },
         ],
       },
     });
   });
   await page.goto('/map');
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Base: My base', exact: true })).toBeVisible();
-  expect(realtimeReads).toBe(0);
-  await page.getByRole('button', { name: 'Realtime off', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Realtime on', exact: true })).toBeVisible();
+  await expect.poll(() => realtimeReads).toBeGreaterThan(0);
+  await expect(page.getByLabel('NPCs (realtime)', { exact: true })).not.toBeChecked();
+  await expect(page.getByLabel('Civilians (realtime)', { exact: true })).not.toBeChecked();
+  await expect(page.getByRole('button', { name: 'NPC: Scout', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Civilian: Traveler', exact: true })).toHaveCount(0);
+  await page.getByLabel('NPCs (realtime)', { exact: true }).check();
+  await expect(page.getByRole('button', { name: 'NPC: Scout', exact: true })).toBeVisible();
+  await page.getByLabel('Civilians (realtime)', { exact: true }).check();
+  await expect(page.getByRole('button', { name: 'Civilian: Traveler', exact: true })).toBeVisible();
   const worm = page.getByRole('button', { name: 'Sandworm: Sandworm', exact: true });
   await expect(worm).toBeVisible();
   await expect(worm.locator('.realtime-symbol')).toBeVisible();
@@ -361,7 +372,7 @@ test('realtime layer updates, filters instances, clears failures and switches ma
   await page.screenshot({ path: 'test-results/map-realtime.png', fullPage: true });
   await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Sandstorm: Sandstorm', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Realtime off', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Realtime on', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sandworm: Desert worm', exact: true })).toBeVisible();
   unavailable = true;
   await expect(page.getByText('Realtime agent is unavailable.', { exact: true })).toBeVisible();
@@ -375,8 +386,19 @@ test('realtime layer updates, filters instances, clears failures and switches ma
 
 test('map survives stylesheet extraction and refreshes independently', async ({ page }) => {
   test.setTimeout(process.env.CI ? 90_000 : 60_000);
+  await page.clock.install();
+  let mapReads = 0;
+  let holdMapRead = false;
+  let releaseMapRead = () => {};
 
-  await page.route('**/api/map?*', (route) => {
+  await page.route('**/api/map?*', async (route) => {
+    mapReads++;
+    if (holdMapRead) {
+      holdMapRead = false;
+      await new Promise<void>((resolve) => {
+        releaseMapRead = resolve;
+      });
+    }
     const deepDesert = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
     const mapConfig = deepDesert
       ? {
@@ -407,6 +429,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
     });
   });
   await page.goto('/map');
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
   const mapPanel = page.locator('[data-map-panel]');
   await expect.poll(async () => (await mapPanel.boundingBox())?.width ?? 0).toBeGreaterThan(500);
   await expect.poll(async () => (await mapPanel.boundingBox())?.height ?? 0).toBeGreaterThan(600);
@@ -469,6 +492,23 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect
     .poll(() => page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width))
     .toBeGreaterThan(fittedMapWidth * 1.1);
+  const zoomedWidth = await page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width);
+  const initialMapReads = mapReads;
+  holdMapRead = true;
+  await page.clock.fastForward(31_000);
+  await expect.poll(() => mapReads).toBeGreaterThan(initialMapReads);
+  await expect(page.locator('[data-loading]')).toHaveAttribute('data-loading', 'false');
+  expect(await page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width)).toBe(
+    zoomedWidth,
+  );
+  const updated = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/map');
+  releaseMapRead();
+  await updated;
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(page.locator('[data-loading]')).toHaveAttribute('data-loading', 'false');
+  await expect
+    .poll(() => page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width))
+    .toBe(zoomedWidth);
   const viewport = page.viewportSize();
   if (viewport) {
     await page.setViewportSize({ width: viewport.width - 1, height: viewport.height });
@@ -505,7 +545,8 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(page.getByRole('checkbox', { name: 'Sector Grid', exact: true })).toBeChecked();
   await expect(page.getByTitle('Show Storage', { exact: true })).toHaveCount(1);
   await expect(page).toHaveURL(/\/portal$/);
-  await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1);
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
+  await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1, { timeout: 20_000 });
   const terrain = page.locator('[data-terrain-state]');
   await expect(terrain).toHaveAttribute('data-terrain-state', 'ready', { timeout: 20_000 });
   await expect(terrain).toHaveAttribute('data-map-resolution', '8192x8192');
@@ -759,4 +800,105 @@ test('guild view renders reported membership without inventing a rank', async ({
   await expect(page.getByRole('heading', { name: 'Guild membership', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Crimson Skies', exact: true })).toBeVisible();
   await expect(page.getByText('Your rank: Not reported')).toBeVisible();
+});
+
+test('3D maps orbit with aligned markers and recover from context loss', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  let samples = 0;
+  await page.route('**/api/map/realtime?*', (route) => {
+    samples++;
+    const markers = [
+      {
+        id: 'worm-a',
+        type: 'worm',
+        name: 'Moving worm',
+        x: 100000 + samples * 2000,
+        y: 100000,
+        partition: 1,
+        realtime: true,
+      },
+      { id: 'worm-b', type: 'worm', name: 'Other worm', x: -170000, y: 100000, partition: 1, realtime: true },
+    ];
+    return route.fulfill({
+      json: {
+        ok: true,
+        gen: 1,
+        capturedAt: Date.now(),
+        sources: [{ partition: 1, ready: true }],
+        markers: samples % 2 ? markers : markers.reverse(),
+      },
+    });
+  });
+  await page.route('**/api/map?*', (route) => {
+    const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
+    const map = deep
+      ? { width: 8192, height: 8192, minX: -1177656, maxX: 1072344, minY: -1177066, maxY: 1072934, flipY: false }
+      : { width: 8192, height: 8192, minX: -457200, maxX: 355600, minY: -457200, maxY: 355600, flipY: false };
+    return route.fulfill({
+      json: {
+        ok: true,
+        map,
+        coriolisLayout: deep ? 6 : null,
+        gridOverlay: deep ? createSectorGridOverlay('DeepDesert', map) : null,
+        markers: [{ id: 'base', type: 'base', name: '3D stronghold', x: -50000, y: -50000 }],
+      },
+    });
+  });
+  await page.goto('/map');
+  const scene = page.locator('[data-map-view="3d"]');
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  const marker = page.getByRole('button', { name: 'Base: 3D stronghold', exact: true });
+  await expect(marker).toBeVisible();
+  const moving = page.getByRole('button', { name: 'Sandworm: Moving worm', exact: true });
+  await expect(moving).toBeVisible();
+  await moving.evaluate((el) => (el.dataset.preserved = 'true'));
+  const snapshotPosition = await marker.evaluate((el) => [el.style.left, el.style.top]);
+  const scrollPosition = await page.evaluate(() => scrollY);
+  await scene.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
+    canvas.dataset.draws = '0';
+    const gl = canvas.getContext('webgl2')!;
+    const draw = gl.drawElements.bind(gl);
+    gl.drawElements = (...args: Parameters<typeof gl.drawElements>) => {
+      canvas.dataset.draws = String(Number(canvas.dataset.draws) + 1);
+      draw(...args);
+    };
+  });
+  const initialSamples = samples;
+  await expect.poll(() => samples).toBeGreaterThan(initialSamples + 1);
+  await expect(moving).toHaveAttribute('data-preserved', 'true');
+  await expect(scene.locator('canvas')).toHaveAttribute('data-draws', '0');
+  expect(await marker.evaluate((el) => [el.style.left, el.style.top])).toEqual(snapshotPosition);
+  expect(await page.evaluate(() => scrollY)).toBe(scrollPosition);
+  await expect(moving).toHaveCSS('transition-duration', '1.8s, 1.8s');
+  const before = await marker.evaluate((el) => el.style.top);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await expect.poll(() => marker.evaluate((el) => el.style.top)).not.toBe(before);
+  await marker.click();
+  await expect(page.getByText('3D stronghold', { exact: true }).last()).toBeVisible();
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await page.screenshot({ path: 'test-results/map-3d-hagga.png', fullPage: true });
+  const canvas = scene.locator('canvas');
+  const box = await canvas.boundingBox();
+  await page.mouse.move(box!.x + box!.width * 0.7, box!.y + box!.height * 0.6);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.5, { steps: 8 });
+  await page.mouse.up();
+  await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  await expect(marker).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Sector Grid', exact: true }).uncheck();
+  await page.screenshot({ path: 'test-results/map-3d-desert.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await expect(canvas).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/map-3d-mobile.png', fullPage: true });
+  await canvas.evaluate((el) => el.dispatchEvent(new Event('webglcontextlost', { cancelable: true })));
+  await expect(scene).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '3D map', exact: true })).toBeVisible();
+  await expect(page.getByText(/3D unavailable: graphics context lost/)).toBeVisible();
+  await expect(page.locator('[data-map-resolution]')).toBeVisible();
+  expect(errors).toEqual([]);
 });

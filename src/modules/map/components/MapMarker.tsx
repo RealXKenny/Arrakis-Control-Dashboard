@@ -88,6 +88,7 @@ export default function MapMarker({ marker, index, point, zoom, onSelect }) {
       title={`${friendlyMarkerType(type)}: ${name}${marker?.sector ? ` — Sector ${marker.sector}` : ''} — X: ${point.x.toFixed(0)}, Y: ${point.y.toFixed(0)}`}
       aria-label={`${friendlyMarkerType(type)}: ${name}`}
       style={{
+        pointerEvents: 'auto',
         position: 'absolute',
         left: point.px * zoom,
         top: point.py * zoom,

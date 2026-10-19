@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import type { RealtimeReading } from '../utils/realtime';
 
 export default function useRealtimeData(mapName: string, mapAvailable: boolean) {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(true);
   const [reading, setReading] = useState<(RealtimeReading & { mapName: string }) | null>(null);
-  const [status, setStatus] = useState('Realtime off');
+  const [status, setStatus] = useState('Connecting realtime…');
   const [partition, setPartition] = useState('');
 
   useEffect(() => {

@@ -21,6 +21,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `LOG_LEVEL=DEBUG` writes redacted metadata and compact background-poll diagnostics to the colored console only. Successful polling is omitted at `INFO`; warnings and failures remain visible. There are no log files or Sentry.
 - Releases: bump the stable SemVer in `package.json` and add the matching `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md`; successful `main` CI creates the tag and GitHub Release.
 - Only a new stable version release publishes `ghcr.io/realxkenny/arrakis-control-dashboard:latest`, `v<version>`, and `sha-<commit>` images after successful `main` CI. The importable egg is `pterodactyl/egg-arrakis-control-dashboard.json`; its allocated `SERVER_PORT` comes from Wings.
+- The manual `Cloud test image` workflow can publish `cloud-test` and `sha-<commit>` for an already verified `main` commit without changing the package version or stable image tags.
 
 ## Map
 
@@ -31,7 +32,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/config/`: authoritative server environment schema, production validation, and the dev/production server launcher.
 - `src/instrumentation.ts`: runtime validation, Console warmup, startup log, and population recorder.
 - `src/assets/`: favicon, application images, and compressed Deep Desert terrain bundles. It is large; do not enumerate it unless necessary.
-- `src/modules/map/terrain/`: lazy WebGL2 terrain renderer; the flat Deep Desert image is its compatibility fallback.
+- `src/modules/map/terrain/`: lazy three.js 3D scene for both maps, measured height surfaces, and instanced Deep Desert rocks; the overhead WebGL2/image viewer remains the compatibility fallback. `MapScene3D.tsx` owns camera/disposal, `heightSurface.ts` elevation sampling, and `sceneGeometry.ts` coordinate/texture alignment.
 - `src/modules/map/server/realtime.ts`: Console snapshots available to all signed-in dashboard members of the configured guild; `hooks/useRealtimeData.ts` polls every two seconds with instance selection. No separate realtime role is required; anonymous player/vehicle objects are excluded.
 - `tests/`: API, architecture, unit, browser, helpers, and `smoke-production.mjs`.
 - Root runtime behavior: `middleware.ts` and `next.config.ts`.
