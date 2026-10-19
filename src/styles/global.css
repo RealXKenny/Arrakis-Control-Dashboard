@@ -62,3 +62,25 @@ html {
     transition-duration: 0.01ms !important;
   }
 }
+.realtime-symbol {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: #211308;
+  color: #f3ad54;
+  font-size: 16px;
+}
+
+.marker-realtime_npc .realtime-symbol {
+  color: #ed806f;
+}
+.marker-civilian .realtime-symbol {
+  color: #78c8ba;
+}
+.marker-storm .realtime-symbol,
+.marker-coriolis .realtime-symbol {
+  color: #ceacf0;
+}

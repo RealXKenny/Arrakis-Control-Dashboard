@@ -301,6 +301,78 @@ test('unavailable personal listings are not shown as zero or a request failure',
   await expect(page.getByText('No matching listings found.', { exact: true })).toHaveCount(0);
 });
 
+test('realtime layer updates, filters instances, clears failures and switches maps', async ({ page }) => {
+  let realtimeReads = 0;
+  let unavailable = false;
+  await page.route('**/api/map?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        map: { width: 1000, height: 1000, minX: 0, maxX: 1000, minY: 0, maxY: 1000 },
+        markers: [{ id: 'base', type: 'base', x: 200, y: 200, name: 'My base' }],
+      },
+    }),
+  );
+  await page.route('**/api/map/realtime?*', (route) => {
+    realtimeReads++;
+    if (unavailable) return route.fulfill({ status: 503, json: { error: 'Realtime agent is unavailable.' } });
+    const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
+    return route.fulfill({
+      json: {
+        ok: true,
+        gen: 1,
+        capturedAt: Date.now(),
+        sources: [
+          { partition: 1, ready: true },
+          { partition: 2, ready: true },
+        ],
+        markers: [
+          {
+            id: 'realtime:0:1',
+            type: 'worm',
+            name: deep ? 'Desert worm' : 'Sandworm',
+            x: 300 + realtimeReads * 10,
+            y: 300,
+            z: 0,
+            partition: 1,
+            realtime: true,
+          },
+          { id: 'realtime:1:2', type: 'storm', name: 'Sandstorm', x: 600, y: 600, z: 0, partition: 2, realtime: true },
+        ],
+      },
+    });
+  });
+  await page.goto('/map');
+  await expect(page.getByRole('button', { name: 'Base: My base', exact: true })).toBeVisible();
+  expect(realtimeReads).toBe(0);
+  await page.getByRole('button', { name: 'Realtime off', exact: true }).click();
+  const worm = page.getByRole('button', { name: 'Sandworm: Sandworm', exact: true });
+  await expect(worm).toBeVisible();
+  await expect(worm.locator('.realtime-symbol')).toBeVisible();
+  const initialLeft = await worm.evaluate((element) => element.style.left);
+  await expect.poll(() => worm.evaluate((element) => element.style.left)).not.toBe(initialLeft);
+  await page.getByLabel('Sandworms (realtime)', { exact: true }).uncheck();
+  await expect(worm).toHaveCount(0);
+  await page.getByLabel('Sandworms (realtime)', { exact: true }).check();
+  await expect(worm).toBeVisible();
+  await page.getByLabel('Realtime instance').selectOption('2');
+  await expect(worm).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sandstorm: Sandstorm', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/map-realtime.png', fullPage: true });
+  await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Sandstorm: Sandstorm', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Realtime off', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Sandworm: Desert worm', exact: true })).toBeVisible();
+  unavailable = true;
+  await expect(page.getByText('Realtime agent is unavailable.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sandworm: Desert worm', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Base: My base', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Realtime on', exact: true }).click();
+  await expect(page.getByText('Realtime off', { exact: true })).toHaveCount(2);
+});
+
 test('map survives stylesheet extraction and refreshes independently', async ({ page }) => {
   test.setTimeout(process.env.CI ? 90_000 : 60_000);
 
@@ -445,7 +517,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(sectorGrid.locator('text')).toHaveCount(81);
   await page.getByRole('checkbox', { name: 'Sector Grid', exact: true }).uncheck();
   await expect(sectorGrid).toHaveCount(0);
-  await expect(page.getByRole('status')).toHaveCount(0);
+  await expect(terrain.getByRole('status')).toHaveCount(0);
   await expect
     .poll(() => terrain.locator('[data-map-tiles="deep-desert"]').evaluate((tiles) => getComputedStyle(tiles).opacity))
     .toBe('0');

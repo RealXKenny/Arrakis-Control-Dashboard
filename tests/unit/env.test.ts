@@ -24,9 +24,11 @@ it('accepts the portal environment template', async () => {
   expect(env.LOG_LEVEL).toBe('INFO');
   expect(env.SERVER_HOSTNAME).toBe('127.0.0.1');
   expect(env.SERVER_PORT).toBe(2008);
+  expect(env.REALTIME_ROLE_ID).toBeUndefined();
 });
 
 it.each([
+  ['REALTIME_ROLE_ID', 'not-a-discord-role'],
   ['SERVER_HOSTNAME', 'invalid hostname'],
   ['SERVER_PORT', '0'],
   ['SERVER_PORT', '65536'],

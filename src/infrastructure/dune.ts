@@ -11,6 +11,8 @@ import {
 export type ConsoleRequestOptions = {
   query?: Record<string, unknown>;
   body?: unknown;
+  timeoutMs?: number;
+  retryRead?: boolean;
 };
 function record(value: unknown): Record<string, unknown> {
   // Dev note: null brought nothing to the meeting, as usual.
@@ -47,7 +49,8 @@ class DuneConsoleClient {
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
-      retryRead: method === 'GET' || method === 'HEAD',
+      timeoutMs: options.timeoutMs,
+      retryRead: options.retryRead ?? (method === 'GET' || method === 'HEAD'),
     });
     if (!result.response.ok || record(result.data).ok === false)
       throw new DuneConsoleApiError(undefined, result.response.status);

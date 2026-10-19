@@ -8,6 +8,7 @@ import MarkerDetails from './MarkerDetails';
 import MapStatusBar from './MapStatusBar';
 
 import useMapData from '../hooks/useMapData';
+import useRealtimeData from '../hooks/useRealtimeData';
 import useMapZoom from '../hooks/useMapZoom';
 import useMapDrag from '../hooks/useMapDrag';
 
@@ -31,6 +32,11 @@ const DEFAULT_EXPANDED_MARKERS = {
 };
 
 const LEGEND_CATEGORIES = [
+  { type: 'worm', label: 'Sandworms (realtime)' },
+  { type: 'realtime_npc', label: 'NPCs (realtime)' },
+  { type: 'civilian', label: 'Civilians (realtime)' },
+  { type: 'storm', label: 'Sandstorms (realtime)' },
+  { type: 'coriolis', label: 'Coriolis (realtime)' },
   {
     type: 'sector-grid',
     label: 'Sector Grid',
@@ -168,8 +174,18 @@ function getLegendIconClass(category, subtype) {
 }
 
 export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string }) {
-  const { mapConfig, markers, coriolisLayout, coriolisNextCycleAt, gridOverlay, error, loading, loadMap } =
-    useMapData(mapName);
+  const {
+    mapConfig,
+    markers: staticMarkers,
+    coriolisLayout,
+    coriolisNextCycleAt,
+    gridOverlay,
+    error,
+    loading,
+    loadMap,
+  } = useMapData(mapName);
+  const realtime = useRealtimeData(mapName, Boolean(mapConfig) && !error);
+  const markers = React.useMemo(() => [...staticMarkers, ...realtime.markers], [staticMarkers, realtime.markers]);
 
   const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${mapName}-v2`;
 
@@ -433,7 +449,10 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
             </div>
           )}
 
-          <MarkerDetails marker={selected} onClose={() => setSelected(null)} />
+          <MarkerDetails
+            marker={selected?.realtime ? realtime.markers.find((marker) => marker.id === selected.id) : selected}
+            onClose={() => setSelected(null)}
+          />
         </div>
 
         {error && (
@@ -470,6 +489,34 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
 
           <span>{legendOpen ? '−' : '+'}</span>
         </button>
+
+        {legendOpen && (
+          <div className={styles.realtimeControls}>
+            <button
+              type="button"
+              className={styles.mapButton}
+              aria-pressed={realtime.enabled}
+              onClick={realtime.toggle}
+            >
+              Realtime {realtime.enabled ? 'on' : 'off'}
+            </button>
+            {realtime.enabled && realtime.sources.length > 0 && (
+              <select
+                aria-label="Realtime instance"
+                value={realtime.partition}
+                onChange={(event) => realtime.setPartition(event.target.value)}
+              >
+                {realtime.sources.map((source) => (
+                  <option key={source.partition} value={source.partition}>
+                    Instance {source.partition}
+                    {source.ready ? '' : ' (not ready)'}
+                  </option>
+                ))}
+              </select>
+            )}
+            <span role="status">{realtime.status}</span>
+          </div>
+        )}
 
         {legendOpen && (
           <div className={styles.mapLegendBody}>

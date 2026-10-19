@@ -478,6 +478,10 @@
   display: none !important;
 }
 
+:global(.live-map-marker > .realtime-symbol) {
+  display: grid !important;
+}
+
 .toolbar {
   height: 36px;
   min-height: 36px;
@@ -961,4 +965,22 @@
   .mapStatusMetric:last-of-type {
     display: none;
   }
+}
+.realtimeControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #d8a75f;
+  padding: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.realtimeControls select {
+  max-width: 160px;
+  color: inherit;
+  background: #100b07;
+  border: 1px solid #594127;
 }
