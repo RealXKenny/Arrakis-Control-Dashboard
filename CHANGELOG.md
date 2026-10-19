@@ -4,12 +4,30 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-19
+
 ### Added
 
+- Optional realtime map layer for sandworms, NPCs, civilians, sandstorms, and Coriolis storms on Hagga Basin and Deep Desert, using Console snapshots refreshed every two seconds while the map is visible.
+- Realtime toggle, instance selection, individual legend filters, moving marker details, and availability messages for missing agents, missing API scopes, unsupported Console versions, and sources that are not ready.
+- Optional `REALTIME_ROLE_ID` configuration in the environment template and Pterodactyl egg, with setup instructions for the Console's **Realtime Data → Read** API key scope.
 - Production Docker image with dashboard assets and changelog bundled, published to GitHub Container Registry for new stable version releases after successful `main` CI.
 - Importable Pterodactyl egg with production environment settings and a no-op installer for the prebuilt image.
 - Container startup and asset-route smoke checks before publishing a new versioned image.
 - Add an OCI image description to the dashboard container metadata.
+
+### Security
+
+- Restrict realtime access to authenticated members of the configured guild with the configured staff role, rechecking the dashboard session on every snapshot request.
+- Require HTTPS or loopback HTTP for realtime Console requests; keep bearer credentials server-side and normalize bounded provider payloads without exposing process metadata.
+- Exclude anonymous agent player and vehicle objects to preserve existing identity and ownership checks. Clear old positions on failures, pause hidden maps, and stop polling after dashboard authorization failures.
+
+### Verification
+
+- Formatting, TypeScript validation, zero-warning lint, 171 Vitest tests, production build, runtime smoke checks, and 23 Playwright browser tests pass.
+- Live agent connectivity requires deployment configuration and remains unverified.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.0.7...v1.1.0)
 
 ## [1.0.7] - 2026-09-20
 

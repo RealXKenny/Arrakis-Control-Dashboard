@@ -20,11 +20,18 @@ const redis = createServer(async (req, res) => {
     if (!req.url.startsWith('/api/1/envelope/')) upstreamReads++;
     res.setHeader('Content-Type', 'application/json');
     const payload =
-      req.url === '/api/integrations/discord/players/me'
-        ? { linked: true, pawnId: 'player', characterName: 'Tester' }
-        : req.url.endsWith('/bases')
-          ? { rows: Array.from({ length: 8 }, (_, id) => ({ id: String(id) })) }
-          : { rows: [], totalCount: 0, map: { width: 1000, height: 1000 } };
+      req.url === '/api/realtime/objects'
+        ? {
+            gen: 1,
+            t: Date.now(),
+            sources: [{ map: 'Survival_1', partition: 1, ready: true }],
+            objects: [{ i: 1, k: 'worm', s: 0, x: 10, y: 20, z: 30 }],
+          }
+        : req.url === '/api/integrations/discord/players/me'
+          ? { linked: true, pawnId: 'player', characterName: 'Tester' }
+          : req.url.endsWith('/bases')
+            ? { rows: Array.from({ length: 8 }, (_, id) => ({ id: String(id) })) }
+            : { rows: [], totalCount: 0, map: { width: 1000, height: 1000 } };
     res.end(JSON.stringify(payload));
     return;
   }
@@ -43,7 +50,12 @@ const storage = createRedisFixture((entry) => {
   if (operation === 'GET')
     return revoked
       ? null
-      : JSON.stringify({ user: { id: 'user' }, guildId: 'guild', roleIds: [], expiresAt: Date.now() + 3600000 });
+      : JSON.stringify({
+          user: { id: 'user' },
+          guildId: 'fixture-guild',
+          roleIds: ['123'],
+          expiresAt: Date.now() + 3600000,
+        });
   return 'OK';
 });
 storage.server.listen(0, '127.0.0.1');
@@ -73,6 +85,7 @@ const child = spawn(
       DISCORD_CLIENT_SECRET: 'fixture-secret',
       DISCORD_GUILD_ID: 'fixture-guild',
       VERIFIED_MEMBER_ROLE_ID: 'fixture-role',
+      REALTIME_ROLE_ID: '123',
       APP_URL: base,
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
     },
@@ -125,6 +138,7 @@ try {
     'auth/callback',
     'auth/logout',
     'map',
+    'map/realtime',
     'player',
     'market',
     'market/config',
@@ -161,6 +175,13 @@ try {
   }
   const buildId = mode === 'dev' ? 'development' : readFileSync('.next/BUILD_ID', 'utf8').trim();
   const headers = { cookie: sessionCookie };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const realtime = await fetch(`${base}/api/map/realtime?map=HaggaBasin`, { headers });
+    assert.equal(realtime.status, 200, 'authenticated realtime snapshot');
+    const snapshot = await realtime.json();
+    assert.equal(snapshot.markers[0].type, 'worm');
+    assert.equal(realtime.headers.get('X-Data-Captured-At'), null, 'realtime bypasses the normal API read cache');
+  }
   const world = await fetch(`${base}/api/portal/world?map=DeepDesert`, { headers });
   assert.equal(world.status, 200, 'authenticated world briefing');
   const worldReading = await world.json();
@@ -194,6 +215,9 @@ try {
   const expired = await fetch(`${base}/api/player`, { headers });
   assert.equal(expired.status, 401, 'intentional logout revokes the Redis session');
   await expired.text();
+  const expiredRealtime = await fetch(`${base}/api/map/realtime`, { headers });
+  assert.equal(expiredRealtime.status, 401, 'logout revokes realtime access');
+  await expiredRealtime.text();
   const signedOutHome = await fetch(`${base}/`, { headers });
   assert.equal(signedOutHome.status, 200, 'homepage with a revoked session cookie');
   assert.match(await signedOutHome.text(), /"isAuthenticated":false/);

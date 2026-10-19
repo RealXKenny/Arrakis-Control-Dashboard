@@ -12,6 +12,11 @@ function friendlyMarkerType(type) {
       poi: "POI's",
       house_representative: 'House Representative',
       trainer: 'Trainer',
+      worm: 'Sandworm',
+      realtime_npc: 'NPC',
+      civilian: 'Civilian',
+      storm: 'Sandstorm',
+      coriolis: 'Coriolis',
     }[String(type || '').toLowerCase()] || 'Marker'
   );
 }
@@ -99,6 +104,11 @@ export default function MapMarker({ marker, index, point, zoom, onSelect }) {
         zIndex: 5,
       }}
     >
+      {marker?.realtime && (
+        <span className="realtime-symbol" aria-hidden="true">
+          {type === 'worm' ? '〰' : type === 'storm' || type === 'coriolis' ? '☁' : '◆'}
+        </span>
+      )}
       {(type === 'spice' || type === 'spice_active') && (
         <span className="spice-status-badge" aria-hidden="true">
           {type === 'spice_active' ? 'LIVE' : '?'}

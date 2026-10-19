@@ -40,6 +40,16 @@ Optional server binding variables:
 
 See [.env.example](.env.example) for the complete configuration template.
 
+## Optional Realtime Data
+
+Run the optional `mvagent` next to the Console using the [MapViewer3D ddp setup](https://github.com/dev-prophet-code/MapViewer3D/tree/ddp). Enable **Realtime Data → Read** on the dashboard's existing `CONSOLE_API_KEY`; `Maps → Read` does not grant this scope. Keep the agent's unauthenticated loopback endpoint private: the dashboard contacts only the Console, using `CONSOLE_URL` with HTTPS and a trusted certificate (HTTP is accepted only on loopback). `DUNE_REALTIME_AGENT_URL` belongs to the Console, not this dashboard.
+
+Set optional `REALTIME_ROLE_ID` to a trusted staff Discord role ID. Blank disables access. Only signed-in members of the configured guild with this role in their OAuth session can fetch realtime positions. Members must sign in again after Discord role changes; logout/session revocation is checked on every request. Creature positions can reveal player activity, so use a staff role rather than a general member role.
+
+On Hagga Basin or Deep Desert, turn **Realtime on** and choose an instance. The layer polls `/api/realtime/objects` through the dashboard every two seconds while visible; it does not open SSE streams or consume stream slots. Errors clear old positions and retry after 30 seconds; dashboard authorization failures stop polling until toggled again. Missing agent, missing scope, unsupported Console versions and sources that are not ready show availability messages without interrupting the normal map. Each browser makes its own snapshot requests, so account for the Console API key's rate limit.
+
+The layer adds sandworms, NPCs, civilians, sandstorms and Coriolis storms, with individual legend filters. Anonymous agent player/vehicle objects are excluded because they cannot satisfy the dashboard's identity and ownership checks. Existing player/vehicle markers continue using their normal map refresh. Instance selection applies to realtime markers only.
+
 ## Commands
 
 ```text

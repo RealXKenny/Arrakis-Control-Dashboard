@@ -12,6 +12,11 @@ function friendlyMarkerType(type) {
       poi: "POI's",
       house_representative: 'House Representative',
       trainer: 'Trainer',
+      worm: 'Sandworm',
+      realtime_npc: 'NPC',
+      civilian: 'Civilian',
+      storm: 'Sandstorm',
+      coriolis: 'Coriolis',
     }[String(type || '').toLowerCase()] || 'Marker'
   );
 }
@@ -62,6 +67,7 @@ export default function MarkerDetails({ marker, onClose }) {
       </div>
 
       <div>{name}</div>
+      {marker.realtime && <div>Realtime · Instance {marker.partition}</div>}
 
       {marker.subtype && <div>Subtype: {marker.subtype}</div>}
 
