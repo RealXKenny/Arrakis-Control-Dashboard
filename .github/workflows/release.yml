@@ -130,6 +130,7 @@ jobs:
         env:
           IMAGE: ${{ steps.image.outputs.name }}
         run: |
+          set -euo pipefail
           docker run -d --name arrakis-dashboard-smoke \
             -e SERVER_PORT=2008 \
             -e CONSOLE_URL=http://127.0.0.1:9 \
@@ -143,13 +144,24 @@ jobs:
             -e REDIS_URL=redis://127.0.0.1:9/0 \
             -p 127.0.0.1:2008:2008 "$IMAGE:latest"
           trap 'docker logs arrakis-dashboard-smoke; docker rm -f arrakis-dashboard-smoke' EXIT
+          ready=false
           for attempt in $(seq 1 60); do
             if curl --fail --silent --output /dev/null http://127.0.0.1:2008/favicon.ico; then
-              exit 0
+              ready=true
+              break
             fi
             sleep 1
           done
-          exit 1
+          test "$ready" = true
+          for attempt in $(seq 1 20); do
+            count=$(docker logs arrakis-dashboard-smoke 2>&1 | grep -c 'Ready in — Arrakis Control Dashboard is listening' || true)
+            if test "$count" -ge 2; then break; fi
+            sleep 1
+          done
+          test "$count" -ge 2
+          docker stop --time 15 arrakis-dashboard-smoke
+          code=$(docker inspect --format '{{.State.ExitCode}}' arrakis-dashboard-smoke)
+          test "$code" = 0 || test "$code" = 143
 
       - name: Log in to GitHub Container Registry
         if: steps.release.outputs.create == 'true'
