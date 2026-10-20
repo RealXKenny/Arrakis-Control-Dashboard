@@ -2,22 +2,35 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { announceReadiness, readinessUrl, resolveServerOptions } from '../../src/config/server-launcher.mjs';
 
 describe('server launcher', () => {
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+  it('uses the custom timestamped STARTUP logger for the single ready line', async () => {
+    const output = vi.spyOn(console, 'info').mockImplementation(() => {});
+    await announceReadiness('http://127.0.0.1:4000/favicon.ico', new AbortController().signal, {
+      probe: async () => true,
+    });
+    expect(output).toHaveBeenCalledTimes(1);
+    expect(output.mock.calls[0][0].replace(/\u001B\[[0-9;]*m/g, '')).toMatch(
+      /\[.*\] ● \[INFO\] \[STARTUP\] Ready in — Arrakis Control Dashboard is listening \(HTTP check passed\)\./,
+    );
+  });
   it('checks the actual forwarded port and maps wildcard binds to loopback', () => {
     expect(readinessUrl(['--hostname', '0.0.0.0', '--port=4000'])).toBe('http://127.0.0.1:4000/favicon.ico');
     expect(readinessUrl(['-H::', '-p4001'])).toBe('http://[::1]:4001/favicon.ico');
   });
-  it('repeats verified readiness briefly so a late-attaching panel can detect it', async () => {
+  it('announces verified readiness once even after the retry window', async () => {
     vi.useFakeTimers();
     const write = vi.fn(),
       probe = vi.fn().mockResolvedValue(true);
     const task = announceReadiness('http://127.0.0.1:4000/favicon.ico', new AbortController().signal, { probe, write });
     await vi.advanceTimersByTimeAsync(21000);
     await task;
-    expect(write).toHaveBeenCalledTimes(5);
+    expect(write).toHaveBeenCalledTimes(1);
     expect(write).toHaveBeenLastCalledWith('Ready in — Arrakis Control Dashboard is listening (HTTP check passed).');
     await vi.advanceTimersByTimeAsync(60000);
-    expect(write).toHaveBeenCalledTimes(5);
+    expect(write).toHaveBeenCalledTimes(1);
   });
   it('never announces an unavailable HTTP server and stops retrying after a minute', async () => {
     vi.useFakeTimers();
