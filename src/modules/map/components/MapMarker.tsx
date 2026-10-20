@@ -67,7 +67,7 @@ function getMarkerClass(marker) {
   return classes.join(' ');
 }
 
-export default function MapMarker({ marker, index, point, zoom, onSelect }) {
+export default function MapMarker({ marker, index, point, zoom, onSelect, markerId = undefined }) {
   const type = String(marker?.type || 'marker')
     .trim()
     .toLowerCase();
@@ -80,6 +80,7 @@ export default function MapMarker({ marker, index, point, zoom, onSelect }) {
     <button
       type="button"
       className={`${markerClass} hag-map-marker`}
+      data-marker-id={markerId}
       data-online={marker?.online === false ? 'false' : 'true'}
       onClick={(event) => {
         event.stopPropagation();
