@@ -16,6 +16,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Changed
 
+- Repeat an HTTP-verified plain startup marker briefly for Pterodactyl fast-start detection, retain older eggs' `Ready in` match, and forward stop signals to Next.js while cancelling readiness retries.
 - Reproject 3D blips immediately during orbit/pan before queued terrain draws, match overlays by marker identity, and suspend realtime screen-position smoothing while dragging.
 - Enable realtime map updates by default; hide realtime NPC and civilian markers initially while preserving saved legend choices and the other layer defaults.
 - Update realtime markers in place with smooth 3D movement, stable identities, and no terrain redraw for position-only snapshots. Background map reads preserve zoom and avoid loading flashes.
