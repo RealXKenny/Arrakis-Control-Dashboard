@@ -1044,6 +1044,7 @@ test('dense 3D blips stay over rendered terrain at high detail on both maps', as
     );
     const blip = scene.locator('[data-terrain-state="visible"]').first();
     const beforeFrame = await blip.evaluate((el) => [el.style.left, el.style.top]);
+    const zoomBox = await page.getByRole('button', { name: 'Zoom in', exact: true }).boundingBox();
     await canvas.evaluate((element) => {
       const original = window.requestAnimationFrame;
       const queued: FrameRequestCallback[] = [];
@@ -1059,15 +1060,19 @@ test('dense 3D blips stay over rendered terrain at high detail on both maps', as
         },
       });
     });
+    // Use a toolbar zoom: dense marker buttons can intercept a drag's starting point.
+    await page.mouse.click(zoomBox!.x + zoomBox!.width / 2, zoomBox!.y + zoomBox!.height / 2);
+    // A queued terrain frame must not leave blips projected with a newer camera.
+    expect(await blip.evaluate((el) => [el.style.left, el.style.top])).toEqual(beforeFrame);
+    await canvas.evaluate((element) => Reflect.get(element, 'resumeFrames')());
+    await expect
+      .poll(() => blip.evaluate((el) => [el.style.left, el.style.top]), { timeout: 15000 })
+      .not.toEqual(beforeFrame);
     const box = await canvas.boundingBox();
     await page.mouse.move(box!.x + box!.width * 0.95, box!.y + box!.height * 0.28);
     await page.mouse.down();
     await page.mouse.move(box!.x + box!.width * 0.8, box!.y + box!.height * 0.28, { steps: 8 });
     await page.mouse.up();
-    // A queued terrain frame must not leave blips projected with a newer camera.
-    expect(await blip.evaluate((el) => [el.style.left, el.style.top])).toEqual(beforeFrame);
-    await canvas.evaluate((element) => Reflect.get(element, 'resumeFrames')());
-    await expect.poll(() => blip.evaluate((el) => [el.style.left, el.style.top])).not.toEqual(beforeFrame);
     await expect(canvas).toHaveAttribute('data-background-blips', '[]');
     await page.screenshot({ path: `test-results/map-aligned-${mapName.replaceAll(' ', '-')}.png`, fullPage: true });
   }
