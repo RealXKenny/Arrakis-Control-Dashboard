@@ -10,6 +10,7 @@ import {
 } from '../../src/modules/map/terrain/sceneGeometry';
 import * as THREE from 'three';
 import { renderQuality } from '../../src/modules/map/terrain/renderQuality';
+import { fitTerrainCamera } from '../../src/modules/map/terrain/sceneFraming';
 
 const map = { width: 100, height: 100, minX: 0, maxX: 100, minY: 0, maxY: 100 };
 const surface: HeightSurface = {
@@ -22,6 +23,35 @@ const surface: HeightSurface = {
   heights: new Uint16Array([0, 100, 200, 300]),
 };
 describe('3D terrain alignment', () => {
+  it('fits tall and offset terrain into landscape and portrait viewports with usable coverage', () => {
+    const bounds = new THREE.Box3(new THREE.Vector3(1000, 200, -6000), new THREE.Vector3(9000, 1400, 2000));
+    for (const aspect of [1.4, 0.55, 2.5]) {
+      const camera = new THREE.PerspectiveCamera(45, aspect, 0.5, 100000);
+      const target = new THREE.Vector3();
+      fitTerrainCamera(camera, bounds, target);
+      expect(target.toArray()).toEqual([5000, 800, -2000]);
+      let largest = 0;
+      for (const x of [bounds.min.x, bounds.max.x])
+        for (const y of [bounds.min.y, bounds.max.y])
+          for (const z of [bounds.min.z, bounds.max.z]) {
+            const p = new THREE.Vector3(x, y, z).project(camera);
+            expect(Math.abs(p.x)).toBeLessThanOrEqual(0.92);
+            expect(Math.abs(p.y)).toBeLessThanOrEqual(0.92);
+            expect(p.z).toBeLessThan(1);
+            largest = Math.max(largest, Math.abs(p.x), Math.abs(p.y));
+          }
+      expect(largest).toBeGreaterThan(0.85);
+    }
+  });
+  it('fits only measured coverage when the reported map extends beyond the height field', () => {
+    const measured = { ...surface, n: 4, step: 100 / 3, heights: new Uint16Array(16) };
+    const geometry = createSurfaceGeometry(measured, { ...map, minX: -100, minY: -100, maxX: 200, maxY: 200 }, 4);
+    const bounds = geometry.userData.surfaceBounds as THREE.Box3;
+    expect(bounds.isEmpty()).toBe(false);
+    expect(bounds.min.x).toBe(-0.5);
+    expect(bounds.max.x).toBe(0.5);
+    geometry.dispose();
+  });
   it('anchors blips to rendered triangles and rejects locations beyond terrain coverage', () => {
     const terrain = { ...surface, heights: new Uint16Array([0, 0, 0, 100]) };
     const geometry = createSurfaceGeometry(terrain, map);

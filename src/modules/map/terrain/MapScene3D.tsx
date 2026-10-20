@@ -18,6 +18,7 @@ import {
 import { loadLayoutAssets, loadSharedAssets } from './terrainAssets';
 import { createDesertDetails, updateDesertDetails } from './desertDetails';
 import { SceneModels } from './sceneModels';
+import { fitTerrainCamera } from './sceneFraming';
 import { colorSurface, createMapMaterial, niceScale } from './mapPresentation';
 import MapHud from './MapHud';
 import { renderQuality, type QualityChoice } from './renderQuality';
@@ -120,12 +121,14 @@ export default function MapScene3D(props: Props) {
     controls.maxDistance = extent * 3;
     controls.screenSpacePanning = false;
     const fit = () => {
-      controls.target.set(0, 0, 0);
-      const distance = (extent * 1.2) / Math.min(1, camera.aspect);
+      const bounds = groundMesh?.geometry.userData.surfaceBounds as THREE.Box3 | undefined;
+      const fallback = new THREE.Box3(
+        new THREE.Vector3(-extent / 2, 0, -extent / 2),
+        new THREE.Vector3(extent / 2, 0, extent / 2),
+      );
+      const distance = fitTerrainCamera(camera, bounds ?? fallback, controls.target);
+      if (distance === null) return;
       controls.maxDistance = distance * 3;
-      camera.far = distance * 12;
-      camera.updateProjectionMatrix();
-      camera.position.set(0, distance * 0.85, distance * 0.85);
       controls.update();
     };
     commands.current = {
@@ -215,6 +218,7 @@ export default function MapScene3D(props: Props) {
         colorSurface(ground, data);
         groundMesh = new THREE.Mesh(ground, material);
         scene.add(groundMesh);
+        fit();
         image.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
         models = new SceneModels(map, data, signal, schedulePaint, (x, y) =>
           groundMesh ? renderedSurfaceHeight(groundMesh.geometry, map, x, y) : null,
@@ -331,8 +335,8 @@ export default function MapScene3D(props: Props) {
       models?.updateView(camera);
       if (detailsGroup)
         updateDesertDetails(detailsGroup, camera, host.clientHeight, profile.rockTriangles, profile.minRockPixels);
-      renderer.render(scene, camera);
       projectMarkers();
+      renderer.render(scene, camera);
       const heading =
         (Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z) * 180) / Math.PI;
       const hud = host.querySelector<HTMLElement>('[data-map-hud]');
@@ -369,13 +373,12 @@ export default function MapScene3D(props: Props) {
     resize();
     fit();
     const cameraChanged = () => {
-      // Keep blips attached on every input event, even while a costly terrain frame is queued.
-      projectMarkers();
+      // Dev note: dunes and blips take the same ornithopter; neither arrives a frame early.
       schedulePaint();
     };
     const cameraStarted = () => {
       cameraMoving = true;
-      projectMarkers();
+      for (const element of overlayRef.current?.children ?? []) (element as HTMLElement).style.transition = 'none';
     };
     const cameraEnded = () => {
       cameraMoving = false;
@@ -426,7 +429,7 @@ export default function MapScene3D(props: Props) {
       const modelChanged = models?.sync(latest.current.markers);
       const visibilityChanged = models?.updateView(camera);
       if (modelChanged || visibilityChanged || (grid && grid.visible !== latest.current.showSectorGrid)) paint();
-      else projectMarkers(true);
+      else if (!pendingPaint) projectMarkers(true);
     };
     changeAppearance.current = () => {
       const atlas = appearance.current.terrainStyle === 'atlas';
