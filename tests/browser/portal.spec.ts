@@ -902,3 +902,89 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   await expect(page.locator('[data-map-resolution]')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('real building pieces and vehicle models appear up close with map tools', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  let exports = 0;
+  const pieces: { building_type: string; x: number; y: number; z: number; rotation: number }[] = [];
+  for (const x of [-512, 0, 512])
+    for (const y of [-512, 0, 512]) {
+      pieces.push({ building_type: 'Atreides_Outpost_Foundation', x, y, z: 0, rotation: 0 });
+      pieces.push({ building_type: 'Atreides_Outpost_Floor', x, y, z: 768, rotation: 0 });
+    }
+  for (const x of [-512, 0, 512])
+    for (const y of [-768, 768])
+      pieces.push({ building_type: 'Atreides_Outpost_Wall_01', x, y, z: 384, rotation: y > 0 ? 180 : 0 });
+  for (const y of [-512, 0, 512])
+    for (const x of [-768, 768])
+      pieces.push({ building_type: 'Atreides_Outpost_Wall_01', x, y, z: 384, rotation: x > 0 ? 90 : -90 });
+  await page.route('**/api/map/realtime?*', (r) =>
+    r.fulfill({ json: { ok: true, gen: 1, capturedAt: Date.now(), sources: [], markers: [] } }),
+  );
+  await page.route('**/api/map?*', (r) =>
+    r.fulfill({
+      json: {
+        ok: true,
+        map: { width: 8192, height: 8192, minX: -457200, maxX: 355600, minY: -457200, maxY: 355600, flipY: false },
+        markers: [
+          { id: 'model-base', type: 'base', name: 'Atreides stronghold', x: 0, y: 0 },
+          { id: 'restricted-base', type: 'base', name: 'Unavailable building', x: 50000, y: 0 },
+          { id: 'thopter', type: 'vehicle', subtype: 'TransportOrnithopter', name: 'Transport', x: 5000, y: 0 },
+        ],
+      },
+    }),
+  );
+  await page.route('**/api/bases/*/export', (r) => {
+    exports++;
+    return r.request().url().includes('restricted-base')
+      ? r.fulfill({ status: 403, json: { error: 'You do not own this base' } })
+      : r.fulfill({ json: { instances: pieces, placeables: [] } });
+  });
+  await page.goto('/map');
+  const scene = page.locator('[data-map-view="3d"]');
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  expect(exports).toBe(0);
+  const base = page.getByRole('button', { name: 'Base: Atreides stronghold', exact: true });
+  await page.getByLabel('Find on map').fill('Atreides');
+  await page.getByRole('list', { name: 'Map search results' }).getByRole('button').click();
+  await page.getByRole('button', { name: 'Fly to', exact: true }).click();
+  await expect(base).toHaveAttribute('data-model-state', 'ready', { timeout: 20_000 });
+  await expect(base).toHaveAttribute('data-model-visible', 'true');
+  await expect(page.locator('button.marker-base').filter({ hasText: 'Unavailable building' })).toHaveAttribute(
+    'data-model-state',
+    'unavailable',
+  );
+  const vehicle = page.getByRole('button', { name: 'Vehicle: Transport Ornithopter', exact: true });
+  await expect(vehicle).toHaveAttribute('data-model-visible', 'true');
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.screenshot({ path: 'test-results/map-building-model.png', fullPage: true });
+  const canvas = scene.locator('canvas'),
+    box = await canvas.boundingBox();
+  await page.mouse.click(box!.x + box!.width * 0.5, box!.y + box!.height * 0.5);
+  await expect(page.getByRole('button', { name: 'Fly to', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await vehicle.click();
+  await page.getByRole('button', { name: 'Fly to', exact: true }).click();
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await page.screenshot({ path: 'test-results/map-vehicle-model.png', fullPage: true });
+  const exportCount = exports;
+  await page.getByLabel('Terrain style').selectOption('atlas');
+  await page.getByRole('button', { name: 'Contours', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Contours', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Terrain style').selectOption('relief');
+  await page.getByRole('button', { name: 'Top down', exact: true }).click();
+  await page.getByRole('button', { name: 'Face north', exact: true }).click();
+  expect(exports).toBe(exportCount);
+  await expect(scene.locator('[data-scale-label]')).toHaveText(/\d+(?:\.\d+)? (?:m|km)/);
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+  await page.evaluate(() => document.exitFullscreen());
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/map-model-mobile.png', fullPage: true });
+  expect(errors).toEqual([]);
+});

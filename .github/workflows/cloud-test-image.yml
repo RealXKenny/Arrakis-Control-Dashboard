@@ -59,6 +59,7 @@ jobs:
             test "$PWD" = /home/container &&
             test -f /opt/arrakis-dashboard/.next/BUILD_ID &&
             test -f /opt/arrakis-dashboard/src/assets/terrain/hagga.hf.gz &&
+            test -f /opt/arrakis-dashboard/src/assets/models/catalog.json.gz &&
             test -f /opt/arrakis-dashboard/licenses/MapViewer3D.txt &&
             test -f /opt/arrakis-dashboard/CHANGELOG.md
           '
@@ -90,6 +91,9 @@ jobs:
           test "$ready" = true
           for asset in hagga.json.gz hagga.hf.gz layout-6.json.gz; do
             curl --fail --silent --output /dev/null "http://127.0.0.1:2008/api/assets/terrain/$asset"
+          done
+          for asset in catalog.json.gz meshpack-0.bin.gz; do
+            curl --fail --silent --output /dev/null "http://127.0.0.1:2008/api/assets/models/$asset"
           done
 
       - name: Log in to GitHub Container Registry
