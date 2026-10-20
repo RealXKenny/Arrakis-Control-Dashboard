@@ -62,7 +62,9 @@ On Hagga Basin or Deep Desert, realtime starts enabled; choose an instance or us
 
 The layer adds sandworms, NPCs, civilians, sandstorms and Coriolis storms, with individual legend filters. Anonymous agent player/vehicle objects are excluded because they cannot satisfy the dashboard's identity and ownership checks. Existing player/vehicle markers continue using their normal map refresh. Instance selection applies to realtime markers only.
 
-Background reads update markers in place without resetting the viewport or showing a loading state. Position-only snapshots leave the 3D terrain untouched, and moving 3D markers glide between samples (respecting reduced-motion settings). Errors still clear unavailable realtime positions and show the provider status.
+Realtime sandworms use an original lightweight 3D model with a ridged, partly buried body, a three-lobed mouth, rows of teeth and a sand wake. Search for a worm and use **Fly to**, or zoom in, to see it; distant worms keep their navigation blips. Models follow the reported positions, rest on the terrain and turn in their direction of movement. Up to 32 worms share model geometry and materials; additional worms retain blips. The Sandworms legend filter controls both models and blips.
+
+Background reads update markers in place without resetting the viewport or showing a loading state. Position-only blip snapshots leave the 3D terrain untouched, and moving 3D markers glide between samples (respecting reduced-motion settings). Visible worm model movement requests a scene draw without rebuilding terrain or resetting the camera; no continuous animation loop runs while idle. Errors still clear unavailable realtime positions and show the provider status.
 
 ## Commands
 
