@@ -9,6 +9,8 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Default orbitable 3D terrain for Hagga Basin and Deep Desert, with local elevation data and Deep Desert rock meshes, terrain-aligned selectable markers, legend/realtime filters, and sector grid.
 - Orbit, pan, wheel/pinch zoom, camera fit, and a 2D toggle with automatic fallback on terrain loading or WebGL2 failure.
 - Manual cloud test image publication after successful main CI, using `cloud-test` and commit tags without changing the stable version or release image.
+- Nearby base reconstruction from authorized exports and 1,179 bundled building meshes, plus subtype-specific vehicle silhouettes with model picking and marker fallbacks.
+- Relief terrain shading, contour lines, compass, metric scale, location search, Fly to, top-down view, fullscreen, and a wider 3D map workspace.
 
 ### Changed
 

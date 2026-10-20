@@ -33,6 +33,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/instrumentation.ts`: runtime validation, Console warmup, startup log, and population recorder.
 - `src/assets/`: favicon, application images, and compressed Deep Desert terrain bundles. It is large; do not enumerate it unless necessary.
 - `src/modules/map/terrain/`: lazy three.js 3D scene for both maps, measured height surfaces, and instanced Deep Desert rocks; the overhead WebGL2/image viewer remains the compatibility fallback. `MapScene3D.tsx` owns camera/disposal, `heightSurface.ts` elevation sampling, and `sceneGeometry.ts` coordinate/texture alignment.
+- `terrain/sceneModels.ts` owns nearby vehicle/building lifecycles; `buildingModels.ts` decodes the bundled DML1 catalogue and owner-authorized exports. `MapHud.tsx` provides search/compass/scale/view controls. Building model assets are allowlisted under `/api/assets/models/`; ownership enforcement stays in the existing base export endpoint.
 - `src/modules/map/server/realtime.ts`: Console snapshots available to all signed-in dashboard members of the configured guild; `hooks/useRealtimeData.ts` polls every two seconds with instance selection. No separate realtime role is required; anonymous player/vehicle objects are excluded.
 - `tests/`: API, architecture, unit, browser, helpers, and `smoke-production.mjs`.
 - Root runtime behavior: `middleware.ts` and `next.config.ts`.
