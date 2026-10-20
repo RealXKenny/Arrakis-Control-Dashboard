@@ -805,6 +805,9 @@ test('guild view renders reported membership without inventing a rank', async ({
 test('3D maps orbit with aligned markers and recover from context loss', async ({ page }) => {
   test.setTimeout(90_000);
   const errors: string[] = [];
+  await page.route('**/api/bases/*/export', (route) =>
+    route.fulfill({ status: 403, json: { error: 'Unavailable export' } }),
+  );
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
     if (message.type() === 'error' && /THREE.WebGLProgram|shader error/i.test(message.text()))
@@ -858,6 +861,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
   const marker = page.getByRole('button', { name: 'Base: 3D stronghold', exact: true });
   await expect(marker).toBeVisible();
+  await expect(marker).toHaveAttribute('data-model-state', 'unavailable');
   const moving = page.getByRole('button', { name: 'Sandworm: Moving worm', exact: true });
   await expect(moving).toBeVisible();
   await moving.evaluate((el) => (el.dataset.preserved = 'true'));
@@ -948,7 +952,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   expect(errors).toEqual([]);
 });
 
-test('real building pieces and vehicle models appear up close with map tools', async ({ page }) => {
+test('base models render from the full map and vehicles appear up close with map tools', async ({ page }) => {
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -994,13 +998,17 @@ test('real building pieces and vehicle models appear up close with map tools', a
   await page.goto('/map');
   const scene = page.locator('[data-map-view="3d"]');
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
-  expect(exports).toBe(0);
   const base = page.getByRole('button', { name: 'Base: Atreides stronghold', exact: true });
+  await expect(base).toHaveAttribute('data-model-state', 'ready', { timeout: 20_000 });
+  await expect(base).toHaveAttribute('data-model-visible', 'true');
+  await expect(base).toHaveAttribute('data-model-prominent', 'false');
+  expect(exports).toBe(2);
   await page.getByLabel('Find on map').fill('Atreides');
   await page.getByRole('list', { name: 'Map search results' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Fly to', exact: true }).click();
   await expect(base).toHaveAttribute('data-model-state', 'ready', { timeout: 20_000 });
   await expect(base).toHaveAttribute('data-model-visible', 'true');
+  await expect(base).toHaveAttribute('data-model-prominent', 'true');
   await expect(page.locator('button.marker-base').filter({ hasText: 'Unavailable building' })).toHaveAttribute(
     'data-model-state',
     'unavailable',
@@ -1033,6 +1041,10 @@ test('real building pieces and vehicle models appear up close with map tools', a
   await page.getByLabel('Terrain style').selectOption('relief');
   await page.getByRole('button', { name: 'Top down', exact: true }).click();
   await page.getByRole('button', { name: 'Face north', exact: true }).click();
+  expect(exports).toBe(exportCount);
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await expect(base).toHaveAttribute('data-model-visible', 'true');
+  await expect(base).toHaveAttribute('data-model-prominent', 'false');
   expect(exports).toBe(exportCount);
   await expect(scene.locator('[data-scale-label]')).toHaveText(/\d+(?:\.\d+)? (?:m|km)/);
   await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();

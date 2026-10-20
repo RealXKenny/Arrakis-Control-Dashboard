@@ -12,6 +12,7 @@ type Entry = {
   state: 'idle' | 'loading' | 'ready' | 'partial' | 'unavailable';
   signature: string;
   visible: boolean;
+  prominent: boolean;
   lastSeen: number;
 };
 const numeric = (v: unknown) =>
@@ -73,7 +74,15 @@ export class SceneModels {
       const signature = JSON.stringify([x, y, marker.z, marker.subtype, marker.yaw, marker.rotation]);
       let entry = this.entries.get(key);
       if (!entry) {
-        entry = { marker, object: null, state: 'idle', signature: '', visible: false, lastSeen: Date.now() };
+        entry = {
+          marker,
+          object: null,
+          state: 'idle',
+          signature: '',
+          visible: false,
+          prominent: false,
+          lastSeen: Date.now(),
+        };
         this.entries.set(key, entry);
       }
       entry.marker = marker;
@@ -127,7 +136,6 @@ export class SceneModels {
   updateView(camera: THREE.Camera) {
     const active = new Set(this.pickable);
     let changed = false;
-    const loadedBases = [...this.entries.values()].filter((e) => e.marker.type === 'base' && e.object).length;
     for (const [key, entry] of this.entries) {
       if (!this.activeKeys.has(key)) continue;
       const marker = entry.marker,
@@ -135,21 +143,15 @@ export class SceneModels {
         y = getCoordinate(marker, 'y');
       const ground = surfaceHeight(this.surface, x, y) ?? this.surface.minZ;
       const distance = camera.position.distanceTo(entry.object?.position ?? terrainPoint(x, y, ground, this.map));
-      if (
-        marker.type === 'base' &&
-        entry.state === 'idle' &&
-        distance < 2400 &&
-        this.inflight < 2 &&
-        loadedBases + this.inflight < 8
-      )
-        void this.loadBase(entry);
+      if (marker.type === 'base' && entry.state === 'idle' && this.inflight < 2) void this.loadBase(entry);
       if (entry.object) {
-        const visible = active.has(entry.object) && distance < (marker.type === 'base' ? 3000 : 1400);
+        const visible = active.has(entry.object) && (marker.type === 'base' || distance < 1400);
         if (visible !== entry.object.visible) {
           entry.object.visible = visible;
           changed = true;
         }
         entry.visible = visible;
+        entry.prominent = visible && distance < (marker.type === 'base' ? 3000 : 1400);
       }
     }
     return changed;
@@ -184,7 +186,7 @@ export class SceneModels {
   }
   state(marker: ModelMarker, index: number) {
     const e = this.entries.get(markerKey(marker, index));
-    return { state: e?.state ?? '', visible: e?.visible ?? false };
+    return { state: e?.state ?? '', visible: e?.visible ?? false, prominent: e?.visible && e.prominent };
   }
   pick(raycaster: THREE.Raycaster) {
     const hits = raycaster.intersectObjects(
