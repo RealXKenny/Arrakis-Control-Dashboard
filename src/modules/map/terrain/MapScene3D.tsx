@@ -7,7 +7,14 @@ import { worldToMapPoint } from '../utils/coordinates';
 import { markerKey } from '../utils/markers';
 import { getCoordinate } from '../utils/mapData';
 import { loadHeightSurface, surfaceHeight } from './heightSurface';
-import { createSurfaceGeometry, loadMapTexture, terrainPoint, type MapBounds } from './sceneGeometry';
+import {
+  createSurfaceGeometry,
+  loadMapTexture,
+  terrainPoint,
+  renderedSurfaceHeight,
+  terrainOccludes,
+  type MapBounds,
+} from './sceneGeometry';
 import { loadLayoutAssets, loadSharedAssets } from './terrainAssets';
 import { createDesertDetails, updateDesertDetails } from './desertDetails';
 import { SceneModels } from './sceneModels';
@@ -134,7 +141,11 @@ export default function MapScene3D(props: Props) {
         const x = getCoordinate(marker, 'x'),
           y = getCoordinate(marker, 'y');
         if (!surface || !Number.isFinite(x + y)) return;
-        const z = surfaceHeight(surface, x, y) ?? surface.minZ;
+        const z = groundMesh ? renderedSurfaceHeight(groundMesh.geometry, map, x, y) : null;
+        if (z === null) {
+          latest.current.onUnavailable('this location has no 3D terrain coverage');
+          return;
+        }
         controls.target.copy(terrainPoint(x, y, z, map));
         const distance = marker.type === 'vehicle' ? 85 : marker.type === 'base' ? 240 : 500;
         camera.position.copy(controls.target).add(new THREE.Vector3(0, distance * 0.75, distance));
@@ -249,13 +260,16 @@ export default function MapScene3D(props: Props) {
     const projectMarkers = (smooth = false) => {
       if (signal.aborted) return;
       const children = overlayRef.current?.children;
-      if (!children || !surface) return;
+      if (!children || !surface || !groundMesh) return;
       // Projection must also work before a terrain draw updates the camera matrices.
       camera.updateMatrixWorld(true);
       const elements = new Map(
         Array.from(children, (child) => [(child as HTMLElement).dataset.markerId, child as HTMLElement]),
       );
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const width = host.clientWidth,
+        height = host.clientHeight;
+      let uncovered = 0;
       latest.current.markers.forEach((marker, index) => {
         const element = elements.get(markerKey(marker, index));
         if (!element) return;
@@ -271,23 +285,41 @@ export default function MapScene3D(props: Props) {
         else if (model?.state === 'partial')
           element.setAttribute('aria-description', 'Some building pieces are unavailable.');
         else element.removeAttribute('aria-description');
-        const h = surfaceHeight(surface!, x, y);
-        const position = terrainPoint(x, y, (h ?? surface!.minZ) + 500, map).project(camera);
+        const h = renderedSurfaceHeight(groundMesh!.geometry, map, x, y);
+        if (point?.inBounds && h === null) uncovered++;
+        if (h === null) {
+          element.style.display = 'none';
+          element.style.transition = 'none';
+          element.dataset.terrainState = 'uncovered';
+          projected.delete(element);
+          return;
+        }
+        const anchor = terrainPoint(x, y, h + 100, map);
+        const position = anchor.clone().project(camera);
         const visible =
           point?.inBounds &&
           position.z >= -1 &&
           position.z <= 1 &&
           Math.abs(position.x) <= 1 &&
-          Math.abs(position.y) <= 1;
+          Math.abs(position.y) <= 1 &&
+          !terrainOccludes(groundMesh!.geometry, map, camera.position, anchor);
+        element.dataset.terrainState = visible ? 'visible' : 'hidden';
         element.style.transition =
-          smooth && !cameraMoving && marker.realtime && projected.has(element) && !reducedMotion
+          smooth && visible && !cameraMoving && marker.realtime && projected.has(element) && !reducedMotion
             ? 'left 1800ms linear, top 1800ms linear'
             : 'none';
-        projected.add(element);
+        if (visible) projected.add(element);
+        else projected.delete(element);
         element.style.display = visible ? '' : 'none';
-        element.style.left = `${((position.x + 1) / 2) * host.clientWidth}px`;
-        element.style.top = `${((1 - position.y) / 2) * host.clientHeight}px`;
+        element.style.left = `${((position.x + 1) / 2) * width}px`;
+        element.style.top = `${((1 - position.y) / 2) * height}px`;
       });
+      const coverage = host.querySelector<HTMLElement>('[data-terrain-coverage]');
+      if (coverage) {
+        coverage.hidden = uncovered === 0;
+        const message = `${uncovered} location${uncovered === 1 ? '' : 's'} outside 3D terrain coverage. Use 2D to view all.`;
+        if (coverage.textContent !== message) coverage.textContent = message;
+      }
     };
     const paint = () => {
       if (signal.aborted) return;

@@ -94,6 +94,7 @@ export default function MapHud(props: Props) {
           </ul>
         )}
       </div>
+      <span data-terrain-coverage role="status" hidden className={styles.sceneCoverage} />
       <button
         type="button"
         className={styles.sceneCompass}

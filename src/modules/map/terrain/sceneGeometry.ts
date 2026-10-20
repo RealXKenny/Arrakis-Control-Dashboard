@@ -46,8 +46,62 @@ export function createSurfaceGeometry(surface: HeightSurface, map: MapBounds, gr
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   geometry.setIndex(indices);
+  geometry.userData.surfaceGrid = { n, valid };
   geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
   return geometry;
+}
+
+// Use the same triangles the GPU draws, including holes and the selected detail level.
+export function renderedSurfaceHeight(
+  geometry: THREE.BufferGeometry,
+  map: MapBounds,
+  x: number,
+  y: number,
+): number | null {
+  const { n, valid } = geometry.userData.surfaceGrid as { n: number; valid: Uint8Array };
+  const gx = ((x - map.minX) / (map.maxX - map.minX)) * (n - 1);
+  const gy = ((y - map.minY) / (map.maxY - map.minY)) * (n - 1);
+  if (!Number.isFinite(gx + gy) || gx < 0 || gy < 0 || gx > n - 1 || gy > n - 1) return null;
+  const col = Math.min(n - 2, Math.floor(gx)),
+    row = Math.min(n - 2, Math.floor(gy));
+  const tx = gx - col,
+    ty = gy - row,
+    a = row * n + col,
+    b = a + 1,
+    c = a + n,
+    d = c + 1;
+  const positions = geometry.getAttribute('position');
+  if (tx + ty <= 1) {
+    if (!valid[a] || !valid[b] || !valid[c]) return null;
+    return (positions.getY(a) * (1 - tx - ty) + positions.getY(b) * tx + positions.getY(c) * ty) * 100;
+  }
+  if (!valid[b] || !valid[c] || !valid[d]) return null;
+  return (positions.getY(b) * (1 - ty) + positions.getY(c) * (1 - tx) + positions.getY(d) * (tx + ty - 1)) * 100;
+}
+
+export function terrainOccludes(
+  geometry: THREE.BufferGeometry,
+  map: MapBounds,
+  camera: THREE.Vector3,
+  target: THREE.Vector3,
+) {
+  const dx = target.x - camera.x,
+    dy = target.y - camera.y,
+    dz = target.z - camera.z;
+  const maxHeight = geometry.boundingBox!.max.y;
+  const start = camera.y > maxHeight && dy < 0 ? Math.max(0, Math.min(1, (maxHeight - camera.y) / dy)) : 0;
+  const { n } = geometry.userData.surfaceGrid as { n: number };
+  const step = Math.min(map.maxX - map.minX, map.maxY - map.minY) / (100 * (n - 1));
+  const samples = Math.min(128, Math.max(2, Math.ceil(((Math.hypot(dx, dz) * (1 - start)) / step) * 2)));
+  const cx = (map.minX + map.maxX) / 2,
+    cy = (map.minY + map.maxY) / 2;
+  for (let i = 1; i < samples; i++) {
+    const t = start + (i / samples) * (1 - start);
+    const h = renderedSurfaceHeight(geometry, map, (camera.x + dx * t) * 100 + cx, (camera.z + dz * t) * 100 + cy);
+    if (h !== null && h / 100 > camera.y + dy * t + 0.5) return true;
+  }
+  return false;
 }
 export async function loadMapTexture(mapName: string, signal: AbortSignal, size = 2048) {
   const canvas = document.createElement('canvas');
