@@ -3,6 +3,7 @@ import { gunzipSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { surfaceHeight, type HeightSurface } from '../../src/modules/map/terrain/heightSurface';
 import { createSurfaceGeometry, terrainPoint } from '../../src/modules/map/terrain/sceneGeometry';
+import { renderQuality } from '../../src/modules/map/terrain/renderQuality';
 
 const map = { width: 100, height: 100, minX: 0, maxX: 100, minY: 0, maxY: 100 };
 const surface: HeightSurface = {
@@ -37,5 +38,28 @@ describe('3D terrain alignment', () => {
     expect(raw.byteLength).toBe(meta.n * meta.n * 2);
     const heights = new Uint16Array(raw.buffer, raw.byteOffset, raw.byteLength / 2);
     expect(surfaceHeight({ ...meta, heights }, 0, 0)).toBeTypeOf('number');
+    const full = createSurfaceGeometry(
+      { ...meta, heights },
+      {
+        ...map,
+        minX: meta.x0,
+        maxX: meta.x0 + (meta.n - 1) * meta.step,
+        minY: meta.y0,
+        maxY: meta.y0 + (meta.n - 1) * meta.step,
+      },
+      1025,
+    );
+    expect(full.getAttribute('position').count).toBe(meta.n ** 2);
+    full.dispose();
+  });
+  it('uses bounded hardware profiles and lets the user override the automatic choice', () => {
+    const desktop = { software: false, mobile: false, maxTextureSize: 8192, pixelRatio: 3 };
+    expect(renderQuality('auto', desktop).level).toBe('high');
+    expect(renderQuality('auto', { ...desktop, software: true }).level).toBe('low');
+    expect(renderQuality('auto', { ...desktop, mobile: true }).level).toBe('balanced');
+    expect(renderQuality('high', { ...desktop, maxTextureSize: 2048 }).textureSize).toBe(2048);
+    expect(renderQuality('high', { ...desktop, software: true }).gridSize).toBe(1025);
+    expect(renderQuality('high', desktop).pixelRatio).toBe(2);
+    expect(createSurfaceGeometry(surface, map, 1025).getAttribute('position').count).toBe(4);
   });
 });

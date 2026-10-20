@@ -13,6 +13,7 @@ import { createDesertDetails, updateDesertDetails } from './desertDetails';
 import { SceneModels } from './sceneModels';
 import { colorSurface, createMapMaterial, niceScale } from './mapPresentation';
 import MapHud from './MapHud';
+import { renderQuality, type QualityChoice } from './renderQuality';
 
 export type MapCamera = {
   zoom: (factor: number) => void;
@@ -40,6 +41,13 @@ export default function MapScene3D(props: Props) {
   const latest = useRef(props);
   const repaint = useRef<(() => void) | null>(null);
   const changeAppearance = useRef<(() => void) | null>(null);
+  const changeQuality = useRef<(() => void) | null>(null);
+  const [quality, setQuality] = useState<QualityChoice>('auto');
+  const qualityChoice = useRef(quality);
+  useLayoutEffect(() => {
+    qualityChoice.current = quality;
+    changeQuality.current?.();
+  }, [quality]);
   const [terrainStyle, setTerrainStyle] = useState<'relief' | 'atlas'>('relief');
   const [contours, setContours] = useState(false);
   const appearance = useRef({ terrainStyle, contours });
@@ -75,12 +83,23 @@ export default function MapScene3D(props: Props) {
     const { signal } = controller;
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     } catch {
       latest.current.onUnavailable('WebGL2 is unavailable');
       return;
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const gl = renderer.getContext();
+    const debug = gl.getExtension('WEBGL_debug_renderer_info');
+    const gpuName = debug ? String(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)) : '';
+    const device = {
+      software: /swiftshader|llvmpipe|software|softpipe|microsoft basic render/i.test(gpuName),
+      mobile: window.matchMedia('(pointer: coarse)').matches,
+      maxTextureSize: renderer.capabilities.maxTextureSize,
+      pixelRatio: window.devicePixelRatio || 1,
+    };
+    let profile = renderQuality(qualityChoice.current, device);
+    renderer.setPixelRatio(profile.pixelRatio);
+    host.dataset.renderQuality = profile.level;
     host.prepend(renderer.domElement);
     renderer.domElement.setAttribute('aria-label', '3D terrain');
     const scene = new THREE.Scene();
@@ -137,6 +156,7 @@ export default function MapScene3D(props: Props) {
     sun.position.set(-extent, extent * 2, -extent);
     scene.add(sun);
     let surface: Awaited<ReturnType<typeof loadHeightSurface>> | null = null;
+    let groundMesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> | null = null;
     let grid: THREE.LineSegments | null = null;
     const { material, uniforms } = createMapMaterial();
     let models: SceneModels | null = null;
@@ -149,6 +169,7 @@ export default function MapScene3D(props: Props) {
         });
     };
     let texture: THREE.Texture | null = null;
+    let textureSize = profile.textureSize;
     let detailsMaterial: THREE.Material | null = null;
     let detailsGroup: THREE.Group | null = null;
     const fail = () => latest.current.onUnavailable('terrain could not be loaded');
@@ -159,7 +180,7 @@ export default function MapScene3D(props: Props) {
     renderer.domElement.addEventListener('webglcontextlost', lost);
     Promise.all([
       loadHeightSurface(mapName, layout, signal),
-      loadMapTexture(mapName, signal).then((image) => {
+      loadMapTexture(mapName, signal, profile.textureSize).then((image) => {
         if (signal.aborted) image.dispose();
         else texture = image;
         return image;
@@ -178,9 +199,11 @@ export default function MapScene3D(props: Props) {
         material.map = appearance.current.terrainStyle === 'atlas' ? image : null;
         material.color.set(0xffffff);
         material.needsUpdate = true;
-        const ground = createSurfaceGeometry(data, map);
+        const ground = createSurfaceGeometry(data, map, profile.gridSize);
         colorSurface(ground, data);
-        scene.add(new THREE.Mesh(ground, material));
+        groundMesh = new THREE.Mesh(ground, material);
+        scene.add(groundMesh);
+        image.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
         models = new SceneModels(map, data, signal, schedulePaint);
         scene.add(models.group);
         if (details) {
@@ -213,6 +236,7 @@ export default function MapScene3D(props: Props) {
         }
         latest.current.onReady();
         host.dataset.sceneState = 'ready';
+        changeQuality.current?.();
         paint();
       })
       .catch(() => {
@@ -261,7 +285,8 @@ export default function MapScene3D(props: Props) {
       if (grid) grid.visible = latest.current.showSectorGrid;
       models?.sync(latest.current.markers);
       models?.updateView(camera);
-      if (detailsGroup) updateDesertDetails(detailsGroup, camera, host.clientHeight);
+      if (detailsGroup)
+        updateDesertDetails(detailsGroup, camera, host.clientHeight, profile.rockTriangles, profile.minRockPixels);
       renderer.render(scene, camera);
       projectMarkers();
       const heading =
@@ -300,6 +325,43 @@ export default function MapScene3D(props: Props) {
     resize();
     fit();
     controls.addEventListener('change', paint);
+    let textureRequest = 0;
+    changeQuality.current = () => {
+      const next = renderQuality(qualityChoice.current, device);
+      if (surface && groundMesh && next.gridSize !== profile.gridSize) {
+        const geometry = createSurfaceGeometry(surface, map, next.gridSize);
+        colorSurface(geometry, surface);
+        groundMesh.geometry.dispose();
+        groundMesh.geometry = geometry;
+      }
+      profile = next;
+      uniforms.detail.value = profile.level === 'low' ? 0 : 1;
+      host.dataset.renderQuality = profile.level;
+      renderer.setPixelRatio(profile.pixelRatio);
+      if (surface && texture && textureSize !== profile.textureSize) {
+        const request = ++textureRequest;
+        const requestedSize = profile.textureSize;
+        void loadMapTexture(mapName, signal, profile.textureSize)
+          .then((image) => {
+            if (signal.aborted || request !== textureRequest) {
+              image.dispose();
+              return;
+            }
+            image.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+            texture?.dispose();
+            texture = image;
+            textureSize = requestedSize;
+            material.map = appearance.current.terrainStyle === 'atlas' ? image : null;
+            material.needsUpdate = true;
+            schedulePaint();
+          })
+          .catch(() => {
+            /* Keep the current texture if a quality upgrade fails. */
+          });
+      } else ++textureRequest;
+      resize();
+    };
+    uniforms.detail.value = profile.level === 'low' ? 0 : 1;
     // Render on demand: live samples and legend changes do not need a permanent GPU loop.
     repaint.current = () => {
       const modelChanged = models?.sync(latest.current.markers);
@@ -345,6 +407,7 @@ export default function MapScene3D(props: Props) {
       if (pendingPaint) cancelAnimationFrame(pendingPaint);
       repaint.current = null;
       changeAppearance.current = null;
+      changeQuality.current = null;
       observer.disconnect();
       commands.current = null;
       controls.removeEventListener('change', paint);
@@ -396,6 +459,8 @@ export default function MapScene3D(props: Props) {
         }}
         style={terrainStyle}
         contours={contours}
+        quality={quality}
+        onQuality={setQuality}
         onStyle={setTerrainStyle}
         onContours={() => setContours((v) => !v)}
         onTop={() => commands.current?.top()}

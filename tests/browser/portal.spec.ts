@@ -855,6 +855,15 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   await expect(moving).toBeVisible();
   await moving.evaluate((el) => (el.dataset.preserved = 'true'));
   const snapshotPosition = await marker.evaluate((el) => [el.style.left, el.style.top]);
+  expect(
+    await scene
+      .locator('canvas')
+      .evaluate((el: HTMLCanvasElement) => el.getContext('webgl2')!.getContextAttributes()!.powerPreference),
+  ).toBe('high-performance');
+  await page.getByLabel('Terrain detail').selectOption('balanced');
+  await expect(scene).toHaveAttribute('data-render-quality', 'balanced');
+  expect(await marker.evaluate((el) => [el.style.left, el.style.top])).toEqual(snapshotPosition);
+  await page.getByLabel('Terrain detail').selectOption('auto');
   const scrollPosition = await page.evaluate(() => scrollY);
   await scene.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
     canvas.dataset.draws = '0';
@@ -907,6 +916,10 @@ test('real building pieces and vehicle models appear up close with map tools', a
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /THREE.WebGLProgram|shader error/i.test(message.text()))
+      errors.push(message.text());
+  });
   let exports = 0;
   const pieces: { building_type: string; x: number; y: number; z: number; rotation: number }[] = [];
   for (const x of [-512, 0, 512])
@@ -972,6 +985,12 @@ test('real building pieces and vehicle models appear up close with map tools', a
   await page.getByRole('button', { name: '×', exact: true }).click();
   await page.screenshot({ path: 'test-results/map-vehicle-model.png', fullPage: true });
   const exportCount = exports;
+  const positionBeforeQuality = await vehicle.evaluate((el) => [el.style.left, el.style.top]);
+  await page.getByLabel('Terrain detail').selectOption('high');
+  await expect(scene).toHaveAttribute('data-render-quality', 'high');
+  expect(await vehicle.evaluate((el) => [el.style.left, el.style.top])).toEqual(positionBeforeQuality);
+  await page.screenshot({ path: 'test-results/map-high-detail.png', fullPage: true });
+  await page.getByLabel('Terrain detail').selectOption('auto');
   await page.getByLabel('Terrain style').selectOption('atlas');
   await page.getByRole('button', { name: 'Contours', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Contours', exact: true })).toHaveAttribute('aria-pressed', 'true');

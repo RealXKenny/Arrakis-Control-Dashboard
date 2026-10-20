@@ -996,16 +996,17 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 64px 12px 12px;
   color: #fff1d2;
   font:
     11px 'Saira',
     sans-serif;
 }
 .sceneTools {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 64px;
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
@@ -1154,10 +1155,7 @@
   }
 }
 .sceneSearch {
-  position: absolute;
-  top: 54px;
-  left: 12px;
-  width: min(290px, calc(100% - 82px));
+  width: min(290px, 100%);
   pointer-events: auto;
 }
 .sceneSearch input {
@@ -1202,9 +1200,4 @@
 }
 .sceneSearch small {
   color: #baa780;
-}
-@media (max-width: 600px) {
-  .sceneSearch {
-    top: 84px;
-  }
 }
