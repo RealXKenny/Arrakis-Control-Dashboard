@@ -170,7 +170,7 @@ export default function MapScene3D(props: Props) {
     };
     let texture: THREE.Texture | null = null;
     let textureSize = profile.textureSize;
-    let detailsMaterial: THREE.Material | null = null;
+    let disposeDetails: (() => void) | null = null;
     let detailsGroup: THREE.Group | null = null;
     const fail = () => latest.current.onUnavailable('terrain could not be loaded');
     const lost = (event: Event) => {
@@ -207,9 +207,11 @@ export default function MapScene3D(props: Props) {
         models = new SceneModels(map, data, signal, schedulePaint);
         scene.add(models.group);
         if (details) {
-          const built = createDesertDetails(details[0], details[1], map);
-          detailsMaterial = built.material;
+          const built = createDesertDetails(details[0], details[1], map, uniforms.detail);
+          disposeDetails = built.dispose;
+          built.applySand(material);
           detailsGroup = built.group;
+          host.dataset.desertTerrain = 'combined';
           scene.add(built.group);
         }
         if (gridOverlay) {
@@ -425,7 +427,7 @@ export default function MapScene3D(props: Props) {
       });
       if (grid) (grid.material as THREE.Material).dispose();
       material.dispose();
-      detailsMaterial?.dispose();
+      disposeDetails?.();
       texture?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
