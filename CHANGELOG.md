@@ -16,6 +16,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Changed
 
+- Anchor 3D blips to the displayed terrain triangles, hide terrain-obscured blips, and stop drawing unsupported locations over the backdrop; show a coverage notice and retain all locations in 2D.
 - Load and render all active owned base models regardless of camera distance, remove the eight-base cap, and retain distant navigation blips while keeping two export requests at a time.
 - Repeat an HTTP-verified plain startup marker briefly for Pterodactyl fast-start detection, retain older eggs' `Ready in` match, and forward stop signals to Next.js while cancelling readiness retries.
 - Reproject 3D blips immediately during orbit/pan before queued terrain draws, match overlays by marker identity, and suspend realtime screen-position smoothing while dragging.

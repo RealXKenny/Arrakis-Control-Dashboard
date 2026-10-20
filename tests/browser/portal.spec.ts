@@ -842,7 +842,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
     const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
     const map = deep
       ? { width: 8192, height: 8192, minX: -1177656, maxX: 1072344, minY: -1177066, maxY: 1072934, flipY: false }
-      : { width: 8192, height: 8192, minX: -457200, maxX: 355600, minY: -457200, maxY: 355600, flipY: false };
+      : { width: 8192, height: 8192, minX: -457200, maxX: 600000, minY: -457200, maxY: 355600, flipY: false };
     return route.fulfill({
       json: {
         ok: true,
@@ -851,6 +851,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
         gridOverlay: deep ? createSectorGridOverlay('DeepDesert', map) : null,
         markers: [
           { id: 'base', type: 'base', name: '3D stronghold', x: -200000, y: -50000 },
+          ...(!deep ? [{ id: 'uncovered', type: 'poi', name: 'Uncovered location', x: 500000, y: 0 }] : []),
           ...(deep ? [{ id: 'patch', type: 'poi', name: 'Terrain overlook', x: -711684, y: 196855 }] : []),
         ],
       },
@@ -859,9 +860,15 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   await page.goto('/map');
   const scene = page.locator('[data-map-view="3d"]');
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
-  const marker = page.getByRole('button', { name: 'Base: 3D stronghold', exact: true });
+  const marker = page.getByRole('button', { name: 'Base: 3D stronghold', exact: true, includeHidden: true });
   await expect(marker).toBeVisible();
   await expect(marker).toHaveAttribute('data-model-state', 'unavailable');
+  const uncovered = page.getByRole('button', { name: "POI's: Uncovered location", exact: true, includeHidden: true });
+  await expect(uncovered).toHaveAttribute('data-terrain-state', 'uncovered');
+  await expect(uncovered).toBeHidden();
+  await expect(scene.locator('[data-terrain-coverage]')).toHaveText(
+    '1 location outside 3D terrain coverage. Use 2D to view all.',
+  );
   const moving = page.getByRole('button', { name: 'Sandworm: Moving worm', exact: true });
   await expect(moving).toBeVisible();
   await moving.evaluate((el) => (el.dataset.preserved = 'true'));
@@ -873,7 +880,11 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   ).toBe('high-performance');
   await page.getByLabel('Terrain detail').selectOption('balanced');
   await expect(scene).toHaveAttribute('data-render-quality', 'balanced');
-  expect(await marker.evaluate((el) => [el.style.left, el.style.top])).toEqual(snapshotPosition);
+  const detailedPosition = await marker.evaluate((el) => [el.style.left, el.style.top]);
+  // Terrain anchors follow the selected mesh, so finer triangles can adjust elevation slightly.
+  detailedPosition.forEach((value, i) =>
+    expect(Math.abs(parseFloat(value) - parseFloat(snapshotPosition[i]))).toBeLessThan(3),
+  );
   await page.getByLabel('Terrain detail').selectOption('auto');
   const scrollPosition = await page.evaluate(() => scrollY);
   await scene.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
@@ -912,20 +923,21 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   const samplesDuringDrag = samples;
   await expect.poll(() => samples).toBeGreaterThan(samplesDuringDrag);
   await expect(moving).toHaveCSS('transition-duration', '0s');
-  await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.5, { steps: 8 });
+  await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.6, { steps: 8 });
   const draggedBox = await marker.boundingBox();
-  expect(Math.hypot(draggedBox!.x - orbitBox!.x, draggedBox!.y - orbitBox!.y)).toBeGreaterThan(5);
+  if (draggedBox) expect(Math.hypot(draggedBox.x - orbitBox!.x, draggedBox.y - orbitBox!.y)).toBeGreaterThan(5);
+  else await expect(marker).toHaveAttribute('data-terrain-state', 'hidden');
   await expect
     .poll(() => canvas.getAttribute('data-blip-at-draw'))
     .toBe(await marker.evaluate((el) => JSON.stringify([el.style.left, el.style.top])));
   await page.mouse.up();
   await expect.poll(() => marker.evaluate((el) => [el.style.left, el.style.top])).not.toEqual(beforeOrbit);
-  const beforePan = await marker.boundingBox();
+  const beforePan = await marker.evaluate((el) => [parseFloat(el.style.left), parseFloat(el.style.top)]);
   await page.mouse.move(box!.x + box!.width * 0.7, box!.y + box!.height * 0.65);
   await page.mouse.down({ button: 'right' });
   await page.mouse.move(box!.x + box!.width * 0.8, box!.y + box!.height * 0.7, { steps: 5 });
-  const pannedBox = await marker.boundingBox();
-  expect(Math.hypot(pannedBox!.x - beforePan!.x, pannedBox!.y - beforePan!.y)).toBeGreaterThan(5);
+  const pannedPosition = await marker.evaluate((el) => [parseFloat(el.style.left), parseFloat(el.style.top)]);
+  expect(Math.hypot(pannedPosition[0] - beforePan[0], pannedPosition[1] - beforePan[1])).toBeGreaterThan(5);
   await page.mouse.up({ button: 'right' });
   await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
@@ -949,6 +961,17 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   await expect(page.getByRole('button', { name: '3D map', exact: true })).toBeVisible();
   await expect(page.getByText(/3D unavailable: graphics context lost/)).toBeVisible();
   await expect(page.locator('[data-map-resolution]')).toBeVisible();
+  await page.getByRole('link', { name: 'Hagga Basin', exact: true }).click();
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
+  await expect(scene).toHaveCount(0);
+  await expect(page.getByRole('button', { name: "POI's: Uncovered location", exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '3D map', exact: true }).click();
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  await page.getByLabel('Find on map').fill('Uncovered location');
+  await page.getByRole('list', { name: 'Map search results' }).getByRole('button').click();
+  await expect(scene).toHaveCount(0);
+  await expect(page.getByText(/3D unavailable: this location has no 3D terrain coverage/)).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -1032,7 +1055,10 @@ test('base models render from the full map and vehicles appear up close with map
   const positionBeforeQuality = await vehicle.evaluate((el) => [el.style.left, el.style.top]);
   await page.getByLabel('Terrain detail').selectOption('high');
   await expect(scene).toHaveAttribute('data-render-quality', 'high');
-  expect(await vehicle.evaluate((el) => [el.style.left, el.style.top])).toEqual(positionBeforeQuality);
+  const detailedVehiclePosition = await vehicle.evaluate((el) => [el.style.left, el.style.top]);
+  detailedVehiclePosition.forEach((value, i) =>
+    expect(Math.abs(parseFloat(value) - parseFloat(positionBeforeQuality[i]))).toBeLessThan(3),
+  );
   await page.screenshot({ path: 'test-results/map-high-detail.png', fullPage: true });
   await page.getByLabel('Terrain detail').selectOption('auto');
   await page.getByLabel('Terrain style').selectOption('atlas');

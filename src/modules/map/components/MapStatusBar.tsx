@@ -14,7 +14,7 @@ export default function MapStatusBar({ loading, error, markerCount, zoomPercent,
       </span>
 
       <span className={styles.mapStatusMetric}>
-        <strong>{markerCount}</strong> visible markers
+        <strong>{markerCount}</strong> {view3D ? 'locations' : 'visible markers'}
       </span>
 
       <span className={styles.mapStatusMetric}>

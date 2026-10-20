@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { gunzipSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { surfaceHeight, type HeightSurface } from '../../src/modules/map/terrain/heightSurface';
-import { createSurfaceGeometry, terrainPoint } from '../../src/modules/map/terrain/sceneGeometry';
+import {
+  createSurfaceGeometry,
+  terrainPoint,
+  renderedSurfaceHeight,
+  terrainOccludes,
+} from '../../src/modules/map/terrain/sceneGeometry';
+import * as THREE from 'three';
 import { renderQuality } from '../../src/modules/map/terrain/renderQuality';
 
 const map = { width: 100, height: 100, minX: 0, maxX: 100, minY: 0, maxY: 100 };
@@ -16,6 +22,26 @@ const surface: HeightSurface = {
   heights: new Uint16Array([0, 100, 200, 300]),
 };
 describe('3D terrain alignment', () => {
+  it('anchors blips to rendered triangles and rejects locations beyond terrain coverage', () => {
+    const terrain = { ...surface, heights: new Uint16Array([0, 0, 0, 100]) };
+    const geometry = createSurfaceGeometry(terrain, map);
+    expect(surfaceHeight(terrain, 75, 75)).toBe(56.25);
+    expect(renderedSurfaceHeight(geometry, map, 75, 75)).toBe(50);
+    expect(renderedSurfaceHeight(geometry, map, 101, 50)).toBeNull();
+    const missing = createSurfaceGeometry({ ...terrain, zeroIsMissing: true }, map);
+    expect(renderedSurfaceHeight(missing, map, 50, 50)).toBeNull();
+    geometry.dispose();
+    missing.dispose();
+  });
+  it('hides a terrain-blocked blip and reveals it when the camera clears the ridge', () => {
+    const bounds = { ...map, minX: 0, minY: 0, maxX: 20000, maxY: 20000 };
+    const ridge = { ...surface, n: 3, step: 10000, heights: new Uint16Array([0, 0, 0, 50000, 50000, 50000, 0, 0, 0]) };
+    const geometry = createSurfaceGeometry(ridge, bounds);
+    const target = terrainPoint(10000, 20000, 100, bounds);
+    expect(terrainOccludes(geometry, bounds, new THREE.Vector3(0, 100, -100), target)).toBe(true);
+    expect(terrainOccludes(geometry, bounds, new THREE.Vector3(0, 1500, -100), target)).toBe(false);
+    geometry.dispose();
+  });
   it('interpolates elevation and rejects outside coordinates instead of extending the map', () => {
     expect(surfaceHeight(surface, 50, 50)).toBe(150);
     expect(surfaceHeight(surface, 100, 100)).toBe(300);
