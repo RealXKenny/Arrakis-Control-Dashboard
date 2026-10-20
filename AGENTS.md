@@ -30,6 +30,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/infrastructure/`: Dune Console/adapter and Discord clients, API boundary, cookies, and API cache. Start with `dune.ts`, `dunedocker/transport.ts`, or `pages-api.ts`.
 - `src/lib/`: server guards, Redis, sessions, rate limits, logging, errors, timeouts, and shared caches.
 - `src/config/`: authoritative server environment schema, production validation, and the dev/production server launcher.
+- `src/config/server-launcher.mjs` forwards panel stop signals and briefly repeats HTTP-verified readiness; new eggs match `Arrakis Control Dashboard is listening`, with `Ready in` retained for installed eggs.
 - `src/instrumentation.ts`: runtime validation, Console warmup, startup log, and population recorder.
 - `src/assets/`: favicon, application images, and compressed Deep Desert terrain bundles. It is large; do not enumerate it unless necessary.
 - `src/modules/map/terrain/`: lazy three.js 3D scene for both maps, measured height surfaces, and instanced Deep Desert rocks; the overhead WebGL2/image viewer remains the compatibility fallback. `MapScene3D.tsx` owns camera/disposal, `heightSurface.ts` elevation sampling, and `sceneGeometry.ts` coordinate/texture alignment.

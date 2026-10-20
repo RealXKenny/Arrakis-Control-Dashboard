@@ -71,7 +71,15 @@ const require = createRequire(import.meta.url);
 const mode = process.env.SMOKE_NEXT_MODE === 'dev' ? 'dev' : 'start';
 const child = spawn(
   process.execPath,
-  ['--trace-warnings', require.resolve('next/dist/bin/next'), mode, '--hostname', '127.0.0.1', '--port', String(port)],
+  [
+    '--trace-warnings',
+    mode === 'start' ? 'src/config/server-launcher.mjs' : require.resolve('next/dist/bin/next'),
+    mode,
+    '--hostname',
+    '127.0.0.1',
+    '--port',
+    String(port),
+  ],
   {
     windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -87,6 +95,7 @@ const child = spawn(
       VERIFIED_MEMBER_ROLE_ID: 'fixture-role',
       APP_URL: base,
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
+      LOG_LEVEL: 'FATAL',
     },
   },
 );
@@ -117,6 +126,16 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   assert.ok(ready, 'Production server must serve /portal');
+  if (mode === 'start') {
+    for (let attempt = 0; attempt < 40; attempt++) {
+      if ((logs.match(/Ready in — Arrakis Control Dashboard is listening/g) ?? []).length >= 2) break;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    assert.ok(
+      (logs.match(/Ready in — Arrakis Control Dashboard is listening/g) ?? []).length >= 2,
+      'Readiness repeats for late panel detection even with LOG_LEVEL=FATAL',
+    );
+  }
   for (const [asset, contentType] of [
     ['/favicon.ico', 'image/x-icon'],
     ['/maps/atreides.webp', 'image/webp'],
@@ -237,7 +256,10 @@ try {
   await deniedImport.text();
   console.log('Runtime smoke passed: 13 API modules, protected base import, telemetry, market and logout.');
 } finally {
-  child.kill();
+  if (process.platform === 'win32' && mode === 'start' && child.exitCode === null) {
+    const cleanup = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+    await once(cleanup, 'exit');
+  } else child.kill();
   await childDone;
   await storage.close();
   redis.closeAllConnections();
