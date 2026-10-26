@@ -54,20 +54,6 @@ describe('source asset handler', () => {
     expect(texture.getHeader('Content-Type')).toBe('application/gzip');
   });
 
-  it('serves model packs while rejecting arbitrary model paths', async () => {
-    for (const name of ['catalog.json.gz', 'meshpack-0.bin.gz', 'meshpack-9.bin.gz']) {
-      const res = responseMock();
-      await assetHandler({ method: 'HEAD', query: { path: ['models', name] } }, res);
-      expect(res.statusCode).toBe(200);
-      expect(res.getHeader('Content-Type')).toBe('application/gzip');
-    }
-    for (const name of ['meshpack-10.bin.gz', 'meshpack-00.bin.gz', 'catalog.json', '../.env']) {
-      const res = responseMock();
-      await assetHandler({ method: 'GET', query: { path: ['models', name] } }, res);
-      expect(res.statusCode).toBe(404);
-    }
-  });
-
   it('serves only the four allowlisted lossless map quadrants', async () => {
     const tile = responseMock();
     await assetHandler({ method: 'HEAD', query: { path: ['maps', 'deep-desert', '1-1.webp'] } }, tile);

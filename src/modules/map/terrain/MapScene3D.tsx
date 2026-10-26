@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import MapMarker from '../components/MapMarker';
@@ -10,17 +10,8 @@ import { loadHeightSurface, surfaceHeight } from './heightSurface';
 import { createSurfaceGeometry, loadMapTexture, terrainPoint, type MapBounds } from './sceneGeometry';
 import { loadLayoutAssets, loadSharedAssets } from './terrainAssets';
 import { createDesertDetails, updateDesertDetails } from './desertDetails';
-import { SceneModels } from './sceneModels';
-import { colorSurface, createMapMaterial, niceScale } from './mapPresentation';
-import MapHud from './MapHud';
 
-export type MapCamera = {
-  zoom: (factor: number) => void;
-  fit: () => void;
-  focus: (marker: Record<string, unknown>) => void;
-  north: () => void;
-  top: () => void;
-};
+export type MapCamera = { zoom: (factor: number) => void; fit: () => void };
 type Marker = Record<string, unknown>;
 type Props = {
   mapName: string;
@@ -39,14 +30,6 @@ export default function MapScene3D(props: Props) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const latest = useRef(props);
   const repaint = useRef<(() => void) | null>(null);
-  const changeAppearance = useRef<(() => void) | null>(null);
-  const [terrainStyle, setTerrainStyle] = useState<'relief' | 'atlas'>('relief');
-  const [contours, setContours] = useState(false);
-  const appearance = useRef({ terrainStyle, contours });
-  useLayoutEffect(() => {
-    appearance.current = { terrainStyle, contours };
-    changeAppearance.current?.();
-  }, [terrainStyle, contours]);
   const mapKey = JSON.stringify(props.mapConfig);
   const gridKey = JSON.stringify(props.gridOverlay);
   const map = useMemo(() => JSON.parse(mapKey) as MapBounds, [mapKey]);
@@ -55,13 +38,7 @@ export default function MapScene3D(props: Props) {
   const commands = useRef<MapCamera | null>(null);
   useImperativeHandle(
     cameraRef,
-    () => ({
-      zoom: (factor) => commands.current?.zoom(factor),
-      fit: () => commands.current?.fit(),
-      focus: (marker) => commands.current?.focus(marker),
-      north: () => commands.current?.north(),
-      top: () => commands.current?.top(),
-    }),
+    () => ({ zoom: (factor) => commands.current?.zoom(factor), fit: () => commands.current?.fit() }),
     [],
   );
   useLayoutEffect(() => {
@@ -84,9 +61,8 @@ export default function MapScene3D(props: Props) {
     host.prepend(renderer.domElement);
     renderer.domElement.setAttribute('aria-label', '3D terrain');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#b8a387');
+    scene.background = new THREE.Color('#211c18');
     const extent = Math.max(map.maxX - map.minX, map.maxY - map.minY) / 100;
-    scene.fog = new THREE.FogExp2('#b8a387', 0.18 / extent);
     const camera = new THREE.PerspectiveCamera(45, 1, Math.max(0.5, extent / 100000), extent * 12);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.maxPolarAngle = Math.PI * 0.48;
@@ -95,7 +71,7 @@ export default function MapScene3D(props: Props) {
     controls.screenSpacePanning = false;
     const fit = () => {
       controls.target.set(0, 0, 0);
-      const distance = (extent * 1.2) / Math.min(1, camera.aspect);
+      const distance = (extent * 1.5) / Math.min(1, camera.aspect);
       controls.maxDistance = distance * 3;
       camera.far = distance * 12;
       camera.updateProjectionMatrix();
@@ -111,43 +87,14 @@ export default function MapScene3D(props: Props) {
           .add(controls.target);
         controls.update();
       },
-      focus: (marker) => {
-        const x = getCoordinate(marker, 'x'),
-          y = getCoordinate(marker, 'y');
-        if (!surface || !Number.isFinite(x + y)) return;
-        const z = surfaceHeight(surface, x, y) ?? surface.minZ;
-        controls.target.copy(terrainPoint(x, y, z, map));
-        const distance = marker.type === 'vehicle' ? 85 : marker.type === 'base' ? 240 : 500;
-        camera.position.copy(controls.target).add(new THREE.Vector3(0, distance * 0.75, distance));
-        controls.update();
-      },
-      north: () => {
-        const distance = camera.position.distanceTo(controls.target);
-        camera.position.copy(controls.target).add(new THREE.Vector3(0, distance * 0.65, distance * 0.76));
-        controls.update();
-      },
-      top: () => {
-        const distance = camera.position.distanceTo(controls.target);
-        camera.position.copy(controls.target).add(new THREE.Vector3(0, distance, 0.01));
-        controls.update();
-      },
     };
-    scene.add(new THREE.HemisphereLight(0xe2eff5, 0x8a6746, 1.7));
-    const sun = new THREE.DirectionalLight(0xffedca, 2.2);
+    scene.add(new THREE.HemisphereLight(0xfff0d8, 0x554430, 2));
+    const sun = new THREE.DirectionalLight(0xffedd0, 2);
     sun.position.set(-extent, extent * 2, -extent);
     scene.add(sun);
     let surface: Awaited<ReturnType<typeof loadHeightSurface>> | null = null;
     let grid: THREE.LineSegments | null = null;
-    const { material, uniforms } = createMapMaterial();
-    let models: SceneModels | null = null;
-    let pendingPaint = 0;
-    const schedulePaint = () => {
-      if (!pendingPaint && !signal.aborted)
-        pendingPaint = requestAnimationFrame(() => {
-          pendingPaint = 0;
-          paint();
-        });
-    };
+    const material = new THREE.MeshStandardMaterial({ color: 0xc4a578, roughness: 1, side: THREE.DoubleSide });
     let texture: THREE.Texture | null = null;
     let detailsMaterial: THREE.Material | null = null;
     let detailsGroup: THREE.Group | null = null;
@@ -175,14 +122,10 @@ export default function MapScene3D(props: Props) {
         }
         surface = data;
         texture = image;
-        material.map = appearance.current.terrainStyle === 'atlas' ? image : null;
+        material.map = image;
         material.color.set(0xffffff);
         material.needsUpdate = true;
-        const ground = createSurfaceGeometry(data, map);
-        colorSurface(ground, data);
-        scene.add(new THREE.Mesh(ground, material));
-        models = new SceneModels(map, data, signal, schedulePaint);
-        scene.add(models.group);
+        scene.add(new THREE.Mesh(createSurfaceGeometry(data, map), material));
         if (details) {
           const built = createDesertDetails(details[0], details[1], map);
           detailsMaterial = built.material;
@@ -230,14 +173,6 @@ export default function MapScene3D(props: Props) {
         const x = getCoordinate(marker, 'x'),
           y = getCoordinate(marker, 'y');
         const point = worldToMapPoint(marker, map);
-        const model = models?.state(marker, index);
-        element.dataset.modelState = model?.state ?? '';
-        element.dataset.modelVisible = String(model?.visible ?? false);
-        if (model?.state === 'unavailable')
-          element.setAttribute('aria-description', 'Building model unavailable; location marker retained.');
-        else if (model?.state === 'partial')
-          element.setAttribute('aria-description', 'Some building pieces are unavailable.');
-        else element.removeAttribute('aria-description');
         const h = surfaceHeight(surface!, x, y);
         const position = terrainPoint(x, y, (h ?? surface!.minZ) + 500, map).project(camera);
         const visible =
@@ -259,32 +194,9 @@ export default function MapScene3D(props: Props) {
     const paint = () => {
       if (signal.aborted) return;
       if (grid) grid.visible = latest.current.showSectorGrid;
-      models?.sync(latest.current.markers);
-      models?.updateView(camera);
       if (detailsGroup) updateDesertDetails(detailsGroup, camera, host.clientHeight);
       renderer.render(scene, camera);
       projectMarkers();
-      const heading =
-        (Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z) * 180) / Math.PI;
-      const hud = host.querySelector<HTMLElement>('[data-map-hud]');
-      const arrow = hud?.querySelector<HTMLElement>('[data-compass-arrow]');
-      if (arrow) arrow.style.transform = `rotate(${-heading}deg)`;
-      const ray = new THREE.Raycaster(),
-        plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -controls.target.y);
-      const a = new THREE.Vector3(),
-        b = new THREE.Vector3();
-      ray.setFromCamera(new THREE.Vector2(-0.8, -0.8), camera);
-      const hitA = ray.ray.intersectPlane(plane, a);
-      ray.setFromCamera(new THREE.Vector2(-0.4, -0.8), camera);
-      const hitB = ray.ray.intersectPlane(plane, b);
-      if (hitA && hitB) {
-        const perPixel = a.distanceTo(b) / (0.2 * host.clientWidth),
-          scale = niceScale(perPixel * 100);
-        const label = hud?.querySelector<HTMLElement>('[data-scale-label]'),
-          line = hud?.querySelector<HTMLElement>('[data-scale-line]');
-        if (label) label.textContent = scale.label;
-        if (line) line.style.width = `${Math.max(1, scale.metres / perPixel)}px`;
-      }
     };
     const resize = () => {
       const width = host.clientWidth,
@@ -302,60 +214,17 @@ export default function MapScene3D(props: Props) {
     controls.addEventListener('change', paint);
     // Render on demand: live samples and legend changes do not need a permanent GPU loop.
     repaint.current = () => {
-      const modelChanged = models?.sync(latest.current.markers);
-      const visibilityChanged = models?.updateView(camera);
-      if (modelChanged || visibilityChanged || (grid && grid.visible !== latest.current.showSectorGrid)) paint();
+      if (grid && grid.visible !== latest.current.showSectorGrid) paint();
       else projectMarkers(true);
     };
-    changeAppearance.current = () => {
-      const atlas = appearance.current.terrainStyle === 'atlas';
-      material.map = atlas ? texture : null;
-      material.vertexColors = !atlas;
-      uniforms.relief.value = atlas ? 0 : 1;
-      uniforms.contours.value = appearance.current.contours ? 1 : 0;
-      material.needsUpdate = true;
-      paint();
-    };
-    const raycaster = new THREE.Raycaster();
-    let down: { x: number; y: number } | null = null;
-    const pointerDown = (e: PointerEvent) => {
-      down = e.button === 0 ? { x: e.clientX, y: e.clientY } : null;
-    };
-    const pointerUp = (e: PointerEvent) => {
-      if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) {
-        down = null;
-        return;
-      }
-      down = null;
-      const rect = renderer.domElement.getBoundingClientRect();
-      raycaster.setFromCamera(
-        new THREE.Vector2(
-          ((e.clientX - rect.left) / rect.width) * 2 - 1,
-          1 - ((e.clientY - rect.top) / rect.height) * 2,
-        ),
-        camera,
-      );
-      const marker = models?.pick(raycaster);
-      if (marker) latest.current.onSelectMarker(marker);
-    };
-    renderer.domElement.addEventListener('pointerdown', pointerDown);
-    renderer.domElement.addEventListener('pointerup', pointerUp);
     return () => {
       controller.abort();
-      if (pendingPaint) cancelAnimationFrame(pendingPaint);
       repaint.current = null;
-      changeAppearance.current = null;
       observer.disconnect();
       commands.current = null;
       controls.removeEventListener('change', paint);
       controls.dispose();
       renderer.domElement.removeEventListener('webglcontextlost', lost);
-      renderer.domElement.removeEventListener('pointerdown', pointerDown);
-      renderer.domElement.removeEventListener('pointerup', pointerUp);
-      if (models) {
-        scene.remove(models.group);
-        models.dispose();
-      }
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.LineSegments) object.geometry.dispose();
         if (object instanceof THREE.InstancedMesh) object.dispose();
@@ -388,24 +257,20 @@ export default function MapScene3D(props: Props) {
           />
         ))}
       </div>
-      <MapHud
-        markers={props.markers}
-        onLocate={(marker) => {
-          commands.current?.focus(marker);
-          latest.current.onSelectMarker(marker);
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 12,
+          left: 12,
+          pointerEvents: 'none',
+          fontSize: 11,
+          color: '#ead6b5',
+          background: '#211c18cc',
+          padding: '5px 8px',
         }}
-        style={terrainStyle}
-        contours={contours}
-        onStyle={setTerrainStyle}
-        onContours={() => setContours((v) => !v)}
-        onTop={() => commands.current?.top()}
-        onNorth={() => commands.current?.north()}
-        onFullscreen={() => {
-          const target = hostRef.current?.closest('[data-map-workspace]');
-          if (document.fullscreenElement) void document.exitFullscreen();
-          else if (target?.requestFullscreen) void target.requestFullscreen().catch(() => {});
-        }}
-      />
+      >
+        Drag to orbit · Right drag to pan · Scroll or pinch to zoom
+      </div>
     </div>
   );
 }
