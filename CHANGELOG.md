@@ -6,7 +6,6 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
-- Custom realtime sandworm models with segmented bodies, three-lobed mouths, teeth and sand wakes; share geometry, follow terrain and movement headings, and retain distant blips and legend filtering.
 - Default orbitable 3D terrain for Hagga Basin and Deep Desert, with local elevation data and Deep Desert rock meshes, terrain-aligned selectable markers, legend/realtime filters, and sector grid.
 - Orbit, pan, wheel/pinch zoom, camera fit, and a 2D toggle with automatic fallback on terrain loading or WebGL2 failure.
 - Manual cloud test image publication after successful main CI, using `cloud-test` and commit tags without changing the stable version or release image.
@@ -22,7 +21,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Repeat an HTTP-verified plain startup marker briefly for Pterodactyl fast-start detection, retain older eggs' `Ready in` match, and forward stop signals to Next.js while cancelling readiness retries.
 - Reproject 3D blips immediately during orbit/pan before queued terrain draws, match overlays by marker identity, and suspend realtime screen-position smoothing while dragging.
 - Enable realtime map updates by default; hide realtime NPC and civilian markers initially while preserving saved legend choices and the other layer defaults.
-- Update realtime markers in place with smooth 3D movement, stable identities, and no terrain redraw for position-only blip snapshots. Visible worm models redraw on movement without rebuilding terrain; background map reads preserve zoom and avoid loading flashes.
+- Update realtime markers in place with smooth 3D movement, stable identities, and no terrain redraw for position-only snapshots. Background map reads preserve zoom and avoid loading flashes.
 
 ## [1.1.1] - 2026-10-19
 
