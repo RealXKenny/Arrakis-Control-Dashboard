@@ -265,7 +265,6 @@ export default function MapScene3D(props: Props) {
         const model = models?.state(marker, index);
         element.dataset.modelState = model?.state ?? '';
         element.dataset.modelVisible = String(model?.visible ?? false);
-        element.dataset.modelProminent = String(model?.prominent ?? false);
         if (model?.state === 'unavailable')
           element.setAttribute('aria-description', 'Building model unavailable; location marker retained.');
         else if (model?.state === 'partial')
