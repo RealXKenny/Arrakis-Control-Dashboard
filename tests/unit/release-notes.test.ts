@@ -37,9 +37,39 @@ describe('release notes', () => {
     expect(release).toContain('if git rev-parse --verify --quiet "refs/tags/$tag"');
     expect(release).toMatch(/- name: Build versioned image\r?\n\s+if: steps\.release\.outputs\.create == 'true'/);
     expect(release).toMatch(/- name: Publish versioned image\r?\n\s+if: steps\.release\.outputs\.create == 'true'/);
-    expect(release).toContain('--tag "$IMAGE:$RELEASE_TAG"');
+    expect(release).toContain('${{ steps.image.outputs.name }}:${{ steps.release.outputs.tag }}');
+    expect(release).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(release).toContain("github.event.workflow_run.event == 'push'");
+    expect(release).toContain("github.event.workflow_run.head_branch == 'main'");
+    expect(release).toContain('load: true');
+    expect(release).toContain('push: false');
+    expect(release).not.toContain('push: true');
+    const build = release.indexOf('- name: Build versioned image');
+    const contents = release.indexOf('- name: Check image contents and Pterodactyl user');
+    const startup = release.indexOf('- name: Check image startup and asset route');
+    const publish = release.indexOf('- name: Publish versioned image');
+    expect(build).toBeLessThan(contents);
+    expect(contents).toBeLessThan(startup);
+    expect(startup).toBeLessThan(publish);
     expect(release.indexOf('- name: Publish versioned image')).toBeLessThan(
       release.indexOf('- name: Create GitHub Release'),
     );
+  });
+
+  it('keeps all CI checks required when jobs run in parallel and cancels only outdated PRs', () => {
+    const ci = fs.readFileSync(path.resolve('.github/workflows/ci.yml'), 'utf8');
+    expect(ci).toContain('group: ci-${{ github.event.pull_request.number || github.run_id }}');
+    expect(ci).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");
+    const checks = ci.slice(ci.indexOf('  checks:'), ci.indexOf('  integration:'));
+    const integration = ci.slice(ci.indexOf('  integration:'), ci.indexOf('  verify:'));
+    for (const command of ['typecheck', 'lint', 'format:check']) expect(checks).toContain(`npm run ${command}`);
+    expect(checks).toContain('npm test');
+    expect(integration).not.toContain('needs:');
+    for (const command of ['build', 'test:production', 'test:browser'])
+      expect(integration).toContain(`npm run ${command}`);
+    expect(integration).toContain('npx playwright install --with-deps --only-shell chromium');
+    expect(integration).toContain('path: .next/cache');
+    expect(ci).toMatch(/verify:\s+if: always\(\)\s+needs: \[checks, integration\]/);
+    expect(ci).toContain('run: test "$CHECKS_RESULT" = success && test "$INTEGRATION_RESULT" = success');
   });
 });

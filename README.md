@@ -183,6 +183,10 @@ Do not deploy with placeholder environment values, disabled HTTPS, or missing Re
 
 ## Operational Notes
 
+CI runs static checks and unit tests in parallel with a production build, runtime smoke checks, and browser tests. The final `verify` job requires both jobs to succeed. Superseded pull-request runs are canceled; main-branch runs are not canceled. The integration job caches only `.next/cache` and installs Chromium's headless shell for Playwright.
+
+Releases still require successful main-branch CI. Docker Buildx reuses a separate GitHub Actions layer cache, loads the versioned image locally, and runs container content and startup checks before registry login, image publication, and GitHub Release creation. No image is pushed by the cached build step. Cache benefits depend on a prior successful cache export; the first run may be cold.
+
 The dashboard expects the Dune Console and Discord provider to be reachable at runtime. Provider failures are logged with correlation IDs and returned as safe errors where possible. The local development fallback for Redis-backed state is intentionally not suitable for production.
 
 At the default `INFO` level, successful background polling is omitted from the console so hosted logs remain readable. Set `LOG_LEVEL=DEBUG` when compact polling diagnostics are needed; warnings and failures remain visible at normal levels.
