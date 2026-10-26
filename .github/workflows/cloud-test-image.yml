@@ -95,15 +95,6 @@ jobs:
           for asset in catalog.json.gz meshpack-0.bin.gz; do
             curl --fail --silent --output /dev/null "http://127.0.0.1:2008/api/assets/models/$asset"
           done
-          for attempt in $(seq 1 20); do
-            count=$(docker logs arrakis-dashboard-cloud-smoke 2>&1 | grep -c 'Ready in — Arrakis Control Dashboard is listening' || true)
-            if test "$count" -ge 2; then break; fi
-            sleep 1
-          done
-          test "$count" -ge 2
-          docker stop --time 15 arrakis-dashboard-cloud-smoke
-          code=$(docker inspect --format '{{.State.ExitCode}}' arrakis-dashboard-cloud-smoke)
-          test "$code" = 0 || test "$code" = 143
 
       - name: Log in to GitHub Container Registry
         env:

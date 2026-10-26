@@ -16,7 +16,7 @@
   "startup": "cd /opt/arrakis-dashboard && exec node src/config/server-launcher.mjs start",
   "config": {
     "files": "{}",
-    "startup": "{\"done\":\"Arrakis Control Dashboard is listening\"}",
+    "startup": "{\"done\":\"Ready in\"}",
     "logs": "{}",
     "stop": "^C"
   },
