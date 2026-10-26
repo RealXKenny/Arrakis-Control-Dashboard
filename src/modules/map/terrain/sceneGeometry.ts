@@ -20,7 +20,6 @@ export function createSurfaceGeometry(surface: HeightSurface, map: MapBounds, gr
   const positions = new Float32Array(n * n * 3);
   const uv = new Float32Array(n * n * 2);
   const valid = new Uint8Array(n * n);
-  const bounds = new THREE.Box3();
   for (let row = 0; row < n; row++)
     for (let col = 0; col < n; col++) {
       const x = map.minX + (col / (n - 1)) * (map.maxX - map.minX);
@@ -28,9 +27,7 @@ export function createSurfaceGeometry(surface: HeightSurface, map: MapBounds, gr
       const h = surfaceHeight(surface, x, y);
       const i = row * n + col;
       valid[i] = h === null ? 0 : 1;
-      const point = terrainPoint(x, y, h ?? surface.minZ, map);
-      point.toArray(positions, i * 3);
-      if (h !== null) bounds.expandByPoint(point);
+      terrainPoint(x, y, h ?? surface.minZ, map).toArray(positions, i * 3);
       const p = worldToMapPoint({ x, y }, map)!;
       uv[i * 2] = p.px / map.width;
       uv[i * 2 + 1] = 1 - p.py / map.height;
@@ -50,7 +47,6 @@ export function createSurfaceGeometry(surface: HeightSurface, map: MapBounds, gr
   geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   geometry.setIndex(indices);
   geometry.userData.surfaceGrid = { n, valid };
-  geometry.userData.surfaceBounds = bounds;
   geometry.computeVertexNormals();
   geometry.computeBoundingBox();
   return geometry;

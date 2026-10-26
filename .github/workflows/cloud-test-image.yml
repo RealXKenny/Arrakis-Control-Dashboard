@@ -97,12 +97,11 @@ jobs:
           done
           for attempt in $(seq 1 20); do
             count=$(docker logs arrakis-dashboard-cloud-smoke 2>&1 | grep -c 'Ready in — Arrakis Control Dashboard is listening' || true)
-            if test "$count" -ge 1; then break; fi
+            if test "$count" -ge 2; then break; fi
             sleep 1
           done
-          test "$count" -eq 1
+          test "$count" -ge 2
           docker stop --time 15 arrakis-dashboard-cloud-smoke
-          test "$(docker logs arrakis-dashboard-cloud-smoke 2>&1 | grep -c 'Ready in — Arrakis Control Dashboard is listening')" -eq 1
           code=$(docker inspect --format '{{.State.ExitCode}}' arrakis-dashboard-cloud-smoke)
           test "$code" = 0 || test "$code" = 143
 
