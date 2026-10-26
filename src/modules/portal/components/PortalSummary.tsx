@@ -38,13 +38,12 @@ export default function PortalSummary({
         ? `Spice blowing at ${reading.spice.sectors[0]}.`
         : `${reading.spice.count} spice fields active.`
       : 'No active spice fields reported. Explore the desert.'
-    : 'Your next chapter on Arrakis.';
+    : 'Your latest world updates.';
   return (
     <div className={css.overview}>
       <section className={css.briefing} aria-label="World briefing">
-        <div className={css.horizon} aria-hidden="true" />
         <div className={css.serverLine}>
-          <strong className={css.serverName}>Crimson Skies / Command</strong>
+          <strong className={css.serverName}>Workspace overview</strong>
           <span className={css.micro}>
             Coriolis cycle in <b>{timeRemaining(reading?.nextCycleAt ?? null, now)}</b>
           </span>
@@ -59,8 +58,8 @@ export default function PortalSummary({
         </div>
         <div className={css.briefingBody}>
           <div className={css.dispatch}>
-            <p className={css.kicker}>Your world. Your next move.</p>
-            <h1>Make Arrakis yours.</h1>
+            <p className={css.kicker}>Good to see you, {character.name}.</p>
+            <h1>Your world, at a glance.</h1>
             <div className={css.dispatchMeta}>
               <div className={css.readingLine}>
                 <strong>Reading {mapName}.</strong>
@@ -98,7 +97,7 @@ export default function PortalSummary({
             </p>
           </div>
           <aside className={css.identity} aria-label="Your character at a glance">
-            <span className={css.kicker}>Your presence on Arrakis</span>
+            <span className={css.kicker}>Your profile</span>
             <div className={css.monogram}>
               {character.avatarUrl ? (
                 <Image
@@ -129,7 +128,7 @@ export default function PortalSummary({
               </span>
             </div>
             <Link href="/portal?view=character">
-              Open your dossier <span aria-hidden="true">↗</span>
+              View your profile <span aria-hidden="true">↗</span>
             </Link>
           </aside>
         </div>
@@ -173,7 +172,7 @@ export default function PortalSummary({
             <h3>{guildName}</h3>
             <p className={css.guildDescription}>
               {character.guild
-                ? 'Your place in the sietch.'
+                ? 'Your place in the community.'
                 : 'Your character has no reported guild membership. Join a guild in game to see it here.'}
             </p>
             {character.guild && (

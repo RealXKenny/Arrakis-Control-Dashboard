@@ -39,8 +39,8 @@ export default function MarkerDetails({ marker, onClose }) {
         width: 280,
         padding: 12,
         background: 'rgba(8, 6, 4, 0.94)',
-        border: '1px solid rgba(216, 167, 95, 0.55)',
-        color: '#e5d2b3',
+        border: '1px solid color-mix(in srgb, var(--theme-accent) 55%, transparent)',
+        color: 'var(--theme-soft)',
         zIndex: 50,
         fontSize: 11,
       }}
@@ -55,7 +55,7 @@ export default function MarkerDetails({ marker, onClose }) {
       >
         <strong
           style={{
-            color: '#d8a75f',
+            color: 'var(--theme-muted)',
           }}
         >
           {friendlyMarkerType(type)}

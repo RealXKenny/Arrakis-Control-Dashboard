@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { createHash } from 'node:crypto';
 import { createRedisFixture } from './helpers/redis-resp.mjs';
 import { announceReadiness } from '../src/config/server-launcher.mjs';
 
@@ -13,6 +14,26 @@ let upstreamReads = 0;
 const redis = createServer(async (req, res) => {
   // Dev note: fake services only; production did not consent to this experiment.
   if (req.url.startsWith('/api/')) {
+    if (
+      req.url.startsWith('/api/backups/fixture/download') &&
+      req.headers.authorization === 'Bearer fixture-admin-console-key'
+    ) {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.end('fixture-backup-bytes');
+      return;
+    }
+    if (req.url.startsWith('/api/server/status') && req.headers.authorization === 'Bearer fixture-admin-console-key') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(
+        JSON.stringify({
+          schemaVersion: 1,
+          ok: true,
+          data: { summary: { overall: 'READY' } },
+          apiKey: 'fixture-admin-console-key',
+        }),
+      );
+      return;
+    }
     const expectedToken = req.url === '/api/integrations/discord/players/me' ? 'fixture-token' : 'fixture-console-key';
     if (req.headers.authorization !== `Bearer ${expectedToken}`) {
       res.statusCode = 401;
@@ -50,6 +71,14 @@ const storage = createRedisFixture((entry) => {
     return 1;
   }
   if (operation === 'GET')
+    if (entry[1] === `arrakis:session:${createHash('sha256').update('fixture-admin-session').digest('hex')}`)
+      return JSON.stringify({
+        user: { id: '456084885220884480' },
+        guildId: 'fixture-guild',
+        roleIds: ['fixture-role'],
+        expiresAt: Date.now() + 3600000,
+      });
+  if (operation === 'GET')
     return revoked
       ? null
       : JSON.stringify({
@@ -82,6 +111,7 @@ const child = spawn(
       NODE_ENV: mode === 'dev' ? 'development' : 'production',
       CONSOLE_URL: `http://127.0.0.1:${redisPort}`,
       CONSOLE_API_KEY: 'fixture-console-key',
+      ADMIN_CONSOLE_API_KEY: 'fixture-admin-console-key',
       ADAPTER_TOKEN: 'fixture-token',
       DISCORD_CLIENT_ID: 'fixture-client',
       DISCORD_CLIENT_SECRET: 'fixture-secret',
@@ -162,6 +192,37 @@ try {
   assert.equal(botReading.data.map, 'DeepDesert');
   assert.equal(botReading.data.rows, undefined, 'bot receives normalized world data only');
   assert.match(botWorld.headers.get('cache-control'), /no-store/);
+  const adminHeaders = {
+    cookie: '__Host-dashboard_session=fixture-admin-session',
+    Origin: base,
+    'Content-Type': 'application/json',
+  };
+  const adminPage = await fetch(`${base}/admin`, { headers: adminHeaders });
+  assert.equal(adminPage.status, 200, 'administrator page checks the server session');
+  const memberAdmin = await fetch(`${base}/api/admin/catalog`, { headers: { cookie: sessionCookie } });
+  assert.equal(memberAdmin.status, 403, 'ordinary members cannot inspect admin operations');
+  const adminCatalog = await fetch(`${base}/api/admin/catalog`, { headers: adminHeaders });
+  assert.equal((await adminCatalog.json()).operations.length, 378);
+  const adminStatus = await fetch(`${base}/api/admin/execute`, {
+    method: 'POST',
+    headers: adminHeaders,
+    body: JSON.stringify({ operation: 'get-server-status' }),
+  });
+  assert.equal(adminStatus.status, 200);
+  const adminReading = await adminStatus.text();
+  assert.match(adminReading, /READY/);
+  assert.doesNotMatch(adminReading, /fixture-admin-console-key/);
+  const adminDownload = await fetch(`${base}/api/admin/execute`, {
+    method: 'POST',
+    headers: adminHeaders,
+    body: JSON.stringify({ operation: 'get-backups-backup-download', path: { backup: 'fixture' } }),
+  });
+  assert.equal(adminDownload.headers.get('content-type'), 'application/octet-stream');
+  assert.equal(
+    await adminDownload.text(),
+    'fixture-backup-bytes',
+    'binary responses stream through the common API boundary',
+  );
   assert.equal(home.status, 200, 'homepage with a session cookie');
   assert.match(await home.text(), /"isAuthenticated":true/);
   const routes = [

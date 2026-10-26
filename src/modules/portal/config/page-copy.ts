@@ -12,30 +12,30 @@ export const portalPageCopy: Record<PortalView, { section: string; title: string
     description: 'Explore spice fields, resources and the latest desert readings.',
   },
   overview: {
-    section: 'Arrakis | Field report',
+    section: 'Workspace overview',
     title: 'Dashboard',
     description: 'Your character, holdings and the latest readings from the desert.',
   },
   character: {
-    section: 'Character dossier',
+    section: 'Your profile',
     title: 'Character',
     description:
       'Your vitals, faction standing, specializations, journey and equipped gear. A complete reading of your character.',
   },
   storage: {
-    section: 'CHOAM vault',
+    section: 'Personal inventory',
     title: 'Storage',
     description:
       'Your personal reserves, backpack and equipped inventory. Browse containers, search for an item, or switch between the grid and list.',
   },
   market: {
-    section: 'CHOAM exchange',
+    section: 'Community market',
     title: 'Exchange',
     description:
       'Every open listing on the server market, with available stock, grades and asking prices. Select an item to inspect its price ladder.',
   },
   bases: {
-    section: 'Solido blueprints',
+    section: 'Your holdings',
     title: 'Bases',
     description:
       'Your bases and shared holdings, their remaining power, water and storage. Export an owned base as a blueprint.',
@@ -47,8 +47,8 @@ export const portalPageCopy: Record<PortalView, { section: string; title: string
       'Your owned and shared fleet. Inspect fuel, condition and remaining reserves before your next journey.',
   },
   guild: {
-    section: 'Sietch registry',
+    section: 'Your community',
     title: 'Guilds',
-    description: 'Your guild membership and rank within the sietch.',
+    description: 'Your guild, its members, and your role in the community.',
   },
 };

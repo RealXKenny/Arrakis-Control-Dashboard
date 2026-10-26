@@ -7,10 +7,20 @@ const egg = JSON.parse(readFileSync(resolve('pterodactyl/egg-arrakis-control-das
   docker_images: Record<string, string>;
   startup: string;
   config: { startup: string };
-  variables: Array<{ env_variable: string; default_value: string; rules: string }>;
+  variables: Array<{
+    env_variable: string;
+    default_value: string;
+    rules: string;
+    user_viewable: boolean;
+    user_editable: boolean;
+  }>;
 };
 
 describe('Pterodactyl dashboard egg', () => {
+  it('keeps the privileged administrator key hidden and non-editable for ordinary panel users', () => {
+    const key = egg.variables.find((variable) => variable.env_variable === 'ADMIN_CONSOLE_API_KEY');
+    expect(key).toMatchObject({ default_value: '', user_viewable: false, user_editable: false });
+  });
   it('uses the published image and built application', () => {
     expect(egg.meta.version).toBe('PTDL_v2');
     expect(Object.values(egg.docker_images)).toEqual(['ghcr.io/realxkenny/arrakis-control-dashboard:latest']);

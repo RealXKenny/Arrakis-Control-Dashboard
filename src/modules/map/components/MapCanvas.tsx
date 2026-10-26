@@ -118,9 +118,9 @@ export default function MapCanvas({
             right: 10,
             zIndex: 20,
             padding: '5px 8px',
-            color: terrainMessage ? '#e4b06f' : '#d8a75f',
+            color: terrainMessage ? 'var(--theme-soft)' : 'var(--theme-muted)',
             background: 'rgba(24, 15, 9, .86)',
-            border: '1px solid rgba(216, 167, 95, .35)',
+            border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)',
             borderRadius: 4,
             fontSize: 10,
             pointerEvents: 'none',
@@ -138,12 +138,12 @@ export default function MapCanvas({
             pointerEvents: 'none',
             backgroundImage: `
               linear-gradient(
-                rgba(216,167,95,.045) 1px,
+                color-mix(in srgb, var(--theme-accent) 5%, transparent) 1px,
                 transparent 1px
               ),
               linear-gradient(
                 90deg,
-                rgba(216,167,95,.045) 1px,
+                color-mix(in srgb, var(--theme-accent) 5%, transparent) 1px,
                 transparent 1px
               )
             `,
@@ -171,9 +171,10 @@ export default function MapCanvas({
             width: 22,
             height: 22,
             transform: 'translate(-50%, -50%)',
-            border: '1px solid #d8a75f',
+            border: '1px solid var(--theme-muted)',
             borderRadius: '50%',
-            boxShadow: '0 0 0 4px rgba(216,167,95,.12), 0 0 20px rgba(216,167,95,.75)',
+            boxShadow:
+              '0 0 0 4px color-mix(in srgb, var(--theme-accent) 12%, transparent), 0 0 20px color-mix(in srgb, var(--theme-accent) 75%, transparent)',
             pointerEvents: 'none',
             zIndex: 10,
           }}
@@ -185,7 +186,7 @@ export default function MapCanvas({
               top: -8,
               width: 1,
               height: 38,
-              background: 'rgba(216,167,95,.7)',
+              background: 'color-mix(in srgb, var(--theme-accent) 70%, transparent)',
               transform: 'translateX(-50%)',
             }}
           />
@@ -197,7 +198,7 @@ export default function MapCanvas({
               left: -8,
               width: 38,
               height: 1,
-              background: 'rgba(216,167,95,.7)',
+              background: 'color-mix(in srgb, var(--theme-accent) 70%, transparent)',
               transform: 'translateY(-50%)',
             }}
           />

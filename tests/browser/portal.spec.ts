@@ -205,6 +205,8 @@ test('dashboard briefing switches maps and keeps compact mobile panels', async (
       .toBe(true);
   }
   await expect(page.getByRole('button', { name: 'Hagga Basin', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: 'test-results/portal-overview-desktop.png', fullPage: true });
   await page.getByRole('button', { name: 'Deep Desert', exact: true }).click();
   await expect(page.getByText('Reading Deep Desert.', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: /Spice.*Deep Desert/ })).toHaveAttribute('href', '/portal');
@@ -219,7 +221,7 @@ test('dashboard briefing switches maps and keeps compact mobile panels', async (
 test('dashboard does not invent world values when telemetry is unavailable', async ({ page }) => {
   await page.route('**/api/portal/world?*', (route) => route.fulfill({ status: 503, json: { error: 'Unavailable' } }));
   await page.goto('/portal');
-  await expect(page.getByRole('heading', { name: 'Your next chapter on Arrakis.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your latest world updates.' })).toBeVisible();
   await expect(page.getByText('World reading delayed', { exact: false })).toBeVisible();
   await expect(page.getByText('The current Landsraad term is not available.')).toBeVisible();
 });
@@ -245,6 +247,10 @@ test('public dashboard displays actual server counts', async ({ page }) => {
   await expect(page.getByText('12', { exact: true })).toBeVisible();
   await expect(page.getByText('240', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/home-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('heading', { name: 'A clearer view. More possibilities.' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/home-mobile.png', fullPage: true });
 });
 
 test('four vehicles form two equal rows', async ({ page }) => {
@@ -610,7 +616,7 @@ test('portal navigation keeps clean URLs through history and refresh', async ({ 
   await expect(page.getByRole('heading', { name: 'Storage', exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/portal$/);
   await page.getByRole('link', { name: 'Dashboard', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Make Arrakis yours.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your world, at a glance.' })).toBeVisible();
 });
 
 test('player rate limiting respects Retry-After without signing out', async ({ page }) => {

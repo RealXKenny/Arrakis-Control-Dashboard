@@ -16,6 +16,7 @@ const serverEnvSchema = z.object({
   BOT_API_TOKEN: z.string().min(32).max(256).optional(),
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_API_KEY: z.string().min(1).optional(),
+  ADMIN_CONSOLE_API_KEY: z.string().min(1).optional(),
   ADAPTER_TOKEN: z.string().min(1).optional(),
   DISCORD_CLIENT_ID: z.string().min(1).optional(),
   DISCORD_CLIENT_SECRET: z.string().min(1).optional(),

@@ -1,8 +1,4 @@
 import '../styles/global.css';
-import '@fontsource/saira/400.css';
-import '@fontsource/saira/500.css';
-import '@fontsource/saira-condensed/600.css';
-import '@fontsource/saira-condensed/700.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
 import Head from 'next/head';

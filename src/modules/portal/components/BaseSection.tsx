@@ -148,7 +148,7 @@ export default function BaseSection({
             gap: 8,
             padding: 5,
             marginBottom: 20,
-            backgroundColor: '#0c0805',
+            backgroundColor: 'var(--theme-surface)',
             border: `1px solid ${COLORS.border}`,
             borderRadius: 10,
           }}
@@ -162,9 +162,13 @@ export default function BaseSection({
               cursor: 'pointer',
               borderRadius: 7,
               padding: '11px 14px',
-              backgroundColor: baseTab === 'owned' ? 'rgba(210,168,90,0.12)' : 'transparent',
+              backgroundColor:
+                baseTab === 'owned' ? 'color-mix(in srgb, var(--theme-accent) 12%, transparent)' : 'transparent',
               color: baseTab === 'owned' ? COLORS.text : COLORS.dim,
-              boxShadow: baseTab === 'owned' ? 'inset 0 0 0 1px rgba(210,168,90,0.16)' : 'none',
+              boxShadow:
+                baseTab === 'owned'
+                  ? 'inset 0 0 0 1px color-mix(in srgb, var(--theme-accent) 16%, transparent)'
+                  : 'none',
               fontSize: '0.76rem',
               fontWeight: 700,
               textTransform: 'uppercase',

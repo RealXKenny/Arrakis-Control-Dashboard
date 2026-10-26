@@ -33,7 +33,7 @@ export default function VehicleCard({ vehicle, index, playerName }) {
           ),
           ${COLORS.panel}
         `,
-        border: `1px solid ${owned ? 'rgba(210,168,90,0.22)' : 'rgba(125,184,232,0.18)'}`,
+        border: `1px solid ${owned ? 'color-mix(in srgb, var(--theme-accent) 22%, transparent)' : 'rgba(125,184,232,0.18)'}`,
         borderRadius: 14,
         padding: 22,
         minWidth: 0,
@@ -115,9 +115,11 @@ export default function VehicleCard({ vehicle, index, playerName }) {
             flexShrink: 0,
             padding: '5px 9px',
             borderRadius: 999,
-            backgroundColor: owned ? 'rgba(210,168,90,0.08)' : 'rgba(125,184,232,0.08)',
-            border: `1px solid ${owned ? 'rgba(210,168,90,0.2)' : 'rgba(125,184,232,0.2)'}`,
-            color: owned ? '#e3c27f' : '#8fc6ee',
+            backgroundColor: owned
+              ? 'color-mix(in srgb, var(--theme-accent) 8%, transparent)'
+              : 'rgba(125,184,232,0.08)',
+            border: `1px solid ${owned ? 'color-mix(in srgb, var(--theme-accent) 20%, transparent)' : 'rgba(125,184,232,0.2)'}`,
+            color: owned ? 'var(--theme-soft)' : '#8fc6ee',
             fontSize: '0.63rem',
             fontWeight: 700,
             textTransform: 'uppercase',

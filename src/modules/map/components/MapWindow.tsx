@@ -401,7 +401,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
             overflow: 'auto',
             cursor: drag ? 'grabbing' : 'grab',
             scrollbarWidth: 'thin',
-            scrollbarColor: '#594127 #100b07',
+            scrollbarColor: 'var(--theme-border) var(--theme-surface)',
             WebkitOverflowScrolling: 'touch',
           }}
         >
@@ -426,7 +426,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
                 inset: 0,
                 display: 'grid',
                 placeItems: 'center',
-                color: '#806d55',
+                color: 'var(--theme-muted)',
                 fontSize: 12,
               }}
             >
@@ -437,7 +437,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
               >
                 <div
                   style={{
-                    color: '#d8a75f',
+                    color: 'var(--theme-muted)',
                     marginBottom: 8,
                   }}
                 >
@@ -459,9 +459,9 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
           <div
             style={{
               padding: '5px 10px',
-              color: '#c76b55',
-              background: 'rgba(80,20,10,.35)',
-              borderTop: '1px solid rgba(124,47,32,.5)',
+              color: 'var(--theme-muted)',
+              background: 'color-mix(in srgb, var(--theme-accent) 35%, transparent)',
+              borderTop: '1px solid color-mix(in srgb, var(--theme-accent) 50%, transparent)',
               fontSize: 10,
             }}
           >

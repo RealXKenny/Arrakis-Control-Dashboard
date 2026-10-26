@@ -29,6 +29,16 @@
   },
   "variables": [
     {
+      "name": "Admin Console API Key",
+      "description": "Optional privileged Console key for the administrator workspace. Configure only through the server administrator; hidden from ordinary panel users.",
+      "env_variable": "ADMIN_CONSOLE_API_KEY",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
       "name": "API Worker Concurrency",
       "description": "Maximum active API requests per worker before overload returns 503. Tune with staging load tests.",
       "env_variable": "API_MAX_CONCURRENCY",

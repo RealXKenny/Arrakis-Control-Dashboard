@@ -4,6 +4,34 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-10-26
+
+### Added
+
+- Administrator workspace at `/admin`, restricted server-side to Discord user `456084885220884480` with a valid configured-guild session and required role.
+- Searchable catalog covering all 378 unique operations in the supplied Console API reference, with parameter forms, response tables, JSON inspection, explicit write confirmations, uploads, downloads, and sanitized log streaming.
+- Separate optional `ADMIN_CONSOLE_API_KEY`, hidden from ordinary Pterodactyl panel users; preserve native API-key scope restrictions and label browser-only, planned, and unsupported operations.
+
+### Changed
+
+- Replace the Dune-inspired interface with a neutral charcoal design system, modern typography, simpler navigation, rounded cards, and consistent styling across the dashboard, maps, inventory, market, and dialogs.
+- Redesign the landing page with workspace shortcuts and a lightweight community card; remove the embedded Discord widget and unused display-font downloads.
+- Keep automatic holiday and seasonal themes as subtle accent changes without changing the shared surfaces or layout.
+- Refine the interface to near-black, graphite, and silver instead of navy and blue, with muted seasonal accent tints.
+
+### Security
+
+- Revalidate the administrator's OAuth identity, guild, required role, and session on every administrative request; require same-origin POSTs and explicit confirmations for changes.
+- Keep privileged credentials server-side, redact bounded response previews and log streams, validate download filenames, and cap upload/download transfers.
+- Preserve native Console scope restrictions, restore-preview requirements, and restart-queue responses; never retry uncertain mutations automatically.
+
+### Verification
+
+- Formatting, TypeScript validation, zero-warning lint, 275 Vitest tests, production build, runtime smoke checks, and 26 Playwright browser tests pass.
+- Live privileged Console operations remain dependent on deployment configuration, key scopes, and installed Console capabilities.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.1.2...v1.1.3)
+
 ## [1.1.2] - 2026-10-26
 
 ### Added

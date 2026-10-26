@@ -53,18 +53,18 @@
   flex-wrap: wrap;
 }
 .eyebrow {
-  color: #dcb26b;
-  text-transform: uppercase;
+  color: var(--theme-muted);
+  text-transform: none;
   font:
-    10px/1.8 'JetBrains Mono',
+    10px/1.8 var(--font-mono),
     ui-monospace,
     monospace;
-  letter-spacing: 2px;
+  letter-spacing: 0.02em;
 }
 .updated {
   color: #80cdd0;
   font:
-    11px/1.8 'JetBrains Mono',
+    11px/1.8 var(--font-mono),
     ui-monospace,
     monospace;
 }
@@ -77,17 +77,17 @@
 }
 .hero h1 {
   font:
-    700 clamp(30px, 3vw, 58px)/1.12 'Saira Condensed',
+    700 clamp(30px, 3vw, 58px)/1.12 var(--font-sans),
     'Segoe UI',
     sans-serif;
   letter-spacing: -1.5px;
-  color: #ffe2a9;
+  color: var(--theme-text);
   margin: 12px 0;
   overflow-wrap: anywhere;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .hero p:not(.eyebrow) {
-  color: #b9a185;
+  color: var(--theme-muted);
   font-size: 14px;
 }
 .heroActions {
@@ -97,15 +97,15 @@
 .live,
 .offline {
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     ui-monospace,
     monospace;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0.02em;
   color: #6dd6d6;
 }
 .offline {
-  color: #aaa394;
+  color: var(--theme-muted);
 }
 .page button {
   cursor: pointer;
@@ -113,10 +113,10 @@
 }
 .heroActions button,
 .notice button {
-  background: #24170f;
-  color: #e0b568;
-  border: 1px solid #66502c;
-  border-radius: 3px;
+  background: var(--theme-surface);
+  color: var(--theme-muted);
+  border: 1px solid var(--theme-border);
+  border-radius: 10px;
   padding: 10px 16px;
   font-size: 12px;
 }
@@ -126,9 +126,9 @@
 }
 .notice {
   padding: 20px;
-  border: 1px solid #856638;
-  background: #24170f;
-  color: #e4cca2;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--theme-soft);
   margin-bottom: 24px;
   line-height: 1.7;
 }
@@ -138,8 +138,8 @@
 .skeleton {
   min-height: 220px;
   padding: 36px;
-  border: 1px solid #503521;
-  color: #b9a185;
+  border: 1px solid var(--theme-border);
+  color: var(--theme-muted);
 }
 .destinations {
   display: grid;
@@ -152,9 +152,9 @@
   flex-direction: column;
   gap: 14px;
   padding: 24px;
-  background: linear-gradient(135deg, #2b1b10, #180e08);
-  border: 1px solid #503521;
-  color: #b9a185;
+  background: linear-gradient(135deg, var(--theme-surface), var(--theme-surface));
+  border: 1px solid var(--theme-border);
+  color: var(--theme-muted);
   text-decoration: none;
   position: relative;
 }
@@ -165,27 +165,27 @@
   right: 8px;
   width: 12px;
   height: 12px;
-  border-top: 1px solid #a07c3f;
-  border-right: 1px solid #a07c3f;
+  border-top: 1px solid var(--theme-muted);
+  border-right: 1px solid var(--theme-muted);
 }
 .destinations a:hover {
-  border-color: #c79d54;
-  background: #252017;
+  border-color: var(--theme-muted);
+  background: var(--theme-surface);
 }
 .destinations strong {
-  color: #ffe2a9;
+  color: var(--theme-text);
   font-size: clamp(22px, 2.3vw, 38px);
   font-weight: 600;
 }
 .destinations b {
-  color: #dcad61;
+  color: var(--theme-muted);
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     ui-monospace,
     monospace;
-  text-transform: uppercase;
+  text-transform: none;
   margin-top: 14px;
-  letter-spacing: 1px;
+  letter-spacing: 0.02em;
 }
 @media (max-width: 620px) {
   .destinations {
@@ -205,13 +205,13 @@
 .hero .eyebrow {
   margin: 0 0 8px;
   font:
-    11px/1.5 'JetBrains Mono',
+    11px/1.5 var(--font-mono),
     monospace;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.02em;
 }
 .hero h1 {
   font:
-    700 48px/1.1 'Saira Condensed',
+    700 48px/1.1 var(--font-sans),
     sans-serif;
   letter-spacing: 0.01em;
   margin: 0 0 16px;
@@ -220,7 +220,7 @@
   max-width: 590px;
   color: var(--theme-muted);
   font:
-    15px/1.5 'Saira',
+    15px/1.5 var(--font-sans),
     sans-serif;
   margin: 0;
 }
@@ -229,20 +229,20 @@
   gap: 16px;
   padding: 8px 12px;
   margin-bottom: 24px;
-  border: 1px solid #d2a85a20;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 13%, transparent);
   font-size: 11px;
 }
 .statusline .updated {
   margin-left: auto;
   font:
-    10px/1.5 'JetBrains Mono',
+    10px/1.5 var(--font-mono),
     monospace;
 }
 .statusline button {
   padding: 4px 8px;
-  background: #24170f;
+  background: var(--theme-surface);
   color: var(--theme-text);
   border: 1px solid var(--theme-border);
-  border-radius: 3px;
+  border-radius: 10px;
   font-size: 11px;
 }

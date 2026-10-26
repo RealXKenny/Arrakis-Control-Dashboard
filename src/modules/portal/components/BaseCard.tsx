@@ -85,7 +85,7 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
           ),
           ${COLORS.panel}
         `,
-        border: `1px solid ${isOwned ? 'rgba(210, 168, 90, 0.22)' : 'rgba(125, 184, 232, 0.18)'}`,
+        border: `1px solid ${isOwned ? 'color-mix(in srgb, var(--theme-accent) 22%, transparent)' : 'rgba(125, 184, 232, 0.18)'}`,
         borderRadius: 14,
         padding: 22,
         minWidth: 0,
@@ -187,7 +187,7 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
                 padding: '7px 11px',
                 border: `1px solid ${COLORS.border}`,
                 borderRadius: 7,
-                backgroundColor: 'rgba(210,168,90,0.08)',
+                backgroundColor: 'color-mix(in srgb, var(--theme-accent) 8%, transparent)',
                 color: COLORS.goldLight,
                 fontSize: '0.62rem',
                 fontWeight: 700,
@@ -206,9 +206,11 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
             flexShrink: 0,
             padding: '5px 9px',
             borderRadius: 999,
-            backgroundColor: isOwned ? 'rgba(210,168,90,0.08)' : 'rgba(125,184,232,0.08)',
-            border: `1px solid ${isOwned ? 'rgba(210,168,90,0.2)' : 'rgba(125,184,232,0.2)'}`,
-            color: isOwned ? '#e3c27f' : '#8fc6ee',
+            backgroundColor: isOwned
+              ? 'color-mix(in srgb, var(--theme-accent) 8%, transparent)'
+              : 'rgba(125,184,232,0.08)',
+            border: `1px solid ${isOwned ? 'color-mix(in srgb, var(--theme-accent) 20%, transparent)' : 'rgba(125,184,232,0.2)'}`,
+            color: isOwned ? 'var(--theme-soft)' : '#8fc6ee',
             fontSize: '0.63rem',
             fontWeight: 700,
             textTransform: 'uppercase',
@@ -298,7 +300,7 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
             marginTop: 15,
             paddingTop: 11,
             borderTop: `1px solid ${COLORS.borderLight}`,
-            color: '#9b7462',
+            color: 'var(--theme-muted)',
             fontSize: '0.65rem',
             lineHeight: 1.5,
           }}
@@ -311,7 +313,7 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
         <div
           style={{
             marginTop: 14,
-            color: '#5f4d3d',
+            color: 'var(--theme-border)',
             fontSize: '0.58rem',
             fontFamily: 'monospace',
           }}

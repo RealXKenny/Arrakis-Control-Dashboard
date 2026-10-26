@@ -30,7 +30,7 @@ export default function ChangelogDialog() {
       if (!Array.isArray(payload.releases)) throw new Error('Changelog response was invalid');
       setReleases(payload.releases);
     } catch {
-      setError('The release archive is hiding in the deep desert. Please try again.');
+      setError('Release notes are temporarily unavailable. Please try again.');
     } finally {
       setLoading(false);
     }
