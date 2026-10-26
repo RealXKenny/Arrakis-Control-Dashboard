@@ -338,14 +338,25 @@ test('realtime layer updates, filters instances, clears failures and switches ma
             realtime: true,
           },
           { id: 'realtime:1:2', type: 'storm', name: 'Sandstorm', x: 600, y: 600, z: 0, partition: 2, realtime: true },
+          { id: 'npc', type: 'realtime_npc', name: 'Scout', x: 400, y: 400, partition: 1, realtime: true },
+          { id: 'civilian', type: 'civilian', name: 'Traveler', x: 500, y: 400, partition: 1, realtime: true },
         ],
       },
     });
   });
   await page.goto('/map');
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Base: My base', exact: true })).toBeVisible();
-  expect(realtimeReads).toBe(0);
-  await page.getByRole('button', { name: 'Realtime off', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Realtime on', exact: true })).toBeVisible();
+  await expect.poll(() => realtimeReads).toBeGreaterThan(0);
+  await expect(page.getByLabel('NPCs (realtime)', { exact: true })).not.toBeChecked();
+  await expect(page.getByLabel('Civilians (realtime)', { exact: true })).not.toBeChecked();
+  await expect(page.getByRole('button', { name: 'NPC: Scout', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Civilian: Traveler', exact: true })).toHaveCount(0);
+  await page.getByLabel('NPCs (realtime)', { exact: true }).check();
+  await expect(page.getByRole('button', { name: 'NPC: Scout', exact: true })).toBeVisible();
+  await page.getByLabel('Civilians (realtime)', { exact: true }).check();
+  await expect(page.getByRole('button', { name: 'Civilian: Traveler', exact: true })).toBeVisible();
   const worm = page.getByRole('button', { name: 'Sandworm: Sandworm', exact: true });
   await expect(worm).toBeVisible();
   await expect(worm.locator('.realtime-symbol')).toBeVisible();
@@ -361,7 +372,7 @@ test('realtime layer updates, filters instances, clears failures and switches ma
   await page.screenshot({ path: 'test-results/map-realtime.png', fullPage: true });
   await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Sandstorm: Sandstorm', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Realtime off', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Realtime on', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sandworm: Desert worm', exact: true })).toBeVisible();
   unavailable = true;
   await expect(page.getByText('Realtime agent is unavailable.', { exact: true })).toBeVisible();
@@ -375,8 +386,19 @@ test('realtime layer updates, filters instances, clears failures and switches ma
 
 test('map survives stylesheet extraction and refreshes independently', async ({ page }) => {
   test.setTimeout(process.env.CI ? 90_000 : 60_000);
+  await page.clock.install();
+  let mapReads = 0;
+  let holdMapRead = false;
+  let releaseMapRead = () => {};
 
-  await page.route('**/api/map?*', (route) => {
+  await page.route('**/api/map?*', async (route) => {
+    mapReads++;
+    if (holdMapRead) {
+      holdMapRead = false;
+      await new Promise<void>((resolve) => {
+        releaseMapRead = resolve;
+      });
+    }
     const deepDesert = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
     const mapConfig = deepDesert
       ? {
@@ -407,6 +429,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
     });
   });
   await page.goto('/map');
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
   const mapPanel = page.locator('[data-map-panel]');
   await expect.poll(async () => (await mapPanel.boundingBox())?.width ?? 0).toBeGreaterThan(500);
   await expect.poll(async () => (await mapPanel.boundingBox())?.height ?? 0).toBeGreaterThan(600);
@@ -469,6 +492,23 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect
     .poll(() => page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width))
     .toBeGreaterThan(fittedMapWidth * 1.1);
+  const zoomedWidth = await page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width);
+  const initialMapReads = mapReads;
+  holdMapRead = true;
+  await page.clock.fastForward(31_000);
+  await expect.poll(() => mapReads).toBeGreaterThan(initialMapReads);
+  await expect(page.locator('[data-loading]')).toHaveAttribute('data-loading', 'false');
+  expect(await page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width)).toBe(
+    zoomedWidth,
+  );
+  const updated = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/map');
+  releaseMapRead();
+  await updated;
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(page.locator('[data-loading]')).toHaveAttribute('data-loading', 'false');
+  await expect
+    .poll(() => page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width))
+    .toBe(zoomedWidth);
   const viewport = page.viewportSize();
   if (viewport) {
     await page.setViewportSize({ width: viewport.width - 1, height: viewport.height });
@@ -505,7 +545,11 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(page.getByRole('checkbox', { name: 'Sector Grid', exact: true })).toBeChecked();
   await expect(page.getByTitle('Show Storage', { exact: true })).toHaveCount(1);
   await expect(page).toHaveURL(/\/portal$/);
-  await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1);
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
+  // CI's software renderer can spend over 20 seconds uploading the full legacy terrain.
+  await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1, {
+    timeout: process.env.CI ? 40_000 : 20_000,
+  });
   const terrain = page.locator('[data-terrain-state]');
   await expect(terrain).toHaveAttribute('data-terrain-state', 'ready', { timeout: 20_000 });
   await expect(terrain).toHaveAttribute('data-map-resolution', '8192x8192');
@@ -759,4 +803,462 @@ test('guild view renders reported membership without inventing a rank', async ({
   await expect(page.getByRole('heading', { name: 'Guild membership', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Crimson Skies', exact: true })).toBeVisible();
   await expect(page.getByText('Your rank: Not reported')).toBeVisible();
+});
+
+test('3D maps orbit with aligned markers and recover from context loss', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  await page.route('**/api/bases/*/export', (route) =>
+    route.fulfill({ status: 403, json: { error: 'Unavailable export' } }),
+  );
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /THREE.WebGLProgram|shader error/i.test(message.text()))
+      errors.push(message.text());
+  });
+  let samples = 0;
+  await page.route('**/api/map/realtime?*', (route) => {
+    samples++;
+    const markers = [
+      {
+        id: 'worm-a',
+        type: 'worm',
+        name: 'Moving worm',
+        x: 100000 + samples * 2000,
+        y: 100000,
+        partition: 1,
+        realtime: true,
+      },
+      { id: 'worm-b', type: 'worm', name: 'Other worm', x: -170000, y: 100000, partition: 1, realtime: true },
+    ];
+    return route.fulfill({
+      json: {
+        ok: true,
+        gen: 1,
+        capturedAt: Date.now(),
+        sources: [{ partition: 1, ready: true }],
+        markers: samples % 2 ? markers : markers.reverse(),
+      },
+    });
+  });
+  await page.route('**/api/map?*', (route) => {
+    const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
+    const map = deep
+      ? { width: 8192, height: 8192, minX: -1177656, maxX: 1072344, minY: -1177066, maxY: 1072934, flipY: false }
+      : { width: 8192, height: 8192, minX: -457200, maxX: 600000, minY: -457200, maxY: 355600, flipY: false };
+    return route.fulfill({
+      json: {
+        ok: true,
+        map,
+        coriolisLayout: deep ? 6 : null,
+        gridOverlay: deep ? createSectorGridOverlay('DeepDesert', map) : null,
+        markers: [
+          { id: 'base', type: 'base', name: '3D stronghold', x: -200000, y: -50000 },
+          ...(!deep ? [{ id: 'uncovered', type: 'poi', name: 'Uncovered location', x: 500000, y: 0 }] : []),
+          ...(deep ? [{ id: 'patch', type: 'poi', name: 'Terrain overlook', x: -711684, y: 196855 }] : []),
+        ],
+      },
+    });
+  });
+  await page.goto('/map');
+  const scene = page.locator('[data-map-view="3d"]');
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  const marker = page.getByRole('button', { name: 'Base: 3D stronghold', exact: true, includeHidden: true });
+  await expect(marker).toBeVisible();
+  await expect(marker).toHaveAttribute('data-model-state', 'unavailable');
+  const uncovered = page.getByRole('button', { name: "POI's: Uncovered location", exact: true, includeHidden: true });
+  await expect(uncovered).toHaveAttribute('data-terrain-state', 'uncovered');
+  await expect(uncovered).toBeHidden();
+  await expect(scene.locator('[data-terrain-coverage]')).toHaveText(
+    '1 location outside 3D terrain coverage. Use 2D to view all.',
+  );
+  const moving = page.getByRole('button', { name: 'Sandworm: Moving worm', exact: true });
+  await expect(moving).toBeVisible();
+  await moving.evaluate((el) => (el.dataset.preserved = 'true'));
+  const snapshotPosition = await marker.evaluate((el) => [el.style.left, el.style.top]);
+  expect(
+    await scene
+      .locator('canvas')
+      .evaluate((el: HTMLCanvasElement) => el.getContext('webgl2')!.getContextAttributes()!.powerPreference),
+  ).toBe('high-performance');
+  await page.getByLabel('Terrain detail').selectOption('balanced');
+  await expect(scene).toHaveAttribute('data-render-quality', 'balanced');
+  const detailedPosition = await marker.evaluate((el) => [el.style.left, el.style.top]);
+  // Terrain anchors follow the selected mesh, so finer triangles can adjust elevation slightly.
+  detailedPosition.forEach((value, i) =>
+    expect(Math.abs(parseFloat(value) - parseFloat(snapshotPosition[i]))).toBeLessThan(3),
+  );
+  await page.getByLabel('Terrain detail').selectOption('auto');
+  const scrollPosition = await page.evaluate(() => scrollY);
+  await scene.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
+    canvas.dataset.draws = '0';
+    const gl = canvas.getContext('webgl2')!;
+    const draw = gl.drawElements.bind(gl);
+    gl.drawElements = (...args: Parameters<typeof gl.drawElements>) => {
+      canvas.dataset.draws = String(Number(canvas.dataset.draws) + 1);
+      const blip = canvas.parentElement!.querySelector<HTMLElement>('button.marker-base')!;
+      canvas.dataset.blipAtDraw = JSON.stringify([blip.style.left, blip.style.top]);
+      draw(...args);
+    };
+  });
+  const initialSamples = samples;
+  await expect.poll(() => samples).toBeGreaterThan(initialSamples + 1);
+  await expect(moving).toHaveAttribute('data-preserved', 'true');
+  await expect(scene.locator('canvas')).toHaveAttribute('data-draws', '0');
+  expect(await marker.evaluate((el) => [el.style.left, el.style.top])).toEqual(snapshotPosition);
+  expect(await page.evaluate(() => scrollY)).toBe(scrollPosition);
+  await expect(moving).toHaveCSS('transition-duration', '1.8s, 1.8s');
+  const before = await marker.evaluate((el) => el.style.top);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await expect.poll(() => marker.evaluate((el) => el.style.top)).not.toBe(before);
+  await marker.click();
+  await expect(page.getByText('3D stronghold', { exact: true }).last()).toBeVisible();
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await page.screenshot({ path: 'test-results/map-3d-hagga.png', fullPage: true });
+  const canvas = scene.locator('canvas');
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  const beforeOrbit = await marker.evaluate((el) => [el.style.left, el.style.top]);
+  const orbitBox = await marker.boundingBox();
+  await page.mouse.move(box!.x + box!.width * 0.7, box!.y + box!.height * 0.6);
+  await page.mouse.down();
+  const samplesDuringDrag = samples;
+  await expect.poll(() => samples).toBeGreaterThan(samplesDuringDrag);
+  await expect(moving).toHaveCSS('transition-duration', '0s');
+  await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.6, { steps: 8 });
+  const draggedBox = await marker.boundingBox();
+  if (draggedBox) expect(Math.hypot(draggedBox.x - orbitBox!.x, draggedBox.y - orbitBox!.y)).toBeGreaterThan(5);
+  else await expect(marker).toHaveAttribute('data-terrain-state', 'hidden');
+  await expect
+    .poll(() => canvas.getAttribute('data-blip-at-draw'))
+    .toBe(await marker.evaluate((el) => JSON.stringify([el.style.left, el.style.top])));
+  await page.mouse.up();
+  await expect.poll(() => marker.evaluate((el) => [el.style.left, el.style.top])).not.toEqual(beforeOrbit);
+  const beforePan = await marker.evaluate((el) => [parseFloat(el.style.left), parseFloat(el.style.top)]);
+  await page.mouse.move(box!.x + box!.width * 0.7, box!.y + box!.height * 0.65);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(box!.x + box!.width * 0.8, box!.y + box!.height * 0.7, { steps: 5 });
+  const pannedPosition = await marker.evaluate((el) => [parseFloat(el.style.left), parseFloat(el.style.top)]);
+  expect(Math.hypot(pannedPosition[0] - beforePan[0], pannedPosition[1] - beforePan[1])).toBeGreaterThan(5);
+  await page.mouse.up({ button: 'right' });
+  await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  await expect(scene).toHaveAttribute('data-desert-terrain', 'combined');
+  await expect(marker).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Sector Grid', exact: true }).uncheck();
+  await page.screenshot({ path: 'test-results/map-3d-desert.png', fullPage: true });
+  await page.getByLabel('Terrain detail').selectOption('balanced');
+  await page.getByLabel('Find on map').fill('Terrain overlook');
+  await page.getByRole('list', { name: 'Map search results' }).getByRole('button').click();
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await page.screenshot({ path: 'test-results/map-combined-desert.png', fullPage: true });
+  await page.getByLabel('Terrain detail').selectOption('auto');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await expect(canvas).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/map-3d-mobile.png', fullPage: true });
+  await canvas.evaluate((el) => el.dispatchEvent(new Event('webglcontextlost', { cancelable: true })));
+  await expect(scene).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '3D map', exact: true })).toBeVisible();
+  await expect(page.getByText(/3D unavailable: graphics context lost/)).toBeVisible();
+  await expect(page.locator('[data-map-resolution]')).toBeVisible();
+  await page.getByRole('link', { name: 'Hagga Basin', exact: true }).click();
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
+  await expect(scene).toHaveCount(0);
+  await expect(page.getByRole('button', { name: "POI's: Uncovered location", exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '3D map', exact: true }).click();
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  await page.getByLabel('Find on map').fill('Uncovered location');
+  await page.getByRole('list', { name: 'Map search results' }).getByRole('button').click();
+  await expect(scene).toHaveCount(0);
+  await expect(page.getByText(/3D unavailable: this location has no 3D terrain coverage/)).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('dense 3D blips stay over rendered terrain at high detail on both maps', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1536, height: 1065 });
+  await page.route('**/api/map/realtime?*', (route) =>
+    route.fulfill({ json: { ok: true, gen: 1, sources: [], markers: [] } }),
+  );
+  await page.route('**/api/map?*', (route) => {
+    const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
+    const map = deep
+      ? { width: 8192, height: 8192, minX: -1177656, maxX: 1072344, minY: -1177066, maxY: 1072934 }
+      : { width: 8192, height: 8192, minX: -457200, maxX: 355600, minY: -457200, maxY: 355600 };
+    const markers = Array.from({ length: 450 }, (_, id) => ({
+      id: `dense-${id}`,
+      type: 'flour_sand',
+      name: `Location ${id}`,
+      x: map.minX + (((id % 25) + 0.5) / 25) * (map.maxX - map.minX),
+      y: map.minY + ((Math.floor(id / 25) + 0.5) / 18) * (map.maxY - map.minY),
+    }));
+    return route.fulfill({ json: { ok: true, map, markers, coriolisLayout: deep ? 6 : null } });
+  });
+  await page.goto('/map');
+  for (const mapName of ['Hagga Basin', 'Deep Desert']) {
+    if (mapName === 'Deep Desert') await page.getByRole('link', { name: mapName, exact: true }).click();
+    const scene = page.locator('[data-map-view="3d"]');
+    await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+    await page.getByLabel('Terrain detail').selectOption('high');
+    const canvas = scene.locator('canvas');
+    await canvas.evaluate((element: HTMLCanvasElement) => {
+      const gl = element.getContext('webgl2')!;
+      const original = gl.drawElements.bind(gl);
+      gl.drawElements = (...args: Parameters<typeof gl.drawElements>) => {
+        original(...args);
+        if (args[1] < 400000) return;
+        const bad: string[] = [];
+        const markers = Array.from(
+          element.parentElement!.querySelectorAll<HTMLElement>('[data-terrain-state="visible"]'),
+        ).slice(0, 20);
+        for (const marker of markers) {
+          const x = Math.round((parseFloat(marker.style.left) * element.width) / element.clientWidth);
+          const y = element.height - Math.round((parseFloat(marker.style.top) * element.height) / element.clientHeight);
+          if (x < 4 || y < 4 || x >= element.width - 4 || y >= element.height - 4) continue;
+          const pixels = new Uint8Array(8 * 8 * 4);
+          gl.readPixels(x - 4, y - 4, 8, 8, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+          let ground = false;
+          for (let i = 0; i < pixels.length; i += 4)
+            if (
+              pixels[i + 3] &&
+              (Math.abs(pixels[i] - 184) > 2 || Math.abs(pixels[i + 1] - 163) > 2 || Math.abs(pixels[i + 2] - 135) > 2)
+            )
+              ground = true;
+          if (!ground) bad.push(marker.dataset.markerId!);
+        }
+        element.dataset.alignmentChecked = String(markers.length);
+        element.dataset.backgroundBlips = JSON.stringify(bad);
+      };
+    });
+    await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+    // Fit may already match the camera: an explicit zoom guarantees a terrain frame.
+    await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+    await expect.poll(async () => Number(await canvas.getAttribute('data-alignment-checked'))).toBeGreaterThan(0);
+    await expect(canvas).toHaveAttribute('data-background-blips', '[]');
+    await canvas.evaluate(
+      () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+    );
+    const blip = scene.locator('[data-terrain-state="visible"]').first();
+    const beforeFrame = await blip.evaluate((el) => [el.style.left, el.style.top]);
+    const zoomBox = await page.getByRole('button', { name: 'Zoom in', exact: true }).boundingBox();
+    await canvas.evaluate((element) => {
+      const original = window.requestAnimationFrame;
+      const queued: FrameRequestCallback[] = [];
+      window.requestAnimationFrame = (callback) => {
+        queued.push(callback);
+        return -1;
+      };
+      Object.defineProperty(element, 'resumeFrames', {
+        configurable: true,
+        value: () => {
+          window.requestAnimationFrame = original;
+          queued.forEach((callback) => original(callback));
+        },
+      });
+    });
+    // Use a toolbar zoom: dense marker buttons can intercept a drag's starting point.
+    await page.mouse.click(zoomBox!.x + zoomBox!.width / 2, zoomBox!.y + zoomBox!.height / 2);
+    // A queued terrain frame must not leave blips projected with a newer camera.
+    expect(await blip.evaluate((el) => [el.style.left, el.style.top])).toEqual(beforeFrame);
+    await canvas.evaluate((element) => Reflect.get(element, 'resumeFrames')());
+    await expect
+      .poll(() => blip.evaluate((el) => [el.style.left, el.style.top]), { timeout: 15000 })
+      .not.toEqual(beforeFrame);
+    const box = await canvas.boundingBox();
+    await page.mouse.move(box!.x + box!.width * 0.95, box!.y + box!.height * 0.28);
+    await page.mouse.down();
+    await page.mouse.move(box!.x + box!.width * 0.8, box!.y + box!.height * 0.28, { steps: 8 });
+    await page.mouse.up();
+    await expect(canvas).toHaveAttribute('data-background-blips', '[]');
+    await page.screenshot({ path: `test-results/map-aligned-${mapName.replaceAll(' ', '-')}.png`, fullPage: true });
+  }
+});
+
+test('sandworm models appear up close, update in place, and respect the realtime filter', async ({ page }) => {
+  test.setTimeout(60_000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /THREE.WebGLProgram|shader error/i.test(message.text()))
+      errors.push(message.text());
+  });
+  let samples = 0;
+  await page.route('**/api/map/realtime?*', (route) => {
+    samples++;
+    return route.fulfill({
+      json: {
+        ok: true,
+        gen: 1,
+        capturedAt: Date.now(),
+        sources: [{ partition: 1, ready: true }],
+        markers: [
+          {
+            id: 'custom-worm',
+            type: 'worm',
+            name: 'Shai-Hulud',
+            x: 0,
+            y: samples * 200,
+            z: -50000,
+            partition: 1,
+            realtime: true,
+          },
+        ],
+      },
+    });
+  });
+  await page.route('**/api/map?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        map: { width: 8192, height: 8192, minX: -457200, maxX: 355600, minY: -457200, maxY: 355600, flipY: false },
+        markers: [],
+      },
+    }),
+  );
+  await page.goto('/map');
+  const scene = page.locator('[data-map-view="3d"]');
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  const worm = page.getByRole('button', { name: 'Sandworm: Shai-Hulud', exact: true, includeHidden: true });
+  await expect(worm).toHaveAttribute('data-model-state', 'ready');
+  await expect(worm).toHaveAttribute('data-model-visible', 'false');
+  await page.getByLabel('Find on map').fill('Shai-Hulud');
+  await page.getByRole('list', { name: 'Map search results' }).getByRole('button').click();
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await expect(worm).toHaveAttribute('data-model-visible', 'true');
+  await expect(worm).toHaveAttribute('data-model-prominent', 'true');
+  await expect(worm.locator('.realtime-symbol')).toBeHidden();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.screenshot({ path: 'test-results/map-sandworm-model.png', fullPage: true });
+  const canvasBox = await scene.locator('canvas').boundingBox();
+  await page.mouse.move(canvasBox!.x + canvasBox!.width * 0.3, canvasBox!.y + canvasBox!.height * 0.35);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox!.x + canvasBox!.width * 0.6, canvasBox!.y + canvasBox!.height * 0.6, {
+    steps: 8,
+  });
+  await page.mouse.up();
+  await page.screenshot({ path: 'test-results/map-sandworm-orbit.png', fullPage: true });
+  const firstElement = await worm.elementHandle();
+  const before = samples;
+  await expect.poll(() => samples).toBeGreaterThan(before);
+  expect(await worm.evaluate((element, oldElement) => element === oldElement, firstElement)).toBe(true);
+  await expect(worm).toHaveAttribute('data-model-visible', 'true');
+  await page.getByLabel('Sandworms (realtime)', { exact: true }).uncheck();
+  await expect(worm).toHaveCount(0);
+  await page.getByLabel('Sandworms (realtime)', { exact: true }).check();
+  await expect(worm).toHaveAttribute('data-model-visible', 'true');
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await expect(worm).toHaveAttribute('data-model-visible', 'false');
+  await expect(worm.locator('.realtime-symbol')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('base models render from the full map and vehicles appear up close with map tools', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error' && /THREE.WebGLProgram|shader error/i.test(message.text()))
+      errors.push(message.text());
+  });
+  let exports = 0;
+  const pieces: { building_type: string; x: number; y: number; z: number; rotation: number }[] = [];
+  for (const x of [-512, 0, 512])
+    for (const y of [-512, 0, 512]) {
+      pieces.push({ building_type: 'Atreides_Outpost_Foundation', x, y, z: 0, rotation: 0 });
+      pieces.push({ building_type: 'Atreides_Outpost_Floor', x, y, z: 768, rotation: 0 });
+    }
+  for (const x of [-512, 0, 512])
+    for (const y of [-768, 768])
+      pieces.push({ building_type: 'Atreides_Outpost_Wall_01', x, y, z: 384, rotation: y > 0 ? 180 : 0 });
+  for (const y of [-512, 0, 512])
+    for (const x of [-768, 768])
+      pieces.push({ building_type: 'Atreides_Outpost_Wall_01', x, y, z: 384, rotation: x > 0 ? 90 : -90 });
+  await page.route('**/api/map/realtime?*', (r) =>
+    r.fulfill({ json: { ok: true, gen: 1, capturedAt: Date.now(), sources: [], markers: [] } }),
+  );
+  await page.route('**/api/map?*', (r) =>
+    r.fulfill({
+      json: {
+        ok: true,
+        map: { width: 8192, height: 8192, minX: -457200, maxX: 355600, minY: -457200, maxY: 355600, flipY: false },
+        markers: [
+          { id: 'model-base', type: 'base', name: 'Atreides stronghold', x: 0, y: 0 },
+          { id: 'restricted-base', type: 'base', name: 'Unavailable building', x: 50000, y: 0 },
+          { id: 'thopter', type: 'vehicle', subtype: 'TransportOrnithopter', name: 'Transport', x: 5000, y: 0 },
+        ],
+      },
+    }),
+  );
+  await page.route('**/api/bases/*/export', (r) => {
+    exports++;
+    return r.request().url().includes('restricted-base')
+      ? r.fulfill({ status: 403, json: { error: 'You do not own this base' } })
+      : r.fulfill({ json: { instances: pieces, placeables: [] } });
+  });
+  await page.goto('/map');
+  const scene = page.locator('[data-map-view="3d"]');
+  await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
+  const base = page.getByRole('button', { name: 'Base: Atreides stronghold', exact: true });
+  await expect(base).toHaveAttribute('data-model-state', 'ready', { timeout: 20_000 });
+  await expect(base).toHaveAttribute('data-model-visible', 'true');
+  await expect(base).toHaveAttribute('data-model-prominent', 'false');
+  expect(exports).toBe(2);
+  await page.getByLabel('Find on map').fill('Atreides');
+  await page.getByRole('list', { name: 'Map search results' }).getByRole('button').click();
+  await page.getByRole('button', { name: 'Fly to', exact: true }).click();
+  await expect(base).toHaveAttribute('data-model-state', 'ready', { timeout: 20_000 });
+  await expect(base).toHaveAttribute('data-model-visible', 'true');
+  await expect(base).toHaveAttribute('data-model-prominent', 'true');
+  await expect(page.locator('button.marker-base').filter({ hasText: 'Unavailable building' })).toHaveAttribute(
+    'data-model-state',
+    'unavailable',
+  );
+  const vehicle = page.getByRole('button', { name: 'Vehicle: Transport Ornithopter', exact: true });
+  await expect(vehicle).toHaveAttribute('data-model-visible', 'true');
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.screenshot({ path: 'test-results/map-building-model.png', fullPage: true });
+  const canvas = scene.locator('canvas'),
+    box = await canvas.boundingBox();
+  await page.mouse.click(box!.x + box!.width * 0.5, box!.y + box!.height * 0.5);
+  await expect(page.getByRole('button', { name: 'Fly to', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await vehicle.click();
+  await page.getByRole('button', { name: 'Fly to', exact: true }).click();
+  await page.getByRole('button', { name: '×', exact: true }).click();
+  await page.screenshot({ path: 'test-results/map-vehicle-model.png', fullPage: true });
+  const exportCount = exports;
+  const positionBeforeQuality = await vehicle.evaluate((el) => [el.style.left, el.style.top]);
+  await page.getByLabel('Terrain detail').selectOption('high');
+  await expect(scene).toHaveAttribute('data-render-quality', 'high');
+  const detailedVehiclePosition = await vehicle.evaluate((el) => [el.style.left, el.style.top]);
+  detailedVehiclePosition.forEach((value, i) =>
+    expect(Math.abs(parseFloat(value) - parseFloat(positionBeforeQuality[i]))).toBeLessThan(3),
+  );
+  await page.screenshot({ path: 'test-results/map-high-detail.png', fullPage: true });
+  await page.getByLabel('Terrain detail').selectOption('auto');
+  await page.getByLabel('Terrain style').selectOption('atlas');
+  await page.getByRole('button', { name: 'Contours', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Contours', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Terrain style').selectOption('relief');
+  await page.getByRole('button', { name: 'Top down', exact: true }).click();
+  await page.getByRole('button', { name: 'Face north', exact: true }).click();
+  expect(exports).toBe(exportCount);
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await expect(base).toHaveAttribute('data-model-visible', 'true');
+  await expect(base).toHaveAttribute('data-model-prominent', 'false');
+  expect(exports).toBe(exportCount);
+  await expect(scene.locator('[data-scale-label]')).toHaveText(/\d+(?:\.\d+)? (?:m|km)/);
+  await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+  await page.evaluate(() => document.exitFullscreen());
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/map-model-mobile.png', fullPage: true });
+  expect(errors).toEqual([]);
 });
