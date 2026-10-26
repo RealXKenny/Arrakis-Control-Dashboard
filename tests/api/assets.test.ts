@@ -36,12 +36,6 @@ describe('source asset handler', () => {
   });
 
   it('serves only allowlisted compressed terrain bundles', async () => {
-    for (const name of ['hagga.json.gz', 'hagga.hf.gz']) {
-      const hagga = responseMock();
-      await assetHandler({ method: 'HEAD', query: { path: ['terrain', name] } }, hagga);
-      expect(hagga.statusCode).toBe(200);
-      expect(hagga.getHeader('Content-Type')).toBe('application/gzip');
-    }
     const res = responseMock();
     await assetHandler({ method: 'HEAD', query: { path: ['terrain', 'layout-3.json.gz'] } }, res);
     expect(res.statusCode).toBe(200);

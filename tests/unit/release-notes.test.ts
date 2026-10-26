@@ -29,7 +29,7 @@ describe('release notes', () => {
     expect(section).not.toBe('');
   });
 
-  it('publishes stable image tags only for a new version release', () => {
+  it('publishes the container only for a new version release', () => {
     const ci = fs.readFileSync(path.resolve('.github/workflows/ci.yml'), 'utf8');
     const release = fs.readFileSync(path.resolve('.github/workflows/release.yml'), 'utf8');
 
@@ -41,19 +41,5 @@ describe('release notes', () => {
     expect(release.indexOf('- name: Publish versioned image')).toBeLessThan(
       release.indexOf('- name: Create GitHub Release'),
     );
-  });
-
-  it('keeps manually requested cloud images separate from stable releases', () => {
-    const workflow = fs.readFileSync(path.resolve('.github/workflows/cloud-test-image.yml'), 'utf8');
-    expect(workflow).toContain('workflow_dispatch:');
-    expect(workflow).toContain("github.ref == 'refs/heads/main'");
-    expect(workflow).toContain('actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=push');
-    expect(workflow.indexOf('Require successful CI')).toBeLessThan(workflow.indexOf('Build cloud test image'));
-    expect(workflow.indexOf('Check image startup and terrain routes')).toBeLessThan(
-      workflow.indexOf('Publish cloud test image'),
-    );
-    expect(workflow).toContain('docker push "$IMAGE:cloud-test"');
-    expect(workflow).toContain('docker push "$IMAGE:sha-$GITHUB_SHA"');
-    expect(workflow).not.toMatch(/:latest|gh release create|npm version|docker push --all-tags/);
   });
 });

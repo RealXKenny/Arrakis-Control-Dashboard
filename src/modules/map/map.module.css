@@ -823,10 +823,6 @@
   border-radius: 10px;
   background: rgba(13, 8, 5, 0.24);
 }
-.workspace .mapActions .mapButton {
-  padding: 8px;
-  white-space: nowrap;
-}
 .zoomReading {
   min-width: 48px;
   color: #f3c875;

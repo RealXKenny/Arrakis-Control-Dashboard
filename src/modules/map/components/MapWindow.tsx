@@ -1,10 +1,6 @@
 'use client';
 
 import React from 'react';
-import dynamic from 'next/dynamic';
-import type { MapCamera } from '../terrain/MapScene3D';
-
-const MapScene3D = dynamic(() => import('../terrain/MapScene3D'), { ssr: false });
 
 import MapToolbar from './MapToolbar';
 import MapCanvas from './MapCanvas';
@@ -20,8 +16,6 @@ import styles from '../map.module.css';
 
 const LEGEND_STORAGE_KEY_PREFIX = 'map-legend';
 const DEFAULT_DISABLED_MARKERS = {
-  realtime_npc: true,
-  civilian: true,
   storage: true,
   ore: true,
   scrap: true,
@@ -190,15 +184,12 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
     loading,
     loadMap,
   } = useMapData(mapName);
-  const realtime = useRealtimeData(mapName, Boolean(mapConfig));
+  const realtime = useRealtimeData(mapName, Boolean(mapConfig) && !error);
   const markers = React.useMemo(() => [...staticMarkers, ...realtime.markers], [staticMarkers, realtime.markers]);
 
   const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${mapName}-v2`;
 
   const [selected, setSelected] = React.useState(null);
-  const [view3D, setView3D] = React.useState(true);
-  const [sceneStatus, setSceneStatus] = React.useState('Loading 3D terrain…');
-  const cameraRef = React.useRef<MapCamera | null>(null);
 
   const target = null;
 
@@ -233,7 +224,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') {
-          if (parsed.disabled && typeof parsed.disabled === 'object') disabled = { ...disabled, ...parsed.disabled };
+          if (parsed.disabled && typeof parsed.disabled === 'object') disabled = parsed.disabled;
           if (parsed.expanded && typeof parsed.expanded === 'object') expanded = { ...expanded, ...parsed.expanded };
           if (typeof parsed.open === 'boolean') open = parsed.open;
         }
@@ -348,8 +339,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
       if (event.key === '+' || event.key === '=') {
         event.preventDefault();
 
-        if (view3D) cameraRef.current?.zoom(1.18);
-        else setZoomAround(zoom * 1.18);
+        setZoomAround(zoom * 1.18);
 
         return;
       }
@@ -357,16 +347,14 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
       if (event.key === '-') {
         event.preventDefault();
 
-        if (view3D) cameraRef.current?.zoom(0.84);
-        else setZoomAround(zoom * 0.84);
+        setZoomAround(zoom * 0.84);
 
         return;
       }
 
       if (event.key.toLowerCase() === 'f') {
         event.preventDefault();
-        if (view3D) cameraRef.current?.fit();
-        else fitMap();
+        fitMap();
         return;
       }
 
@@ -375,7 +363,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
         refreshMap();
       }
     },
-    [zoom, setZoomAround, fitMap, refreshMap, view3D],
+    [zoom, setZoomAround, fitMap, refreshMap],
   );
 
   React.useEffect(() => {
@@ -390,16 +378,11 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
     <div className={styles.workspace} data-map-workspace>
       <section className={styles.mapPanel} data-map-panel>
         <MapToolbar
-          view3D={view3D}
-          onToggleView={() => {
-            setView3D(!view3D);
-            setSceneStatus('Loading 3D terrain…');
-          }}
           zoomPercent={zoomPercent}
           coriolisNextCycleAt={coriolisNextCycleAt}
-          onZoomOut={() => (view3D ? cameraRef.current?.zoom(0.84) : setZoomAround(zoom * 0.84))}
-          onZoomIn={() => (view3D ? cameraRef.current?.zoom(1.18) : setZoomAround(zoom * 1.18))}
-          onFit={() => (view3D ? cameraRef.current?.fit() : fitMap())}
+          onZoomOut={() => setZoomAround(zoom * 0.84)}
+          onZoomIn={() => setZoomAround(zoom * 1.18)}
+          onFit={fitMap}
           onRefresh={refreshMap}
         />
 
@@ -415,31 +398,14 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
             flex: 1,
             minHeight: 0,
             minWidth: 0,
-            overflow: view3D ? 'hidden' : 'auto',
+            overflow: 'auto',
             cursor: drag ? 'grabbing' : 'grab',
             scrollbarWidth: 'thin',
             scrollbarColor: '#594127 #100b07',
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {mapConfig && view3D ? (
-            <MapScene3D
-              key={`${mapName}:${coriolisLayout}`}
-              mapName={mapName}
-              mapConfig={mapConfig}
-              layout={coriolisLayout}
-              markers={visibleMarkers}
-              gridOverlay={gridOverlay}
-              showSectorGrid={!legendDisabled['sector-grid']}
-              cameraRef={cameraRef}
-              onSelectMarker={setSelected}
-              onReady={() => setSceneStatus('')}
-              onUnavailable={(reason) => {
-                setSceneStatus(`3D unavailable: ${reason}. Showing 2D map.`);
-                setView3D(false);
-              }}
-            />
-          ) : mapConfig ? (
+          {mapConfig ? (
             <MapCanvas
               mapName={mapName}
               mapConfig={mapConfig}
@@ -487,23 +453,6 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
             marker={selected?.realtime ? realtime.markers.find((marker) => marker.id === selected.id) : selected}
             onClose={() => setSelected(null)}
           />
-          {sceneStatus && (view3D || sceneStatus.startsWith('3D unavailable')) && (
-            <span
-              role="status"
-              style={{
-                position: 'absolute',
-                top: 10,
-                left: 10,
-                zIndex: 30,
-                color: '#e4b06f',
-                background: '#211c18dd',
-                padding: '5px 8px',
-                fontSize: 11,
-              }}
-            >
-              {sceneStatus}
-            </span>
-          )}
         </div>
 
         {error && (
@@ -521,7 +470,6 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
         )}
 
         <MapStatusBar
-          view3D={view3D}
           loading={loading}
           error={error}
           markerCount={visibleMarkers.length}

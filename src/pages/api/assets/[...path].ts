@@ -21,7 +21,6 @@ const contentTypes = Object.freeze({
 
 function isTerrainAsset(segments: string[]) {
   const name = segments.slice(1).join('/');
-  if (/^hagga\.(?:json|hf)\.gz$/.test(name)) return true;
   return /^(?:meshes\.(?:json|bin)|layout-(?:[0-9]|1[01])\.(?:json|bin|hf)|tex\/(?:det1|det2|brk)\.rgba)\.gz$/.test(
     name,
   );
