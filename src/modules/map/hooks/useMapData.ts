@@ -70,24 +70,20 @@ export default function useMapData(mapName = 'HaggaBasin') {
   const [loading, setLoading] = useState(true);
   const expired = useRef(false);
   const active = useRef<AbortController | null>(null);
-  const hasReading = useRef(false);
   const loadMap = useCallback(
     async (force = false) => {
       if (active.current || expired.current) return;
       const controller = new AbortController();
       active.current = controller;
       const timeout = setTimeout(() => controller.abort(), 15000);
-      // Dev note: the dunes can change their reading without shaking the navigator's chair.
-      if (!hasReading.current || force) setLoading(true);
+      setLoading(true);
       try {
         const response = await cachedFetch(`/api/map?map=${encodeURIComponent(mapName)}`, {
           force,
           onCached: async (cached) => {
             const data = await cached.json();
             if (!controller.signal.aborted) {
-              const map = getMapConfig(data, mapName);
-              setMapConfig((current) => (JSON.stringify(current) === JSON.stringify(map) ? current : map));
-              if (map) hasReading.current = true;
+              setMapConfig(getMapConfig(data, mapName));
               setMarkers(getMarkerArray(data));
               setCoriolisLayout(getCoriolisLayout(data));
               setCoriolisNextCycleAt(getCoriolisCycleAt(data));
@@ -110,8 +106,7 @@ export default function useMapData(mapName = 'HaggaBasin') {
         const map = getMapConfig(data, mapName);
         if (!data?.ok || !map) throw new Error('Map configuration is unavailable.');
         if (controller.signal.aborted) return;
-        setMapConfig((current) => (JSON.stringify(current) === JSON.stringify(map) ? current : map));
-        hasReading.current = true;
+        setMapConfig(map);
         setMarkers(getMarkerArray(data));
         setCoriolisLayout(getCoriolisLayout(data));
         setCoriolisNextCycleAt(getCoriolisCycleAt(data));
@@ -130,7 +125,6 @@ export default function useMapData(mapName = 'HaggaBasin') {
     [mapName],
   );
   useEffect(() => {
-    hasReading.current = false;
     setMapConfig(null);
     setMarkers([]);
     setCoriolisLayout(null);

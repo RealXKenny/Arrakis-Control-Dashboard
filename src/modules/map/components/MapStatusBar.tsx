@@ -2,7 +2,7 @@
 
 import styles from '../map.module.css';
 
-export default function MapStatusBar({ loading, error, markerCount, zoomPercent, target, view3D }) {
+export default function MapStatusBar({ loading, error, markerCount, zoomPercent, target }) {
   return (
     <div className={styles.mapStatusBar}>
       <span
@@ -18,13 +18,7 @@ export default function MapStatusBar({ loading, error, markerCount, zoomPercent,
       </span>
 
       <span className={styles.mapStatusMetric}>
-        {view3D ? (
-          <strong>3D terrain</strong>
-        ) : (
-          <>
-            <strong>{zoomPercent}%</strong> zoom
-          </>
-        )}
+        <strong>{zoomPercent}%</strong> zoom
       </span>
 
       {target && (
