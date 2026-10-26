@@ -245,19 +245,13 @@ export default function MapScene3D(props: Props) {
         if (!signal.aborted) fail();
       });
     const projected = new WeakSet<HTMLElement>();
-    let cameraMoving = false;
     const projectMarkers = (smooth = false) => {
       if (signal.aborted) return;
       const children = overlayRef.current?.children;
       if (!children || !surface) return;
-      // Projection must also work before a terrain draw updates the camera matrices.
-      camera.updateMatrixWorld(true);
-      const elements = new Map(
-        Array.from(children, (child) => [(child as HTMLElement).dataset.markerId, child as HTMLElement]),
-      );
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       latest.current.markers.forEach((marker, index) => {
-        const element = elements.get(markerKey(marker, index));
+        const element = children[index] as HTMLElement | undefined;
         if (!element) return;
         const x = getCoordinate(marker, 'x'),
           y = getCoordinate(marker, 'y');
@@ -279,7 +273,7 @@ export default function MapScene3D(props: Props) {
           Math.abs(position.x) <= 1 &&
           Math.abs(position.y) <= 1;
         element.style.transition =
-          smooth && !cameraMoving && marker.realtime && projected.has(element) && !reducedMotion
+          smooth && marker.realtime && projected.has(element) && !reducedMotion
             ? 'left 1800ms linear, top 1800ms linear'
             : 'none';
         projected.add(element);
@@ -332,22 +326,7 @@ export default function MapScene3D(props: Props) {
     observer.observe(host);
     resize();
     fit();
-    const cameraChanged = () => {
-      // Keep blips attached on every input event, even while a costly terrain frame is queued.
-      projectMarkers();
-      schedulePaint();
-    };
-    const cameraStarted = () => {
-      cameraMoving = true;
-      projectMarkers();
-    };
-    const cameraEnded = () => {
-      cameraMoving = false;
-      cameraChanged();
-    };
-    controls.addEventListener('change', cameraChanged);
-    controls.addEventListener('start', cameraStarted);
-    controls.addEventListener('end', cameraEnded);
+    controls.addEventListener('change', paint);
     let textureRequest = 0;
     changeQuality.current = () => {
       const next = renderQuality(qualityChoice.current, device);
@@ -433,9 +412,7 @@ export default function MapScene3D(props: Props) {
       changeQuality.current = null;
       observer.disconnect();
       commands.current = null;
-      controls.removeEventListener('change', cameraChanged);
-      controls.removeEventListener('start', cameraStarted);
-      controls.removeEventListener('end', cameraEnded);
+      controls.removeEventListener('change', paint);
       controls.dispose();
       renderer.domElement.removeEventListener('webglcontextlost', lost);
       renderer.domElement.removeEventListener('pointerdown', pointerDown);
@@ -468,7 +445,6 @@ export default function MapScene3D(props: Props) {
         {props.markers.map((marker, index) => (
           <MapMarker
             key={markerKey(marker, index)}
-            markerId={markerKey(marker, index)}
             marker={marker}
             index={index}
             point={{ px: -1000, py: -1000, x: getCoordinate(marker, 'x'), y: getCoordinate(marker, 'y') }}
