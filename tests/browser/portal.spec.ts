@@ -546,10 +546,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(page.getByTitle('Show Storage', { exact: true })).toHaveCount(1);
   await expect(page).toHaveURL(/\/portal$/);
   await page.getByRole('button', { name: '2D map', exact: true }).click();
-  // CI's software renderer can spend over 20 seconds uploading the full legacy terrain.
-  await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1, {
-    timeout: process.env.CI ? 40_000 : 20_000,
-  });
+  await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1, { timeout: 20_000 });
   const terrain = page.locator('[data-terrain-state]');
   await expect(terrain).toHaveAttribute('data-terrain-state', 'ready', { timeout: 20_000 });
   await expect(terrain).toHaveAttribute('data-map-resolution', '8192x8192');
