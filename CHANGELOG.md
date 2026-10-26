@@ -16,7 +16,6 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Changed
 
-- Load and render all active owned base models regardless of camera distance, remove the eight-base cap, and retain distant navigation blips while keeping two export requests at a time.
 - Repeat an HTTP-verified plain startup marker briefly for Pterodactyl fast-start detection, retain older eggs' `Ready in` match, and forward stop signals to Next.js while cancelling readiness retries.
 - Reproject 3D blips immediately during orbit/pan before queued terrain draws, match overlays by marker identity, and suspend realtime screen-position smoothing while dragging.
 - Enable realtime map updates by default; hide realtime NPC and civilian markers initially while preserving saved legend choices and the other layer defaults.

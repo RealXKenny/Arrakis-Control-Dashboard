@@ -989,7 +989,7 @@
   border: 1px solid #594127;
 }
 
-:global(.live-map-marker[data-model-prominent='true']) {
+:global(.live-map-marker[data-model-visible='true']) {
   background-image: none !important;
 }
 .sceneHud {
