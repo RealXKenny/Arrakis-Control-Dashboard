@@ -16,7 +16,7 @@
   "startup": "cd /opt/arrakis-dashboard && exec node src/config/server-launcher.mjs start",
   "config": {
     "files": "{}",
-    "startup": "{\"done\":\"Ready in\"}",
+    "startup": "{\"done\":\"Arrakis Control Dashboard is listening\"}",
     "logs": "{}",
     "stop": "^C"
   },
@@ -28,6 +28,36 @@
     }
   },
   "variables": [
+    {
+      "name": "API Worker Concurrency",
+      "description": "Maximum active API requests per worker before overload returns 503. Tune with staging load tests.",
+      "env_variable": "API_MAX_CONCURRENCY",
+      "default_value": "100",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|integer|min:1|max:10000",
+      "field_type": "text"
+    },
+    {
+      "name": "Global Read Budget",
+      "description": "Requests per read route per minute shared through Redis across workers. Increase only after capacity validation.",
+      "env_variable": "API_GLOBAL_READ_LIMIT",
+      "default_value": "2400",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|integer|min:1|max:100000000",
+      "field_type": "text"
+    },
+    {
+      "name": "Dashboard Bot API Token",
+      "description": "Optional independent secret for the read-only Discord bot API. Empty disables access. Never reuse Discord, Console, or adapter tokens.",
+      "env_variable": "BOT_API_TOKEN",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string|min:32|max:256",
+      "field_type": "text"
+    },
     {
       "name": "Log Level",
       "description": "Console verbosity; INFO is recommended.",

@@ -58,3 +58,26 @@ it('does not resurrect an invalidated in-flight reading', async () => {
   await pending;
   expect((await cache.get('user:a', async () => 2)).data).toBe(2);
 });
+
+it('coalesces a burst but rejects distinct work beyond the pending budget', async () => {
+  const cache = new ReadCache<number>(
+    () => 1,
+    () => true,
+    { maxPending: 1 },
+  );
+  let finish: (value: number) => void;
+  const load = vi.fn(
+    () =>
+      new Promise<number>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const burst = Array.from({ length: 1000 }, () => cache.get('shared', load));
+  const overflow = vi.fn().mockResolvedValue(2);
+  await expect(cache.get('other', overflow)).rejects.toMatchObject({ statusCode: 503, code: 'SERVER_BUSY' });
+  expect(load).toHaveBeenCalledTimes(1);
+  expect(overflow).not.toHaveBeenCalled();
+  finish!(1);
+  await Promise.all(burst);
+  expect((await cache.get('other', overflow)).data).toBe(2);
+});

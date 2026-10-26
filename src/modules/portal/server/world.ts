@@ -18,25 +18,35 @@ export async function GET(req, res) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
   const map = new URL(req.url, 'http://localhost').searchParams.get('map') ?? 'HaggaBasin';
   if (!['DeepDesert', 'HaggaBasin'].includes(map)) throw new AppError('Invalid map', 400, 'INVALID_MAP', true);
+  return NextResponse.json(await readWorld(map), { headers: { 'Cache-Control': 'no-store' } });
+}
+
+/** Shared sanitized world summary, reusable only after the caller's own authorization. */
+export async function readWorld(map: string) {
+  if (!['DeepDesert', 'HaggaBasin'].includes(map)) throw new AppError('Invalid map', 400, 'INVALID_MAP', true);
   let reading = cache.get(map);
   if (!reading || reading.expires <= Date.now()) {
     // Dev note: stale worlds get refreshed; even Arrakis needs housekeeping.
     const client = getDuneClient();
+    const population = readPopulationHistory();
     const value = Promise.allSettled([
       client.request('GET', `/api/map/markers?map=${map}&static=0`),
       client.request('GET', '/api/exchange/stats'),
       client.request('GET', '/api/admin/landsraad'),
       client.request('GET', '/api/players'),
-    ]).then((results) => {
+    ]).then(async (results) => {
       const [markers, market, council, players] = results.map((result) =>
         result.status === 'fulfilled' ? result.value : null,
       );
-      return { ...worldReading(map, markers, market, council), totalPlayHours: totalPlayHours(players) };
+      return {
+        ...worldReading(map, markers, market, council),
+        totalPlayHours: totalPlayHours(players),
+        population: await population,
+      };
     });
     reading = { expires: Date.now() + 30000, value };
     cache.set(map, reading);
   }
-  // Dev note: world data and population history carpool to the response.
-  const [world, population] = await Promise.all([reading.value, readPopulationHistory()]);
-  return NextResponse.json({ ...world, population }, { headers: { 'Cache-Control': 'no-store' } });
+  // The population history shares the same snapshot instead of a Redis range read per visitor.
+  return reading.value;
 }

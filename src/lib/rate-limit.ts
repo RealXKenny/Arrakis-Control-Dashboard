@@ -43,6 +43,7 @@ function checkDevelopmentLimit(key: string, rule: RateLimitRule): RateLimitResul
     for (const [entryKey, entry] of developmentBuckets) {
       if (entry.resetAt <= now) developmentBuckets.delete(entryKey);
     }
+    while (developmentBuckets.size > MAX_BUCKETS) developmentBuckets.delete(developmentBuckets.keys().next().value!);
   }
   return {
     allowed: bucket.count <= rule.limit,

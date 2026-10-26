@@ -5,6 +5,17 @@ import { DuneConsoleApiError, getDuneClient } from '../../../infrastructure/dune
 import { getSession } from '../../../lib/session-store';
 import { getServerEnv } from '../../../config/env';
 import { normalizeRealtime } from '../utils/realtime';
+import { ReadCache } from '../../../lib/read-cache';
+
+// Only normalized guild-wide data is shared. Every caller must pass session/guild checks first.
+const snapshots = new ReadCache<NextResponse>(
+  (response) => Buffer.byteLength(response.body ?? ''),
+  () => true,
+  { ttlMs: 1000, maxEntries: 2, maxPending: 2 },
+);
+export function clearRealtimeReadCache() {
+  snapshots.clear();
+}
 
 const reply = (body: unknown, status = 200) =>
   NextResponse.json(body, { status, headers: { 'Cache-Control': 'private, no-store' } });
@@ -26,6 +37,12 @@ export async function GET(req, res) {
       !(consoleUrl.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(consoleUrl.hostname)))
   )
     return reply({ error: 'Realtime Data requires a Console HTTPS URL or HTTP on loopback.' }, 503);
+  const entry = await snapshots.get(`${env.CONSOLE_URL}:${map}`, () => loadSnapshot(map));
+  // The boundary adds per-request error IDs; never mutate the shared response object.
+  return new NextResponse(entry.data.body, { status: entry.data.status, headers: { ...entry.data.headers } });
+}
+
+async function loadSnapshot(map: string) {
   try {
     const data = await getDuneClient().request('GET', '/api/realtime/objects', {
       timeoutMs: 5000,

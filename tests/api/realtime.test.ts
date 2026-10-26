@@ -3,6 +3,7 @@ import route from '../../src/pages/api/map/realtime';
 import { getDuneClient, DuneConsoleApiError } from '../../src/infrastructure/dune';
 import { getSession } from '../../src/lib/session-store';
 import { responseMock } from '../helpers/response';
+import { clearRealtimeReadCache } from '../../src/modules/map/server/realtime';
 
 const config = vi.hoisted(() => ({
   DISCORD_GUILD_ID: 'guild',
@@ -28,6 +29,7 @@ const call = async (url = '/api/map/realtime?map=HaggaBasin', method = 'GET') =>
   return { status: res.statusCode, body: typeof res.body === 'string' ? JSON.parse(res.body) : res.body, res };
 };
 beforeEach(() => {
+  clearRealtimeReadCache();
   vi.clearAllMocks();
   config.CONSOLE_URL = 'https://console.test';
   vi.mocked(getSession).mockResolvedValue({
@@ -65,6 +67,18 @@ it('allows any signed-in dashboard member without a special realtime role', asyn
   expect(result.status).toBe(200);
   expect(result.body.markers[0].type).toBe('worm');
   expect(request).toHaveBeenCalledTimes(1);
+});
+
+it('coalesces concurrent snapshots without skipping authorization or retaining them after expiry', async () => {
+  const results = await Promise.all(Array.from({ length: 50 }, () => call()));
+  expect(results.every((result) => result.status === 200)).toBe(true);
+  expect(getSession).toHaveBeenCalledTimes(50);
+  expect(request).toHaveBeenCalledTimes(1);
+  vi.mocked(getSession).mockResolvedValueOnce(null);
+  expect((await call()).status).toBe(401);
+  clearRealtimeReadCache();
+  expect((await call()).status).toBe(200);
+  expect(request).toHaveBeenCalledTimes(2);
 });
 
 it('normalizes positions and omits raw source metadata, players and vehicles', async () => {

@@ -5,6 +5,7 @@ import { createRequestLogger, logRequestAccess } from '../lib/logger';
 import { getSafeError } from '../lib/errors';
 import { checkRateLimit, getClientAddress } from '../lib/rate-limit';
 import { getServerEnv } from '../config/env';
+import { acquireApiCapacity } from '../lib/api-capacity';
 
 type ResponseInit = { status?: number; headers?: Record<string, string> };
 
@@ -102,6 +103,7 @@ export async function runPagesApiHandler(req, res, method, handler) {
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
 
+  let releaseCapacity: (() => void) | null = null;
   try {
     if (typeof req.url === 'string' && req.url.length > 2048) {
       const payload = { ok: false, error: 'Request URI too long', code: 'URI_TOO_LONG', requestId };
@@ -117,11 +119,18 @@ export async function runPagesApiHandler(req, res, method, handler) {
       return;
     }
 
+    const env = getServerEnv();
+    releaseCapacity = acquireApiCapacity(env.API_MAX_CONCURRENCY ?? 100);
+    if (!releaseCapacity) {
+      res.setHeader('Retry-After', '2');
+      res.status(503).json({ ok: false, error: 'Server is busy. Retry shortly.', code: 'SERVER_BUSY', requestId });
+      return;
+    }
     const isSensitive = route.includes('/auth/') || route.includes('/export') || req.method !== 'GET';
     const rule = isSensitive ? { limit: 30, windowMs: 60_000 } : { limit: 120, windowMs: 60_000 };
     const [clientLimit, routeLimit] = await Promise.all([
       checkRateLimit(`${getClientAddress(req)}:${route}`, rule),
-      checkRateLimit(`global:${route}`, { ...rule, limit: rule.limit * 20 }),
+      checkRateLimit(`global:${route}`, { ...rule, limit: isSensitive ? 600 : (env.API_GLOBAL_READ_LIMIT ?? 2400) }),
     ]);
     const limit = !clientLimit.allowed || clientLimit.storageUnavailable ? clientLimit : routeLimit;
     res.setHeader('X-RateLimit-Limit', isSensitive ? '30' : '120');
@@ -174,8 +183,11 @@ export async function runPagesApiHandler(req, res, method, handler) {
     const safeError = getSafeError(error);
     log.error('Failed to load data', error);
     if (!res.headersSent) {
+      if (safeError.statusCode === 503) res.setHeader('Retry-After', '2');
       const payload = { ok: false, error: safeError.message, code: safeError.code, requestId };
       res.status(safeError.statusCode).json(payload);
     }
+  } finally {
+    releaseCapacity?.();
   }
 }

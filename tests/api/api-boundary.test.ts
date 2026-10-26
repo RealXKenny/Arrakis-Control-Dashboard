@@ -3,8 +3,31 @@ import { describe, expect, it } from 'vitest';
 import { NextResponse, runPagesApiHandler } from '../../src/infrastructure/pages-api';
 import authCallback from '../../src/pages/api/auth/callback/index';
 import marketConfig from '../../src/pages/api/market/config/index';
+import { acquireApiCapacity } from '../../src/lib/api-capacity';
 
 describe('Pages API boundary', () => {
+  it('rejects overload before invoking a handler and recovers after capacity is released', async () => {
+    const slots = Array.from({ length: 100 }, () => acquireApiCapacity(100));
+    try {
+      const res = responseMock();
+      let called = false;
+      await runPagesApiHandler({ method: 'GET', url: '/api/test', headers: {} }, res, 'GET', async () => {
+        called = true;
+        return NextResponse.json({ ok: true });
+      });
+      expect(res.statusCode).toBe(503);
+      expect(res.body).toMatchObject({ code: 'SERVER_BUSY' });
+      expect(res.getHeader('Retry-After')).toBe('2');
+      expect(called).toBe(false);
+    } finally {
+      slots.forEach((release) => release?.());
+    }
+    const res = responseMock();
+    await runPagesApiHandler({ method: 'GET', url: '/api/test', headers: {} }, res, 'GET', async () =>
+      NextResponse.json({ ok: true }),
+    );
+    expect(res.statusCode).toBe(200);
+  });
   it('returns successful responses with a request ID', async () => {
     const req = { method: 'GET', url: '/api/test', headers: {} };
     const res = responseMock();
