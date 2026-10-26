@@ -91,21 +91,27 @@ jobs:
         shell: bash
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Docker Buildx
+        if: steps.release.outputs.create == 'true'
+        uses: docker/setup-buildx-action@v4
+
       - name: Build versioned image
         if: steps.release.outputs.create == 'true'
-        shell: bash
-        env:
-          IMAGE: ${{ steps.image.outputs.name }}
-          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
-        run: |
-          docker build \
-            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
-            --label "org.opencontainers.image.revision=$RELEASE_SHA" \
-            --label "org.opencontainers.image.version=$RELEASE_TAG" \
-            --tag "$IMAGE:latest" \
-            --tag "$IMAGE:$RELEASE_TAG" \
-            --tag "$IMAGE:sha-$RELEASE_SHA" .
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          push: false
+          cache-from: type=gha,scope=arrakis-release
+          cache-to: type=gha,mode=max,scope=arrakis-release
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
+            org.opencontainers.image.version=${{ steps.release.outputs.tag }}
+          tags: |
+            ${{ steps.image.outputs.name }}:latest
+            ${{ steps.image.outputs.name }}:${{ steps.release.outputs.tag }}
+            ${{ steps.image.outputs.name }}:sha-${{ github.event.workflow_run.head_sha }}
 
       - name: Check image contents and Pterodactyl user
         if: steps.release.outputs.create == 'true'
