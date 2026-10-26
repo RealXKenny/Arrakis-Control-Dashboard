@@ -4,6 +4,26 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Custom realtime sandworm models with segmented bodies, three-lobed mouths, teeth and sand wakes; share geometry, follow terrain and movement headings, and retain distant blips and legend filtering.
+- Default orbitable 3D terrain for Hagga Basin and Deep Desert, with local elevation data and Deep Desert rock meshes, terrain-aligned selectable markers, legend/realtime filters, and sector grid.
+- Orbit, pan, wheel/pinch zoom, camera fit, and a 2D toggle with automatic fallback on terrain loading or WebGL2 failure.
+- Manual cloud test image publication after successful main CI, using `cloud-test` and commit tags without changing the stable version or release image.
+- Nearby base reconstruction from authorized exports and 1,179 bundled building meshes, plus subtype-specific vehicle silhouettes with model picking and marker fallbacks.
+- Relief terrain shading, contour lines, compass, metric scale, location search, Fly to, top-down view, fullscreen, and a wider 3D map workspace.
+- GPU-aware Auto/Low/Balanced/High terrain detail, a high-performance WebGL GPU request, full available elevation resolution and sharper atlas textures on High, plus close-up sand ripples and bounded rock detail.
+- Combine the older Deep Desert terrain patches, material tints, breakup masks, and original tiled sand normal maps with the orbitable 3D scene, models, and GPU detail controls.
+
+### Changed
+
+- Anchor 3D blips to the displayed terrain triangles, hide terrain-obscured blips, and stop drawing unsupported locations over the backdrop; show a coverage notice and retain all locations in 2D.
+- Load and render all active owned base models regardless of camera distance, remove the eight-base cap, and retain distant navigation blips while keeping two export requests at a time.
+- Emit one HTTP-verified startup marker through the custom timestamped STARTUP logger, retain older eggs' `Ready in` match, and forward stop signals to Next.js while cancelling readiness checks.
+- Fit the 3D camera to loaded terrain coverage and viewport proportions; project blips in the same frame as terrain draws during orbit/pan, match overlays by marker identity, and suspend realtime screen-position smoothing while dragging.
+- Enable realtime map updates by default; hide realtime NPC and civilian markers initially while preserving saved legend choices and the other layer defaults.
+- Update realtime markers in place with smooth 3D movement, stable identities, and no terrain redraw for position-only blip snapshots. Visible worm models redraw on movement without rebuilding terrain; background map reads preserve zoom and avoid loading flashes.
+
 ## [1.1.1] - 2026-10-19
 
 ### Changed

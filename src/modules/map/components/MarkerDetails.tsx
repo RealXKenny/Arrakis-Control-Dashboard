@@ -21,7 +21,7 @@ function friendlyMarkerType(type) {
   );
 }
 
-export default function MarkerDetails({ marker, onClose }) {
+export default function MarkerDetails({ marker, onClose, onFlyTo }) {
   if (!marker) {
     return null;
   }
@@ -67,6 +67,22 @@ export default function MarkerDetails({ marker, onClose }) {
       </div>
 
       <div>{name}</div>
+      {onFlyTo && (
+        <button
+          type="button"
+          onClick={onFlyTo}
+          style={{
+            margin: '10px 0',
+            padding: '7px 12px',
+            color: '#ffe0a0',
+            border: '1px solid #8f7146',
+            background: '#332b1c',
+            cursor: 'pointer',
+          }}
+        >
+          Fly to
+        </button>
+      )}
       {marker.realtime && <div>Realtime · Instance {marker.partition}</div>}
 
       {marker.subtype && <div>Subtype: {marker.subtype}</div>}

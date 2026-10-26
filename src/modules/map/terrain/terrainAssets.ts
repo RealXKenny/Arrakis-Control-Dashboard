@@ -41,7 +41,7 @@ function forCaller<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {
   });
 }
 const CONTENT_ENCODED = /\b(?:gzip|x-gzip|deflate|br|zstd)\b/i;
-async function gunzip(url: string): Promise<Uint8Array> {
+export async function gunzip(url: string): Promise<Uint8Array> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`${url}: ${response.status}`);
   if (!response.body) throw new Error(`${url}: no response body`);
