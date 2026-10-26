@@ -21,6 +21,13 @@ export async function register() {
       validateProductionEnv();
       startup.info('Runtime configuration validated');
 
+      const env = validateProductionEnv();
+      if (env.REDIS_URL) {
+        const { getRedisPool } = await import('./lib/redis-client');
+        getRedisPool();
+        startup.info('Redis pool configured for dashboard data');
+      }
+
       const { warmupDuneClient } = await import('./infrastructure/dune');
       startup.info('Connecting to Dune Console');
       await warmupDuneClient();

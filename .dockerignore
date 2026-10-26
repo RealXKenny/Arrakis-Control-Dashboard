@@ -12,3 +12,8 @@ guides
 .env.*
 !.env.example
 tsconfig.tsbuildinfo
+.vexp
+docker-compose.yml
+Dockerfile
+.dockerignore
+README.md

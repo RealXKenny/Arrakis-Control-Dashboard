@@ -15,7 +15,7 @@ export default function LandingPage({
     <DashboardShell
       brand="Crimson Skies"
       subtitle="Community workspace"
-      navigation={[{ label: 'Overview', group: 'Workspace', href: '/', active: true }]}
+      navigation={[{ label: 'Overview', group: 'Workspace', href: '/home', active: true }]}
       actions={
         <>
           {isAdmin && <Link href="/admin">Administration</Link>}

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  // Dev note: middleware stands in the middle because sideware sounded suspicious.
+export function proxy(request: NextRequest) {
+  // Dev note: proxy still stands in the middle; sideware sounded suspicious.
   const suppliedRequestId = request.headers.get('x-request-id');
   const requestId =
     suppliedRequestId && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(suppliedRequestId)
@@ -25,7 +25,7 @@ export function middleware(request: NextRequest) {
       "frame-ancestors 'none'",
       "object-src 'none'",
       "font-src 'self'",
-      "frame-src https://discord.com",
+      'frame-src https://discord.com',
       "img-src 'self' data: blob: https://cdn.discordapp.com",
       "connect-src 'self'",
       "manifest-src 'self'",

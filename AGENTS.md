@@ -24,10 +24,11 @@ Use this map before searching. Keep it current when structure or core contracts 
 
 ## Map
 
-- `src/pages/`: thin Pages Router pages/API entry points; there is no App Router.
+- `src/app/`: App Router root (`/`) shell — Tailwind v4 pillbox theme in `globals.css`, Server Component orchestration in `page.tsx` over `src/lib/data-provider.ts` (ioredis read-through provider with mock fallback), client interactivity isolated in `src/components/`. App Router and Pages Router must never match the same path; the old landing page is parked at `src/pages/home.tsx`.
+- `src/pages/`: thin Pages Router pages/API entry points.
 - `src/modules/<feature>/`: UI, hooks, normalization, utilities, and server handlers for `auth`, `bases`, `changelog`, `guilds`, `home`, `map`, `player`, and `portal`.
 - `src/infrastructure/`: Dune Console/adapter and Discord clients, API boundary, cookies, and API cache. Start with `dune.ts`, `dunedocker/transport.ts`, or `pages-api.ts`.
-- `src/lib/`: server guards, Redis, sessions, rate limits, logging, errors, timeouts, and shared caches.
+- `src/lib/`: server guards, sessions, rate limits, logging, errors, timeouts, and shared caches. `src/lib/env.ts` is the canonical environment schema (`src/config/env.ts` re-exports it); `src/lib/redis-client.ts` is the ioredis pool/cluster + circuit breaker behind the dashboard data provider.
 - `src/config/`: authoritative server environment schema, production validation, and the dev/production server launcher.
 - `src/instrumentation.ts`: runtime validation, Console warmup, startup log, and population recorder.
 - `src/assets/`: favicon, application images, and compressed Deep Desert terrain bundles. It is large; do not enumerate it unless necessary.
@@ -38,7 +39,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/lib/api-capacity.ts`: per-worker API admission budget before Redis work. Read-cache overflow returns 503; realtime snapshots coalesce for one second after per-request authorization. `tests/load/dashboard.k6.js` is the optional staging load harness.
 - `src/modules/map/server/realtime.ts`: Console snapshots available to all signed-in dashboard members of the configured guild; `hooks/useRealtimeData.ts` polls every two seconds with instance selection. No separate realtime role is required; anonymous player/vehicle objects are excluded.
 - `tests/`: API, architecture, unit, browser, helpers, and `smoke-production.mjs`.
-- Root runtime behavior: `middleware.ts` and `next.config.ts`.
+- Root runtime behavior: `src/proxy.ts` (Middleware renamed in Next.js 16) and `next.config.ts`. `docker-compose.yml` runs the app beside a local Redis for development.
 
 ## Contracts
 
@@ -56,7 +57,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 
 - `.env` is ignored and secret; `.env.example` is the only committed template. Never print values or create `NEXT_PUBLIC_` secrets.
 - `APP_URL` is the canonical public origin; the Discord callback is derived as `<APP_URL>/auth/callback`. Do not add a separate redirect URI variable.
-- Empty environment values normalize to absent values. Add or change variables in `src/config/env.ts`, `.env.example`, tests, and README together.
+- Empty environment values normalize to absent values. Add or change variables in `src/lib/env.ts`, `.env.example`, tests, and README together.
 - Builds work without deployment secrets; production runtime does not.
 
 ## Change discipline
