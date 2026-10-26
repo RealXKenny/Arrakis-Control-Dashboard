@@ -387,7 +387,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
   }, [handleKeyDown]);
 
   return (
-    <div className={styles.workspace} data-map-workspace data-map-mode={view3D ? '3d' : '2d'}>
+    <div className={styles.workspace} data-map-workspace>
       <section className={styles.mapPanel} data-map-panel>
         <MapToolbar
           view3D={view3D}
@@ -486,7 +486,6 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
           <MarkerDetails
             marker={selected?.realtime ? realtime.markers.find((marker) => marker.id === selected.id) : selected}
             onClose={() => setSelected(null)}
-            onFlyTo={view3D ? () => cameraRef.current?.focus(selected) : undefined}
           />
           {sceneStatus && (view3D || sceneStatus.startsWith('3D unavailable')) && (
             <span

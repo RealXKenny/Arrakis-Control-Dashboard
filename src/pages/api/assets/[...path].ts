@@ -36,12 +36,6 @@ function isTiledMapAsset(segments: string[]) {
   );
 }
 
-function isModelAsset(segments: string[]) {
-  return (
-    segments.length === 2 && segments[0] === 'models' && /^(?:catalog\.json|meshpack-[0-9]\.bin)\.gz$/.test(segments[1])
-  );
-}
-
 function resolveAsset(parts: unknown): { file: string; contentType: string } | null {
   if (!Array.isArray(parts) || parts.some((part) => typeof part !== 'string')) return null;
   const segments = parts as string[];
@@ -49,7 +43,6 @@ function resolveAsset(parts: unknown): { file: string; contentType: string } | n
     (segments.length === 1 && segments[0] === 'favicon.ico') ||
     (segments.length === 2 && ['items', 'maps'].includes(segments[0])) ||
     isTiledMapAsset(segments) ||
-    isModelAsset(segments) ||
     (segments[0] === 'terrain' && isTerrainAsset(segments));
   if (
     !validFile ||
