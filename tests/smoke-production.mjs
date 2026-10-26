@@ -167,7 +167,7 @@ try {
     assert.ok((await response.arrayBuffer()).byteLength > 0, asset);
   }
   const sessionCookie = '__Host-dashboard_session=fixture-session';
-  const home = await fetch(`${base}/`, { headers: { cookie: sessionCookie } });
+  const home = await fetch(`${base}/home`, { headers: { cookie: sessionCookie } });
   const themeScript = await fetch(`${base}/api/theme-script`);
   assert.equal(themeScript.status, 200);
   assert.match(themeScript.headers.get('content-type'), /application\/javascript/);
@@ -225,6 +225,11 @@ try {
   );
   assert.equal(home.status, 200, 'homepage with a session cookie');
   assert.match(await home.text(), /"isAuthenticated":true/);
+  const appRoot = await fetch(`${base}/`);
+  assert.equal(appRoot.status, 200, 'app router root serves the dashboard shell');
+  const appRootHtml = await appRoot.text();
+  assert.match(appRootHtml, /Harvesting sectors/);
+  assert.doesNotMatch(appRootHtml, /"isAuthenticated"/, 'app router root is not the pages landing');
   const routes = [
     'theme-script',
     'v1/bot/world',
@@ -312,8 +317,8 @@ try {
   const expiredRealtime = await fetch(`${base}/api/map/realtime`, { headers });
   assert.equal(expiredRealtime.status, 401, 'logout revokes realtime access');
   await expiredRealtime.text();
-  const signedOutHome = await fetch(`${base}/`, { headers });
-  assert.equal(signedOutHome.status, 200, 'homepage with a revoked session cookie');
+  const signedOutHome = await fetch(`${base}/home`, { headers });
+  assert.equal(signedOutHome.status, 200, 'landing with a revoked session cookie');
   assert.match(await signedOutHome.text(), /"isAuthenticated":false/);
   if (logs.includes('MaxListenersExceededWarning'))
     console.error(

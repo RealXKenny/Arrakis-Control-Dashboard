@@ -1,0 +1,42 @@
+# Local development stack: dashboard + Redis for the shared session, rate
+# limit, population, and snapshot caches. Production uses REDIS_URL against
+# the provisioned Redis server instead of this compose service.
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+
+  app:
+    build: .
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      SERVER_HOSTNAME: 0.0.0.0
+      SERVER_PORT: '2008'
+      REDIS_URL: redis://redis:6379/0
+      # Fill these in from your deployment secrets for full functionality:
+      # CONSOLE_URL: https://your-dune-console
+      # CONSOLE_API_KEY: replace-me
+      # ADAPTER_TOKEN: replace-me
+      # DISCORD_CLIENT_ID: replace-me
+      # DISCORD_CLIENT_SECRET: replace-me
+      # DISCORD_GUILD_ID: replace-me
+      # VERIFIED_MEMBER_ROLE_ID: replace-me
+      # APP_URL: http://localhost:2008
+    ports:
+      - '2008:2008'
+
+volumes:
+  redis-data:

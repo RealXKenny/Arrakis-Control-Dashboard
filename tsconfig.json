@@ -23,13 +23,17 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    // Next 16 forces strictNullChecks on mixed Pages+App projects when the key is
+    // absent; legacy modules were authored with it off, so pin it explicitly.
+    "strictNullChecks": false
   },
   "include": [
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -4,6 +4,31 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-26
+
+### Added
+
+- Next.js App Router shell at `/`: React Server Components orchestrate the operations dashboard in `src/app/` while all backend secrets stay server-side; interactive controls remain explicitly scoped `"use client"` in `src/components/`.
+- Production dashboard data provider in `src/lib/data-provider.ts` backed by a pooled `ioredis` connection (`src/lib/redis-client.ts`): round-robin read pooling, exponential reconnect backoff, optional Redis Cluster failover via `REDIS_CLUSTER_NODES`, and a circuit breaker that fails fast and half-opens with a single probe.
+- Read-through snapshot cache: fresh dashboard snapshots are served from Redis so high render concurrency never reaches the Dune Console; misses refresh from the Console adapter and write back with a 30 second TTL, and stale snapshots inside a 10 minute grace window are served when the Console is unreachable.
+- `src/lib/env.ts` as the canonical strict Zod environment schema; `src/config/env.ts` re-exports it so legacy imports keep working. `validateProductionEnv()` still gates production startup on the full secret set.
+- `src/components/Topbar.tsx` pillbox navigation and a full pillbox design system (Tailwind v4 theme in `src/app/globals.css`): fully rounded navigation pills, segmented tab controls, filter tags, and status badges on a pure charcoal SaaS palette.
+- `docker-compose.yml` for local development: the dashboard beside a health-checked Redis with persistence.
+- App Router error and not-found boundaries styled to the pillbox system.
+
+### Changed
+
+- Migrate `/` to the App Router dashboard; the previous landing page is parked at `/home` so the two routers never match the same path.
+- Modernize the root layout, topbar, dashboard tabs, badges, and retry actions to the pillbox aesthetic; sharp-edged toggles, tab underlines, and legacy chrome are gone from the App Router surface.
+- Rename `middleware.ts` to `proxy.ts` per the Next.js 16 Middleware → Proxy convention (same security headers and request correlation).
+- Replace the multi-stage Debian Dockerfile with a `node:22-alpine` build and runtime; the image still runs as the unprivileged `container` user and supports the Pterodactyl entrypoint.
+- Bump `tailwindcss`/`@tailwindcss/postcss` and add `ioredis` to the dependency set; bump stable version to 1.2.0.
+
+### Security
+
+- Keep `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`, and Redis credentials strictly server-side: the App Router data provider, ioredis pool, and environment schema are all `assert-server` guarded and never imported by client components.
+- Preserve the existing production startup gate that refuses to serve traffic without the full secret set, and keep secret values out of error messages and logs.
+
 ## [1.1.3] - 2026-10-26
 
 ### Added

@@ -33,7 +33,8 @@ Required production variables include:
 - `CONSOLE_URL`, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN` for scoped Dune Console access.
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `DISCORD_GUILD_ID` for Discord OAuth.
 - `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/auth/callback`.
-- `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits and persistent sessions.
+- `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits, persistent sessions, and the dashboard snapshot cache.
+- `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list that switches the App Router data provider to `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index.
 
 Optional server binding variables:
 
@@ -151,7 +152,7 @@ To publish a release, update the `version` in `package.json` and add a matching 
 
 ```text
 Browser
-  -> middleware.ts
+  -> proxy.ts (request correlation and security headers)
   -> src/pages/api/**
   -> runPagesApiHandler
   -> session and authorization checks
@@ -159,14 +160,22 @@ Browser
   -> Dune Console or Discord
 ```
 
+The App Router shell (`/`) renders server-side from `src/app/` and reads live
+snapshots through `src/lib/data-provider.ts`: a read-through cache over the
+`ioredis` pool (`src/lib/redis-client.ts`, pooled connections with reconnect
+backoff, optional Cluster failover, and a circuit breaker) that falls back to
+the Dune Console adapter on cache misses and to stale snapshots during
+outages.
+
 Important boundaries:
 
-- `src/pages/` contains Next.js pages and API routes.
+- `src/app/` contains the App Router root layout and dashboard page; `src/pages/` holds the remaining Pages Router pages and all API routes.
 - `src/modules/` contains feature-specific UI, hooks, normalization, and server helpers.
 - `src/infrastructure/` contains the Dune client, cookie helpers, and API boundary utilities.
-- `src/lib/` contains shared logging, errors, Redis, rate limiting, and session storage.
-- `src/config/env.ts` validates server environment configuration.
-- `middleware.ts` adds request correlation and security headers.
+- `src/lib/` contains shared logging, errors, Redis (node-redis for sessions/rate limits, ioredis pool for dashboard data), rate limiting, and session storage.
+- `src/lib/env.ts` validates server environment configuration; `src/config/env.ts` re-exports it for legacy imports.
+- `proxy.ts` adds request correlation and security headers (Middleware renamed in Next.js 16; it must live at `src/proxy.ts` beside the routers).
+- `docker-compose.yml` runs the dashboard beside a local Redis for development.
 - `tests/` contains focused unit and API-boundary tests.
 
 ## Security and Reliability
