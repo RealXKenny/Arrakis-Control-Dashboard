@@ -4,13 +4,23 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-19
+
+### Changed
+
+- Make realtime sandworm, NPC, civilian, sandstorm, and Coriolis positions available to every signed-in dashboard member of the configured guild, without an additional staff role.
+- Remove `REALTIME_ROLE_ID` from configuration and the Pterodactyl egg; existing values are ignored.
+- Preserve signed-out access protection, per-request session checks, secure Console transport, and existing player and vehicle ownership restrictions.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.1.0...v1.1.1)
+
 ## [1.1.0] - 2026-10-19
 
 ### Added
 
 - Optional realtime map layer for sandworms, NPCs, civilians, sandstorms, and Coriolis storms on Hagga Basin and Deep Desert, using Console snapshots refreshed every two seconds while the map is visible.
 - Realtime toggle, instance selection, individual legend filters, moving marker details, and availability messages for missing agents, missing API scopes, unsupported Console versions, and sources that are not ready.
-- Setup instructions for the Console's **Realtime Data → Read** API key scope, with no separate realtime Discord role required.
+- Optional `REALTIME_ROLE_ID` configuration in the environment template and Pterodactyl egg, with setup instructions for the Console's **Realtime Data → Read** API key scope.
 - Production Docker image with dashboard assets and changelog bundled, published to GitHub Container Registry for new stable version releases after successful `main` CI.
 - Importable Pterodactyl egg with production environment settings and a no-op installer for the prebuilt image.
 - Container startup and asset-route smoke checks before publishing a new versioned image.
@@ -18,7 +28,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Security
 
-- Make realtime creature and weather positions available to every signed-in dashboard member of the configured guild, rechecking the dashboard session on every snapshot request and blocking signed-out access.
+- Restrict realtime access to authenticated members of the configured guild with the configured staff role, rechecking the dashboard session on every snapshot request.
 - Require HTTPS or loopback HTTP for realtime Console requests; keep bearer credentials server-side and normalize bounded provider payloads without exposing process metadata.
 - Exclude anonymous agent player and vehicle objects to preserve existing identity and ownership checks. Clear old positions on failures, pause hidden maps, and stop polling after dashboard authorization failures.
 
