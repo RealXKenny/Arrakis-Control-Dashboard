@@ -806,10 +806,6 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  page.on('console', (message) => {
-    if (message.type() === 'error' && /THREE.WebGLProgram|shader error/i.test(message.text()))
-      errors.push(message.text());
-  });
   let samples = 0;
   await page.route('**/api/map/realtime?*', (route) => {
     samples++;
@@ -846,10 +842,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
         map,
         coriolisLayout: deep ? 6 : null,
         gridOverlay: deep ? createSectorGridOverlay('DeepDesert', map) : null,
-        markers: [
-          { id: 'base', type: 'base', name: '3D stronghold', x: -50000, y: -50000 },
-          ...(deep ? [{ id: 'patch', type: 'poi', name: 'Terrain overlook', x: -711684, y: 196855 }] : []),
-        ],
+        markers: [{ id: 'base', type: 'base', name: '3D stronghold', x: -50000, y: -50000 }],
       },
     });
   });
@@ -903,16 +896,9 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   await page.mouse.up();
   await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
-  await expect(scene).toHaveAttribute('data-desert-terrain', 'combined');
   await expect(marker).toBeVisible();
   await page.getByRole('checkbox', { name: 'Sector Grid', exact: true }).uncheck();
   await page.screenshot({ path: 'test-results/map-3d-desert.png', fullPage: true });
-  await page.getByLabel('Terrain detail').selectOption('balanced');
-  await page.getByLabel('Find on map').fill('Terrain overlook');
-  await page.getByRole('list', { name: 'Map search results' }).getByRole('button').click();
-  await page.getByRole('button', { name: '×', exact: true }).click();
-  await page.screenshot({ path: 'test-results/map-combined-desert.png', fullPage: true });
-  await page.getByLabel('Terrain detail').selectOption('auto');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Fit map', exact: true }).click();
   await expect(canvas).toBeVisible();

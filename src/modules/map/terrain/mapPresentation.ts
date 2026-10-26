@@ -46,7 +46,6 @@ export function createMapMaterial() {
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <normal_fragment_maps>',
       `#include <normal_fragment_maps>
-      #ifndef DESERT_SAND
       // Fade subpixel ripples to avoid shimmer when orbiting or zooming out.
       float ripplePhase = dot(vCartographicWorld.xz, vec2(5.0, 2.0)) + sin(vCartographicWorld.z * 0.4);
       float rippleFade = 1.0 - smoothstep(0.3, 2.0, fwidth(ripplePhase));
@@ -54,7 +53,6 @@ export function createMapMaterial() {
       vec3 viewGradient = mat3(viewMatrix) * rippleGradient;
       normal = normalize(normal - (viewGradient - normal * dot(normal, viewGradient))
         * cos(ripplePhase) * 0.035 * rippleFade * uTerrainDetail * uRelief);
-      #endif
       `,
     );
     shader.fragmentShader = shader.fragmentShader.replace(
