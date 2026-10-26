@@ -74,13 +74,7 @@ export function createDesertDetails(shared: SharedAssets, layout: LayoutAssets, 
   return { group, material };
 }
 
-export function updateDesertDetails(
-  group: THREE.Group,
-  camera: THREE.PerspectiveCamera,
-  height: number,
-  triangleBudget = 750000,
-  minPixels = 4,
-) {
+export function updateDesertDetails(group: THREE.Group, camera: THREE.PerspectiveCamera, height: number) {
   camera.updateMatrixWorld();
   const candidates: { batch: THREE.InstancedMesh; index: number; score: number }[] = [];
   const center = new THREE.Vector3();
@@ -96,16 +90,16 @@ export function updateDesertDetails(
     for (let i = 0; i < source.length / 16; i++) {
       matrix.fromArray(source, i * 16);
       center.copy(batch.geometry.boundingSphere!.center).applyMatrix4(matrix);
-      sphere.set(center, batch.userData.radius * matrix.getMaxScaleOnAxis());
+      sphere.set(center, batch.userData.radius);
       const score = (sphere.radius * height) / Math.max(1, camera.position.distanceTo(center));
-      if (score >= minPixels && frustum.intersectsSphere(sphere)) candidates.push({ batch, index: i, score });
+      if (score >= 4 && frustum.intersectsSphere(sphere)) candidates.push({ batch, index: i, score });
     }
   }
   candidates.sort((a, b) => b.score - a.score);
   let triangles = 0;
   for (const { batch, index } of candidates) {
     const cost = batch.geometry.index!.count / 3;
-    if (triangles + cost > triangleBudget) continue;
+    if (triangles + cost > 750000) continue;
     triangles += cost;
     matrix.fromArray(batch.userData.sourceMatrices, index * 16);
     batch.setMatrixAt(batch.count++, matrix);

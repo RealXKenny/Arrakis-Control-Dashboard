@@ -14,9 +14,9 @@ export type MapBounds = {
 export function terrainPoint(x: number, y: number, z: number, map: MapBounds) {
   return new THREE.Vector3((x - (map.minX + map.maxX) / 2) / 100, z / 100, (y - (map.minY + map.maxY) / 2) / 100);
 }
-export function createSurfaceGeometry(surface: HeightSurface, map: MapBounds, gridSize = 513) {
+export function createSurfaceGeometry(surface: HeightSurface, map: MapBounds) {
   // Dev note: a measured dune beats a wild sand guess every time.
-  const n = Math.min(surface.n, gridSize);
+  const n = Math.min(surface.n, 513);
   const positions = new Float32Array(n * n * 3);
   const uv = new Float32Array(n * n * 2);
   const valid = new Uint8Array(n * n);
@@ -49,10 +49,9 @@ export function createSurfaceGeometry(surface: HeightSurface, map: MapBounds, gr
   geometry.computeVertexNormals();
   return geometry;
 }
-export async function loadMapTexture(mapName: string, signal: AbortSignal, size = 2048) {
+export async function loadMapTexture(mapName: string, signal: AbortSignal) {
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const tileSize = size / 2;
+  canvas.width = canvas.height = 2048;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Map texture unavailable');
   const folder = mapName === 'DeepDesert' ? 'deep-desert' : 'hagga-basin';
@@ -62,8 +61,8 @@ export async function loadMapTexture(mapName: string, signal: AbortSignal, size 
         y = Math.floor(i / 2);
       const response = await fetch(`/maps/${folder}/${x}-${y}.webp`, { signal });
       if (!response.ok) throw new Error('Map image unavailable');
-      const bitmap = await createImageBitmap(await response.blob(), { resizeWidth: tileSize, resizeHeight: tileSize });
-      if (!signal.aborted) ctx.drawImage(bitmap, x * tileSize, y * tileSize, tileSize, tileSize);
+      const bitmap = await createImageBitmap(await response.blob(), { resizeWidth: 1024, resizeHeight: 1024 });
+      if (!signal.aborted) ctx.drawImage(bitmap, x * 1024, y * 1024, 1024, 1024);
       bitmap.close();
     }),
   );

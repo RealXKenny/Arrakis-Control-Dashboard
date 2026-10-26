@@ -11,7 +11,6 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Manual cloud test image publication after successful main CI, using `cloud-test` and commit tags without changing the stable version or release image.
 - Nearby base reconstruction from authorized exports and 1,179 bundled building meshes, plus subtype-specific vehicle silhouettes with model picking and marker fallbacks.
 - Relief terrain shading, contour lines, compass, metric scale, location search, Fly to, top-down view, fullscreen, and a wider 3D map workspace.
-- GPU-aware Auto/Low/Balanced/High terrain detail, a high-performance WebGL GPU request, full available elevation resolution and sharper atlas textures on High, plus close-up sand ripples and bounded rock detail.
 
 ### Changed
 
