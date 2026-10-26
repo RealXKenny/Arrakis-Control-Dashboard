@@ -4,6 +4,34 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-26
+
+### Added
+
+- Automatic holiday and seasonal color themes based on the visitor's local date, including floating holidays, Easter, explicit priorities, midnight updates, and default-theme fallback.
+- URL theme previews such as `?theme=halloween`, `?theme=july4th`, and `?theme=default`, with an extensible configuration matrix and CSP-compatible initialization before the page body renders.
+- Read-only Discord bot endpoint at `/api/v1/bot/world`, using an independent optional `BOT_API_TOKEN` to access sanitized guild-wide world summaries without user impersonation or mutation access.
+- Configurable `API_MAX_CONCURRENCY` and `API_GLOBAL_READ_LIMIT` settings, optional bot credentials in the environment template and Pterodactyl egg, and a staging k6 load-test harness with deployment guidance.
+
+### Changed
+
+- Coalesce authorized realtime snapshots for one second per map per worker, including brief failure cooldowns, while preserving per-request session and guild checks.
+- Cache population history with shared world summaries to reduce repeated Redis reads, and bound development rate-limit storage.
+- Reject excess API and read-cache work with `503 SERVER_BUSY` and `Retry-After` instead of starting unbounded provider requests.
+- Announce HTTP readiness once after a successful local listener check, cancel readiness probes during shutdown, and update the Pterodactyl startup marker to `Arrakis Control Dashboard is listening`.
+
+### Security
+
+- Keep bot credentials separate from Discord, Console, and adapter tokens; validate bearer credentials with constant-time digest comparison and enforce a shared credential-wide request budget.
+- Preserve private/no-store API responses, normalized provider payloads, browser session authorization, and the existing Content Security Policy.
+
+### Verification
+
+- Formatting, TypeScript validation, zero-warning lint, 250 Vitest tests, production build, runtime smoke checks, and 24 Playwright browser tests pass.
+- Capacity for 800,000 concurrent users remains unverified and requires infrastructure sizing and distributed load testing. The optional k6 harness has not been executed in this environment.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.1.1...v1.1.2)
+
 ## [1.1.1] - 2026-10-19
 
 ### Changed

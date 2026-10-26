@@ -6,8 +6,17 @@ import '@fontsource/saira-condensed/700.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
 import Head from 'next/head';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 
 export default function App({ Component, pageProps }) {
+  const router = useRouter();
+  useEffect(() => {
+    // Keep query overrides current during shallow navigation as well as full page loads.
+    const refresh = () => window.dispatchEvent(new Event('theme-route-change'));
+    router.events.on('routeChangeComplete', refresh);
+    return () => router.events.off('routeChangeComplete', refresh);
+  }, [router.events]);
   return (
     <>
       <Head>

@@ -32,6 +32,9 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/instrumentation.ts`: runtime validation, Console warmup, startup log, and population recorder.
 - `src/assets/`: favicon, application images, and compressed Deep Desert terrain bundles. It is large; do not enumerate it unless necessary.
 - `src/modules/map/terrain/`: lazy WebGL2 terrain renderer; the flat Deep Desert image is its compatibility fallback.
+- `src/modules/theme/`: local calendar theme matrix, pure resolver, and pre-paint browser controller; `/api/theme-script` serves CSP-compatible JavaScript. Palette styles live in `src/styles/global.css`.
+- `src/modules/bot/server/`: versioned read-only service API for sanitized guild-wide world data; separate `BOT_API_TOKEN` authorization, no browser session impersonation.
+- `src/lib/api-capacity.ts`: per-worker API admission budget before Redis work. Read-cache overflow returns 503; realtime snapshots coalesce for one second after per-request authorization. `tests/load/dashboard.k6.js` is the optional staging load harness.
 - `src/modules/map/server/realtime.ts`: Console snapshots available to all signed-in dashboard members of the configured guild; `hooks/useRealtimeData.ts` polls every two seconds with instance selection. No separate realtime role is required; anonymous player/vehicle objects are excluded.
 - `tests/`: API, architecture, unit, browser, helpers, and `smoke-production.mjs`.
 - Root runtime behavior: `middleware.ts` and `next.config.ts`.

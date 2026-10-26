@@ -11,6 +11,9 @@ const serverEnvSchema = z.object({
     .refine((value) => !/[\s\u0000-\u001f\u007f]/u.test(value))
     .default('127.0.0.1'),
   SERVER_PORT: z.coerce.number().int().min(1).max(65_535).default(2008),
+  API_MAX_CONCURRENCY: z.coerce.number().int().min(1).max(10_000).default(100),
+  API_GLOBAL_READ_LIMIT: z.coerce.number().int().min(1).max(100_000_000).default(2400),
+  BOT_API_TOKEN: z.string().min(32).max(256).optional(),
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_API_KEY: z.string().min(1).optional(),
   ADAPTER_TOKEN: z.string().min(1).optional(),

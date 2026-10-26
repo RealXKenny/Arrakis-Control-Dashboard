@@ -4,7 +4,9 @@ import { once } from 'node:events';
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { createRedisFixture } from './helpers/redis-resp.mjs';
+import { announceReadiness } from '../src/config/server-launcher.mjs';
 
 let revoked = false;
 let upstreamReads = 0;
@@ -87,6 +89,7 @@ const child = spawn(
       VERIFIED_MEMBER_ROLE_ID: 'fixture-role',
       APP_URL: base,
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
+      BOT_API_TOKEN: 'fixture-independent-bot-api-credential-32',
     },
   },
 );
@@ -117,6 +120,11 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   assert.ok(ready, 'Production server must serve /portal');
+  const readinessMessages = [];
+  await announceReadiness(`${base}/portal`, new AbortController().signal, {
+    write: (message) => readinessMessages.push(message),
+  });
+  assert.deepEqual(readinessMessages, ['Ready in — Arrakis Control Dashboard is listening (HTTP check passed).']);
   for (const [asset, contentType] of [
     ['/favicon.ico', 'image/x-icon'],
     ['/maps/atreides.webp', 'image/webp'],
@@ -130,9 +138,35 @@ try {
   }
   const sessionCookie = '__Host-dashboard_session=fixture-session';
   const home = await fetch(`${base}/`, { headers: { cookie: sessionCookie } });
+  const themeScript = await fetch(`${base}/api/theme-script`);
+  assert.equal(themeScript.status, 200);
+  assert.match(themeScript.headers.get('content-type'), /application\/javascript/);
+  const themeRoot = { dataset: {} };
+  runInNewContext(await themeScript.text(), {
+    Date,
+    URLSearchParams,
+    setTimeout: () => 0,
+    clearTimeout: () => {},
+    window: { location: { search: '?theme=halloween' }, addEventListener: () => {} },
+    document: { documentElement: themeRoot, addEventListener: () => {} },
+  });
+  assert.equal(themeRoot.dataset.theme, 'halloween', 'production theme script executes without bundler closures');
+  const botDenied = await fetch(`${base}/api/v1/bot/world`);
+  assert.equal(botDenied.status, 401);
+  const botWorld = await fetch(`${base}/api/v1/bot/world?map=DeepDesert`, {
+    headers: { Authorization: 'Bearer fixture-independent-bot-api-credential-32' },
+  });
+  assert.equal(botWorld.status, 200);
+  const botReading = await botWorld.json();
+  assert.equal(botReading.apiVersion, '1');
+  assert.equal(botReading.data.map, 'DeepDesert');
+  assert.equal(botReading.data.rows, undefined, 'bot receives normalized world data only');
+  assert.match(botWorld.headers.get('cache-control'), /no-store/);
   assert.equal(home.status, 200, 'homepage with a session cookie');
   assert.match(await home.text(), /"isAuthenticated":true/);
   const routes = [
+    'theme-script',
+    'v1/bot/world',
     'auth/login',
     'auth/callback',
     'auth/logout',

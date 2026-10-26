@@ -7,7 +7,7 @@
   top: 0;
   z-index: 40;
   padding: 12px 0;
-  background: #100905eb;
+  background: var(--theme-masthead, #100905eb);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid #d2a85a20;
 }

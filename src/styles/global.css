@@ -3,12 +3,14 @@
   --theme-muted: #b9a185;
   --theme-gold: #d2a85a;
   --theme-border: #503521;
+  --theme-background: #100905;
+  --theme-glow: #54321b;
   color-scheme: dark;
   font-family: 'Saira', system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.5;
-  color: #ffe2a9;
-  background: #100905;
+  color: var(--theme-text);
+  background: var(--theme-background);
 }
 * {
   box-sizing: border-box;
@@ -19,7 +21,7 @@ body {
   min-height: 100vh;
 }
 body {
-  background: radial-gradient(ellipse at 50% 0%, #54321b, #100905 65%);
+  background: radial-gradient(ellipse at 50% 0%, var(--theme-glow), var(--theme-background) 65%);
 }
 #__next {
   width: 100%;
@@ -42,7 +44,7 @@ button:disabled {
   cursor: default;
 }
 a {
-  color: #dfb46d;
+  color: var(--theme-link, #dfb46d);
 }
 :focus-visible {
   outline: 2px solid #73cbd2;
@@ -50,7 +52,78 @@ a {
 }
 html {
   scrollbar-width: thin;
-  scrollbar-color: #625035 #100905;
+  scrollbar-color: var(--theme-scrollbar, #625035) var(--theme-background);
+}
+/* Color-only palettes preserve layout, chart semantics, and the existing dark UI contrast. */
+:root[data-theme-palette] {
+  --theme-link: var(--theme-gold);
+  --theme-scrollbar: var(--theme-border);
+  --theme-masthead: color-mix(in srgb, var(--theme-background) 92%, transparent);
+}
+:root[data-theme-palette='gold'] {
+  --theme-gold: #f0ca7c;
+  --theme-glow: #59401b;
+}
+:root[data-theme-palette='ice'] {
+  --theme-text: #e0efff;
+  --theme-muted: #acbdd1;
+  --theme-gold: #98d5f2;
+  --theme-border: #3b5269;
+  --theme-background: #090f18;
+  --theme-glow: #243e57;
+}
+:root[data-theme-palette='rose'] {
+  --theme-text: #ffe0e9;
+  --theme-muted: #d0aaba;
+  --theme-gold: #f4a3bf;
+  --theme-border: #6b3b50;
+  --theme-background: #180b12;
+  --theme-glow: #572539;
+}
+:root[data-theme-palette='green'] {
+  --theme-text: #e0f3d9;
+  --theme-muted: #afc6a8;
+  --theme-gold: #a9d980;
+  --theme-border: #3e5b38;
+  --theme-background: #0b130b;
+  --theme-glow: #294528;
+}
+:root[data-theme-palette='spring'] {
+  --theme-text: #f0e4ff;
+  --theme-muted: #c6b4d4;
+  --theme-gold: #d6b0f2;
+  --theme-border: #58436b;
+  --theme-background: #130d1b;
+  --theme-glow: #423052;
+}
+:root[data-theme-palette='patriotic'] {
+  --theme-text: #edf0ff;
+  --theme-muted: #b9bed6;
+  --theme-gold: #f1a7ae;
+  --theme-border: #4f567a;
+  --theme-background: #0c1020;
+  --theme-glow: #293459;
+}
+:root[data-theme-palette='autumn'] {
+  --theme-gold: #efb074;
+  --theme-border: #68442a;
+  --theme-glow: #59321c;
+}
+:root[data-theme-palette='spooky'] {
+  --theme-text: #ffe5ca;
+  --theme-muted: #c5adca;
+  --theme-gold: #ffb166;
+  --theme-border: #654072;
+  --theme-background: #120b19;
+  --theme-glow: #42224f;
+}
+:root[data-theme-palette='festive'] {
+  --theme-text: #fff0d6;
+  --theme-muted: #c8bfaa;
+  --theme-gold: #edc67c;
+  --theme-border: #45644c;
+  --theme-background: #0b1511;
+  --theme-glow: #254834;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

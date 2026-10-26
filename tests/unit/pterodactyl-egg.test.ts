@@ -6,6 +6,7 @@ const egg = JSON.parse(readFileSync(resolve('pterodactyl/egg-arrakis-control-das
   meta: { version: string };
   docker_images: Record<string, string>;
   startup: string;
+  config: { startup: string };
   variables: Array<{ env_variable: string; default_value: string; rules: string }>;
 };
 
@@ -15,6 +16,7 @@ describe('Pterodactyl dashboard egg', () => {
     expect(Object.values(egg.docker_images)).toEqual(['ghcr.io/realxkenny/arrakis-control-dashboard:latest']);
     expect(egg.startup).toContain('/opt/arrakis-dashboard');
     expect(egg.startup).toContain('server-launcher.mjs start');
+    expect(JSON.parse(egg.config.startup)).toEqual({ done: 'Arrakis Control Dashboard is listening' });
   });
 
   it('exposes every required production setting and leaves the Wings port alone', () => {
