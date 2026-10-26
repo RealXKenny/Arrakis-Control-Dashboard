@@ -1006,13 +1006,6 @@
     11px 'Saira',
     sans-serif;
 }
-.sceneCoverage {
-  max-width: 360px;
-  padding: 5px 8px;
-  color: #f5dfb4;
-  background: #211d17e6;
-  border-radius: 6px;
-}
 .sceneTools {
   display: flex;
   flex-wrap: wrap;
