@@ -1,5 +1,4 @@
 import './assert-server';
-import { COLORS, formatLogLine } from './log-format.mjs';
 import { getServerEnv } from '../config/env';
 
 const LEVELS = Object.freeze({
@@ -12,7 +11,61 @@ const LEVELS = Object.freeze({
 
 type LogLevel = keyof typeof LEVELS;
 
+const COLORS = Object.freeze({
+  reset: '\u001B[0m',
+  dim: '\u001B[2m',
+  cyan: '\u001B[36m',
+  green: '\u001B[32m',
+  yellow: '\u001B[33m',
+  red: '\u001B[31m',
+  magenta: '\u001B[35m',
+  blue: '\u001B[34m',
+  brightCyan: '\u001B[96m',
+  brightGreen: '\u001B[92m',
+  brightYellow: '\u001B[93m',
+  brightMagenta: '\u001B[95m',
+  brightBlue: '\u001B[94m',
+  brightOrange: '\u001B[38;5;208m',
+  white: '\u001B[37m',
+});
+
 const CLEAR_TERMINAL = '\u001B[2J\u001B[3J\u001B[H';
+
+const LEVEL_COLORS: Record<LogLevel, string> = Object.freeze({
+  DEBUG: COLORS.magenta,
+  INFO: COLORS.green,
+  WARN: COLORS.yellow,
+  ERROR: COLORS.red,
+  FATAL: COLORS.red,
+});
+
+const LEVEL_ICONS: Record<LogLevel, string> = Object.freeze({
+  DEBUG: '◆',
+  INFO: '●',
+  WARN: '▲',
+  ERROR: '✖',
+  FATAL: '✖',
+});
+
+const SCOPE_COLORS: Record<string, string> = Object.freeze({
+  BOT: COLORS.brightYellow,
+  DISCORD: COLORS.brightCyan,
+  'SHARD MANAGER': COLORS.brightMagenta,
+  'PLAYER PANEL': COLORS.brightGreen,
+  'BLUEPRINT PANEL': COLORS.yellow,
+  COMMANDS: COLORS.brightBlue,
+  COMPONENTS: COLORS.magenta,
+  EVENTS: COLORS.green,
+  INTERACTIONS: COLORS.cyan,
+  'DUNE API': COLORS.yellow,
+  'DISCORD ADAPTER': COLORS.brightCyan,
+  'DISCORD AUDIT': COLORS.brightGreen,
+  'DISCORD AUDIT LOG': COLORS.brightMagenta,
+  DASHBOARD: COLORS.brightOrange,
+  HTTP: COLORS.brightGreen,
+  STARTUP: COLORS.brightYellow,
+  default: COLORS.white,
+});
 
 export type LogContext = {
   requestId?: string;
@@ -49,6 +102,23 @@ function redact(value: unknown, key = ''): unknown {
   return value;
 }
 
+function formatTimestamp(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+
+  return `${values.month}/${values.day}/${values.year} ${values.hour}:${values.minute}:${values.second} ${values.dayPeriod}`;
+}
+
 function formatDetails(details: unknown): string {
   if (details === undefined) {
     return '';
@@ -77,6 +147,7 @@ export interface Logger {
 export function createLogger(scope: string, minimumLevel: string = getServerEnv().LOG_LEVEL): Logger {
   const normalizedLevel = minimumLevel.toUpperCase() as LogLevel;
   const threshold = LEVELS[normalizedLevel] ?? LEVELS.INFO;
+  const scopeColor = SCOPE_COLORS[scope] ?? SCOPE_COLORS.default;
 
   function write(level: LogLevel, message: string, details?: unknown): void {
     // Dev note: quiet logs are not shy; they simply missed the threshold.
@@ -84,7 +155,11 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
       return;
     }
 
-    const output = formatLogLine(scope, level, message);
+    const output =
+      `${COLORS.dim}[${formatTimestamp(new Date())}]${COLORS.reset} ` +
+      `${LEVEL_COLORS[level]}${LEVEL_ICONS[level]} [${level}]${COLORS.reset} ` +
+      `${scopeColor}[${scope}]${COLORS.reset} ` +
+      message;
     const safeDetails = redact(details);
     const line = formatDetails(safeDetails);
     const formattedOutput = line ? `${output} ${COLORS.dim}·${COLORS.reset} ${line}` : output;

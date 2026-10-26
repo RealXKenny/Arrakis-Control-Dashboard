@@ -128,12 +128,12 @@ try {
   assert.ok(ready, 'Production server must serve /portal');
   if (mode === 'start') {
     for (let attempt = 0; attempt < 40; attempt++) {
-      if ((logs.match(/Ready in — Arrakis Control Dashboard is listening/g) ?? []).length >= 1) break;
+      if ((logs.match(/Ready in — Arrakis Control Dashboard is listening/g) ?? []).length >= 2) break;
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
     assert.ok(
-      (logs.match(/Ready in — Arrakis Control Dashboard is listening/g) ?? []).length === 1,
-      'HTTP-verified readiness appears once even with LOG_LEVEL=FATAL',
+      (logs.match(/Ready in — Arrakis Control Dashboard is listening/g) ?? []).length >= 2,
+      'Readiness repeats for late panel detection even with LOG_LEVEL=FATAL',
     );
   }
   for (const [asset, contentType] of [

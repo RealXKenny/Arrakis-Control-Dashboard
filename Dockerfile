@@ -20,7 +20,6 @@ COPY --chown=container:container --from=build /opt/arrakis-dashboard/node_module
 COPY --chown=container:container --from=build /opt/arrakis-dashboard/.next/ ./.next/
 COPY --chown=container:container --from=build /opt/arrakis-dashboard/next.config.ts ./
 COPY --chown=container:container --from=build /opt/arrakis-dashboard/src/config/server-launcher.mjs ./src/config/
-COPY --chown=container:container --from=build /opt/arrakis-dashboard/src/lib/log-format.mjs ./src/lib/
 COPY --chown=container:container --from=build /opt/arrakis-dashboard/src/assets/ ./src/assets/
 COPY --chown=container:container --from=build /opt/arrakis-dashboard/CHANGELOG.md ./
 COPY --chown=container:container src/modules/map/terrain/MAPVIEWER3D-LICENSE.txt ./licenses/MapViewer3D.txt

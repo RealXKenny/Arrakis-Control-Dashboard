@@ -2,7 +2,6 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import dotenv from 'dotenv';
-import { formatLogLine } from '../lib/log-format.mjs';
 
 const DEFAULT_HOSTNAME = '127.0.0.1';
 const DEFAULT_PORT = '2008';
@@ -77,26 +76,28 @@ async function probeHttp(url, signal) {
   return response.status === 200;
 }
 
-export async function announceReadiness(
-  url,
-  signal,
-  { probe = probeHttp, write = (message) => console.info(formatLogLine('STARTUP', 'INFO', message)) } = {},
-) {
+export async function announceReadiness(url, signal, { probe = probeHttp, write = console.log } = {}) {
   const started = Date.now();
-  // Dev note: one roll call is enough once the HTTP listener answers.
-  while (!signal.aborted && Date.now() - started < 60000) {
-    let ready = false;
-    try {
-      ready = await probe(url, signal);
-    } catch {
-      /* Startup and shutdown may close the listener. */
+  const repeats = [0, 2000, 5000, 10000, 20000];
+  let readyAt = null,
+    announcement = 0;
+  // Dev note: repeat the roll call briefly, in case Wings was still putting its boots on.
+  while (!signal.aborted && Date.now() - started < 60000 && announcement < repeats.length) {
+    if (readyAt === null || Date.now() - readyAt >= repeats[announcement]) {
+      let ready = false;
+      try {
+        ready = await probe(url, signal);
+      } catch {
+        /* Startup and shutdown may close the listener. */
+      }
+      if (signal.aborted) return;
+      if (ready) {
+        readyAt ??= Date.now();
+        write('Ready in — Arrakis Control Dashboard is listening (HTTP check passed).');
+        announcement++;
+      }
     }
-    if (signal.aborted) return;
-    if (ready) {
-      write('Ready in — Arrakis Control Dashboard is listening (HTTP check passed).');
-      return;
-    }
-    await pause(1000, signal);
+    if (announcement < repeats.length) await pause(1000, signal);
   }
 }
 
