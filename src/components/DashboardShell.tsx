@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import type { ReactNode } from 'react';
 import ChangelogDialog from '../modules/changelog/components/ChangelogDialog';
 import css from './dashboard-shell.module.css';
@@ -39,10 +38,13 @@ export default function DashboardShell({
             as={brandHref.startsWith('/portal?view=') ? '/portal' : undefined}
             className={css.brand}
           >
-            <Image className={css.mark} src="/favicon.ico" alt="" width={32} height={32} priority unoptimized />
+            <svg className={css.mark} viewBox="0 0 32 32" width="36" height="36" fill="none" aria-hidden="true">
+              <rect width="32" height="32" rx="9" fill="currentColor" />
+              <path d="M9 10h6v6H9zm8 0h6v3h-6zm0 5h6v7h-6zm-8 3h6v4H9z" fill="var(--theme-on-accent)" />
+            </svg>
             <span>
               {brand}
-              <small className={css.visuallyHidden}>{subtitle}</small>
+              <small className={css.subtitle}>{subtitle}</small>
             </span>
           </Link>
           <div className={css.actions}>{actions}</div>
@@ -86,9 +88,9 @@ export default function DashboardShell({
       </main>
       <footer className={css.footer}>
         <div>
-          {brand} · Dune: Awakening · <ChangelogDialog />
+          {brand} · <ChangelogDialog />
         </div>
-        <span>Explore. Prepare. Endure.</span>
+        <span>Your community. Connected.</span>
       </footer>
     </div>
   );

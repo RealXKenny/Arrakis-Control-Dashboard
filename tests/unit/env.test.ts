@@ -27,6 +27,7 @@ it('accepts the portal environment template', async () => {
   expect(env.API_MAX_CONCURRENCY).toBe(100);
   expect(env.API_GLOBAL_READ_LIMIT).toBe(2400);
   expect(env.BOT_API_TOKEN).toBeUndefined();
+  expect(env.ADMIN_CONSOLE_API_KEY).toBeUndefined();
 });
 
 it.each([

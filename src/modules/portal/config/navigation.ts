@@ -25,6 +25,6 @@ export function portalNavigation(view: PortalView): NavigationItem[] {
     { label: 'Storage', group: 'Holdings', href: '/portal?view=storage', active: view === 'storage' },
     { label: 'My bases', group: 'Holdings', href: '/portal?view=bases', active: view === 'bases' },
     { label: 'Vehicles', group: 'Holdings', href: '/portal?view=vehicles', active: view === 'vehicles' },
-    { label: 'Guild', group: 'Sietch', href: '/portal?view=guild', active: view === 'guild' },
+    { label: 'Guild', group: 'Community', href: '/portal?view=guild', active: view === 'guild' },
   ];
 }

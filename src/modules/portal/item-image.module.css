@@ -7,7 +7,11 @@
   flex: 0 0 56px;
   vertical-align: middle;
   border-radius: 8px;
-  background: radial-gradient(circle, #d4a86918, #100b0780);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--theme-muted) 9%, transparent),
+    color-mix(in srgb, var(--theme-surface) 50%, transparent)
+  );
 }
 .frame img {
   width: 100%;
@@ -21,6 +25,6 @@
   flex-basis: 112px;
 }
 .fallback {
-  color: #a78c69;
+  color: var(--theme-muted);
   font-size: 28px;
 }

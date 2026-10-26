@@ -150,13 +150,21 @@ export default function BaseInventory({
             </p>
             <h3 style={{ margin: 0, color: COLORS.text, fontSize: '1.25rem', letterSpacing: '-0.02em' }}>{baseName}</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-              <div style={{ width: 120, height: 5, overflow: 'hidden', borderRadius: 99, background: '#090604' }}>
+              <div
+                style={{
+                  width: 120,
+                  height: 5,
+                  overflow: 'hidden',
+                  borderRadius: 99,
+                  background: 'var(--theme-surface)',
+                }}
+              >
                 <div
                   style={{
                     width: `${fillPercent}%`,
                     height: '100%',
                     borderRadius: 99,
-                    background: `linear-gradient(90deg, ${COLORS.gold}, #f0c66b)`,
+                    background: `linear-gradient(90deg, ${COLORS.gold}, var(--theme-soft))`,
                   }}
                 />
               </div>
@@ -232,8 +240,8 @@ export default function BaseInventory({
                         cursor: 'pointer',
                         padding: '11px 13px',
                         borderRadius: 8,
-                        border: `1px solid ${active ? 'rgba(210,168,90,0.35)' : COLORS.borderLight}`,
-                        background: active ? 'rgba(210,168,90,0.1)' : '#ffffff03',
+                        border: `1px solid ${active ? 'color-mix(in srgb, var(--theme-accent) 35%, transparent)' : COLORS.borderLight}`,
+                        background: active ? 'color-mix(in srgb, var(--theme-accent) 10%, transparent)' : '#ffffff03',
                         color: active ? COLORS.text : COLORS.textSoft,
                         minHeight: 54,
                       }}
@@ -258,14 +266,20 @@ export default function BaseInventory({
                           {formatNumber(container.itemCount ?? 0, 0)} items
                         </span>
                         <span
-                          style={{ width: 40, height: 3, overflow: 'hidden', borderRadius: 99, background: '#090604' }}
+                          style={{
+                            width: 40,
+                            height: 3,
+                            overflow: 'hidden',
+                            borderRadius: 99,
+                            background: 'var(--theme-surface)',
+                          }}
                         >
                           <span
                             style={{
                               display: 'block',
                               width: `${container.maxSlots ? Math.min(100, ((container.usedSlots ?? 0) / container.maxSlots) * 100) : 0}%`,
                               height: '100%',
-                              background: active ? COLORS.gold : '#80613d',
+                              background: active ? COLORS.gold : 'var(--theme-border)',
                             }}
                           />
                         </span>
@@ -317,7 +331,7 @@ export default function BaseInventory({
                       marginTop: 4,
                       padding: '7px 9px',
                       color: COLORS.text,
-                      background: '#090604',
+                      background: 'var(--theme-surface)',
                       border: `1px solid ${COLORS.border}`,
                       borderRadius: 6,
                       outline: 'none',

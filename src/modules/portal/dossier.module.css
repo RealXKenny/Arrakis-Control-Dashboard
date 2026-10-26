@@ -4,40 +4,18 @@
   padding: 24px;
   margin-bottom: 18px;
   border: 1px solid var(--theme-border);
-  border-radius: 3px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 3px, #d2a85a03 3px 4px), linear-gradient(145deg, #2b1c12, #180f09);
-}
-.panel::before,
-.panel::after {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  pointer-events: none;
-  opacity: 0.65;
-}
-.panel::before {
-  top: 7px;
-  left: 7px;
-  border-top: 1px solid var(--theme-gold);
-  border-left: 1px solid var(--theme-gold);
-}
-.panel::after {
-  bottom: 7px;
-  right: 7px;
-  border-bottom: 1px solid var(--theme-gold);
-  border-right: 1px solid var(--theme-gold);
+  border-radius: 10px;
+  background: var(--theme-surface);
 }
 .panel h2 {
   margin: 0 0 20px;
   font:
-    600 12px/1.5 'JetBrains Mono',
+    600 12px/1.5 var(--font-mono),
     ui-monospace,
     monospace;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--theme-gold);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--theme-accent);
 }
 .panel p {
   color: var(--theme-muted);
@@ -56,7 +34,7 @@
 }
 .identity h2 {
   font-size: 28px;
-  letter-spacing: 1px;
+  letter-spacing: 0.02em;
   color: var(--theme-text);
   margin: 0;
 }
@@ -74,9 +52,9 @@
 .guildFacts dt {
   color: var(--theme-muted);
   font:
-    10px/1.5 'JetBrains Mono',
+    10px/1.5 var(--font-mono),
     monospace;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .guildFacts dd {
   margin: 6px 0 0;
@@ -103,7 +81,7 @@
   min-width: 0;
   padding: 16px;
   border: 1px solid var(--theme-border);
-  background: #120b0790;
+  background: color-mix(in srgb, var(--theme-surface) 56%, transparent);
 }
 .rankHeader {
   display: flex;
@@ -115,17 +93,17 @@
 }
 .rankHeader h3 {
   margin: 0;
-  color: var(--theme-gold);
+  color: var(--theme-accent);
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     monospace;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 .rankHeader > span {
   color: var(--theme-muted);
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     monospace;
 }
 .rankMembers {
@@ -163,25 +141,25 @@
   place-items: center;
   font-size: 40px;
   border: 1px solid var(--theme-border);
-  background: #120b06;
-  color: var(--theme-gold);
+  background: var(--theme-surface);
+  color: var(--theme-accent);
 }
 .avatarEditable {
   cursor: pointer;
 }
 .avatarEditable:hover,
 .avatarEditable:focus-within {
-  border-color: var(--theme-gold);
+  border-color: var(--theme-accent);
 }
 .uploadOverlay {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  background: #080503b8;
-  color: var(--theme-gold);
+  background: color-mix(in srgb, var(--theme-surface) 72%, transparent);
+  color: var(--theme-accent);
   font:
-    28px 'JetBrains Mono',
+    28px var(--font-mono),
     monospace;
   opacity: 0;
   transition: opacity 120ms ease;
@@ -205,10 +183,10 @@
   border: 1px solid var(--theme-border);
   border-radius: 20px;
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     ui-monospace,
     monospace;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .metrics {
   display: grid;
@@ -219,7 +197,7 @@
 .metrics div {
   padding: 18px 12px;
   border: 1px solid var(--theme-border);
-  background: #110b0790;
+  background: color-mix(in srgb, var(--theme-surface) 56%, transparent);
 }
 .metrics dt,
 .facts dt {
@@ -244,7 +222,7 @@
 }
 .facts dd {
   margin: 0;
-  color: var(--theme-gold);
+  color: var(--theme-accent);
 }
 .toolbar {
   display: flex;
@@ -273,7 +251,7 @@
 }
 .equipment li > span {
   font-size: 28px;
-  color: var(--theme-gold);
+  color: var(--theme-accent);
 }
 .equipment strong {
   font-size: 14px;
@@ -286,9 +264,9 @@
 }
 .equipment b {
   margin-left: auto;
-  color: var(--theme-gold);
+  color: var(--theme-accent);
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     ui-monospace,
     monospace;
 }
@@ -305,7 +283,7 @@
 }
 .panel .balance {
   font-size: 32px;
-  color: var(--theme-gold);
+  color: var(--theme-accent);
   margin: 14px 0 0;
 }
 .readonly {
@@ -321,8 +299,8 @@
   display: grid;
   place-items: center;
   font-size: 100px;
-  color: var(--theme-gold);
-  background: radial-gradient(ellipse, #d2a85a18, transparent 65%);
+  color: var(--theme-accent);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--theme-accent) 9%, transparent), transparent 65%);
 }
 .containers {
   display: grid;
@@ -331,18 +309,18 @@
 .panel button {
   border: 1px solid var(--theme-border);
   padding: 10px 12px;
-  background: #160e09;
+  background: var(--theme-surface);
   color: var(--theme-muted);
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     ui-monospace,
     monospace;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .panel button[aria-pressed='true'] {
-  border-color: var(--theme-gold);
-  color: var(--theme-gold);
-  background: #d2a85a12;
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
+  background: color-mix(in srgb, var(--theme-accent) 7%, transparent);
 }
 .containers button {
   display: flex;
@@ -362,12 +340,12 @@
   margin-top: 8px;
   padding: 12px;
   border: 1px solid var(--theme-border);
-  background: #120b07;
+  background: var(--theme-surface);
   color: var(--theme-text);
 }
 .caption {
   font:
-    11px/1.7 'JetBrains Mono',
+    11px/1.7 var(--font-mono),
     ui-monospace,
     monospace;
 }
@@ -386,7 +364,7 @@
 .itemList li {
   min-width: 0;
   border: 1px solid var(--theme-border);
-  background: #130c08;
+  background: var(--theme-surface);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -409,16 +387,16 @@
 }
 .items b,
 .itemList b {
-  color: var(--theme-gold);
+  color: var(--theme-accent);
   font:
-    12px 'JetBrains Mono',
+    12px var(--font-mono),
     ui-monospace,
     monospace;
 }
 .itemSymbol {
   font-size: 36px;
   text-align: center;
-  color: var(--theme-gold);
+  color: var(--theme-accent);
   padding: 8px;
 }
 .itemList li {
@@ -480,7 +458,7 @@
 }
 .instrumentValue {
   font:
-    700 clamp(24px, 2.2vw, 40px)/1.1 'Saira Condensed',
+    700 clamp(24px, 2.2vw, 40px)/1.1 var(--font-sans),
     sans-serif;
   color: var(--theme-text);
 }
@@ -491,7 +469,7 @@
 }
 .summaryRow h3 {
   font:
-    700 28px/1.15 'Saira Condensed',
+    700 28px/1.15 var(--font-sans),
     sans-serif;
   color: var(--theme-text);
   margin: 16px 0;
@@ -499,11 +477,11 @@
 .summaryRow a {
   display: inline-block;
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     ui-monospace,
     monospace;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  text-transform: none;
+  letter-spacing: 0.02em;
   padding-top: 16px;
 }
 @media (max-width: 900px) {
@@ -517,12 +495,12 @@
 
 .identity h2 {
   font:
-    700 31px/1.2 'Saira Condensed',
+    700 31px/1.2 var(--font-sans),
     sans-serif;
 }
 .panel h2 {
   font-size: 11px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.02em;
   font-weight: 400;
 }
 .panel p {
@@ -531,13 +509,13 @@
 }
 .metrics dt {
   font:
-    10px/1.5 'JetBrains Mono',
+    10px/1.5 var(--font-mono),
     monospace;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .metrics dd {
   font:
-    600 24px/1.3 'Saira Condensed',
+    600 24px/1.3 var(--font-sans),
     sans-serif;
 }
 .columns > div:last-child > section:first-child .metrics {
@@ -546,7 +524,7 @@
 
 .panel.identity h2 {
   font:
-    700 31px/1.2 'Saira Condensed',
+    700 31px/1.2 var(--font-sans),
     sans-serif;
   letter-spacing: 0.01em;
 }
@@ -558,13 +536,10 @@
 }
 .panel {
   border-radius: 14px;
-  background: linear-gradient(140deg, #291b12, #19100b);
-  border-color: #65482f;
+  background: linear-gradient(140deg, var(--theme-surface), var(--theme-surface));
+  border-color: var(--theme-border);
 }
 .panel::before,
-.panel::after {
-  display: none;
-}
 .containerArt {
   font-size: 48px;
   padding: 16px;
@@ -574,9 +549,9 @@
   padding: 30px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 92% 8%, #c9993a14, transparent 28%),
-    linear-gradient(135deg, #2c1b11 0%, #1b100a 58%, #140b07 100%);
-  box-shadow: 0 18px 45px #08050355;
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--theme-muted) 8%, transparent), transparent 28%),
+    linear-gradient(135deg, var(--theme-surface) 0%, var(--theme-surface) 58%, var(--theme-surface) 100%);
+  box-shadow: 0 18px 45px color-mix(in srgb, var(--theme-surface) 33%, transparent);
 }
 .guildPanel > h2 {
   display: flex;
@@ -594,20 +569,28 @@
   align-items: center;
   gap: 22px;
   padding: 22px;
-  border: 1px solid #d2a85a2e;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 18%, transparent);
   border-radius: 10px;
-  background: linear-gradient(110deg, #120b08aa, #2b1b1028);
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--theme-surface) 67%, transparent),
+    color-mix(in srgb, var(--theme-surface) 16%, transparent)
+  );
 }
 .guildPanel .avatar {
   flex: 0 0 96px;
   width: 96px;
   height: 96px;
-  border-color: #d2a85a70;
+  border-color: color-mix(in srgb, var(--theme-accent) 44%, transparent);
   border-radius: 12px;
-  background: radial-gradient(circle, #d2a85a18, #0f0906 70%);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--theme-accent) 9%, transparent),
+    var(--theme-surface) 70%
+  );
   box-shadow:
     inset 0 0 22px #00000055,
-    0 0 0 5px #0d080533;
+    0 0 0 5px color-mix(in srgb, var(--theme-surface) 20%, transparent);
 }
 .guildPanel .avatar img {
   width: 82px;
@@ -621,7 +604,7 @@
   margin: 0;
   color: var(--theme-text);
   font:
-    700 clamp(24px, 3vw, 38px)/1.05 'Saira Condensed',
+    700 clamp(24px, 3vw, 38px)/1.05 var(--font-sans),
     sans-serif;
   letter-spacing: 0.01em;
   overflow-wrap: anywhere;
@@ -630,14 +613,14 @@
   display: inline-block;
   margin: 12px 0 0;
   padding: 5px 9px;
-  border: 1px solid #d2a85a35;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 21%, transparent);
   border-radius: 999px;
-  color: var(--theme-gold);
-  background: #d2a85a0d;
+  color: var(--theme-accent);
+  background: color-mix(in srgb, var(--theme-accent) 5%, transparent);
   font:
-    10px 'JetBrains Mono',
+    10px var(--font-mono),
     monospace;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.08em;
 }
 .guildPanel .identity p.guildDescription {
@@ -646,10 +629,10 @@
   margin-top: 14px;
   padding: 0;
   border: 0;
-  color: #b9a185;
+  color: var(--theme-muted);
   background: transparent;
   font:
-    14px/1.65 'Saira',
+    14px/1.65 var(--font-sans),
     sans-serif;
   letter-spacing: 0;
   text-transform: none;
@@ -667,13 +650,13 @@
 .guildPanel .guildFacts > div {
   flex: 1;
   padding: 14px 16px;
-  border: 1px solid #d2a85a22;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 13%, transparent);
   border-radius: 8px;
-  background: #0e0805aa;
+  background: color-mix(in srgb, var(--theme-surface) 67%, transparent);
 }
 .guildPanel .guildFacts dd {
   font:
-    600 22px/1.2 'Saira Condensed',
+    600 22px/1.2 var(--font-sans),
     sans-serif;
 }
 .guildPanel .rankGrid {
@@ -683,9 +666,9 @@
 .guildPanel .rankCard {
   min-height: 142px;
   padding: 18px;
-  border-color: #d2a85a2e;
+  border-color: color-mix(in srgb, var(--theme-accent) 18%, transparent);
   border-radius: 9px;
-  background: linear-gradient(160deg, #21140d, #100906);
+  background: linear-gradient(160deg, var(--theme-surface), var(--theme-surface));
   transition:
     transform 150ms ease,
     border-color 150ms ease,
@@ -693,36 +676,36 @@
 }
 .guildPanel .rankCard:hover {
   transform: translateY(-2px);
-  border-color: #d2a85a68;
-  background: linear-gradient(160deg, #29190f, #130a06);
+  border-color: color-mix(in srgb, var(--theme-accent) 41%, transparent);
+  background: linear-gradient(160deg, var(--theme-surface), var(--theme-surface));
 }
 .guildPanel .rankCard:nth-child(1) {
-  border-top: 2px solid #e0b568;
+  border-top: 2px solid var(--theme-muted);
 }
 .guildPanel .rankCard:nth-child(2) {
   border-top: 2px solid #b9c5c4;
 }
 .guildPanel .rankCard:nth-child(3) {
-  border-top: 2px solid #9c6f48;
+  border-top: 2px solid var(--theme-muted);
 }
 .guildPanel .rankHeader {
   padding-bottom: 14px;
-  border-bottom-color: #d2a85a2e;
+  border-bottom-color: color-mix(in srgb, var(--theme-accent) 18%, transparent);
 }
 .guildPanel .rankHeader h3 {
   color: var(--theme-text);
   font-size: 12px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.02em;
 }
 .guildPanel .rankHeader > span {
   display: grid;
   width: 24px;
   height: 24px;
   place-items: center;
-  border: 1px solid #d2a85a35;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 21%, transparent);
   border-radius: 50%;
-  color: var(--theme-gold);
-  background: #d2a85a0d;
+  color: var(--theme-accent);
+  background: color-mix(in srgb, var(--theme-accent) 5%, transparent);
 }
 .guildPanel .rankMembers li {
   padding: 14px 0 6px;
@@ -732,14 +715,14 @@
 }
 .guildPanel .emptyRank {
   padding-top: 6px;
-  color: #907d69;
+  color: var(--theme-muted);
   font-style: italic;
 }
 .guildFooter {
   margin: 24px 0 0;
   padding-top: 18px;
-  border-top: 1px solid #d2a85a22;
-  color: #a89176 !important;
+  border-top: 1px solid color-mix(in srgb, var(--theme-accent) 13%, transparent);
+  color: var(--theme-muted) !important;
 }
 @media (max-width: 700px) {
   .guildPanel {

@@ -14,19 +14,19 @@
 }
 .header {
   padding-bottom: 16px;
-  border-bottom: 1px solid #6b452d66;
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 40%, transparent);
 }
 .eyebrow {
-  color: #cda26b;
+  color: var(--theme-muted);
   font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.02em;
   margin: 0 0 5px;
 }
 .board button {
-  border: 1px solid #3c2415;
-  background: #17110d;
-  color: #cda26b;
+  border: 1px solid var(--theme-raised);
+  background: var(--theme-surface);
+  color: var(--theme-muted);
   padding: 8px 12px;
   border-radius: 6px;
   font: inherit;
@@ -49,7 +49,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 16px;
-  border: 1px solid #3c2415;
+  border: 1px solid var(--theme-raised);
   border-radius: 6px;
 }
 .summary span,
@@ -58,17 +58,17 @@
 }
 .summary span,
 .notice {
-  color: #a08568;
+  color: var(--theme-muted);
   font-size: 0.75rem;
 }
 .summary strong {
-  color: #ffe2a9;
+  color: var(--theme-text);
   margin-top: 5px;
 }
 .search {
   display: block;
   text-align: left;
-  color: #dbc19a;
+  color: var(--theme-soft);
   font-size: 0.85rem;
   margin: 18px 0;
 }
@@ -77,15 +77,15 @@
   width: 100%;
   margin-top: 8px;
   padding: 12px;
-  background: #17110d;
-  border: 1px solid #3c2415;
-  border-radius: 4px;
-  color: #ffe2a9;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-raised);
+  border-radius: 10px;
+  color: var(--theme-text);
 }
 .tableViewport {
   max-height: 380px;
   overflow: auto;
-  border: 1px solid #3c2415;
+  border: 1px solid var(--theme-raised);
   border-radius: 6px;
 }
 .board table {
@@ -103,17 +103,17 @@
 .board th {
   position: sticky;
   top: 0;
-  background: #1d120c;
-  color: #a08568;
+  background: var(--theme-surface);
+  color: var(--theme-muted);
   font-size: 0.7rem;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .board th:first-child,
 .board td:first-child {
   text-align: left;
 }
 .board td {
-  color: #dbc19a;
+  color: var(--theme-soft);
 }
 .board td.empty {
   text-align: center;
@@ -122,10 +122,10 @@
 .pagination {
   margin-top: 18px;
   padding: 14px 16px;
-  border: 1px solid #65482f;
+  border: 1px solid var(--theme-border);
   border-radius: 10px;
-  background: #18100c;
-  color: #a08568;
+  background: var(--theme-surface);
+  color: var(--theme-muted);
   font-size: 0.78rem;
 }
 .pagination button {
@@ -159,30 +159,30 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #ffe2a9;
+  color: var(--theme-text);
 }
 .board .itemButton:hover,
 .board .itemButton[aria-pressed='true'] {
-  color: #d2a85a;
+  color: var(--theme-accent);
   text-decoration: underline;
 }
 .summary strong {
   font:
-    700 32px 'Saira Condensed',
+    700 32px var(--font-sans),
     sans-serif;
 }
 .summary > div {
-  background: #130c08;
+  background: var(--theme-surface);
   border-radius: 2px;
-  border-color: #503521;
+  border-color: var(--theme-border);
   padding: 22px;
 }
 .summary span {
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: #b9a185;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: var(--theme-muted);
   font:
-    10px 'JetBrains Mono',
+    10px var(--font-mono),
     ui-monospace,
     monospace;
 }
@@ -207,9 +207,9 @@
   flex-wrap: wrap;
   margin-bottom: 14px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #65482f66;
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 40%, transparent);
   font:
-    11px 'JetBrains Mono',
+    11px var(--font-mono),
     monospace;
   color: var(--theme-muted);
 }
@@ -219,17 +219,17 @@
   padding: 6px 10px;
 }
 .filters button[aria-pressed='true'] {
-  border-color: var(--theme-gold);
-  color: var(--theme-gold);
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
 }
 .filters select {
-  background: #160e09;
+  background: var(--theme-surface);
   border: 1px solid var(--theme-border);
   color: var(--theme-text);
   padding: 8px;
   margin-left: 8px;
   font:
-    12px 'JetBrains Mono',
+    12px var(--font-mono),
     monospace;
 }
 .tableViewport {
@@ -256,7 +256,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   border: 1px solid var(--theme-border);
-  background: #130c08;
+  background: var(--theme-surface);
   padding: 10px 12px;
   gap: 5px 12px;
 }
@@ -264,14 +264,14 @@
   border: 0;
   padding: 0;
   font:
-    10px/1.5 'JetBrains Mono',
+    10px/1.5 var(--font-mono),
     monospace;
 }
 .board td:first-child {
   grid-column: 1/3;
   grid-row: 1;
   font:
-    13px/1.5 'Saira',
+    13px/1.5 var(--font-sans),
     sans-serif;
 }
 .board td:nth-child(2) {
@@ -296,28 +296,28 @@
 .board td:nth-child(5) {
   grid-column: 3;
   grid-row: 1;
-  color: var(--theme-gold);
+  color: var(--theme-accent);
   font-size: 13px;
 }
 .board td:nth-child(6) {
   grid-column: 1 / -1;
   grid-row: 3;
   padding-top: 8px;
-  border-top: 1px solid #65482f66;
-  color: #f1c979;
+  border-top: 1px solid color-mix(in srgb, var(--theme-border) 40%, transparent);
+  color: var(--theme-soft);
   text-align: left;
   font-size: 11px;
 }
 .board td:nth-child(6)::before {
   content: 'Suggested sell · ';
-  color: #a88d6d;
-  text-transform: uppercase;
+  color: var(--theme-muted);
+  text-transform: none;
   letter-spacing: 0.08em;
   font-size: 9px;
 }
 .board .itemButton {
   font:
-    13px/1.5 'Saira',
+    13px/1.5 var(--font-sans),
     sans-serif;
 }
 .board td.empty {
@@ -344,7 +344,7 @@
 .workspace > div {
   padding: 20px;
   border: 1px solid var(--theme-border);
-  background: linear-gradient(145deg, #2b1c12, #180f09);
+  background: linear-gradient(145deg, var(--theme-surface), var(--theme-surface));
 }
 .workspace .search {
   margin-top: 0;
@@ -356,12 +356,12 @@
 }
 .workspace > div {
   border-radius: 14px;
-  border-color: #65482f;
-  background: linear-gradient(140deg, #291b12, #19100b);
+  border-color: var(--theme-border);
+  background: linear-gradient(140deg, var(--theme-surface), var(--theme-surface));
 }
 .board tr {
   border-radius: 10px;
-  border-color: #65482f;
+  border-color: var(--theme-border);
 }
 .board tr:has(td.empty) {
   grid-column: 1 / -1;

@@ -13,6 +13,7 @@ export class NextResponse {
   body: string | null;
   readonly status: number;
   readonly headers: Record<string, string>;
+  stream?: { body: ReadableStream<Uint8Array>; maximumBytes: number; cleanup?: () => void };
 
   constructor(body: string | null = null, init: ResponseInit = {}) {
     this.body = body;
@@ -38,7 +39,7 @@ export class NextResponse {
   }
 }
 
-function sendNextResponse(res, response: NextResponse) {
+async function sendNextResponse(res, response: NextResponse) {
   for (const [name, value] of Object.entries(response.headers || {})) {
     res.setHeader(name, value);
   }
@@ -47,6 +48,65 @@ function sendNextResponse(res, response: NextResponse) {
   res.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
 
   res.status(response.status);
+
+  if (response.stream) {
+    const stream = response.stream;
+    const reader = stream.body.getReader();
+    let bytes = 0;
+    let completed = false;
+    let disconnected = false;
+    const disconnect = () => {
+      disconnected = true;
+      void reader.cancel().catch(() => {});
+    };
+    res.once('close', disconnect);
+    try {
+      while (!disconnected) {
+        const part = await reader.read();
+        if (part.done) {
+          completed = true;
+          break;
+        }
+        bytes += part.value.byteLength;
+        if (bytes > stream.maximumBytes) throw new Error('Response transfer limit exceeded');
+        if (!res.write(Buffer.from(part.value))) {
+          // One drain wait at a time, with listeners removed on every completion path.
+          await new Promise<void>((resolve, reject) => {
+            const cleanup = () => {
+              res.removeListener('drain', drained);
+              res.removeListener('close', closed);
+              res.removeListener('error', failed);
+            };
+            const drained = () => {
+              cleanup();
+              resolve();
+            };
+            const closed = () => {
+              cleanup();
+              reject(new Error('Client disconnected'));
+            };
+            const failed = (error: Error) => {
+              cleanup();
+              reject(error);
+            };
+            res.once('drain', drained);
+            res.once('close', closed);
+            res.once('error', failed);
+          });
+        }
+      }
+      if (!disconnected) res.end();
+    } catch (error) {
+      res.destroy();
+      throw error;
+    } finally {
+      res.removeListener('close', disconnect);
+      if (!completed) await reader.cancel().catch(() => {});
+      reader.releaseLock();
+      stream.cleanup?.();
+    }
+    return;
+  }
 
   if (response.body === null || response.body === undefined) {
     return res.end();
@@ -178,7 +238,7 @@ export async function runPagesApiHandler(req, res, method, handler) {
         durationMs: Date.now() - startedAt,
       });
     }
-    sendNextResponse(res, response);
+    await sendNextResponse(res, response);
   } catch (error) {
     const safeError = getSafeError(error);
     log.error('Failed to load data', error);
