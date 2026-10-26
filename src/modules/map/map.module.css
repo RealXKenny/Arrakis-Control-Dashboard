@@ -992,9 +992,6 @@
 :global(.live-map-marker[data-model-prominent='true']) {
   background-image: none !important;
 }
-:global(.live-map-marker[data-model-prominent='true'] > .realtime-symbol) {
-  display: none !important;
-}
 .sceneHud {
   position: absolute;
   inset: 0;

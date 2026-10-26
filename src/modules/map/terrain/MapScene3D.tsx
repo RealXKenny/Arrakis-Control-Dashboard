@@ -147,8 +147,7 @@ export default function MapScene3D(props: Props) {
           return;
         }
         controls.target.copy(terrainPoint(x, y, z, map));
-        const distance =
-          marker.type === 'vehicle' ? 85 : marker.type === 'base' ? 240 : marker.type === 'worm' ? 180 : 500;
+        const distance = marker.type === 'vehicle' ? 85 : marker.type === 'base' ? 240 : 500;
         camera.position.copy(controls.target).add(new THREE.Vector3(0, distance * 0.75, distance));
         controls.update();
       },
@@ -216,9 +215,7 @@ export default function MapScene3D(props: Props) {
         groundMesh = new THREE.Mesh(ground, material);
         scene.add(groundMesh);
         image.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
-        models = new SceneModels(map, data, signal, schedulePaint, (x, y) =>
-          groundMesh ? renderedSurfaceHeight(groundMesh.geometry, map, x, y) : null,
-        );
+        models = new SceneModels(map, data, signal, schedulePaint);
         scene.add(models.group);
         if (details) {
           const built = createDesertDetails(details[0], details[1], map, uniforms.detail);
@@ -284,7 +281,7 @@ export default function MapScene3D(props: Props) {
         element.dataset.modelVisible = String(model?.visible ?? false);
         element.dataset.modelProminent = String(model?.prominent ?? false);
         if (model?.state === 'unavailable')
-          element.setAttribute('aria-description', '3D model unavailable; location marker retained.');
+          element.setAttribute('aria-description', 'Building model unavailable; location marker retained.');
         else if (model?.state === 'partial')
           element.setAttribute('aria-description', 'Some building pieces are unavailable.');
         else element.removeAttribute('aria-description');

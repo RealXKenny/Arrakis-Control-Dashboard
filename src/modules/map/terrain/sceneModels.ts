@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { BuildingLibrary } from './buildingModels';
 import { createVehicleModel, disposeVehicleModels, vehicleKind } from './vehicleModels';
-import { createSandwormModel } from './sandwormModel';
 import { markerKey } from '../utils/markers';
 import { getCoordinate } from '../utils/mapData';
 import { surfaceHeight, type HeightSurface } from './heightSurface';
@@ -61,22 +60,18 @@ export class SceneModels {
     private surface: HeightSurface,
     private signal: AbortSignal,
     private changed: () => void,
-    private groundHeight: (x: number, y: number) => number | null = (x, y) => surfaceHeight(surface, x, y),
   ) {}
   sync(markers: ModelMarker[]) {
     let changed = false;
     const seen = new Set<string>();
-    let worms = 0;
     for (const [i, marker] of markers.entries()) {
-      if (marker.type !== 'base' && marker.type !== 'vehicle' && marker.type !== 'worm') continue;
-      if (marker.type === 'worm' && worms++ >= 32) continue;
+      if (marker.type !== 'base' && marker.type !== 'vehicle') continue;
       const x = getCoordinate(marker, 'x'),
         y = getCoordinate(marker, 'y');
       if (!Number.isFinite(x + y)) continue;
       const key = markerKey(marker, i);
       seen.add(key);
-      const wormGround = marker.type === 'worm' ? this.groundHeight(x, y) : undefined;
-      const signature = JSON.stringify([x, y, marker.z, marker.subtype, marker.yaw, marker.rotation, wormGround]);
+      const signature = JSON.stringify([x, y, marker.z, marker.subtype, marker.yaw, marker.rotation]);
       let entry = this.entries.get(key);
       if (!entry) {
         entry = {
@@ -93,30 +88,6 @@ export class SceneModels {
       entry.marker = marker;
       entry.lastSeen = Date.now();
       if (entry.signature === signature) continue;
-      if (marker.type === 'worm') {
-        const hadPosition = entry.state === 'ready';
-        if (!this.prototypes.has('worm')) this.prototypes.set('worm', createSandwormModel());
-        if (!entry.object) {
-          entry.object = this.prototypes.get('worm')!.clone(true);
-          entry.object.visible = false;
-          this.group.add(entry.object);
-        }
-        const ground = wormGround;
-        if (ground === null || ground === undefined) {
-          entry.state = 'unavailable';
-          entry.signature = signature;
-          continue;
-        }
-        const oldPosition = entry.object.position.clone();
-        entry.object.position.copy(terrainPoint(x, y, ground, this.map));
-        const delta = entry.object.position.clone().sub(oldPosition);
-        if (hadPosition && Math.hypot(delta.x, delta.z) > 0.1)
-          entry.object.rotation.set(0, Math.atan2(-delta.x, -delta.z), 0);
-        entry.state = 'ready';
-        entry.signature = signature;
-        changed ||= entry.object.visible;
-        continue;
-      }
       if (entry.signature && marker.type === 'vehicle' && entry.object) {
         this.group.remove(entry.object);
         entry.object = null;
@@ -174,16 +145,13 @@ export class SceneModels {
       const distance = camera.position.distanceTo(entry.object?.position ?? terrainPoint(x, y, ground, this.map));
       if (marker.type === 'base' && entry.state === 'idle' && this.inflight < 2) void this.loadBase(entry);
       if (entry.object) {
-        const visible =
-          active.has(entry.object) &&
-          entry.state !== 'unavailable' &&
-          (marker.type === 'base' || distance < (marker.type === 'worm' ? 6000 : 1400));
+        const visible = active.has(entry.object) && (marker.type === 'base' || distance < 1400);
         if (visible !== entry.object.visible) {
           entry.object.visible = visible;
           changed = true;
         }
         entry.visible = visible;
-        entry.prominent = visible && distance < (marker.type === 'base' ? 3000 : marker.type === 'worm' ? 1800 : 1400);
+        entry.prominent = visible && distance < (marker.type === 'base' ? 3000 : 1400);
       }
     }
     return changed;
