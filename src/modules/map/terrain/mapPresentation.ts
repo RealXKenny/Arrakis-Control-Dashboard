@@ -23,7 +23,7 @@ export function colorSurface(geometry: THREE.BufferGeometry, surface: HeightSurf
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 }
 export function createMapMaterial() {
-  const uniforms = { contours: { value: 0 }, relief: { value: 1 }, detail: { value: 1 } };
+  const uniforms = { contours: { value: 0 }, relief: { value: 1 } };
   const material = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     roughness: 0.97,
@@ -34,27 +34,13 @@ export function createMapMaterial() {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uContours = uniforms.contours;
     shader.uniforms.uRelief = uniforms.relief;
-    shader.uniforms.uTerrainDetail = uniforms.detail;
     shader.vertexShader = 'varying vec3 vCartographicWorld;\n' + shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace(
       '#include <worldpos_vertex>',
       '#include <worldpos_vertex>\nvCartographicWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;',
     );
     shader.fragmentShader =
-      'varying vec3 vCartographicWorld;\nuniform float uContours;\nuniform float uRelief;\nuniform float uTerrainDetail;\n' +
-      shader.fragmentShader;
-    shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <normal_fragment_maps>',
-      `#include <normal_fragment_maps>
-      // Fade subpixel ripples to avoid shimmer when orbiting or zooming out.
-      float ripplePhase = dot(vCartographicWorld.xz, vec2(5.0, 2.0)) + sin(vCartographicWorld.z * 0.4);
-      float rippleFade = 1.0 - smoothstep(0.3, 2.0, fwidth(ripplePhase));
-      vec3 rippleGradient = vec3(5.0, 0.0, 2.0 + 0.4 * cos(vCartographicWorld.z * 0.4));
-      vec3 viewGradient = mat3(viewMatrix) * rippleGradient;
-      normal = normalize(normal - (viewGradient - normal * dot(normal, viewGradient))
-        * cos(ripplePhase) * 0.035 * rippleFade * uTerrainDetail * uRelief);
-      `,
-    );
+      'varying vec3 vCartographicWorld;\nuniform float uContours;\nuniform float uRelief;\n' + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <color_fragment>',
       `#include <color_fragment>

@@ -2,7 +2,6 @@
 import styles from '../map.module.css';
 import { useState } from 'react';
 import type { ModelMarker } from './sceneModels';
-import type { QualityChoice } from './renderQuality';
 type Props = {
   markers: ModelMarker[];
   onLocate: (marker: ModelMarker) => void;
@@ -13,8 +12,6 @@ type Props = {
   onContours: () => void;
   style: 'relief' | 'atlas';
   contours: boolean;
-  quality: QualityChoice;
-  onQuality: (quality: QualityChoice) => void;
 };
 export default function MapHud(props: Props) {
   const [query, setQuery] = useState('');
@@ -39,19 +36,6 @@ export default function MapHud(props: Props) {
           >
             <option value="relief">Relief</option>
             <option value="atlas">Atlas</option>
-          </select>
-        </label>
-        <label>
-          Detail{' '}
-          <select
-            aria-label="Terrain detail"
-            value={props.quality}
-            onChange={(e) => props.onQuality(e.target.value as QualityChoice)}
-          >
-            <option value="auto">Auto</option>
-            <option value="low">Low</option>
-            <option value="balanced">Balanced</option>
-            <option value="high">High</option>
           </select>
         </label>
         <button type="button" aria-pressed={props.contours} onClick={props.onContours}>
