@@ -28,6 +28,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 - Distinguish static POIs that share provider IDs by location and deduplicate repeated samples before rendering. Project markers and terrain from the same camera frame, canceling interpolation during camera changes to stop blips sticking during rapid zoom.
 - Release 3D geometry, instanced meshes, controls, observers and graphics contexts when closing or switching previews; bound model detail, export sizes, loading concurrency and request timeouts.
+- Keep dense high-detail alignment coverage for each map in its own browser test and batch framebuffer sampling into one readback per draw, avoiding software-renderer timeouts while retaining 450 markers and rapid zoom reversals.
 - Start Discord OAuth only on intentional sign-in navigation rather than a background link prefetch.
 - Align the Docker image's home/working directory and OCI description with Pterodactyl release checks; verify bundled model, terrain, share-image and license assets before publishing.
 
@@ -39,7 +40,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Verification
 
-- Formatting, TypeScript, zero-warning lint, 333 unit/API tests, production build, runtime/API smoke checks, and 40 Chromium browser tests pass.
+- Formatting, TypeScript, zero-warning lint, 333 unit/API tests, production build, runtime/API smoke checks, and 41 Chromium browser tests pass.
 - Browser coverage includes mobile/ultrawide layouts, rapid-zoom marker alignment, dense terrain markers, resource models, base preview ownership/context-loss handling, storage pagination/focus, pre-paint themes, and crawler-visible Discord metadata under CSP.
 - Capacity for 800,000 concurrent users remains unverified; distributed infrastructure sizing and staging load tests are still required.
 - The community base marketplace and creator rewards remain future plans and are not included in this release.
