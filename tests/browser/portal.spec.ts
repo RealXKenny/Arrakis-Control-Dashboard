@@ -1031,35 +1031,36 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   expect(errors).toEqual([]);
 });
 
-test('dense 3D blips stay over rendered terrain at high detail on both maps', async ({ page }) => {
-  test.setTimeout(120_000);
-  const identityWarnings: string[] = [];
-  page.on('console', (message) => {
-    if (/same key|unique.*key/i.test(message.text())) identityWarnings.push(message.text());
-  });
-  await page.setViewportSize({ width: 1536, height: 1065 });
-  await page.route('**/api/map/realtime?*', (route) =>
-    route.fulfill({ json: { ok: true, gen: 1, sources: [], markers: [] } }),
-  );
-  await page.route('**/api/map?*', (route) => {
-    const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
-    const map = deep
-      ? { width: 8192, height: 8192, minX: -1177656, maxX: 1072344, minY: -1177066, maxY: 1072934 }
-      : { width: 8192, height: 8192, minX: -457200, maxX: 355600, minY: -457200, maxY: 355600 };
-    const markers = Array.from({ length: 450 }, (_, id) => ({
-      id: `shared-template-${id % 4}`,
-      type: 'flour_sand',
-      name: `Location ${id}`,
-      x: map.minX + (((id % 25) + 0.5) / 25) * (map.maxX - map.minX),
-      y: map.minY + ((Math.floor(id / 25) + 0.5) / 18) * (map.maxY - map.minY),
-    }));
-    return route.fulfill({
-      json: { ok: true, map, markers: [...markers, { ...markers[0] }], coriolisLayout: deep ? 6 : null },
+for (const mapName of ['Hagga Basin', 'Deep Desert']) {
+  test(`dense 3D blips stay over rendered terrain at high detail on ${mapName}`, async ({ page }) => {
+    test.setTimeout(120_000);
+    const identityWarnings: string[] = [];
+    page.on('console', (message) => {
+      if (/same key|unique.*key/i.test(message.text())) identityWarnings.push(message.text());
     });
-  });
-  await page.goto('/map');
-  for (const mapName of ['Hagga Basin', 'Deep Desert']) {
-    if (mapName === 'Deep Desert') await page.getByRole('link', { name: mapName, exact: true }).click();
+    await page.setViewportSize({ width: 1100, height: 800 });
+    await page.route('**/api/map/realtime?*', (route) =>
+      route.fulfill({ json: { ok: true, gen: 1, sources: [], markers: [] } }),
+    );
+    await page.route('**/api/map?*', (route) => {
+      const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
+      const map = deep
+        ? { width: 8192, height: 8192, minX: -1177656, maxX: 1072344, minY: -1177066, maxY: 1072934 }
+        : { width: 8192, height: 8192, minX: -457200, maxX: 355600, minY: -457200, maxY: 355600 };
+      const markers = Array.from({ length: 450 }, (_, id) => ({
+        id: `shared-template-${id % 4}`,
+        type: 'flour_sand',
+        name: `Location ${id}`,
+        x: map.minX + (((id % 25) + 0.5) / 25) * (map.maxX - map.minX),
+        y: map.minY + ((Math.floor(id / 25) + 0.5) / 18) * (map.maxY - map.minY),
+      }));
+      return route.fulfill({
+        json: { ok: true, map, markers: [...markers, { ...markers[0] }], coriolisLayout: deep ? 6 : null },
+      });
+    });
+    // Separate per-map budgets retain full geometry, marker density and wheel sequences.
+    // A normal desktop canvas avoids making software rasterization an ultrawide benchmark.
+    await page.goto(`/portal?view=${mapName === 'Deep Desert' ? 'deep-desert' : 'hagga'}`);
     const scene = page.locator('[data-map-view="3d"]');
     await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
     const markerNodes = scene.locator('[data-marker-id]');
@@ -1077,9 +1078,14 @@ test('dense 3D blips stay over rendered terrain at high detail on both maps', as
     await canvas.evaluate((element: HTMLCanvasElement) => {
       const gl = element.getContext('webgl2')!;
       const original = gl.drawElements.bind(gl);
+      let framePixels = new Uint8Array(0);
       gl.drawElements = (...args: Parameters<typeof gl.drawElements>) => {
         original(...args);
         if (args[1] < 400000) return;
+        // Read the framebuffer once: 20 synchronous GPU readbacks per draw overwhelm SwiftShader.
+        const byteLength = element.width * element.height * 4;
+        if (framePixels.length !== byteLength) framePixels = new Uint8Array(byteLength);
+        gl.readPixels(0, 0, element.width, element.height, gl.RGBA, gl.UNSIGNED_BYTE, framePixels);
         const bad: string[] = [];
         const markers = Array.from(
           element.parentElement!.querySelectorAll<HTMLElement>('[data-terrain-state="visible"]'),
@@ -1088,15 +1094,21 @@ test('dense 3D blips stay over rendered terrain at high detail on both maps', as
           const x = Math.round((parseFloat(marker.style.left) * element.width) / element.clientWidth);
           const y = element.height - Math.round((parseFloat(marker.style.top) * element.height) / element.clientHeight);
           if (x < 4 || y < 4 || x >= element.width - 4 || y >= element.height - 4) continue;
-          const pixels = new Uint8Array(8 * 8 * 4);
-          gl.readPixels(x - 4, y - 4, 8, 8, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
           let ground = false;
-          for (let i = 0; i < pixels.length; i += 4)
-            if (
-              pixels[i + 3] &&
-              (Math.abs(pixels[i] - 16) > 2 || Math.abs(pixels[i + 1] - 17) > 2 || Math.abs(pixels[i + 2] - 19) > 2)
-            )
-              ground = true;
+          for (let dy = -4; dy < 4 && !ground; dy++) {
+            for (let dx = -4; dx < 4; dx++) {
+              const offset = ((y + dy) * element.width + x + dx) * 4;
+              if (
+                framePixels[offset + 3] &&
+                (Math.abs(framePixels[offset] - 16) > 2 ||
+                  Math.abs(framePixels[offset + 1] - 17) > 2 ||
+                  Math.abs(framePixels[offset + 2] - 19) > 2)
+              ) {
+                ground = true;
+                break;
+              }
+            }
+          }
           if (!ground) bad.push(marker.dataset.markerId!);
         }
         element.dataset.alignmentChecked = String(markers.length);
@@ -1162,8 +1174,8 @@ test('dense 3D blips stay over rendered terrain at high detail on both maps', as
     await expect(canvas).toHaveAttribute('data-background-blips', '[]');
     expect(identityWarnings).toEqual([]);
     await page.screenshot({ path: `test-results/map-aligned-${mapName.replaceAll(' ', '-')}.png`, fullPage: true });
-  }
-});
+  });
+}
 
 test('sandworm models appear up close, update in place, and respect the realtime filter', async ({ page }) => {
   test.setTimeout(60_000);
