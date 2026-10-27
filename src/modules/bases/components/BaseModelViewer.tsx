@@ -34,7 +34,7 @@ export default function BaseModelViewer({
     if (!host) return;
     const controller = new AbortController();
     const loadSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
-    const library = new BuildingLibrary(loadSignal);
+    const library = new BuildingLibrary(loadSignal, { visual: true });
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -237,7 +237,7 @@ export default function BaseModelViewer({
             {parts.map((part) => (
               <li key={part.templateId}>
                 <span>
-                  {part.templateId.replace(/_Placeable$/, '').replaceAll('_', ' ')}
+                  {part.name ?? part.templateId.replace(/_Placeable$/, '').replaceAll('_', ' ')}
                   <small>{part.templateId}</small>
                 </span>
                 <span>

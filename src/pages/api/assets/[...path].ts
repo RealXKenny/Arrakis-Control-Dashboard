@@ -38,7 +38,11 @@ function isTiledMapAsset(segments: string[]) {
 
 function isModelAsset(segments: string[]) {
   return (
-    segments.length === 2 && segments[0] === 'models' && /^(?:catalog\.json|meshpack-[0-9]\.bin)\.gz$/.test(segments[1])
+    segments.length === 2 &&
+    segments[0] === 'models' &&
+    /^(?:catalog\.json|meshpack-[0-9]\.bin|visual-catalog\.json|visual-pack-(?:[0-9]|[1-9][0-9])\.bin)\.gz$/.test(
+      segments[1],
+    )
   );
 }
 
