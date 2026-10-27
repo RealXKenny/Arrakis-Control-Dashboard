@@ -1,146 +1,52 @@
-import { COLORS, styles } from '../config/colors';
 import { getVehicleId, isOwnedVehicle, isVehicleAccessible } from '../utils/vehicles';
 import VehicleCard from './VehicleCard';
 
 function VehicleGrid({ vehicles, playerName, vehicleTab, setVehicleTab }) {
   const accessibleVehicles = vehicles.filter((vehicle) => isVehicleAccessible(vehicle, playerName));
-
   const ownedVehicles = accessibleVehicles.filter((vehicle) => isOwnedVehicle(vehicle, playerName));
-
   const sharedVehicles = accessibleVehicles.filter((vehicle) => !isOwnedVehicle(vehicle, playerName));
-
   const visibleVehicles = vehicleTab === 'owned' ? ownedVehicles : sharedVehicles;
 
   if (visibleVehicles.length === 0) {
     return (
-      <div
-        style={{
-          padding: 32,
-          textAlign: 'center',
-          backgroundColor: '#ffffff03',
-          border: `1px solid ${COLORS.borderLight}`,
-          borderRadius: 10,
-        }}
-      >
-        <div
-          style={{
-            color: COLORS.textSoft,
-            fontSize: '0.9rem',
-            marginBottom: 5,
-          }}
-        >
-          No vehicles found
-        </div>
-
-        <div
-          style={{
-            color: COLORS.dim,
-            fontSize: '0.75rem',
-          }}
-        >
-          There are currently no vehicles in this category.
-        </div>
+      <div className="rounded-2xl border border-dashed border-white/10 bg-zinc-900/30 p-8 text-center">
+        <div className="text-sm text-zinc-200">No vehicles found</div>
+        <div className="mt-1 text-xs text-zinc-500">There are currently no vehicles in this category.</div>
       </div>
     );
   }
 
   return (
     <>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-          gap: 8,
-          padding: 5,
-          marginBottom: 20,
-          backgroundColor: 'var(--theme-surface)',
-          border: `1px solid ${COLORS.border}`,
-          borderRadius: 10,
-        }}
-      >
+      <div className="mb-5 grid grid-cols-2 gap-1 rounded-full border border-white/5 bg-zinc-950/50 p-1">
         <button
           type="button"
           onClick={() => setVehicleTab('owned')}
-          style={{
-            appearance: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            borderRadius: 7,
-            padding: '11px 14px',
-            backgroundColor:
-              vehicleTab === 'owned' ? 'color-mix(in srgb, var(--theme-accent) 12%, transparent)' : 'transparent',
-            color: vehicleTab === 'owned' ? COLORS.text : COLORS.dim,
-            boxShadow:
-              vehicleTab === 'owned'
-                ? 'inset 0 0 0 1px color-mix(in srgb, var(--theme-accent) 16%, transparent)'
-                : 'none',
-            fontSize: '0.76rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.6px',
-          }}
+          className={`rounded-full px-4 py-2.5 text-xs font-medium transition-colors ${
+            vehicleTab === 'owned' ? 'bg-indigo-500/10 text-indigo-300' : 'text-zinc-400 hover:bg-zinc-800'
+          }`}
         >
-          Own Vehicles
-          <span
-            style={{
-              marginLeft: 7,
-              color: vehicleTab === 'owned' ? COLORS.gold : COLORS.dim,
-            }}
-          >
-            {ownedVehicles.length}
-          </span>
+          Own Vehicles <span className="ml-1.5 text-zinc-500">{ownedVehicles.length}</span>
         </button>
-
         <button
           type="button"
           onClick={() => setVehicleTab('shared')}
-          style={{
-            appearance: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            borderRadius: 7,
-            padding: '11px 14px',
-            backgroundColor: vehicleTab === 'shared' ? 'rgba(125,184,232,0.1)' : 'transparent',
-            color: vehicleTab === 'shared' ? '#b5d9f2' : COLORS.dim,
-            boxShadow: vehicleTab === 'shared' ? 'inset 0 0 0 1px rgba(125,184,232,0.15)' : 'none',
-            fontSize: '0.76rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.6px',
-          }}
+          className={`rounded-full px-4 py-2.5 text-xs font-medium transition-colors ${
+            vehicleTab === 'shared' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-800'
+          }`}
         >
-          Shared Vehicles
-          <span
-            style={{
-              marginLeft: 7,
-              color: vehicleTab === 'shared' ? COLORS.water : COLORS.dim,
-            }}
-          >
-            {sharedVehicles.length}
-          </span>
+          Shared Vehicles <span className="ml-1.5 text-zinc-500">{sharedVehicles.length}</span>
         </button>
       </div>
 
-      <div
-        className="vehicle-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-          gap: 18,
-        }}
-      >
+      <div className="vehicle-grid grid grid-cols-2 gap-4">
         {visibleVehicles.map((vehicle, index) => {
           const isOddFinalVehicle = visibleVehicles.length % 2 === 1 && index === visibleVehicles.length - 1;
-
           const vehicleId = getVehicleId(vehicle);
-
           return (
             <div
               key={vehicleId ?? `vehicle-${index}`}
-              style={{
-                minWidth: 0,
-                gridColumn: isOddFinalVehicle ? '1 / -1' : 'auto',
-              }}
+              className={`min-w-0 ${isOddFinalVehicle ? 'col-span-full' : ''}`}
             >
               <VehicleCard vehicle={vehicle} index={index} playerName={playerName} />
             </div>
@@ -150,52 +56,17 @@ function VehicleGrid({ vehicles, playerName, vehicleTab, setVehicleTab }) {
     </>
   );
 }
+
 export default function VehicleSection({ vehicles, playerName, vehicleTab, setVehicleTab }) {
   return (
-    <section
-      style={{
-        ...styles.panel,
-        padding: 24,
-        marginBottom: 20,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 15,
-          flexWrap: 'wrap',
-          marginBottom: 18,
-        }}
-      >
+    <section className="mb-5 rounded-3xl border border-white/5 bg-zinc-900/40 p-6">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p
-            style={{
-              margin: '0 0 5px',
-              color: COLORS.goldLight,
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '1.5px',
-            }}
-          >
-            Vehicle Network
-          </p>
-
-          <h2 style={styles.sectionTitle}>Vehicles</h2>
+          <p className="mb-1 text-[11px] font-medium tracking-wide text-zinc-500 uppercase">Vehicle Network</p>
+          <h2 className="m-0 text-xl font-semibold text-zinc-100">Vehicles</h2>
         </div>
-
-        <div
-          style={{
-            color: COLORS.dim,
-            fontSize: '0.72rem',
-          }}
-        >
-          {vehicles.length} owned / shared
-        </div>
+        <div className="text-xs text-zinc-500">{vehicles.length} owned / shared</div>
       </div>
-
       <VehicleGrid vehicles={vehicles} playerName={playerName} vehicleTab={vehicleTab} setVehicleTab={setVehicleTab} />
     </section>
   );

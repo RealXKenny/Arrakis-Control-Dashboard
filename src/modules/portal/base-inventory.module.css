@@ -5,8 +5,8 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #000b;
-  backdrop-filter: blur(12px);
+  background: rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(4px);
 }
 .dialog {
   width: min(1440px, 100%);
@@ -17,9 +17,9 @@
   overflow: hidden;
   border: 1px solid var(--theme-border);
   border-radius: 28px;
-  background: var(--theme-surface);
+  background: rgb(24 24 27 / 0.94);
   color: var(--theme-text);
-  box-shadow: 0 32px 120px #0009;
+  backdrop-filter: blur(16px);
   outline: none;
   font-size: 13px;
 }
@@ -38,8 +38,8 @@
   margin: 0 0 8px;
   color: var(--theme-muted);
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .header h2 {
@@ -72,8 +72,8 @@
 .meter i {
   display: block;
   height: 100%;
-  background: var(--theme-accent);
   border-radius: inherit;
+  background: var(--theme-accent);
 }
 .summary {
   display: grid;
@@ -97,7 +97,7 @@
   height: 40px;
   border: 1px solid var(--theme-border);
   border-radius: 50%;
-  background: var(--theme-background);
+  background: var(--theme-raised);
   font-size: 22px !important;
 }
 .workspace {
@@ -112,7 +112,7 @@
   padding: 20px 16px;
   gap: 12px;
   border-right: 1px solid var(--theme-border);
-  background: var(--theme-background);
+  background: rgb(9 9 11 / 0.25);
 }
 .sectionLabel {
   display: flex;
@@ -128,8 +128,8 @@
 }
 .sectionLabel > span {
   padding: 3px 8px;
-  border-radius: 999px;
   border: 1px solid var(--theme-border);
+  border-radius: 999px;
   font-size: 10px;
 }
 .containerList {
@@ -148,15 +148,18 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  text-align: left;
+  padding: 12px;
   border: 1px solid transparent;
-  background: transparent;
   border-radius: 16px;
-  padding: 13px 12px;
+  background: transparent;
+  text-align: left;
+}
+.containerList button:hover {
+  background: var(--theme-hover);
 }
 .containerList button[aria-pressed='true'] {
-  background: var(--theme-surface);
   border-color: var(--theme-border);
+  background: var(--theme-raised);
   color: var(--theme-text);
 }
 .containerIcon {
@@ -165,7 +168,7 @@
   flex: 0 0 34px;
   height: 34px;
   border: 1px solid var(--theme-border);
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--theme-muted);
   font-size: 22px;
 }
@@ -211,25 +214,25 @@
   overflow-wrap: anywhere;
 }
 .toolbar p:not(.eyebrow) {
+  margin: 7px 0 0;
   color: var(--theme-muted);
   font-size: 11px;
-  margin: 7px 0 0;
 }
 .toolbar label {
   display: grid;
   gap: 7px;
-  font-size: 10px;
   color: var(--theme-muted);
+  font-size: 11px;
 }
 .toolbar input {
   width: 220px;
   max-width: 100%;
   box-sizing: border-box;
-  border-radius: 999px;
+  padding: 11px 14px;
   border: 1px solid var(--theme-border);
-  background: var(--theme-background);
+  border-radius: 12px;
+  background: rgb(24 24 27 / 0.5);
   color: var(--theme-text);
-  padding: 11px 16px;
   font: inherit;
   font-size: 12px;
 }
@@ -252,10 +255,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid var(--theme-border);
-  border-radius: 18px;
   padding: 14px;
-  background: var(--theme-background);
+  border: 1px solid var(--theme-border);
+  border-radius: 16px;
+  background: rgb(9 9 11 / 0.25);
+}
+.items li:hover {
+  background: rgb(39 39 42 / 0.4);
 }
 .itemImage {
   display: grid;
@@ -292,8 +298,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  text-align: center;
   color: var(--theme-muted);
+  text-align: center;
 }
 .emptyIcon {
   display: grid;
@@ -306,8 +312,8 @@
   font-size: 36px;
 }
 .empty h3 {
-  color: var(--theme-soft);
   margin: 0 0 8px;
+  color: var(--theme-soft);
   font-size: 16px;
   font-weight: 500;
 }
@@ -319,9 +325,9 @@
 .empty button {
   margin-top: 20px;
   padding: 10px 18px;
-  border-radius: 999px;
   border: 1px solid var(--theme-border);
-  background: var(--theme-background);
+  border-radius: 999px;
+  background: var(--theme-raised);
 }
 .pager {
   display: flex;
@@ -331,15 +337,15 @@
   gap: 8px;
   padding-top: 12px;
   border-top: 1px solid var(--theme-border);
-  font-size: 10px;
   color: var(--theme-muted);
+  font-size: 10px;
 }
 .pager button {
-  border: 1px solid var(--theme-border);
-  border-radius: 999px;
   min-width: 36px;
   height: 36px;
-  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
+  background: var(--theme-raised);
 }
 .dialog button:disabled {
   opacity: 0.35;
@@ -383,8 +389,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    text-align: left;
     width: 100%;
+    text-align: left;
   }
   .summary strong {
     font-size: 12px;

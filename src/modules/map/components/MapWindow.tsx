@@ -506,7 +506,10 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
                 zIndex: 30,
                 color: 'var(--theme-soft)',
                 background: 'var(--theme-masthead)',
-                padding: '5px 8px',
+                border: '1px solid var(--theme-border)',
+                borderRadius: 999,
+                backdropFilter: 'blur(8px)',
+                padding: '6px 10px',
                 fontSize: 11,
               }}
             >
@@ -518,11 +521,11 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
         {error && (
           <div
             style={{
-              padding: '5px 10px',
-              color: '#c76b55',
-              background: 'rgba(80,20,10,.35)',
-              borderTop: '1px solid rgba(124,47,32,.5)',
-              fontSize: 10,
+              padding: '8px 12px',
+              color: 'var(--theme-danger)',
+              background: 'var(--theme-surface)',
+              borderTop: '1px solid var(--theme-border)',
+              fontSize: 11,
             }}
           >
             MAP ERROR: {error}

@@ -140,6 +140,7 @@ export function visualYawOffset(templateId: string): number {
   if (templateId === 'Atreides_Outpost_Wall_Inclined_Wide_Left') return -37.5;
   if (templateId === 'Atreides_Outpost_Wall_Inclined_Wide_Right') return 37.5;
   const name = templateId.toLowerCase();
+  if (name === 'atreides_outpost_stairs' || name === 'atreides_outpost_ramp') return 180;
   // Reference offsets are relative to its ordinary pieces; swapping Babylon's X/Z axes reverses yaw.
   if (name.includes('corner')) return 90;
   if ((name.includes('top') || name.includes('bottom')) && (name.includes('left') || name.includes('right')))

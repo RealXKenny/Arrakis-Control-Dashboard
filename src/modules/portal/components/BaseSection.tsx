@@ -1,69 +1,29 @@
 import BaseImport from '../../bases/components/BaseImport';
 import BasePreview from '../../bases/components/BasePreview';
-import { COLORS, styles } from '../config/colors';
 import { useEffect, useState } from 'react';
-
-import { getBaseId } from '../utils/bases';
-import { getBaseName } from '../utils/bases';
+import { getBaseId, getBaseName } from '../utils/bases';
 import BaseCard from './BaseCard';
 import BaseInventory from './BaseInventory';
 
 function BaseGrid({ bases, telemetry, selectedBaseId, onSelectBase }) {
   if (bases.length === 0) {
     return (
-      <div
-        style={{
-          padding: 32,
-          textAlign: 'center',
-          backgroundColor: '#ffffff03',
-          border: `1px solid ${COLORS.borderLight}`,
-          borderRadius: 10,
-        }}
-      >
-        <div
-          style={{
-            color: COLORS.textSoft,
-            fontSize: '0.9rem',
-            marginBottom: 5,
-          }}
-        >
-          No bases found
-        </div>
-
-        <div
-          style={{
-            color: COLORS.dim,
-            fontSize: '0.75rem',
-          }}
-        >
-          There are currently no bases in this category.
-        </div>
+      <div className="rounded-2xl border border-dashed border-white/10 bg-zinc-900/30 p-8 text-center">
+        <div className="text-sm text-zinc-200">No bases found</div>
+        <div className="mt-1 text-xs text-zinc-500">There are currently no bases in this category.</div>
       </div>
     );
   }
 
   return (
-    <div
-      className="base-grid"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-        gap: 18,
-      }}
-    >
+    <div className="base-grid grid grid-cols-2 gap-4">
       {bases.map((base, index) => {
         const isOddFinalBase = bases.length % 2 === 1 && index === bases.length - 1;
-
         const baseId = getBaseId(base);
-
         return (
           <div
             key={baseId ?? `base-${index}`}
-            className={isOddFinalBase ? 'base-grid-last' : ''}
-            style={{
-              minWidth: 0,
-              gridColumn: isOddFinalBase ? '1 / -1' : 'auto',
-            }}
+            className={`min-w-0 ${isOddFinalBase ? 'base-grid-last col-span-full' : ''}`}
           >
             <BaseCard
               base={base}
@@ -98,151 +58,41 @@ export default function BaseSection({
 
   return (
     <>
-      <section
-        style={{
-          ...styles.panel,
-          padding: 24,
-          marginBottom: 20,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: 15,
-            flexWrap: 'wrap',
-            marginBottom: 18,
-          }}
-        >
+      <section className="mb-5 rounded-3xl border border-white/5 bg-zinc-900/40 p-6">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p
-              style={{
-                margin: '0 0 5px',
-                color: COLORS.goldLight,
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '1.5px',
-              }}
-            >
-              Territory Network
-            </p>
-
-            <h2 style={styles.sectionTitle}>Bases</h2>
+            <p className="mb-1 text-[11px] font-medium tracking-wide text-zinc-500 uppercase">Territory Network</p>
+            <h2 className="m-0 text-xl font-semibold text-zinc-100">Bases</h2>
           </div>
-
-          <div
-            style={{
-              color: COLORS.dim,
-              fontSize: '0.72rem',
-            }}
-          >
+          <div className="text-xs text-zinc-500">
             {ownedBases.length} owned · {sharedBases.length} shared
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-            gap: 8,
-            padding: 5,
-            marginBottom: 20,
-            backgroundColor: 'var(--theme-surface)',
-            border: `1px solid ${COLORS.border}`,
-            borderRadius: 10,
-          }}
-        >
+        <div className="mb-5 grid grid-cols-2 gap-1 rounded-full border border-white/5 bg-zinc-950/50 p-1">
           <button
             type="button"
             onClick={() => setBaseTab('owned')}
-            style={{
-              appearance: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              borderRadius: 7,
-              padding: '11px 14px',
-              backgroundColor:
-                baseTab === 'owned' ? 'color-mix(in srgb, var(--theme-accent) 12%, transparent)' : 'transparent',
-              color: baseTab === 'owned' ? COLORS.text : COLORS.dim,
-              boxShadow:
-                baseTab === 'owned'
-                  ? 'inset 0 0 0 1px color-mix(in srgb, var(--theme-accent) 16%, transparent)'
-                  : 'none',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-            }}
+            className={`rounded-full px-4 py-2.5 text-xs font-medium transition-colors ${
+              baseTab === 'owned' ? 'bg-indigo-500/10 text-indigo-300' : 'text-zinc-400 hover:bg-zinc-800'
+            }`}
           >
-            Own Bases
-            <span
-              style={{
-                marginLeft: 7,
-                color: baseTab === 'owned' ? COLORS.gold : COLORS.dim,
-              }}
-            >
-              {ownedBases.length}
-            </span>
+            Own Bases <span className="ml-1.5 text-zinc-500">{ownedBases.length}</span>
           </button>
-
           <button
             type="button"
             onClick={() => setBaseTab('shared')}
-            style={{
-              appearance: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              borderRadius: 7,
-              padding: '11px 14px',
-              backgroundColor: baseTab === 'shared' ? 'rgba(125,184,232,0.1)' : 'transparent',
-              color: baseTab === 'shared' ? '#b5d9f2' : COLORS.dim,
-              boxShadow: baseTab === 'shared' ? 'inset 0 0 0 1px rgba(125,184,232,0.15)' : 'none',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-            }}
+            className={`rounded-full px-4 py-2.5 text-xs font-medium transition-colors ${
+              baseTab === 'shared' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-800'
+            }`}
           >
-            Shared Bases
-            <span
-              style={{
-                marginLeft: 7,
-                color: baseTab === 'shared' ? COLORS.water : COLORS.dim,
-              }}
-            >
-              {sharedBases.length}
-            </span>
+            Shared Bases <span className="ml-1.5 text-zinc-500">{sharedBases.length}</span>
           </button>
         </div>
 
         {basesLoading && bases.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 9,
-              marginBottom: 14,
-              color: COLORS.dim,
-              fontSize: '0.68rem',
-            }}
-          >
-            <span
-              className="portal-status-dot"
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                backgroundColor: COLORS.gold,
-                boxShadow: `
-                      0 0 4px ${COLORS.gold},
-                      0 0 8px ${COLORS.gold},
-                      0 0 16px ${COLORS.gold},
-                      0 0 24px ${COLORS.gold}
-                    `,
-              }}
-            />
+          <div className="mb-4 flex items-center gap-2 text-xs text-zinc-500" role="status">
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-300" aria-hidden="true" />
             Updating live telemetry...
           </div>
         )}

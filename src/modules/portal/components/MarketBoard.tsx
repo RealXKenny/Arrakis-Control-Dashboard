@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import { COLORS } from '../config/colors';
 import { useMarketData } from '../hooks/useMarketData';
 import { formatMarketNumber, getBuybackPercent, getSuggestedSellPrice } from '../utils/market';
 import layout from '../market.module.css';
-import dossier from '../dossier.module.css';
-import PriceLadder from './PriceLadder';
 import ItemImage from './ItemImage';
 import { itemImage } from '../utils/item-image';
 
@@ -16,7 +13,6 @@ export default function MarketBoard() {
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState('listed');
   const [owner, setOwner] = useState('all');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data, loading, error, stale, refresh } = useMarketData(query, page, sort, owner);
   const items = Array.isArray(data?.items?.rows) ? data.items.rows : [];
   const total = Number(data?.items?.totalCount ?? items.length);
@@ -24,11 +20,6 @@ export default function MarketBoard() {
   const buybackPercent = getBuybackPercent(data?.marketConfig);
   const suggestedSellPrice = (item) => getSuggestedSellPrice(item?.lowest_price ?? item?.lowestPrice, buybackPercent);
   const supported = data?.items?.capabilities?.exchange !== false;
-  // Dev note: selection uses an ID because pointing at the screen failed code review.
-  const selected = items.find(
-    (item, index) =>
-      `${item.template_id ?? item.templateId}-${item.quality_level ?? item.quality ?? index}` === selectedId,
-  );
   return (
     <section className={layout.board} aria-busy={loading}>
       {stale && data && <p role="status">Showing a cached market reading while refreshing.</p>}
@@ -41,7 +32,7 @@ export default function MarketBoard() {
         </button>
       </div>
       {error && (
-        <p role="alert" style={{ color: COLORS.red }}>
+        <p role="alert" className="text-red-300">
           {error}{' '}
           <button type="button" onClick={refresh}>
             Try again
@@ -53,7 +44,7 @@ export default function MarketBoard() {
           {message}
         </p>
       ))}
-      <div className={layout.summary}>
+      <div className={layout.summary} data-market-summary>
         <div>
           <span>Total listings</span>
           <strong>{formatMarketNumber(data?.stats?.totalListings)}</strong>
@@ -67,8 +58,10 @@ export default function MarketBoard() {
           <strong>{buybackPercent == null ? '—' : `${buybackPercent}%`}</strong>
         </div>
       </div>
-      <p className={layout.notice}>Select an item to inspect seller prices and available stock.</p>
-      <div className={layout.workspace}>
+      <p className={layout.notice}>
+        Compare asking prices, available stock, and suggested sell values across current listings.
+      </p>
+      <div className={layout.workspace} data-market-workspace>
         <div>
           <label className={layout.search}>
             Search the market
@@ -134,17 +127,9 @@ export default function MarketBoard() {
                 {items.map((item, index) => (
                   <tr key={`${item.template_id ?? item.templateId}-${item.quality_level ?? item.quality ?? index}`}>
                     <td>
-                      <button
-                        className={layout.itemButton}
-                        aria-pressed={selected === item}
-                        onClick={() =>
-                          setSelectedId(
-                            `${item.template_id ?? item.templateId}-${item.quality_level ?? item.quality ?? index}`,
-                          )
-                        }
-                      >
+                      <span className={layout.itemButton}>
                         <ItemImage src={itemImage(item)} /> {item.display_name ?? item.name ?? item.template_id}
-                      </button>
+                      </span>
                     </td>
                     <td>{formatMarketNumber(item.quality_level ?? item.quality)}</td>
                     <td>{formatMarketNumber(item.listing_count ?? item.listings)}</td>
@@ -172,66 +157,6 @@ export default function MarketBoard() {
             </table>
           </div>
         </div>
-        <aside className={layout.sidebar}>
-          <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
-            <h2>Item intelligence</h2>
-            {selected ? (
-              <>
-                <ItemImage src={itemImage(selected)} large />
-                <h3>{selected.display_name ?? selected.name ?? selected.template_id}</h3>
-                <dl className={dossier.facts}>
-                  <div>
-                    <dt>Grade</dt>
-                    <dd>{formatMarketNumber(selected.quality_level ?? selected.quality)}</dd>
-                  </div>
-                  <div>
-                    <dt>Lowest ask</dt>
-                    <dd>{formatMarketNumber(selected.lowest_price ?? selected.lowestPrice)}</dd>
-                  </div>
-                  <div>
-                    <dt>Suggested sell</dt>
-                    <dd>{formatMarketNumber(suggestedSellPrice(selected))}</dd>
-                  </div>
-                  <div>
-                    <dt>Available units</dt>
-                    <dd>{formatMarketNumber(selected.total_stock ?? selected.stock)}</dd>
-                  </div>
-                  <div>
-                    <dt>Open listings</dt>
-                    <dd>{formatMarketNumber(selected.listing_count ?? selected.listings)}</dd>
-                  </div>
-                </dl>
-              </>
-            ) : (
-              <p>Select an item to inspect its asking price, grade and available stock.</p>
-            )}
-          </section>
-          {selected && (
-            <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
-              <PriceLadder
-                key={`${owner}-${selectedId}`}
-                owner={owner}
-                templateId={String(selected.template_id ?? selected.templateId)}
-                quality={String(selected.quality_level ?? selected.quality ?? '')}
-              />
-            </section>
-          )}
-          <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
-            <h2>CHOAM buyback</h2>
-            <p className={dossier.balance}>{buybackPercent == null ? '—' : `${buybackPercent}%`}</p>
-            <p>
-              Suggested sell prices use this percentage of the current lowest ask and round down to whole Solari.
-              Item-specific caps and availability can vary.
-            </p>
-          </section>
-          <section className={`${dossier.panel} ${layout.sidebarPanel}`}>
-            <h2>Market access</h2>
-            <p>
-              Browse current listings here. Complete purchases and manage listings through your server’s supported
-              trading interface.
-            </p>
-          </section>
-        </aside>
       </div>
       <div className={layout.pagination}>
         <button type="button" disabled={page === 0 || loading} onClick={() => setPage((value) => value - 1)}>

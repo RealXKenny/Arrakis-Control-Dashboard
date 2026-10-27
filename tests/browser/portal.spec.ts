@@ -165,6 +165,10 @@ test('navigation and market refresh do not reload player data or request logout'
   await page.goto('/portal');
   await expect(page.getByRole('heading', { name: 'Spice blowing at D5.' })).toBeVisible();
   await page.screenshot({ path: 'test-results/portal-overview.png', fullPage: true });
+  const topbar = page.locator('header').first();
+  await expect(topbar).toHaveCSS('position', 'sticky');
+  await expect(topbar).toHaveCSS('z-index', '50');
+  await expect(topbar.locator('img[src="/favicon.ico"]')).toBeVisible();
   await page.getByRole('link', { name: 'Exchange', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Spice', exact: true })).toBeVisible();
   await page.locator('img[src$="/items/MelangeSpice.png"]').first().scrollIntoViewIfNeeded();
@@ -179,13 +183,16 @@ test('navigation and market refresh do not reload player data or request logout'
   await expect(page.getByRole('cell', { name: '9,007,199,254,740,993' })).toBeVisible();
   await expect(page.getByRole('cell', { name: '5,404,319,552,844,595' })).toBeVisible();
   await page.screenshot({ path: 'test-results/portal-market.png', fullPage: true });
-  await page.getByRole('button', { name: 'Spice', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Spice', exact: true })).toBeVisible();
-  await expect(page.locator('dt').filter({ hasText: /^Suggested sell$/ })).toBeVisible();
-  await expect(page.getByText('5,404,319,552,844,595', { exact: true })).toHaveCount(2);
-  await expect(page.getByText('Guild trader', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Item intelligence', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'CHOAM buyback', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Market access', exact: true })).toHaveCount(0);
+  await expect(page.getByText('5,404,319,552,844,595', { exact: true })).toHaveCount(1);
+  await expect(page.getByText('Guild trader', { exact: true })).toHaveCount(0);
+  const summaryBounds = await page.locator('[data-market-summary]').boundingBox();
+  const workspaceBounds = await page.locator('[data-market-workspace]').boundingBox();
+  expect(workspaceBounds!.width).toBeCloseTo(summaryBounds!.width, 1);
   await page.getByLabel('Sort listings').selectOption('price');
-  await expect(page.getByRole('button', { name: 'Spice', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Spice', exact: true })).toBeVisible();
   const before = requests.filter((url) => url.endsWith('/api/player')).length;
   await page.getByRole('button', { name: 'Refresh Market' }).click();
   await expect(page.getByRole('button', { name: 'Refresh Market' })).toBeEnabled();
@@ -254,15 +261,24 @@ test('mobile portal fits without horizontal overflow', async ({ page }) => {
 });
 
 test('public dashboard displays actual server counts', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?theme=default');
   await expect(page.getByText('12', { exact: true })).toBeVisible();
   await expect(page.getByText('240', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/home-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('heading', { name: 'A clearer view. More possibilities.' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Connect with Discord' })).toHaveCSS('color', 'rgb(9, 9, 11)');
+  await expect(page.getByRole('link', { name: 'Connect with Discord' })).toHaveCSS('color', 'rgb(165, 180, 252)');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/home-mobile.png', fullPage: true });
+  await page.evaluate(() => window.scrollTo(0, 800));
+  await expect
+    .poll(() =>
+      page
+        .locator('header')
+        .first()
+        .evaluate((element) => element.getBoundingClientRect().top),
+    )
+    .toBe(0);
 });
 
 test('four vehicles form two equal rows', async ({ page }) => {
@@ -314,7 +330,7 @@ test('unavailable personal listings are not shown as zero or a request failure',
   await expect(page.getByText('No listings found.', { exact: true })).toBeVisible();
   await expect(page.getByText('5,500', { exact: true })).toBeVisible();
   await expect(page.getByText('240', { exact: true })).toBeVisible();
-  await expect(page.getByText('60%', { exact: true })).toHaveCount(2);
+  await expect(page.getByText('60%', { exact: true })).toHaveCount(1);
   await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toHaveCount(0);
   await expect(page.getByText('No matching listings found.', { exact: true })).toHaveCount(0);
 });

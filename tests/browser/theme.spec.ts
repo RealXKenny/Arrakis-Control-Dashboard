@@ -49,7 +49,7 @@ test('holiday accents reach pillbox controls and reset without layout shifts', a
   });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'valentine');
   // Color transitions may still be at their starting value in the first animation frame.
-  await expect(button).toHaveCSS('background-color', 'rgb(216, 199, 205)');
+  await expect(button).toHaveCSS('background-color', 'color(srgb 0.847059 0.780392 0.803922 / 0.1)');
   expect(await button.boundingBox()).toEqual(baseLayout);
   await page.evaluate(() => {
     history.pushState({}, '', '?theme=default');

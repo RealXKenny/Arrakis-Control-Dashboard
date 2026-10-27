@@ -26,8 +26,7 @@
 }
 
 :global(.live-map-marker:hover) {
-  filter: brightness(1.25) drop-shadow(0 0 6px color-mix(in srgb, var(--theme-accent) 90%, transparent))
-    drop-shadow(0 2px 5px rgba(0, 0, 0, 0.9));
+  filter: brightness(1.12);
   z-index: 10 !important;
 }
 
@@ -62,7 +61,7 @@
 }
 
 :global(.live-map-marker.marker-spice_active) {
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--theme-accent) 85%, transparent));
+  filter: brightness(1.08);
 }
 
 :global(.live-map-marker.marker-spice.spice-size-large),
@@ -98,14 +97,13 @@
   height: 17px;
   padding: 0 4px;
   box-sizing: border-box;
-  border: 1px solid #202a32;
-  border-radius: 9px;
-  background: #50616f;
-  color: #fff;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
+  background: var(--theme-raised);
+  color: var(--theme-text);
   font:
     700 10px/1 Arial,
     sans-serif;
-  box-shadow: 0 1px 3px #0009;
   pointer-events: none;
   z-index: 2;
 }
@@ -517,11 +515,8 @@
   background: var(--theme-surface);
   border: 1px solid var(--theme-border);
   border-left: 0;
-  box-shadow:
-    0 25px 80px rgba(0, 0, 0, 0.75),
-    0 0 0 1px color-mix(in srgb, var(--theme-accent) 8%, transparent);
   color: var(--theme-soft);
-  font-family: 'Cascadia Code', 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-family: var(--font-sans);
 }
 
 .mapLegendHeader {
@@ -1000,8 +995,9 @@
   color: var(--theme-text);
 }
 .sceneTools button[aria-pressed='true'] {
-  background: var(--theme-accent);
-  color: var(--theme-on-accent);
+  border-color: color-mix(in srgb, var(--theme-accent) 20%, transparent);
+  background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  color: var(--theme-accent);
 }
 .sceneTools select {
   min-width: 0;
@@ -1028,13 +1024,13 @@
   min-height: 38px;
   padding: 9px 14px;
   border: 1px solid var(--theme-border);
-  border-radius: 999px;
-  background: var(--theme-background);
+  border-radius: 12px;
+  background: rgb(24 24 27 / 0.5);
   color: var(--theme-text);
   font: inherit;
 }
 .sceneSearch input::placeholder {
-  color: var(--theme-muted);
+  color: #52525b;
 }
 .sceneSearch ul {
   position: absolute;
@@ -1047,8 +1043,8 @@
   padding: 6px;
   border: 1px solid var(--theme-border);
   border-radius: 16px;
-  background: var(--theme-raised);
-  box-shadow: 0 12px 32px #0005;
+  background: rgb(24 24 27 / 0.94);
+  backdrop-filter: blur(12px);
 }
 .sceneSearch li {
   padding: 2px;
@@ -1268,10 +1264,9 @@
   padding: 16px;
   border: 1px solid var(--theme-border);
   border-radius: 20px;
-  background: var(--theme-masthead);
+  background: rgb(24 24 27 / 0.9);
   color: var(--theme-soft);
-  box-shadow: 0 12px 32px #0003;
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
 }
 .markerDetails header {
   display: flex;
@@ -1333,10 +1328,10 @@
   width: 100%;
   min-height: 36px;
   padding: 8px 14px;
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 20%, transparent);
   border-radius: 999px;
-  background: var(--theme-accent);
-  color: var(--theme-on-accent);
+  background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  color: var(--theme-accent);
   font: 500 12px var(--font-sans);
 }
 .mapViewport:has(.markerDetails) .sceneGuidance {
