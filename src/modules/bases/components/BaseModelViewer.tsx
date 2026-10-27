@@ -47,6 +47,8 @@ export default function BaseModelViewer({
       onSettled();
       return () => controller.abort();
     }
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.9;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.domElement.setAttribute('aria-label', `${baseName} 3D model`);
     renderer.domElement.style.width = '100%';

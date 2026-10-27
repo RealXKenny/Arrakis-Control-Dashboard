@@ -23,6 +23,7 @@ describe('source asset handler', () => {
       ['terrain', 'hagga.json.gz'],
       ['models', 'catalog.json.gz'],
       ['models', 'meshpack-9.bin.gz'],
+      ['models', 'visual-pack-100.bin.gz'],
     ]) {
       const res = responseMock();
       await assetHandler({ method: 'HEAD', query: { path: parts } }, res);

@@ -27,7 +27,7 @@ export function proxy(request: NextRequest) {
       "font-src 'self'",
       'frame-src https://discord.com',
       "img-src 'self' data: blob: https://cdn.discordapp.com",
-      "connect-src 'self'",
+      "connect-src 'self' blob:",
       "manifest-src 'self'",
       "media-src 'none'",
       "worker-src 'self' blob:",

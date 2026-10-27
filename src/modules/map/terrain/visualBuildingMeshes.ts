@@ -33,6 +33,101 @@ export async function loadVisualBuildingParts(bytes: Uint8Array): Promise<Visual
     return url;
   });
   const model = await new GLTFLoader(manager).parseAsync(new Uint8Array(bytes).buffer, '');
+  // Atlas and index images are embedded by the offline importer. Never fetch external assets.
+  const configured = new Set<THREE.Material>();
+  const pending: Promise<void>[] = [];
+  model.scene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+      if (configured.has(material) || !(material instanceof THREE.MeshStandardMaterial)) continue;
+      configured.add(material);
+      const data = material.userData.arrakisLayers as
+        { atlas?: unknown; index?: unknown; normals?: unknown; count?: unknown } | undefined;
+      if (
+        !data ||
+        typeof data.atlas !== 'string' ||
+        typeof data.index !== 'string' ||
+        !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.atlas) ||
+        data.atlas.length > 2_000_000 ||
+        !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.index) ||
+        (data.normals !== undefined &&
+          (typeof data.normals !== 'string' ||
+            !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.normals) ||
+            data.normals.length > 2_000_000)) ||
+        data.index.length > 100_000 ||
+        !object.geometry.getAttribute('uv1') ||
+        !object.geometry.getAttribute('uv')
+      )
+        continue;
+      const loader = new THREE.TextureLoader(manager);
+      pending.push(
+        Promise.all([
+          loader.loadAsync(data.atlas),
+          loader.loadAsync(data.index),
+          typeof data.normals === 'string' ? loader.loadAsync(data.normals) : Promise.resolve(null),
+        ]).then(([atlas, index, normalAtlas]) => {
+          atlas.flipY = false;
+          atlas.colorSpace = THREE.SRGBColorSpace;
+          index.flipY = false;
+          index.colorSpace = THREE.NoColorSpace;
+          index.minFilter = THREE.NearestFilter;
+          index.magFilter = THREE.NearestFilter;
+          index.generateMipmaps = false;
+          const layerCount = typeof data.count === 'number' && data.count >= 2 && data.count <= 12 ? data.count : 12;
+          if (normalAtlas) {
+            normalAtlas.flipY = false;
+            normalAtlas.colorSpace = THREE.NoColorSpace;
+          }
+          material.userData.arrakisTextures = [
+            atlas,
+            index,
+            ...(normalAtlas ? [normalAtlas] : []),
+            ...(material.map ? [material.map] : []),
+            ...(material.normalMap ? [material.normalMap] : []),
+          ];
+          if (normalAtlas) material.normalMap = normalAtlas;
+          // Ensure the standard material enables UV sampling even when its original layer is missing.
+          material.map = atlas;
+          delete material.userData.arrakisLayers;
+          material.defines = { ...material.defines, USE_UV1: '' };
+          material.onBeforeCompile = (shader) => {
+            shader.uniforms.arrakisAtlas = { value: atlas };
+            shader.uniforms.arrakisIndex = { value: index };
+            shader.uniforms.arrakisLayerCount = { value: layerCount };
+            if (normalAtlas) shader.uniforms.arrakisNormalAtlas = { value: normalAtlas };
+            shader.vertexShader = 'varying vec2 vArrakisIndexUv;\n' + shader.vertexShader;
+            shader.vertexShader = shader.vertexShader.replace(
+              '#include <uv_vertex>',
+              '#include <uv_vertex>\nvArrakisIndexUv = uv1;',
+            );
+            shader.fragmentShader =
+              (normalAtlas ? 'uniform sampler2D arrakisNormalAtlas;\n' : '') +
+              'uniform sampler2D arrakisAtlas;\nuniform sampler2D arrakisIndex;\nuniform float arrakisLayerCount;\nvarying vec2 vArrakisIndexUv;\n' +
+              shader.fragmentShader;
+            shader.fragmentShader = shader.fragmentShader.replace(
+              '#include <map_fragment>',
+              'float layer = clamp(floor(texture2D(arrakisIndex, vArrakisIndexUv).r * 255.0 + 0.5), 0.0, arrakisLayerCount - 1.0);\n' +
+                'vec2 tile = vec2(mod(layer, 4.0), floor(layer / 4.0));\n' +
+                'vec2 atlasUv = (tile + fract(vMapUv)) / vec2(4.0, 3.0);\n' +
+                'diffuseColor *= texture2D(arrakisAtlas, atlasUv);',
+            );
+            if (normalAtlas)
+              shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <normal_fragment_maps>',
+                THREE.ShaderChunk.normal_fragment_maps.replaceAll(
+                  'texture2D( normalMap, vNormalMapUv )',
+                  'texture2D( arrakisNormalAtlas, atlasUv )',
+                ),
+              );
+          };
+          material.customProgramCacheKey = () =>
+            normalAtlas ? 'arrakis-layers-color-normal-v2' : 'arrakis-layers-color-v2';
+          material.needsUpdate = true;
+        }),
+      );
+    }
+  });
+  await Promise.all(pending);
   model.scene.updateMatrixWorld(true);
   const parts: VisualBuildingPart[] = [];
   const originalGeometries = new Set<THREE.BufferGeometry>();

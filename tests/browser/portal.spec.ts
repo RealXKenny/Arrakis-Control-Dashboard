@@ -1415,7 +1415,8 @@ test('Bases lazily previews a selected owned structure using the livemap catalog
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
-    if (/THREE.WebGLProgram|shader error/i.test(message.text())) errors.push(message.text());
+    if (/THREE.WebGLProgram|shader error|GLTFLoader: Couldn't load texture/i.test(message.text()))
+      errors.push(message.text());
   });
   let exports = 0;
   await page.route('**/api/bases/*/export', (route) => {
@@ -1436,7 +1437,10 @@ test('Bases lazily previews a selected owned structure using the livemap catalog
           { building_type: 'Atreides_Outpost_Wall_01', x: 0, y: 768, z: 384, rotation: 180 },
           { building_type: 'Future_Unsupported_Piece', x: 0, y: 0, z: 0 },
         ],
-        placeables: [{ building_type: 'Atre_Chair_1_Placeable', x: 0, y: 0, z: 384, ry: 90 }],
+        placeables: [
+          { building_type: 'Atre_Chair_1_Placeable', x: 0, y: 0, z: 384, ry: 90 },
+          { building_type: 'Atreides_DoorTall_Placeable', x: 300, y: 0, z: 384 },
+        ],
       },
     });
   });
