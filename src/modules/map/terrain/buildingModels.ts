@@ -34,9 +34,12 @@ export function parseModelExport(value: unknown) {
   return exportSchema.parse(value);
 }
 type Vector = [number, number, number];
-type Row = { mesh: number; group: string; offset?: Vector; rot?: Vector; scale?: Vector };
-type Catalog = { rows: Record<string, Row>; meshes: { pack: number; offset: number; length: number; tris: number }[] };
-export type BuildingPartSummary = { templateId: string; total: number; rendered: number };
+type Row = { mesh: number; group: string; name?: string; offset?: Vector; rot?: Vector; scale?: Vector };
+type Catalog = {
+  rows: Record<string, Row>;
+  meshes: { pack: number; offset: number; length: number; tris: number; format?: 'glb' }[];
+};
+export type BuildingPartSummary = { templateId: string; name?: string; total: number; rendered: number };
 
 /** Match actual catalogue IDs only; ambiguous case variants must never pick an unrelated item. */
 export function resolveBuildingRow(rows: Record<string, Row>, templateId: string): Row | undefined {
@@ -121,34 +124,74 @@ const colors: Record<string, number> = {
   Decoration: 0xbca082,
 };
 
+type ModelPart = { geometry: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] };
+
 export class BuildingLibrary {
-  constructor(private signal?: AbortSignal) {}
+  constructor(
+    private signal?: AbortSignal,
+    private options: { visual?: boolean } = {},
+  ) {}
   private catalog: Promise<Catalog> | null = null;
   private packs = new Map<number, Promise<Uint8Array>>();
-  private geometries = new Map<number, Promise<THREE.BufferGeometry>>();
+  private models = new Map<number, Promise<ModelPart[]>>();
   private loaded = new Set<THREE.BufferGeometry>();
   private materials = new Map<string, THREE.MeshStandardMaterial>();
+  private visualMaterials = new Set<THREE.Material>();
+  private textures = new Set<THREE.Texture>();
   private disposed = false;
   private load() {
-    return (this.catalog ??= gunzip('/api/assets/models/catalog.json.gz', this.signal).then((raw) =>
+    const name = this.options.visual ? 'visual-catalog.json.gz' : 'catalog.json.gz';
+    return (this.catalog ??= gunzip(`/api/assets/models/${name}`, this.signal).then((raw) =>
       JSON.parse(new TextDecoder().decode(raw)),
     ));
   }
-  private async geometry(id: number, catalog: Catalog) {
-    if (!this.geometries.has(id)) {
+  private async model(id: number, catalog: Catalog): Promise<ModelPart[]> {
+    if (!this.models.has(id)) {
       const meta = catalog.meshes[id];
       if (!meta) throw new Error('Unknown building mesh');
+      const prefix = this.options.visual ? 'visual-pack' : 'meshpack';
       if (!this.packs.has(meta.pack))
-        this.packs.set(meta.pack, gunzip(`/api/assets/models/meshpack-${meta.pack}.bin.gz`, this.signal));
-      const pending = this.packs.get(meta.pack)!.then((raw) => {
+        this.packs.set(meta.pack, gunzip(`/api/assets/models/${prefix}-${meta.pack}.bin.gz`, this.signal));
+      const pending = this.packs.get(meta.pack)!.then(async (raw) => {
         if (this.disposed) throw new Error('Model library closed');
-        const geometry = decodeBuildingMesh(raw.slice(meta.offset, meta.offset + meta.length).buffer);
-        this.loaded.add(geometry);
-        return geometry;
+        const bytes = raw.slice(meta.offset, meta.offset + meta.length);
+        const parts: ModelPart[] =
+          meta.format === 'glb'
+            ? await (await import('./visualBuildingMeshes')).loadVisualBuildingParts(bytes)
+            : [{ geometry: decodeBuildingMesh(bytes.buffer) }];
+        for (const part of parts) {
+          this.loaded.add(part.geometry);
+          for (const material of part.material
+            ? Array.isArray(part.material)
+              ? part.material
+              : [part.material]
+            : []) {
+            this.visualMaterials.add(material);
+            for (const value of Object.values(material)) if (value instanceof THREE.Texture) this.textures.add(value);
+          }
+        }
+        if (this.disposed) {
+          this.dispose();
+          throw new Error('Model library closed');
+        }
+        return parts;
       });
-      this.geometries.set(id, pending);
+      this.models.set(id, pending);
     }
-    return this.geometries.get(id)!;
+    return this.models.get(id)!;
+  }
+  private material(group: string) {
+    if (!this.materials.has(group))
+      this.materials.set(
+        group,
+        new THREE.MeshStandardMaterial({
+          color: colors[group] ?? 0xb7a68c,
+          roughness: 0.78,
+          metalness: 0.18,
+          side: THREE.DoubleSide,
+        }),
+      );
+    return this.materials.get(group)!;
   }
   async build(value: unknown) {
     const data = parseModelExport(value),
@@ -158,19 +201,19 @@ export class BuildingLibrary {
     const parts = new Map<string, BuildingPartSummary>();
     const shieldSizes = new Map(data.pentashields.map((shield) => [shield.placeable_id, shield.scale]));
     const shieldScales = new Map<number, Vector>();
-    // The export carries target dimensions in metres for shields. Derive factors from our
-    // native mesh plus catalogue transform, rather than borrowing GLB-specific axis fixes.
+    // Shields carry target metre dimensions: derive factors from actual model bounds.
     await Promise.all(
       data.placeables.map(async (p, index) => {
         const target = shieldSizes.get(index);
         if (!target || !/^Choam_PentashieldSurface(?:Horizontal|Vertical)_Placeable$/.test(p.building_type)) return;
         const row = resolveBuildingRow(catalog.rows, p.building_type);
         if (!row || row.mesh < 0 || !catalog.meshes[row.mesh]) return;
-        const geometry = await this.geometry(row.mesh, catalog);
+        const bounds = new THREE.Box3();
+        for (const part of await this.model(row.mesh, catalog)) bounds.union(part.geometry.boundingBox!);
         const local = toSceneMatrix(
           unrealMatrix(row.offset ?? [0, 0, 0], row.rot ?? [0, 0, 0], row.scale?.some(Boolean) ? row.scale : [1, 1, 1]),
         );
-        const size = geometry.boundingBox!.clone().applyMatrix4(local).getSize(new THREE.Vector3());
+        const size = bounds.applyMatrix4(local).getSize(new THREE.Vector3());
         if (Math.min(size.x, size.y, size.z) <= 0) return;
         shieldScales.set(index, [target[0] / size.x, target[1] / size.z, target[2] / size.y]);
       }),
@@ -178,13 +221,18 @@ export class BuildingLibrary {
     let known = 0,
       triangles = 0;
     const add = (p: z.infer<typeof piece>, placeable: boolean, index: number) => {
-      const summary = parts.get(p.building_type) ?? { templateId: p.building_type, total: 0, rendered: 0 };
+      const row = resolveBuildingRow(catalog.rows, p.building_type);
+      const summary = parts.get(p.building_type) ?? {
+        templateId: p.building_type,
+        ...(row?.name ? { name: row.name } : {}),
+        total: 0,
+        rendered: 0,
+      };
       summary.total++;
       parts.set(p.building_type, summary);
-      const row = resolveBuildingRow(catalog.rows, p.building_type);
       if (!row || row.mesh < 0 || !catalog.meshes[row.mesh]) return;
       const cost = catalog.meshes[row.mesh].tris;
-      if (triangles + cost > 400_000) return;
+      if (triangles + cost > (this.options.visual ? 2_000_000 : 400_000)) return;
       triangles += cost;
       known++;
       summary.rendered++;
@@ -193,8 +241,9 @@ export class BuildingLibrary {
         placeable ? [p.rx ?? 0, p.ry ?? 0, p.rz ?? 0] : [0, p.rotation ?? 0, 0],
         placeable ? shieldScales.get(index) : undefined,
       );
-      const scale = row.scale?.some(Boolean) ? row.scale : ([1, 1, 1] as Vector);
-      transform.multiply(unrealMatrix(row.offset ?? [0, 0, 0], row.rot ?? [0, 0, 0], scale));
+      transform.multiply(
+        unrealMatrix(row.offset ?? [0, 0, 0], row.rot ?? [0, 0, 0], row.scale?.some(Boolean) ? row.scale : [1, 1, 1]),
+      );
       const key = `${row.mesh}:${row.group}`;
       if (!batches.has(key)) batches.set(key, { row, matrices: [] });
       batches.get(key)!.matrices.push(toSceneMatrix(transform));
@@ -205,23 +254,19 @@ export class BuildingLibrary {
     const group = new THREE.Group();
     await Promise.all(
       [...batches.values()].map(async ({ row, matrices }) => {
-        const geometry = await this.geometry(row.mesh, catalog);
+        const model = await this.model(row.mesh, catalog);
         if (this.disposed) return;
-        if (!this.materials.has(row.group))
-          this.materials.set(
-            row.group,
-            new THREE.MeshStandardMaterial({
-              color: colors[row.group] ?? 0xb7a68c,
-              roughness: 0.78,
-              metalness: 0.18,
-              side: THREE.DoubleSide,
-            }),
+        for (const [index, part] of model.entries()) {
+          const batch = new THREE.InstancedMesh(
+            part.geometry,
+            part.material ?? this.material(row.group),
+            matrices.length,
           );
-        const batch = new THREE.InstancedMesh(geometry, this.materials.get(row.group), matrices.length);
-        batch.name = `building-mesh-${row.mesh}:${row.group}`;
-        matrices.forEach((m, i) => batch.setMatrixAt(i, m));
-        batch.computeBoundingSphere();
-        group.add(batch);
+          batch.name = `building-mesh-${row.mesh}:${row.group}${index ? `:${index}` : ''}`;
+          matrices.forEach((matrix, item) => batch.setMatrixAt(item, matrix));
+          batch.computeBoundingSphere();
+          group.add(batch);
+        }
       }),
     );
     return {
@@ -234,11 +279,19 @@ export class BuildingLibrary {
   }
   dispose() {
     this.disposed = true;
-    for (const g of this.loaded) g.dispose();
-    for (const m of this.materials.values()) m.dispose();
+    for (const geometry of this.loaded) geometry.dispose();
+    for (const material of this.materials.values()) material.dispose();
+    for (const material of this.visualMaterials) material.dispose();
+    for (const texture of this.textures) {
+      texture.dispose();
+      const data = texture.source.data;
+      if (typeof ImageBitmap !== 'undefined' && data instanceof ImageBitmap) data.close();
+    }
     this.loaded.clear();
     this.materials.clear();
+    this.visualMaterials.clear();
+    this.textures.clear();
     this.packs.clear();
-    this.geometries.clear();
+    this.models.clear();
   }
 }
