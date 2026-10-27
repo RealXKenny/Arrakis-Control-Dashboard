@@ -37,7 +37,7 @@ type Vector = [number, number, number];
 type Row = { mesh: number; group: string; name?: string; offset?: Vector; rot?: Vector; scale?: Vector };
 type Catalog = {
   rows: Record<string, Row>;
-  meshes: { pack: number; offset: number; length: number; tris: number; format?: 'glb' }[];
+  meshes: { pack: number; offset: number; length: number; tris: number; format?: 'glb'; source?: 'native' }[];
 };
 export type BuildingPartSummary = { templateId: string; name?: string; total: number; rendered: number };
 
@@ -124,6 +124,30 @@ const colors: Record<string, number> = {
   Decoration: 0xbca082,
 };
 
+/** Classify untextured materials; player-built accent names are not lamps. */
+export function visualFallbackKind(name: string): 'glass' | 'shield' | 'light' | 'light-blue' | null {
+  const normalized = name.toLowerCase();
+  if (/glass|translucent/.test(normalized)) return 'glass';
+  if (/force_?field|hologram|shield|prudence_energy/.test(normalized)) return 'shield';
+  if (normalized.includes('_pb_')) return null;
+  if (/light_?blue/.test(normalized)) return 'light-blue';
+  if (/_lights?\d*$/.test(normalized)) return 'light';
+  return null;
+}
+
+/** Reference-derived offsets, converted from Babylon axes to the Three.js scene. */
+export function visualYawOffset(templateId: string): number {
+  if (templateId === 'Atreides_Outpost_Wall_Inclined_Wide_Left') return -37.5;
+  if (templateId === 'Atreides_Outpost_Wall_Inclined_Wide_Right') return 37.5;
+  const name = templateId.toLowerCase();
+  // Reference offsets are relative to its ordinary pieces; swapping Babylon's X/Z axes reverses yaw.
+  if (name.includes('corner')) return 90;
+  if ((name.includes('top') || name.includes('bottom')) && (name.includes('left') || name.includes('right')))
+    return 180;
+  if (name.includes('railing')) return 180;
+  return 0;
+}
+
 type ModelPart = { geometry: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] };
 
 export class BuildingLibrary {
@@ -132,7 +156,7 @@ export class BuildingLibrary {
     private options: { visual?: boolean } = {},
   ) {}
   private catalog: Promise<Catalog> | null = null;
-  private packs = new Map<number, Promise<Uint8Array>>();
+  private packs = new Map<string, Promise<Uint8Array>>();
   private models = new Map<number, Promise<ModelPart[]>>();
   private loaded = new Set<THREE.BufferGeometry>();
   private materials = new Map<string, THREE.MeshStandardMaterial>();
@@ -149,10 +173,11 @@ export class BuildingLibrary {
     if (!this.models.has(id)) {
       const meta = catalog.meshes[id];
       if (!meta) throw new Error('Unknown building mesh');
-      const prefix = this.options.visual ? 'visual-pack' : 'meshpack';
-      if (!this.packs.has(meta.pack))
-        this.packs.set(meta.pack, gunzip(`/api/assets/models/${prefix}-${meta.pack}.bin.gz`, this.signal));
-      const pending = this.packs.get(meta.pack)!.then(async (raw) => {
+      const prefix = this.options.visual && meta.source !== 'native' ? 'visual-pack' : 'meshpack';
+      const packKey = prefix + ':' + meta.pack;
+      if (!this.packs.has(packKey))
+        this.packs.set(packKey, gunzip(`/api/assets/models/${prefix}-${meta.pack}.bin.gz`, this.signal));
+      const pending = this.packs.get(packKey)!.then(async (raw) => {
         if (this.disposed) throw new Error('Model library closed');
         const bytes = raw.slice(meta.offset, meta.offset + meta.length);
         const parts: ModelPart[] =
@@ -168,6 +193,8 @@ export class BuildingLibrary {
             : []) {
             this.visualMaterials.add(material);
             for (const value of Object.values(material)) if (value instanceof THREE.Texture) this.textures.add(value);
+            for (const texture of material.userData.arrakisTextures ?? [])
+              if (texture instanceof THREE.Texture) this.textures.add(texture);
           }
         }
         if (this.disposed) {
@@ -192,6 +219,30 @@ export class BuildingLibrary {
         }),
       );
     return this.materials.get(group)!;
+  }
+  private specialMaterial(kind: NonNullable<ReturnType<typeof visualFallbackKind>>) {
+    const key = 'special:' + kind;
+    if (!this.materials.has(key)) {
+      const options: Record<
+        NonNullable<ReturnType<typeof visualFallbackKind>>,
+        THREE.MeshStandardMaterialParameters
+      > = {
+        glass: { color: 0x739ebf, transparent: true, opacity: 0.28, metalness: 0, roughness: 0.1, depthWrite: false },
+        shield: {
+          color: 0x33ccd9,
+          emissive: 0x146680,
+          transparent: true,
+          opacity: 0.4,
+          metalness: 0,
+          roughness: 0.3,
+          depthWrite: false,
+        },
+        'light-blue': { color: 0x338cb3, emissive: 0x66d9ff, metalness: 0.1, roughness: 0.2 },
+        light: { color: 0xffeba6, emissive: 0xd9b366, metalness: 0, roughness: 0.4 },
+      };
+      this.materials.set(key, new THREE.MeshStandardMaterial({ ...options[kind], side: THREE.DoubleSide }));
+    }
+    return this.materials.get(key)!;
   }
   async build(value: unknown) {
     const data = parseModelExport(value),
@@ -232,13 +283,15 @@ export class BuildingLibrary {
       parts.set(p.building_type, summary);
       if (!row || row.mesh < 0 || !catalog.meshes[row.mesh]) return;
       const cost = catalog.meshes[row.mesh].tris;
-      if (triangles + cost > (this.options.visual ? 2_000_000 : 400_000)) return;
+      if (triangles + cost > (this.options.visual ? 4_000_000 : 400_000)) return;
       triangles += cost;
       known++;
       summary.rendered++;
       const transform = unrealMatrix(
         [p.x, p.y, p.z],
-        placeable ? [p.rx ?? 0, p.ry ?? 0, p.rz ?? 0] : [0, p.rotation ?? 0, 0],
+        placeable
+          ? [p.rx ?? 0, p.ry ?? 0, p.rz ?? 0]
+          : [0, (p.rotation ?? 0) + (this.options.visual ? visualYawOffset(p.building_type) : 0), 0],
         placeable ? shieldScales.get(index) : undefined,
       );
       transform.multiply(
@@ -257,11 +310,24 @@ export class BuildingLibrary {
         const model = await this.model(row.mesh, catalog);
         if (this.disposed) return;
         for (const [index, part] of model.entries()) {
-          const batch = new THREE.InstancedMesh(
-            part.geometry,
-            part.material ?? this.material(row.group),
-            matrices.length,
-          );
+          // Untextured white FModel placeholders are not the game's layered material.
+          // Use the existing faction palette until the missing shader layers are available.
+          const fallback = (material: THREE.Material) => {
+            if (!(material instanceof THREE.MeshStandardMaterial) || material.map) return material;
+            const kind = visualFallbackKind(material.name);
+            if (kind) return this.specialMaterial(kind);
+            return material.color.getHex() === 0xffffff && !material.transparent && material.opacity === 1
+              ? this.material(row.group)
+              : material;
+          };
+          const material = Array.isArray(part.material)
+            ? part.material.map(fallback)
+            : part.material
+              ? fallback(part.material)
+              : row.group === '__shield'
+                ? this.specialMaterial('shield')
+                : this.material(row.group);
+          const batch = new THREE.InstancedMesh(part.geometry, material, matrices.length);
           batch.name = `building-mesh-${row.mesh}:${row.group}${index ? `:${index}` : ''}`;
           matrices.forEach((matrix, item) => batch.setMatrixAt(item, matrix));
           batch.computeBoundingSphere();

@@ -9,12 +9,36 @@ import {
   resolveBuildingRow,
   toSceneMatrix,
   unrealMatrix,
+  visualFallbackKind,
+  visualYawOffset,
 } from '../../src/modules/map/terrain/buildingModels';
 import { createVehicleModel, disposeVehicleModels, vehicleKind } from '../../src/modules/map/terrain/vehicleModels';
 import { niceScale } from '../../src/modules/map/terrain/mapPresentation';
 const catalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/catalog.json.gz')).toString());
+const visualCatalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/visual-catalog.json.gz')).toString());
 afterEach(() => vi.unstubAllGlobals());
 describe('map models', () => {
+  it('keeps a wall normal aligned with its rotated foundation edge', () => {
+    for (const yaw of [0, 10, 90, 100, 180, 270]) {
+      const normal = new THREE.Vector3(0, 0, 1).transformDirection(toSceneMatrix(unrealMatrix([0, 0, 0], [0, yaw, 0])));
+      expect(normal.x).toBeCloseTo(-Math.sin((yaw * Math.PI) / 180));
+      expect(normal.z).toBeCloseTo(Math.cos((yaw * Math.PI) / 180));
+    }
+  });
+  it('applies reference-derived offsets to structural piece classes', () => {
+    expect(visualYawOffset('Atreides_Outpost_Wall_Inclined_Wide_Left')).toBe(-37.5);
+    expect(visualYawOffset('Atreides_Outpost_Wall_Inclined_Wide_Right')).toBe(37.5);
+    expect(visualYawOffset('Atreides_Outpost_Wall_01')).toBe(0);
+    expect(visualYawOffset('Atreides_Outpost_Wall_Round_Corner_01')).toBe(90);
+    expect(visualYawOffset('Atreides_Outpost_Railing')).toBe(180);
+    expect(visualYawOffset('Atreides_Outpost_Wall_Triangle_Bottom_Right')).toBe(180);
+  });
+  it('recognizes untextured glass, shields and lamps without treating building accents as lamps', () => {
+    expect(visualFallbackKind('MI_Window_Glass')).toBe('glass');
+    expect(visualFallbackKind('MI_Pentashield')).toBe('shield');
+    expect(visualFallbackKind('MI_Prop_Lights')).toBe('light');
+    expect(visualFallbackKind('MI_PB_Light_Blue')).toBeNull();
+  });
   it('decodes every bundled mesh without invalid indices or nonfinite positions', () => {
     const packs = new Map<number, Buffer>();
     for (const mesh of catalog.meshes) {
@@ -62,6 +86,39 @@ describe('map models', () => {
     library.dispose();
     expect(parseModelExport({ instances: [piece], owner_secret: 'excluded' })).not.toHaveProperty('owner_secret');
     expect(() => parseModelExport({ instances: [{ ...piece, x: Infinity }] })).toThrow();
+  });
+  it('uses original shield proxy packs in the visual preview', async () => {
+    const fetcher = vi.fn(
+      async (url: string) => new Response(new Uint8Array(readFileSync('src/assets/models/' + url.split('/').at(-1)))),
+    );
+    vi.stubGlobal('fetch', fetcher);
+    const library = new BuildingLibrary(undefined, { visual: true });
+    const result = await library.build({
+      placeables: [
+        { building_type: 'Choam_PentashieldSurfaceVertical_Placeable', x: 0, y: 0, z: 0 },
+        { building_type: 'Choam_PentashieldSurfaceHorizontal_Placeable', x: 100, y: 0, z: 0 },
+      ],
+    });
+    expect(result.pieces).toBe(2);
+    expect(result.group.children).toHaveLength(2);
+    expect(fetcher.mock.calls.map(([url]) => String(url))).toContain('/api/assets/models/meshpack-8.bin.gz');
+    const verticalMesh = visualCatalog.rows.Choam_PentashieldSurfaceVertical_Placeable.mesh;
+    const horizontalMesh = visualCatalog.rows.Choam_PentashieldSurfaceHorizontal_Placeable.mesh;
+    const vertical = result.group.children.find((object) => object.name.startsWith(`building-mesh-${verticalMesh}:`));
+    const horizontal = result.group.children.find((object) =>
+      object.name.startsWith(`building-mesh-${horizontalMesh}:`),
+    );
+    expect(vertical).toBeDefined();
+    expect(horizontal).toBeDefined();
+    expect(new THREE.Box3().setFromObject(vertical!).getSize(new THREE.Vector3()).y).toBeGreaterThan(3);
+    expect(new THREE.Box3().setFromObject(horizontal!).getSize(new THREE.Vector3()).z).toBeGreaterThan(4);
+    for (const object of result.group.children) {
+      const material = (object as THREE.InstancedMesh).material as THREE.MeshStandardMaterial;
+      expect(material.transparent).toBe(true);
+      expect(material.opacity).toBeCloseTo(0.4);
+      (object as THREE.InstancedMesh).dispose();
+    }
+    library.dispose();
   });
   it('provides distinct vehicle silhouettes and stable metric scale units', () => {
     expect(vehicleKind('TransportOrnithopter')).toBe('transport');

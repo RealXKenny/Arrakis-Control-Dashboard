@@ -2,6 +2,19 @@
 
 All notable changes to Arrakis Control Dashboard are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Render vertical and horizontal pentashield surfaces in the owned-base preview using their native proxy geometry and translucent shield materials.
+
+### Changed
+
+- Embed available FModel surface color and normal textures in the owned-base 3D preview. Unreal layered materials without usable surface maps retain their existing fallback appearance.
+- Render available Atreides Outpost color layers using their exported layer index maps, and retain fallback materials where shader inputs are unavailable.
+- Allow larger base previews and preserve the reference project’s identified inclined-wall offsets.
+- Allow the expanded visual model catalog to serve three-digit pack numbers.
+
 ## [1.2.0] - 2026-10-26
 
 ### Added

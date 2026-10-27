@@ -7,6 +7,7 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import draco from 'draco3dgltf';
+import { bindExportedMaterials, createMaterialResolver } from './exportedMaterials.mjs';
 
 const HOST = 'https://assets.dune.layout.tools/';
 const MAX_ASSET = 32 * 1024 * 1024;
@@ -36,6 +37,7 @@ export function inspectEmbeddedGlb(raw) {
 
 export async function buildVisualAssets({
   sourceRoot,
+  metadataRoot,
   cacheRoot = path.join(os.tmpdir(), 'arrakis-building-source'),
 } = {}) {
   const root = path.resolve(fileURLToPath(new URL('../../../../', import.meta.url)));
@@ -44,7 +46,14 @@ export async function buildVisualAssets({
   await fs.mkdir(cacheRoot, { recursive: true });
   const download = async (relative) => {
     if (!/^[A-Za-z0-9_./-]+$/.test(relative) || relative.includes('..')) throw new Error('Invalid asset path');
-    if (sourceRoot) return fs.readFile(path.join(path.resolve(sourceRoot), relative));
+    if (sourceRoot) {
+      const local = path.join(path.resolve(sourceRoot), relative);
+      try {
+        return await fs.readFile(local);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
+    }
     const cachePath = path.join(cacheRoot, `${sha(relative)}.source`);
     try {
       return await fs.readFile(cachePath);
@@ -120,6 +129,7 @@ export async function buildVisualAssets({
   const io = new NodeIO()
     .registerExtensions(ALL_EXTENSIONS)
     .registerDependencies({ 'draco3d.decoder': await draco.createDecoderModule() });
+  const materialResolver = sourceRoot ? await createMaterialResolver(sourceRoot, metadataRoot) : null;
   const models = [];
   const failures = [];
   const entries = [...sources.entries()];
@@ -132,10 +142,8 @@ export async function buildVisualAssets({
         const [relative, templates] = entries[index];
         try {
           const source = await download(relative);
-          // Local FModel exports may include sibling texture files; NodeIO embeds them on write.
-          const document = sourceRoot
-            ? await io.read(path.join(path.resolve(sourceRoot), relative))
-            : await io.readBinary(new Uint8Array(source));
+          // FModel material JSON is applied only to explicitly identified texture inputs.
+          const document = await io.readBinary(new Uint8Array(source));
           const triangles = document
             .getRoot()
             .listMeshes()
@@ -156,6 +164,26 @@ export async function buildVisualAssets({
             .listExtensionsUsed()
             .find((extension) => extension.extensionName === 'KHR_draco_mesh_compression')
             ?.dispose();
+          // FModel leaves glTF metallic at its default of 1; without an environment map this renders black.
+          for (const material of document.getRoot().listMaterials()) {
+            if (!material.getMetallicRoughnessTexture() && material.getMetallicFactor() === 1)
+              material.setMetallicFactor(0);
+          }
+          // FModel exports Unreal vertex masks as glTF colors; they are not surface tints.
+          if (
+            materialResolver &&
+            (await fs.stat(path.join(path.resolve(sourceRoot), relative)).then(
+              () => true,
+              () => false,
+            ))
+          ) {
+            for (const mesh of document.getRoot().listMeshes()) {
+              for (const primitive of mesh.listPrimitives()) primitive.setAttribute('COLOR_0', null);
+            }
+          }
+          const bindings = materialResolver
+            ? await bindExportedMaterials(document, relative, materialResolver)
+            : { colorMaps: 0, normalMaps: 0 };
           const bytes = Buffer.from(await io.writeBinary(document));
           if (bytes.length > MAX_ASSET) throw new Error('Decoded model too large');
           const glb = inspectEmbeddedGlb(bytes);
@@ -166,6 +194,7 @@ export async function buildVisualAssets({
             tris: triangles,
             sha256: sha(source),
             images: glb.images?.length ?? 0,
+            ...bindings,
           });
         } catch (error) {
           failures.push({ path: relative, templates, reason: error.message });
@@ -203,6 +232,20 @@ export async function buildVisualAssets({
     for (const id of model.templates) rows[id].mesh = mesh;
   }
   flush();
+  // The game exposes only collision proxies for these shield surfaces; retain those actual shapes.
+  for (const id of ['Choam_PentashieldSurfaceVertical_Placeable', 'Choam_PentashieldSurfaceHorizontal_Placeable']) {
+    const nativeRow = native.rows[id];
+    if (rows[id]?.mesh >= 0 || !nativeRow || nativeRow.mesh < 0 || !native.meshes[nativeRow.mesh]) continue;
+    const fallback = native.meshes[nativeRow.mesh];
+    rows[id] = { ...rows[id], group: '__shield', mesh: meshes.length };
+    meshes.push({
+      pack: fallback.pack,
+      offset: fallback.offset,
+      length: fallback.length,
+      tris: fallback.tris,
+      source: 'native',
+    });
+  }
   const missingPlayable = playable.filter((id) => !rows[id] || rows[id].mesh < 0);
   const report = {
     playable: playable.length,
@@ -211,6 +254,8 @@ export async function buildVisualAssets({
     templates: Object.keys(rows).length,
     visualMeshes: models.length,
     meshesWithImages: models.filter((model) => model.images).length,
+    colorMaps: models.reduce((sum, model) => sum + model.colorMaps, 0),
+    normalMaps: models.reduce((sum, model) => sum + model.normalMaps, 0),
     packs: packs.length,
     failures,
   };
@@ -244,5 +289,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const sourceRoot = process.argv
     .find((argument) => argument.startsWith('--source-root='))
     ?.slice('--source-root='.length);
-  await buildVisualAssets({ sourceRoot });
+  const metadataRoot = process.argv
+    .find((argument) => argument.startsWith('--metadata-root='))
+    ?.slice('--metadata-root='.length);
+  await buildVisualAssets({ sourceRoot, metadataRoot });
 }
