@@ -689,3 +689,19 @@
       border-color 0.18s;
   }
 }
+
+@media (min-width: 1800px) {
+  .overview {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .wideSection {
+    grid-column: span 2;
+  }
+  .briefingBody {
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+    gap: 48px;
+  }
+  .briefingBody h1 {
+    max-width: 20ch;
+  }
+}

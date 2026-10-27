@@ -3,6 +3,42 @@ import assetHandler from '../../src/pages/api/assets/[...path]';
 import { responseMock } from '../helpers/response';
 
 describe('source asset handler', () => {
+  it('serves public share PNGs without exposing their sources or arbitrary files', async () => {
+    for (const name of ['preview-v1.png', 'mark-v1.png']) {
+      const res = responseMock();
+      await assetHandler({ method: 'GET', query: { path: ['share', name] } }, res);
+      expect(res.statusCode).toBe(200);
+      expect(res.getHeader('Content-Type')).toBe('image/png');
+      expect((res.body as Buffer).subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    }
+    for (const name of ['preview-v1.svg', 'surprise.png', '../.env']) {
+      const res = responseMock();
+      await assetHandler({ method: 'GET', query: { path: ['share', name] } }, res);
+      expect(res.statusCode).toBe(404);
+    }
+  });
+  it('serves measured Hagga terrain and only allowlisted model packs', async () => {
+    for (const parts of [
+      ['terrain', 'hagga.hf.gz'],
+      ['terrain', 'hagga.json.gz'],
+      ['models', 'catalog.json.gz'],
+      ['models', 'meshpack-9.bin.gz'],
+    ]) {
+      const res = responseMock();
+      await assetHandler({ method: 'HEAD', query: { path: parts } }, res);
+      expect(res.statusCode).toBe(200);
+      expect(res.getHeader('Content-Type')).toBe('application/gzip');
+    }
+    for (const parts of [
+      ['models', 'meshpack-10.bin.gz'],
+      ['models', '..', '.env'],
+      ['terrain', 'hagga.bin.gz'],
+    ]) {
+      const res = responseMock();
+      await assetHandler({ method: 'GET', query: { path: parts } }, res);
+      expect(res.statusCode).toBe(404);
+    }
+  });
   it('serves known assets with their content type and cache policy', async () => {
     const res = responseMock();
     await assetHandler({ method: 'GET', query: { path: ['maps', 'atreides.webp'] } }, res);

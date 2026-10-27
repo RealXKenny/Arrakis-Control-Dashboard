@@ -2,32 +2,49 @@
 
 All notable changes to Arrakis Control Dashboard are documented here.
 
-## [Unreleased]
-
 ## [1.2.0] - 2026-10-26
 
 ### Added
 
-- Next.js App Router shell at `/`: React Server Components orchestrate the operations dashboard in `src/app/` while all backend secrets stay server-side; interactive controls remain explicitly scoped `"use client"` in `src/components/`.
-- Production dashboard data provider in `src/lib/data-provider.ts` backed by a pooled `ioredis` connection (`src/lib/redis-client.ts`): round-robin read pooling, exponential reconnect backoff, optional Redis Cluster failover via `REDIS_CLUSTER_NODES`, and a circuit breaker that fails fast and half-opens with a single probe.
-- Read-through snapshot cache: fresh dashboard snapshots are served from Redis so high render concurrency never reaches the Dune Console; misses refresh from the Console adapter and write back with a 30 second TTL, and stale snapshots inside a 10 minute grace window are served when the Console is unreachable.
-- `src/lib/env.ts` as the canonical strict Zod environment schema; `src/config/env.ts` re-exports it so legacy imports keep working. `validateProductionEnv()` still gates production startup on the full secret set.
-- `src/components/Topbar.tsx` pillbox navigation and a full pillbox design system (Tailwind v4 theme in `src/app/globals.css`): fully rounded navigation pills, segmented tab controls, filter tags, and status badges on a pure charcoal SaaS palette.
-- `docker-compose.yml` for local development: the dashboard beside a health-checked Redis with persistence.
-- App Router error and not-found boundaries styled to the pillbox system.
+- Orbitable 3D Hagga Basin and Deep Desert maps with measured terrain, local building/vehicle/sandworm models, location search, compass, scale, fullscreen, terrain detail controls, and automatic 2D fallback. Restore the livemap implementation already present in merge history.
+- Terrain-conforming procedural models for active/possible spice fields, shipwreck POIs, and flour-sand deposits, with layer-aware picking, a nearest-40 allocation budget, distant marker fallbacks, and geometry disposal when filters, distance, or detail change.
+- An opt-in owned-base 3D preview in My bases, using authorized exports and actual local building/furniture meshes. Include orbit, zoom, fit and top-view controls, per-template reconstruction counts, native item transforms, and exported pentashield dimensions.
+- Server-rendered Discord component link previews with the Crimson Skies mark, public feature summaries, and website/portal/Discord buttons. Include Open Graph/Twitter image fallbacks and small, allowlisted brand images.
+- A server-only ioredis pool and snapshot-provider infrastructure with connection reuse, optional Redis Cluster configuration, failover, and a circuit breaker. The member portal continues to use its existing feature APIs.
+- A canonical server environment schema in `src/lib/env.ts`, re-exported through `src/config/env.ts`, and a local development Docker Compose configuration with Redis.
 
 ### Changed
 
-- Migrate `/` to the App Router dashboard; the previous landing page is parked at `/home` so the two routers never match the same path.
-- Modernize the root layout, topbar, dashboard tabs, badges, and retry actions to the pillbox aesthetic; sharp-edged toggles, tab underlines, and legacy chrome are gone from the App Router surface.
-- Rename `middleware.ts` to `proxy.ts` per the Next.js 16 Middleware → Proxy convention (same security headers and request correlation).
-- Replace the multi-stage Debian Dockerfile with a `node:22-alpine` build and runtime; the image still runs as the unprivileged `container` user and supports the Pterodactyl entrypoint.
-- Bump `tailwindcss`/`@tailwindcss/postcss` and add `ioredis` to the dependency set; bump stable version to 1.2.0.
+- Unify landing, portal, maps, inventory and dialogs around a charcoal-and-silver pillbox interface, modern typography, rounded controls, responsive mobile layouts, and fluid ultrawide spacing.
+- Serve the public landing page directly at `/`; redirect legacy `/home` links with query parameters intact and remove the separate public operations dashboard and App Router shell. Keep the Pages Router feature architecture.
+- Make the Crimson Skies brand in every topbar return to `/`. Remove extra public navigation pills and administration entry links while preserving direct `/admin` authorization.
+- Redesign map toolbars, layer controls and location details as matching responsive cards with a dark canvas surround.
+- Modernize base storage with independently scrolling containers and contents, reachable pagination, search, clear empty states, mobile layouts, and keyboard focus containment/restoration.
+- Connect the holiday/seasonal calendar to the shared accent palette, including local-date selection, floating holidays, midnight/resume refresh, explicit default overrides, and cleanup of optional theme metadata without layout changes.
+- Add Three.js and its development types; retain the modern Tailwind toolchain. Rename Middleware to `src/proxy.ts` for Next.js 16 and use a cached multi-stage Node 22 Alpine image running as the unprivileged Pterodactyl container user.
+- Include the MapViewer3D MIT attribution in the runtime image. Synchronize the package and lockfile at stable version 1.2.0.
+
+### Fixed
+
+- Distinguish static POIs that share provider IDs by location and deduplicate repeated samples before rendering. Project markers and terrain from the same camera frame, canceling interpolation during camera changes to stop blips sticking during rapid zoom.
+- Release 3D geometry, instanced meshes, controls, observers and graphics contexts when closing or switching previews; bound model detail, export sizes, loading concurrency and request timeouts.
+- Start Discord OAuth only on intentional sign-in navigation rather than a background link prefetch.
+- Align the Docker image's home/working directory and OCI description with Pterodactyl release checks; verify bundled model, terrain, share-image and license assets before publishing.
 
 ### Security
 
-- Keep `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`, and Redis credentials strictly server-side: the App Router data provider, ioredis pool, and environment schema are all `assert-server` guarded and never imported by client components.
-- Preserve the existing production startup gate that refuses to serve traffic without the full secret set, and keep secret values out of error messages and logs.
+- Preserve server-side session, guild/role, exact administrator identity and base-ownership checks; never expose shared-base exports through the owned-base preview.
+- Keep all credentials server-side, private exports out of browser persistence, and existing method checks, same-origin mutation checks, rate limits, security headers and response bounds intact.
+- Build public share URLs only from `APP_URL`, ignore untrusted request hosts and query data, and keep member telemetry out of embeds. Bound Discord component JSON to 3,000 bytes and allowlist the public PNG assets.
+
+### Verification
+
+- Formatting, TypeScript, zero-warning lint, 333 unit/API tests, production build, runtime/API smoke checks, and 40 Chromium browser tests pass.
+- Browser coverage includes mobile/ultrawide layouts, rapid-zoom marker alignment, dense terrain markers, resource models, base preview ownership/context-loss handling, storage pagination/focus, pre-paint themes, and crawler-visible Discord metadata under CSP.
+- Capacity for 800,000 concurrent users remains unverified; distributed infrastructure sizing and staging load tests are still required.
+- The community base marketplace and creator rewards remain future plans and are not included in this release.
+
+[Full comparison](https://github.com/RealXKenny/Arrakis-Control-Dashboard/compare/v1.1.3...v1.2.0)
 
 ## [1.1.3] - 2026-10-26
 

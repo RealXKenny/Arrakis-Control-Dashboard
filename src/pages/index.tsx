@@ -8,12 +8,12 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   const { getRequestCookie } = await import('../infrastructure/cookies');
   const sessionId = getRequestCookie(req, 'dashboard_session');
   const session = sessionId ? await getSession(sessionId) : null;
-  const { isDashboardAdmin } = await import('../modules/admin/server/access');
+  const { getShareProps } = await import('../modules/sharing/server/config');
 
   return {
     props: {
+      ...getShareProps(),
       isAuthenticated: Boolean(sessionId && session && session.expiresAt > Date.now()),
-      isAdmin: isDashboardAdmin(session),
     },
   };
 };

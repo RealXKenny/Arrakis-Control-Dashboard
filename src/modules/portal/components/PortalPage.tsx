@@ -1,7 +1,6 @@
 import { clearClientReadCache } from '../../../lib/client-cache';
 import { usePortalView, navigatePortal } from '../hooks/usePortalView';
 import Image from 'next/image';
-import NextLink from 'next/link';
 import { useState } from 'react';
 import DashboardShell from '../../../components/DashboardShell';
 import layout from '../portal.module.css';
@@ -23,7 +22,7 @@ import MapWindow from '../../map/components/MapWindow';
 import { useGuildData } from '../hooks/useGuildData';
 import { guildRoleLabel } from '../utils/guild';
 
-export default function PlayerPortal({ isAdmin = false }: { isAdmin?: boolean }) {
+export default function PlayerPortal() {
   const view = usePortalView();
   const copy = portalPageCopy[view];
   const {
@@ -113,7 +112,6 @@ export default function PlayerPortal({ isAdmin = false }: { isAdmin?: boolean })
   return (
     <DashboardShell
       brand="Crimson Skies"
-      brandHref="/portal?view=overview"
       subtitle="Community workspace"
       navigation={portalNavigation(view)}
       onNavigate={navigatePortal}
@@ -122,7 +120,6 @@ export default function PlayerPortal({ isAdmin = false }: { isAdmin?: boolean })
           <a href="/auth/login">Connect Discord</a>
         ) : (
           <>
-            {isAdmin && <NextLink href="/admin">Administration</NextLink>}
             <span className={layout.account}>{character?.name ?? 'Survivor'}</span>
             <button onClick={retry} disabled={statusLoading} aria-label="Refresh telemetry">
               ↻

@@ -1,7 +1,8 @@
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 import ChangelogDialog from '../modules/changelog/components/ChangelogDialog';
-import css from './dashboard-shell.module.css';
+import Topbar, { type TopbarItem } from './Topbar';
+
+/** Shared public, member, and admin shell with pill navigation and fluid gutters. */
 
 export type NavigationItem = { label: string; href: string; group: string; active?: boolean };
 
@@ -22,75 +23,33 @@ export default function DashboardShell({
   children: ReactNode;
   onNavigate?: (href: string) => boolean;
 }) {
+  const items: TopbarItem[] = navigation.map(({ label, href, active }) => ({ label, href, active }));
   return (
-    <div className={css.shell}>
-      <a href="#dashboard-content" className={css.skip}>
+    <div className="flex min-h-screen flex-col bg-ink font-sans text-zinc-200 antialiased">
+      <a
+        href="#dashboard-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:border focus:border-accent focus:bg-panel focus:px-4 focus:py-2 focus:text-sm focus:text-zinc-100"
+      >
         Skip to content
       </a>
-      <div className={css.masthead}>
-        <header className={css.header}>
-          <Link
-            href={brandHref}
-            onClick={(event) => {
-              if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && onNavigate?.(brandHref))
-                event.preventDefault();
-            }}
-            as={brandHref.startsWith('/portal?view=') ? '/portal' : undefined}
-            className={css.brand}
-          >
-            <svg className={css.mark} viewBox="0 0 32 32" width="36" height="36" fill="none" aria-hidden="true">
-              <rect width="32" height="32" rx="9" fill="currentColor" />
-              <path d="M9 10h6v6H9zm8 0h6v3h-6zm0 5h6v7h-6zm-8 3h6v4H9z" fill="var(--theme-on-accent)" />
-            </svg>
-            <span>
-              {brand}
-              <small className={css.subtitle}>{subtitle}</small>
-            </span>
-          </Link>
-          <div className={css.actions}>{actions}</div>
-        </header>
-        <nav className={css.navigation} aria-label="Main navigation">
-          {Array.from(new Set(navigation.map((item) => item.group))).map((group) => (
-            <div className={css.navGroup} role="group" aria-label={group} key={group}>
-              <small>{group}</small>
-              <div>
-                {navigation
-                  .filter((item) => item.group === group)
-                  .map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={(event) => {
-                        if (
-                          !event.metaKey &&
-                          !event.ctrlKey &&
-                          !event.shiftKey &&
-                          !event.altKey &&
-                          onNavigate?.(item.href)
-                        )
-                          event.preventDefault();
-                      }}
-                      as={item.href.startsWith('/portal?view=') ? '/portal' : undefined}
-                      shallow={item.href.startsWith('/portal?view=')}
-                      aria-current={item.active ? 'page' : undefined}
-                      className={item.active ? css.active : undefined}
-                    >
-                      <span>{item.label}</span>
-                    </Link>
-                  ))}
-              </div>
-            </div>
-          ))}
-        </nav>
-      </div>
-      <main id="dashboard-content" className={css.content}>
+      <Topbar
+        brand={brand}
+        subtitle={subtitle}
+        brandHref={brandHref}
+        items={items}
+        actions={actions}
+        onNavigate={onNavigate}
+      />
+      <main id="dashboard-content" className="workspace-frame workspace-content">
         {children}
       </main>
-      <footer className={css.footer}>
-        <div>
-          {brand} · <ChangelogDialog />
+      <footer className="border-t border-edge">
+        <div className="workspace-frame flex flex-wrap items-center justify-between gap-2 py-5 text-xs text-zinc-500">
+          <span>
+            {brand} · <ChangelogDialog />
+          </span>
+          <span>Your community. Connected.</span>
         </div>
-        <span>Your community. Connected.</span>
       </footer>
     </div>
   );

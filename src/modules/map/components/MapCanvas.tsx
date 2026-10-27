@@ -119,7 +119,7 @@ export default function MapCanvas({
             zIndex: 20,
             padding: '5px 8px',
             color: terrainMessage ? 'var(--theme-soft)' : 'var(--theme-muted)',
-            background: 'rgba(24, 15, 9, .86)',
+            background: 'var(--theme-masthead)',
             border: '1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)',
             borderRadius: 4,
             fontSize: 10,
