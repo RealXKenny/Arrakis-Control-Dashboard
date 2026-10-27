@@ -32,7 +32,7 @@ export const portalPageCopy: Record<PortalView, { section: string; title: string
     section: 'Community market',
     title: 'Exchange',
     description:
-      'Every open listing on the server market, with available stock, grades and asking prices. Select an item to inspect its price ladder.',
+      'Every open listing on the server market, with available stock, grades, asking prices, and suggested sell values in one full-width workspace.',
   },
   bases: {
     section: 'Your holdings',

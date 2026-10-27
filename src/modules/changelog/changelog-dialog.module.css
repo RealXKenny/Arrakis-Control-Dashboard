@@ -2,11 +2,11 @@
   margin: 0;
   padding: 0;
   border: 0;
-  color: var(--theme-accent);
+  color: var(--theme-muted);
   background: none;
   font: inherit;
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--theme-accent) 40%, transparent);
+  text-decoration-color: rgb(255 255 255 / 0.15);
   text-underline-offset: 3px;
 }
 .versionButton:hover {
@@ -20,8 +20,8 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #050302d9;
-  backdrop-filter: blur(7px);
+  background: rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(4px);
 }
 .dialog {
   display: flex;
@@ -29,11 +29,11 @@
   width: min(920px, 100%);
   max-height: min(820px, calc(100vh - 48px));
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--theme-accent) 40%, transparent);
-  border-radius: 10px;
+  border: 1px solid var(--theme-border);
+  border-radius: 28px;
   color: var(--theme-text);
-  background: linear-gradient(145deg, var(--theme-surface), var(--theme-surface) 45%);
-  box-shadow: 0 30px 100px #000c;
+  background: rgb(24 24 27 / 0.94);
+  backdrop-filter: blur(16px);
   text-align: left;
 }
 .dialogHeader {
@@ -47,37 +47,36 @@
 .dialogHeader p,
 .releaseHeader p {
   margin: 0;
-  color: var(--theme-accent);
+  color: var(--theme-muted);
   font:
     10px/1.5 var(--font-mono),
     monospace;
   letter-spacing: 0.02em;
-  text-transform: none;
 }
 .dialogHeader h2 {
   margin: 6px 0 0;
   color: var(--theme-text);
   font:
-    700 38px/1 var(--font-sans),
+    600 32px/1.1 var(--font-sans),
     sans-serif;
-  letter-spacing: 0.05em;
-  text-transform: none;
+  letter-spacing: -0.035em;
 }
 .closeButton {
   width: 38px;
   height: 38px;
+  flex-shrink: 0;
   padding: 0;
   border: 1px solid var(--theme-border);
-  border-radius: 10px;
-  color: var(--theme-muted);
-  background: var(--theme-surface);
+  border-radius: 999px;
+  color: var(--theme-soft);
+  background: var(--theme-raised);
   font:
-    28px/1 var(--font-sans),
+    24px/1 var(--font-sans),
     sans-serif;
 }
 .closeButton:hover {
   color: var(--theme-text);
-  border-color: var(--theme-accent);
+  background: var(--theme-hover);
 }
 .dialogBody {
   overflow-y: auto;
@@ -90,7 +89,7 @@
 }
 .release {
   padding: 28px 0 34px;
-  border-bottom: 1px solid color-mix(in srgb, var(--theme-accent) 13%, transparent);
+  border-bottom: 1px solid var(--theme-border);
 }
 .release:last-child {
   border-bottom: 0;
@@ -105,20 +104,19 @@
   margin: 5px 0 0;
   color: var(--theme-text);
   font:
-    700 28px/1.2 var(--font-sans),
+    600 25px/1.2 var(--font-sans),
     sans-serif;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.025em;
 }
 .releaseHeader > span {
-  padding: 5px 9px;
-  border: 1px solid #73c9cb80;
-  color: #73c9cb;
-  background: #18303180;
+  padding: 5px 10px;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
+  color: var(--theme-muted);
+  background: var(--theme-raised);
   font:
     10px/1.4 var(--font-mono),
     monospace;
-  letter-spacing: 0.02em;
-  text-transform: none;
 }
 .sections {
   display: grid;
@@ -128,12 +126,10 @@
 }
 .sections h4 {
   margin: 0 0 10px;
-  color: var(--theme-muted);
+  color: var(--theme-soft);
   font:
-    600 14px/1.5 var(--font-sans),
+    500 14px/1.5 var(--font-sans),
     sans-serif;
-  letter-spacing: 0.08em;
-  text-transform: none;
 }
 .sections ul {
   display: grid;
@@ -144,19 +140,18 @@
 }
 .sections li {
   position: relative;
-  padding-left: 17px;
+  padding-left: 15px;
   color: var(--theme-muted);
   font:
     14px/1.65 var(--font-sans),
     sans-serif;
 }
 .sections li::before {
-  content: '◆';
+  content: '•';
   position: absolute;
   left: 0;
-  top: 0.25em;
-  color: #73c9cb;
-  font-size: 7px;
+  top: 0;
+  color: var(--theme-accent);
 }
 @media (max-width: 700px) {
   .backdrop {
@@ -165,6 +160,7 @@
   }
   .dialog {
     max-height: calc(100vh - 24px);
+    border-radius: 22px;
   }
   .dialogHeader,
   .dialogBody {

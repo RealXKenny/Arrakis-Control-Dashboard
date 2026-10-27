@@ -173,8 +173,7 @@ export default function MapCanvas({
             transform: 'translate(-50%, -50%)',
             border: '1px solid var(--theme-muted)',
             borderRadius: '50%',
-            boxShadow:
-              '0 0 0 4px color-mix(in srgb, var(--theme-accent) 12%, transparent), 0 0 20px color-mix(in srgb, var(--theme-accent) 75%, transparent)',
+            boxShadow: '0 0 0 3px color-mix(in srgb, var(--theme-accent) 18%, transparent)',
             pointerEvents: 'none',
             zIndex: 10,
           }}

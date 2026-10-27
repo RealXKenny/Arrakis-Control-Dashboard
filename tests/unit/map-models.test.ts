@@ -31,6 +31,9 @@ describe('map models', () => {
     expect(visualYawOffset('Atreides_Outpost_Wall_01')).toBe(0);
     expect(visualYawOffset('Atreides_Outpost_Wall_Round_Corner_01')).toBe(90);
     expect(visualYawOffset('Atreides_Outpost_Railing')).toBe(180);
+    expect(visualYawOffset('Atreides_Outpost_Stairs')).toBe(180);
+    expect(visualYawOffset('Atreides_Outpost_Ramp')).toBe(180);
+    expect(visualYawOffset('Atreides_Outpost_Stairs_Half')).toBe(0);
     expect(visualYawOffset('Atreides_Outpost_Wall_Triangle_Bottom_Right')).toBe(180);
   });
   it('recognizes untextured glass, shields and lamps without treating building accents as lamps', () => {

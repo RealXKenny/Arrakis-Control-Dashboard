@@ -1,5 +1,9 @@
 import { LEVEL_XP } from '../config/progression';
-import { COLORS } from '../config/colors';
+const COLORS = {
+  red: 'var(--theme-danger)',
+  gold: 'var(--theme-accent)',
+  water: 'var(--theme-soft)',
+};
 
 export function getLevelProgress(level, xp) {
   const numericLevel = Math.max(1, Math.min(200, Number(level) || 1));

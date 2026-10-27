@@ -1,99 +1,15 @@
-.chartMetrics {
-  display: flex;
-  gap: 36px;
-}
-.chartMetrics > div {
-  display: flex;
-  flex-direction: column;
-}
-.chartMetrics strong {
-  color: var(--theme-text);
-  font:
-    600 28px/1.1 var(--font-sans),
-    sans-serif;
-}
-.chartMetrics span,
-.chartAxis,
-.chartInspect,
-.chartCaption {
-  font:
-    9px/1.6 var(--font-mono),
-    monospace;
-}
-.chartMetrics span {
-  text-transform: none;
-  letter-spacing: 0.02em;
-  margin-top: 3px;
-}
-.chart {
-  width: 100%;
-  height: 90px;
-  display: block;
-  margin-top: 16px;
-  overflow: visible;
-}
-.chartLine {
-  stroke: #55b9c6;
-  stroke-width: 1.5;
-  fill: none;
-  vector-effect: non-scaling-stroke;
-}
-.chartFill {
-  fill: #55b9c61c;
-}
-.chartDot {
-  fill: #77d4df;
-}
-.chartBaseline {
-  stroke: #55b9c625;
-  stroke-width: 1;
-}
-.chartAxis {
-  display: flex;
-  justify-content: space-between;
-  color: var(--theme-muted);
-}
-.chartInspect {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-.chartInspect input {
-  flex: 1;
-  min-width: 70px;
-  accent-color: #55b9c6;
-  height: 12px;
-}
-.chartInspect output {
-  min-width: 110px;
-  color: #75c5cf;
-}
-.widePanel .chartCaption {
-  margin: 10px 0 0;
-  font-size: 9px;
-}
-.chartEmpty {
-  display: flex;
-  align-items: center;
-  min-height: 112px;
-  font-size: 12px;
-}
 .overview {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 26px;
+  gap: 24px;
   color: var(--theme-muted);
 }
 .briefing {
   grid-column: 1 / -1;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
+  min-width: 0;
   padding: 28px;
   border: 1px solid var(--theme-border);
-  border-radius: 22px;
+  border-radius: 28px;
   background: var(--theme-surface);
 }
 .serverLine {
@@ -102,14 +18,14 @@
   gap: 14px;
   flex-wrap: wrap;
   padding-bottom: 22px;
-  border-bottom: 1px solid color-mix(in srgb, var(--theme-muted) 15%, transparent);
+  border-bottom: 1px solid var(--theme-border);
 }
 .serverName,
 .kicker {
-  font: 500 12px/1.6 var(--font-sans);
-  letter-spacing: 0.02em;
-  text-transform: none;
   color: var(--theme-soft);
+  font:
+    500 12px/1.6 var(--font-sans),
+    sans-serif;
 }
 .serverName {
   margin-right: auto;
@@ -126,24 +42,28 @@
   display: flex;
   gap: 3px;
   padding: 3px;
-  background: color-mix(in srgb, var(--theme-surface) 50%, transparent);
   border: 1px solid var(--theme-border);
-  border-radius: 9px;
+  border-radius: 999px;
+  background: var(--theme-background);
 }
 .mapSwitch button {
   border: 0;
-  border-radius: 6px;
+  border-radius: 999px;
   background: transparent;
-  color: var(--theme-soft);
-  padding: 8px 10px;
+  color: var(--theme-muted);
+  padding: 8px 12px;
   cursor: pointer;
   font:
     500 11px var(--font-sans),
     sans-serif;
 }
-.mapSwitch button[aria-pressed='true'] {
+.mapSwitch button:hover {
+  background: var(--theme-hover);
   color: var(--theme-text);
-  background: var(--theme-border);
+}
+.mapSwitch button[aria-pressed='true'] {
+  color: var(--theme-accent);
+  background: rgb(99 102 241 / 0.1);
 }
 .briefingBody {
   display: grid;
@@ -160,12 +80,12 @@
   margin: 0;
 }
 .briefing h1 {
+  margin: 12px 0 26px;
+  color: var(--theme-text);
   font:
     600 clamp(38px, 4.5vw, 58px)/1.08 var(--font-sans),
     sans-serif;
-  letter-spacing: -1px;
-  color: var(--theme-text);
-  margin: 12px 0 26px;
+  letter-spacing: -0.045em;
 }
 .readingLine {
   display: flex;
@@ -181,9 +101,9 @@
 .dispatchMeta {
   margin-top: 4px;
   padding: 14px 16px;
-  border: 1px solid color-mix(in srgb, var(--theme-soft) 14%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--theme-surface) 40%, transparent);
+  border: 1px solid var(--theme-border);
+  border-radius: 16px;
+  background: rgb(9 9 11 / 0.25);
 }
 .dispatchMeta > p {
   margin: 8px 0 0;
@@ -195,80 +115,64 @@
 .conditionPanel {
   margin-top: 18px;
   padding: 16px;
-  border-left: 2px solid color-mix(in srgb, var(--theme-muted) 50%, transparent);
-  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 16px;
+  background: rgb(9 9 11 / 0.25);
 }
 .conditionLabel {
   color: var(--theme-muted);
   font:
-    9px/1.4 var(--font-mono),
+    10px/1.4 var(--font-mono),
     monospace;
-  letter-spacing: 0.02em;
-  text-transform: none;
 }
 .conditions {
-  color: var(--theme-soft);
+  margin: 8px 0 5px;
+  color: var(--theme-text);
   font:
     500 24px/1.3 var(--font-sans),
     sans-serif;
-  margin: 8px 0 5px;
 }
 .conditionDetail {
   margin: 0;
-  color: var(--theme-soft);
+  color: var(--theme-muted);
   font-size: 12px;
   line-height: 1.7;
 }
 .freshness {
+  margin: 18px 0 0;
+  color: var(--theme-muted);
   font:
     10px/1.6 var(--font-mono),
     monospace;
-  color: var(--theme-soft);
-  margin: 18px 0 0;
 }
 .freshness::before {
   content: '';
   display: inline-block;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: var(--theme-muted);
   margin-right: 8px;
+  border-radius: 50%;
+  background: var(--theme-success);
 }
 .identity {
-  position: relative;
   min-width: 0;
-  overflow: hidden;
-  background: var(--theme-surface);
-  border: 1px solid color-mix(in srgb, var(--theme-soft) 25%, transparent);
-  border-radius: 18px;
   padding: 26px 24px 22px;
+  border: 1px solid var(--theme-border);
+  border-radius: 24px;
+  background: rgb(9 9 11 / 0.25);
   text-align: center;
-  box-shadow:
-    0 18px 40px color-mix(in srgb, var(--theme-surface) 30%, transparent),
-    inset 0 1px color-mix(in srgb, var(--theme-soft) 5%, transparent);
-}
-.identity::before {
-  content: '';
-  position: absolute;
-  inset: 0 18% auto;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--theme-soft) 40%, transparent), transparent);
 }
 .monogram {
-  position: relative;
-  margin: 22px auto 16px;
   width: 72px;
   height: 72px;
   display: grid;
   place-items: center;
-  border: 2px solid var(--theme-muted);
-  border-radius: 18px;
+  margin: 22px auto 16px;
+  overflow: hidden;
+  border: 1px solid var(--theme-border);
+  border-radius: 22px;
   color: var(--theme-text);
-  background: linear-gradient(140deg, var(--theme-muted), var(--theme-raised));
-  box-shadow:
-    0 0 0 5px color-mix(in srgb, var(--theme-muted) 8%, transparent),
-    0 10px 22px #0000004d;
+  background: var(--theme-raised);
   font:
     500 30px var(--font-sans),
     sans-serif;
@@ -278,20 +182,18 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: inherit;
 }
 .identity h2 {
+  margin: 0;
   color: var(--theme-text);
   font:
     600 29px/1.1 var(--font-sans),
     sans-serif;
-  margin: 0;
-  letter-spacing: 0.2px;
   overflow-wrap: anywhere;
 }
 .identity p {
   margin: 8px 0 0;
-  color: var(--theme-soft);
+  color: var(--theme-muted);
   font-size: 11px;
 }
 .identityStats {
@@ -300,7 +202,7 @@
   gap: 8px;
   margin: 24px 0 20px;
   padding: 12px 0;
-  border-block: 1px solid color-mix(in srgb, var(--theme-soft) 17%, transparent);
+  border-block: 1px solid var(--theme-border);
 }
 .identityStats > span {
   display: flex;
@@ -308,53 +210,39 @@
   justify-content: center;
   gap: 5px;
   min-height: 54px;
-  padding: 8px 6px;
-  border: 1px solid color-mix(in srgb, var(--theme-soft) 11%, transparent);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--theme-surface) 50%, transparent);
+  padding: 10px;
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  background: var(--theme-surface);
   color: var(--theme-muted);
-  font:
-    9px/1.2 var(--font-mono),
-    monospace;
-  letter-spacing: 0.5px;
-  text-transform: none;
+  font-size: 10px;
 }
 .identityStats strong {
-  color: var(--theme-soft);
-  font:
-    500 19px/1.05 var(--font-sans),
-    sans-serif;
-  letter-spacing: 0;
+  color: var(--theme-text);
+  font-size: 19px;
   font-weight: 500;
   overflow-wrap: anywhere;
 }
-.identityStats > span:nth-child(3) strong {
-  color: var(--theme-soft);
-}
-.identityStats > span:nth-child(4) strong {
-  color: var(--theme-soft);
-}
-.identity a {
+.identity a,
+.panelAction {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin: 0 -4px;
+  justify-content: space-between;
   padding: 10px 12px;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
+  background: var(--theme-raised);
   color: var(--theme-soft);
-  background: color-mix(in srgb, var(--theme-border) 9%, transparent);
-  border: 1px solid transparent;
-  border-radius: 8px;
   text-decoration: none;
   font-size: 11px;
   transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease;
+    background 150ms ease,
+    color 150ms ease;
 }
-.identity a:hover {
+.identity a:hover,
+.panelAction:hover {
+  background: var(--theme-hover);
   color: var(--theme-text);
-  background: color-mix(in srgb, var(--theme-border) 17%, transparent);
-  border-color: color-mix(in srgb, var(--theme-muted) 30%, transparent);
 }
 .cards {
   grid-column: 1 / -1;
@@ -366,49 +254,45 @@
   position: relative;
   min-width: 0;
   min-height: 128px;
-  text-decoration: none;
-  color: var(--theme-muted);
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 20px;
   border: 1px solid var(--theme-border);
-  border-radius: 12px;
+  border-radius: 20px;
   background: var(--theme-surface);
+  color: var(--theme-muted);
+  text-decoration: none;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
 }
 .card strong {
-  color: var(--theme-soft);
+  color: var(--theme-text);
   font:
     600 clamp(25px, 2.8vw, 34px)/1.1 var(--font-sans),
     sans-serif;
   overflow-wrap: anywhere;
 }
 .card small {
-  font:
-    11px var(--font-sans),
-    sans-serif;
   color: var(--theme-muted);
+  font-size: 11px;
 }
 .card > span:not(.kicker) {
-  font-size: 11px;
-  padding-right: 16px;
   margin-top: auto;
+  padding-right: 16px;
+  font-size: 11px;
 }
 .card > b {
   position: absolute;
-  bottom: 16px;
-  right: 15px;
-  font-weight: 400;
+  right: 18px;
+  bottom: 18px;
   color: var(--theme-muted);
+  font-weight: 400;
 }
 .card:hover {
-  background: var(--theme-surface);
-  border-color: var(--theme-muted);
-}
-.overview a:focus-visible,
-.overview button:focus-visible {
-  outline: 2px solid var(--theme-soft);
-  outline-offset: 4px;
+  border-color: rgb(255 255 255 / 0.1);
+  background: var(--theme-raised);
 }
 .panels {
   grid-column: 1 / -1;
@@ -427,23 +311,23 @@
 .panel {
   min-width: 0;
   padding: 24px;
-  background: linear-gradient(135deg, var(--theme-surface), var(--theme-surface));
   border: 1px solid var(--theme-border);
-  border-radius: 14px;
+  border-radius: 24px;
+  background: var(--theme-surface);
 }
 .panel h2 {
-  font: 600 13px var(--font-sans);
-  letter-spacing: 0.02em;
-  color: var(--theme-soft);
   margin: 0 0 18px;
-  text-transform: none;
+  color: var(--theme-text);
+  font:
+    600 14px var(--font-sans),
+    sans-serif;
 }
 .panel h3 {
+  margin: 0 0 8px;
+  color: var(--theme-text);
   font:
     600 24px var(--font-sans),
     sans-serif;
-  color: var(--theme-soft);
-  margin: 0 0 8px;
 }
 .panel p {
   font-size: 12px;
@@ -453,10 +337,6 @@
   color: var(--theme-soft);
   text-decoration: none;
   font-size: 12px;
-}
-.panel a:hover,
-.identity a:hover {
-  text-decoration: underline;
 }
 .inset {
   padding: 4px 0;
@@ -477,39 +357,23 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--theme-soft) 14%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--theme-surface) 50%, transparent);
+  padding: 12px;
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  background: rgb(9 9 11 / 0.25);
 }
 .guildFacts span {
   color: var(--theme-muted);
-  font:
-    9px/1.2 var(--font-mono),
-    monospace;
-  letter-spacing: 0.8px;
-  text-transform: none;
+  font-size: 10px;
 }
 .guildFacts strong {
-  color: var(--theme-soft);
-  font:
-    500 17px/1.1 var(--font-sans),
-    sans-serif;
+  color: var(--theme-text);
+  font-size: 17px;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 .panelAction {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-top: 18px;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--theme-muted) 20%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--theme-border) 9%, transparent);
-}
-.panelAction:hover {
-  border-color: color-mix(in srgb, var(--theme-muted) 44%, transparent);
-  background: color-mix(in srgb, var(--theme-border) 14%, transparent);
 }
 .holdings {
   display: grid;
@@ -522,9 +386,10 @@
   align-items: baseline;
   min-width: 0;
   padding: 10px 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--theme-soft) 14%, transparent);
+  border-bottom: 1px solid var(--theme-border);
 }
 .holdings strong {
+  color: var(--theme-text);
   font:
     600 32px var(--font-sans),
     sans-serif;
@@ -543,23 +408,56 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
+  margin: 4px 0 14px;
+  color: var(--theme-text);
   font:
     500 22px var(--font-sans),
     sans-serif;
-  color: var(--theme-soft);
-  margin: 4px 0 14px;
 }
 .sectionTitle span {
+  color: var(--theme-muted);
   font:
     10px var(--font-mono),
     monospace;
+}
+.chartMetrics {
+  display: flex;
+  gap: 36px;
+}
+.chartMetrics > div {
+  display: flex;
+  flex-direction: column;
+}
+.chartMetrics strong {
+  color: var(--theme-text);
+  font:
+    600 28px/1.1 var(--font-sans),
+    sans-serif;
+}
+.chartMetrics span,
+.chartAxis,
+.chartInspect,
+.chartCaption {
   color: var(--theme-muted);
+  font:
+    10px/1.6 var(--font-mono),
+    monospace;
+}
+.chartMetrics span {
+  margin-top: 3px;
 }
 .chart {
+  width: 100%;
   height: 124px;
+  display: block;
+  margin-top: 16px;
+  overflow: visible;
 }
 .chartLine {
   stroke: var(--theme-accent);
+  stroke-width: 1.5;
+  fill: none;
+  vector-effect: non-scaling-stroke;
 }
 .chartFill {
   fill: color-mix(in srgb, var(--theme-accent) 10%, transparent);
@@ -567,11 +465,39 @@
 .chartDot {
   fill: var(--theme-accent);
 }
+.chartBaseline {
+  stroke: color-mix(in srgb, var(--theme-accent) 15%, transparent);
+  stroke-width: 1;
+}
+.chartAxis {
+  display: flex;
+  justify-content: space-between;
+}
+.chartInspect {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
 .chartInspect input {
+  flex: 1;
+  min-width: 70px;
+  height: 12px;
   accent-color: var(--theme-accent);
 }
 .chartInspect output {
+  min-width: 110px;
   color: var(--theme-soft);
+}
+.widePanel .chartCaption {
+  margin: 10px 0 0;
+}
+.chartEmpty {
+  display: flex;
+  align-items: center;
+  min-height: 112px;
+  font-size: 12px;
 }
 .factions {
   display: grid;
@@ -584,29 +510,28 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  border: 1px solid color-mix(in srgb, var(--theme-border) 27%, transparent);
-  border-radius: 12px;
   padding: 15px 8px;
-  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 16px;
+  background: rgb(9 9 11 / 0.25);
 }
 .crest {
   width: 64px;
   height: 64px;
   object-fit: contain;
-  filter: drop-shadow(0 3px 9px color-mix(in srgb, var(--theme-soft) 15%, transparent));
 }
 .factions strong {
+  color: var(--theme-text);
   font:
     600 32px/1 var(--font-sans),
     sans-serif;
-  color: var(--theme-text);
 }
 .factions span {
   font-size: 11px;
 }
 .factions .leading {
-  border-color: var(--theme-muted);
-  background: linear-gradient(160deg, var(--theme-raised), var(--theme-surface));
+  border-color: color-mix(in srgb, var(--theme-accent) 25%, transparent);
+  background: rgb(99 102 241 / 0.08);
 }
 .versus {
   text-align: center;
@@ -618,13 +543,13 @@
 .footnote {
   grid-column: 1 / -1;
   order: 6;
+  margin: 0;
   font-size: 10px;
   line-height: 1.8;
-  margin: 0;
 }
 .footnote a {
-  color: var(--theme-soft);
   margin-left: 8px;
+  color: var(--theme-soft);
 }
 @media (max-width: 850px) {
   .overview {
@@ -665,15 +590,9 @@
   .mapSwitch button {
     flex: 1;
   }
-  .card {
-    padding: 16px;
-  }
-  .kicker {
-    font-size: 9px;
-    letter-spacing: 0.02em;
-  }
+  .card,
   .panel {
-    padding: 20px;
+    padding: 18px;
   }
   .sectionTitle {
     font-size: 21px;
@@ -682,14 +601,6 @@
     width: 100%;
   }
 }
-@media (prefers-reduced-motion: no-preference) {
-  .card {
-    transition:
-      background 0.18s,
-      border-color 0.18s;
-  }
-}
-
 @media (min-width: 1800px) {
   .overview {
     grid-template-columns: repeat(4, minmax(0, 1fr));
