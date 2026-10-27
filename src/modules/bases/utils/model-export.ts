@@ -6,11 +6,11 @@ export class BaseModelError extends Error {
 }
 
 /** Ownership is revalidated by the existing route; private exports never enter a client cache. */
-export async function fetchBaseModelExport(id: string, signal: AbortSignal): Promise<unknown> {
+export async function fetchBaseModelExport(id: string, signal: AbortSignal, endpoint?: string): Promise<unknown> {
   signal.throwIfAborted();
   if (!id || id.length > 128) throw new BaseModelError('unavailable');
   const active = AbortSignal.any([signal, AbortSignal.timeout(12000)]);
-  const response = await fetch(`/api/bases/${encodeURIComponent(id)}/export`, {
+  const response = await fetch(endpoint ?? `/api/bases/${encodeURIComponent(id)}/export`, {
     signal: active,
     cache: 'no-store',
     credentials: 'same-origin',

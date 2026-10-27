@@ -1468,6 +1468,64 @@ test('spice fields, shipwrecks, and flour sand have terrain models that follow l
   expect(errors).toEqual([]);
 });
 
+test('owned bases publish to the marketplace and open sanitized 3D listings', async ({ page }) => {
+  const id = 'a'.repeat(24);
+  const summary = {
+    id,
+    title: 'Shared Outpost',
+    author: 'Desert Navigator',
+    baseType: 'Advanced Sub-Fief',
+    map: 'Hagga Basin',
+    pieceCount: 2,
+    placeableCount: 1,
+    publishedAt: '2026-10-27T12:00:00.000Z',
+  };
+  const record = {
+    summary,
+    layout: {
+      name: 'Shared Outpost',
+      base_type: 'Advanced Sub-Fief',
+      map: 'Hagga Basin',
+      instances: [{ building_type: 'Atreides_Outpost_Foundation', x: 0, y: 0, z: 0, rotation: 0 }],
+      placeables: [{ building_type: 'Atre_Chair_1_Placeable', x: 0, y: 0, z: 384, ry: 90 }],
+      pentashields: [],
+    },
+  };
+  await page.route('**/api/bases/0/marketplace', (route) => route.fulfill({ json: { ok: true, listing: summary } }));
+  await page.route('**/api/base-marketplace', (route) =>
+    route.fulfill({ json: { ok: true, listings: [summary], total: 1 } }),
+  );
+  await page.route(`**/api/base-marketplace/${id}`, (route) => route.fulfill({ json: record }));
+  await page.goto('/portal?view=bases');
+  const base = page.locator('article').filter({ hasText: 'Stronghold 1' });
+  await base.getByRole('button', { name: 'Share Base', exact: true }).click();
+  await base.getByRole('link', { name: 'View listing ↗' }).click();
+  await expect(page.getByRole('heading', { name: 'Base Marketplace', exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Shared Outpost', { exact: true })).toBeVisible();
+  await page.getByLabel('Search by base or author').fill('nobody');
+  await expect(page.getByText('No matching bases', { exact: true })).toBeVisible();
+  await page.getByLabel('Search by base or author').fill('Desert Navigator');
+  await expect(page.getByText('Shared Outpost', { exact: true })).toBeVisible();
+  await page.getByLabel('Base size').selectOption('large');
+  await expect(page.getByText('No matching bases', { exact: true })).toBeVisible();
+  await page.getByLabel('Base size').selectOption('small');
+  await page.screenshot({ path: 'test-results/base-marketplace.png', fullPage: true });
+  await page.getByRole('button', { name: 'Inspect base', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Shared Outpost shared base', exact: true });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'ready', {
+    timeout: 30000,
+  });
+  await expect(dialog.getByText('2 of 2 building pieces')).toBeVisible();
+  await expect(dialog.getByRole('link', { name: 'Download layout ↓' })).toHaveAttribute(
+    'href',
+    `/api/base-marketplace/${id}?download=1`,
+  );
+  await page.screenshot({ path: 'test-results/base-marketplace-preview.png' });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+});
+
 test('Bases lazily previews a selected owned structure using the livemap catalogue', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
