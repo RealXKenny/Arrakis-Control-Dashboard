@@ -44,7 +44,7 @@ export const portalPageCopy: Record<PortalView, { section: string; title: string
     section: 'Vehicle network',
     title: 'Vehicles',
     description:
-      'Your owned and shared fleet. Inspect fuel, condition and remaining reserves before your next journey.',
+      'Your owned and shared fleet. Inspect condition, fuel where applicable, and cargo capacity before your next journey.',
   },
   guild: {
     section: 'Your community',
