@@ -8,6 +8,7 @@ export const portalViews = [
   'storage',
   'market',
   'bases',
+  'base-market',
   'vehicles',
   'guild',
 ] as const;
@@ -24,6 +25,7 @@ export function portalNavigation(view: PortalView): NavigationItem[] {
     { label: 'Character', group: 'Holdings', href: '/portal?view=character', active: view === 'character' },
     { label: 'Storage', group: 'Holdings', href: '/portal?view=storage', active: view === 'storage' },
     { label: 'My bases', group: 'Holdings', href: '/portal?view=bases', active: view === 'bases' },
+    { label: 'Base market', group: 'Economy', href: '/portal?view=base-market', active: view === 'base-market' },
     { label: 'Vehicles', group: 'Holdings', href: '/portal?view=vehicles', active: view === 'vehicles' },
     { label: 'Guild', group: 'Community', href: '/portal?view=guild', active: view === 'guild' },
   ];

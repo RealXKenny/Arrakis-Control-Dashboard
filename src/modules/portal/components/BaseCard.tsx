@@ -12,6 +12,7 @@ import {
   isOwnedBase,
 } from '../utils/bases';
 import { getPowerColor, getStorageColor, getWaterColor } from '../utils/progression';
+import BaseMarketplaceShare from '../../marketplace/components/BaseMarketplaceShare';
 import TelemetryMetric from './TelemetryMetric';
 
 export default function BaseCard({ base, index, telemetry, selected = false, onSelect }) {
@@ -83,6 +84,7 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
               Download Blueprint ↓
             </a>
           )}
+          {isOwned && <BaseMarketplaceShare baseId={String(baseId)} />}
         </div>
         <span className="shrink-0 rounded-full border border-white/5 bg-zinc-800/60 px-2.5 py-1 text-[11px] font-medium text-zinc-400">
           {relationship}

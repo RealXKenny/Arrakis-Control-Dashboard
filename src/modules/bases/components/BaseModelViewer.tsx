@@ -19,10 +19,12 @@ type Controls = { fit: () => void; top: () => void; zoom: (factor: number) => vo
 export default function BaseModelViewer({
   baseId,
   baseName,
+  modelUrl,
   onSettled,
 }: {
   baseId: string;
   baseName: string;
+  modelUrl?: string;
   onSettled: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -113,8 +115,12 @@ export default function BaseModelViewer({
       onSettled();
     };
     renderer.domElement.addEventListener('webglcontextlost', lost);
-    void fetchBaseModelExport(baseId, loadSignal)
-      .then((value) => library.build(value))
+    void fetchBaseModelExport(baseId, loadSignal, modelUrl)
+      .then((value) => {
+        const source =
+          value && typeof value === 'object' && 'layout' in value ? (value as { layout: unknown }).layout : value;
+        return library.build(source);
+      })
       .then((built) => {
         if (controller.signal.aborted) {
           built.group.traverse((object) => {
@@ -182,7 +188,7 @@ export default function BaseModelViewer({
       renderer.forceContextLoss();
       renderer.domElement.remove();
     };
-  }, [baseId, baseName, onSettled]);
+  }, [baseId, baseName, modelUrl, onSettled]);
   const ready = status.kind === 'ready' || status.kind === 'partial';
   return (
     <div className={css.viewer} data-base-preview-state={status.kind}>

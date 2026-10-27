@@ -8,6 +8,7 @@ import PortalSummary from './PortalSummary';
 import BaseSection from './BaseSection';
 import VehicleSection from './VehicleSection';
 import MarketBoard from './MarketBoard';
+import BaseMarketplace from '../../marketplace/components/BaseMarketplace';
 import { usePlayerData } from '../hooks/usePlayerData';
 import { extractBases, isOwnedBase } from '../utils/bases';
 import { extractVehicles } from '../utils/vehicles';
@@ -174,6 +175,7 @@ export default function PlayerPortal() {
               />
             )}
             {view === 'market' && <MarketBoard />}
+            {view === 'base-market' && <BaseMarketplace />}
             {(view === 'hagga' || view === 'deep-desert') && (
               <MapWindow key={view} mapName={view === 'hagga' ? 'HaggaBasin' : 'DeepDesert'} />
             )}

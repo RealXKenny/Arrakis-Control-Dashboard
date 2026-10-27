@@ -7,6 +7,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 ### Added
 
 - Render vertical and horizontal pentashield surfaces in the owned-base preview using their native proxy geometry and translucent shield materials.
+- Add a Base Marketplace with ownership-checked publishing, idempotent Redis-backed community listings, author and size filters, sanitized downloads, and lazy 3D shared-base previews.
 
 ### Changed
 
