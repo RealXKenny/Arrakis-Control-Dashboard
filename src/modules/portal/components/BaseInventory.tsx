@@ -1,36 +1,25 @@
-import { useEffect, useState } from 'react';
-import { COLORS } from '../config/colors';
+import { useEffect, useRef, useState } from 'react';
 import { formatNumber } from '../utils/formatting';
 import { record } from '../utils/inventory';
 import { itemImage } from '../utils/item-image';
 import ItemImage from './ItemImage';
+import css from '../base-inventory.module.css';
 
-type InventoryItem = {
-  templateId?: string;
-  name?: string;
-  quantity?: number;
-  image?: string;
-};
-
+type InventoryItem = { templateId?: string; name?: string; quantity?: number; image?: string };
 type Container = {
   placeableId?: string;
   name?: string;
   typeName?: string;
-  group?: string;
   usedSlots?: number;
   maxSlots?: number;
   itemCount?: number;
   items?: InventoryItem[];
 };
+const CONTAINERS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
+const fill = (used = 0, total = 0) => (total > 0 ? Math.max(0, Math.min(100, (used / total) * 100)) : 0);
 
-const ITEMS_PER_PAGE = 9;
-
-function getContainers(inventory: unknown): Container[] {
-  const root = record(inventory);
-  const containers = root.containers;
-  return Array.isArray(containers) ? (containers as Container[]) : [];
-}
-
+/** A bounded storage workspace; each column scrolls independently of its controls. */
 export default function BaseInventory({
   baseName,
   inventory,
@@ -40,360 +29,205 @@ export default function BaseInventory({
   inventory: unknown;
   onClose: () => void;
 }) {
-  const containers = getContainers(inventory);
-  const [selectedId, setSelectedId] = useState(containers[0]?.placeableId ?? '');
+  const root = record(inventory);
+  const containers = Array.isArray(root.containers) ? (root.containers as Container[]) : [];
+  // Index selection also handles containers whose provider omitted a placeable ID.
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [query, setQuery] = useState('');
   const [containerPage, setContainerPage] = useState(0);
   const [itemPage, setItemPage] = useState(0);
-  const [containersPerPage, setContainersPerPage] = useState(10);
-  const selected = containers.find((container) => container.placeableId === selectedId) ?? containers[0];
+  const dialogRef = useRef<HTMLElement>(null);
+  const selected = containers[selectedIndex] ?? containers[0];
   const normalizedQuery = query.trim().toLowerCase();
-
-  const visibleItems = (selected?.items ?? []).filter((item) => {
-    if (!normalizedQuery) return true;
-    return `${item.name ?? ''} ${item.templateId ?? ''}`.toLowerCase().includes(normalizedQuery);
-  });
-  const containerPageCount = Math.max(1, Math.ceil(containers.length / containersPerPage));
-  const visibleContainers = containers.slice(
-    containerPage * containersPerPage,
-    (containerPage + 1) * containersPerPage,
+  const visibleItems = (selected?.items ?? []).filter((item) =>
+    `${item.name ?? ''} ${item.templateId ?? ''}`.toLowerCase().includes(normalizedQuery),
   );
+  const containerPageCount = Math.max(1, Math.ceil(containers.length / CONTAINERS_PER_PAGE));
+  const currentContainerPage = Math.min(containerPage, containerPageCount - 1);
   const itemPageCount = Math.max(1, Math.ceil(visibleItems.length / ITEMS_PER_PAGE));
-  const pagedItems = visibleItems.slice(itemPage * ITEMS_PER_PAGE, (itemPage + 1) * ITEMS_PER_PAGE);
-
+  const currentItemPage = Math.min(itemPage, itemPageCount - 1);
   const totalItems = containers.reduce((sum, container) => sum + Number(container.itemCount ?? 0), 0);
   const totalSlots = containers.reduce((sum, container) => sum + Number(container.maxSlots ?? 0), 0);
   const usedSlots = containers.reduce((sum, container) => sum + Number(container.usedSlots ?? 0), 0);
-  const fillPercent = totalSlots > 0 ? Math.min(100, (usedSlots / totalSlots) * 100) : 0;
 
   useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+    const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
+      if (event.key !== 'Tab') return;
+      const elements = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input, a[href], [tabindex="0"]') ?? [],
+      ).filter((element) => element.getClientRects().length > 0);
+      const first = elements[0],
+        last = elements.at(-1);
+      if (!first || !last) {
+        event.preventDefault();
+        return;
+      }
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialogRef.current)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
   }, [onClose]);
-
-  useEffect(() => {
-    setItemPage(0);
-  }, [selectedId, query]);
-
-  useEffect(() => {
-    const updatePageSize = () => {
-      setContainersPerPage(Math.max(6, Math.floor((window.innerHeight - 205) / 58)));
-    };
-    updatePageSize();
-    window.addEventListener('resize', updatePageSize);
-    return () => window.removeEventListener('resize', updatePageSize);
-  }, []);
 
   return (
     <div
-      role="presentation"
+      className={css.backdrop}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        background: 'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(5px)',
-      }}
     >
       <section
+        ref={dialogRef}
+        className={css.dialog}
         role="dialog"
         aria-modal="true"
         aria-label={`${baseName} storage`}
-        style={{
-          width: 'min(1200px, calc(100vw - 32px))',
-          height: 'min(900px, calc(100vh - 32px))',
-          boxSizing: 'border-box',
-          overflow: 'hidden',
-          display: 'grid',
-          gridTemplateRows: 'auto minmax(0, 1fr)',
-          padding: 22,
-          background: 'linear-gradient(145deg, rgba(37, 24, 13, 0.98), rgba(12, 8, 5, 0.98))',
-          border: `1px solid ${COLORS.border}`,
-          borderRadius: 14,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.65)',
-          borderTop: `2px solid ${COLORS.gold}`,
-        }}
+        tabIndex={-1}
       >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-end',
-            gap: 16,
-            flexWrap: 'wrap',
-            marginBottom: 18,
-            paddingBottom: 14,
-            borderBottom: `1px solid ${COLORS.borderLight}`,
-          }}
-        >
-          <div>
-            <p
-              style={{
-                margin: '0 0 4px',
-                color: COLORS.goldLight,
-                fontSize: '0.65rem',
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-              }}
-            >
-              Base storage
-            </p>
-            <h3 style={{ margin: 0, color: COLORS.text, fontSize: '1.25rem', letterSpacing: '-0.02em' }}>{baseName}</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-              <div
-                style={{
-                  width: 120,
-                  height: 5,
-                  overflow: 'hidden',
-                  borderRadius: 99,
-                  background: 'var(--theme-surface)',
-                }}
-              >
-                <div
-                  style={{
-                    width: `${fillPercent}%`,
-                    height: '100%',
-                    borderRadius: 99,
-                    background: `linear-gradient(90deg, ${COLORS.gold}, var(--theme-soft))`,
-                  }}
-                />
-              </div>
-              <span style={{ color: COLORS.dim, fontSize: '0.62rem' }}>
-                {usedSlots}/{totalSlots || '—'} slots used
+        <header className={css.header}>
+          <div className={css.title}>
+            <p className={css.eyebrow}>Base storage</p>
+            <h2>{baseName}</h2>
+            <div className={css.capacity}>
+              <span className={css.meter} aria-hidden="true">
+                <i style={{ width: `${fill(usedSlots, totalSlots)}%` }} />
+              </span>
+              <span>
+                {formatNumber(usedSlots, 0)} / {formatNumber(totalSlots, 0)} slots used
               </span>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ textAlign: 'right', color: COLORS.dim, fontSize: '0.72rem' }}>
-              <strong style={{ display: 'block', color: COLORS.goldLight, fontSize: '0.8rem' }}>
-                {formatNumber(totalItems, 0)} items
-              </strong>
-              <span>{containers.length} storage containers</span>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close base storage"
-              style={{
-                border: `1px solid ${COLORS.border}`,
-                borderRadius: 6,
-                padding: '5px 9px',
-                cursor: 'pointer',
-                color: COLORS.textSoft,
-                background: '#ffffff08',
-                fontSize: '0.9rem',
-              }}
-            >
-              ×
-            </button>
+          <div className={css.summary}>
+            <strong>{formatNumber(totalItems, 0)} items</strong>
+            <span>{containers.length} storage containers</span>
           </div>
-        </div>
-
+          <button type="button" className={css.close} aria-label="Close base storage" onClick={onClose}>
+            ×
+          </button>
+        </header>
         {!containers.length ? (
-          <p style={{ margin: 0, color: COLORS.dim, fontSize: '0.8rem' }}>
-            No storage containers were reported for this base.
-          </p>
+          <div className={css.empty}>
+            <h3>No containers yet</h3>
+            <p>No storage containers were reported for this base.</p>
+          </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'minmax(240px, 0.82fr) minmax(0, 2fr)',
-              gap: 18,
-              minHeight: 0,
-            }}
-          >
-            <div
-              style={{ display: 'grid', minHeight: 0, gridTemplateRows: 'minmax(0, 1fr) auto', gap: 7 }}
-              role="list"
-              aria-label="Base storage containers"
-            >
-              <div
-                style={{
-                  display: 'grid',
-                  gap: 7,
-                  minHeight: 0,
-                  alignContent: 'start',
-                }}
-              >
-                {visibleContainers.map((container) => {
-                  const active = container.placeableId === (selected?.placeableId ?? '');
-                  const containerLabel = container.name || container.typeName || 'Unnamed container';
-                  return (
-                    <button
-                      key={container.placeableId ?? container.name}
-                      type="button"
-                      onClick={() => setSelectedId(container.placeableId ?? '')}
-                      aria-pressed={active}
-                      style={{
-                        appearance: 'none',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        padding: '11px 13px',
-                        borderRadius: 8,
-                        border: `1px solid ${active ? 'color-mix(in srgb, var(--theme-accent) 35%, transparent)' : COLORS.borderLight}`,
-                        background: active ? 'color-mix(in srgb, var(--theme-accent) 10%, transparent)' : '#ffffff03',
-                        color: active ? COLORS.text : COLORS.textSoft,
-                        minHeight: 54,
-                      }}
-                    >
-                      <strong
-                        style={{
-                          display: 'block',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          color: active ? COLORS.goldLight : COLORS.textSoft,
-                          fontSize: '0.74rem',
-                          marginBottom: 5,
+          <div className={css.workspace}>
+            <aside className={css.sidebar} aria-label="Base storage containers">
+              <div className={css.sectionLabel}>
+                <h3>Containers</h3>
+                <span>{containers.length}</span>
+              </div>
+              <div className={css.containerList}>
+                {containers
+                  .slice(currentContainerPage * CONTAINERS_PER_PAGE, (currentContainerPage + 1) * CONTAINERS_PER_PAGE)
+                  .map((container, offset) => {
+                    const index = currentContainerPage * CONTAINERS_PER_PAGE + offset;
+                    const active = container === selected;
+                    return (
+                      <button
+                        type="button"
+                        key={`${container.placeableId ?? 'container'}-${index}`}
+                        aria-pressed={active}
+                        onClick={() => {
+                          setSelectedIndex(index);
+                          setItemPage(0);
                         }}
-                        title={containerLabel}
                       >
-                        {containerLabel}
-                      </strong>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ flex: 1, color: COLORS.dim, fontSize: '0.62rem' }}>
-                          {container.usedSlots ?? 0}/{container.maxSlots ?? '—'} slots ·{' '}
-                          {formatNumber(container.itemCount ?? 0, 0)} items
+                        <span className={css.containerIcon} aria-hidden="true">
+                          ▱
                         </span>
-                        <span
-                          style={{
-                            width: 40,
-                            height: 3,
-                            overflow: 'hidden',
-                            borderRadius: 99,
-                            background: 'var(--theme-surface)',
-                          }}
-                        >
-                          <span
-                            style={{
-                              display: 'block',
-                              width: `${container.maxSlots ? Math.min(100, ((container.usedSlots ?? 0) / container.maxSlots) * 100) : 0}%`,
-                              height: '100%',
-                              background: active ? COLORS.gold : 'var(--theme-border)',
-                            }}
-                          />
+                        <span className={css.containerInfo}>
+                          <strong>{container.name || container.typeName || 'Unnamed container'}</strong>
+                          <small>
+                            {container.usedSlots ?? 0}/{container.maxSlots ?? '—'} slots ·{' '}
+                            {formatNumber(container.itemCount ?? 0, 0)} items
+                          </small>
+                          <span className={css.meter} aria-hidden="true">
+                            <i style={{ width: `${fill(container.usedSlots, container.maxSlots)}%` }} />
+                          </span>
                         </span>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
               </div>
               <Pager
-                page={containerPage}
+                page={currentContainerPage}
                 pageCount={containerPageCount}
                 onPageChange={setContainerPage}
                 label="Containers"
               />
-            </div>
-
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  marginBottom: 10,
-                  padding: '10px 12px',
-                  background: 'rgba(255,255,255,0.025)',
-                  border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: 9,
-                }}
-              >
+            </aside>
+            <section className={css.content} aria-label="Container contents">
+              <div className={css.toolbar}>
                 <div>
-                  <h4 style={{ margin: 0, color: COLORS.text, fontSize: '0.95rem' }}>
-                    {selected?.name ?? 'Container'}
-                  </h4>
-                  <span style={{ color: COLORS.dim, fontSize: '0.65rem' }}>
-                    {selected?.typeName ?? 'Storage container'}
-                  </span>
+                  <p className={css.eyebrow}>Selected container</p>
+                  <h3>{selected?.name || selected?.typeName || 'Container'}</h3>
+                  <p>{selected?.typeName || 'Storage container'}</p>
                 </div>
-                <label style={{ color: COLORS.dim, fontSize: '0.65rem' }}>
+                <label>
                   Search items
                   <input
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Name or template"
-                    style={{
-                      display: 'block',
-                      width: 190,
-                      marginTop: 4,
-                      padding: '7px 9px',
-                      color: COLORS.text,
-                      background: 'var(--theme-surface)',
-                      border: `1px solid ${COLORS.border}`,
-                      borderRadius: 6,
-                      outline: 'none',
+                    maxLength={128}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setItemPage(0);
                     }}
+                    placeholder="Name or template"
                   />
                 </label>
               </div>
-              <ul
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-                  gap: 8,
-                  margin: 0,
-                  padding: 0,
-                  listStyle: 'none',
-                }}
-              >
-                {pagedItems.map((item, index) => (
-                  <li
-                    key={`${item.templateId ?? item.name}-${index}`}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '56px minmax(0, 1fr) auto',
-                      gap: 9,
-                      alignItems: 'center',
-                      minHeight: 72,
-                      padding: '8px 10px',
-                      overflow: 'hidden',
-                      background: '#ffffff04',
-                      border: `1px solid ${COLORS.borderLight}`,
-                      boxShadow: '0 5px 14px rgba(0,0,0,0.14)',
-                      borderRadius: 7,
-                    }}
-                  >
-                    <ItemImage src={itemImage(item)} />
-                    <span style={{ minWidth: 0 }}>
-                      <strong
-                        style={{
-                          display: 'block',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          color: COLORS.textSoft,
-                          fontSize: '0.72rem',
-                        }}
-                        title={item.name}
-                      >
-                        {item.name ?? item.templateId ?? 'Unknown item'}
-                      </strong>
-                      <small style={{ color: COLORS.dim, fontSize: '0.58rem' }}>{item.templateId ?? '—'}</small>
+              <div className={css.itemsScroll}>
+                {visibleItems.length ? (
+                  <ul className={css.items} aria-label="Container items">
+                    {visibleItems
+                      .slice(currentItemPage * ITEMS_PER_PAGE, (currentItemPage + 1) * ITEMS_PER_PAGE)
+                      .map((item, index) => (
+                        <li key={`${item.templateId ?? item.name}-${index}`}>
+                          <span className={css.itemImage}>
+                            <ItemImage src={itemImage(item)} />
+                          </span>
+                          <span className={css.itemInfo}>
+                            <strong title={item.name}>{item.name ?? item.templateId ?? 'Unknown item'}</strong>
+                            <small>{item.templateId ?? '—'}</small>
+                          </span>
+                          <b>×{formatNumber(item.quantity ?? 0, 0)}</b>
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <div className={css.empty} role="status">
+                    <span className={css.emptyIcon} aria-hidden="true">
+                      ▱
                     </span>
-                    <b style={{ color: COLORS.goldLight, fontSize: '0.72rem' }}>
-                      ×{formatNumber(item.quantity ?? 0, 0)}
-                    </b>
-                  </li>
-                ))}
-              </ul>
-              <Pager page={itemPage} pageCount={itemPageCount} onPageChange={setItemPage} label="Items" />
-              {!visibleItems.length && (
-                <p style={{ color: COLORS.dim, fontSize: '0.75rem' }}>No items match this search.</p>
-              )}
-            </div>
+                    <h3>{normalizedQuery ? 'No matching items' : 'This container is empty'}</h3>
+                    <p>
+                      {normalizedQuery ? 'Try another name or template.' : 'No items were reported in this container.'}
+                    </p>
+                    {normalizedQuery && (
+                      <button type="button" onClick={() => setQuery('')}>
+                        Clear search
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              <Pager page={currentItemPage} pageCount={itemPageCount} onPageChange={setItemPage} label="Items" />
+            </section>
           </div>
         )}
       </section>
@@ -413,33 +247,27 @@ function Pager({
   label: string;
 }) {
   if (pageCount <= 1) return null;
-
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 10 }}>
-      <button type="button" disabled={page === 0} onClick={() => onPageChange(page - 1)} style={pagerButtonStyle}>
+    <nav className={css.pager} aria-label={`${label} pagination`}>
+      <button
+        type="button"
+        aria-label={`Previous ${label.toLowerCase()} page`}
+        disabled={page === 0}
+        onClick={() => onPageChange(page - 1)}
+      >
         ←
       </button>
-      <span style={{ color: COLORS.dim, fontSize: '0.62rem' }}>
+      <span>
         {label} page {page + 1} of {pageCount}
       </span>
       <button
         type="button"
-        disabled={page === pageCount - 1}
+        aria-label={`Next ${label.toLowerCase()} page`}
+        disabled={page >= pageCount - 1}
         onClick={() => onPageChange(page + 1)}
-        style={pagerButtonStyle}
       >
         →
       </button>
-    </div>
+    </nav>
   );
 }
-
-const pagerButtonStyle = {
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: 6,
-  padding: '4px 9px',
-  cursor: 'pointer',
-  color: COLORS.textSoft,
-  background: '#ffffff08',
-  fontSize: '0.75rem',
-};

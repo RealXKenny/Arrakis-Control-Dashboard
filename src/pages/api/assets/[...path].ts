@@ -21,6 +21,7 @@ const contentTypes = Object.freeze({
 
 function isTerrainAsset(segments: string[]) {
   const name = segments.slice(1).join('/');
+  if (/^hagga\.(?:json|hf)\.gz$/.test(name)) return true;
   return /^(?:meshes\.(?:json|bin)|layout-(?:[0-9]|1[01])\.(?:json|bin|hf)|tex\/(?:det1|det2|brk)\.rgba)\.gz$/.test(
     name,
   );
@@ -35,13 +36,21 @@ function isTiledMapAsset(segments: string[]) {
   );
 }
 
+function isModelAsset(segments: string[]) {
+  return (
+    segments.length === 2 && segments[0] === 'models' && /^(?:catalog\.json|meshpack-[0-9]\.bin)\.gz$/.test(segments[1])
+  );
+}
+
 function resolveAsset(parts: unknown): { file: string; contentType: string } | null {
   if (!Array.isArray(parts) || parts.some((part) => typeof part !== 'string')) return null;
   const segments = parts as string[];
   const validFile =
     (segments.length === 1 && segments[0] === 'favicon.ico') ||
+    (segments.length === 2 && segments[0] === 'share' && /^(?:preview|mark)-v1\.png$/.test(segments[1])) ||
     (segments.length === 2 && ['items', 'maps'].includes(segments[0])) ||
     isTiledMapAsset(segments) ||
+    isModelAsset(segments) ||
     (segments[0] === 'terrain' && isTerrainAsset(segments));
   if (
     !validFile ||

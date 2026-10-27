@@ -92,7 +92,13 @@ describe('early theme script lifecycle', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 11, 30, 23, 59, 59));
     const listeners: Record<string, () => void> = {};
-    const root = { dataset: {} as Record<string, string>, removeAttribute: () => delete root.dataset.themePalette };
+    const root = {
+      dataset: {} as Record<string, string>,
+      removeAttribute: (name: string) => {
+        const key = name.replace(/^data-/, '').replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+        delete root.dataset[key];
+      },
+    };
     const location = { search: '' };
     runInNewContext(getThemeScript(), {
       Date,
@@ -126,5 +132,62 @@ describe('early theme script lifecycle', () => {
     listeners.visibilitychange();
     expect(root.dataset.theme).toBe('new-years');
     expect(vi.getTimerCount()).toBe(1);
+  });
+});
+
+describe('theme configuration metadata', () => {
+  it('applies and clears only its own classes and text metadata without creating layout elements', () => {
+    const attributes = new Map<string, string>();
+    const classes = new Set(['existing-app-class']);
+    const root = {
+      dataset: {} as Record<string, string>,
+      setAttribute: (name: string, value: string) => attributes.set(name, value),
+      removeAttribute: (name: string) => {
+        attributes.delete(name);
+        if (name === 'data-theme-palette') delete root.dataset.themePalette;
+      },
+      classList: {
+        add: (value: string) => classes.add(value),
+        remove: (value: string) => classes.delete(value),
+        contains: (value: string) => classes.has(value),
+      },
+    };
+    const listeners: Record<string, () => void> = {};
+    const location = { search: '?theme=custom-holiday' };
+    runInNewContext(
+      getThemeScript([
+        {
+          id: 'custom-holiday',
+          priority: 30,
+          palette: 'rose',
+          rule: { kind: 'fixed', month: 2, start: 14 },
+          cssClass: 'celebration existing-app-class',
+          message: 'Happy day <friends>',
+          asset: '/items/example.png',
+        },
+      ]),
+      {
+        Date,
+        URLSearchParams,
+        setTimeout: () => 1,
+        clearTimeout: () => {},
+        window: {
+          location,
+          addEventListener: (name: string, callback: () => void) => {
+            listeners[name] = callback;
+          },
+        },
+        document: { documentElement: root, addEventListener: () => {} },
+      },
+    );
+    expect(root.dataset.theme).toBe('custom-holiday');
+    expect(classes.has('celebration')).toBe(true);
+    expect(attributes.get('data-theme-message')).toBe('Happy day <friends>');
+    expect(attributes.get('data-theme-asset')).toBe('/items/example.png');
+    location.search = '?theme=default';
+    listeners.popstate();
+    expect(root.dataset).toEqual({ theme: 'default' });
+    expect([...classes]).toEqual(['existing-app-class']);
+    expect(attributes.size).toBe(0);
   });
 });

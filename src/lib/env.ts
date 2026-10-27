@@ -6,7 +6,7 @@ import { z } from 'zod';
  *
  * This module is the single source of truth for environment validation;
  * `src/config/env.ts` re-exports it so legacy Pages Router modules keep
- * working during the App Router cutover. It may only be imported from
+ * working against the shared runtime configuration. It may only be imported from
  * server-side code — `assert-server` throws at module load otherwise — so
  * secrets (CONSOLE_URL, CONSOLE_API_KEY, ADAPTER_TOKEN, Redis credentials)
  * can never reach a client bundle.

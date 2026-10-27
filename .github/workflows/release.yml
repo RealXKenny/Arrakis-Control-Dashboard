@@ -125,6 +125,10 @@ jobs:
             test "$PWD" = /home/container &&
             test -f /opt/arrakis-dashboard/.next/BUILD_ID &&
             test -f /opt/arrakis-dashboard/src/assets/favicon.ico &&
+            test -f /opt/arrakis-dashboard/src/assets/models/catalog.json.gz &&
+            test -f /opt/arrakis-dashboard/src/assets/terrain/hagga.hf.gz &&
+            test -f /opt/arrakis-dashboard/src/assets/share/preview-v1.png &&
+            test -f /opt/arrakis-dashboard/licenses/MapViewer3D.txt &&
             test -f /opt/arrakis-dashboard/CHANGELOG.md
           '
           test "$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.description" }}' "$IMAGE:latest")" = 'Web dashboard for Dune: Awakening server operations, Discord OAuth, and live telemetry.'
@@ -151,6 +155,9 @@ jobs:
           trap 'docker logs arrakis-dashboard-smoke; docker rm -f arrakis-dashboard-smoke' EXIT
           for attempt in $(seq 1 60); do
             if curl --fail --silent --output /dev/null http://127.0.0.1:2008/favicon.ico; then
+              for asset in models/catalog.json.gz terrain/hagga.hf.gz share/preview-v1.png; do
+                curl --fail --silent --output /dev/null "http://127.0.0.1:2008/api/assets/$asset"
+              done
               exit 0
             fi
             sleep 1

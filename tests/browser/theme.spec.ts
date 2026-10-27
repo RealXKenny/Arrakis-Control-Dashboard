@@ -33,3 +33,29 @@ test('applies local themes before body parsing under CSP without changing layout
   await page.goto('/?theme=halloween');
   await expect(html).toHaveAttribute('data-initial-theme', 'halloween');
 });
+
+test('holiday accents reach pillbox controls and reset without layout shifts', async ({ page }) => {
+  await page.route('**/api/theme-script', (route) =>
+    route.fulfill({ contentType: 'application/javascript', body: getThemeScript() }),
+  );
+  await page.goto('/?theme=default');
+  const button = page.getByRole('link', { name: 'Connect with Discord' });
+  await expect(button).toBeVisible();
+  const baseColor = await button.evaluate((node) => getComputedStyle(node).backgroundColor);
+  const baseLayout = await button.boundingBox();
+  await page.evaluate(() => {
+    history.pushState({}, '', '?theme=valentine');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'valentine');
+  // Color transitions may still be at their starting value in the first animation frame.
+  await expect(button).toHaveCSS('background-color', 'rgb(216, 199, 205)');
+  expect(await button.boundingBox()).toEqual(baseLayout);
+  await page.evaluate(() => {
+    history.pushState({}, '', '?theme=default');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'default');
+  await expect(button).toHaveCSS('background-color', baseColor);
+  expect(await button.boundingBox()).toEqual(baseLayout);
+});

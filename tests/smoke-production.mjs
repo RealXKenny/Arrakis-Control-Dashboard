@@ -157,6 +157,8 @@ try {
   assert.deepEqual(readinessMessages, ['Ready in — Arrakis Control Dashboard is listening (HTTP check passed).']);
   for (const [asset, contentType] of [
     ['/favicon.ico', 'image/x-icon'],
+    ['/api/assets/terrain/hagga.json.gz', 'application/gzip'],
+    ['/api/assets/models/catalog.json.gz', 'application/gzip'],
     ['/maps/atreides.webp', 'image/webp'],
     ['/maps/hagga-basin/0-0.webp', 'image/webp'],
     ['/items/MelangeSpice.png', 'image/png'],
@@ -166,12 +168,25 @@ try {
     assert.equal(response.headers.get('content-type'), contentType, asset);
     assert.ok((await response.arrayBuffer()).byteLength > 0, asset);
   }
+  const entry = await fetch(`${base}/home?theme=default&source=bookmark`, { redirect: 'manual' });
+  assert.equal(entry.status, 307);
+  const landingUrl = new URL(entry.headers.get('location'), base);
+  assert.equal(landingUrl.pathname, '/');
+  assert.equal(landingUrl.searchParams.get('theme'), 'default');
+  assert.equal(landingUrl.searchParams.get('source'), 'bookmark');
+  await entry.text();
   const sessionCookie = '__Host-dashboard_session=fixture-session';
-  const home = await fetch(`${base}/home`, { headers: { cookie: sessionCookie } });
+  const home = await fetch(`${base}/`, { headers: { cookie: sessionCookie } });
   const themeScript = await fetch(`${base}/api/theme-script`);
   assert.equal(themeScript.status, 200);
   assert.match(themeScript.headers.get('content-type'), /application\/javascript/);
-  const themeRoot = { dataset: {} };
+  const themeRoot = {
+    dataset: {},
+    removeAttribute(name) {
+      const key = name.replace(/^data-/, '').replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+      delete this.dataset[key];
+    },
+  };
   runInNewContext(await themeScript.text(), {
     Date,
     URLSearchParams,
@@ -225,11 +240,25 @@ try {
   );
   assert.equal(home.status, 200, 'homepage with a session cookie');
   assert.match(await home.text(), /"isAuthenticated":true/);
-  const appRoot = await fetch(`${base}/`);
-  assert.equal(appRoot.status, 200, 'app router root serves the dashboard shell');
-  const appRootHtml = await appRoot.text();
-  assert.match(appRootHtml, /Harvesting sectors/);
-  assert.doesNotMatch(appRootHtml, /"isAuthenticated"/, 'app router root is not the pages landing');
+  const rootLanding = await fetch(`${base}/`);
+  assert.equal(rootLanding.status, 200, 'root directly serves the public landing page');
+  assert.equal(new URL(rootLanding.url).pathname, '/');
+  const rootLandingHtml = await rootLanding.text();
+  assert.match(rootLandingHtml, /A clearer view/);
+  assert.match(rootLandingHtml, /"isAuthenticated":false/);
+  const sharePayload = rootLandingHtml.match(/<script[^>]*id="discord:component-embed"[^>]*>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(sharePayload, 'public preview is present before browser JavaScript executes');
+  assert.ok(Buffer.byteLength(sharePayload) <= 3000, 'Discord component payload stays bounded');
+  const shareCard = JSON.parse(sharePayload);
+  assert.equal(shareCard.component.type, 17);
+  assert.equal(shareCard.component.components.find((component) => component.type === 1).components[0].url, `${base}/`);
+  const shareImage = await fetch(`${base}/api/assets/share/preview-v1.png`);
+  assert.equal(shareImage.status, 200);
+  assert.match(shareImage.headers.get('content-type'), /image\/png/);
+  const shareImageBytes = Buffer.from(await shareImage.arrayBuffer());
+  assert.equal(shareImageBytes.readUInt32BE(16), 1200);
+  assert.equal(shareImageBytes.readUInt32BE(20), 630);
+  assert.doesNotMatch(rootLandingHtml, /Harvesting sectors/, 'the removed operations dashboard is not served');
   const routes = [
     'theme-script',
     'v1/bot/world',

@@ -227,7 +227,6 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
   return (
     <DashboardShell
       brand="Crimson Skies"
-      brandHref="/portal"
       subtitle="Administration"
       navigation={[
         { label: 'Workspace', group: 'Dashboard', href: '/portal' },

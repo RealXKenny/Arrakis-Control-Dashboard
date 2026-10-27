@@ -2,6 +2,10 @@
 
 Arrakis Control is a Next.js dashboard for authorized Dune server operations. It provides Discord OAuth login, player telemetry, base and vehicle data, market information, map data, and base export functionality.
 
+The public landing page is `/`; legacy `/home` links redirect there while preserving query parameters. The signed-in workspace is `/portal`.
+
+Sharing `/` or `/portal` in Discord provides a server-rendered component card with public feature summaries, the community mark, and **Visit website**, **Open portal**, and **Join Discord** link buttons. Open Graph and Twitter metadata provide a standard image-card fallback. The canonical URLs use `APP_URL`, never request headers or member data; no preview URLs are emitted when that setting is absent. Copy and links live in `src/modules/sharing/metadata.ts`, and versioned PNGs in `src/assets/share/` use the existing hardened asset route. After deployment, check the public URL in [Discord's Embed Debugger](https://discord.com/developers/embeds); Discord controls preview availability and caching.
+
 The application uses the Next.js Pages Router and keeps external service credentials and authorization decisions on the server.
 
 ## Requirements
@@ -34,7 +38,7 @@ Required production variables include:
 - `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `DISCORD_GUILD_ID` for Discord OAuth.
 - `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/auth/callback`.
 - `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits, persistent sessions, and the dashboard snapshot cache.
-- `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list that switches the App Router data provider to `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index.
+- `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list that switches the optional server snapshot provider to `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index.
 
 Optional server binding variables:
 
@@ -109,13 +113,26 @@ Single-day holidays and holiday weekends take priority over longer holiday perio
 
 Preview any configured ID with `?theme=halloween`, `?theme=easter`, or `?theme=independence-day` (`july4th` is an alias). Use `?theme=default` to restore the original colors; remove the parameter to resume automatic selection. Unknown overrides are ignored. No environment setting or secret is needed. The controller rechecks at local midnight, on navigation/resume, and at least once a minute for system clock changes. If JavaScript is disabled or its request fails, the server-rendered default theme remains usable.
 
+The calendar matrix in `src/modules/theme/schedule.ts` controls inclusive local dates, priorities, palettes, and optional `cssClass`, `message`, and `asset` metadata. The early controller applies the class and exposes the message/asset as text attributes on `<html>`; it never injects HTML or inserts a banner that could shift content. Only its own classes and metadata are removed on reset. `src/styles/pillbox-theme.css` connects the shared pillbox accent token to the same seasonal palette used by feature modules. No theme assets are downloaded unless a feature explicitly uses them.
+
+
+## Interactive maps
+
+Both maps open in an orbitable 3D view with measured terrain, selectable locations, and realtime markers. Drag to orbit, right-drag to pan, and scroll/pinch to zoom. Controls include location search, Fly to, compass, scale, fullscreen, and detail selection. The 2D map remains available and is the automatic fallback if terrain loading or WebGL2 fails.
+
+Owned-base structures use the existing ownership-checked export endpoint and locally bundled models; vehicle and sandworm models retain bounded detail and distance limits. Renderer tests cover marker alignment, context-loss recovery, filters, and model selection. The Three.js scene loads only when a map opens. MapViewer3D attribution is in `src/modules/map/terrain/MAPVIEWER3D-LICENSE.txt` and is included in the production image.
+
+The **My bases** workspace also offers an opt-in 3D preview. Choose an owned base and select **Load 3D preview** to fetch its authorized export; switching or closing the preview releases the renderer. Actual building and furniture meshes retain their catalog offsets and native rotations, and exported pentashield dimensions are applied in metres. **Building parts** lists per-template reconstruction counts; unsupported items and pieces outside the 400,000-triangle budget are reported rather than replaced with generic geometry. Exports are bounded to 2 MiB and are never stored in browser persistence. The storage dialog provides independently scrollable containers and contents, pagination, search, and keyboard focus management across desktop and mobile layouts.
+
+Spice fields (possible and active), shipwreck POIs, and flour-sand deposits have original procedural 3D representations. Resource patches follow measured terrain and omit unsupported triangles; filtering the corresponding layer removes its models. Only the nearest 40 world models are allocated, with distant blips retained. Leaving their range or changing terrain detail releases their geometry; no external model downloads are needed for these objects.
+
 ## Optional Realtime Data
 
 Run the optional `mvagent` next to the Console using the [MapViewer3D ddp setup](https://github.com/dev-prophet-code/MapViewer3D/tree/ddp). Enable **Realtime Data → Read** on the dashboard's existing `CONSOLE_API_KEY`; `Maps → Read` does not grant this scope. Keep the agent's unauthenticated loopback endpoint private: the dashboard contacts only the Console, using `CONSOLE_URL` with HTTPS and a trusted certificate (HTTP is accepted only on loopback). `DUNE_REALTIME_AGENT_URL` belongs to the Console, not this dashboard.
 
 Realtime creature and weather positions are available to every signed-in dashboard member of the configured guild. No additional Discord role or `REALTIME_ROLE_ID` setting is required; legacy values are ignored. Signed-out visitors cannot fetch positions, and logout/session revocation is checked on every request. The dashboard's normal Discord login requirements still apply.
 
-On Hagga Basin or Deep Desert, turn **Realtime on** and choose an instance. The layer polls `/api/realtime/objects` through the dashboard every two seconds while visible; it does not open SSE streams or consume stream slots. Errors clear old positions and retry after 30 seconds; dashboard authorization failures stop polling until toggled again. Missing agent, missing scope, unsupported Console versions and sources that are not ready show availability messages without interrupting the normal map. Each browser makes its own snapshot requests, so account for the Console API key's rate limit.
+On Hagga Basin or Deep Desert, realtime starts enabled; choose an instance or use the toggle to pause it. The layer polls `/api/realtime/objects` through the dashboard every two seconds while visible; it does not open SSE streams or consume stream slots. Errors clear old positions and retry after 30 seconds; dashboard authorization failures stop polling until toggled again. Missing agent, missing scope, unsupported Console versions and sources that are not ready show availability messages without interrupting the normal map. Each browser makes its own snapshot requests, so account for the Console API key's rate limit.
 
 The layer adds sandworms, NPCs, civilians, sandstorms and Coriolis storms, with individual legend filters. Anonymous agent player/vehicle objects are excluded because they cannot satisfy the dashboard's identity and ownership checks. Existing player/vehicle markers continue using their normal map refresh. Instance selection applies to realtime markers only.
 
@@ -160,16 +177,14 @@ Browser
   -> Dune Console or Discord
 ```
 
-The App Router shell (`/`) renders server-side from `src/app/` and reads live
-snapshots through `src/lib/data-provider.ts`: a read-through cache over the
-`ioredis` pool (`src/lib/redis-client.ts`, pooled connections with reconnect
-backoff, optional Cluster failover, and a circuit breaker) that falls back to
-the Dune Console adapter on cache misses and to stale snapshots during
-outages.
+The public entry `/` serves the community landing page with
+server-side session checks. `/portal` provides the signed-in workspace and reads
+normalized telemetry through the existing feature APIs. The separate public
+operations dashboard and its App Router shell have been removed.
 
 Important boundaries:
 
-- `src/app/` contains the App Router root layout and dashboard page; `src/pages/` holds the remaining Pages Router pages and all API routes.
+- `src/pages/` contains the Pages Router pages and API routes; `next.config.ts` redirects legacy `/home` links to `/`.
 - `src/modules/` contains feature-specific UI, hooks, normalization, and server helpers.
 - `src/infrastructure/` contains the Dune client, cookie helpers, and API boundary utilities.
 - `src/lib/` contains shared logging, errors, Redis (node-redis for sessions/rate limits, ioredis pool for dashboard data), rate limiting, and session storage.

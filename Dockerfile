@@ -15,9 +15,12 @@ RUN npm run build \
 
 FROM node:22-alpine AS runtime
 
+LABEL org.opencontainers.image.description="Web dashboard for Dune: Awakening server operations, Discord OAuth, and live telemetry."
+
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NODE_ENV=production \
-    SERVER_HOSTNAME=0.0.0.0
+    SERVER_HOSTNAME=0.0.0.0 \
+    HOME=/home/container
 
 # Run as an unprivileged user; the Pterodactyl egg expects the "container" account.
 RUN addgroup -S container \
@@ -36,8 +39,10 @@ COPY --from=build --chown=container:container /opt/arrakis-dashboard/src/proxy.t
 COPY --from=build --chown=container:container /opt/arrakis-dashboard/src/config/server-launcher.mjs ./src/config/
 COPY --from=build --chown=container:container /opt/arrakis-dashboard/src/assets/ ./src/assets/
 COPY --from=build --chown=container:container /opt/arrakis-dashboard/CHANGELOG.md ./
+COPY --from=build --chown=container:container /opt/arrakis-dashboard/src/modules/map/terrain/MAPVIEWER3D-LICENSE.txt ./licenses/MapViewer3D.txt
 COPY --chown=container:container docker/entrypoint.sh /entrypoint.sh
 
+WORKDIR /home/container
 USER container
 EXPOSE 2008
 CMD ["/bin/sh", "/entrypoint.sh"]

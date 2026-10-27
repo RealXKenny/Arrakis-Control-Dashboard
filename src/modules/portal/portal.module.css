@@ -246,3 +246,14 @@
   border-radius: 10px;
   font-size: 11px;
 }
+
+@media (min-width: 1800px) {
+  .page :global(.base-grid),
+  .page :global(.vehicle-grid) {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)) !important;
+  }
+  .page :global(.base-grid) > div,
+  .page :global(.vehicle-grid) > div {
+    grid-column: auto !important;
+  }
+}

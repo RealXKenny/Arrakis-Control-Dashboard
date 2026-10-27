@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
     '/api/assets/*': ['./src/assets/**/*'],
   },
 
+  async redirects() {
+    // Dev note: one front door is plenty; query strings travel with the visitor.
+    return [{ source: '/home', destination: '/', permanent: false }];
+  },
+
   async rewrites() {
     return [
       {

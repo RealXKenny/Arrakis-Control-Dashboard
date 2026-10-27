@@ -1,4 +1,5 @@
 import BaseImport from '../../bases/components/BaseImport';
+import BasePreview from '../../bases/components/BasePreview';
 import { COLORS, styles } from '../config/colors';
 import { useEffect, useState } from 'react';
 
@@ -264,6 +265,7 @@ export default function BaseSection({
           />
         )}
       </section>
+      {baseTab === 'owned' && <BasePreview bases={ownedBases} />}
       <BaseImport />
     </>
   );

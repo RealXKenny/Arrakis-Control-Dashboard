@@ -4,7 +4,7 @@
   --color-ink: #09090b;
   --color-panel: #18181b;
   --color-edge: #27272a;
-  --color-accent: #3b82f6;
+  --color-accent: var(--theme-accent, #e4e4e7);
   --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
 }
@@ -22,7 +22,7 @@
   }
 
   ::selection {
-    background-color: rgb(59 130 246 / 0.28);
+    background-color: rgb(161 161 170 / 0.28);
   }
 
   :focus-visible {
@@ -40,4 +40,29 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* Fluid gutters keep normal screens familiar and use the extra ultrawide space. */
+:root {
+  --workspace-gutter: clamp(16px, 2.5vw, 80px);
+}
+.workspace-frame {
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  padding-inline: var(--workspace-gutter);
+}
+.workspace-content {
+  flex: 1;
+  padding-block: clamp(24px, 3vw, 56px) 64px;
+}
+
+/* This class also wins over the legacy Pages Router anchor color rule. */
+.action-primary {
+  background: var(--color-accent);
+  color: var(--color-ink);
+}
+.action-primary:hover {
+  background: color-mix(in srgb, var(--color-accent) 86%, white);
+  color: var(--color-ink);
 }

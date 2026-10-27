@@ -10,6 +10,8 @@ export interface ThemeDefinition {
   priority: number;
   rule: CalendarRule;
   /** Optional metadata for future decorative assets and banners; never injected as HTML. */
+  /** Optional root class; the controller removes only classes it applied itself. */
+  cssClass?: string;
   message?: string;
   asset?: string;
   palette: 'gold' | 'ice' | 'rose' | 'green' | 'spring' | 'patriotic' | 'autumn' | 'spooky' | 'festive';
