@@ -12,11 +12,12 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 - Embed available FModel surface color and normal textures in the owned-base 3D preview. Unreal layered materials without usable surface maps retain their existing fallback appearance.
 - Render available Atreides Outpost color layers using their exported layer index maps, and retain fallback materials where shader inputs are unavailable.
-- Allow larger base previews and preserve the reference project’s identified inclined-wall offsets. Correct Atreides entrance stair and ramp orientation against the in-game reference.
+- Allow larger base previews and preserve the reference project’s identified inclined-wall offsets. Retain native Atreides stair and ramp orientation and use the reference left/right mesh substitutions for wide ramp edges and floor triangles.
 - Allow the expanded visual model catalog to serve three-digit pack numbers.
 - Rebuild the landing page and shared application shell with a muted zinc bento grid, floating glass pill navigation, live-map entry points, and real public server counts.
 - Standardize portal, admin, market, base, map, form, table, and dialog surfaces with soft borders, rounded controls, legible muted text, and no legacy glows or heavy shadows. Remove obsolete visual components, duplicated overrides, and inline UI tokens.
 - Keep the glass navigation sticky at `z-50`, replace the text monogram with the official favicon through `next/image`, and expand the Exchange stats and listing grid to full width after removing its sidebar cards and obsolete price-ladder selection flow.
+- Keep vehicle access tabs visible for empty shared results, replace container-vehicle fuel gauges with reported cargo or weight capacity, and refine the responsive vehicle cards and empty states.
 
 ## [1.2.0] - 2026-10-26
 

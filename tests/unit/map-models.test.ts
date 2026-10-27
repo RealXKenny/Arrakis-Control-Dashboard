@@ -10,6 +10,7 @@ import {
   toSceneMatrix,
   unrealMatrix,
   visualFallbackKind,
+  visualModelTemplate,
   visualYawOffset,
 } from '../../src/modules/map/terrain/buildingModels';
 import { createVehicleModel, disposeVehicleModels, vehicleKind } from '../../src/modules/map/terrain/vehicleModels';
@@ -31,10 +32,19 @@ describe('map models', () => {
     expect(visualYawOffset('Atreides_Outpost_Wall_01')).toBe(0);
     expect(visualYawOffset('Atreides_Outpost_Wall_Round_Corner_01')).toBe(90);
     expect(visualYawOffset('Atreides_Outpost_Railing')).toBe(180);
-    expect(visualYawOffset('Atreides_Outpost_Stairs')).toBe(180);
-    expect(visualYawOffset('Atreides_Outpost_Ramp')).toBe(180);
+    expect(visualYawOffset('Atreides_Outpost_Stairs')).toBe(0);
+    expect(visualYawOffset('Atreides_Outpost_Ramp')).toBe(0);
     expect(visualYawOffset('Atreides_Outpost_Stairs_Half')).toBe(0);
     expect(visualYawOffset('Atreides_Outpost_Wall_Triangle_Bottom_Right')).toBe(180);
+    expect(visualModelTemplate('Atreides_Outpost_Ramp_Edge_Wide_Left')).toBe('Atreides_Outpost_Ramp_Edge_Wide_Right');
+    expect(visualModelTemplate('Atreides_Outpost_Ramp_Edge_Wide_Right')).toBe('Atreides_Outpost_Ramp_Edge_Wide_Left');
+    expect(visualModelTemplate('Atreides_Outpost_Floor_Triangle_Wide_Left')).toBe(
+      'Atreides_Outpost_Floor_Triangle_Wide_Right',
+    );
+    expect(visualModelTemplate('Atreides_Outpost_Floor_Triangle_Wide_Right')).toBe(
+      'Atreides_Outpost_Floor_Triangle_Wide_Left',
+    );
+    expect(visualModelTemplate('Atreides_Outpost_Stairs')).toBe('Atreides_Outpost_Stairs');
   });
   it('recognizes untextured glass, shields and lamps without treating building accents as lamps', () => {
     expect(visualFallbackKind('MI_Window_Glass')).toBe('glass');
