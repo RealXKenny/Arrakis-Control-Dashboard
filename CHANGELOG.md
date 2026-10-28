@@ -4,7 +4,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
-## [1.20.1] - 2026-10-28
+## [1.20.1] - 2026-10-27
 
 ### Added
 
