@@ -1468,7 +1468,7 @@ test('spice fields, shipwrecks, and flour sand have terrain models that follow l
   expect(errors).toEqual([]);
 });
 
-test('owned bases publish to the marketplace and open sanitized 3D listings', async ({ page }) => {
+test('owned bases publish to the marketplace while 3D listing previews are paused', async ({ page }) => {
   const id = 'a'.repeat(24);
   const summary = {
     id,
@@ -1513,10 +1513,9 @@ test('owned bases publish to the marketplace and open sanitized 3D listings', as
   await page.getByRole('button', { name: 'Inspect base', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Shared Outpost shared base', exact: true });
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'ready', {
-    timeout: 30000,
-  });
-  await expect(dialog.getByText('2 of 2 building pieces')).toBeVisible();
+  await expect(dialog.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'unavailable');
+  await expect(dialog.getByText('3D base previews are disabled pending a future update.')).toBeVisible();
+  await expect(dialog.locator('canvas')).toHaveCount(0);
   await expect(dialog.getByRole('link', { name: 'Download layout ↓' })).toHaveAttribute(
     'href',
     `/api/base-marketplace/${id}?download=1`,
@@ -1526,7 +1525,7 @@ test('owned bases publish to the marketplace and open sanitized 3D listings', as
   await expect(dialog).toHaveCount(0);
 });
 
-test('Bases lazily previews a selected owned structure using the livemap catalogue', async ({ page }) => {
+test('Bases keeps owned 3D previews paused without requesting exports', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
@@ -1565,80 +1564,42 @@ test('Bases lazily previews a selected owned structure using the livemap catalog
   expect(exports).toBe(0);
   await expect(preview.locator('canvas')).toHaveCount(0);
   await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
-  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'partial', {
-    timeout: 30_000,
-  });
-  expect(exports).toBe(1);
-  await expect(preview.getByText(/Partial preview/)).toBeVisible();
-  await preview.locator('summary').click();
-  await expect(
-    preview.getByRole('list', { name: 'Base building parts' }).getByText('Atre_Chair_1_Placeable', { exact: true }),
-  ).toBeVisible();
-  await expect(
-    preview.getByRole('list', { name: 'Base building parts' }).getByText('Future_Unsupported_Piece', { exact: true }),
-  ).toBeVisible();
-  const canvas = preview.locator('canvas');
-  const first = await canvas.evaluate((element: HTMLCanvasElement) => {
-    const gl = element.getContext('webgl2')!;
-    const original = gl.drawElementsInstanced.bind(gl);
-    gl.drawElementsInstanced = (...args: Parameters<typeof gl.drawElementsInstanced>) => {
-      original(...args);
-      element.dataset.baseDraws = String(Number(element.dataset.baseDraws ?? 0) + 1);
-    };
-    return element.getBoundingClientRect().width;
-  });
-  expect(first).toBeGreaterThan(300);
-  await preview.getByRole('button', { name: 'Zoom base preview in', exact: true }).click();
-  await expect.poll(async () => Number(await canvas.getAttribute('data-base-draws'))).toBeGreaterThan(0);
-  await preview.getByRole('button', { name: 'Top view', exact: true }).click();
-  await preview.getByRole('button', { name: 'Fit base', exact: true }).click();
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({ path: 'test-results/base-preview-desktop.png', fullPage: true });
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: 'test-results/base-preview-mobile.png', fullPage: true });
+  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'unavailable');
+  await expect(preview.getByText('3D base previews are disabled pending a future update.')).toBeVisible();
+  expect(exports).toBe(0);
+  await expect(preview.locator('canvas')).toHaveCount(0);
   await preview.getByRole('combobox', { name: 'Base for 3D preview' }).selectOption('1');
   await expect(preview.locator('canvas')).toHaveCount(0);
-  expect(exports).toBe(1);
   await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
-  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'partial', {
-    timeout: 30_000,
-  });
-  expect(exports).toBe(2);
+  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'unavailable');
+  expect(exports).toBe(0);
   await preview.getByRole('button', { name: 'Close preview', exact: true }).click();
   await expect(preview.locator('canvas')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
-test('base preview shows safe ownership failures and recovers from context loss', async ({ page }) => {
+test('base preview remains paused without requesting private exports', async ({ page }) => {
   let denied = true;
-  await page.route('**/api/bases/*/export', (route) =>
-    denied
+  let exports = 0;
+  await page.route('**/api/bases/*/export', (route) => {
+    exports++;
+    return denied
       ? route.fulfill({ status: 403, json: { error: 'private provider information' } })
       : route.fulfill({
           json: { instances: [{ building_type: 'Atreides_Outpost_Foundation', x: 0, y: 0, z: 0 }], placeables: [] },
-        }),
-  );
+        });
+  });
   await page.goto('/portal?view=bases');
   const preview = page.getByRole('region', { name: '3D base preview', exact: true });
   await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
-  await expect(preview.getByText('This base is not available to your account.', { exact: true })).toBeVisible();
+  await expect(preview.getByText('3D base previews are disabled pending a future update.')).toBeVisible();
+  expect(exports).toBe(0);
   await expect(preview.getByText('private provider information')).toHaveCount(0);
   denied = false;
   await preview.getByRole('button', { name: 'Reload preview', exact: true }).click();
-  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'ready', {
-    timeout: 30_000,
-  });
-  await preview
-    .locator('canvas')
-    .evaluate((canvas) => canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true })));
-  await expect(
-    preview.getByText('The graphics context was lost. Reload the preview to try again.', { exact: true }),
-  ).toBeVisible();
-  await preview.getByRole('button', { name: 'Reload preview', exact: true }).click();
-  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'ready', {
-    timeout: 30_000,
-  });
+  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'unavailable');
+  expect(exports).toBe(0);
+  await expect(preview.locator('canvas')).toHaveCount(0);
 });
 
 test('base storage matches the dark workspace and keeps long container lists usable', async ({ page }) => {
