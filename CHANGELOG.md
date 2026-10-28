@@ -4,13 +4,19 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.20.1] - 2026-10-28
+
 ### Added
 
+- Add a base-facing control so users can compare piece placement at a consistent 0° heading.
+- Port the reference engine's UE position and piece-yaw transforms into the local base-preview renderer.
 - Render vertical and horizontal pentashield surfaces in the owned-base preview using their native proxy geometry and translucent shield materials.
 - Add a Base Marketplace with ownership-checked publishing, idempotent Redis-backed community listings, author and size filters, sanitized downloads, and lazy 3D shared-base previews.
 
 ### Changed
 
+- Disable owned-base and marketplace 3D previews pending a follow-up update.
+- Preserve per-piece placement while allowing the whole preview to use a repeatable base heading.
 - Embed available FModel surface color and normal textures in the owned-base 3D preview. Unreal layered materials without usable surface maps retain their existing fallback appearance.
 - Render available Atreides Outpost color layers using their exported layer index maps, and retain fallback materials where shader inputs are unavailable.
 - Allow larger base previews and preserve the reference project’s identified inclined-wall offsets. Retain native Atreides stair and ramp orientation and use the reference left/right mesh substitutions for wide ramp edges and floor triangles.
