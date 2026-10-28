@@ -106,6 +106,22 @@
   color: var(--theme-muted);
   font-size: 12px;
 }
+.facingControl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--theme-muted);
+  white-space: nowrap;
+}
+.facingControl input {
+  width: 112px;
+  accent-color: var(--theme-accent);
+}
+.facingControl output {
+  min-width: 38px;
+  color: var(--theme-text);
+  font-variant-numeric: tabular-nums;
+}
 .stage {
   position: relative;
   height: clamp(340px, 55vh, 650px);

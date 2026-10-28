@@ -13,7 +13,8 @@ type Status = {
   total?: number;
   needsSignIn?: boolean;
 };
-type Controls = { fit: () => void; top: () => void; zoom: (factor: number) => void };
+type Controls = { fit: () => void; top: () => void; zoom: (factor: number) => void; face: (degrees: number) => void };
+const BASE_3D_PREVIEW_ENABLED = false;
 
 /** Reuse livemap's real building meshes and bounded decoder, with one on-demand renderer. */
 export default function BaseModelViewer({
@@ -29,11 +30,18 @@ export default function BaseModelViewer({
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<Controls | null>(null);
+  const baseFacingRef = useRef(0);
   const [status, setStatus] = useState<Status>({ kind: 'loading', message: 'Loading base structure…' });
   const [parts, setParts] = useState<BuildingPartSummary[]>([]);
+  const [baseFacing, setBaseFacing] = useState(0);
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+    if (!BASE_3D_PREVIEW_ENABLED) {
+      setStatus({ kind: 'unavailable', message: '3D base previews are disabled pending a future update.' });
+      onSettled();
+      return;
+    }
     const controller = new AbortController();
     const loadSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
     const library = new BuildingLibrary(loadSignal, { visual: true });
@@ -96,6 +104,13 @@ export default function BaseModelViewer({
         controls.update();
         paint();
       },
+      face: (degrees) => {
+        baseFacingRef.current = degrees;
+        if (model) {
+          model.rotation.y = THREE.MathUtils.degToRad(degrees);
+          paint();
+        }
+      },
     };
     const resize = () => {
       if (!host.clientWidth || !host.clientHeight || controller.signal.aborted) return;
@@ -129,6 +144,8 @@ export default function BaseModelViewer({
           return;
         }
         model = built.group;
+        // Keep a repeatable 0° base heading while preserving every piece's own rotation.
+        model.rotation.y = THREE.MathUtils.degToRad(baseFacingRef.current);
         model.updateMatrixWorld(true);
         bounds = new THREE.Box3().setFromObject(model);
         if (bounds.isEmpty()) throw new Error('Empty model');
@@ -216,6 +233,34 @@ export default function BaseModelViewer({
           </button>
           <button type="button" disabled={!ready} onClick={() => controlsRef.current?.top()}>
             Top view
+          </button>
+          <label className={css.facingControl}>
+            <span>Base facing</span>
+            <input
+              type="range"
+              aria-label="Base facing degrees"
+              min={-180}
+              max={180}
+              step={1}
+              value={baseFacing}
+              disabled={!ready}
+              onChange={(event) => {
+                const degrees = THREE.MathUtils.clamp(Number(event.target.value), -180, 180);
+                setBaseFacing(degrees);
+                controlsRef.current?.face(degrees);
+              }}
+            />
+            <output>{baseFacing}°</output>
+          </label>
+          <button
+            type="button"
+            disabled={!ready || baseFacing === 0}
+            onClick={() => {
+              setBaseFacing(0);
+              controlsRef.current?.face(0);
+            }}
+          >
+            Face 0°
           </button>
         </div>
       </div>
