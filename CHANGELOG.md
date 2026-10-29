@@ -4,6 +4,20 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.20.2] - 2026-10-28
+
+### Added
+
+- Add the Announcify announcement widget across the website, connected to the community project with an explicit API origin and required security-policy permissions.
+- Show a lazily generated straight-on base image above marketplace piece counts, with bounded sequential rendering and released GPU resources.
+- Add **Import to my character** beside **Inspect base**, reusing the existing validated, idempotent Solido delivery flow and keeping unsupported-layout restrictions.
+
+### Fixed
+
+- Re-enable on-demand 3D previews for owned bases and shared marketplace layouts, including camera and base-facing controls.
+- Unify detailed and native model coordinate systems and apply exported actor transforms plus catalogue offsets, rotations, and scales to every piece. Remove name-based yaw overrides, mirroring, and left/right substitutions.
+- Show published bases in the Base Marketplace by querying Redis listing positions instead of positive score bounds, preserving newest-first ordering and bounded reads.
+
 ## [1.20.1] - 2026-10-27
 
 ### Added

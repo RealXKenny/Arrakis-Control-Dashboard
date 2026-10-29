@@ -1,6 +1,8 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 import type { MarketplaceSummary } from '../schema';
+import MarketplaceThumbnail from './MarketplaceThumbnail';
+import MarketplaceImport from './MarketplaceImport';
 
 const BaseModelViewer = dynamic(() => import('../../bases/components/BaseModelViewer'), {
   ssr: false,
@@ -69,7 +71,8 @@ export default function MarketplaceCard({ listing }: { listing: MarketplaceSumma
           Shared
         </span>
       </div>
-      <dl className="mt-6 grid grid-cols-2 gap-3 text-sm">
+      <MarketplaceThumbnail id={listing.id} title={listing.title} publishedAt={listing.publishedAt} />
+      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-xl border border-white/5 bg-zinc-950/30 p-3">
           <dt className="text-[11px] text-zinc-500">Building pieces</dt>
           <dd className="mt-1 font-medium text-zinc-200">{listing.pieceCount.toLocaleString()}</dd>
@@ -83,14 +86,17 @@ export default function MarketplaceCard({ listing }: { listing: MarketplaceSumma
         <span>{listing.map}</span>
         <time dateTime={listing.publishedAt}>{date.format(new Date(listing.publishedAt))}</time>
       </div>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setOpen(true)}
-        className="mt-auto inline-flex items-center justify-center rounded-full bg-zinc-800 px-4 py-2.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-zinc-100"
-      >
-        Inspect base
-      </button>
+      <div className="mt-auto flex items-start gap-2 pt-4">
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex flex-1 items-center justify-center rounded-full bg-zinc-800 px-4 py-2.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-zinc-100"
+        >
+          Inspect base
+        </button>
+        <MarketplaceImport key={`${listing.id}:${listing.publishedAt}`} id={listing.id} title={listing.title} />
+      </div>
 
       {open && (
         <div

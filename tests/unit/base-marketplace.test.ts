@@ -18,7 +18,7 @@ import {
 
 const summaries = new Map<string, string>();
 const records = new Map<string, string>();
-const members = new Set<string>();
+const members = new Map<string, number>();
 
 function record(id: string, title: string, publishedAt = '2026-10-27T12:00:00.000Z') {
   return createMarketplaceRecord({
@@ -47,17 +47,21 @@ beforeEach(() => {
   members.clear();
   redis.eval.mockReset().mockImplementation(async (_script, keys, args) => {
     const [, recordKey, summaryStateKey] = keys;
-    const [serializedRecord, summary] = args;
+    const [serializedRecord, summary, score] = args;
     const previous = summaries.get(summaryStateKey);
     if (previous) members.delete(previous);
     records.set(recordKey, serializedRecord);
     summaries.set(summaryStateKey, summary);
-    members.add(summary);
+    members.set(summary, Number(score));
     return 1;
   });
-  redis.zrange
-    .mockReset()
-    .mockImplementation(async (_key, _min, max) => [...members].slice(0, max + 1).map((value) => JSON.parse(value)));
+  redis.zrange.mockReset().mockImplementation(async (_key, min, max, options) => {
+    const sorted = [...members].sort((a, b) => a[1] - b[1]);
+    const selected = options.byScore
+      ? sorted.filter(([, score]) => score >= min && score <= max)
+      : sorted.slice(min, max + 1);
+    return selected.map(([value]) => JSON.parse(value));
+  });
   redis.get.mockReset().mockImplementation(async (key) => {
     const value = records.get(key);
     return value === undefined ? null : JSON.parse(value);
@@ -98,10 +102,11 @@ describe('Base Marketplace schema and Redis store', () => {
   });
 
   it('bounds catalog reads and returns validated detail records', async () => {
-    await publishMarketplaceRecord(record('a'.repeat(24), 'One'));
-    await publishMarketplaceRecord(record('b'.repeat(24), 'Two'));
+    await publishMarketplaceRecord(record('a'.repeat(24), 'One', '2026-10-25T12:00:00.000Z'));
+    await publishMarketplaceRecord(record('b'.repeat(24), 'Two', '2026-10-26T12:00:00.000Z'));
     await publishMarketplaceRecord(record('c'.repeat(24), 'Three'));
-    expect(await listMarketplaceSummaries(2)).toHaveLength(2);
+    expect((await listMarketplaceSummaries(2)).map((listing) => listing.title)).toEqual(['Three', 'Two']);
+    expect(redis.zrange).toHaveBeenLastCalledWith('arrakis:base-marketplace:listings', 0, 1, { byScore: false });
     expect((await getMarketplaceRecord('a'.repeat(24)))?.summary.title).toBe('One');
     expect(await getMarketplaceRecord('not-an-id')).toBeNull();
   });

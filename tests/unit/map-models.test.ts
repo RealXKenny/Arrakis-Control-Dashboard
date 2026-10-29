@@ -9,11 +9,7 @@ import {
   resolveBuildingRow,
   toSceneMatrix,
   unrealMatrix,
-  visualBabylonMatrix,
-  visualBabylonYaw,
   visualFallbackKind,
-  visualModelTemplate,
-  visualUnrealYaw,
 } from '../../src/modules/map/terrain/buildingModels';
 import { visualBuildingImportBasis } from '../../src/modules/map/terrain/visualBuildingMeshes';
 import {
@@ -30,6 +26,15 @@ const catalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/catalog.js
 const visualCatalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/visual-catalog.json.gz')).toString());
 afterEach(() => vi.unstubAllGlobals());
 describe('map models', () => {
+  it('keeps visual pack axes identical to the native decoder without mirroring handed pieces', () => {
+    const basis = visualBuildingImportBasis();
+    for (const point of [
+      [1, 2, 3],
+      [-4, 5, -6],
+    ]) {
+      expect(new THREE.Vector3(...point).applyMatrix4(basis).toArray()).toEqual(point);
+    }
+  });
   it('ports the reference engine UE coordinate and rotation rules unchanged', () => {
     const uePosition = { x: 10, y: 20, z: 30 };
     expect(ueToBabylonPosition(uePosition)).toEqual({ x: 20, y: 30, z: 10 });
@@ -47,84 +52,6 @@ describe('map models', () => {
       const normal = new THREE.Vector3(0, 0, 1).transformDirection(toSceneMatrix(unrealMatrix([0, 0, 0], [0, yaw, 0])));
       expect(normal.x).toBeCloseTo(-Math.sin((yaw * Math.PI) / 180));
       expect(normal.z).toBeCloseTo(Math.cos((yaw * Math.PI) / 180));
-    }
-  });
-  it('applies only Babylon GLB root correction for actors already using Babylon axes', () => {
-    const basis = visualBuildingImportBasis();
-    expect(new THREE.Vector3(1, 0, 0).applyMatrix4(basis).distanceTo(new THREE.Vector3(-1, 0, 0))).toBeLessThan(1e-10);
-    expect(new THREE.Vector3(0, 1, 0).applyMatrix4(basis).distanceTo(new THREE.Vector3(0, 1, 0))).toBeLessThan(1e-10);
-    expect(new THREE.Vector3(0, 0, 1).applyMatrix4(basis).distanceTo(new THREE.Vector3(0, 0, 1))).toBeLessThan(1e-10);
-  });
-  it('converts preview rotations using the reference engine template rules', () => {
-    expect(visualBabylonYaw('Atreides_Outpost_Wall_01', 0)).toBe(-90);
-    expect(visualBabylonYaw('Atreides_Outpost_Wall_Inclined_Wide_Left', 0)).toBe(-127.5);
-    expect(visualBabylonYaw('Atreides_Outpost_Wall_Inclined_Wide_Right', 0)).toBe(-52.5);
-    expect(visualBabylonYaw('Atreides_Outpost_Stairs', 0)).toBe(-90);
-    expect(visualBabylonYaw('Atreides_Outpost_Ramp_Corner_Inward', 0)).toBe(180);
-    expect(visualBabylonYaw('Atreides_Outpost_Floor_Wedge', 0)).toBe(-90);
-    expect(visualBabylonYaw('Atreides_Outpost_Railing', 90)).toBe(180);
-    expect(visualUnrealYaw('Atreides_Outpost_Wall_01', 0)).toBe(90);
-    expect(visualUnrealYaw('Atreides_Outpost_Wall_Inclined_Wide_Left', 0)).toBe(127.5);
-    expect(visualUnrealYaw('Atreides_Outpost_Wall_Inclined_Wide_Right', 0)).toBe(52.5);
-    expect(visualUnrealYaw('Atreides_Outpost_Stairs', 0)).toBe(90);
-    expect(visualUnrealYaw('Atreides_Outpost_Stairs_Half', 0)).toBe(90);
-    expect(visualUnrealYaw('Atreides_Outpost_Ramp', 0)).toBe(90);
-    expect(visualUnrealYaw('Atreides_Outpost_Ramp_Half', 0)).toBe(90);
-    expect(visualUnrealYaw('Atreides_Outpost_Roof_Half', 0)).toBe(90);
-    expect(visualUnrealYaw('Atreides_Outpost_Gate_Big', 0)).toBe(90);
-    expect(visualUnrealYaw('Atreides_Outpost_Floor_Wedge', 0)).toBe(90);
-    expect(visualUnrealYaw('Atreides_Outpost_Ramp_Corner_Inward', 0)).toBe(-180);
-    expect(visualUnrealYaw('Atreides_Outpost_Floor_Round_Corner', 0)).toBe(-180);
-    expect(visualUnrealYaw('Atreides_Outpost_Railing_Round_Corner', 0)).toBe(-180);
-    expect(visualUnrealYaw('Atreides_Outpost_Roof_Cover_Bottom_Half_Left', 0)).toBe(-90);
-    expect(visualUnrealYaw('Atreides_Outpost_Wall_Round_Corner_01', 0)).toBe(-180);
-    expect(visualUnrealYaw('Atreides_Outpost_Railing', 90)).toBe(-180);
-    expect(visualUnrealYaw('Atreides_Outpost_Wall_Triangle_Bottom_Right', 30)).toBe(-120);
-    expect(visualModelTemplate('Atreides_Outpost_Ramp_Edge_Wide_Left')).toBe('Atreides_Outpost_Ramp_Edge_Wide_Right');
-    expect(visualModelTemplate('Atreides_Outpost_Ramp_Edge_Wide_Right')).toBe('Atreides_Outpost_Ramp_Edge_Wide_Left');
-    expect(visualModelTemplate('Atreides_Outpost_Floor_Triangle_Wide_Left')).toBe(
-      'Atreides_Outpost_Floor_Triangle_Wide_Right',
-    );
-    expect(visualModelTemplate('Atreides_Outpost_Floor_Triangle_Wide_Right')).toBe(
-      'Atreides_Outpost_Floor_Triangle_Wide_Left',
-    );
-    expect(visualModelTemplate('Atreides_Outpost_Stairs')).toBe('Atreides_Outpost_Stairs');
-  });
-  it('matches the reference Babylon yaw after scene-axis conversion at cardinal and diagonal angles', () => {
-    const basis = visualBuildingImportBasis();
-    const templates = [
-      'Atreides_Outpost_Floor_Wedge',
-      'Atreides_Outpost_Ramp_Corner_Inward',
-      'Atreides_Outpost_Railing_Round_Corner',
-      'Atreides_Outpost_Wall_Triangle_Bottom_Right',
-      'Atreides_Outpost_Wall_Inclined_Wide_Left',
-    ];
-    for (const template of templates) {
-      for (const yaw of [-350, -260, -170, 0, 30, 90, 180, 280, 340]) {
-        const expectedBabylonYaw = -visualUnrealYaw(template, yaw);
-        const expected = new THREE.Matrix4()
-          .makeRotationY(THREE.MathUtils.degToRad(expectedBabylonYaw))
-          .multiply(basis);
-        const actual = toSceneMatrix(unrealMatrix([0, 0, 0], [0, visualUnrealYaw(template, yaw), 0])).multiply(basis);
-        actual.elements.forEach((value, index) => expect(value).toBeCloseTo(expected.elements[index], 6));
-      }
-    }
-  });
-  it('places visual base pieces with the reference engine position and yaw transform', () => {
-    for (const template of [
-      'Atreides_Outpost_Floor_Wedge',
-      'Atreides_Outpost_Ramp_Corner_Inward',
-      'Atreides_Outpost_Railing_Round_Corner',
-      'Atreides_Outpost_Wall_Triangle_Bottom_Right',
-      'Atreides_Outpost_Wall_Inclined_Wide_Left',
-    ]) {
-      for (const yaw of [-350, -260, -170, 0, 30, 90, 180, 280, 340]) {
-        const expected = new THREE.Matrix4()
-          .makeRotationY(THREE.MathUtils.degToRad(visualBabylonYaw(template, yaw)))
-          .setPosition(0.2, 0.3, 0.1);
-        const actual = visualBabylonMatrix([10, 20, 30], template, yaw);
-        actual.elements.forEach((value, index) => expect(value).toBeCloseTo(expected.elements[index], 6));
-      }
     }
   });
   it('recognizes untextured glass, shields and lamps without treating building accents as lamps', () => {

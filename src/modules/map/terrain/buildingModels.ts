@@ -1,13 +1,6 @@
 import * as THREE from 'three';
 import { z } from 'zod';
 import { gunzip } from './terrainAssets';
-import {
-  toViewerStoredYaw,
-  uePitchToBabylonPitch,
-  ueRollToBabylonRoll,
-  ueToBabylonPosition,
-  ueYawToBabylonYaw,
-} from './ueTransform';
 
 const coordinate = z.number().finite().min(-1e8).max(1e8);
 const piece = z.object({
@@ -142,48 +135,6 @@ export function visualFallbackKind(name: string): 'glass' | 'shield' | 'light' |
   return null;
 }
 
-const VISUAL_MODEL_EQUIVALENTS: Record<string, string> = {
-  Atreides_Outpost_Floor_Triangle_Wide_Left: 'Atreides_Outpost_Floor_Triangle_Wide_Right',
-  Atreides_Outpost_Floor_Triangle_Wide_Right: 'Atreides_Outpost_Floor_Triangle_Wide_Left',
-  Atreides_Outpost_Ramp_Edge_Wide_Left: 'Atreides_Outpost_Ramp_Edge_Wide_Right',
-  Atreides_Outpost_Ramp_Edge_Wide_Right: 'Atreides_Outpost_Ramp_Edge_Wide_Left',
-};
-
-export function visualModelTemplate(templateId: string): string {
-  return VISUAL_MODEL_EQUIVALENTS[templateId] ?? templateId;
-}
-
-const VISUAL_MODEL_YAW_OFFSETS: Record<string, number> = {
-  Atreides_Outpost_Wall_Inclined_Wide_Left: -37.5,
-  Atreides_Outpost_Wall_Inclined_Wide_Right: 37.5,
-};
-
-/** Reference viewer yaw in Babylon's Y-up scene coordinates. */
-export function visualBabylonYaw(templateId: string, yaw: number): number {
-  const modelOffset = VISUAL_MODEL_YAW_OFFSETS[templateId] ?? 0;
-  return ueYawToBabylonYaw(templateId, yaw + modelOffset);
-}
-
-/** Legacy furniture transforms use unrealMatrix, whose scene yaw has the opposite sign. */
-export function visualUnrealYaw(templateId: string, yaw: number): number {
-  return -visualBabylonYaw(templateId, yaw);
-}
-
-/** Match the reference engine's UE [x,y,z] -> Babylon [y,z,x] actor transform. */
-export function visualBabylonMatrix(location: Vector, templateId: string, yaw: number, pitch = 0, roll = 0) {
-  const viewerYaw = toViewerStoredYaw(templateId, yaw);
-  const babylonPosition = ueToBabylonPosition({ x: location[0], y: location[1], z: location[2] });
-  const position = new THREE.Vector3(babylonPosition.x * 0.01, babylonPosition.y * 0.01, babylonPosition.z * 0.01);
-  const rotation = new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(
-      THREE.MathUtils.degToRad(uePitchToBabylonPitch(pitch)),
-      THREE.MathUtils.degToRad(visualBabylonYaw(templateId, viewerYaw)),
-      THREE.MathUtils.degToRad(ueRollToBabylonRoll(roll)),
-      'YXZ',
-    ),
-  );
-  return new THREE.Matrix4().compose(position, rotation, new THREE.Vector3(1, 1, 1));
-}
 type ModelPart = { geometry: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] };
 
 export class BuildingLibrary {
@@ -308,10 +259,7 @@ export class BuildingLibrary {
     let known = 0,
       triangles = 0;
     const add = (p: z.infer<typeof piece>, placeable: boolean, index: number) => {
-      const row = resolveBuildingRow(
-        catalog.rows,
-        this.options.visual ? visualModelTemplate(p.building_type) : p.building_type,
-      );
+      const row = resolveBuildingRow(catalog.rows, p.building_type);
       const summary = parts.get(p.building_type) ?? {
         templateId: p.building_type,
         ...(row?.name ? { name: row.name } : {}),
@@ -326,29 +274,18 @@ export class BuildingLibrary {
       triangles += cost;
       known++;
       summary.rendered++;
-      const visualGlb = this.options.visual && catalog.meshes[row.mesh].format === 'glb';
-      const transform = visualGlb
-        ? visualBabylonMatrix(
-            [p.x, p.y, p.z],
-            p.building_type,
-            placeable ? (p.ry ?? 0) : (p.rotation ?? 0),
-            placeable ? (p.rx ?? 0) : 0,
-            placeable ? (p.rz ?? 0) : 0,
-          )
-        : unrealMatrix(
-            [p.x, p.y, p.z],
-            placeable
-              ? [p.rx ?? 0, this.options.visual ? visualUnrealYaw(p.building_type, p.ry ?? 0) : (p.ry ?? 0), p.rz ?? 0]
-              : [0, p.rotation ?? 0, 0],
-            placeable ? shieldScales.get(index) : undefined,
-          );
-      if (!visualGlb)
-        transform.multiply(
-          unrealMatrix(row.offset ?? [0, 0, 0], row.rot ?? [0, 0, 0], row.scale?.some(Boolean) ? row.scale : [1, 1, 1]),
-        );
+      // All model formats share UE X/Z/Y scene axes. Apply native actor and catalogue
+      // transforms once; names such as "corner" must never change mesh identity or yaw.
+      const transform = unrealMatrix(
+        [p.x, p.y, p.z],
+        placeable ? [p.rx ?? 0, p.ry ?? 0, p.rz ?? 0] : [0, p.rotation ?? 0, 0],
+        placeable ? shieldScales.get(index) : undefined,
+      ).multiply(
+        unrealMatrix(row.offset ?? [0, 0, 0], row.rot ?? [0, 0, 0], row.scale?.some(Boolean) ? row.scale : [1, 1, 1]),
+      );
       const key = `${row.mesh}:${row.group}`;
       if (!batches.has(key)) batches.set(key, { row, matrices: [] });
-      batches.get(key)!.matrices.push(visualGlb ? transform : toSceneMatrix(transform));
+      batches.get(key)!.matrices.push(toSceneMatrix(transform));
     };
     data.instances.forEach((p, index) => add(p, false, index));
     data.placeables.forEach((p, index) => add(p, true, index));
