@@ -1,4 +1,4 @@
-import { clearClientReadCache } from '../../../lib/client-cache';
+import { importBlueprint, IMPORT_UNCONFIRMED } from '../utils/import-blueprint';
 import { useEffect, useRef, useState } from 'react';
 import { MAX_BLUEPRINT_BYTES, parseBlueprint, type Blueprint } from '../schema';
 import css from '../import.module.css';
@@ -30,23 +30,13 @@ export default function BaseImport() {
           setBusy(true);
           const timer = setTimeout(() => controller.abort(), 120000);
           try {
-            const response = await fetch('/api/bases/import', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ requestId: requestId.current, title: title || 'Blueprint', blueprint }),
-              signal: controller.signal,
-            });
-            const body = await response.json();
-            if (!response.ok) throw new Error('Import could not be confirmed. Check your backpack before retrying.');
+            const message = await importBlueprint(blueprint, title, requestId.current, controller.signal);
             if (mounted.current) {
-              setMessage(
-                typeof body.record?.message === 'string' ? body.record.message : 'Check your backpack for delivery.',
-              );
+              setMessage(message);
               setBlueprint(null);
-              clearClientReadCache(true);
             }
           } catch {
-            if (mounted.current) setMessage('Import could not be confirmed. Check your backpack before retrying.');
+            if (mounted.current) setMessage(IMPORT_UNCONFIRMED);
           } finally {
             clearTimeout(timer);
             active.current = null;

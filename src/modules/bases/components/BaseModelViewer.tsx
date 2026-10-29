@@ -14,7 +14,6 @@ type Status = {
   needsSignIn?: boolean;
 };
 type Controls = { fit: () => void; top: () => void; zoom: (factor: number) => void; face: (degrees: number) => void };
-const BASE_3D_PREVIEW_ENABLED = false;
 
 /** Reuse livemap's real building meshes and bounded decoder, with one on-demand renderer. */
 export default function BaseModelViewer({
@@ -37,11 +36,6 @@ export default function BaseModelViewer({
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    if (!BASE_3D_PREVIEW_ENABLED) {
-      setStatus({ kind: 'unavailable', message: '3D base previews are disabled pending a future update.' });
-      onSettled();
-      return;
-    }
     const controller = new AbortController();
     const loadSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
     const library = new BuildingLibrary(loadSignal, { visual: true });

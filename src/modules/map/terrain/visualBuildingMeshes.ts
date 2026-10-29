@@ -3,11 +3,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export type VisualBuildingPart = { geometry: THREE.BufferGeometry; material: THREE.Material | THREE.Material[] };
 
-/** Match Babylon's GLB root correction; actor placement already uses Babylon axes. */
+/** FModel packs already use the native decoder's metre-scaled UE X/Z/Y axes. */
 export function visualBuildingImportBasis() {
-  const mirrorRightHandedZ = new THREE.Matrix4().makeScale(1, 1, -1);
-  const babylonRootRotation = new THREE.Matrix4().makeRotationY(Math.PI);
-  return babylonRootRotation.multiply(mirrorRightHandedZ);
+  return new THREE.Matrix4();
 }
 
 /** Generated packs are self-contained; never let a model request a remote buffer or image. */
@@ -138,8 +136,7 @@ export async function loadVisualBuildingParts(bytes: Uint8Array): Promise<Visual
   model.scene.updateMatrixWorld(true);
   const parts: VisualBuildingPart[] = [];
   const originalGeometries = new Set<THREE.BufferGeometry>();
-  // Match Babylon's __root__ (180° around Y and Z reflection). Actor transforms
-  // map UE [X,Y,Z] directly into Babylon [Y,Z,X], so do not remap the mesh again.
+  // Preserve authored geometry and node transforms in the common model space.
   const importBasis = visualBuildingImportBasis();
   model.scene.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;

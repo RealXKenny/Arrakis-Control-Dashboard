@@ -2,6 +2,7 @@ import '../styles/global.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/600.css';
 import Head from 'next/head';
+import Script from 'next/script';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import SharePreview from '../modules/sharing/SharePreview';
@@ -27,6 +28,12 @@ export default function App({ Component, pageProps }) {
       </Head>
       <SharePreview origin={pageProps.shareOrigin} />
       <Component {...pageProps} />
+      <Script
+        src="https://announcify.app/widget.js"
+        data-project-id="cmvsu06fg00001v0xfjofkwxp"
+        data-api-base="https://announcify.app"
+        strategy="afterInteractive"
+      />
     </>
   );
 }

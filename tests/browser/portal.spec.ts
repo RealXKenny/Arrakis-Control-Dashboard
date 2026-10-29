@@ -1468,7 +1468,7 @@ test('spice fields, shipwrecks, and flour sand have terrain models that follow l
   expect(errors).toEqual([]);
 });
 
-test('owned bases publish to the marketplace while 3D listing previews are paused', async ({ page }) => {
+test('owned bases publish to the marketplace and open 3D listing previews', async ({ page }) => {
   const id = 'a'.repeat(24);
   const summary = {
     id,
@@ -1496,6 +1496,18 @@ test('owned bases publish to the marketplace while 3D listing previews are pause
     route.fulfill({ json: { ok: true, listings: [summary], total: 1 } }),
   );
   await page.route(`**/api/base-marketplace/${id}`, (route) => route.fulfill({ json: record }));
+  let imports = 0;
+  await page.route('**/api/bases/import', (route) => {
+    imports++;
+    const body = route.request().postDataJSON();
+    expect(body.title).toBe(summary.title);
+    expect(body.blueprint.instances[0].instance_id).toBe(0);
+    expect(body.blueprint.placeables[0].ry).toBe(90);
+    expect(body.blueprint).not.toHaveProperty('owner_name');
+    return route.fulfill({
+      json: { ok: true, record: { status: 'imported', message: 'Delivered to your backpack as a Solido tool.' } },
+    });
+  });
   await page.goto('/portal?view=bases');
   const base = page.locator('article').filter({ hasText: 'Stronghold 1' });
   await base.getByRole('button', { name: 'Share Base', exact: true }).click();
@@ -1509,13 +1521,20 @@ test('owned bases publish to the marketplace while 3D listing previews are pause
   await page.getByLabel('Base size').selectOption('large');
   await expect(page.getByText('No matching bases', { exact: true })).toBeVisible();
   await page.getByLabel('Base size').selectOption('small');
+  await page.locator('article').filter({ hasText: 'Shared Outpost' }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole('img', { name: 'Shared Outpost straight-on base view' })).toBeVisible({ timeout: 30000 });
   await page.screenshot({ path: 'test-results/base-marketplace.png', fullPage: true });
+  await page.getByRole('button', { name: 'Import to my character', exact: true }).click();
+  await expect(page.getByText('Delivered to your backpack as a Solido tool.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Import submitted', exact: true })).toBeDisabled();
+  expect(imports).toBe(1);
   await page.getByRole('button', { name: 'Inspect base', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Shared Outpost shared base', exact: true });
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'unavailable');
-  await expect(dialog.getByText('3D base previews are disabled pending a future update.')).toBeVisible();
-  await expect(dialog.locator('canvas')).toHaveCount(0);
+  await expect(dialog.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'ready', {
+    timeout: 30000,
+  });
+  await expect(dialog.locator('canvas')).toHaveCount(1);
   await expect(dialog.getByRole('link', { name: 'Download layout ↓' })).toHaveAttribute(
     'href',
     `/api/base-marketplace/${id}?download=1`,
@@ -1525,7 +1544,7 @@ test('owned bases publish to the marketplace while 3D listing previews are pause
   await expect(dialog).toHaveCount(0);
 });
 
-test('Bases keeps owned 3D previews paused without requesting exports', async ({ page }) => {
+test('Bases loads owned 3D previews on demand and disposes them when switching bases', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
@@ -1564,21 +1583,25 @@ test('Bases keeps owned 3D previews paused without requesting exports', async ({
   expect(exports).toBe(0);
   await expect(preview.locator('canvas')).toHaveCount(0);
   await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
-  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'unavailable');
-  await expect(preview.getByText('3D base previews are disabled pending a future update.')).toBeVisible();
-  expect(exports).toBe(0);
-  await expect(preview.locator('canvas')).toHaveCount(0);
+  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'partial', {
+    timeout: 30000,
+  });
+  expect(exports).toBe(1);
+  await expect(preview.locator('canvas')).toHaveCount(1);
+  await preview.getByRole('button', { name: 'Top view', exact: true }).click();
   await preview.getByRole('combobox', { name: 'Base for 3D preview' }).selectOption('1');
   await expect(preview.locator('canvas')).toHaveCount(0);
   await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
-  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'unavailable');
-  expect(exports).toBe(0);
+  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'partial', {
+    timeout: 30000,
+  });
+  expect(exports).toBe(2);
   await preview.getByRole('button', { name: 'Close preview', exact: true }).click();
   await expect(preview.locator('canvas')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
-test('base preview remains paused without requesting private exports', async ({ page }) => {
+test('base preview hides private export errors and recovers on reload', async ({ page }) => {
   let denied = true;
   let exports = 0;
   await page.route('**/api/bases/*/export', (route) => {
@@ -1592,14 +1615,16 @@ test('base preview remains paused without requesting private exports', async ({ 
   await page.goto('/portal?view=bases');
   const preview = page.getByRole('region', { name: '3D base preview', exact: true });
   await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
-  await expect(preview.getByText('3D base previews are disabled pending a future update.')).toBeVisible();
-  expect(exports).toBe(0);
+  await expect(preview.getByText('This base is not available to your account.')).toBeVisible();
+  expect(exports).toBe(1);
   await expect(preview.getByText('private provider information')).toHaveCount(0);
   denied = false;
   await preview.getByRole('button', { name: 'Reload preview', exact: true }).click();
-  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'unavailable');
-  expect(exports).toBe(0);
-  await expect(preview.locator('canvas')).toHaveCount(0);
+  await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'ready', {
+    timeout: 30000,
+  });
+  expect(exports).toBe(2);
+  await expect(preview.locator('canvas')).toHaveCount(1);
 });
 
 test('base storage matches the dark workspace and keeps long container lists usable', async ({ page }) => {

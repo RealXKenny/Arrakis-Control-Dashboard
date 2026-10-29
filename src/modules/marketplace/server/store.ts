@@ -41,7 +41,8 @@ export async function publishMarketplaceRecord(record: MarketplaceRecord): Promi
 
 export async function listMarketplaceSummaries(limit = 100): Promise<MarketplaceSummary[]> {
   const count = Math.max(1, Math.min(MARKETPLACE_LISTING_LIMIT, Math.floor(limit)));
-  const values = await withTimeout(client().zrange(INDEX_KEY, 0, count - 1, { byScore: true }), 12000);
+  // Negative timestamps sort newest first; these bounds select ranks, not timestamp scores.
+  const values = await withTimeout(client().zrange(INDEX_KEY, 0, count - 1, { byScore: false }), 12000);
   const summaries: MarketplaceSummary[] = [];
   for (const value of values) {
     try {

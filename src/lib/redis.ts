@@ -54,7 +54,12 @@ export function createDashboardRedis(url: string) {
     zadd(key: string, entry: { score: number; member: unknown }) {
       return command(['ZADD', key, String(entry.score), encode(entry.member)]);
     },
-    async zrange<T extends unknown[]>(key: string, min: number, max: number, options: { byScore: true }): Promise<T> {
+    async zrange<T extends unknown[]>(
+      key: string,
+      min: number,
+      max: number,
+      options: { byScore: boolean },
+    ): Promise<T> {
       const values = await command([options.byScore ? 'ZRANGEBYSCORE' : 'ZRANGE', key, String(min), String(max)]);
       if (!Array.isArray(values)) throw new Error('Invalid Redis sorted-set response');
       return values.map((value) => decode(String(value))) as T;
