@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
-import { gunzipSync } from 'node:zlib';
 import os from 'node:os';
 import path from 'node:path';
 import { Document, NodeIO } from '@gltf-transform/core';
@@ -14,18 +12,51 @@ import {
 } from '../../src/modules/map/terrain/exportedMaterials.mjs';
 
 describe('FModel material conversion', () => {
-  it('bundles the foundation index map and all twelve material layers', () => {
-    const catalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/visual-catalog.json.gz')).toString());
-    const model = catalog.meshes[catalog.rows.Atreides_Outpost_Foundation.mesh];
-    const pack = gunzipSync(readFileSync('src/assets/models/visual-pack-' + model.pack + '.bin.gz'));
-    const glb = pack.subarray(model.offset, model.offset + model.length);
-    const json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString());
-    const material = json.materials.find((item: { name: string }) => item.name === 'ML_Env_PB_Atre_Outpost_Foundation');
-    expect(material.extras.arrakisLayers.count).toBe(12);
-    expect(material.extras.arrakisLayers.missing).toBe(0);
-    expect(material.extras.arrakisLayers.index).toMatch(/^data:image\/png;base64,/);
-    expect(material.extras.arrakisLayers.atlas).toMatch(/^data:image\/png;base64,/);
-    expect(json.meshes[0].primitives[0].attributes.TEXCOORD_1).toBeDefined();
+  it('bundles the foundation index map and all twelve material layers', async () => {
+    const document = new Document();
+    document.createBuffer();
+    const material = document.createMaterial('Foundation');
+    const buffer = document.getRoot().listBuffers()[0];
+    const positions = document
+      .createAccessor()
+      .setType('VEC3')
+      .setArray(new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]))
+      .setBuffer(buffer);
+    const uv = document
+      .createAccessor()
+      .setType('VEC2')
+      .setArray(new Float32Array([0, 0, 1, 0, 0, 1]))
+      .setBuffer(buffer);
+    document
+      .createMesh()
+      .addPrimitive(
+        document
+          .createPrimitive()
+          .setAttribute('POSITION', positions)
+          .setAttribute('TEXCOORD_0', uv)
+          .setAttribute('TEXCOORD_1', uv)
+          .setMaterial(material),
+      );
+    const image = await sharp({ create: { width: 2, height: 2, channels: 4, background: '#887766' } })
+      .png()
+      .toBuffer();
+    const resolver = {
+      resolve: async () => ({
+        Textures: {},
+        Layered: {
+          colors: Array.from({ length: 12 }, (_, index) => `/Game/layer-${index}.png`),
+          indexMap: '/Game/index.png',
+          indexUv: 1,
+        },
+      }),
+      texture: async (reference: string | undefined) => (reference ? image : null),
+    };
+    await bindExportedMaterials(document, 'Dune/Meshes/foundation.glb', resolver);
+    const layers = material.getExtras().arrakisLayers;
+    expect(layers.count).toBe(12);
+    expect(layers.missing).toBe(0);
+    expect(layers.index).toMatch(/^data:image\/png;base64,/);
+    expect(layers.atlas).toMatch(/^data:image\/webp;base64,/);
   });
   it('reconstructs upward-facing normals from Unreal alpha and green channels', () => {
     const result = unpackUnrealNormal(Buffer.from([0, 128, 0, 128]));
