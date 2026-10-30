@@ -230,9 +230,7 @@ export async function bindExportedMaterials(document, modelPath, resolver, { lay
       typeof source.Layered.indexMap === 'string' &&
       source.Layered.indexUv === 1 &&
       primitives.length &&
-      primitives.every(
-        (primitive) => primitive.getAttribute('TEXCOORD_0') && primitive.getAttribute('TEXCOORD_1'),
-      )
+      primitives.every((primitive) => primitive.getAttribute('TEXCOORD_0') && primitive.getAttribute('TEXCOORD_1'))
     ) {
       const layerTints = new Map();
       for (const parameter of source.Parameters?.VectorParameterValues ?? []) {
