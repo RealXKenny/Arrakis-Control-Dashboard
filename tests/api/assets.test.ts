@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { gunzipSync } from 'node:zlib';
+import { readFileSync } from 'node:fs';
 import assetHandler from '../../src/pages/api/assets/[...path]';
 import { responseMock } from '../helpers/response';
 
@@ -18,12 +20,14 @@ describe('source asset handler', () => {
     }
   });
   it('serves measured Hagga terrain and only allowlisted model packs', async () => {
+    const catalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/visual-catalog.json.gz')).toString());
+    const lastVisualPack = Math.max(...catalog.meshes.map((mesh: { pack: number }) => mesh.pack));
     for (const parts of [
       ['terrain', 'hagga.hf.gz'],
       ['terrain', 'hagga.json.gz'],
       ['models', 'catalog.json.gz'],
       ['models', 'meshpack-9.bin.gz'],
-      ['models', 'visual-pack-100.bin.gz'],
+      ['models', `visual-pack-${lastVisualPack}.bin.gz`],
     ]) {
       const res = responseMock();
       await assetHandler({ method: 'HEAD', query: { path: parts } }, res);

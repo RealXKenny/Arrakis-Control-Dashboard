@@ -344,14 +344,15 @@ export async function bindExportedMaterials(document, modelPath, resolver, { lay
         });
       }
     }
-    // Without UV0, glTF samples every texture at (0, 0), making whole meshes nearly black.
-    if (primitives.length && primitives.some((primitive) => !primitive.getAttribute('TEXCOORD_0'))) continue;
     const tilingUv =
       source.Parameters?.Switches?.UseTilingTexturesUVChannel === true &&
       primitives.length > 0 &&
       primitives.every((primitive) => primitive.getAttribute('TEXCOORD_1'))
         ? 1
         : 0;
+    // Keep UV1-only exports when the material explicitly uses UV1 for its tiling surface.
+    if (primitives.length && tilingUv !== 1 && primitives.some((primitive) => !primitive.getAttribute('TEXCOORD_0')))
+      continue;
     for (const [type, keys] of Object.entries(INPUTS)) {
       for (const key of keys) {
         const reference = source.Textures[key];
