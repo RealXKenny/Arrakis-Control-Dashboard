@@ -1602,11 +1602,11 @@ test('Bases loads owned 3D previews on demand and disposes them when switching b
     });
   });
   await page.goto('/portal?view=bases');
-  const preview = page.getByRole('region', { name: '3D base preview', exact: true });
-  await expect(preview.getByText('Explore your base in 3D', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open full-screen preview' })).toBeVisible();
   expect(exports).toBe(0);
-  await expect(preview.locator('canvas')).toHaveCount(0);
-  await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Open full-screen preview' }).click();
+  const preview = page.getByRole('region', { name: '3D base preview', exact: true });
   await expect(preview.locator('[data-base-preview-state]')).toHaveAttribute('data-base-preview-state', 'partial', {
     timeout: 30000,
   });
@@ -1749,8 +1749,8 @@ test('saved front pictures survive reload and marketplace cards skip 3D download
     return route.fulfill({ json: { ok: true, view: saved?.view ?? null } });
   });
   await page.goto('/portal?view=bases');
+  await page.getByRole('button', { name: 'Open full-screen preview' }).click();
   const preview = page.getByRole('region', { name: '3D base preview', exact: true });
-  await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
   await expect(preview.getByRole('button', { name: 'Take picture & save front', exact: true })).toBeEnabled({
     timeout: 30000,
   });
@@ -1808,8 +1808,8 @@ test('base preview hides private export errors and recovers on reload', async ({
         });
   });
   await page.goto('/portal?view=bases');
+  await page.getByRole('button', { name: 'Open full-screen preview' }).click();
   const preview = page.getByRole('region', { name: '3D base preview', exact: true });
-  await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
   await expect(preview.getByText('This base is not available to your account.')).toBeVisible();
   expect(exports).toBe(1);
   await expect(preview.getByText('private provider information')).toHaveCount(0);
