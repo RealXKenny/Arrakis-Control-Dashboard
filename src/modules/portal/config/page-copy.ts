@@ -40,6 +40,11 @@ export const portalPageCopy: Record<PortalView, { section: string; title: string
     description:
       'Your bases and shared holdings, their remaining power, water and storage. Export an owned base as a blueprint.',
   },
+  'base-preview': {
+    section: 'Your holdings',
+    title: 'Base preview',
+    description: 'Walk around your structures in a full-screen desert setting.',
+  },
   'base-market': {
     section: 'Community blueprints',
     title: 'Base Marketplace',

@@ -140,7 +140,7 @@ type ModelPart = { geometry: THREE.BufferGeometry; material?: THREE.Material | T
 export class BuildingLibrary {
   constructor(
     private signal?: AbortSignal,
-    private options: { visual?: boolean } = {},
+    private options: { visual?: boolean; assetRefresh?: string } = {},
   ) {}
   private catalog: Promise<Catalog> | null = null;
   private packs = new Map<string, Promise<Uint8Array>>();
@@ -150,9 +150,13 @@ export class BuildingLibrary {
   private visualMaterials = new Set<THREE.Material>();
   private textures = new Set<THREE.Texture>();
   private disposed = false;
+  private assetUrl(name: string) {
+    const url = `/api/assets/models/${name}`;
+    return this.options.assetRefresh ? `${url}?refresh=${encodeURIComponent(this.options.assetRefresh)}` : url;
+  }
   private load() {
     const name = this.options.visual ? 'visual-catalog.json.gz' : 'catalog.json.gz';
-    return (this.catalog ??= gunzip(`/api/assets/models/${name}`, this.signal).then((raw) =>
+    return (this.catalog ??= gunzip(this.assetUrl(name), this.signal).then((raw) =>
       JSON.parse(new TextDecoder().decode(raw)),
     ));
   }
@@ -163,7 +167,7 @@ export class BuildingLibrary {
       const prefix = this.options.visual && meta.source !== 'native' ? 'visual-pack' : 'meshpack';
       const packKey = prefix + ':' + meta.pack;
       if (!this.packs.has(packKey))
-        this.packs.set(packKey, gunzip(`/api/assets/models/${prefix}-${meta.pack}.bin.gz`, this.signal));
+        this.packs.set(packKey, gunzip(this.assetUrl(`${prefix}-${meta.pack}.bin.gz`), this.signal));
       const pending = this.packs.get(packKey)!.then(async (raw) => {
         if (this.disposed) throw new Error('Model library closed');
         const bytes = raw.slice(meta.offset, meta.offset + meta.length);
@@ -239,6 +243,7 @@ export class BuildingLibrary {
     const parts = new Map<string, BuildingPartSummary>();
     const shieldSizes = new Map(data.pentashields.map((shield) => [shield.placeable_id, shield.scale]));
     const shieldScales = new Map<number, Vector>();
+    const matrix = new THREE.Matrix4();
     // Shields carry target metre dimensions: derive factors from actual model bounds.
     await Promise.all(
       data.placeables.map(async (p, index) => {
@@ -276,51 +281,57 @@ export class BuildingLibrary {
       summary.rendered++;
       // All model formats share UE X/Z/Y scene axes. Apply native actor and catalogue
       // transforms once; names such as "corner" must never change mesh identity or yaw.
-      const transform = unrealMatrix(
-        [p.x, p.y, p.z],
-        placeable ? [p.rx ?? 0, p.ry ?? 0, p.rz ?? 0] : [0, p.rotation ?? 0, 0],
-        placeable ? shieldScales.get(index) : undefined,
-      ).multiply(
-        unrealMatrix(row.offset ?? [0, 0, 0], row.rot ?? [0, 0, 0], row.scale?.some(Boolean) ? row.scale : [1, 1, 1]),
+      matrix.copy(
+        unrealMatrix(
+          [p.x, p.y, p.z],
+          placeable ? [p.rx ?? 0, p.ry ?? 0, p.rz ?? 0] : [0, p.rotation ?? 0, 0],
+          placeable ? shieldScales.get(index) : undefined,
+        ).multiply(
+          unrealMatrix(row.offset ?? [0, 0, 0], row.rot ?? [0, 0, 0], row.scale?.some(Boolean) ? row.scale : [1, 1, 1]),
+        ),
       );
       const key = `${row.mesh}:${row.group}`;
       if (!batches.has(key)) batches.set(key, { row, matrices: [] });
-      batches.get(key)!.matrices.push(toSceneMatrix(transform));
+      batches.get(key)!.matrices.push(toSceneMatrix(matrix));
     };
     data.instances.forEach((p, index) => add(p, false, index));
     data.placeables.forEach((p, index) => add(p, true, index));
     if (!known) throw new Error('No supported building pieces');
     const group = new THREE.Group();
-    await Promise.all(
-      [...batches.values()].map(async ({ row, matrices }) => {
-        const model = await this.model(row.mesh, catalog);
-        if (this.disposed) return;
-        for (const [index, part] of model.entries()) {
-          // Untextured white FModel placeholders are not the game's layered material.
-          // Use the existing faction palette until the missing shader layers are available.
-          const fallback = (material: THREE.Material) => {
-            if (!(material instanceof THREE.MeshStandardMaterial) || material.map) return material;
-            const kind = visualFallbackKind(material.name);
-            if (kind) return this.specialMaterial(kind);
-            return material.color.getHex() === 0xffffff && !material.transparent && material.opacity === 1
-              ? this.material(row.group)
-              : material;
-          };
-          const material = Array.isArray(part.material)
-            ? part.material.map(fallback)
-            : part.material
-              ? fallback(part.material)
-              : row.group === '__shield'
-                ? this.specialMaterial('shield')
-                : this.material(row.group);
-          const batch = new THREE.InstancedMesh(part.geometry, material, matrices.length);
-          batch.name = `building-mesh-${row.mesh}:${row.group}${index ? `:${index}` : ''}`;
-          matrices.forEach((matrix, item) => batch.setMatrixAt(item, matrix));
-          batch.computeBoundingSphere();
-          group.add(batch);
-        }
-      }),
+    const prepared = await Promise.all(
+      [...batches.values()].map(async ({ row, matrices }) => ({
+        row,
+        matrices,
+        model: await this.model(row.mesh, catalog),
+      })),
     );
+    for (const { row, matrices, model } of prepared) {
+      if (this.disposed) return;
+      for (const [index, part] of model.entries()) {
+        // Untextured white FModel placeholders are not the game's layered material.
+        // Use the existing faction palette until the missing shader layers are available.
+        const fallback = (material: THREE.Material) => {
+          if (!(material instanceof THREE.MeshStandardMaterial) || material.map) return material;
+          const kind = visualFallbackKind(material.name);
+          if (kind) return this.specialMaterial(kind);
+          return material.color.getHex() === 0xffffff && !material.transparent && material.opacity === 1
+            ? this.material(row.group)
+            : material;
+        };
+        const material = Array.isArray(part.material)
+          ? part.material.map(fallback)
+          : part.material
+            ? fallback(part.material)
+            : row.group === '__shield'
+              ? this.specialMaterial('shield')
+              : this.material(row.group);
+        const batch = new THREE.InstancedMesh(part.geometry, material, matrices.length);
+        batch.name = `building-mesh-${row.mesh}:${row.group}${index ? `:${index}` : ''}`;
+        matrices.forEach((matrix, item) => batch.setMatrixAt(item, matrix));
+        batch.computeBoundingSphere();
+        group.add(batch);
+      }
+    }
     return {
       group,
       origin: [data.x, data.y, data.z],

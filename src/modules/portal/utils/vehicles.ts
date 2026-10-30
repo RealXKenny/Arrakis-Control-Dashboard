@@ -54,6 +54,24 @@ export function getVehicleType(vehicle) {
   return vehicle?.type ?? vehicle?.vehicleType ?? vehicle?.vehicle_type ?? 'Unknown';
 }
 
+export function getVehicleImage(vehicle) {
+  const identity = String(
+    vehicle?.type ?? vehicle?.vehicleType ?? vehicle?.vehicle_type ?? vehicle?.name ?? vehicle?.vehicleName ?? '',
+  ).toLowerCase();
+
+  if (/container/.test(identity)) return '/maps/vehicle-container.webp';
+  if (/sand\s*crawler|sandcrawler/.test(identity)) return '/maps/vehicle-sandcrawler.webp';
+  if (/sand\s*bike|sandbike/.test(identity)) return '/maps/vehicle-sandbike.webp';
+  if (/tread\s*wheel|treadwheel/.test(identity)) return '/maps/vehicle-treadwheel.webp';
+  if (/ornithopter|ornithopter|\borni\b/.test(identity)) {
+    if (/transport|cargo/.test(identity)) return '/maps/vehicle-ornithopter-transport.webp';
+    if (/medium/.test(identity)) return '/maps/vehicle-ornithopter-medium.webp';
+    return '/maps/vehicle-ornithopter-light.webp';
+  }
+  if (/buggy/.test(identity)) return '/maps/vehicle-buggy.webp';
+  return null;
+}
+
 export function isContainerVehicle(vehicle) {
   return /container/i.test(
     String(

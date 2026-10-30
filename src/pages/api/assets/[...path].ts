@@ -4,7 +4,7 @@ import path from 'node:path';
 
 export const config = {
   api: {
-    responseLimit: '8mb',
+    responseLimit: '32mb',
   },
 };
 
@@ -40,7 +40,7 @@ function isModelAsset(segments: string[]) {
   return (
     segments.length === 2 &&
     segments[0] === 'models' &&
-    /^(?:catalog\.json|meshpack-[0-9]\.bin|visual-catalog\.json|visual-pack-(?:[0-9]|[1-9][0-9]{1,2})\.bin)\.gz$/.test(
+    /^(?:catalog\.json|meshpack-[0-9]\.bin|visual-catalog\.json|visual-pack-(?:0|[1-9][0-9]{0,3})\.bin)\.gz$/.test(
       segments[1],
     )
   );
@@ -87,7 +87,10 @@ export default async function handler(req, res) {
     res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
     res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
     res.setHeader('Content-Length', String(body.byteLength));
-    res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+    const isVisualCatalog =
+      Array.isArray(req.query.path) && req.query.path.join('/') === 'models/visual-catalog.json.gz';
+    // The catalog is small and changes when preview packs are rebuilt; always revalidate it.
+    res.setHeader('Cache-Control', isVisualCatalog ? 'no-cache' : 'public, max-age=3600, must-revalidate');
     if (req.method === 'HEAD') return res.status(200).end();
     return res.status(200).send(body);
   } catch (error) {

@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getBaseId, getBaseName } from '../../portal/utils/bases';
 import css from '../preview.module.css';
 
@@ -12,8 +12,16 @@ const BaseModelViewer = dynamic(() => import('./BaseModelViewer'), {
   ),
 });
 
-/** A single opt-in context: opening Bases does not download private exports or allocate a renderer. */
-export default function BasePreview({ bases }: { bases: Record<string, unknown>[] }) {
+/** The dedicated preview view is the only portal context that downloads an owned base export. */
+export default function BasePreview({
+  bases,
+  immersive = false,
+  onExit,
+}: {
+  bases: Record<string, unknown>[];
+  immersive?: boolean;
+  onExit?: () => void;
+}) {
   const options = useMemo(
     () => [
       ...new Map(
@@ -28,19 +36,31 @@ export default function BasePreview({ bases }: { bases: Record<string, unknown>[
   );
   const [choice, setChoice] = useState('');
   const selected = options.find((base) => base.id === choice) ?? options[0];
-  const [request, setRequest] = useState<{ id: string; revision: number } | null>(null);
+  const [request, setRequest] = useState<{ id: string; revision: number; assetRefresh?: string } | null>(null);
+  const autoStarted = useRef(false);
   const active = options.find((base) => base.id === request?.id);
   const [loading, setLoading] = useState(false);
   const settled = useCallback(() => setLoading(false), []);
+  useEffect(() => {
+    if (!immersive || autoStarted.current || !options.length) return;
+    autoStarted.current = true;
+    setChoice(options[0].id);
+    setLoading(true);
+    setRequest({ id: options[0].id, revision: 1 });
+  }, [immersive, options]);
   return (
-    <section className={css.panel} aria-label="3D base preview">
-      <header className={css.header}>
+    <section className={`${css.panel} ${immersive ? css.immersivePanel : ''}`} aria-label="3D base preview">
+      <header className={`${css.header} ${immersive ? css.immersiveHeader : ''}`}>
         <div>
-          <p className={css.eyebrow}>Your structures</p>
-          <h2>3D base preview</h2>
-          <p>Orbit your base and inspect its building pieces.</p>
+          <p className={css.eyebrow}>{immersive ? 'DESERT ARCHITECTURE' : 'Your structures'}</p>
+          <h2>{immersive ? 'Base preview' : '3D base preview'}</h2>
+          <p>
+            {immersive
+              ? 'Explore your structure beneath the open sky.'
+              : 'Orbit your base and inspect its building pieces.'}
+          </p>
         </div>
-        <div className={css.actions}>
+        <div className={`${css.actions} ${immersive ? css.immersiveActions : ''}`}>
           <label>
             <span>Base</span>
             <select
@@ -67,7 +87,14 @@ export default function BasePreview({ bases }: { bases: Record<string, unknown>[
             onClick={() => {
               if (selected) {
                 setLoading(true);
-                setRequest((current) => ({ id: selected.id, revision: (current?.revision ?? 0) + 1 }));
+                setRequest((current) => {
+                  const revision = (current?.revision ?? 0) + 1;
+                  return {
+                    id: selected.id,
+                    revision,
+                    ...(current ? { assetRefresh: `${Date.now()}-${revision}` } : {}),
+                  };
+                });
               }
             }}
           >
@@ -84,6 +111,11 @@ export default function BasePreview({ bases }: { bases: Record<string, unknown>[
               Close preview
             </button>
           )}
+          {immersive && onExit && (
+            <button type="button" className={css.exitPreview} onClick={onExit}>
+              My bases <span aria-hidden="true">↗</span>
+            </button>
+          )}
         </div>
       </header>
       {active && request ? (
@@ -91,10 +123,12 @@ export default function BasePreview({ bases }: { bases: Record<string, unknown>[
           key={`${request.id}:${request.revision}`}
           baseId={active.id}
           baseName={active.name}
+          assetRefresh={request.assetRefresh}
+          immersive={immersive}
           onSettled={settled}
         />
       ) : (
-        <div className={css.placeholder}>
+        <div className={`${css.placeholder} ${immersive ? css.immersivePlaceholder : ''}`}>
           <svg
             width="48"
             height="48"

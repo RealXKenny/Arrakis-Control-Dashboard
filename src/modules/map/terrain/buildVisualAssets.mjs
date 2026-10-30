@@ -122,6 +122,11 @@ export async function buildVisualAssets({
       row.m_DisplayName?.LocalizedString,
     );
   }
+  // Animated Desert Mechanic doors have skeletal meshes, not the native collision proxy
+  // currently associated with these IDs. Do not present the unrelated pentashield as a door.
+  for (const id of ['MTX_Neut_DesertMechanic_Door_Placeable', 'MTX_Neut_DesertMechanic_Prudence_Door_Placeable']) {
+    if (rows[id]) rows[id].mesh = -1;
+  }
   for (const [id, relative] of templateSources) {
     if (!sources.has(relative)) sources.set(relative, []);
     sources.get(relative).push(id);
@@ -261,11 +266,12 @@ export async function buildVisualAssets({
   };
   await fs.writeFile(path.join(output, 'visual-coverage.json'), JSON.stringify(report, null, 2) + '\n');
   for (let index = 0; index < packs.length; index++) {
-    if (packs[index].length > 8 * 1024 * 1024) throw new Error('Visual pack exceeds transfer limit');
+    if (packs[index].length > 32 * 1024 * 1024) throw new Error('Visual pack exceeds transfer limit');
     await fs.writeFile(path.join(output, `visual-pack-${index}.bin.gz`), packs[index]);
   }
+  const rebuiltCatalogPath = path.join(output, 'visual-catalog.rebuilt.json.gz');
   await fs.writeFile(
-    path.join(output, 'visual-catalog.json.gz'),
+    rebuiltCatalogPath,
     gzipSync(
       JSON.stringify({
         provenance: {
@@ -279,18 +285,131 @@ export async function buildVisualAssets({
       { level: 9 },
     ),
   );
+  await fs.rename(rebuiltCatalogPath, path.join(output, 'visual-catalog.json.gz'));
   console.info(JSON.stringify(report));
   if (missingPlayable.length)
     throw new Error(`${missingPlayable.length} playable building types have no visual model; see visual-coverage.json`);
   return report;
 }
 
+/** Rebind just the visual meshes referenced by one exported base using local FModel materials. */
+export async function rebuildBaseVisualMaterials({ basePath, sourceRoot, metadataRoot, materialNames } = {}) {
+  if (!basePath || !sourceRoot) throw new Error('A base JSON and FModel export root are required');
+  const root = path.resolve(fileURLToPath(new URL('../../../../', import.meta.url)));
+  const output = path.join(root, 'src/assets/models');
+  const catalogPath = path.join(output, 'visual-catalog.json.gz');
+  const base = JSON.parse(await fs.readFile(path.resolve(basePath), 'utf8'));
+  const catalog = JSON.parse(gunzipSync(await fs.readFile(catalogPath)));
+  const ids = new Set(
+    [
+      ...(Array.isArray(base.instances) ? base.instances : []),
+      ...(Array.isArray(base.placeables) ? base.placeables : []),
+    ]
+      .map((piece) => piece?.building_type)
+      .filter((id) => typeof id === 'string'),
+  );
+  const meshIds = new Set([...ids].map((id) => catalog.rows[id]?.mesh).filter((id) => Number.isInteger(id) && id >= 0));
+  const selectedMaterials = materialNames ? new Set(materialNames) : null;
+  const resolver = await createMaterialResolver(sourceRoot, metadataRoot);
+  const io = new NodeIO()
+    .registerExtensions(ALL_EXTENSIONS)
+    .registerDependencies({ 'draco3d.decoder': await draco.createDecoderModule() });
+  const sourcePacks = new Map();
+  const updates = [];
+  for (const meshId of meshIds) {
+    const meta = catalog.meshes[meshId];
+    if (meta?.format !== 'glb') continue;
+    if (!sourcePacks.has(meta.pack))
+      sourcePacks.set(meta.pack, gunzipSync(await fs.readFile(path.join(output, `visual-pack-${meta.pack}.bin.gz`))));
+    const pack = sourcePacks.get(meta.pack);
+    const input = pack.subarray(meta.offset, meta.offset + meta.length);
+    if (selectedMaterials) {
+      const jsonLength = input.readUInt32LE(12);
+      const glb = JSON.parse(input.subarray(20, 20 + jsonLength).toString());
+      if (!(glb.materials ?? []).some((material) => selectedMaterials.has(material.name))) continue;
+    }
+    const document = await io.readBinary(new Uint8Array(input));
+    const bound = await bindExportedMaterials(document, meta.path, resolver);
+    const hasLayerAtlas = document
+      .getRoot()
+      .listMaterials()
+      .some((material) => material.getExtras()?.arrakisLayers);
+    if (!hasLayerAtlas && !bound.colorMaps && !bound.normalMaps) continue;
+    const bytes = Buffer.from(await io.writeBinary(document));
+    if (bytes.length > MAX_ASSET) throw new Error(`Rebound mesh exceeds the asset limit: ${meta.path}`);
+    updates.push({ meshId, meta, bytes, ...bound, hasLayerAtlas });
+    console.info(`Rebound material textures on ${meta.path} (${updates.length} meshes)`);
+  }
+
+  if (!updates.length) throw new Error('No FModel textures matched the visual meshes in this base');
+  let nextPack = Math.max(...catalog.meshes.map((mesh) => mesh.pack)) + 1;
+  const packs = [];
+  let chunks = [];
+  let packLength = 0;
+  let packIndex = nextPack;
+  const updatedMeshes = new Map();
+  const flush = () => {
+    if (!packLength) return;
+    packs.push({ index: packIndex, bytes: gzipSync(Buffer.concat(chunks), { level: 9 }) });
+    packIndex++;
+    chunks = [];
+    packLength = 0;
+  };
+  for (const update of updates) {
+    if (packLength && packLength + update.bytes.length > PACK_TARGET) flush();
+    const newId = catalog.meshes.length;
+    catalog.meshes.push({
+      ...update.meta,
+      pack: packIndex,
+      offset: packLength,
+      length: update.bytes.length,
+    });
+    updatedMeshes.set(update.meshId, newId);
+    chunks.push(update.bytes);
+    packLength += update.bytes.length;
+  }
+  flush();
+  if (packIndex > 10000) throw new Error('Rebound visual packs exceed the asset route allowlist');
+  for (const row of Object.values(catalog.rows)) {
+    if (updatedMeshes.has(row.mesh)) row.mesh = updatedMeshes.get(row.mesh);
+  }
+  for (const pack of packs) {
+    const file = path.join(output, `visual-pack-${pack.index}.bin.gz`);
+    if (
+      await fs.stat(file).then(
+        () => true,
+        () => false,
+      )
+    )
+      throw new Error(`Refusing to overwrite existing asset ${file}`);
+    await fs.writeFile(file, pack.bytes);
+  }
+  await fs.writeFile(catalogPath, gzipSync(JSON.stringify(catalog), { level: 9 }));
+  const report = {
+    base: base.base_id ?? base.name ?? path.basename(basePath),
+    meshesUpdated: updates.length,
+    layerAtlases: updates.filter((update) => update.hasLayerAtlas).length,
+    colorMaps: updates.reduce((sum, update) => sum + update.colorMaps, 0),
+    normalMaps: updates.reduce((sum, update) => sum + update.normalMaps, 0),
+    packs: packs.map(({ index, bytes }) => ({ index, compressedBytes: bytes.length })),
+  };
+  console.info(JSON.stringify(report, null, 2));
+  return report;
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const basePath = process.argv.find((argument) => argument.startsWith('--base-json='))?.slice('--base-json='.length);
   const sourceRoot = process.argv
     .find((argument) => argument.startsWith('--source-root='))
     ?.slice('--source-root='.length);
   const metadataRoot = process.argv
     .find((argument) => argument.startsWith('--metadata-root='))
     ?.slice('--metadata-root='.length);
-  await buildVisualAssets({ sourceRoot, metadataRoot });
+  const materialNames = process.argv
+    .find((argument) => argument.startsWith('--material-names='))
+    ?.slice('--material-names='.length)
+    .split(',')
+    .filter(Boolean);
+  if (basePath) await rebuildBaseVisualMaterials({ basePath, sourceRoot, metadataRoot, materialNames });
+  else await buildVisualAssets({ sourceRoot, metadataRoot });
 }
