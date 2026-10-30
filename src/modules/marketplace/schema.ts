@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { baseViewSchema } from '../bases/utils/preview-settings';
 
 export const MARKETPLACE_LAYOUT_MAX_BYTES = 2 * 1024 * 1024;
 export const MARKETPLACE_LISTING_LIMIT = 200;
@@ -53,10 +54,15 @@ const summarySchema = z.object({
   pieceCount: z.number().int().min(1).max(10000),
   placeableCount: z.number().int().min(0).max(5000),
   publishedAt: z.string().datetime(),
+  previewRevision: z
+    .string()
+    .regex(/^[a-f0-9]{24}$/)
+    .optional(),
 });
-const recordSchema = z.object({ summary: summarySchema, layout: layoutSchema });
+const recordSchema = z.object({ summary: summarySchema, layout: layoutSchema, frontView: baseViewSchema.optional() });
 
 export type MarketplaceSummary = z.infer<typeof summarySchema>;
+export type MarketplaceListing = MarketplaceSummary & { editableBaseId?: string };
 export type MarketplaceLayout = z.infer<typeof layoutSchema>;
 export type MarketplaceRecord = z.infer<typeof recordSchema>;
 

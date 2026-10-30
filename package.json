@@ -1,6 +1,6 @@
 {
   "name": "Arrakis-Control-Dashboard",
-  "version": "1.20.2",
+  "version": "1.20.3",
   "scripts": {
     "dev": "node src/config/server-launcher.mjs dev",
     "build": "next build",

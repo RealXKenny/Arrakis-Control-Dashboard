@@ -1,14 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { MarketplaceSummary } from '../schema';
+import Link from 'next/link';
+import type { MarketplaceListing } from '../schema';
 import MarketplaceCard from './MarketplaceCard';
 
 type SizeFilter = 'all' | 'small' | 'medium' | 'large';
 
-function validListing(value: unknown): value is MarketplaceSummary {
+function validListing(value: unknown): value is MarketplaceListing {
   if (!value || typeof value !== 'object') return false;
-  const item = value as Partial<MarketplaceSummary>;
+  const item = value as Partial<MarketplaceListing>;
   return (
     typeof item.id === 'string' &&
+    (item.editableBaseId === undefined ||
+      (typeof item.editableBaseId === 'string' &&
+        item.editableBaseId.length > 0 &&
+        item.editableBaseId.length <= 128)) &&
+    (item.previewRevision === undefined ||
+      (typeof item.previewRevision === 'string' && /^[a-f0-9]{24}$/.test(item.previewRevision))) &&
     /^[a-f0-9]{24}$/.test(item.id) &&
     typeof item.title === 'string' &&
     typeof item.author === 'string' &&
@@ -25,7 +32,7 @@ function validListing(value: unknown): value is MarketplaceSummary {
 }
 
 export default function BaseMarketplace() {
-  const [listings, setListings] = useState<MarketplaceSummary[]>([]);
+  const [listings, setListings] = useState<MarketplaceListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
@@ -146,6 +153,15 @@ export default function BaseMarketplace() {
           </button>
         </div>
       )}
+      {!loading && listings.some((listing) => !listing.previewRevision) && (
+        <p role="status" className="mt-4 rounded-2xl border border-amber-500/20 p-4 text-sm text-amber-200">
+          Older listings need an owner-selected picture. Open{' '}
+          <Link className="underline" href="/portal?view=bases">
+            My bases
+          </Link>
+          , load the base preview, choose its front, and take a picture. Its existing listing updates when you save.
+        </p>
+      )}
       {loading && !error && (
         <div
           role="status"
@@ -169,7 +185,15 @@ export default function BaseMarketplace() {
       {!error && filtered.length > 0 && (
         <div className="mt-4 grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((listing) => (
-            <MarketplaceCard key={listing.id} listing={listing} />
+            <MarketplaceCard
+              key={listing.id}
+              listing={listing}
+              onPictureSaved={(previewRevision) =>
+                setListings((current) =>
+                  current.map((item) => (item.id === listing.id ? { ...item, previewRevision } : item)),
+                )
+              }
+            />
           ))}
         </div>
       )}
