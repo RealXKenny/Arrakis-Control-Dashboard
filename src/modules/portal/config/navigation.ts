@@ -8,6 +8,7 @@ export const portalViews = [
   'storage',
   'market',
   'bases',
+  'base-preview',
   'base-market',
   'vehicles',
   'guild',
@@ -24,9 +25,10 @@ export function portalNavigation(view: PortalView): NavigationItem[] {
     { label: 'Exchange', group: 'Economy', href: '/portal?view=market', active: view === 'market' },
     { label: 'Character', group: 'Holdings', href: '/portal?view=character', active: view === 'character' },
     { label: 'Storage', group: 'Holdings', href: '/portal?view=storage', active: view === 'storage' },
-    { label: 'My bases', group: 'Holdings', href: '/portal?view=bases', active: view === 'bases' },
-    { label: 'Base market', group: 'Economy', href: '/portal?view=base-market', active: view === 'base-market' },
-    { label: 'Vehicles', group: 'Holdings', href: '/portal?view=vehicles', active: view === 'vehicles' },
+    { label: 'Base market', group: 'Bases', href: '/portal?view=base-market', active: view === 'base-market' },
+    { label: 'My bases', group: 'Bases', href: '/portal?view=bases', active: view === 'bases' },
+    { label: 'Base preview', group: 'Bases', href: '/portal?view=base-preview', active: view === 'base-preview' },
+    { label: 'Vehicles', group: 'Vehicles', href: '/portal?view=vehicles', active: view === 'vehicles' },
     { label: 'Guild', group: 'Community', href: '/portal?view=guild', active: view === 'guild' },
   ];
 }

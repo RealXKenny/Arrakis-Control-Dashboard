@@ -1,5 +1,4 @@
 import BaseImport from '../../bases/components/BaseImport';
-import BasePreview from '../../bases/components/BasePreview';
 import { useEffect, useState } from 'react';
 import { getBaseId, getBaseName } from '../utils/bases';
 import BaseCard from './BaseCard';
@@ -48,6 +47,7 @@ export default function BaseSection({
   sharedBases,
   baseTab,
   setBaseTab,
+  onOpenPreview,
 }) {
   const [selectedBaseId, setSelectedBaseId] = useState(null);
   const selectedBase = visibleBases.find((base) => String(getBaseId(base)) === String(selectedBaseId));
@@ -64,8 +64,19 @@ export default function BaseSection({
             <p className="mb-1 text-[11px] font-medium tracking-wide text-zinc-500 uppercase">Territory Network</p>
             <h2 className="m-0 text-xl font-semibold text-zinc-100">Bases</h2>
           </div>
-          <div className="text-xs text-zinc-500">
-            {ownedBases.length} owned · {sharedBases.length} shared
+          <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+            <span>
+              {ownedBases.length} owned · {sharedBases.length} shared
+            </span>
+            {baseTab === 'owned' && ownedBases.length > 0 && (
+              <button
+                type="button"
+                onClick={onOpenPreview}
+                className="rounded-full border border-indigo-400/20 bg-indigo-400/10 px-4 py-2 font-medium text-indigo-200 transition hover:bg-indigo-400/15"
+              >
+                Open full-screen preview <span aria-hidden="true">↗</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -115,7 +126,6 @@ export default function BaseSection({
           />
         )}
       </section>
-      {baseTab === 'owned' && <BasePreview bases={ownedBases} />}
       <BaseImport />
     </>
   );

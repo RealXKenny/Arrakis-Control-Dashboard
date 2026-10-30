@@ -6,6 +6,7 @@ import DashboardShell from '../../../components/DashboardShell';
 import layout from '../portal.module.css';
 import PortalSummary from './PortalSummary';
 import BaseSection from './BaseSection';
+import BasePreview from '../../bases/components/BasePreview';
 import VehicleSection from './VehicleSection';
 import MarketBoard from './MarketBoard';
 import BaseMarketplace from '../../marketplace/components/BaseMarketplace';
@@ -131,9 +132,10 @@ export default function PlayerPortal() {
           </>
         )
       }
+      immersive={view === 'base-preview'}
     >
       <div className={layout.page}>
-        {view !== 'overview' && (
+        {view !== 'overview' && view !== 'base-preview' && (
           <header className={layout.hero}>
             <p className={layout.eyebrow}>Crimson Skies | {copy.section}</p>
             <h1>{copy.title}</h1>
@@ -288,7 +290,11 @@ export default function PlayerPortal() {
                 sharedBases={sharedBases}
                 baseTab={baseTab}
                 setBaseTab={setBaseTab}
+                onOpenPreview={() => navigatePortal('/portal?view=base-preview')}
               />
+            )}
+            {view === 'base-preview' && (
+              <BasePreview bases={ownedBases} immersive onExit={() => navigatePortal('/portal?view=bases')} />
             )}
             {view === 'vehicles' && (
               <VehicleSection

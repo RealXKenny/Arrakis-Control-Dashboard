@@ -4,6 +4,33 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.20.4] - 2026-10-30
+
+### Added
+
+- Add matching Dune vehicle icons to portal vehicle cards.
+- Rebind FModel layer atlases and normal maps for 12 machinery props used by base 2010.
+- Rebind FModel material layers for 57 building and prop meshes used by base 1250.
+- Move the owned-base preview into its own full-screen tab with desert scenery and day/night lighting.
+- Organize the top pill navigation into separate Bases and Vehicles categories, including Base Market under Bases.
+- Show base-preview loading progress and render a fast native preview while detailed meshes and textures load for large bases.
+
+### Changed
+
+- Load saved base camera settings alongside the private base export and load distinct detailed meshes concurrently.
+- Refresh detailed preview assets when reloading a base preview.
+
+### Fixed
+
+- Apply inherited FModel layer color tints when building preview texture atlases.
+- Apply per-layer FModel color override tints when rebuilding base prop atlases.
+- Fill checker-only used material layers from the nearest real surface in the same material instead of flat gray.
+- Skip texture binding on visual meshes without UV coordinates so they do not render from a single dark texel.
+- Omit the unrelated pentashield collision proxy for animated Desert Mechanic door previews.
+- Revalidate the visual mesh catalog on preview loads so rebuilt texture packs appear without stale cached entries.
+- Replace the misleading authorization caption with a clear base-preview loading message.
+- Keep large-base previews available when detailed assets cannot finish loading by retaining the fast preview.
+
 ## [1.20.3] - 2026-10-29
 
 ### Added

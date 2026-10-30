@@ -18,12 +18,34 @@ export function unpackUnrealNormal(pixels) {
 
 // FModel exports many shared shader defaults. Only bind explicitly named surface inputs.
 const INPUTS = {
-  color: ['Layer BaseColor', 'BaseColor', 'Base Color', 'Diffuse', 'Albedo'],
-  normal: ['Layer Normal', 'Normal'],
+  color: [
+    'Layer BaseColor',
+    'BaseColor',
+    'Base Color',
+    'Diffuse',
+    'Albedo',
+    'Tarp - Texture _D',
+    'Pattern - Texture _D',
+  ],
+  normal: ['Layer Normal', 'Normal', 'Tarp - Texture _N', 'Mesh Normal'],
 };
 const MAX_TEXTURE_BYTES = 32 * 1024 * 1024;
 
-export async function createMaterialResolver(sourceRoot, metadataRoot) {
+async function tintLayerTexture(bytes, tint) {
+  const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (let pixel = 0; pixel < data.length; pixel += info.channels) {
+    for (let channel = 0; channel < 3; channel++) {
+      const srgb = data[pixel + channel] / 255;
+      const linear = srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+      const tinted = linear * tint[channel];
+      const output = tinted <= 0.0031308 ? tinted * 12.92 : 1.055 * tinted ** (1 / 2.4) - 0.055;
+      data[pixel + channel] = Math.round(Math.max(0, Math.min(1, output)) * 255);
+    }
+  }
+  return sharp(data, { raw: info }).png().toBuffer();
+}
+
+export async function createMaterialResolver(sourceRoot, metadataRoot, { maxTextureSize = 2048 } = {}) {
   const root = path.resolve(sourceRoot);
   const index = new Map();
   async function visit(directory) {
@@ -40,7 +62,7 @@ export async function createMaterialResolver(sourceRoot, metadataRoot) {
   await visit(root);
   const materials = new Map(),
     images = new Map();
-  async function texture(reference) {
+  async function texture(reference, maxSize = maxTextureSize) {
     if (
       typeof reference !== 'string' ||
       !/^\/Game\/[\w/.-]+$/.test(reference) ||
@@ -50,14 +72,15 @@ export async function createMaterialResolver(sourceRoot, metadataRoot) {
     const relative = reference.slice(6).split('.')[0] + '.png';
     const file = path.resolve(root, relative);
     if (!file.startsWith(root + path.sep)) return null;
-    if (!images.has(file))
+    const cacheKey = `${file}:${maxSize}`;
+    if (!images.has(cacheKey))
       images.set(
-        file,
+        cacheKey,
         (async () => {
           try {
             if ((await fs.stat(file)).size > MAX_TEXTURE_BYTES) return null;
             // Bound decoded texture size and embed PNGs; no runtime requests to the export folder.
-            const resized = sharp(file, { limitInputPixels: 67108864 }).resize(256, 256, {
+            const resized = sharp(file, { limitInputPixels: 67108864 }).resize(maxSize, maxSize, {
               fit: 'inside',
               withoutEnlargement: true,
             });
@@ -80,9 +103,9 @@ export async function createMaterialResolver(sourceRoot, metadataRoot) {
           }
         })(),
       );
-    return images.get(file);
+    return images.get(cacheKey);
   }
-  async function resolve(name, modelPath) {
+  async function resolve(name, modelPath, ancestry = new Set()) {
     const matches = index.get(name.toLowerCase()) ?? [];
     if (!matches.length) return null;
     // Resolve duplicates by the closest shared parent; do not guess when equally close.
@@ -108,7 +131,35 @@ export async function createMaterialResolver(sourceRoot, metadataRoot) {
       return materials.get(file);
     }
     const file = ranked[0].file;
-    const flattened = normalizeExportedMaterial(await read(file));
+    let flattened = normalizeExportedMaterial(await read(file));
+    if (!flattened) return null;
+    flattened = {
+      ...flattened,
+      ...(flattened.Parameters ? { Parameters: { ...flattened.Parameters } } : {}),
+    };
+    const parent = flattened.Parameters?.Parent;
+    const parentName = parent?.ObjectName?.match(/'([^']+)'/)?.[1];
+    const parentPath = parent?.ObjectPath?.startsWith('/Game/') ? parent.ObjectPath.slice(6).split('.')[0] : null;
+    const lineageKey = `${file.toLowerCase()}:${name.toLowerCase()}`;
+    if (parentName && parentPath && !ancestry.has(lineageKey)) {
+      const inherited = await resolve(parentName, parentPath, new Set([...ancestry, lineageKey]));
+      if (inherited?.Parameters) {
+        const vectors = new Map();
+        for (const value of [
+          ...(inherited.Parameters.VectorParameterValues ?? []),
+          ...(flattened.Parameters.VectorParameterValues ?? []),
+        ]) {
+          const info = value.ParameterInfo;
+          if (!info?.Name) continue;
+          vectors.set(`${info.Association ?? ''}:${info.Index ?? ''}:${info.Name}`, value);
+        }
+        flattened.Parameters = {
+          ...inherited.Parameters,
+          ...flattened.Parameters,
+          VectorParameterValues: [...vectors.values()],
+        };
+      }
+    }
     if (!metadataRoot) return flattened;
     const candidate = path.join(path.resolve(metadataRoot), path.relative(root, file));
     const raw = normalizeExportedMaterial(await read(candidate));
@@ -119,7 +170,7 @@ export async function createMaterialResolver(sourceRoot, metadataRoot) {
     }
     return { ...flattened, ...raw, Textures: textures };
   }
-  return { resolve, texture };
+  return { resolve, texture, clearTextureCache: () => images.clear() };
 }
 
 /** Normalize FModel package-property exports without guessing among multiple material layers. */
@@ -159,7 +210,7 @@ export function normalizeExportedMaterial(source) {
   return { Textures: textures, Parameters: properties, Layered: layered };
 }
 
-export async function bindExportedMaterials(document, modelPath, resolver) {
+export async function bindExportedMaterials(document, modelPath, resolver, { layerTileSize = 512 } = {}) {
   let colorMaps = 0,
     normalMaps = 0;
   const embedded = new Map();
@@ -174,62 +225,120 @@ export async function bindExportedMaterials(document, modelPath, resolver) {
       .filter((primitive) => primitive.getMaterial() === material);
     // A bounded atlas keeps the exported foundation layers in the GLB itself.
     if (
-      /^ML_Env_PB_Atre_Outpost_/i.test(material.getName()) &&
       source.Layered?.colors?.length > 1 &&
       source.Layered.colors.length <= 12 &&
+      typeof source.Layered.indexMap === 'string' &&
       source.Layered.indexUv === 1 &&
       primitives.length &&
-      primitives.every((primitive) => primitive.getAttribute('TEXCOORD_1'))
+      primitives.every(
+        (primitive) => primitive.getAttribute('TEXCOORD_0') && primitive.getAttribute('TEXCOORD_1'),
+      )
     ) {
+      const layerTints = new Map();
+      for (const parameter of source.Parameters?.VectorParameterValues ?? []) {
+        const info = parameter.ParameterInfo;
+        if (
+          !['Layer ColorTint', 'Layer Override - ColorTint'].includes(info?.Name) ||
+          info.Association !== 'LayerParameter' ||
+          !Number.isInteger(info.Index)
+        )
+          continue;
+        const value = parameter.ParameterValue ?? {};
+        const priority = info.Name === 'Layer Override - ColorTint' ? 2 : 1;
+        const existing = layerTints.get(info.Index);
+        if (!existing || existing.priority < priority)
+          layerTints.set(info.Index, {
+            priority,
+            tint: [value.R ?? 1, value.G ?? 1, value.B ?? 1].map(Number),
+          });
+      }
       const indexBytes = await resolver.texture(source.Layered.indexMap);
       if (indexBytes) {
         const tiles = [];
         const normalTiles = [];
+        const colorLayerBytes = await Promise.all(
+          source.Layered.colors
+            .slice(0, 12)
+            .map((reference) => (reference ? resolver.texture(reference, layerTileSize) : null)),
+        );
         let missing = 0;
         let missingNormals = 0;
         for (let i = 0; i < 12; i++) {
           const reference = source.Layered.colors[i];
-          const bytes = reference ? await resolver.texture(reference) : null;
+          let bytes = colorLayerBytes[i] ?? null;
           if (reference && !bytes) missing++;
+          let fallbackIndex = i;
+          if (!bytes) {
+            fallbackIndex = colorLayerBytes.findIndex(Boolean);
+            if (fallbackIndex >= 0) {
+              // Some used UV layer IDs export as a dev checker; reuse a real surface instead of flat gray.
+              bytes = colorLayerBytes[fallbackIndex];
+              for (let candidate = 0; candidate < colorLayerBytes.length; candidate++) {
+                if (!colorLayerBytes[candidate]) continue;
+                if (Math.abs(candidate - i) < Math.abs(fallbackIndex - i)) fallbackIndex = candidate;
+              }
+              bytes = colorLayerBytes[fallbackIndex];
+            }
+          }
+          const tint = layerTints.get(i)?.tint ?? layerTints.get(fallbackIndex)?.tint;
+          if (bytes && tint) bytes = await tintLayerTexture(bytes, tint);
           const tile = bytes
-            ? await sharp(bytes).resize(128, 128, { fit: 'fill' }).png().toBuffer()
-            : await sharp({ create: { width: 128, height: 128, channels: 3, background: '#999994' } })
+            ? await sharp(bytes).resize(layerTileSize, layerTileSize, { fit: 'fill' }).png().toBuffer()
+            : await sharp({
+                create: { width: layerTileSize, height: layerTileSize, channels: 3, background: '#999994' },
+              })
                 .png()
                 .toBuffer();
-          tiles.push({ input: tile, left: (i % 4) * 128, top: Math.floor(i / 4) * 128 });
+          tiles.push({ input: tile, left: (i % 4) * layerTileSize, top: Math.floor(i / 4) * layerTileSize });
           if (source.Layered.normals?.length) {
             const normalReference = source.Layered.normals[i];
-            const normalBytes = normalReference ? await resolver.texture(normalReference) : null;
+            const normalBytes = normalReference ? await resolver.texture(normalReference, layerTileSize) : null;
             if (normalReference && !normalBytes) missingNormals++;
             const normalTile = normalBytes
-              ? await sharp(normalBytes).resize(128, 128, { fit: 'fill' }).png().toBuffer()
+              ? await sharp(normalBytes).resize(layerTileSize, layerTileSize, { fit: 'fill' }).png().toBuffer()
               : await sharp({
-                  create: { width: 128, height: 128, channels: 4, background: { r: 128, g: 128, b: 255, alpha: 1 } },
+                  create: {
+                    width: layerTileSize,
+                    height: layerTileSize,
+                    channels: 4,
+                    background: { r: 128, g: 128, b: 255, alpha: 1 },
+                  },
                 })
                   .png()
                   .toBuffer();
-            normalTiles.push({ input: normalTile, left: (i % 4) * 128, top: Math.floor(i / 4) * 128 });
+            normalTiles.push({
+              input: normalTile,
+              left: (i % 4) * layerTileSize,
+              top: Math.floor(i / 4) * layerTileSize,
+            });
           }
         }
-        const atlas = await sharp({ create: { width: 512, height: 384, channels: 4, background: '#999994' } })
+        const atlas = await sharp({
+          create: { width: layerTileSize * 4, height: layerTileSize * 3, channels: 4, background: '#999994' },
+        })
           .composite(tiles)
-          .png()
+          .webp({ quality: 90, effort: 5 })
           .toBuffer();
         const normalAtlas = normalTiles.length
           ? await sharp({
-              create: { width: 512, height: 384, channels: 4, background: { r: 128, g: 128, b: 255, alpha: 1 } },
+              create: {
+                width: layerTileSize * 4,
+                height: layerTileSize * 3,
+                channels: 4,
+                background: { r: 128, g: 128, b: 255, alpha: 1 },
+              },
             })
               .composite(normalTiles)
-              .png()
+              .webp({ lossless: true, effort: 5 })
               .toBuffer()
           : null;
         material.setExtras({
           ...material.getExtras(),
           arrakisLayers: {
-            atlas: 'data:image/png;base64,' + atlas.toString('base64'),
+            atlas: 'data:image/webp;base64,' + atlas.toString('base64'),
             index: 'data:image/png;base64,' + indexBytes.toString('base64'),
             ...(normalAtlas
-              ? { normals: 'data:image/png;base64,' + normalAtlas.toString('base64'), missingNormals }
+              ? { normals: 'data:image/webp;base64,' + normalAtlas.toString('base64'), missingNormals }
               : {}),
             missing,
             count: source.Layered.colors.length,
@@ -237,6 +346,8 @@ export async function bindExportedMaterials(document, modelPath, resolver) {
         });
       }
     }
+    // Without UV0, glTF samples every texture at (0, 0), making whole meshes nearly black.
+    if (primitives.length && primitives.some((primitive) => !primitive.getAttribute('TEXCOORD_0'))) continue;
     const tilingUv =
       source.Parameters?.Switches?.UseTilingTexturesUVChannel === true &&
       primitives.length > 0 &&
@@ -244,8 +355,6 @@ export async function bindExportedMaterials(document, modelPath, resolver) {
         ? 1
         : 0;
     for (const [type, keys] of Object.entries(INPUTS)) {
-      if (type === 'color' && material.getBaseColorTexture()) continue;
-      if (type === 'normal' && material.getNormalTexture()) continue;
       for (const key of keys) {
         const reference = source.Textures[key];
         const bytes = await resolver.texture(reference);

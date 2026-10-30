@@ -16,6 +16,7 @@ type Status = {
   pieces?: number;
   total?: number;
   needsSignIn?: boolean;
+  progress?: number;
 };
 type Controls = {
   fit: () => void;
@@ -24,12 +25,96 @@ type Controls = {
   face: (degrees: number) => void;
   capture: () => BaseCapture;
   front: () => void;
+  setNightMode: (night: boolean) => void;
 };
+
+function captureBackdrop(source: HTMLCanvasElement, night: boolean) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 640;
+  canvas.height = 360;
+  const context = canvas.getContext('2d');
+  if (!context) return source.toDataURL('image/png');
+  const sky = context.createLinearGradient(0, 0, 0, 360);
+  if (night) {
+    sky.addColorStop(0, '#09172a');
+    sky.addColorStop(0.65, '#536579');
+    sky.addColorStop(1, '#9a735c');
+  } else {
+    sky.addColorStop(0, '#6bb8d4');
+    sky.addColorStop(0.65, '#e8c49b');
+    sky.addColorStop(1, '#d4a16b');
+  }
+  context.fillStyle = sky;
+  context.fillRect(0, 0, 640, 360);
+  if (night) {
+    context.fillStyle = 'rgba(255,255,255,.8)';
+    for (const [x, y] of [
+      [70, 44],
+      [156, 82],
+      [242, 35],
+      [348, 70],
+      [452, 36],
+      [570, 91],
+      [520, 122],
+    ]) {
+      context.beginPath();
+      context.arc(x, y, 1.3, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.fillStyle = '#f3dfb5';
+    context.beginPath();
+    context.arc(535, 66, 19, 0, Math.PI * 2);
+    context.fill();
+  } else {
+    context.fillStyle = 'rgba(255,232,180,.9)';
+    context.beginPath();
+    context.arc(535, 66, 25, 0, Math.PI * 2);
+    context.fill();
+  }
+  const ridge = (color: string, points: [number, number][]) => {
+    context.fillStyle = color;
+    context.beginPath();
+    context.moveTo(0, 270);
+    for (const [x, y] of points) context.lineTo(x, y);
+    context.lineTo(640, 300);
+    context.lineTo(640, 360);
+    context.lineTo(0, 360);
+    context.closePath();
+    context.fill();
+  };
+  ridge(night ? '#465064' : '#9b8064', [
+    [0, 252],
+    [88, 205],
+    [148, 233],
+    [246, 181],
+    [310, 222],
+    [414, 174],
+    [488, 226],
+    [574, 190],
+    [640, 232],
+  ]);
+  ridge(night ? '#202b3b' : '#6e5845', [
+    [0, 292],
+    [96, 246],
+    [178, 274],
+    [278, 224],
+    [358, 272],
+    [450, 226],
+    [534, 267],
+    [640, 232],
+  ]);
+  context.fillStyle = night ? '#253041' : '#a67c54';
+  context.fillRect(0, 315, 640, 45);
+  context.drawImage(source, 0, 0, 640, 360);
+  return canvas.toDataURL('image/png');
+}
 
 /** Reuse livemap's real building meshes and bounded decoder, with one on-demand renderer. */
 export default function BaseModelViewer({
   baseId,
   baseName,
+  assetRefresh,
+  immersive = false,
   modelUrl,
   onSettled,
   modelData,
@@ -37,6 +122,8 @@ export default function BaseModelViewer({
 }: {
   baseId: string;
   baseName: string;
+  assetRefresh?: string;
+  immersive?: boolean;
   modelUrl?: string;
   onSettled: () => void;
   modelData?: unknown;
@@ -46,8 +133,11 @@ export default function BaseModelViewer({
   const controlsRef = useRef<Controls | null>(null);
   const baseFacingRef = useRef(0);
   const [status, setStatus] = useState<Status>({ kind: 'loading', message: 'Loading base structure…' });
+  const [fastPreviewRendered, setFastPreviewRendered] = useState(false);
   const [parts, setParts] = useState<BuildingPartSummary[]>([]);
   const [baseFacing, setBaseFacing] = useState(0);
+  const [nightMode, setNightMode] = useState(false);
+  const nightModeRef = useRef(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedPicture, setSavedPicture] = useState('');
@@ -90,13 +180,15 @@ export default function BaseModelViewer({
     const host = hostRef.current;
     if (!host) return;
     const controller = new AbortController();
-    const loadSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]);
-    const library = new BuildingLibrary(loadSignal, { visual: true });
+    const loadSignal = AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]);
+    const library = new BuildingLibrary(loadSignal, { visual: true, assetRefresh });
+    const fastLibrary = new BuildingLibrary(loadSignal, { assetRefresh });
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
     } catch {
       library.dispose();
+      fastLibrary.dispose();
       setStatus({
         kind: 'unavailable',
         message: '3D rendering is unavailable in this browser. Base telemetry and downloads are still available.',
@@ -106,24 +198,50 @@ export default function BaseModelViewer({
     }
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 0.9;
+    renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.domElement.setAttribute('aria-label', `${baseName} 3D model`);
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
     host.append(renderer.domElement);
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#101113');
+    scene.background = null;
     const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 10000);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.maxPolarAngle = Math.PI * 0.49;
-    const light = new THREE.DirectionalLight(0xffffff, 2.5);
-    light.position.set(-100, 180, 100);
-    scene.add(light, new THREE.HemisphereLight(0xf4f4f5, 0x4b4640, 2));
+    const sun = new THREE.DirectionalLight(0xffe5bb, 2.7);
+    sun.position.set(-100, 180, 100);
+    const fill = new THREE.DirectionalLight(0xffd7aa, 0.85);
+    fill.position.set(120, 70, -100);
+    const hemisphere = new THREE.HemisphereLight(0xe8f5ff, 0x927253, 1.8);
+    scene.add(sun, fill, hemisphere);
     let model: THREE.Group | null = null;
+    let hasFastPreview = false;
+    let hasInstalledModel = false;
     let grid: THREE.GridHelper | null = null;
     let bounds: THREE.Box3 | null = null;
     const paint = () => {
       if (!controller.signal.aborted) renderer.render(scene, camera);
+    };
+    const applyNightMode = (night: boolean) => {
+      hemisphere.color.set(night ? '#8094bd' : '#e8f5ff');
+      hemisphere.groundColor.set(night ? '#26314b' : '#927253');
+      hemisphere.intensity = night ? 1.05 : 1.8;
+      sun.color.set(night ? '#9bb5e8' : '#ffe5bb');
+      sun.intensity = night ? 0.85 : 2.7;
+      fill.color.set(night ? '#5772a8' : '#ffd7aa');
+      fill.intensity = night ? 0.42 : 0.85;
+      renderer.toneMappingExposure = night ? 0.72 : 0.9;
+      if (grid) {
+        const materials = Array.isArray(grid.material) ? grid.material : [grid.material];
+        materials.forEach((material) => {
+          if (material instanceof THREE.LineBasicMaterial) {
+            material.color.set(night ? '#51627d' : '#806849');
+            material.opacity = night ? 0.55 : 0.38;
+          }
+        });
+      }
+      paint();
     };
     const fit = () => {
       if (!bounds) return;
@@ -141,6 +259,7 @@ export default function BaseModelViewer({
     };
     controlsRef.current = {
       fit,
+      setNightMode: applyNightMode,
       top: () => {
         const distance = camera.position.distanceTo(controls.target);
         camera.position.copy(controls.target).add(new THREE.Vector3(0, distance, 0.01));
@@ -190,7 +309,7 @@ export default function BaseModelViewer({
           renderer.setPixelRatio(1);
           renderer.setSize(640, 360, false);
           renderer.render(scene, shot);
-          return { view, image: renderer.domElement.toDataURL('image/png') };
+          return { view, image: captureBackdrop(renderer.domElement, nightModeRef.current) };
         } finally {
           if (grid) grid.visible = true;
           renderer.setPixelRatio(oldRatio);
@@ -218,50 +337,62 @@ export default function BaseModelViewer({
     };
     renderer.domElement.addEventListener('webglcontextlost', lost);
     let savedView: BaseView | null = null;
+    setStatus({ kind: 'loading', message: 'Loading base export…', progress: 4 });
     const settings = canSave
       ? fetch(`/api/bases/${encodeURIComponent(baseId)}/preview`, { signal: loadSignal, credentials: 'same-origin' })
           .then(async (response) => (response.ok ? response.json() : null))
           .catch(() => null)
       : Promise.resolve(null);
-    void Promise.all([
-      modelData ? Promise.resolve(modelData) : fetchBaseModelExport(baseId, loadSignal, modelUrl),
-      settings,
-    ])
-      .then(([value, settings]) => {
-        setNeedsPicture(!settings?.hasPicture);
-        const view = baseViewSchema.safeParse(
-          settings?.view ?? (value && typeof value === 'object' && 'frontView' in value ? value.frontView : null),
+    const exportPromise = modelData ? Promise.resolve(modelData) : fetchBaseModelExport(baseId, loadSignal, modelUrl);
+    const progressTimer = window.setInterval(() => {
+      setStatus((current) =>
+        current.kind !== 'loading'
+          ? current
+          : {
+              ...current,
+              progress: Math.min(82, (current.progress ?? 4) + Math.max(0.35, (82 - (current.progress ?? 4)) * 0.04)),
+            },
+      );
+    }, 350);
+    const installModel = (built: Awaited<ReturnType<BuildingLibrary['build']>>) => {
+      if (model) {
+        scene.remove(model);
+        model.traverse((object) => {
+          if (object instanceof THREE.InstancedMesh) object.dispose();
+        });
+      }
+      const originalBounds = new THREE.Box3().setFromObject(built.group);
+      built.group.position.sub(originalBounds.getCenter(new THREE.Vector3()));
+      model = new THREE.Group();
+      model.add(built.group);
+      // Keep a repeatable 0° base heading while preserving every piece's own rotation.
+      model.rotation.y = THREE.MathUtils.degToRad(baseFacingRef.current);
+      model.updateMatrixWorld(true);
+      bounds = new THREE.Box3().setFromObject(model);
+      if (bounds.isEmpty()) throw new Error('Empty model');
+      const center = bounds.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+      bounds.translate(center.clone().negate());
+      scene.add(model);
+      if (!grid) {
+        grid = new THREE.GridHelper(
+          Math.max(10, bounds.getSize(new THREE.Vector3()).x, bounds.getSize(new THREE.Vector3()).z) * 1.5,
+          20,
+          0x626269,
+          0x303035,
         );
-        savedView = view.success ? view.data : null;
-        const source =
-          value && typeof value === 'object' && 'layout' in value ? (value as { layout: unknown }).layout : value;
-        return library.build(source);
-      })
-      .then((built) => {
-        if (controller.signal.aborted) {
-          built.group.traverse((object) => {
-            if (object instanceof THREE.InstancedMesh) object.dispose();
-          });
-          return;
-        }
-        const originalBounds = new THREE.Box3().setFromObject(built.group);
-        built.group.position.sub(originalBounds.getCenter(new THREE.Vector3()));
-        model = new THREE.Group();
-        model.add(built.group);
-        // Keep a repeatable 0° base heading while preserving every piece's own rotation.
-        model.rotation.y = THREE.MathUtils.degToRad(baseFacingRef.current);
-        model.updateMatrixWorld(true);
-        bounds = new THREE.Box3().setFromObject(model);
-        if (bounds.isEmpty()) throw new Error('Empty model');
-        // Export coordinates can have a large origin; centre the viewer on the structure itself.
-        const center = bounds.getCenter(new THREE.Vector3());
-        model.position.sub(center);
-        bounds.translate(center.clone().negate());
-        scene.add(model);
-        const size = bounds.getSize(new THREE.Vector3());
-        grid = new THREE.GridHelper(Math.max(10, size.x, size.z) * 1.5, 20, 0x626269, 0x303035);
-        grid.position.y = bounds.min.y - 0.05;
+        const gridMaterials = Array.isArray(grid.material) ? grid.material : [grid.material];
+        gridMaterials.forEach((material) => {
+          if (material instanceof THREE.LineBasicMaterial) {
+            material.transparent = true;
+            material.depthWrite = false;
+          }
+        });
         scene.add(grid);
+      }
+      grid.position.y = bounds.min.y - 0.05;
+      applyNightMode(nightModeRef.current);
+      if (!hasInstalledModel) {
         fitTerrainCamera(camera, bounds, controls.target);
         fit();
         if (savedView) {
@@ -275,9 +406,68 @@ export default function BaseModelViewer({
           controls.update();
           paint();
         }
+        hasInstalledModel = true;
+      } else {
+        paint();
+      }
+      return built;
+    };
+    void Promise.all([exportPromise, settings])
+      .then(async ([value, settings]) => {
+        setNeedsPicture(!settings?.hasPicture);
+        const view = baseViewSchema.safeParse(
+          settings?.view ?? (value && typeof value === 'object' && 'frontView' in value ? value.frontView : null),
+        );
+        savedView = view.success ? view.data : null;
+        const source =
+          value && typeof value === 'object' && 'layout' in value ? (value as { layout: unknown }).layout : value;
+        const pieceCount =
+          source && typeof source === 'object'
+            ? ((source as { instances?: unknown[] }).instances?.length ?? 0) +
+              ((source as { placeables?: unknown[] }).placeables?.length ?? 0)
+            : 0;
+        if (pieceCount >= 100) {
+          setStatus({ kind: 'loading', message: 'Building fast preview…', progress: 24 });
+          try {
+            const fast = await fastLibrary.build(source);
+            if (controller.signal.aborted) {
+              fast.group.traverse((object) => {
+                if (object instanceof THREE.InstancedMesh) object.dispose();
+              });
+              return null;
+            }
+            installModel(fast);
+            hasFastPreview = true;
+            setFastPreviewRendered(true);
+            setParts(fast.parts);
+            setStatus({ kind: 'loading', message: 'Loading detailed models and textures…', progress: 36 });
+          } catch {
+            // Dev note: get the quick sand-colored scaffolding up before the fancy spice finish.
+          }
+        }
+        if (!controller.signal.aborted)
+          setStatus({
+            kind: 'loading',
+            message: 'Loading detailed models and textures…',
+            progress: hasFastPreview ? 36 : 86,
+          });
+        return library.build(source);
+      })
+      .then((built) => {
+        if (!built) return;
+        if (controller.signal.aborted) {
+          built.group.traverse((object) => {
+            if (object instanceof THREE.InstancedMesh) object.dispose();
+          });
+          return;
+        }
+        installModel(built);
+        hasFastPreview = false;
+        setFastPreviewRendered(false);
         setStatus({
           kind: built.pieces < built.total ? 'partial' : 'ready',
           message: `${built.pieces} of ${built.total} building pieces`,
+          progress: 100,
           pieces: built.pieces,
           total: built.total,
         });
@@ -292,17 +482,30 @@ export default function BaseModelViewer({
               ? 'This base is not available to your account.'
               : error instanceof BaseModelError && error.code === 'too-large'
                 ? 'This export exceeds the preview size limit.'
-                : 'A 3D preview is unavailable for this base. Its export may contain unsupported pieces, or the service may be unavailable.';
-        setStatus({
-          kind: 'unavailable',
-          message,
-          needsSignIn: error instanceof BaseModelError && error.code === 'unauthorized',
-        });
+                : loadSignal.aborted && loadSignal.reason?.name === 'TimeoutError'
+                  ? 'The preview took too long to load. Check your connection and reload it.'
+                  : error instanceof SyntaxError
+                    ? 'The base export could not be read. Reload the preview or export the base again.'
+                    : error instanceof Error && /No supported building pieces/.test(error.message)
+                      ? 'This base has no building pieces in the preview catalog yet.'
+                      : 'The preview could not load its base export or model assets. Check the browser connection and reload.';
+        setFastPreviewRendered(false);
+        setStatus(
+          hasFastPreview
+            ? { kind: 'partial', message: 'Fast preview loaded; detailed models were unavailable.' }
+            : {
+                kind: 'unavailable',
+                message,
+                needsSignIn: error instanceof BaseModelError && error.code === 'unauthorized',
+              },
+        );
       })
       .finally(() => {
+        window.clearInterval(progressTimer);
         if (!controller.signal.aborted) onSettled();
       });
     return () => {
+      window.clearInterval(progressTimer);
       controller.abort();
       observer.disconnect();
       controls.removeEventListener('change', paint);
@@ -313,6 +516,7 @@ export default function BaseModelViewer({
         if (object instanceof THREE.InstancedMesh) object.dispose();
       });
       library.dispose();
+      fastLibrary.dispose();
       if (grid) {
         grid.geometry.dispose();
         (Array.isArray(grid.material) ? grid.material : [grid.material]).forEach((material) => material.dispose());
@@ -321,10 +525,10 @@ export default function BaseModelViewer({
       renderer.forceContextLoss();
       renderer.domElement.remove();
     };
-  }, [baseId, baseName, modelUrl, modelData, canSave, onSettled]);
+  }, [baseId, baseName, assetRefresh, modelUrl, modelData, canSave, onSettled]);
   const ready = status.kind === 'ready' || status.kind === 'partial';
   return (
-    <div className={css.viewer} data-base-preview-state={status.kind}>
+    <div className={`${css.viewer} ${immersive ? css.immersiveViewer : ''}`} data-base-preview-state={status.kind}>
       <div className={css.toolbar}>
         <span>{ready ? status.message : 'Base structure'}</span>
         <div>
@@ -352,6 +556,20 @@ export default function BaseModelViewer({
           </button>
           <button type="button" disabled={!ready} onClick={() => controlsRef.current?.front()}>
             Level front view
+          </button>
+          <button
+            type="button"
+            disabled={!ready}
+            aria-pressed={nightMode}
+            aria-label={nightMode ? 'Switch to daytime lighting' : 'Switch to nighttime lighting'}
+            onClick={() => {
+              const next = !nightModeRef.current;
+              nightModeRef.current = next;
+              setNightMode(next);
+              controlsRef.current?.setNightMode(next);
+            }}
+          >
+            {nightMode ? '☾ Night' : '☼ Day'}
           </button>
           {(canSave || onCapture) && (
             <>
@@ -412,11 +630,28 @@ export default function BaseModelViewer({
           />
         </div>
       )}
-      <div className={css.stage}>
+      <div
+        className={`${css.stage} ${immersive ? css.immersiveStage : ''}`}
+        data-time-of-day={nightMode ? 'night' : 'day'}
+      >
+        <div className={css.farMountains} aria-hidden="true" />
+        <div className={css.nearMountains} aria-hidden="true" />
         <div className={css.canvas} ref={hostRef} />
         {!ready && (
-          <div className={css.overlay} role="status">
+          <div className={`${css.overlay} ${fastPreviewRendered ? css.fastPreviewOverlay : ''}`} role="status">
             <span>{status.message}</span>
+            {status.kind === 'loading' && (
+              <div
+                className={css.progressTrack}
+                role="progressbar"
+                aria-label="Base preview loading progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(status.progress ?? 0)}
+              >
+                <span className={css.progressFill} style={{ width: `${status.progress ?? 0}%` }} />
+              </div>
+            )}
             {status.needsSignIn && <a href="/auth/login">Sign in again</a>}
           </div>
         )}
@@ -426,7 +661,7 @@ export default function BaseModelViewer({
           ? 'Partial preview: some pieces are unsupported or exceed the detail budget.'
           : ready
             ? 'Drag to orbit · Right drag to pan · Scroll to zoom'
-            : 'Only authorized base exports are used for this preview.'}
+            : 'Preparing your base preview…'}
       </p>
       {ready && (
         <details className={css.parts}>

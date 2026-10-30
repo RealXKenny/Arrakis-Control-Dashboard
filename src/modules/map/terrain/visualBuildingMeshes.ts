@@ -52,13 +52,13 @@ export async function loadVisualBuildingParts(bytes: Uint8Array): Promise<Visual
         !data ||
         typeof data.atlas !== 'string' ||
         typeof data.index !== 'string' ||
-        !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.atlas) ||
-        data.atlas.length > 2_000_000 ||
+        !/^data:image\/(?:png|webp);base64,[A-Za-z0-9+/=]+$/.test(data.atlas) ||
+        data.atlas.length > 32_000_000 ||
         !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.index) ||
         (data.normals !== undefined &&
           (typeof data.normals !== 'string' ||
-            !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(data.normals) ||
-            data.normals.length > 2_000_000)) ||
+            !/^data:image\/(?:png|webp);base64,[A-Za-z0-9+/=]+$/.test(data.normals) ||
+            data.normals.length > 32_000_000)) ||
         data.index.length > 100_000 ||
         !object.geometry.getAttribute('uv1') ||
         !object.geometry.getAttribute('uv')

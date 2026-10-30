@@ -1,5 +1,12 @@
 import { clampPercent, formatNumber, getNumber } from '../utils/formatting';
-import { getVehicleName, getVehicleType, getVehicleOwner, isContainerVehicle, isOwnedVehicle } from '../utils/vehicles';
+import {
+  getVehicleImage,
+  getVehicleName,
+  getVehicleType,
+  getVehicleOwner,
+  isContainerVehicle,
+  isOwnedVehicle,
+} from '../utils/vehicles';
 import TelemetryMetric from './TelemetryMetric';
 
 const STORAGE_KEYS = {
@@ -74,6 +81,7 @@ function CargoMetric({ vehicle }) {
 export default function VehicleCard({ vehicle, index, playerName }) {
   const vehicleName = getVehicleName(vehicle, index);
   const vehicleType = getVehicleType(vehicle);
+  const vehicleImage = getVehicleImage(vehicle);
   const owner = getVehicleOwner(vehicle);
   const owned = isOwnedVehicle(vehicle, playerName);
   const container = isContainerVehicle(vehicle);
@@ -103,6 +111,18 @@ export default function VehicleCard({ vehicle, index, playerName }) {
           {relationship}
         </span>
       </div>
+
+      {vehicleImage && (
+        <div className="mb-5 flex h-36 items-center justify-center overflow-hidden rounded-2xl border border-white/5 bg-zinc-950/40 p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={vehicleImage}
+            alt={`${vehicleType} vehicle`}
+            className="h-full w-full object-contain"
+            loading="lazy"
+          />
+        </div>
+      )}
 
       <div className="mb-5 rounded-xl border border-white/5 bg-zinc-950/30 px-3.5 py-3">
         <div className="mb-1 text-[11px] font-medium text-zinc-500">Owner</div>

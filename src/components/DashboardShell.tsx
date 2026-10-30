@@ -14,6 +14,7 @@ export default function DashboardShell({
   actions,
   children,
   onNavigate,
+  immersive = false,
 }: {
   brand: string;
   brandHref?: string;
@@ -22,8 +23,9 @@ export default function DashboardShell({
   actions?: ReactNode;
   children: ReactNode;
   onNavigate?: (href: string) => boolean;
+  immersive?: boolean;
 }) {
-  const items: TopbarItem[] = navigation.map(({ label, href, active }) => ({ label, href, active }));
+  const items: TopbarItem[] = navigation.map(({ label, href, group, active }) => ({ label, href, group, active }));
   return (
     <div className="flex min-h-screen flex-col bg-transparent font-sans text-zinc-200 antialiased">
       <a
@@ -40,17 +42,22 @@ export default function DashboardShell({
         actions={actions}
         onNavigate={onNavigate}
       />
-      <main id="dashboard-content" className="workspace-frame workspace-content">
+      <main
+        id="dashboard-content"
+        className={immersive ? 'min-h-0 flex-1 px-0 py-0' : 'workspace-frame workspace-content'}
+      >
         {children}
       </main>
-      <footer className="border-t border-white/5">
-        <div className="workspace-frame flex flex-wrap items-center justify-between gap-2 py-5 text-xs text-zinc-500">
-          <span>
-            {brand} · <ChangelogDialog />
-          </span>
-          <span>Your community. Connected.</span>
-        </div>
-      </footer>
+      {!immersive && (
+        <footer className="border-t border-white/5">
+          <div className="workspace-frame flex flex-wrap items-center justify-between gap-2 py-5 text-xs text-zinc-500">
+            <span>
+              {brand} · <ChangelogDialog />
+            </span>
+            <span>Your community. Connected.</span>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

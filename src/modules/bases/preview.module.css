@@ -5,6 +5,14 @@
   border-radius: 28px;
   background: var(--theme-surface);
 }
+.immersivePanel {
+  min-height: 100%;
+  margin: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
 .header {
   display: flex;
   align-items: center;
@@ -25,6 +33,16 @@
   font-weight: 600;
   letter-spacing: -0.02em;
 }
+.immersiveHeader {
+  gap: 12px 24px;
+  padding: 10px clamp(16px, 3vw, 48px) 14px;
+}
+.immersiveHeader h2 {
+  font-size: clamp(21px, 2vw, 30px);
+}
+.immersiveHeader p:not(.eyebrow) {
+  margin-top: 4px;
+}
 .header p:not(.eyebrow) {
   margin: 8px 0 0;
   color: var(--theme-muted);
@@ -36,6 +54,12 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+}
+.immersiveActions {
+  gap: 10px;
+}
+.exitPreview {
+  color: #dbeafe !important;
 }
 .actions label {
   display: flex;
@@ -124,14 +148,111 @@
 }
 .stage {
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   height: clamp(340px, 55vh, 650px);
-  background: #101113;
+  background-color: #bd9974;
+  background-image:
+    radial-gradient(
+      circle at 78% 17%,
+      rgb(255 234 180 / 0.9) 0 26px,
+      rgb(255 234 180 / 0.18) 27px 70px,
+      transparent 71px
+    ),
+    linear-gradient(180deg, #70b8d2 0%, #d2c1a8 58%, #c89c6e 100%);
+  transition: background 450ms ease;
+}
+.stage[data-time-of-day='night'] {
+  background-color: #796d69;
+  background-image:
+    radial-gradient(circle at 12% 16%, rgb(255 255 255 / 0.85) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 24% 31%, rgb(255 255 255 / 0.72) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 37% 12%, rgb(255 255 255 / 0.72) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 51% 24%, rgb(255 255 255 / 0.8) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 66% 11%, rgb(255 255 255 / 0.75) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 81% 32%, rgb(255 255 255 / 0.7) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 88% 14%, #f3e6c8 0 14px, rgb(243 230 200 / 0.18) 15px 42px, transparent 43px),
+    linear-gradient(180deg, #09172b 0%, #354962 58%, #9a735b 100%);
+}
+.farMountains,
+.nearMountains {
+  position: absolute;
+  right: -2%;
+  left: -2%;
+  pointer-events: none;
+}
+.farMountains {
+  z-index: 0;
+  bottom: 7%;
+  height: 49%;
+  background: linear-gradient(180deg, #a7957e, #766454);
+  clip-path: polygon(
+    0 70%,
+    7% 57%,
+    13% 68%,
+    23% 40%,
+    30% 64%,
+    41% 32%,
+    48% 62%,
+    59% 29%,
+    67% 58%,
+    76% 37%,
+    83% 65%,
+    92% 42%,
+    100% 61%,
+    100% 100%,
+    0 100%
+  );
+  opacity: 0.82;
+}
+.nearMountains {
+  z-index: 1;
+  bottom: -1%;
+  height: 36%;
+  background: linear-gradient(180deg, #806b57, #594b3e);
+  clip-path: polygon(
+    0 48%,
+    9% 29%,
+    18% 53%,
+    29% 34%,
+    38% 60%,
+    51% 25%,
+    61% 54%,
+    73% 30%,
+    84% 56%,
+    94% 33%,
+    100% 48%,
+    100% 100%,
+    0 100%
+  );
+  opacity: 0.9;
+}
+.stage[data-time-of-day='night'] .farMountains {
+  background: linear-gradient(180deg, #3e4b5e, #293548);
+}
+.stage[data-time-of-day='night'] .nearMountains {
+  background: linear-gradient(180deg, #263247, #182337);
+}
+.immersiveStage {
+  height: clamp(420px, calc(100svh - 335px), 1200px);
+  min-height: 420px;
+  border-block: 1px solid rgb(255 255 255 / 0.08);
 }
 .canvas {
   position: absolute;
   inset: 0;
   overflow: hidden;
   touch-action: none;
+  z-index: 2;
+}
+.immersiveViewer .toolbar {
+  padding: 12px clamp(16px, 3vw, 48px);
+  border-color: rgb(255 255 255 / 0.08);
+  background: rgb(9 13 21 / 0.72);
+  backdrop-filter: blur(18px);
+}
+.immersiveViewer .caption {
+  padding-inline: clamp(16px, 3vw, 48px);
 }
 .overlay {
   position: absolute;
@@ -139,11 +260,89 @@
   display: grid;
   place-content: center;
   padding: 32px;
-  background: rgb(16 17 19 / 0.9);
+  z-index: 3;
+  background: rgb(10 15 23 / 0.42);
+  backdrop-filter: blur(8px);
   color: var(--theme-muted);
   font-size: 13px;
   text-align: center;
   pointer-events: none;
+}
+.fastPreviewOverlay {
+  inset: 12px auto auto 50%;
+  display: flex;
+  width: min(520px, calc(100% - 24px));
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 14px;
+  background: rgb(10 15 23 / 0.78);
+  text-align: left;
+}
+.fastPreviewOverlay .progressTrack {
+  width: min(220px, 34vw);
+  margin: 0;
+  flex: 1;
+}
+.progressTrack {
+  width: min(280px, 70vw);
+  height: 6px;
+  margin: 14px auto 0;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 999px;
+  background: rgb(9 13 21 / 0.7);
+}
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d7a75f, #f4d69a);
+  box-shadow: 0 0 14px rgb(244 214 154 / 0.55);
+  transition: width 250ms ease-out;
+}
+.immersivePlaceholder {
+  position: relative;
+  min-height: min(74vh, 780px);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      circle at 78% 18%,
+      rgb(255 234 180 / 0.9) 0 25px,
+      rgb(255 234 180 / 0.18) 26px 70px,
+      transparent 71px
+    ),
+    linear-gradient(180deg, #70b8d2 0%, #d2c1a8 58%, #c89c6e 100%);
+}
+.immersivePlaceholder::before,
+.immersivePlaceholder::after {
+  position: absolute;
+  right: -2%;
+  bottom: 0;
+  left: -2%;
+  height: 42%;
+  content: '';
+  pointer-events: none;
+}
+.immersivePlaceholder::before {
+  background: #766454;
+  clip-path: polygon(0 60%, 12% 35%, 24% 55%, 40% 22%, 52% 55%, 68% 25%, 81% 58%, 94% 30%, 100% 48%, 100% 100%, 0 100%);
+}
+.immersivePlaceholder::after {
+  z-index: 1;
+  height: 30%;
+  background: #594b3e;
+  clip-path: polygon(0 48%, 16% 25%, 31% 57%, 49% 20%, 65% 54%, 82% 25%, 100% 48%, 100% 100%, 0 100%);
+}
+.immersivePlaceholder > * {
+  position: relative;
+  z-index: 2;
+  color: #f5f1e9;
+  text-shadow: 0 2px 18px rgb(9 13 21 / 0.6);
 }
 .overlay a {
   pointer-events: auto;
@@ -236,6 +435,9 @@
   }
   .stage {
     height: 380px;
+  }
+  .immersiveStage {
+    height: max(460px, calc(100svh - 360px));
   }
   .caption {
     padding-inline: 18px;
