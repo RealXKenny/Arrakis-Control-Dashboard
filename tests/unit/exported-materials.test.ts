@@ -52,7 +52,12 @@ describe('FModel material conversion', () => {
       texture: async (reference: string | undefined) => (reference ? image : null),
     };
     await bindExportedMaterials(document, 'Dune/Meshes/foundation.glb', resolver);
-    const layers = material.getExtras().arrakisLayers;
+    const layers = material.getExtras().arrakisLayers as {
+      count: number;
+      missing: number;
+      index: string;
+      atlas: string;
+    };
     expect(layers.count).toBe(12);
     expect(layers.missing).toBe(0);
     expect(layers.index).toMatch(/^data:image\/png;base64,/);
