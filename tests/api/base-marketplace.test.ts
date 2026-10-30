@@ -1,20 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { requireOwnedBaseExport, publishMarketplaceRecord, listMarketplaceSummaries, getMarketplaceRecord, getSession } =
-  vi.hoisted(() => ({
-    requireOwnedBaseExport: vi.fn(),
-    publishMarketplaceRecord: vi.fn(),
-    listMarketplaceSummaries: vi.fn(),
-    getMarketplaceRecord: vi.fn(),
-    getSession: vi.fn(),
-  }));
-vi.mock('../../src/modules/bases/server/owned-export', () => ({ requireOwnedBaseExport }));
+const {
+  requireOwnedBaseExport,
+  ownedBaseContext,
+  publishMarketplaceRecord,
+  listMarketplaceSummaries,
+  getMarketplaceRecord,
+  getSession,
+} = vi.hoisted(() => ({
+  requireOwnedBaseExport: vi.fn(),
+  ownedBaseContext: vi.fn(),
+  publishMarketplaceRecord: vi.fn(),
+  listMarketplaceSummaries: vi.fn(),
+  getMarketplaceRecord: vi.fn(),
+  getSession: vi.fn(),
+}));
+vi.mock('../../src/modules/bases/server/owned-export', () => ({ requireOwnedBaseExport, ownedBaseContext }));
 vi.mock('../../src/modules/marketplace/server/store', () => ({
   publishMarketplaceRecord,
   listMarketplaceSummaries,
   getMarketplaceRecord,
 }));
 vi.mock('../../src/lib/session-store', () => ({ getSession }));
+vi.mock('../../src/modules/bases/server/preview-settings', async (original) => ({
+  ...(await original()),
+  getPreviewSettings: vi.fn(async () => ({ image: 'data:image/png;base64,AAAA' })),
+}));
 vi.mock('../../src/infrastructure/pages-api', async (importOriginal) => ({
   ...(await importOriginal()),
   isSameOriginRequest: () => true,
@@ -22,6 +33,7 @@ vi.mock('../../src/infrastructure/pages-api', async (importOriginal) => ({
 
 import { POST } from '../../src/modules/marketplace/server/publish';
 import { detail, list } from '../../src/modules/marketplace/server/read';
+import { getPreviewSettings, previewId } from '../../src/modules/bases/server/preview-settings';
 
 const summary = {
   id: 'a'.repeat(24),
@@ -47,6 +59,7 @@ const record = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  ownedBaseContext.mockResolvedValue({ ids: [] });
   getSession.mockResolvedValue({
     user: { id: 'user', username: 'author' },
     guildId: 'guild',
@@ -73,6 +86,45 @@ beforeEach(() => {
 });
 
 describe('Base Marketplace API handlers', () => {
+  it('marks only the current verified owner’s listing editable, including legacy records', async () => {
+    const own = { ...summary, id: previewId('user', '6797') };
+    const other = { ...summary, id: previewId('someone-else', '6797') };
+    listMarketplaceSummaries.mockResolvedValueOnce([own, other]);
+    ownedBaseContext.mockResolvedValueOnce({ ids: ['6797'] });
+    const response = await list({ headers: { cookie: 'dashboard_session=test' } } as never, {} as never);
+    expect(JSON.parse(response.body).listings).toEqual([{ ...own, editableBaseId: '6797' }, other]);
+  });
+
+  it('keeps browsing available without edit permissions when ownership cannot be verified', async () => {
+    ownedBaseContext.mockRejectedValueOnce(new Error('Console unavailable'));
+    const response = await list({ headers: { cookie: 'dashboard_session=test' } } as never, {} as never);
+    expect(JSON.parse(response.body).listings).toEqual([summary]);
+  });
+  it('requires an owner-selected picture before publishing even when called directly', async () => {
+    vi.mocked(getPreviewSettings).mockResolvedValueOnce(null);
+    await expect(POST({ query: { baseId: '6797' }, headers: {} } as never, {} as never)).rejects.toMatchObject({
+      statusCode: 409,
+      code: 'BASE_PICTURE_REQUIRED',
+    });
+    expect(publishMarketplaceRecord).not.toHaveBeenCalled();
+  });
+
+  it('serves saved PNGs only after membership authorization', async () => {
+    getSession.mockResolvedValueOnce(null);
+    await expect(
+      detail(
+        { query: { listingId: summary.id, image: '1' }, headers: { cookie: 'dashboard_session=test' } } as never,
+        {} as never,
+      ),
+    ).rejects.toMatchObject({ statusCode: 401 });
+    const response = await detail(
+      { query: { listingId: summary.id, image: '1' }, headers: { cookie: 'dashboard_session=test' } } as never,
+      {} as never,
+    );
+    expect(response.headers['Content-Type']).toBe('image/png');
+    expect(response.stream.maximumBytes).toBe(1024 * 1024);
+    expect((await response.stream.body.getReader().read()).value).toEqual(Buffer.from('AAAA', 'base64'));
+  });
   it('publishes a server-fetched authorized export without accepting private client JSON', async () => {
     const response = await POST(
       {

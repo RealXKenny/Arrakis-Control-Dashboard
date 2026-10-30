@@ -4,6 +4,19 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.20.3] - 2026-10-29
+
+### Added
+
+- Choose a base front and capture a picture when uploading or sharing, with framing that fits the whole rendered base.
+- Save owned-base front views and pictures in Redis and restore the selected view when reopening the preview.
+- Add **Change picture** to the owner's existing marketplace listings, including older listings, without republishing their layouts or changing publication order.
+
+### Changed
+
+- Replace automatic front detection and generated WebGL thumbnails with owner-selected PNG pictures that load directly on marketplace cards.
+- Require a picture before sharing; existing listings without pictures retain their layouts and prompt their owners to add a picture before marketplace import becomes available.
+
 ## [1.20.2] - 2026-10-28
 
 ### Added

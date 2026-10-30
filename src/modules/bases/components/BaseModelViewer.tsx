@@ -5,6 +5,10 @@ import { BuildingLibrary, type BuildingPartSummary } from '../../map/terrain/bui
 import { fitTerrainCamera } from '../../map/terrain/sceneFraming';
 import { BaseModelError, fetchBaseModelExport } from '../utils/model-export';
 import css from '../preview.module.css';
+import { baseViewSchema, type BaseView } from '../utils/preview-settings';
+import { fitBaseCamera } from '../utils/preview-camera';
+
+export type BaseCapture = { view: BaseView; image: string };
 
 type Status = {
   kind: 'loading' | 'ready' | 'partial' | 'unavailable';
@@ -13,7 +17,14 @@ type Status = {
   total?: number;
   needsSignIn?: boolean;
 };
-type Controls = { fit: () => void; top: () => void; zoom: (factor: number) => void; face: (degrees: number) => void };
+type Controls = {
+  fit: () => void;
+  top: () => void;
+  zoom: (factor: number) => void;
+  face: (degrees: number) => void;
+  capture: () => BaseCapture;
+  front: () => void;
+};
 
 /** Reuse livemap's real building meshes and bounded decoder, with one on-demand renderer. */
 export default function BaseModelViewer({
@@ -21,11 +32,15 @@ export default function BaseModelViewer({
   baseName,
   modelUrl,
   onSettled,
+  modelData,
+  onCapture,
 }: {
   baseId: string;
   baseName: string;
   modelUrl?: string;
   onSettled: () => void;
+  modelData?: unknown;
+  onCapture?: (capture: BaseCapture) => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<Controls | null>(null);
@@ -33,6 +48,44 @@ export default function BaseModelViewer({
   const [status, setStatus] = useState<Status>({ kind: 'loading', message: 'Loading base structure…' });
   const [parts, setParts] = useState<BuildingPartSummary[]>([]);
   const [baseFacing, setBaseFacing] = useState(0);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [savedPicture, setSavedPicture] = useState('');
+  const [needsPicture, setNeedsPicture] = useState(true);
+  const saveController = useRef<AbortController | null>(null);
+  const canSave = !modelUrl && !modelData;
+  useEffect(() => () => saveController.current?.abort(), []);
+  async function save() {
+    if (!controlsRef.current || saving) return;
+    const capture = controlsRef.current.capture();
+    if (onCapture && capture) {
+      onCapture(capture);
+      setSaveMessage('Front and picture selected.');
+      return;
+    }
+    if (!canSave) return;
+    const controller = new AbortController();
+    saveController.current = controller;
+    setSaving(true);
+    setSaveMessage('Saving…');
+    try {
+      const response = await fetch(`/api/bases/${encodeURIComponent(baseId)}/preview`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(capture),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]),
+      });
+      if (!response.ok) throw new Error('Unable to save');
+      setSavedPicture(capture.image);
+      setNeedsPicture(false);
+      setSaveMessage('Front and picture saved for this base. Shared cards will use this picture.');
+    } catch {
+      if (!controller.signal.aborted) setSaveMessage('Could not save this view. Please try again.');
+    } finally {
+      if (!controller.signal.aborted) setSaving(false);
+    }
+  }
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
@@ -74,7 +127,11 @@ export default function BaseModelViewer({
     };
     const fit = () => {
       if (!bounds) return;
-      const distance = fitTerrainCamera(camera, bounds, controls.target);
+      if (model) {
+        model.updateMatrixWorld(true);
+        bounds = new THREE.Box3().setFromObject(model);
+      }
+      const distance = fitBaseCamera(camera, bounds, controls.target);
       if (distance !== null) {
         controls.minDistance = Math.max(0.1, distance / 100);
         controls.maxDistance = distance * 6;
@@ -105,6 +162,42 @@ export default function BaseModelViewer({
           paint();
         }
       },
+      front: () => {
+        const distance = Math.max(camera.position.distanceTo(controls.target), 1);
+        const back = camera.position.clone().sub(controls.target).setY(0).normalize();
+        if (back.lengthSq() < 0.01) back.set(0, 0, 1);
+        camera.position.copy(controls.target).addScaledVector(back, distance);
+        fit();
+      },
+      capture: () => {
+        if (!model || !bounds) throw new Error('Preview is not ready');
+        model.updateMatrixWorld(true);
+        const captureBounds = new THREE.Box3().setFromObject(model);
+        const scale = Math.max(captureBounds.getSize(new THREE.Vector3()).length(), 1);
+        const shot = camera.clone();
+        shot.aspect = 640 / 360;
+        const target = controls.target.clone();
+        fitBaseCamera(shot, captureBounds, target);
+        const view: BaseView = {
+          position: shot.position.clone().divideScalar(scale).toArray(),
+          target: target.divideScalar(scale).toArray(),
+          facing: baseFacingRef.current,
+        };
+        const oldSize = renderer.getSize(new THREE.Vector2());
+        const oldRatio = renderer.getPixelRatio();
+        if (grid) grid.visible = false;
+        try {
+          renderer.setPixelRatio(1);
+          renderer.setSize(640, 360, false);
+          renderer.render(scene, shot);
+          return { view, image: renderer.domElement.toDataURL('image/png') };
+        } finally {
+          if (grid) grid.visible = true;
+          renderer.setPixelRatio(oldRatio);
+          renderer.setSize(oldSize.x, oldSize.y, false);
+          paint();
+        }
+      },
     };
     const resize = () => {
       if (!host.clientWidth || !host.clientHeight || controller.signal.aborted) return;
@@ -124,8 +217,22 @@ export default function BaseModelViewer({
       onSettled();
     };
     renderer.domElement.addEventListener('webglcontextlost', lost);
-    void fetchBaseModelExport(baseId, loadSignal, modelUrl)
-      .then((value) => {
+    let savedView: BaseView | null = null;
+    const settings = canSave
+      ? fetch(`/api/bases/${encodeURIComponent(baseId)}/preview`, { signal: loadSignal, credentials: 'same-origin' })
+          .then(async (response) => (response.ok ? response.json() : null))
+          .catch(() => null)
+      : Promise.resolve(null);
+    void Promise.all([
+      modelData ? Promise.resolve(modelData) : fetchBaseModelExport(baseId, loadSignal, modelUrl),
+      settings,
+    ])
+      .then(([value, settings]) => {
+        setNeedsPicture(!settings?.hasPicture);
+        const view = baseViewSchema.safeParse(
+          settings?.view ?? (value && typeof value === 'object' && 'frontView' in value ? value.frontView : null),
+        );
+        savedView = view.success ? view.data : null;
         const source =
           value && typeof value === 'object' && 'layout' in value ? (value as { layout: unknown }).layout : value;
         return library.build(source);
@@ -137,7 +244,10 @@ export default function BaseModelViewer({
           });
           return;
         }
-        model = built.group;
+        const originalBounds = new THREE.Box3().setFromObject(built.group);
+        built.group.position.sub(originalBounds.getCenter(new THREE.Vector3()));
+        model = new THREE.Group();
+        model.add(built.group);
         // Keep a repeatable 0° base heading while preserving every piece's own rotation.
         model.rotation.y = THREE.MathUtils.degToRad(baseFacingRef.current);
         model.updateMatrixWorld(true);
@@ -152,7 +262,19 @@ export default function BaseModelViewer({
         grid = new THREE.GridHelper(Math.max(10, size.x, size.z) * 1.5, 20, 0x626269, 0x303035);
         grid.position.y = bounds.min.y - 0.05;
         scene.add(grid);
+        fitTerrainCamera(camera, bounds, controls.target);
         fit();
+        if (savedView) {
+          baseFacingRef.current = savedView.facing;
+          setBaseFacing(savedView.facing);
+          model.rotation.y = THREE.MathUtils.degToRad(savedView.facing);
+          model.updateMatrixWorld(true);
+          const scale = Math.max(new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).length(), 1);
+          camera.position.set(...savedView.position).multiplyScalar(scale);
+          controls.target.set(...savedView.target).multiplyScalar(scale);
+          controls.update();
+          paint();
+        }
         setStatus({
           kind: built.pieces < built.total ? 'partial' : 'ready',
           message: `${built.pieces} of ${built.total} building pieces`,
@@ -199,7 +321,7 @@ export default function BaseModelViewer({
       renderer.forceContextLoss();
       renderer.domElement.remove();
     };
-  }, [baseId, baseName, modelUrl, onSettled]);
+  }, [baseId, baseName, modelUrl, modelData, canSave, onSettled]);
   const ready = status.kind === 'ready' || status.kind === 'partial';
   return (
     <div className={css.viewer} data-base-preview-state={status.kind}>
@@ -223,11 +345,21 @@ export default function BaseModelViewer({
             +
           </button>
           <button type="button" disabled={!ready} onClick={() => controlsRef.current?.fit()}>
-            Fit base
+            Fit whole base
           </button>
           <button type="button" disabled={!ready} onClick={() => controlsRef.current?.top()}>
             Top view
           </button>
+          <button type="button" disabled={!ready} onClick={() => controlsRef.current?.front()}>
+            Level front view
+          </button>
+          {(canSave || onCapture) && (
+            <>
+              <button type="button" disabled={!ready || saving} onClick={() => void save()}>
+                {onCapture ? 'Use this front and picture' : 'Take picture & save front'}
+              </button>
+            </>
+          )}
           <label className={css.facingControl}>
             <span>Base facing</span>
             <input
@@ -258,6 +390,28 @@ export default function BaseModelViewer({
           </button>
         </div>
       </div>
+      {saveMessage && (
+        <p className={css.caption} role="status">
+          {saveMessage}
+        </p>
+      )}
+      {canSave && !onCapture && needsPicture && (
+        <p className={css.caption} role="status">
+          Picture required: choose the front and take a picture to share this base or update its existing listing.
+        </p>
+      )}
+      {savedPicture && (
+        <div className={css.caption}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={savedPicture}
+            alt={`${baseName} saved front picture`}
+            width={640}
+            height={360}
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
+        </div>
+      )}
       <div className={css.stage}>
         <div className={css.canvas} ref={hostRef} />
         {!ready && (

@@ -7,6 +7,7 @@ import { requireOwnedBaseExport } from '../../bases/server/owned-export';
 import { record as objectRecord } from '../../portal/utils/inventory';
 import { createMarketplaceRecord } from '../schema';
 import { publishMarketplaceRecord } from './store';
+import { getPreviewSettings } from '../../bases/server/preview-settings';
 
 function displayText(value: unknown, fallback: string, maximum: number) {
   const normalized = typeof value === 'string' ? value.trim() : '';
@@ -18,6 +19,9 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
   const { blueprint, linkedPlayer, session } = await requireOwnedBaseExport(req, res);
   const baseId = String(req.query.baseId);
   const id = createHash('sha256').update(`${session.user.id}:${baseId}`).digest('hex').slice(0, 24);
+  const preview = await getPreviewSettings(id);
+  if (!preview?.image)
+    throw new AppError('Choose a front and take a base picture before sharing.', 409, 'BASE_PICTURE_REQUIRED', true);
   const metadata = objectRecord(blueprint);
   const record = createMarketplaceRecord({
     id,

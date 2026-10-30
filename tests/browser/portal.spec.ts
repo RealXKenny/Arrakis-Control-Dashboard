@@ -857,17 +857,23 @@ test('blueprint import handles uncertain delivery and success without duplicate 
     name: 'test-base.json',
     mimeType: 'application/json',
     buffer: Buffer.from(
-      JSON.stringify({ instances: [{ instance_id: 1, building_type: 'Foundation', x: 0, y: 0, z: 0, rotation: 0 }] }),
+      JSON.stringify({
+        instances: [{ instance_id: 1, building_type: 'Atreides_Outpost_Foundation', x: 0, y: 0, z: 0, rotation: 0 }],
+      }),
     ),
   });
   await expect(page.getByText('1 building pieces · 0 placeables')).toBeVisible();
   const action = page.getByRole('button', { name: 'Import to my character', exact: true });
+  await expect(action).toBeDisabled();
+  const choose = page.getByRole('button', { name: 'Use this front and picture', exact: true });
+  await expect(choose).toBeEnabled({ timeout: 30000 });
+  await choose.click();
   await action.click();
-  await expect(page.getByRole('status')).toContainText('Import could not be confirmed');
+  await expect(page.getByRole('status').filter({ hasText: 'Import could not be confirmed' })).toBeVisible();
   await expect(page.getByText('fixture-private-provider-error')).toHaveCount(0);
   expect(requests).toHaveLength(1);
   await action.click();
-  await expect(page.getByRole('status')).toContainText('Blueprint delivered');
+  await expect(page.getByText('Blueprint delivered to your backpack.', { exact: true })).toBeVisible();
   await expect(action).toBeDisabled();
   expect(requests).toHaveLength(2);
   expect(requests[1].requestId).toBe(requests[0].requestId);
@@ -1479,6 +1485,7 @@ test('owned bases publish to the marketplace and open 3D listing previews', asyn
     pieceCount: 2,
     placeableCount: 1,
     publishedAt: '2026-10-27T12:00:00.000Z',
+    previewRevision: 'd'.repeat(24),
   };
   const record = {
     summary,
@@ -1495,7 +1502,17 @@ test('owned bases publish to the marketplace and open 3D listing previews', asyn
   await page.route('**/api/base-marketplace', (route) =>
     route.fulfill({ json: { ok: true, listings: [summary], total: 1 } }),
   );
-  await page.route(`**/api/base-marketplace/${id}`, (route) => route.fulfill({ json: record }));
+  let picture = '';
+  await page.route('**/api/bases/0/export', (route) => route.fulfill({ json: record.layout }));
+  await page.route('**/api/bases/0/preview', (route) => {
+    if (route.request().method() === 'POST') picture = route.request().postDataJSON().image;
+    return route.fulfill({ json: { ok: true, view: null, hasPicture: Boolean(picture) } });
+  });
+  await page.route(`**/api/base-marketplace/${id}*`, (route) =>
+    new URL(route.request().url()).searchParams.get('image') === '1'
+      ? route.fulfill({ contentType: 'image/png', body: Buffer.from(picture.split(',')[1], 'base64') })
+      : route.fulfill({ json: record }),
+  );
   let imports = 0;
   await page.route('**/api/bases/import', (route) => {
     imports++;
@@ -1511,6 +1528,13 @@ test('owned bases publish to the marketplace and open 3D listing previews', asyn
   await page.goto('/portal?view=bases');
   const base = page.locator('article').filter({ hasText: 'Stronghold 1' });
   await base.getByRole('button', { name: 'Share Base', exact: true }).click();
+  await expect(base.getByRole('heading', { name: 'Choose the front of your base' })).toBeVisible();
+  await expect(base.getByRole('button', { name: 'Publish base with this picture', exact: true })).toBeDisabled();
+  await expect(base.getByRole('button', { name: 'Use this front and picture', exact: true })).toBeEnabled({
+    timeout: 30000,
+  });
+  await base.getByRole('button', { name: 'Use this front and picture', exact: true }).click();
+  await base.getByRole('button', { name: 'Publish base with this picture', exact: true }).click();
   await base.getByRole('link', { name: 'View listing ↗' }).click();
   await expect(page.getByRole('heading', { name: 'Base Marketplace', exact: true }).first()).toBeVisible();
   await expect(page.getByText('Shared Outpost', { exact: true })).toBeVisible();
@@ -1522,7 +1546,7 @@ test('owned bases publish to the marketplace and open 3D listing previews', asyn
   await expect(page.getByText('No matching bases', { exact: true })).toBeVisible();
   await page.getByLabel('Base size').selectOption('small');
   await page.locator('article').filter({ hasText: 'Shared Outpost' }).scrollIntoViewIfNeeded();
-  await expect(page.getByRole('img', { name: 'Shared Outpost straight-on base view' })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByRole('img', { name: 'Shared Outpost front picture' })).toBeVisible({ timeout: 30000 });
   await page.screenshot({ path: 'test-results/base-marketplace.png', fullPage: true });
   await page.getByRole('button', { name: 'Import to my character', exact: true }).click();
   await expect(page.getByText('Delivered to your backpack as a Solido tool.', { exact: true })).toBeVisible();
@@ -1599,6 +1623,177 @@ test('Bases loads owned 3D previews on demand and disposes them when switching b
   await preview.getByRole('button', { name: 'Close preview', exact: true }).click();
   await expect(preview.locator('canvas')).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test('old marketplace listings require an owner picture without generating a thumbnail', async ({ page }) => {
+  const summary = {
+    id: 'e'.repeat(24),
+    title: 'Old base',
+    author: 'Owner',
+    baseType: 'Sub-Fief',
+    map: 'Hagga Basin',
+    pieceCount: 1,
+    placeableCount: 0,
+    publishedAt: '2026-10-27T12:00:00.000Z',
+  };
+  let modelReads = 0;
+  await page.route('**/api/base-marketplace', (route) =>
+    route.fulfill({ json: { ok: true, listings: [summary], total: 1 } }),
+  );
+  await page.route(`**/api/base-marketplace/${summary.id}*`, (route) => {
+    modelReads++;
+    return route.abort();
+  });
+  await page.goto('/portal?view=base-market');
+  await expect(
+    page.getByText('Picture required — the owner must choose a front and take a picture in My bases.', { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Import to my character', exact: true })).toHaveCount(0);
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(modelReads).toBe(0);
+  await expect(page.getByRole('button', { name: 'Change picture', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'My bases', exact: true }).last()).toHaveAttribute(
+    'href',
+    '/portal?view=bases',
+  );
+});
+
+test('owners replace an old marketplace picture without publishing or uploading the base again', async ({ page }) => {
+  const id = 'f'.repeat(24);
+  const revision = 'd'.repeat(24);
+  const summary = {
+    id,
+    editableBaseId: '0',
+    title: 'Existing fortress',
+    author: 'Owner',
+    baseType: 'Sub-Fief',
+    map: 'Hagga Basin',
+    pieceCount: 1,
+    placeableCount: 0,
+    publishedAt: '2026-10-27T12:00:00.000Z',
+  };
+  const layout = { instances: [{ building_type: 'Atreides_Outpost_Foundation', x: 0, y: 0, z: 0 }], placeables: [] };
+  let image = '';
+  let saves = 0;
+  let uploads = 0;
+  await page.route('**/api/base-marketplace', (route) =>
+    route.fulfill({ json: { ok: true, listings: [summary], total: 1 } }),
+  );
+  await page.route(`**/api/base-marketplace/${id}*`, (route) =>
+    new URL(route.request().url()).searchParams.get('image') === '1'
+      ? route.fulfill({ contentType: 'image/png', body: Buffer.from(image.split(',')[1], 'base64') })
+      : route.fulfill({ json: { summary, layout } }),
+  );
+  await page.route('**/api/bases/0/marketplace', (route) => {
+    uploads++;
+    return route.abort();
+  });
+  await page.route('**/api/bases/import', (route) => {
+    uploads++;
+    return route.abort();
+  });
+  await page.route('**/api/bases/0/export', (route) => {
+    uploads++;
+    return route.abort();
+  });
+  await page.route('**/api/bases/0/preview', (route) => {
+    expect(route.request().method()).toBe('POST');
+    const body = route.request().postDataJSON();
+    expect(body.view.facing).toBe(91);
+    image = body.image;
+    saves++;
+    return saves === 1
+      ? route.fulfill({ status: 403, json: { error: 'Not authorized' } })
+      : route.fulfill({ json: { ok: true, revision } });
+  });
+  await page.goto('/portal?view=base-market');
+  await page.getByRole('button', { name: 'Change picture', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Existing fortress change picture', exact: true });
+  const save = dialog.getByRole('button', { name: 'Save picture', exact: true });
+  await expect(save).toBeDisabled();
+  await expect(dialog.getByRole('button', { name: 'Use this front and picture', exact: true })).toBeEnabled({
+    timeout: 30000,
+  });
+  await dialog.getByLabel('Base facing degrees').fill('91');
+  await dialog.getByRole('button', { name: 'Level front view', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Use this front and picture', exact: true }).click();
+  await save.click();
+  await expect(dialog.getByRole('alert')).toHaveText('Could not save the picture. Please try again.');
+  await save.click();
+  await expect(dialog).toHaveCount(0);
+  const picture = page.getByRole('img', { name: 'Existing fortress front picture', exact: true });
+  await expect(picture).toHaveAttribute('src', `/api/base-marketplace/${id}?image=1&v=${revision}`);
+  await expect.poll(() => picture.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(640);
+  await expect(page.locator('time')).toHaveAttribute('datetime', summary.publishedAt);
+  expect(uploads).toBe(0);
+  expect(saves).toBe(2);
+  await expect(page.getByRole('button', { name: 'Import to my character', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/marketplace-change-picture.png', fullPage: true });
+});
+
+test('saved front pictures survive reload and marketplace cards skip 3D downloads', async ({ page }) => {
+  const id = 'b'.repeat(24);
+  let saved: { view: { facing: number }; image: string } | null = null;
+  let modelReads = 0;
+  const layout = {
+    instances: [
+      { building_type: 'Atreides_Outpost_Foundation', x: -1024, y: 0, z: 0 },
+      { building_type: 'Atreides_Outpost_Foundation', x: 1024, y: 0, z: 0 },
+      { building_type: 'Atreides_Outpost_Wall_01', x: 1024, y: 0, z: 384 },
+    ],
+    placeables: [],
+  };
+  await page.route('**/api/bases/*/export', (route) => route.fulfill({ json: layout }));
+  await page.route('**/api/bases/*/preview', (route) => {
+    if (route.request().method() === 'POST') saved = route.request().postDataJSON();
+    return route.fulfill({ json: { ok: true, view: saved?.view ?? null } });
+  });
+  await page.goto('/portal?view=bases');
+  const preview = page.getByRole('region', { name: '3D base preview', exact: true });
+  await preview.getByRole('button', { name: 'Load 3D preview', exact: true }).click();
+  await expect(preview.getByRole('button', { name: 'Take picture & save front', exact: true })).toBeEnabled({
+    timeout: 30000,
+  });
+  await preview.getByLabel('Base facing degrees').fill('73');
+  await preview.getByRole('button', { name: 'Fit whole base', exact: true }).click();
+  await preview.getByRole('button', { name: 'Take picture & save front', exact: true }).click();
+  await expect(
+    preview.getByText('Front and picture saved for this base. Shared cards will use this picture.', { exact: true }),
+  ).toBeVisible();
+  expect(saved?.view.facing).toBe(73);
+  expect(saved?.image).toMatch(/^data:image\/png;base64,/);
+  await preview.getByRole('button', { name: 'Reload preview', exact: true }).click();
+  await expect(preview.getByLabel('Base facing degrees')).toHaveValue('73', { timeout: 30000 });
+  await page.screenshot({ path: 'test-results/saved-base-front.png', fullPage: true });
+  const summary = {
+    id,
+    title: 'Photographed base',
+    author: 'Owner',
+    baseType: 'Sub-Fief',
+    map: 'Hagga Basin',
+    pieceCount: 3,
+    placeableCount: 0,
+    publishedAt: '2026-10-27T12:00:00.000Z',
+    previewRevision: 'c'.repeat(24),
+  };
+  await page.route('**/api/base-marketplace', (route) =>
+    route.fulfill({ json: { ok: true, listings: [summary], total: 1 } }),
+  );
+  await page.route(`**/api/base-marketplace/${id}*`, (route) => {
+    if (new URL(route.request().url()).searchParams.get('image') === '1')
+      return route.fulfill({ contentType: 'image/png', body: Buffer.from(saved!.image.split(',')[1], 'base64') });
+    modelReads++;
+    return route.fulfill({ json: { summary, layout } });
+  });
+  await page.goto('/portal?view=base-market');
+  const image = page.getByRole('img', { name: 'Photographed base front picture' });
+  await expect(image).toBeVisible();
+  await expect
+    .poll(() => image.evaluate((element: HTMLImageElement) => [element.naturalWidth, element.naturalHeight]))
+    .toEqual([640, 360]);
+  expect(modelReads).toBe(0);
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/saved-base-marketplace.png', fullPage: true });
 });
 
 test('base preview hides private export errors and recovers on reload', async ({ page }) => {
