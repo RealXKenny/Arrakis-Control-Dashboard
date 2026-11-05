@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   BuildingLibrary,
   decodeBuildingMesh,
+  decodeBuildingUv,
   parseModelExport,
   resolveBuildingRow,
   toSceneMatrix,
@@ -22,8 +23,13 @@ import {
 } from '../../src/modules/map/terrain/ueTransform';
 import { createVehicleModel, disposeVehicleModels, vehicleKind } from '../../src/modules/map/terrain/vehicleModels';
 import { niceScale } from '../../src/modules/map/terrain/mapPresentation';
-const catalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/catalog.json.gz')).toString());
-const visualCatalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/visual-catalog.json.gz')).toString());
+const catalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/native/catalog.json.gz')).toString());
+const clientCatalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/client/catalog.json.gz')).toString());
+const readModelAsset = (url: string) => {
+  const relative = String(url).split('/api/assets/')[1]?.split('?')[0];
+  if (!relative?.startsWith('models/')) throw new Error('Unexpected model asset URL');
+  return readFileSync(`src/assets/${relative}`);
+};
 afterEach(() => vi.unstubAllGlobals());
 describe('map models', () => {
   it('keeps visual pack axes identical to the native decoder without mirroring handed pieces', () => {
@@ -60,11 +66,66 @@ describe('map models', () => {
     expect(visualFallbackKind('MI_Prop_Lights')).toBe('light');
     expect(visualFallbackKind('MI_PB_Light_Blue')).toBeNull();
   });
+  it('decodes every client mesh and UV channel within the preview limits', () => {
+    const packs = new Map<number, Buffer>();
+    for (const mesh of clientCatalog.meshes) {
+      if (!packs.has(mesh.pack))
+        packs.set(mesh.pack, gunzipSync(readFileSync(`src/assets/models/client/client-meshes-${mesh.pack}.bin.gz`)));
+      const data = packs.get(mesh.pack)!;
+      expect(data.byteLength).toBeLessThanOrEqual(64 * 1024 * 1024);
+      const geometry = decodeBuildingMesh(
+        Uint8Array.from(data.subarray(mesh.offset, mesh.offset + mesh.length)).buffer,
+      );
+      expect(geometry.index!.count / 3).toBe(mesh.tris);
+      if (mesh.texture) {
+        expect(clientCatalog.textures[mesh.texture]).toBeDefined();
+        const uv = decodeBuildingUv(
+          Uint8Array.from(data.subarray(mesh.offset + mesh.uv, mesh.offset + mesh.uv + mesh.uvLength)).buffer,
+          geometry.getAttribute('position').count,
+        );
+        expect(uv.every(Number.isFinite)).toBe(true);
+      }
+      geometry.dispose();
+    }
+    expect(() => decodeBuildingUv(new ArrayBuffer(12), 2)).toThrow();
+  });
+  it('maps client glass panes and keeps rows aligned with the native template list', () => {
+    expect(Object.keys(clientCatalog.rows).sort()).toEqual(Object.keys(catalog.rows).sort());
+    const window = clientCatalog.rows.Atreides_Outpost_Window_02;
+    expect(clientCatalog.meshes[window.mesh].path).toMatch(/SM_Env_PB_Atre_Outpost_Window_02$/);
+    const [pane] = window.accessories;
+    expect(pane).not.toBe(window.mesh);
+    expect(clientCatalog.meshes[pane].materials.map(visualFallbackKind).every((kind: string) => kind === 'glass')).toBe(
+      true,
+    );
+    expect(clientCatalog.rows.MTX_Neut_DesertMechanic_Door_Placeable.mesh).toBeGreaterThanOrEqual(0);
+  });
+  it('renders client window panes with the translucent glass material', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => new Response(new Uint8Array(readModelAsset(url)))),
+    );
+    const library = new BuildingLibrary(undefined, { visual: true });
+    const built = await library.build({
+      instances: [{ building_type: 'Atreides_Outpost_Window_02', x: 0, y: 0, z: 0 }],
+    });
+    expect(built.pieces).toBe(1);
+    const materials = built.group.children.map(
+      (object) => (object as THREE.InstancedMesh).material as THREE.MeshStandardMaterial,
+    );
+    expect(materials).toHaveLength(2);
+    expect(materials.filter((material) => material.transparent && material.opacity < 0.5)).toHaveLength(1);
+    for (const child of built.group.children) (child as THREE.InstancedMesh).dispose();
+    library.dispose();
+  });
   it('decodes every bundled mesh without invalid indices or nonfinite positions', () => {
     const packs = new Map<number, Buffer>();
     for (const mesh of catalog.meshes) {
       if (!packs.has(mesh.pack))
-        packs.set(mesh.pack, gunzipSync(readFileSync(`src/assets/models/meshpack-${mesh.pack}.bin.gz`)));
+        packs.set(
+          mesh.pack,
+          gunzipSync(readFileSync(`src/assets/models/native/meshpacks/meshpack-${mesh.pack}.bin.gz`)),
+        );
       const data = packs.get(mesh.pack)!;
       const geometry = decodeBuildingMesh(
         Uint8Array.from(data.subarray(mesh.offset, mesh.offset + mesh.length)).buffer,
@@ -82,9 +143,7 @@ describe('map models', () => {
     expect(direction.z).toBeCloseTo(1);
   });
   it('builds real pieces in batches, shares geometry, and reports unsupported pieces', async () => {
-    const fetcher = vi.fn(
-      async (url: string) => new Response(new Uint8Array(readFileSync(`src/assets/models/${url.split('/').at(-1)}`))),
-    );
+    const fetcher = vi.fn(async (url: string) => new Response(new Uint8Array(readModelAsset(url))));
     vi.stubGlobal('fetch', fetcher);
     const library = new BuildingLibrary();
     const piece = { building_type: 'Atreides_Outpost_Foundation', x: 500, y: 0, z: 0, rotation: 90 };
@@ -108,10 +167,8 @@ describe('map models', () => {
     expect(parseModelExport({ instances: [piece], owner_secret: 'excluded' })).not.toHaveProperty('owner_secret');
     expect(() => parseModelExport({ instances: [{ ...piece, x: Infinity }] })).toThrow();
   });
-  it('uses original shield proxy packs in the visual preview', async () => {
-    const fetcher = vi.fn(
-      async (url: string) => new Response(new Uint8Array(readFileSync('src/assets/models/' + url.split('/').at(-1)))),
-    );
+  it('uses the client shield proxy meshes in the detailed preview', async () => {
+    const fetcher = vi.fn(async (url: string) => new Response(new Uint8Array(readModelAsset(url))));
     vi.stubGlobal('fetch', fetcher);
     const library = new BuildingLibrary(undefined, { visual: true });
     const result = await library.build({
@@ -122,9 +179,11 @@ describe('map models', () => {
     });
     expect(result.pieces).toBe(2);
     expect(result.group.children).toHaveLength(2);
-    expect(fetcher.mock.calls.map(([url]) => String(url))).toContain('/api/assets/models/meshpack-8.bin.gz');
-    const verticalMesh = visualCatalog.rows.Choam_PentashieldSurfaceVertical_Placeable.mesh;
-    const horizontalMesh = visualCatalog.rows.Choam_PentashieldSurfaceHorizontal_Placeable.mesh;
+    expect(fetcher.mock.calls.map(([url]) => String(url))).toContain(
+      `/api/assets/models/client/client-meshes-${clientCatalog.meshes[clientCatalog.rows.Choam_PentashieldSurfaceVertical_Placeable.mesh].pack}.bin.gz`,
+    );
+    const verticalMesh = clientCatalog.rows.Choam_PentashieldSurfaceVertical_Placeable.mesh;
+    const horizontalMesh = clientCatalog.rows.Choam_PentashieldSurfaceHorizontal_Placeable.mesh;
     const vertical = result.group.children.find((object) => object.name.startsWith(`building-mesh-${verticalMesh}:`));
     const horizontal = result.group.children.find((object) =>
       object.name.startsWith(`building-mesh-${horizontalMesh}:`),
@@ -155,9 +214,7 @@ describe('map models', () => {
   it('uses exact item meshes, preserves furniture rotations, and sizes exported shields', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(
-        async (url: string) => new Response(new Uint8Array(readFileSync(`src/assets/models/${url.split('/').at(-1)}`))),
-      ),
+      vi.fn(async (url: string) => new Response(new Uint8Array(readModelAsset(url)))),
     );
     const library = new BuildingLibrary();
     const built = await library.build({

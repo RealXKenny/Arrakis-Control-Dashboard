@@ -92,7 +92,7 @@ export default function BasePreview({
                   return {
                     id: selected.id,
                     revision,
-                    ...(current ? { assetRefresh: `${Date.now()}-${revision}` } : {}),
+                    assetRefresh: `${Date.now()}-${revision}`,
                   };
                 });
               }

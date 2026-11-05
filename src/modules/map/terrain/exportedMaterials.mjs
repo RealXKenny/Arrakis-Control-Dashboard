@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
+import { TGALoader } from 'three/addons/loaders/TGALoader.js';
 
 /** Reconstruct the blue channel of Unreal's alpha/green packed normal maps. */
 export function unpackUnrealNormal(pixels) {
@@ -45,8 +46,9 @@ async function tintLayerTexture(bytes, tint) {
   return sharp(data, { raw: info }).png().toBuffer();
 }
 
-export async function createMaterialResolver(sourceRoot, metadataRoot, { maxTextureSize = 2048 } = {}) {
+export async function createMaterialResolver(sourceRoot, metadataRoot, { maxTextureSize = 4096 } = {}) {
   const root = path.resolve(sourceRoot);
+  const textureRoots = [root, ...(metadataRoot ? [path.resolve(metadataRoot)] : [])];
   const index = new Map();
   async function visit(directory) {
     for (const item of await fs.readdir(directory, { withFileTypes: true })) {
@@ -69,22 +71,48 @@ export async function createMaterialResolver(sourceRoot, metadataRoot, { maxText
       /(?:\.\.|\/dev\/|materialpreview|checker|default|\/testing\/)/i.test(reference)
     )
       return null;
-    const relative = reference.slice(6).split('.')[0] + '.png';
-    const file = path.resolve(root, relative);
-    if (!file.startsWith(root + path.sep)) return null;
-    const cacheKey = `${file}:${maxSize}`;
+    const relative = reference.slice(6).split('.')[0];
+    const files = textureRoots.flatMap((textureRoot) =>
+      ['.png', '.tga'].map((extension) => path.resolve(textureRoot, relative + extension)),
+    );
+    if (files.some((file) => !textureRoots.some((textureRoot) => file.startsWith(textureRoot + path.sep)))) return null;
+    const cacheKey = `${files.join('|')}:${maxSize}`;
     if (!images.has(cacheKey))
       images.set(
         cacheKey,
         (async () => {
           try {
-            if ((await fs.stat(file)).size > MAX_TEXTURE_BYTES) return null;
+            let file = null;
+            for (const candidate of files) {
+              if (
+                await fs.stat(candidate).then(
+                  () => true,
+                  () => false,
+                )
+              ) {
+                file = candidate;
+                break;
+              }
+            }
+            if (!file || (await fs.stat(file)).size > MAX_TEXTURE_BYTES) return null;
+            let input = file;
+            if (/\.tga$/i.test(file)) {
+              const encoded = await fs.readFile(file);
+              const parsed = new TGALoader().parse(
+                encoded.buffer.slice(encoded.byteOffset, encoded.byteOffset + encoded.byteLength),
+              );
+              input = await sharp(Buffer.from(parsed.data), {
+                raw: { width: parsed.width, height: parsed.height, channels: 4 },
+              })
+                .png()
+                .toBuffer();
+            }
             // Bound decoded texture size and embed PNGs; no runtime requests to the export folder.
-            const resized = sharp(file, { limitInputPixels: 67108864 }).resize(maxSize, maxSize, {
+            const resized = sharp(input, { limitInputPixels: 67108864 }).resize(maxSize, maxSize, {
               fit: 'inside',
               withoutEnlargement: true,
             });
-            if (/_N\.png$/i.test(file)) {
+            if (/_N\.(?:png|tga)$/i.test(file)) {
               const { data, info } = await resized.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
               let blue = 0;
               for (let i = 2; i < data.length; i += 4) blue += data[i];
@@ -210,7 +238,7 @@ export function normalizeExportedMaterial(source) {
   return { Textures: textures, Parameters: properties, Layered: layered };
 }
 
-export async function bindExportedMaterials(document, modelPath, resolver, { layerTileSize = 512 } = {}) {
+export async function bindExportedMaterials(document, modelPath, resolver, { layerTileSize = 640 } = {}) {
   let colorMaps = 0,
     normalMaps = 0;
   const embedded = new Map();
@@ -242,6 +270,12 @@ export async function bindExportedMaterials(document, modelPath, resolver, { lay
         )
           continue;
         const value = parameter.ParameterValue ?? {};
+        if (
+          info.Name === 'Layer Override - ColorTint' &&
+          value.A !== undefined &&
+          (!Number.isFinite(Number(value.A)) || Number(value.A) <= 0)
+        )
+          continue;
         const priority = info.Name === 'Layer Override - ColorTint' ? 2 : 1;
         const existing = layerTints.get(info.Index);
         if (!existing || existing.priority < priority)
@@ -327,9 +361,14 @@ export async function bindExportedMaterials(document, modelPath, resolver, { lay
               },
             })
               .composite(normalTiles)
-              .webp({ lossless: true, effort: 5 })
+              .webp({ quality: 95, effort: 5 })
               .toBuffer()
           : null;
+        const layerRepeat =
+          /SM_Env_PB_Atre_Outpost_Foundation$/i.test(modelPath) &&
+          /ML_Env_PB_Atre_Outpost_Foundation_Floor$/i.test(material.getName())
+            ? 2
+            : 1;
         material.setExtras({
           ...material.getExtras(),
           arrakisLayers: {
@@ -340,6 +379,7 @@ export async function bindExportedMaterials(document, modelPath, resolver, { lay
               : {}),
             missing,
             count: source.Layered.colors.length,
+            repeat: layerRepeat,
           },
         });
       }
@@ -353,8 +393,10 @@ export async function bindExportedMaterials(document, modelPath, resolver, { lay
     // Keep UV1-only exports when the material explicitly uses UV1 for its tiling surface.
     if (primitives.length && tilingUv !== 1 && primitives.some((primitive) => !primitive.getAttribute('TEXCOORD_0')))
       continue;
+    const hasLayerAtlas = Boolean(material.getExtras()?.arrakisLayers);
     for (const [type, keys] of Object.entries(INPUTS)) {
       for (const key of keys) {
+        if (hasLayerAtlas && (key === 'Layer BaseColor' || key === 'Layer Normal')) continue;
         const reference = source.Textures[key];
         const bytes = await resolver.texture(reference);
         if (!bytes) continue;

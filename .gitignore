@@ -9,3 +9,4 @@ tsconfig.tsbuildinfo
 test-results/
 playwright-report/
 /.vexp
+.codex-asset-cache/

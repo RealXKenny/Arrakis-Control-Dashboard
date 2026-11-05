@@ -51,7 +51,7 @@ export default function Topbar({
       event.preventDefault();
   }
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-b from-zinc-950 via-zinc-950/90 to-transparent pt-3 pb-2 sm:pt-4">
+    <header className="bg-gradient-to-b from-zinc-950 via-zinc-950/90 to-transparent pt-3 pb-2 sm:pt-4">
       <div className="workspace-frame min-w-0">
         <div
           className={`flex flex-wrap items-center gap-3 rounded-[28px] border border-white/5 bg-zinc-900/50 p-3 backdrop-blur-md xl:px-4 ${grouped ? 'xl:rounded-[26px]' : 'xl:flex-nowrap xl:rounded-full'}`}

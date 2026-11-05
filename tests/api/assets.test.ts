@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { gunzipSync } from 'node:zlib';
-import { readFileSync } from 'node:fs';
 import assetHandler from '../../src/pages/api/assets/[...path]';
 import { responseMock } from '../helpers/response';
 
@@ -20,22 +18,29 @@ describe('source asset handler', () => {
     }
   });
   it('serves measured Hagga terrain and only allowlisted model packs', async () => {
-    const catalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/visual-catalog.json.gz')).toString());
-    const lastVisualPack = Math.max(...catalog.meshes.map((mesh: { pack: number }) => mesh.pack));
     for (const parts of [
       ['terrain', 'hagga.hf.gz'],
       ['terrain', 'hagga.json.gz'],
-      ['models', 'catalog.json.gz'],
-      ['models', 'meshpack-9.bin.gz'],
-      ['models', `visual-pack-${lastVisualPack}.bin.gz`],
+      ['models', 'native', 'catalog.json.gz'],
+      ['models', 'native', 'meshpacks', 'meshpack-9.bin.gz'],
+      ['models', 'client', 'catalog.json.gz'],
+      ['models', 'client', 'client-meshes-0.bin.gz'],
+      ['models', 'client', 'client-textures-0.bin.gz'],
     ]) {
       const res = responseMock();
       await assetHandler({ method: 'HEAD', query: { path: parts } }, res);
       expect(res.statusCode).toBe(200);
       expect(res.getHeader('Content-Type')).toBe('application/gzip');
+      expect(Number(res.getHeader('Content-Length'))).toBeLessThan(32 * 1024 * 1024);
     }
+    const catalog = responseMock();
+    await assetHandler({ method: 'HEAD', query: { path: ['models', 'client', 'catalog.json.gz'] } }, catalog);
+    expect(catalog.getHeader('Cache-Control')).toBe('no-cache');
     for (const parts of [
-      ['models', 'meshpack-10.bin.gz'],
+      ['models', 'native', 'meshpacks', 'meshpack-10.bin.gz'],
+      ['models', 'client', 'client-meshes-100.bin.gz'],
+      ['models', 'client', 'coverage.json'],
+      ['models', 'visual', 'catalog.json.gz'],
       ['models', '..', '.env'],
       ['terrain', 'hagga.bin.gz'],
     ]) {

@@ -158,7 +158,7 @@ try {
   for (const [asset, contentType] of [
     ['/favicon.ico', 'image/x-icon'],
     ['/api/assets/terrain/hagga.json.gz', 'application/gzip'],
-    ['/api/assets/models/catalog.json.gz', 'application/gzip'],
+    ['/api/assets/models/native/catalog.json.gz', 'application/gzip'],
     ['/maps/atreides.webp', 'image/webp'],
     ['/maps/hagga-basin/0-0.webp', 'image/webp'],
     ['/items/MelangeSpice.png', 'image/png'],

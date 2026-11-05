@@ -3,31 +3,15 @@ import * as THREE from 'three';
 import { afterEach, expect, it, vi } from 'vitest';
 import { BuildingLibrary, toSceneMatrix, unrealMatrix } from '../../src/modules/map/terrain/buildingModels';
 
-function triangleGlb() {
-  const json = Buffer.from(
-    JSON.stringify({
-      asset: { version: '2.0' },
-      scene: 0,
-      scenes: [{ nodes: [0] }],
-      nodes: [{ mesh: 0 }],
-      meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }],
-      buffers: [{ byteLength: 36 }],
-      bufferViews: [{ buffer: 0, byteLength: 36 }],
-      accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: 'VEC3', min: [0, 0, 0], max: [2, 3, 4] }],
-    }),
-  );
-  const length = Math.ceil(json.length / 4) * 4;
-  const bytes = Buffer.alloc(12 + 8 + length + 8 + 36);
-  bytes.writeUInt32LE(0x46546c67, 0);
-  bytes.writeUInt32LE(2, 4);
-  bytes.writeUInt32LE(bytes.length, 8);
-  bytes.writeUInt32LE(length, 12);
-  bytes.writeUInt32LE(0x4e4f534a, 16);
-  bytes.fill(32, 20, 20 + length);
-  json.copy(bytes, 20);
-  bytes.writeUInt32LE(36, 20 + length);
-  bytes.writeUInt32LE(0x004e4942, 24 + length);
-  Buffer.from(new Float32Array([0, 0, 0, 2, 0, 0, 0, 3, 4]).buffer).copy(bytes, 28 + length);
+/** One-triangle DML1 mesh in the client pack format. */
+function triangleMesh() {
+  const bytes = Buffer.alloc(62);
+  bytes.writeUInt32LE(0x314c4d44, 0);
+  bytes.writeUInt32LE(3, 4);
+  bytes.writeUInt32LE(3, 8);
+  [0, 0, 0, 200, 300, 400].forEach((value, index) => bytes.writeFloatLE(value, 12 + index * 4));
+  [0, 0, 0, 65535, 0, 0, 0, 65535, 65535].forEach((value, index) => bytes.writeUInt16LE(value, 36 + index * 2));
+  [0, 1, 2].forEach((value, index) => bytes.writeUInt16LE(value, 56 + index * 2));
   return bytes;
 }
 
@@ -43,17 +27,17 @@ it('places every visual template using native actor and catalogue transforms, in
     'New_Faction_Railing_Corner_Bottom_Right',
   ];
   const local = { offset: [50, -75, 125], rot: [10, 25, -15], scale: [1.2, 0.8, 1.5] };
-  const model = triangleGlb();
+  const model = triangleMesh();
   const catalog = {
     rows: Object.fromEntries(templates.map((id, index) => [id, { mesh: index, group: 'Test', ...local }])),
-    meshes: templates.map(() => ({ pack: 0, offset: 0, length: model.length, tris: 1, format: 'glb' })),
+    meshes: templates.map(() => ({ pack: 0, offset: 0, length: model.length, tris: 1 })),
   };
   vi.stubGlobal(
     'fetch',
     vi.fn(
       async (url: string) =>
         new Response(
-          new Uint8Array(gzipSync(url.endsWith('visual-catalog.json.gz') ? JSON.stringify(catalog) : model)),
+          new Uint8Array(gzipSync(url.endsWith('client/catalog.json.gz') ? JSON.stringify(catalog) : model)),
         ),
     ),
   );

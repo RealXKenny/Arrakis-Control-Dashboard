@@ -42,7 +42,10 @@ export async function buildVisualAssets({
 } = {}) {
   const root = path.resolve(fileURLToPath(new URL('../../../../', import.meta.url)));
   const output = path.join(root, 'src/assets/models');
-  const native = JSON.parse(gunzipSync(await fs.readFile(path.join(output, 'catalog.json.gz'))));
+  const native = JSON.parse(gunzipSync(await fs.readFile(path.join(output, 'native/catalog.json.gz'))));
+  const visualOutput = path.join(output, 'visual');
+  const visualPacks = path.join(visualOutput, 'packs');
+  await fs.mkdir(visualPacks, { recursive: true });
   await fs.mkdir(cacheRoot, { recursive: true });
   const download = async (relative) => {
     if (!/^[A-Za-z0-9_./-]+$/.test(relative) || relative.includes('..')) throw new Error('Invalid asset path');
@@ -249,6 +252,7 @@ export async function buildVisualAssets({
       length: fallback.length,
       tris: fallback.tris,
       source: 'native',
+      path: fallback.path,
     });
   }
   const missingPlayable = playable.filter((id) => !rows[id] || rows[id].mesh < 0);
@@ -264,12 +268,12 @@ export async function buildVisualAssets({
     packs: packs.length,
     failures,
   };
-  await fs.writeFile(path.join(output, 'visual-coverage.json'), JSON.stringify(report, null, 2) + '\n');
+  await fs.writeFile(path.join(visualOutput, 'coverage.json'), JSON.stringify(report, null, 2) + '\n');
   for (let index = 0; index < packs.length; index++) {
     if (packs[index].length > 32 * 1024 * 1024) throw new Error('Visual pack exceeds transfer limit');
-    await fs.writeFile(path.join(output, `visual-pack-${index}.bin.gz`), packs[index]);
+    await fs.writeFile(path.join(visualPacks, `visual-pack-${index}.bin.gz`), packs[index]);
   }
-  const rebuiltCatalogPath = path.join(output, 'visual-catalog.rebuilt.json.gz');
+  const rebuiltCatalogPath = path.join(visualOutput, 'catalog.rebuilt.json.gz');
   await fs.writeFile(
     rebuiltCatalogPath,
     gzipSync(
@@ -285,30 +289,51 @@ export async function buildVisualAssets({
       { level: 9 },
     ),
   );
-  await fs.rename(rebuiltCatalogPath, path.join(output, 'visual-catalog.json.gz'));
+  await fs.rename(rebuiltCatalogPath, path.join(visualOutput, 'catalog.json.gz'));
   console.info(JSON.stringify(report));
   if (missingPlayable.length)
-    throw new Error(`${missingPlayable.length} playable building types have no visual model; see visual-coverage.json`);
+    throw new Error(`${missingPlayable.length} playable building types have no visual model; see visual/coverage.json`);
   return report;
 }
 
 /** Rebind just the visual meshes referenced by one exported base using local FModel materials. */
-export async function rebuildBaseVisualMaterials({ basePath, sourceRoot, metadataRoot, materialNames } = {}) {
-  if (!basePath || !sourceRoot) throw new Error('A base JSON and FModel export root are required');
+export async function rebuildBaseVisualMaterials({
+  basePath,
+  sourceRoot,
+  metadataRoot,
+  materialNames,
+  meshPathPrefix,
+  packName: requestedPackName,
+} = {}) {
+  if ((!basePath && !meshPathPrefix) || !sourceRoot)
+    throw new Error('A base JSON or mesh path prefix and FModel material export are required');
   const root = path.resolve(fileURLToPath(new URL('../../../../', import.meta.url)));
   const output = path.join(root, 'src/assets/models');
-  const catalogPath = path.join(output, 'visual-catalog.json.gz');
-  const base = JSON.parse(await fs.readFile(path.resolve(basePath), 'utf8'));
+  const visualOutput = path.join(output, 'visual');
+  const visualPacks = path.join(visualOutput, 'packs');
+  await fs.mkdir(visualPacks, { recursive: true });
+  const catalogPath = path.join(visualOutput, 'catalog.json.gz');
+  const base = basePath ? JSON.parse(await fs.readFile(path.resolve(basePath), 'utf8')) : null;
   const catalog = JSON.parse(gunzipSync(await fs.readFile(catalogPath)));
-  const ids = new Set(
-    [
-      ...(Array.isArray(base.instances) ? base.instances : []),
-      ...(Array.isArray(base.placeables) ? base.placeables : []),
-    ]
-      .map((piece) => piece?.building_type)
-      .filter((id) => typeof id === 'string'),
-  );
-  const meshIds = new Set([...ids].map((id) => catalog.rows[id]?.mesh).filter((id) => Number.isInteger(id) && id >= 0));
+  const meshIds = base
+    ? new Set(
+        [
+          ...(Array.isArray(base.instances) ? base.instances : []),
+          ...(Array.isArray(base.placeables) ? base.placeables : []),
+        ]
+          .map((piece) => piece?.building_type)
+          .filter((id) => typeof id === 'string')
+          .map((id) => catalog.rows[id]?.mesh)
+          .filter((id) => Number.isInteger(id) && id >= 0),
+      )
+    : new Set(
+        catalog.meshes
+          .map((meta, id) => ({ meta, id }))
+          .filter(
+            ({ meta }) => meta.format === 'glb' && meta.source === 'umodel' && meta.path?.startsWith(meshPathPrefix),
+          )
+          .map(({ id }) => id),
+      );
   const selectedMaterials = materialNames ? new Set(materialNames) : null;
   const resolver = await createMaterialResolver(sourceRoot, metadataRoot);
   const io = new NodeIO()
@@ -316,82 +341,235 @@ export async function rebuildBaseVisualMaterials({ basePath, sourceRoot, metadat
     .registerDependencies({ 'draco3d.decoder': await draco.createDecoderModule() });
   const sourcePacks = new Map();
   const updates = [];
-  for (const meshId of meshIds) {
+  const setId = meshPathPrefix
+    ? meshPathPrefix
+        .split('/PlayerBuilt/')[1]
+        ?.split('/')
+        .filter((part) => part && part !== 'Meshes')
+        .join('-')
+        .toLowerCase()
+    : null;
+  if (meshPathPrefix && !setId) throw new Error('Mesh path prefix must be under PlayerBuilt');
+  // This exported Atre Outpost set is the current Atreides building library.
+  const packSet = requestedPackName ?? (setId === 'atre-outpost' ? 'atreides' : setId === 'hark' ? 'harkonnen' : setId);
+  if (packSet && !/^[a-z0-9-]{1,80}$/.test(packSet)) throw new Error('Invalid visual pack set name');
+  const textureImages = new Map();
+  const storeTexture = (dataUri) => {
+    const match = /^data:image\/(png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUri ?? '');
+    if (!match) throw new Error('Invalid generated layer texture');
+    const bytes = Buffer.from(match[2], 'base64');
+    const id = sha(bytes);
+    if (!textureImages.has(id)) textureImages.set(id, { bytes, mime: `image/${match[1]}` });
+    return id;
+  };
+  const meshList = [...meshIds].filter((id) => catalog.meshes[id]?.format === 'glb');
+  for (const meshId of meshList) {
     const meta = catalog.meshes[meshId];
-    if (meta?.format !== 'glb') continue;
-    if (!sourcePacks.has(meta.pack))
-      sourcePacks.set(meta.pack, gunzipSync(await fs.readFile(path.join(output, `visual-pack-${meta.pack}.bin.gz`))));
-    const pack = sourcePacks.get(meta.pack);
-    const input = pack.subarray(meta.offset, meta.offset + meta.length);
-    if (selectedMaterials) {
-      const jsonLength = input.readUInt32LE(12);
-      const glb = JSON.parse(input.subarray(20, 20 + jsonLength).toString());
-      if (!(glb.materials ?? []).some((material) => selectedMaterials.has(material.name))) continue;
-    }
-    const document = await io.readBinary(new Uint8Array(input));
-    const bound = await bindExportedMaterials(document, meta.path, resolver);
-    const hasLayerAtlas = document
-      .getRoot()
-      .listMaterials()
-      .some((material) => material.getExtras()?.arrakisLayers);
-    if (!hasLayerAtlas && !bound.colorMaps && !bound.normalMaps) continue;
-    const bytes = Buffer.from(await io.writeBinary(document));
-    if (bytes.length > MAX_ASSET) throw new Error(`Rebound mesh exceeds the asset limit: ${meta.path}`);
-    updates.push({ meshId, meta, bytes, ...bound, hasLayerAtlas });
-    console.info(`Rebound material textures on ${meta.path} (${updates.length} meshes)`);
+    if (sourcePacks.has(meta.pack)) continue;
+    const file = meta.file ?? `visual/packs/visual-pack-${meta.pack}.bin.gz`;
+    sourcePacks.set(meta.pack, gunzipSync(await fs.readFile(path.join(output, file))));
   }
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(4, meshList.length) }, async () => {
+      for (;;) {
+        const index = cursor++;
+        if (index >= meshList.length) return;
+        const meshId = meshList[index];
+        const meta = catalog.meshes[meshId];
+        const pack = sourcePacks.get(meta.pack);
+        const input = pack.subarray(meta.offset, meta.offset + meta.length);
+        if (selectedMaterials) {
+          const jsonLength = input.readUInt32LE(12);
+          const glb = JSON.parse(input.subarray(20, 20 + jsonLength).toString());
+          if (!(glb.materials ?? []).some((material) => selectedMaterials.has(material.name))) continue;
+        }
+        const document = await io.readBinary(new Uint8Array(input));
+        // UModel writes Unreal material masks into glTF vertex colors. They are not
+        // authored surface tints and multiply the FModel albedo into muddy colors.
+        if (meshPathPrefix) {
+          for (const mesh of document.getRoot().listMeshes()) {
+            for (const primitive of mesh.listPrimitives()) primitive.setAttribute('COLOR_0', null);
+          }
+        }
+        const bound = await bindExportedMaterials(document, meta.path, resolver);
+        if (packSet) {
+          for (const material of document.getRoot().listMaterials()) {
+            const extras = material.getExtras();
+            const layers = extras?.arrakisLayers;
+            if (!layers) continue;
+            const references = {
+              set: packSet,
+              atlas: storeTexture(layers.atlas),
+              index: storeTexture(layers.index),
+              ...(layers.normals ? { normals: storeTexture(layers.normals) } : {}),
+              count: layers.count,
+              ...(layers.repeat ? { repeat: layers.repeat } : {}),
+            };
+            const updatedExtras = { ...extras, arrakisLayerRefs: references };
+            delete updatedExtras.arrakisLayers;
+            material.setExtras(updatedExtras);
+          }
+        }
+        const hasLayerAtlas = document
+          .getRoot()
+          .listMaterials()
+          .some((material) => material.getExtras()?.arrakisLayers || material.getExtras()?.arrakisLayerRefs);
+        if (!hasLayerAtlas && !bound.colorMaps && !bound.normalMaps) continue;
+        const bytes = Buffer.from(await io.writeBinary(document));
+        if (bytes.length > MAX_ASSET) throw new Error(`Rebound mesh exceeds the asset limit: ${meta.path}`);
+        updates.push({ meshId, meta, bytes, ...bound, hasLayerAtlas });
+        console.info(`Rebound material textures on ${meta.path} (${updates.length}/${meshList.length} meshes)`);
+      }
+    }),
+  );
 
   if (!updates.length) throw new Error('No FModel textures matched the visual meshes in this base');
+  const texturePack = packSet
+    ? (() => {
+        const images = {};
+        const chunks = [];
+        for (const [id, image] of textureImages) {
+          images[id] = { length: image.bytes.length, mime: image.mime };
+          chunks.push(image.bytes);
+        }
+        return { images, raw: Buffer.concat(chunks), bytes: null, descriptor: null };
+      })()
+    : null;
   let nextPack = Math.max(...catalog.meshes.map((mesh) => mesh.pack)) + 1;
   const packs = [];
-  let chunks = [];
-  let packLength = 0;
-  let packIndex = nextPack;
-  const updatedMeshes = new Map();
-  const flush = () => {
-    if (!packLength) return;
-    packs.push({ index: packIndex, bytes: gzipSync(Buffer.concat(chunks), { level: 9 }) });
-    packIndex++;
-    chunks = [];
-    packLength = 0;
-  };
-  for (const update of updates) {
-    if (packLength && packLength + update.bytes.length > PACK_TARGET) flush();
-    const newId = catalog.meshes.length;
-    catalog.meshes.push({
-      ...update.meta,
-      pack: packIndex,
-      offset: packLength,
-      length: update.bytes.length,
-    });
-    updatedMeshes.set(update.meshId, newId);
-    chunks.push(update.bytes);
-    packLength += update.bytes.length;
-  }
-  flush();
-  if (packIndex > 10000) throw new Error('Rebound visual packs exceed the asset route allowlist');
-  for (const row of Object.values(catalog.rows)) {
-    if (updatedMeshes.has(row.mesh)) row.mesh = updatedMeshes.get(row.mesh);
+  const retiredPacks = [];
+  const retiredModelFiles = [];
+  let retiredTextureFile;
+  const namedPacks = [];
+  if (packSet) {
+    const replacements = new Map(updates.map((update) => [update.meshId, update.bytes]));
+    const previousPacks = [...new Set(updates.map((update) => update.meta.pack))].sort((a, b) => a - b);
+    const entries = catalog.meshes
+      .map((meta, id) => ({ meta, id }))
+      .filter(({ meta }) => meta.source !== 'native' && previousPacks.includes(meta.pack))
+      .sort((a, b) => a.meta.pack - b.meta.pack || a.meta.offset - b.meta.offset);
+    if (entries.some(({ meta }) => !meta.path?.startsWith(meshPathPrefix)))
+      throw new Error('A visual pack contains another set; refusing to merge unrelated models');
+    const packIndex =
+      Math.max(...catalog.meshes.filter((mesh) => mesh.source !== 'native').map((mesh) => mesh.pack)) + 1;
+    const chunks = [];
+    let offset = 0;
+    for (const { meta, id } of entries) {
+      const source = sourcePacks.get(meta.pack);
+      const bytes = replacements.get(id) ?? source.subarray(meta.offset, meta.offset + meta.length);
+      meta.pack = packIndex;
+      meta.offset = offset;
+      meta.length = bytes.length;
+      chunks.push(bytes);
+      offset += bytes.length;
+    }
+    for (const [id, image] of Object.entries(texturePack.images)) {
+      texturePack.images[id] = { ...image, offset: 0 };
+    }
+    let textureOffset = 0;
+    for (const image of Object.values(texturePack.images)) {
+      image.offset = textureOffset;
+      textureOffset += image.length;
+    }
+    const modelBytes = gzipSync(Buffer.concat(chunks), { level: 9 });
+    const textureBytes = gzipSync(texturePack.raw, { level: 9 });
+    if (modelBytes.length > 32 * 1024 * 1024 || textureBytes.length > 32 * 1024 * 1024)
+      throw new Error(`The ${packSet} model or texture pack exceeds the 32 MiB asset limit`);
+    const packDirectory = `visual/${packSet}-pack`;
+    const modelFile = `${packDirectory}/${packSet}-models.bin.gz`;
+    const textureFile = `${packDirectory}/${packSet}-textures.bin.gz`;
+    for (const { meta } of entries) {
+      if (meta.file && meta.file !== modelFile) retiredModelFiles.push(meta.file);
+      meta.file = modelFile;
+    }
+    texturePack.bytes = textureBytes;
+    texturePack.descriptor = { file: textureFile, pack: packIndex, images: texturePack.images };
+    namedPacks.push({ file: modelFile, bytes: modelBytes }, { file: textureFile, bytes: textureBytes });
+    retiredPacks.push(...previousPacks);
+    retiredTextureFile =
+      catalog.texturePacks?.[packSet]?.file ?? (!requestedPackName ? catalog.texturePacks?.[setId]?.file : undefined);
+    const texturePacks = { ...catalog.texturePacks };
+    if (!requestedPackName && packSet !== setId) delete texturePacks[setId];
+    catalog.texturePacks = { ...texturePacks, [packSet]: texturePack.descriptor };
+  } else {
+    let chunks = [];
+    let packLength = 0;
+    let packIndex = nextPack;
+    const updatedMeshes = new Map();
+    const flush = () => {
+      if (!packLength) return;
+      packs.push({ index: packIndex, bytes: gzipSync(Buffer.concat(chunks), { level: 9 }) });
+      packIndex++;
+      chunks = [];
+      packLength = 0;
+    };
+    for (const update of updates) {
+      if (packLength && packLength + update.bytes.length > PACK_TARGET) flush();
+      const newId = catalog.meshes.length;
+      catalog.meshes.push({
+        ...update.meta,
+        pack: packIndex,
+        offset: packLength,
+        length: update.bytes.length,
+      });
+      updatedMeshes.set(update.meshId, newId);
+      chunks.push(update.bytes);
+      packLength += update.bytes.length;
+    }
+    flush();
+    if (packIndex > 10000) throw new Error('Rebound visual packs exceed the asset route allowlist');
+    for (const row of Object.values(catalog.rows)) {
+      if (updatedMeshes.has(row.mesh)) row.mesh = updatedMeshes.get(row.mesh);
+    }
   }
   for (const pack of packs) {
-    const file = path.join(output, `visual-pack-${pack.index}.bin.gz`);
-    if (
-      await fs.stat(file).then(
-        () => true,
-        () => false,
-      )
-    )
-      throw new Error(`Refusing to overwrite existing asset ${file}`);
-    await fs.writeFile(file, pack.bytes);
+    const file = path.join(visualPacks, `visual-pack-${pack.index}.bin.gz`);
+    const temporary = `${file}.tmp`;
+    await fs.writeFile(temporary, pack.bytes);
+    await fs.rename(temporary, file);
+  }
+  for (const pack of namedPacks) {
+    const file = path.join(output, pack.file);
+    const temporary = `${file}.tmp`;
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(temporary, pack.bytes);
+    await fs.rename(temporary, file);
   }
   await fs.writeFile(catalogPath, gzipSync(JSON.stringify(catalog), { level: 9 }));
+  for (const packIndex of new Set(retiredPacks)) {
+    if (!packs.some((pack) => pack.index === packIndex))
+      await fs.rm(path.join(visualPacks, `visual-pack-${packIndex}.bin.gz`), { force: true });
+  }
+  if (retiredTextureFile && retiredTextureFile !== texturePack?.descriptor.file)
+    await fs.rm(path.join(root, 'src/assets/models', retiredTextureFile), { force: true });
+  for (const file of new Set(retiredModelFiles))
+    await fs.rm(path.join(root, 'src/assets/models', file), { force: true });
+  if (packSet) {
+    for (const file of [
+      `visual/${packSet}-pack/${packSet}-models.bin.gz`,
+      `visual/${packSet}-pack/${packSet}-textures.bin.gz`,
+    ]) {
+      if (!namedPacks.some((pack) => pack.file === file)) await fs.rm(path.join(output, file), { force: true });
+    }
+  }
   const report = {
-    base: base.base_id ?? base.name ?? path.basename(basePath),
+    base: base ? (base.base_id ?? base.name ?? path.basename(basePath)) : meshPathPrefix,
     meshesUpdated: updates.length,
     layerAtlases: updates.filter((update) => update.hasLayerAtlas).length,
     colorMaps: updates.reduce((sum, update) => sum + update.colorMaps, 0),
     normalMaps: updates.reduce((sum, update) => sum + update.normalMaps, 0),
-    packs: packs.map(({ index, bytes }) => ({ index, compressedBytes: bytes.length })),
+    packs: [
+      ...packs.map(({ index, bytes }) => ({ file: `visual-pack-${index}.bin.gz`, compressedBytes: bytes.length })),
+      ...namedPacks.map(({ file, bytes }) => ({ file, compressedBytes: bytes.length })),
+    ],
+    ...(texturePack
+      ? {
+          texturePatch: texturePack.descriptor.file,
+          texturePatchBytes: texturePack.bytes.length,
+          uniqueTextureImages: Object.keys(texturePack.descriptor.images).length,
+        }
+      : {}),
   };
   console.info(JSON.stringify(report, null, 2));
   return report;
@@ -410,6 +588,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     ?.slice('--material-names='.length)
     .split(',')
     .filter(Boolean);
-  if (basePath) await rebuildBaseVisualMaterials({ basePath, sourceRoot, metadataRoot, materialNames });
+  const meshPathPrefix = process.argv
+    .find((argument) => argument.startsWith('--mesh-path-prefix='))
+    ?.slice('--mesh-path-prefix='.length);
+  const packName = process.argv.find((argument) => argument.startsWith('--pack-name='))?.slice('--pack-name='.length);
+  if (basePath || meshPathPrefix)
+    await rebuildBaseVisualMaterials({ basePath, sourceRoot, metadataRoot, materialNames, meshPathPrefix, packName });
   else await buildVisualAssets({ sourceRoot, metadataRoot });
 }

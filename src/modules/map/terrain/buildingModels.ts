@@ -34,11 +34,31 @@ export function parseModelExport(value: unknown) {
   return exportSchema.parse(value);
 }
 type Vector = [number, number, number];
-type Row = { mesh: number; group: string; name?: string; offset?: Vector; rot?: Vector; scale?: Vector };
-type Catalog = {
-  rows: Record<string, Row>;
-  meshes: { pack: number; offset: number; length: number; tris: number; format?: 'glb'; source?: 'native' }[];
+type Row = {
+  mesh: number;
+  group: string;
+  name?: string;
+  offset?: Vector;
+  rot?: Vector;
+  scale?: Vector;
+  accessories?: number[];
 };
+type MeshMeta = {
+  pack: number;
+  offset: number;
+  length: number;
+  tris: number;
+  /** Offset of the UVH1 channel inside the mesh record; present only with an albedo texture. */
+  uv?: number;
+  uvLength?: number;
+  texture?: string;
+  materials?: string[];
+};
+type TextureMeta = { pack: number; offset: number; length: number; mime: string };
+type Catalog = { rows: Record<string, Row>; meshes: MeshMeta[]; textures?: Record<string, TextureMeta> };
+const MAX_PACK_BYTES = 64 * 1024 * 1024;
+const MAX_TEXTURE_BYTES = 4 * 1024 * 1024;
+const TEXTURE_MIMES = new Set(['image/jpeg', 'image/png']);
 export type BuildingPartSummary = { templateId: string; name?: string; total: number; rendered: number };
 
 /** Match actual catalogue IDs only; ambiguous case variants must never pick an unrelated item. */
@@ -78,6 +98,33 @@ export function decodeBuildingMesh(buffer: ArrayBuffer) {
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
   return geometry;
+}
+
+function halfToFloat(half: number) {
+  const sign = half & 0x8000 ? -1 : 1,
+    exponent = (half >> 10) & 31,
+    mantissa = half & 1023;
+  if (exponent === 0) return sign * mantissa * 2 ** -24;
+  if (exponent === 31) return Number.NaN;
+  return sign * (1 + mantissa / 1024) * 2 ** (exponent - 15);
+}
+
+/** UVH1 from the MapViewer3D client data: one half-float UV pair per DML1 vertex, in vertex order. */
+export function decodeBuildingUv(buffer: ArrayBuffer, vertices: number) {
+  const view = new DataView(buffer);
+  if (
+    buffer.byteLength !== 8 + vertices * 4 ||
+    view.getUint32(0, true) !== 0x31485655 ||
+    view.getUint32(4, true) !== vertices
+  )
+    throw new Error('Invalid building UVs');
+  const uv = new Float32Array(vertices * 2);
+  for (let i = 0; i < uv.length; i++) {
+    const value = halfToFloat(view.getUint16(8 + i * 2, true));
+    // Dev note: a NaN UV is the spice of texture bugs; flatten it before it spreads.
+    uv[i] = Number.isFinite(value) ? value : 0;
+  }
+  return uv;
 }
 
 export function unrealMatrix(loc: Vector, rot: Vector = [0, 0, 0], scale: Vector = [1, 1, 1]) {
@@ -149,54 +196,124 @@ export class BuildingLibrary {
   private materials = new Map<string, THREE.MeshStandardMaterial>();
   private visualMaterials = new Set<THREE.Material>();
   private textures = new Set<THREE.Texture>();
+  private texturedMaterials = new Map<string, Promise<THREE.MeshStandardMaterial | null>>();
   private disposed = false;
   private assetUrl(name: string) {
     const url = `/api/assets/models/${name}`;
     return this.options.assetRefresh ? `${url}?refresh=${encodeURIComponent(this.options.assetRefresh)}` : url;
   }
   private load() {
-    const name = this.options.visual ? 'visual-catalog.json.gz' : 'catalog.json.gz';
+    // Detailed previews use the MapViewer3D client packs; the fast preview keeps the simplified native pack.
+    const name = this.options.visual ? 'client/catalog.json.gz' : 'native/catalog.json.gz';
     return (this.catalog ??= gunzip(this.assetUrl(name), this.signal).then((raw) =>
       JSON.parse(new TextDecoder().decode(raw)),
     ));
   }
+  private pack(file: string) {
+    if (!this.packs.has(file))
+      this.packs.set(
+        file,
+        gunzip(this.assetUrl(file), this.signal).then((raw) => {
+          if (raw.byteLength > MAX_PACK_BYTES) throw new Error('Model pack exceeds its decoded size limit');
+          return raw;
+        }),
+      );
+    return this.packs.get(file)!;
+  }
   private async model(id: number, catalog: Catalog): Promise<ModelPart[]> {
     if (!this.models.has(id)) {
       const meta = catalog.meshes[id];
-      if (!meta) throw new Error('Unknown building mesh');
-      const prefix = this.options.visual && meta.source !== 'native' ? 'visual-pack' : 'meshpack';
-      const packKey = prefix + ':' + meta.pack;
-      if (!this.packs.has(packKey))
-        this.packs.set(packKey, gunzip(this.assetUrl(`${prefix}-${meta.pack}.bin.gz`), this.signal));
-      const pending = this.packs.get(packKey)!.then(async (raw) => {
+      if (!meta || !Number.isInteger(meta.pack) || meta.pack < 0 || meta.pack > 99)
+        throw new Error('Unknown building mesh');
+      const packFile = this.options.visual
+        ? `client/client-meshes-${meta.pack}.bin.gz`
+        : `native/meshpacks/meshpack-${meta.pack}.bin.gz`;
+      const pending = this.pack(packFile).then(async (raw) => {
         if (this.disposed) throw new Error('Model library closed');
-        const bytes = raw.slice(meta.offset, meta.offset + meta.length);
-        const parts: ModelPart[] =
-          meta.format === 'glb'
-            ? await (await import('./visualBuildingMeshes')).loadVisualBuildingParts(bytes)
-            : [{ geometry: decodeBuildingMesh(bytes.buffer) }];
-        for (const part of parts) {
-          this.loaded.add(part.geometry);
-          for (const material of part.material
-            ? Array.isArray(part.material)
-              ? part.material
-              : [part.material]
-            : []) {
-            this.visualMaterials.add(material);
-            for (const value of Object.values(material)) if (value instanceof THREE.Texture) this.textures.add(value);
-            for (const texture of material.userData.arrakisTextures ?? [])
-              if (texture instanceof THREE.Texture) this.textures.add(texture);
-          }
+        const end = meta.offset + meta.length;
+        if (!Number.isSafeInteger(meta.offset) || meta.offset < 0 || meta.length <= 0 || end > raw.byteLength)
+          throw new Error('Invalid building mesh range');
+        const geometry = decodeBuildingMesh(raw.slice(meta.offset, end).buffer);
+        this.loaded.add(geometry);
+        let material: THREE.Material | undefined;
+        const kinds = (meta.materials ?? []).map(visualFallbackKind);
+        // A single-section client mesh can only use a special look when every slot shares it.
+        if (kinds.length && kinds.every((kind) => kind && kind === kinds[0]))
+          material = this.specialMaterial(kinds[0]!);
+        else if (this.options.visual && meta.texture && meta.uv === meta.length && meta.uvLength) {
+          const uvEnd = end + meta.uvLength;
+          if (uvEnd > raw.byteLength) throw new Error('Invalid building UV range');
+          geometry.setAttribute(
+            'uv',
+            new THREE.BufferAttribute(
+              decodeBuildingUv(raw.slice(end, uvEnd).buffer, geometry.getAttribute('position').count),
+              2,
+            ),
+          );
+          material = (await this.texturedMaterial(meta.texture, catalog)) ?? undefined;
         }
         if (this.disposed) {
           this.dispose();
           throw new Error('Model library closed');
         }
-        return parts;
+        return [{ geometry, ...(material ? { material } : {}) }];
       });
       this.models.set(id, pending);
     }
     return this.models.get(id)!;
+  }
+  /** One albedo per client mesh approximates the game's layered materials; failures keep faction colours. */
+  private texturedMaterial(id: string, catalog: Catalog) {
+    if (!this.texturedMaterials.has(id))
+      this.texturedMaterials.set(
+        id,
+        (async () => {
+          const meta = catalog.textures?.[id];
+          if (
+            !/^[a-f0-9]{64}$/.test(id) ||
+            !meta ||
+            !Number.isInteger(meta.pack) ||
+            meta.pack < 0 ||
+            meta.pack > 99 ||
+            !TEXTURE_MIMES.has(meta.mime) ||
+            !Number.isSafeInteger(meta.offset) ||
+            meta.offset < 0 ||
+            meta.length <= 0 ||
+            meta.length > MAX_TEXTURE_BYTES
+          )
+            throw new Error('Invalid building texture');
+          if (typeof createImageBitmap !== 'function') return null;
+          const raw = await this.pack(`client/client-textures-${meta.pack}.bin.gz`);
+          if (meta.offset + meta.length > raw.byteLength) throw new Error('Invalid building texture range');
+          const bitmap = await createImageBitmap(
+            new Blob([raw.slice(meta.offset, meta.offset + meta.length)], { type: meta.mime }),
+          );
+          const texture = new THREE.Texture(bitmap);
+          // UE UVs start at the top of the image, which matches an unflipped ImageBitmap upload.
+          texture.flipY = false;
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.anisotropy = 4;
+          texture.needsUpdate = true;
+          this.textures.add(texture);
+          if (this.disposed) {
+            this.dispose();
+            throw new Error('Model library closed');
+          }
+          const material = new THREE.MeshStandardMaterial({
+            map: texture,
+            roughness: 0.85,
+            metalness: 0.05,
+            side: THREE.DoubleSide,
+          });
+          this.visualMaterials.add(material);
+          return material;
+        })().catch((error: unknown) => {
+          if (this.disposed) throw error;
+          return null;
+        }),
+      );
+    return this.texturedMaterials.get(id)!;
   }
   private material(group: string) {
     if (!this.materials.has(group))
@@ -274,7 +391,9 @@ export class BuildingLibrary {
       summary.total++;
       parts.set(p.building_type, summary);
       if (!row || row.mesh < 0 || !catalog.meshes[row.mesh]) return;
-      const cost = catalog.meshes[row.mesh].tris;
+      const cost =
+        catalog.meshes[row.mesh].tris +
+        (row.accessories ?? []).reduce((sum, meshId) => sum + (catalog.meshes[meshId]?.tris ?? 0), 0);
       if (triangles + cost > (this.options.visual ? 4_000_000 : 400_000)) return;
       triangles += cost;
       known++;
@@ -302,29 +421,17 @@ export class BuildingLibrary {
       [...batches.values()].map(async ({ row, matrices }) => ({
         row,
         matrices,
-        model: await this.model(row.mesh, catalog),
+        model: (
+          await Promise.all([row.mesh, ...(row.accessories ?? [])].map((meshId) => this.model(meshId, catalog)))
+        ).flat(),
       })),
     );
     for (const { row, matrices, model } of prepared) {
       if (this.disposed) return;
       for (const [index, part] of model.entries()) {
-        // Untextured white FModel placeholders are not the game's layered material.
-        // Use the existing faction palette until the missing shader layers are available.
-        const fallback = (material: THREE.Material) => {
-          if (!(material instanceof THREE.MeshStandardMaterial) || material.map) return material;
-          const kind = visualFallbackKind(material.name);
-          if (kind) return this.specialMaterial(kind);
-          return material.color.getHex() === 0xffffff && !material.transparent && material.opacity === 1
-            ? this.material(row.group)
-            : material;
-        };
-        const material = Array.isArray(part.material)
-          ? part.material.map(fallback)
-          : part.material
-            ? fallback(part.material)
-            : row.group === '__shield'
-              ? this.specialMaterial('shield')
-              : this.material(row.group);
+        // Shields always use the translucent shield look; untextured meshes keep the faction palette.
+        const material =
+          row.group === '__shield' ? this.specialMaterial('shield') : (part.material ?? this.material(row.group));
         const batch = new THREE.InstancedMesh(part.geometry, material, matrices.length);
         batch.name = `building-mesh-${row.mesh}:${row.group}${index ? `:${index}` : ''}`;
         matrices.forEach((matrix, item) => batch.setMatrixAt(item, matrix));
@@ -354,6 +461,7 @@ export class BuildingLibrary {
     this.materials.clear();
     this.visualMaterials.clear();
     this.textures.clear();
+    this.texturedMaterials.clear();
     this.packs.clear();
     this.models.clear();
   }
