@@ -2,10 +2,10 @@ import '../../../lib/assert-server';
 import { cookies } from '../../../infrastructure/cookies';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { DuneConsoleApiError, getDuneClient } from '../../../infrastructure/dune';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 import { getServerEnv } from '../../../config/env';
 import { normalizeRealtime } from '../utils/realtime';
-import { ReadCache } from '../../../lib/read-cache';
+import { ReadCache } from '../../../lib/cache/read-cache';
 
 // Only normalized guild-wide data is shared. Every caller must pass session/guild checks first.
 const snapshots = new ReadCache<NextResponse>(

@@ -6,7 +6,7 @@ const { owned, redis, sameOrigin } = vi.hoisted(() => ({
   sameOrigin: vi.fn(),
 }));
 vi.mock('../../src/modules/bases/server/owned-export', () => ({ requireOwnedBaseExport: owned }));
-vi.mock('../../src/lib/redis', () => ({ getRedisClient: () => redis }));
+vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 vi.mock('../../src/infrastructure/pages-api', async (original) => ({
   ...(await original()),
   isSameOriginRequest: sameOrigin,

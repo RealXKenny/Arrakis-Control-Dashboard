@@ -3,7 +3,7 @@ import { record } from '../utils/inventory';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { getDuneClient } from '../../../infrastructure/dune';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 import { AppError } from '../../../lib/errors';
 import { ownedListings } from './my-listings';
 

@@ -1,4 +1,4 @@
-import './assert-server';
+import '../assert-server';
 
 // Shared across route bundles within a worker; replicas each enforce their own memory budget.
 const state = globalThis as typeof globalThis & { arrakisActiveApiRequests?: number };

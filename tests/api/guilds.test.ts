@@ -11,9 +11,9 @@ const { request, session, linkedPlayer, redis } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request }) }));
-vi.mock('../../src/lib/session-store', () => ({ getSession: session }));
+vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
 vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
-vi.mock('../../src/lib/redis', () => ({ getRedisClient: () => redis }));
+vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 
 const req = (url: string, query = {}) => ({
   method: 'GET',

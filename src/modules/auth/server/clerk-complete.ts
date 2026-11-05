@@ -5,7 +5,7 @@ import { readDiscordIdentity } from '../../../infrastructure/discord';
 import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
 import { AppError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
-import { withTimeout } from '../../../lib/timeout';
+import { withTimeout } from '../../../lib/http/timeout';
 import { establishDashboardSession } from './establish';
 
 const CLERK_TIMEOUT_MS = 10_000;

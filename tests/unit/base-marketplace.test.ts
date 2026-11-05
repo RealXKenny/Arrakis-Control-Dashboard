@@ -7,7 +7,7 @@ const { redis } = vi.hoisted(() => ({
     get: vi.fn(),
   },
 }));
-vi.mock('../../src/lib/redis', () => ({ getRedisClient: () => redis }));
+vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 
 import { createMarketplaceRecord, parseMarketplaceLayout } from '../../src/modules/marketplace/schema';
 import {

@@ -1,5 +1,5 @@
-import './assert-server';
-import { AppError } from './errors';
+import '../assert-server';
+import { AppError } from '../errors';
 
 const READ_TTL_MS = 30_000;
 type Entry<T> = { data: T; capturedAt: number; bytes: number };

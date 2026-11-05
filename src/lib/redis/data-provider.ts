@@ -1,15 +1,10 @@
-import './assert-server';
-import { getDuneClient } from '../infrastructure/dune';
-import { acquireApiCapacity } from './api-capacity';
-import { checkRateLimit } from './rate-limit';
-import { getServerEnv } from './env';
-import {
-  getRedisPool,
-  RedisUnavailableError,
-  REDIS_SNAPSHOT_TTL_SECONDS,
-  REDIS_STALE_GRACE_SECONDS,
-} from './redis-client';
-import { DAY_MS, summarizePopulation, totalPlayHours } from '../modules/portal/utils/population';
+import '../assert-server';
+import { getDuneClient } from '../../infrastructure/dune';
+import { acquireApiCapacity } from '../security/api-capacity';
+import { checkRateLimit } from '../security/rate-limit';
+import { getServerEnv } from '../env';
+import { getRedisPool, RedisUnavailableError, REDIS_SNAPSHOT_TTL_SECONDS, REDIS_STALE_GRACE_SECONDS } from './pool';
+import { DAY_MS, summarizePopulation, totalPlayHours } from '../../modules/portal/utils/population';
 import type {
   DashboardSnapshot,
   LandsraadTerm,
@@ -22,7 +17,7 @@ import type {
   SpiceSectorStatus,
   SystemLogEntry,
   SystemLogLevel,
-} from './types';
+} from '../types';
 
 /**
  * Server-only data provider for the App Router dashboard.

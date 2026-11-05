@@ -1,4 +1,4 @@
-import './assert-server';
+import '../assert-server';
 export async function withTimeout<T>(operation: Promise<T>, milliseconds: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;
   try {

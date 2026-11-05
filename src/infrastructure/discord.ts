@@ -1,6 +1,6 @@
 import '../lib/assert-server';
 import { AppError } from '../lib/errors';
-import { readBoundedText } from '../lib/http-response';
+import { readBoundedText } from '../lib/http/response';
 
 const DISCORD_RESPONSE_LIMIT = 1024 * 1024;
 

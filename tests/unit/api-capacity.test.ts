@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { acquireApiCapacity } from '../../src/lib/api-capacity';
+import { acquireApiCapacity } from '../../src/lib/security/api-capacity';
 
 it('bounds concurrent work and releases each slot only once', () => {
   const release = acquireApiCapacity(1);

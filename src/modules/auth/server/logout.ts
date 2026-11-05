@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
 import { NextResponse, getRequestOrigin, isSameOriginRequest } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
-import { deleteSession, getSession } from '../../../lib/session-store';
+import { deleteSession, getSession } from '../../../lib/security/session-store';
 import { revokeClerkSession } from './clerk-complete';
 
 export async function POST(req, res) {

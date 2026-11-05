@@ -4,7 +4,7 @@ import { getServerEnv } from '../../../config/env';
 import { cookies } from '../../../infrastructure/cookies';
 import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
 import { logger } from '../../../lib/logger';
-import { saveSession, sessionTtlSeconds } from '../../../lib/session-store';
+import { saveSession, sessionTtlSeconds } from '../../../lib/security/session-store';
 
 type DiscordIdentity = { userData: Record<string, unknown>; memberData: { roles: string[] } };
 

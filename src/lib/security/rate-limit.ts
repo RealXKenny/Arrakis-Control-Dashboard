@@ -1,7 +1,7 @@
-import './assert-server';
+import '../assert-server';
 import { createHash } from 'node:crypto';
-import { getServerEnv } from '../config/env';
-import { getRedisClient } from './redis';
+import { getServerEnv } from '../../config/env';
+import { getRedisClient } from '../redis/client';
 import { isIP } from 'node:net';
 
 type Bucket = { count: number; resetAt: number };

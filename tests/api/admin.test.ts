@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import catalog from '../../src/pages/api/admin/catalog';
 import execute from '../../src/pages/api/admin/execute';
 import upload from '../../src/pages/api/admin/upload';
-import { getSession } from '../../src/lib/session-store';
+import { getSession } from '../../src/lib/security/session-store';
 import { sanitizedEvents, executeOperation } from '../../src/modules/admin/server/execute';
 import { parseAdminRequest } from '../../src/modules/admin/server/request';
 import { responseMock } from '../helpers/response';
@@ -20,8 +20,8 @@ const config = vi.hoisted(() => ({
   ADAPTER_TOKEN: 'separate-adapter-key',
 }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => config }));
-vi.mock('../../src/lib/session-store', () => ({ getSession: vi.fn() }));
-vi.mock('../../src/lib/rate-limit', () => ({
+vi.mock('../../src/lib/security/session-store', () => ({ getSession: vi.fn() }));
+vi.mock('../../src/lib/security/rate-limit', () => ({
   checkRateLimit: async () => ({ allowed: true, remaining: 20, retryAfter: 60 }),
   getClientAddress: () => 'test',
 }));

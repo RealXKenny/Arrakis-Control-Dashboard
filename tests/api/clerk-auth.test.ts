@@ -25,7 +25,7 @@ const setCookie = vi.fn();
 
 vi.mock('@clerk/nextjs/server', () => ({ getAuth: (req: unknown) => getAuth(req), clerkClient: async () => clerk }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => config, isClerkAuthEnabled: () => enabled() }));
-vi.mock('../../src/lib/session-store', () => ({ saveSession, sessionTtlSeconds: () => 43200 }));
+vi.mock('../../src/lib/security/session-store', () => ({ saveSession, sessionTtlSeconds: () => 43200 }));
 vi.mock('../../src/infrastructure/cookies', () => ({ cookies: () => ({ set: setCookie, get: () => undefined }) }));
 
 const publishableKey = `pk_test_${btoa('happy-sandworm-12.clerk.accounts.dev$')}`;

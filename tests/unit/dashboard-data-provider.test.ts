@@ -8,7 +8,7 @@ import {
   ProviderRateLimitedError,
   ProviderReadError,
   RedisDashboardDataProvider,
-} from '../../src/lib/data-provider';
+} from '../../src/lib/redis/data-provider';
 import type { DashboardSnapshot, LoadProfile } from '../../src/lib/types';
 
 const FIXED_NOW = Date.parse('2026-10-26T12:00:00.000Z');

@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
 import { cookies } from '../../../infrastructure/cookies';
 import { AppError } from '../../../lib/errors';
-import { getSession, type DashboardSession } from '../../../lib/session-store';
+import { getSession, type DashboardSession } from '../../../lib/security/session-store';
 
 const ADMIN_DISCORD_USER_ID = '456084885220884480';
 

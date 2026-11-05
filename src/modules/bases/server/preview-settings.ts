@@ -4,8 +4,8 @@ import { inflateSync } from 'node:zlib';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse, isSameOriginRequest } from '../../../infrastructure/pages-api';
 import { AppError } from '../../../lib/errors';
-import { getRedisClient } from '../../../lib/redis';
-import { withTimeout } from '../../../lib/timeout';
+import { getRedisClient } from '../../../lib/redis/client';
+import { withTimeout } from '../../../lib/http/timeout';
 import { requireOwnedBaseExport } from './owned-export';
 import { baseViewSchema, previewSettingsSchema, type PreviewSettings } from '../utils/preview-settings';
 

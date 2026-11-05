@@ -1,7 +1,7 @@
 import '../../../lib/assert-server';
 import { AppError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
-import { getRedisClient } from '../../../lib/redis';
+import { getRedisClient } from '../../../lib/redis/client';
 import { getDuneClient } from '../../../infrastructure/dune';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { getLinkedPlayer } from '../../player/server/linked-player';

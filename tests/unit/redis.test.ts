@@ -1,7 +1,7 @@
 import { once } from 'node:events';
 import { afterEach, expect, it } from 'vitest';
 import { createServer } from 'node:net';
-import { createDashboardRedis } from '../../src/lib/redis';
+import { createDashboardRedis } from '../../src/lib/redis/client';
 import { createRedisFixture } from '../helpers/redis-resp.mjs';
 
 const cleanups: Array<() => void | Promise<void>> = [];

@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { NextResponse, isSameOriginRequest } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 import { warmupDuneClient } from '../../../infrastructure/dune';
 import { AppError } from '../../../lib/errors';
 import { parseBlueprint } from '../schema';

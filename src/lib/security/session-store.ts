@@ -1,7 +1,7 @@
-import './assert-server';
+import '../assert-server';
 import { createHash } from 'node:crypto';
-import { getRedisClient } from './redis';
-import { logger } from './logger';
+import { getRedisClient } from '../redis/client';
+import { logger } from '../logger';
 
 export type DashboardSession = {
   user: { id: string; username?: string; global_name?: string; avatar?: string | null };

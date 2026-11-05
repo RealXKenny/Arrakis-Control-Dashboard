@@ -1,6 +1,6 @@
-import './assert-server';
+import '../assert-server';
 import { createClient } from 'redis';
-import { getServerEnv } from '../config/env';
+import { getServerEnv } from '../../config/env';
 
 function decode<T>(value: string): T {
   try {

@@ -1,4 +1,4 @@
-import './assert-server';
+import '../assert-server';
 
 export async function readBoundedText(response: Response, maxBytes: number): Promise<string> {
   const declaredLength = Number(response.headers.get('content-length'));

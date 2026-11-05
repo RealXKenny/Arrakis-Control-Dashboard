@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { record } from '../utils/inventory';
 import { createHash } from 'node:crypto';
 import { getServerEnv } from '../../../config/env';
-import { getRedisClient } from '../../../lib/redis';
+import { getRedisClient } from '../../../lib/redis/client';
 import { getDuneClient } from '../../../infrastructure/dune';
 import { logger } from '../../../lib/logger';
 import { DAY_MS, summarizePopulation } from '../utils/population';

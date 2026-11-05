@@ -1,4 +1,4 @@
-import { clearClientReadCache } from '../../../lib/client-cache';
+import { clearClientReadCache } from '../../../lib/cache/client-cache';
 import { usePortalView, navigatePortal } from '../hooks/usePortalView';
 import Image from 'next/image';
 import { useState } from 'react';

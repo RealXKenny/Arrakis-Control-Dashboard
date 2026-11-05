@@ -9,7 +9,7 @@ const state = vi.hoisted(() => ({
   upload: vi.fn(),
 }));
 vi.mock('../../src/infrastructure/cookies', () => ({ cookies: () => ({ get: () => ({ value: 'session' }) }) }));
-vi.mock('../../src/lib/session-store', () => ({ getSession: state.session }));
+vi.mock('../../src/lib/security/session-store', () => ({ getSession: state.session }));
 vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: state.player }));
 vi.mock('../../src/modules/bases/server/history', () => ({
   importHistory: async () => [],
