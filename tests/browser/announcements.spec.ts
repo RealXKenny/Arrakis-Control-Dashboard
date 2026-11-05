@@ -7,7 +7,7 @@ test('loads the announcement project once and keeps it available after navigatio
   page.on('console', (message) => {
     if (message.type() === 'error' && /Content Security Policy/i.test(message.text())) errors.push(message.text());
   });
-  await page.route('https://announcify.app/widget.js', async (route) => {
+  await page.route('https://www.announcify.app/widget.js', async (route) => {
     loads++;
     await route.fulfill({
       contentType: 'application/javascript',
@@ -21,7 +21,7 @@ test('loads the announcement project once and keeps it available after navigatio
       `,
     });
   });
-  await page.route('https://announcify.app/api/widget/cmvsu06fg00001v0xfjofkwxp', async (route) => {
+  await page.route('https://www.announcify.app/api/widget/cmvsu06fg00001v0xfjofkwxp', async (route) => {
     apiRequests++;
     await route.fulfill({ contentType: 'application/json', body: '{}' });
   });

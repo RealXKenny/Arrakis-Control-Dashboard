@@ -23,6 +23,10 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Adjusted the foundation floor’s hex pattern to look closer to the reference.
 - Corrected color handling that made some Atreides surfaces look muddy.
 
+### Fixed
+
+- Announcements load again after the announcement service moved to a new web address.
+
 ### Security
 
 - Updated the dashboard’s web framework and supporting libraries to versions that close several known security issues.

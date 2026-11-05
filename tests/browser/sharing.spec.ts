@@ -47,6 +47,10 @@ test('preview metadata stays inert under CSP and does not duplicate after naviga
     if (message.type() === 'error' && /Content Security Policy|script-src/i.test(message.text()))
       errors.push(message.text());
   });
+  // Keep the CSP check deterministic: the vendor widget is exercised in announcements.spec.ts.
+  await page.route('https://www.announcify.app/**', (route) =>
+    route.fulfill({ contentType: 'application/javascript', body: '' }),
+  );
   await page.goto('/');
   await expect(page.locator('head script#discord\\:component-embed')).toHaveCount(1);
   await page.getByRole('link', { name: /Open your portal/ }).click();
