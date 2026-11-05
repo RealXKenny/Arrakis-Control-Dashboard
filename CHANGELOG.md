@@ -4,6 +4,17 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.20.6] - 2026-11-05
+
+### Added
+
+- Added a Guild requirements tab where members can browse guild recruitment listings and joining details.
+- Added leader-only Guild settings to edit joining requirements and contact details, and publish or unlist a guild.
+
+### Security
+
+- Guild settings and logo changes verify the linked character’s guild leadership by character ID. Matching character names cannot authorize edits.
+
 ## [1.20.5] - 2026-11-05
 
 ### Added

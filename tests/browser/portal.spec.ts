@@ -887,6 +887,66 @@ test('guild view renders reported membership without inventing a rank', async ({
   await expect(page.getByText('Your rank: Not reported')).toBeVisible();
 });
 
+for (const leader of [true, false]) {
+  test(`guild recruitment board supports ${leader ? 'leader settings' : 'read-only members'}`, async ({ page }) => {
+    await page.route('**/api/guilds?*', (route) =>
+      route.fulfill({ json: { ok: true, data: { rows: [{ guild_id: '2', guild_name: 'Crimson Skies' }] } } }),
+    );
+    await page.route('**/api/guilds/2/logo', (route) => route.fulfill({ json: { ok: true, data: { logo: null } } }));
+    await page.route('**/api/guilds/2/members', (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          data: { rows: [{ player_id: 'tester', character_name: 'Desert Navigator', role_id: leader ? '100' : '1' }] },
+        },
+      }),
+    );
+    let listing = {
+      guildName: 'Crimson Skies',
+      requirements: 'Active players welcome',
+      contact: 'Ask in Discord',
+      published: false,
+    };
+    await page.route('**/api/guilds/2/requirements', async (route) => {
+      if (route.request().method() === 'POST') listing = route.request().postDataJSON();
+      await route.fulfill({ json: { ok: true, data: listing } });
+    });
+    await page.route('**/api/guilds/requirements?*', (route) =>
+      route.fulfill({
+        json: { ok: true, data: { rows: listing.published ? [{ ...listing, guildId: '2' }] : [], hasMore: false } },
+      }),
+    );
+    await page.goto('/portal?view=guild');
+    await expect(page.getByText(`Your rank: ${leader ? 'Leader' : 'Member'}`, { exact: true })).toBeVisible();
+    const tabs = page.getByRole('navigation', { name: 'Guild tabs' });
+    if (leader) {
+      await tabs.getByRole('button', { name: 'Settings', exact: true }).click();
+      await page
+        .getByRole('textbox', { name: 'Joining requirements', exact: true })
+        .fill('Friendly active players, all levels welcome.');
+      await page.getByLabel('List my guild for recruitment').check();
+      await page.getByRole('button', { name: 'Save guild settings' }).click();
+      await expect(page.getByText('Guild requirements published.', { exact: true })).toBeVisible();
+    } else {
+      await expect(tabs.getByRole('button', { name: 'Settings', exact: true })).toHaveCount(0);
+      listing.published = true;
+    }
+    await tabs.getByRole('button', { name: 'Guild requirements', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Crimson Skies', exact: true })).toBeVisible();
+    await expect(page.getByText(listing.requirements, { exact: true })).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (leader) {
+      await tabs.getByRole('button', { name: 'Settings', exact: true }).click();
+      await page.getByLabel('List my guild for recruitment').uncheck();
+      await page.getByRole('button', { name: 'Save guild settings' }).click();
+      await expect(page.getByText('Settings saved. Your guild is not listed.', { exact: true })).toBeVisible();
+      await tabs.getByRole('button', { name: 'Guild requirements', exact: true }).click();
+      await expect(page.getByText('No guilds are recruiting here yet.', { exact: false })).toBeVisible();
+    }
+  });
+}
+
 test('root landing fills ultrawide screens without the extra navigation pills', async ({ page }) => {
   await page.setViewportSize({ width: 3432, height: 1308 });
   const response = await page.goto('/');

@@ -2,12 +2,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET as listGuilds } from '../../src/modules/guilds/server/list';
 import { GET as listMembers } from '../../src/modules/guilds/server/members';
 import { GET as getLogo, POST as saveLogo } from '../../src/modules/guilds/server/logo';
+import {
+  GET as getRequirements,
+  POST as saveRequirements,
+  LIST as listRequirements,
+} from '../../src/modules/guilds/server/requirements';
 
 const { request, session, linkedPlayer, redis } = vi.hoisted(() => ({
   request: vi.fn(),
   session: vi.fn(),
   linkedPlayer: vi.fn(),
-  redis: { get: vi.fn(), set: vi.fn() },
+  redis: { get: vi.fn(), set: vi.fn(), eval: vi.fn(), zrange: vi.fn() },
 }));
 
 vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request }) }));
@@ -23,6 +28,7 @@ const req = (url: string, query = {}) => ({
 });
 
 beforeEach(() => {
+  vi.clearAllMocks();
   request.mockReset();
   session.mockResolvedValue({
     user: { id: 'discord-user', username: 'leader' },
@@ -33,6 +39,87 @@ beforeEach(() => {
   linkedPlayer.mockResolvedValue({ linked: true, pawnId: '4', characterName: 'Leader' });
   redis.get.mockResolvedValue(null);
   redis.set.mockResolvedValue('OK');
+  redis.eval.mockResolvedValue(1);
+  redis.zrange.mockResolvedValue([]);
+});
+
+const requirements = {
+  guildName: 'Crimson Skies',
+  requirements: 'Active players, all experience levels.',
+  contact: 'Ask Leader in game',
+  published: true,
+};
+
+describe('guild recruitment settings', () => {
+  it('publishes and unlists a guild through one atomic Redis operation', async () => {
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
+    for (const published of [true, false]) {
+      const data = { ...requirements, published, forged: 'ignored' };
+      const response = await saveRequirements(
+        { ...req('/api/guilds/2/requirements', { guildId: '2' }), body: data },
+        {},
+      );
+      expect(JSON.parse(response.body).data).toEqual({ ...requirements, published });
+      expect(redis.eval).toHaveBeenLastCalledWith(
+        expect.stringContaining("redis.call('ZREM'"),
+        ['arrakis:guild-requirements:2', 'arrakis:guild-requirements'],
+        [JSON.stringify({ ...requirements, published }), published ? '1' : '0', expect.any(Number), 'guild:2'],
+      );
+    }
+  });
+
+  it('rejects members, officers, other guild leaders, and unlinked characters', async () => {
+    for (const member of [
+      { player_id: '4', role_id: '1' },
+      { player_id: '4', role_id: '50' },
+      { player_id: '99', role_id: '100' },
+    ]) {
+      request.mockResolvedValue({ rows: [member] });
+      await expect(
+        saveRequirements({ ...req('/api/guilds/2/requirements', { guildId: '2' }), body: requirements }, {}),
+      ).rejects.toMatchObject({ statusCode: 403 });
+      await expect(getRequirements(req('/api/guilds/2/requirements', { guildId: '2' }), {})).rejects.toMatchObject({
+        statusCode: 403,
+      });
+    }
+    linkedPlayer.mockResolvedValue({ linked: false, pawnId: '4' });
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
+    await expect(
+      saveRequirements({ ...req('/api/guilds/2/requirements', { guildId: '2' }), body: requirements }, {}),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(redis.eval).not.toHaveBeenCalled();
+  });
+
+  it('bounds input and requires requirements for published guilds', async () => {
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
+    for (const body of [
+      { ...requirements, requirements: ' ' },
+      { ...requirements, requirements: 'x'.repeat(2001) },
+      { ...requirements, contact: 'x'.repeat(201) },
+      { ...requirements, published: 'true' },
+    ]) {
+      await expect(
+        saveRequirements({ ...req('/api/guilds/2/requirements', { guildId: '2' }), body }, {}),
+      ).rejects.toMatchObject({ statusCode: 400 });
+    }
+    expect(redis.eval).not.toHaveBeenCalled();
+  });
+
+  it('lists only published, normalized records using bounded rank pagination', async () => {
+    redis.zrange.mockResolvedValue(['guild:2', 'guild:3', 'guild:4']);
+    redis.get.mockImplementation(async (key) =>
+      key.endsWith(':2')
+        ? { ...requirements, secret: 'omitted' }
+        : key.endsWith(':3')
+          ? { ...requirements, published: false }
+          : { invalid: true },
+    );
+    const response = await listRequirements(req('/api/guilds/requirements', { page: '1' }), {});
+    expect(JSON.parse(response.body).data).toEqual({ rows: [{ ...requirements, guildId: '2' }], hasMore: false });
+    expect(redis.zrange).toHaveBeenCalledWith('arrakis:guild-requirements', 20, 40, { byScore: false });
+    session.mockResolvedValue(null);
+    await expect(listRequirements(req('/api/guilds/requirements'), {})).rejects.toMatchObject({ statusCode: 401 });
+  });
 });
 
 describe('guild API handlers', () => {

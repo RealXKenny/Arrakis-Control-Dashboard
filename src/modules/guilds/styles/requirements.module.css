@@ -1,0 +1,90 @@
+.workspace {
+  padding: 24px;
+  border: 1px solid var(--theme-border);
+  border-radius: 18px;
+  background: var(--theme-background);
+  min-width: 0;
+}
+.workspace h2 {
+  margin: 0 0 12px;
+}
+.workspace > p {
+  color: var(--theme-muted);
+}
+.form {
+  display: grid;
+  gap: 20px;
+  max-width: 720px;
+  margin-top: 24px;
+}
+.form label {
+  display: grid;
+  gap: 8px;
+}
+.form input:not([type='checkbox']),
+.form textarea {
+  width: 100%;
+  padding: 12px;
+  color: var(--theme-text);
+  background: transparent;
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  font: inherit;
+}
+.form textarea {
+  resize: vertical;
+}
+.form .checkbox {
+  display: flex;
+  align-items: center;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+.card {
+  padding: 20px;
+  border: 1px solid var(--theme-border);
+  border-radius: 14px;
+  min-width: 0;
+}
+.card h3 {
+  margin-top: 0;
+}
+.card h4 {
+  color: var(--theme-muted);
+  margin-bottom: 8px;
+}
+.card p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.tabs,
+.paging {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.paging {
+  margin: 24px 0 0;
+}
+.tabs button,
+.workspace button {
+  padding: 10px 16px;
+  border: 1px solid var(--theme-border);
+  border-radius: 10px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+.tabs button[aria-current='page'] {
+  background: var(--theme-border);
+}
+.workspace button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -23,6 +23,8 @@ import { portalPageCopy } from '../config/page-copy';
 import MapWindow from '../../map/components/MapWindow';
 import { useGuildData } from '../hooks/useGuildData';
 import { guildRoleLabel } from '../utils/guild';
+import GuildRequirements from '../../guilds/components/GuildRequirements';
+import guildStyles from '../../guilds/styles/requirements.module.css';
 
 export default function PlayerPortal() {
   const view = usePortalView();
@@ -49,6 +51,7 @@ export default function PlayerPortal() {
   const vehicles = extractVehicles(player);
   const ownedBases = bases.filter(isOwnedBase);
   const sharedBases = bases.filter((base) => !isOwnedBase(base));
+  const [guildTab, setGuildTab] = useState<'membership' | 'requirements' | 'settings'>('membership');
   const [logoMessage, setLogoMessage] = useState('');
   const [logoUploading, setLogoUploading] = useState(false);
   const guildId = guildData.currentGuild?.guild_id ?? record(character?.guild).id;
@@ -189,6 +192,36 @@ export default function PlayerPortal() {
               {view === 'character' && <CharacterDossier character={character} details={player.details ?? {}} />}
               {view === 'storage' && <StorageWorkspace character={character} inventory={player.details?.inventory} />}
               {view === 'guild' && (
+                <>
+                  <nav className={guildStyles.tabs} aria-label="Guild tabs">
+                    <button
+                      aria-current={guildTab === 'membership' ? 'page' : undefined}
+                      onClick={() => setGuildTab('membership')}
+                    >
+                      My guild
+                    </button>
+                    <button
+                      aria-current={guildTab === 'requirements' ? 'page' : undefined}
+                      onClick={() => setGuildTab('requirements')}
+                    >
+                      Guild requirements
+                    </button>
+                    {canEditLogo && (
+                      <button
+                        aria-current={guildTab === 'settings' ? 'page' : undefined}
+                        onClick={() => setGuildTab('settings')}
+                      >
+                        Settings
+                      </button>
+                    )}
+                  </nav>
+                  {guildTab === 'requirements' && <GuildRequirements guildName={guildName} />}
+                  {guildTab === 'settings' && canEditLogo && (
+                    <GuildRequirements key={String(guildId)} settings guildId={String(guildId)} guildName={guildName} />
+                  )}
+                </>
+              )}
+              {view === 'guild' && guildTab === 'membership' && (
                 <section className={`${dossier.panel} ${dossier.guildPanel}`}>
                   <h2>Guild membership</h2>
                   <div className={dossier.identity}>
