@@ -199,7 +199,7 @@ export default function PlayerPortal() {
                       aria-current={guildTab === 'membership' ? 'page' : undefined}
                       onClick={() => setGuildTab('membership')}
                     >
-                      My guild
+                      My Guild
                     </button>
                     {canEditLogo && (
                       <button

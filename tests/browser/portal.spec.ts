@@ -890,7 +890,7 @@ test('guild requirements opens as its own community page', async ({ page }) => {
     route.fulfill({ json: { ok: true, data: { rows: [], hasMore: false } } }),
   );
   await page.goto('/portal?view=guild-requirements');
-  await expect(page.getByRole('heading', { name: 'Guild requirements', exact: true, level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Guilds', exact: true, level: 1 })).toBeVisible();
   await expect(page.getByText('No guilds are recruiting here yet.', { exact: false })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Guild tabs' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Save guild settings' })).toHaveCount(0);
@@ -957,7 +957,7 @@ for (const { leader, verified } of [
     }
     await page
       .getByRole('navigation', { name: 'Main navigation' })
-      .getByRole('link', { name: 'Guild requirements', exact: true })
+      .getByRole('link', { name: 'Guilds', exact: true })
       .click();
     await expect(page.getByRole('navigation', { name: 'Guild tabs' })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Crimson Skies', exact: true })).toBeVisible();
@@ -967,7 +967,7 @@ for (const { leader, verified } of [
     if (verified) {
       await page
         .getByRole('navigation', { name: 'Main navigation' })
-        .getByRole('link', { name: 'Guild', exact: true })
+        .getByRole('link', { name: 'My Guild', exact: true })
         .click();
       await tabs.getByRole('button', { name: 'Settings', exact: true }).click();
       await page.getByLabel('List my guild for recruitment').uncheck();
@@ -975,7 +975,7 @@ for (const { leader, verified } of [
       await expect(page.getByText('Settings saved. Your guild is not listed.', { exact: true })).toBeVisible();
       await page
         .getByRole('navigation', { name: 'Main navigation' })
-        .getByRole('link', { name: 'Guild requirements', exact: true })
+        .getByRole('link', { name: 'Guilds', exact: true })
         .click();
       await expect(page.getByRole('navigation', { name: 'Guild tabs' })).toHaveCount(0);
       await expect(page.getByText('No guilds are recruiting here yet.', { exact: false })).toBeVisible();

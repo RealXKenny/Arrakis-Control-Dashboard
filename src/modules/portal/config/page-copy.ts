@@ -58,12 +58,12 @@ export const portalPageCopy: Record<PortalView, { section: string; title: string
   },
   guild: {
     section: 'Your community',
-    title: 'Guilds',
+    title: 'My Guild',
     description: 'Your guild, its members, and your role in the community.',
   },
   'guild-requirements': {
     section: 'Community recruitment',
-    title: 'Guild requirements',
+    title: 'Guilds',
     description: 'Find a guild recruiting new members and read their joining requirements.',
   },
 };

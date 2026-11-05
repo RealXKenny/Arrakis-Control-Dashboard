@@ -86,8 +86,8 @@ export default function GuildRequirements({
   }
 
   return (
-    <section className={css.workspace} aria-label={settings ? 'Guild settings' : 'Guild requirements'}>
-      <h2>{settings ? 'Guild settings' : 'Guild requirements'}</h2>
+    <section className={css.workspace} aria-label={settings ? 'Guild settings' : 'Guilds'}>
+      <h2>{settings ? 'Guild settings' : 'Guilds'}</h2>
       <p>
         {settings
           ? 'Publish your guild’s joining requirements. Only the guild leader can edit these settings.'
@@ -150,7 +150,7 @@ export default function GuildRequirements({
       {!loading && !settings && !error && (
         <>
           {entries.length === 0 && (
-            <p>No guilds are recruiting here yet. Guild leaders can create a listing under Guild → Settings.</p>
+            <p>No guilds are recruiting here yet. Guild leaders can create a listing under My Guild → Settings.</p>
           )}
           <div className={css.cards}>
             {entries.map((entry) => (
@@ -167,7 +167,7 @@ export default function GuildRequirements({
               </article>
             ))}
           </div>
-          <nav className={css.paging} aria-label="Guild requirements pages">
+          <nav className={css.paging} aria-label="Guild listing pages">
             <button disabled={page === 0} onClick={() => setPage(page - 1)}>
               Previous
             </button>
