@@ -4,7 +4,7 @@ import { cookies } from '../../../infrastructure/cookies';
 import { AppError } from '../../../lib/errors';
 import { getSession, type DashboardSession } from '../../../lib/session-store';
 
-export const ADMIN_DISCORD_USER_ID = '456084885220884480';
+const ADMIN_DISCORD_USER_ID = '456084885220884480';
 
 /** Authority comes exclusively from the OAuth-verified server session, never a client flag. */
 export function isDashboardAdmin(session: DashboardSession | null): boolean {

@@ -1,5 +1,5 @@
 const PREFIX = 'arrakis:read:v1:';
-export const CLIENT_STALE_MS = 30_000;
+const CLIENT_STALE_MS = 30_000;
 type Identity = { cacheScope: string; expiresAt: number; checkedAt: number };
 type Snapshot = { body: string; capturedAt: number };
 let generation = 0;

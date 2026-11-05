@@ -1,7 +1,7 @@
 import './assert-server';
 import { AppError } from './errors';
 
-export const READ_TTL_MS = 30_000;
+const READ_TTL_MS = 30_000;
 type Entry<T> = { data: T; capturedAt: number; bytes: number };
 export class ReadCache<T> {
   private entries = new Map<string, Entry<T>>();

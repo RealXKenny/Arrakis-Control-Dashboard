@@ -1,48 +1,8 @@
-import { LEVEL_XP } from '../config/progression';
 const COLORS = {
   red: 'var(--theme-danger)',
   gold: 'var(--theme-accent)',
   water: 'var(--theme-soft)',
 };
-
-export function getLevelProgress(level, xp) {
-  const numericLevel = Math.max(1, Math.min(200, Number(level) || 1));
-
-  const numericXp = Math.max(0, Number(xp) || 0);
-
-  const currentLevelData = LEVEL_XP.find((entry) => entry.level === numericLevel);
-
-  const nextLevelData = LEVEL_XP.find((entry) => entry.level === numericLevel + 1);
-
-  // Dev note: level 200 is the ceiling; even heroes need building codes.
-  if (!nextLevelData) {
-    return {
-      percent: 100,
-      currentXp: numericXp,
-      levelStartXp: currentLevelData?.xp ?? 0,
-      nextLevelXp: 344440,
-      remainingXp: 0,
-      maxLevel: true,
-    };
-  }
-
-  const levelStartXp = currentLevelData?.xp ?? 0;
-
-  const nextLevelXp = nextLevelData.xp;
-
-  const levelRange = nextLevelXp - levelStartXp;
-
-  const progressXp = Math.max(0, Math.min(levelRange, numericXp - levelStartXp));
-
-  return {
-    percent: levelRange > 0 ? (progressXp / levelRange) * 100 : 0,
-    currentXp: numericXp,
-    levelStartXp,
-    nextLevelXp,
-    remainingXp: Math.max(0, nextLevelXp - numericXp),
-    maxLevel: false,
-  };
-}
 
 export function getPowerColor(percent) {
   if (percent <= 10) {

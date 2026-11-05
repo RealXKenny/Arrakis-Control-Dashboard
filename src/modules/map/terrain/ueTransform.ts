@@ -4,12 +4,6 @@ export interface UEPosition {
   z: number;
 }
 
-export interface UERotator {
-  pitch: number;
-  yaw: number;
-  roll: number;
-}
-
 export interface BabylonPosition {
   x: number;
   y: number;

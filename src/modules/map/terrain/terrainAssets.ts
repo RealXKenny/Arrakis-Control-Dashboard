@@ -115,7 +115,3 @@ export async function loadLayoutAssets(
   }
   return forCaller(pending, signal);
 }
-export function clearTerrainAssetCache(): void {
-  sharedPromise = null;
-  layoutCache.clear();
-}

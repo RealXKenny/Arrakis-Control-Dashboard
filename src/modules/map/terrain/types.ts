@@ -1,4 +1,4 @@
-export type TerrainMesh = {
+type TerrainMesh = {
   lo: [number, number, number];
   ext: [number, number, number];
   vo: number;
@@ -12,7 +12,7 @@ export type TerrainLibrary = {
   idxBytes: number;
   meshes: TerrainMesh[];
 };
-export type TerrainDraw = {
+type TerrainDraw = {
   m: number;
   off: number;
   n: number;

@@ -36,9 +36,6 @@ export function orthoFromWorldRect(view: TerrainView, zRange: number): Float32Ar
   m[15] = 1;
   return m;
 }
-export function projectWorldPoint(m: Float32Array, x: number, y: number, z: number): [number, number, number] {
-  return [m[0] * x + m[12], m[5] * y + m[13], m[10] * z + m[14]];
-}
 export function octDecode(ex: number, ey: number): [number, number, number] {
   let x = ex;
   let y = ey;
@@ -59,13 +56,6 @@ export function dequantizePosition(
   ext: readonly [number, number, number],
 ): [number, number, number] {
   return [lo[0] + (q[at] / 65535) * ext[0], lo[1] + (q[at + 1] / 65535) * ext[1], lo[2] + (q[at + 2] / 65535) * ext[2]];
-}
-export function sampleHeightField(field: Uint16Array, layout: TerrainLayoutMeta, x: number, y: number): number {
-  const n = layout.hfN;
-  const ix = Math.min(n - 1, Math.max(0, Math.round((x - layout.hfX0) / layout.hfStep)));
-  const iy = Math.min(n - 1, Math.max(0, Math.round((y - layout.hfY0) / layout.hfStep)));
-  const raw = field[iy * n + ix];
-  return layout.hfZlo + (raw / 65535) * (layout.hfZhi - layout.hfZlo);
 }
 export type SizableCanvas = {
   width: number;

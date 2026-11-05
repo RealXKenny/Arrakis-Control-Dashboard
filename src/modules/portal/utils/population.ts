@@ -23,7 +23,7 @@ export function totalPlayHours(players: unknown): number | null {
 }
 
 export const DAY_MS = 86400000;
-export const MAX_SAMPLE_GAP_MS = 90000;
+const MAX_SAMPLE_GAP_MS = 90000;
 
 export function summarizePopulation(values: unknown[], now: number): PopulationHistory {
   const unique = new Map<number, PopulationPoint>();

@@ -182,16 +182,9 @@
   .page :global(.vehicle-grid) > div {
     grid-column: auto !important;
   }
-  .page :global(.vitals-grid) {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-  .page :global(.vitals-grid) > :last-child {
-    grid-column: 1 / -1;
-  }
 }
 @media (max-width: 620px) {
   .page :global(.base-metrics),
-  .page :global(.vitals-grid),
   .page :global(.currency-grid) {
     grid-template-columns: minmax(0, 1fr) !important;
   }

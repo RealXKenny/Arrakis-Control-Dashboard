@@ -8,7 +8,7 @@ import {
   type HttpMethod,
 } from './dunedocker/transport';
 
-export type ConsoleRequestOptions = {
+type ConsoleRequestOptions = {
   query?: Record<string, unknown>;
   body?: unknown;
   timeoutMs?: number;
@@ -129,7 +129,7 @@ async function warmupDuneClient() {
   return client;
 }
 
-export { DuneConsoleClient, DuneConsoleApiError, DiscordAdapterApiError, getDuneClient, warmupDuneClient };
+export { DuneConsoleClient, DuneConsoleApiError, getDuneClient, warmupDuneClient };
 
 export async function getDiscordPlayer(actor: unknown): Promise<unknown> {
   const env = requireServerEnv('CONSOLE_URL', 'ADAPTER_TOKEN');

@@ -1,6 +1,6 @@
 import type { NavigationItem } from '../../../components/DashboardShell';
 
-export const portalViews = [
+const portalViews = [
   'overview',
   'hagga',
   'deep-desert',

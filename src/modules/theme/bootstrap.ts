@@ -1,7 +1,7 @@
 import { resolveTheme, themeSchedule, type ThemeDefinition } from './schedule';
 
 /** Runs before body parsing. Only attributes change, so React markup and layout stay stable. */
-export function startThemeController(resolve: typeof resolveTheme, schedule: ThemeDefinition[]) {
+function startThemeController(resolve: typeof resolveTheme, schedule: ThemeDefinition[]) {
   let timer: ReturnType<typeof setTimeout>;
   let appliedClasses: string[] = [];
   function refresh() {

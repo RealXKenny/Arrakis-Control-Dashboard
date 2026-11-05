@@ -19,7 +19,7 @@ export function getGeneratorSeconds(base) {
   );
 }
 
-export function getGeneratorType(base) {
+function getGeneratorType(base) {
   const type = String(base?.base_type ?? base?.baseType ?? base?.type ?? '').toLowerCase();
   if (type.includes('spicegenerator')) return 'spice';
   if (type.includes('directional')) return 'windTurbineDirectional';
