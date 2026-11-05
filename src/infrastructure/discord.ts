@@ -1,6 +1,6 @@
 import '../lib/assert-server';
 import { AppError } from '../lib/errors';
-import { readBoundedText } from '../lib/http-response';
+import { readBoundedText } from '../lib/http/response';
 
 const DISCORD_RESPONSE_LIMIT = 1024 * 1024;
 
@@ -48,10 +48,19 @@ export async function exchangeDiscordIdentity(
   if (typeof tokenData.access_token !== 'string' || !tokenData.access_token || tokenData.access_token.length > 4096) {
     throw new AppError('Authentication was declined.', 400, 'OAUTH_REJECTED', true);
   }
+  return readDiscordIdentity(tokenData.access_token, guildId);
+}
 
+/**
+ * Verify a Discord user access token and its guild membership. Shared by the direct OAuth
+ * callback and the Clerk bridge, so both apply exactly the same identity and role evidence.
+ */
+export async function readDiscordIdentity(accessToken: string, guildId: string) {
+  if (!accessToken || accessToken.length > 4096 || !/^[!-~]+$/.test(accessToken))
+    throw new AppError('Authentication was declined.', 400, 'OAUTH_REJECTED', true);
   const userResponse = await fetch('https://discord.com/api/users/@me', {
     headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     cache: 'no-store',
     signal: AbortSignal.timeout(10000),
@@ -71,7 +80,7 @@ export async function exchangeDiscordIdentity(
 
   const memberResponse = await fetch(memberUrl, {
     headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     cache: 'no-store',
     signal: AbortSignal.timeout(10000),

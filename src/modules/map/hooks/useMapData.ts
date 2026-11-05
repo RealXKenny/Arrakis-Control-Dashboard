@@ -1,5 +1,5 @@
 'use client';
-import { cachedFetch } from '../../../lib/client-cache';
+import { cachedFetch } from '../../../lib/cache/client-cache';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { normalizeMapResolution } from '../utils/mapResolution';

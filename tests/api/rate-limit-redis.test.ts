@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
-import { checkRateLimit, getClientAddress } from '../../src/lib/rate-limit';
+import { checkRateLimit, getClientAddress } from '../../src/lib/security/rate-limit';
 const { evaluate } = vi.hoisted(() => ({ evaluate: vi.fn() }));
-vi.mock('../../src/lib/redis', () => ({ getRedisClient: () => ({ eval: evaluate }) }));
+vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => ({ eval: evaluate }) }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => ({ NODE_ENV: 'production' }) }));
 beforeEach(() => {
   evaluate.mockReset();

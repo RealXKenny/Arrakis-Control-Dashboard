@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { populationSegments, type PopulationHistory } from '../utils/population';
 import { formatNumber } from '../utils/formatting';
-import css from '../overview.module.css';
+import css from '../styles/overview.module.css';
 
 export default function PopulationChart({
   history,

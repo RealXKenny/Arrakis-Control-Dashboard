@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { BaseCapture } from './BaseModelViewer';
 import { MAX_BLUEPRINT_BYTES, parseBlueprint, type Blueprint } from '../schema';
-import css from '../import.module.css';
+import css from '../styles/import.module.css';
 const BaseModelViewer = dynamic(() => import('./BaseModelViewer'), { ssr: false });
 export default function BaseImport() {
   const [busy, setBusy] = useState(false);

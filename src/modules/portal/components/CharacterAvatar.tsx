@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { useState } from 'react';
-import css from '../dossier.module.css';
+import css from '../styles/dossier.module.css';
 export default function CharacterAvatar({ src, name }: { src?: string | null; name: string }) {
   const [failed, setFailed] = useState<string | null>(null);
   return (

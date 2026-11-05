@@ -1,4 +1,4 @@
-import { cachedFetch, capturedAt, clearClientReadCache } from '../../../lib/client-cache';
+import { cachedFetch, capturedAt, clearClientReadCache } from '../../../lib/cache/client-cache';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { REFRESH_INTERVAL } from '../config/progression';
 import { extractBases, getBaseId } from '../utils/bases';

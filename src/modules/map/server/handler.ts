@@ -5,7 +5,7 @@ import { cookies } from '../../../infrastructure/cookies';
 
 import { getDuneClient } from '../../../infrastructure/dune';
 import { logger } from '../../../lib/logger';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 
 import { extractBaseRows, normalizeBase, getBaseId } from './bases';
 

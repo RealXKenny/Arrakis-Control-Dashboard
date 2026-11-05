@@ -15,7 +15,7 @@ function BaseGrid({ bases, telemetry, selectedBaseId, onSelectBase }) {
   }
 
   return (
-    <div className="base-grid grid grid-cols-2 gap-4">
+    <div className="base-grid fly-in-stagger grid grid-cols-2 gap-4">
       {bases.map((base, index) => {
         const isOddFinalBase = bases.length % 2 === 1 && index === bases.length - 1;
         const baseId = getBaseId(base);

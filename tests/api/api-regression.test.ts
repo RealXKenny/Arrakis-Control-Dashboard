@@ -14,18 +14,18 @@ import status from '../../src/pages/api/server/status';
 import world from '../../src/pages/api/portal/world';
 import { runPagesApiHandler, NextResponse } from '../../src/infrastructure/pages-api';
 import { getDuneClient, getDiscordPlayer } from '../../src/infrastructure/dune';
-import { getSession, saveSession, deleteSession } from '../../src/lib/session-store';
-import { checkRateLimit } from '../../src/lib/rate-limit';
+import { getSession, saveSession, deleteSession } from '../../src/lib/security/session-store';
+import { checkRateLimit } from '../../src/lib/security/rate-limit';
 import { responseMock } from '../helpers/response';
 
 vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: vi.fn(), getDiscordPlayer: vi.fn() }));
-vi.mock('../../src/lib/session-store', () => ({
+vi.mock('../../src/lib/security/session-store', () => ({
   getSession: vi.fn(),
   saveSession: vi.fn(),
   deleteSession: vi.fn(),
   sessionTtlSeconds: () => 43200,
 }));
-vi.mock('../../src/lib/rate-limit', () => ({ checkRateLimit: vi.fn(), getClientAddress: () => 'test' }));
+vi.mock('../../src/lib/security/rate-limit', () => ({ checkRateLimit: vi.fn(), getClientAddress: () => 'test' }));
 vi.mock('../../src/config/env', () => ({
   getServerEnv: () => ({
     NODE_ENV: 'test',

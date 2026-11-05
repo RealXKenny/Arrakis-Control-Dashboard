@@ -3,9 +3,9 @@ import '../lib/assert-server';
 import { randomUUID } from 'node:crypto';
 import { createRequestLogger, logRequestAccess } from '../lib/logger';
 import { getSafeError } from '../lib/errors';
-import { checkRateLimit, getClientAddress } from '../lib/rate-limit';
+import { checkRateLimit, getClientAddress } from '../lib/security/rate-limit';
 import { getServerEnv } from '../config/env';
-import { acquireApiCapacity } from '../lib/api-capacity';
+import { acquireApiCapacity } from '../lib/security/api-capacity';
 
 type ResponseInit = { status?: number; headers?: Record<string, string> };
 

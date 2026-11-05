@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { cachedFetch } from '../../../lib/client-cache';
+import { cachedFetch } from '../../../lib/cache/client-cache';
 export function useMarketData(query: string, page: number, sort = 'name', owner = 'all') {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

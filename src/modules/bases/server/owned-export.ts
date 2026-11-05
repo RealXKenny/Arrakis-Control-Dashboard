@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getDuneClient } from '../../../infrastructure/dune';
 import { cookies } from '../../../infrastructure/cookies';
 import { AppError } from '../../../lib/errors';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import { record } from '../../portal/utils/inventory';
 

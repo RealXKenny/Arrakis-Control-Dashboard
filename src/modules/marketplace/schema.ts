@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { baseViewSchema } from '../bases/utils/preview-settings';
 
-export const MARKETPLACE_LAYOUT_MAX_BYTES = 2 * 1024 * 1024;
+const MARKETPLACE_LAYOUT_MAX_BYTES = 2 * 1024 * 1024;
 export const MARKETPLACE_LISTING_LIMIT = 200;
 const coordinate = z.number().finite().min(-1e8).max(1e8);
 const identifier = z.union([z.number().int().nonnegative().safe(), z.string().regex(/^\d{1,20}$/)]);

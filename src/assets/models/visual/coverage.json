@@ -1,0 +1,35 @@
+{
+  "set": "Atre/Outpost",
+  "templates": 1784,
+  "imported": 89,
+  "glassAccessories": 3,
+  "updatedCatalogRows": 88,
+  "nativeFallbackRows": 770,
+  "unmatched": 7,
+  "unmatchedFiles": [
+    "SM_Env_PB_Atre_Outpost_Door_Tall_MD.gltf",
+    "SM_Env_PB_Atre_Outpost_HatchDoor_MD.gltf",
+    "SM_Env_PB_Atre_Outpost_PrudenceDoor.gltf",
+    "SM_Env_PB_Atre_Outpost_WallTriangleBottom_Wide_L.gltf",
+    "SM_Env_PB_Atre_Outpost_Window_01_MeshDecal.gltf",
+    "SM_Env_PB_Atre_Outpost_Window_02_MeshDecal.gltf",
+    "SM_Env_PB_Atre_Outpost_WindowRoundCorner_MeshDecal.gltf"
+  ],
+  "failed": 0,
+  "failures": [],
+  "meshesWithImages": 0,
+  "textureNote": "Atre Outpost meshes and their deduplicated layer images are separate named Atreides model and texture packs.",
+  "packs": [
+    {
+      "file": "visual/atreides-pack/atreides-models.bin.gz",
+      "compressedBytes": 12186037
+    }
+  ],
+  "texturePatch": {
+    "file": "visual/atreides-pack/atreides-textures.bin.gz",
+    "pack": 30,
+    "compressedBytes": 16987889,
+    "uniqueImages": 24,
+    "meshesBound": 172
+  }
+}

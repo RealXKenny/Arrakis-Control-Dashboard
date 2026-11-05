@@ -1,5 +1,5 @@
 'use client';
-import styles from '../map.module.css';
+import styles from '../styles/map.module.css';
 
 function friendlyMarkerType(type) {
   return (

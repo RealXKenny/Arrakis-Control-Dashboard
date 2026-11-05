@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppError, getSafeError } from '../../src/lib/errors';
 import { createLogger, logger, logRequestAccess } from '../../src/lib/logger';
-import { checkRateLimit } from '../../src/lib/rate-limit';
-import { deleteSession, getSession, saveSession } from '../../src/lib/session-store';
+import { checkRateLimit } from '../../src/lib/security/rate-limit';
+import { deleteSession, getSession, saveSession } from '../../src/lib/security/session-store';
 import { getRequestCookie } from '../../src/infrastructure/cookies';
 
 describe('shared production hardening', () => {
