@@ -18,6 +18,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 ### Fixed
 
 - Moved the image cache into Pterodactyl’s writable server storage and prepare it before startup, preventing image cache directory errors on containers with a read-only application filesystem.
+- Guild leader settings now verify both linked pawn and controller IDs instead of relying on a cached single ID. Settings visibility uses the same server-verified permission as saving changes.
 
 ## [1.20.5] - 2026-11-05
 

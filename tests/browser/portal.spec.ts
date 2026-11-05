@@ -887,8 +887,14 @@ test('guild view renders reported membership without inventing a rank', async ({
   await expect(page.getByText('Your rank: Not reported')).toBeVisible();
 });
 
-for (const leader of [true, false]) {
-  test(`guild recruitment board supports ${leader ? 'leader settings' : 'read-only members'}`, async ({ page }) => {
+for (const { leader, verified } of [
+  { leader: true, verified: true },
+  { leader: false, verified: false },
+  { leader: true, verified: false },
+]) {
+  test(`guild recruitment board supports ${verified ? 'leader settings' : leader ? 'unverified leadership' : 'read-only members'}`, async ({
+    page,
+  }) => {
     await page.route('**/api/guilds?*', (route) =>
       route.fulfill({ json: { ok: true, data: { rows: [{ guild_id: '2', guild_name: 'Crimson Skies' }] } } }),
     );
@@ -898,6 +904,7 @@ for (const leader of [true, false]) {
         json: {
           ok: true,
           data: { rows: [{ player_id: 'tester', character_name: 'Desert Navigator', role_id: leader ? '100' : '1' }] },
+          canEdit: verified,
         },
       }),
     );
@@ -919,7 +926,7 @@ for (const leader of [true, false]) {
     await page.goto('/portal?view=guild');
     await expect(page.getByText(`Your rank: ${leader ? 'Leader' : 'Member'}`, { exact: true })).toBeVisible();
     const tabs = page.getByRole('navigation', { name: 'Guild tabs' });
-    if (leader) {
+    if (verified) {
       await tabs.getByRole('button', { name: 'Settings', exact: true }).click();
       await page
         .getByRole('textbox', { name: 'Joining requirements', exact: true })
@@ -936,7 +943,7 @@ for (const leader of [true, false]) {
     await expect(page.getByText(listing.requirements, { exact: true })).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    if (leader) {
+    if (verified) {
       await tabs.getByRole('button', { name: 'Settings', exact: true }).click();
       await page.getByLabel('List my guild for recruitment').uncheck();
       await page.getByRole('button', { name: 'Save guild settings' }).click();

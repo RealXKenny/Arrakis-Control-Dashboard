@@ -82,7 +82,7 @@ export default function PlayerPortal() {
       ),
   }));
   const guildOwner = guildData.members.find((member) => String(member.role_id) === '100');
-  const canEditLogo = guildData.currentMember?.role_id != null && String(guildData.currentMember.role_id) === '100';
+  const canEditLogo = guildData.canEdit;
 
   async function uploadGuildLogo(file: File) {
     if (!guildId || file.type !== 'image/png' || file.size > 512 * 1024) {

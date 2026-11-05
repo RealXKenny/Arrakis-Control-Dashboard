@@ -26,6 +26,7 @@ export function useGuildData(character, enabled: boolean) {
   const [guilds, setGuilds] = useState<Record<string, unknown>[]>([]);
   const [members, setMembers] = useState<Record<string, unknown>[]>([]);
   const [logo, setLogo] = useState<string | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const characterRef = useRef(character);
@@ -46,6 +47,9 @@ export function useGuildData(character, enabled: boolean) {
     if (!enabled || !currentCharacter) return;
     let cancelled = false;
     setLoading(true);
+    setCanEdit(false);
+    setMembers([]);
+    setLogo(null);
     setError('');
     void (async () => {
       try {
@@ -83,7 +87,10 @@ export function useGuildData(character, enabled: boolean) {
         if (!memberResponse.ok) throw new Error(`Guild members returned ${memberResponse.status}`);
         const memberPayload = record(await memberResponse.json());
         const nextMembers = rows(record(memberPayload.data)) ?? [];
-        if (!cancelled) setMembers(nextMembers);
+        if (!cancelled) {
+          setMembers(nextMembers);
+          setCanEdit(memberPayload.canEdit === true);
+        }
       } catch {
         if (!cancelled) {
           setError('Guild data is temporarily unavailable.');
@@ -111,6 +118,7 @@ export function useGuildData(character, enabled: boolean) {
   return {
     currentGuild: currentGuild ?? null,
     currentMember: currentMember ?? null,
+    canEdit,
     members,
     logo,
     setLogo,

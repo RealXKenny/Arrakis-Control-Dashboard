@@ -51,6 +51,51 @@ const requirements = {
 };
 
 describe('guild recruitment settings', () => {
+  it('verifies the controller ID as well as the pawn ID, ignoring a stale session identity', async () => {
+    const currentSession = await session();
+    session.mockResolvedValue({ ...currentSession, linkedPlayerId: 'old-pawn' });
+    linkedPlayer.mockResolvedValue({
+      linked: true,
+      pawnId: 'current-pawn',
+      controllerId: '4',
+      characterName: 'Leader',
+    });
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
+    const members = await listMembers(req('/api/guilds/2/members', { guildId: '2' }), {});
+    expect(JSON.parse(members.body).canEdit).toBe(true);
+    const saved = await saveRequirements(
+      { ...req('/api/guilds/2/requirements', { guildId: '2' }), body: requirements },
+      {},
+    );
+    expect(saved.status).toBe(200);
+    redis.get.mockResolvedValue(requirements);
+    const loaded = await getRequirements(req('/api/guilds/2/requirements', { guildId: '2' }), {});
+    expect(JSON.parse(loaded.body).data).toEqual(requirements);
+  });
+
+  it('does not grant edit access based on a matching character name or stale session ID', async () => {
+    const currentSession = await session();
+    session.mockResolvedValue({ ...currentSession, linkedPlayerId: '99', linkedPlayerName: 'Leader' });
+    linkedPlayer.mockResolvedValue({ linked: true, pawnId: '4', characterName: 'Leader' });
+    request.mockResolvedValue({ rows: [{ player_id: '99', character_name: 'Leader', role_id: '100' }] });
+    const members = await listMembers(req('/api/guilds/2/members', { guildId: '2' }), {});
+    expect(JSON.parse(members.body).canEdit).toBe(false);
+    await expect(getRequirements(req('/api/guilds/2/requirements', { guildId: '2' }), {})).rejects.toMatchObject({
+      statusCode: 403,
+    });
+  });
+
+  it('keeps member lists readable but denies settings when identity verification fails', async () => {
+    linkedPlayer.mockRejectedValue(new Error('adapter unavailable'));
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
+    const members = await listMembers(req('/api/guilds/2/members', { guildId: '2' }), {});
+    expect(JSON.parse(members.body).canEdit).toBe(false);
+    await expect(getRequirements(req('/api/guilds/2/requirements', { guildId: '2' }), {})).rejects.toMatchObject({
+      statusCode: 503,
+      code: 'PLAYER_VERIFICATION_UNAVAILABLE',
+    });
+  });
+
   it('publishes and unlists a guild through one atomic Redis operation', async () => {
     request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
     for (const published of [true, false]) {
