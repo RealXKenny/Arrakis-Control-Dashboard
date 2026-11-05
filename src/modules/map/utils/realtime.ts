@@ -20,7 +20,7 @@ const snapshotSchema = z.object({
   objects: z.array(z.unknown()).max(50_000),
 });
 
-export type RealtimeMarker = {
+type RealtimeMarker = {
   id: string;
   type: string;
   name: string;

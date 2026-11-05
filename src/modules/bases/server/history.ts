@@ -1,7 +1,7 @@
 import '../../../lib/assert-server';
-import { getRedisClient } from '../../../lib/redis';
+import { getRedisClient } from '../../../lib/redis/client';
 import { AppError } from '../../../lib/errors';
-import { withTimeout } from '../../../lib/timeout';
+import { withTimeout } from '../../../lib/http/timeout';
 import type { ImportRecord } from '../types';
 function client() {
   const redis = getRedisClient();

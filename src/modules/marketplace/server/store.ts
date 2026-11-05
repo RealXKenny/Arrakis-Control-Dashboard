@@ -1,7 +1,7 @@
 import '../../../lib/assert-server';
 import { AppError } from '../../../lib/errors';
-import { getRedisClient } from '../../../lib/redis';
-import { withTimeout } from '../../../lib/timeout';
+import { getRedisClient } from '../../../lib/redis/client';
+import { withTimeout } from '../../../lib/http/timeout';
 import { getPreviewSettings, previewKey } from '../../bases/server/preview-settings';
 import {
   MARKETPLACE_LISTING_LIMIT,

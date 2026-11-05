@@ -48,16 +48,17 @@ export default function DashboardShell({
       >
         {children}
       </main>
-      {!immersive && (
-        <footer className="border-t border-white/5">
-          <div className="workspace-frame flex flex-wrap items-center justify-between gap-2 py-5 text-xs text-zinc-500">
-            <span>
-              {brand} · <ChangelogDialog />
-            </span>
-            <span>Your community. Connected.</span>
-          </div>
-        </footer>
-      )}
+      <footer className={`border-t border-white/5 ${immersive ? 'bg-zinc-950/50' : ''}`}>
+        <div className="workspace-frame flex flex-wrap items-center justify-between gap-2 py-3 text-xs text-zinc-500">
+          <span>
+            {brand} · <ChangelogDialog />
+          </span>
+          <span className="text-right">
+            Your community. Connected. · Arrakis Control Dashboard is an unofficial community project and is not
+            affiliated with, endorsed by, sponsored by, or supported by Funcom.
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }

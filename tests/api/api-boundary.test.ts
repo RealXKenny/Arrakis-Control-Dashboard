@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { NextResponse, runPagesApiHandler } from '../../src/infrastructure/pages-api';
 import authCallback from '../../src/pages/api/auth/callback/index';
 import marketConfig from '../../src/pages/api/market/config/index';
-import { acquireApiCapacity } from '../../src/lib/api-capacity';
+import { acquireApiCapacity } from '../../src/lib/security/api-capacity';
 
 describe('Pages API boundary', () => {
   it('rejects overload before invoking a handler and recovers after capacity is released', async () => {

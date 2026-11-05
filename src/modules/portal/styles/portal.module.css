@@ -1,0 +1,200 @@
+.page {
+  min-width: 0;
+}
+
+/* Dev note: child grids behave only while the portal root is watching. */
+.page :global(.base-grid),
+.page :global(.vehicle-grid) {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.page button {
+  cursor: pointer;
+  font-family: inherit;
+}
+.page button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.account {
+  color: var(--theme-soft);
+  font-size: 12px;
+}
+.hero {
+  padding: 0 0 32px;
+}
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--theme-muted);
+  font:
+    11px/1.5 var(--font-mono),
+    monospace;
+  letter-spacing: 0.02em;
+}
+.hero h1 {
+  margin: 0 0 16px;
+  color: var(--theme-text);
+  font:
+    600 clamp(32px, 3vw, 48px)/1.1 var(--font-sans),
+    sans-serif;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+.hero p:not(.eyebrow) {
+  max-width: 640px;
+  margin: 0;
+  color: var(--theme-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.statusline,
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.statusline {
+  justify-content: flex-start;
+  padding: 10px 14px;
+  margin-bottom: 24px;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
+  background: var(--theme-surface);
+  color: var(--theme-muted);
+  font-size: 11px;
+}
+.updated {
+  margin-left: auto;
+  color: var(--theme-muted);
+  font:
+    10px/1.5 var(--font-mono),
+    monospace;
+}
+.live,
+.offline {
+  color: var(--theme-soft);
+  font:
+    11px var(--font-mono),
+    monospace;
+}
+.offline {
+  color: var(--theme-muted);
+}
+.heroActions {
+  justify-content: flex-start;
+  margin-top: 20px;
+}
+.heroActions button,
+.notice button,
+.statusline button {
+  padding: 9px 14px;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
+  background: var(--theme-raised);
+  color: var(--theme-soft);
+  font-size: 12px;
+}
+.heroActions button:hover,
+.notice button:hover,
+.statusline button:hover {
+  background: var(--theme-hover);
+  color: var(--theme-text);
+}
+.notice {
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid var(--theme-border);
+  border-radius: 20px;
+  background: var(--theme-surface);
+  color: var(--theme-soft);
+  line-height: 1.7;
+}
+.notice a {
+  color: var(--theme-accent);
+}
+.skeleton {
+  min-height: 220px;
+  padding: 36px;
+  border: 1px solid var(--theme-border);
+  border-radius: 24px;
+  background: var(--theme-surface);
+  color: var(--theme-muted);
+}
+.destinations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.destinations a {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid var(--theme-border);
+  border-radius: 24px;
+  background: var(--theme-surface);
+  color: var(--theme-muted);
+  text-decoration: none;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+.destinations a:hover {
+  border-color: rgb(255 255 255 / 0.1);
+  background: var(--theme-raised);
+}
+.destinations strong {
+  color: var(--theme-text);
+  font-size: clamp(22px, 2.3vw, 38px);
+  font-weight: 600;
+}
+.destinations b {
+  margin-top: 14px;
+  color: var(--theme-muted);
+  font:
+    11px var(--font-mono),
+    monospace;
+}
+
+@media (min-width: 1200px) {
+  .page :global(.currency-grid) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+@media (min-width: 1800px) {
+  .page :global(.base-grid),
+  .page :global(.vehicle-grid) {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)) !important;
+  }
+  .page :global(.base-grid) > div,
+  .page :global(.vehicle-grid) > div {
+    grid-column: auto !important;
+  }
+}
+@media (max-width: 900px) {
+  .page :global(.base-grid),
+  .page :global(.vehicle-grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .page :global(.base-grid) > div,
+  .page :global(.vehicle-grid) > div {
+    grid-column: auto !important;
+  }
+}
+@media (max-width: 620px) {
+  .page :global(.base-metrics),
+  .page :global(.currency-grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .destinations {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    padding-top: 8px;
+  }
+  .destinations a {
+    padding: 22px;
+  }
+}

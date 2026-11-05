@@ -35,7 +35,8 @@ Fill in `.env` before using authentication or server-backed features. Never comm
 Required production variables include:
 
 - `CONSOLE_URL`, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN` for scoped Dune Console access.
-- `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `DISCORD_GUILD_ID` for Discord OAuth.
+- `DISCORD_GUILD_ID` for guild membership checks, plus `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` when `AUTH_PROVIDER` is `discord` (the default).
+- `CLERK_SECRET_KEY` and `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` when `AUTH_PROVIDER` is `clerk`. Clerk handles the Discord sign-in (configure its Discord connection with custom credentials and the `identify guilds.members.read` scopes); the dashboard then re-checks guild membership and `VERIFIED_MEMBER_ROLE_ID` with the member’s Discord token at `/auth/complete` before issuing its normal session. Logout also revokes the Clerk session. The secret key is server-only; the publishable key is public by design.
 - `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/auth/callback`.
 - `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits, persistent sessions, and the dashboard snapshot cache.
 - `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list that switches the optional server snapshot provider to `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index.
@@ -119,7 +120,6 @@ Preview any configured ID with `?theme=halloween`, `?theme=easter`, or `?theme=i
 
 The calendar matrix in `src/modules/theme/schedule.ts` controls inclusive local dates, priorities, palettes, and optional `cssClass`, `message`, and `asset` metadata. The early controller applies the class and exposes the message/asset as text attributes on `<html>`; it never injects HTML or inserts a banner that could shift content. Only its own classes and metadata are removed on reset. `src/styles/pillbox-theme.css` connects the shared pillbox accent token to the same seasonal palette used by feature modules. No theme assets are downloaded unless a feature explicitly uses them.
 
-
 ## Interactive maps
 
 Both maps open in an orbitable 3D view with measured terrain, selectable locations, and realtime markers. Drag to orbit, right-drag to pan, and scroll/pinch to zoom. Controls include location search, Fly to, compass, scale, fullscreen, and detail selection. The 2D map remains available and is the automatic fallback if terrain loading or WebGL2 fails.
@@ -195,7 +195,7 @@ Important boundaries:
 - `src/pages/` contains the Pages Router pages and API routes; `next.config.ts` redirects legacy `/home` links to `/`.
 - `src/modules/` contains feature-specific UI, hooks, normalization, and server helpers.
 - `src/infrastructure/` contains the Dune client, cookie helpers, and API boundary utilities.
-- `src/lib/` contains shared logging, errors, Redis (node-redis for sessions/rate limits, ioredis pool for dashboard data), rate limiting, and session storage.
+- `src/lib/` contains shared logging and errors, plus `redis/` (node-redis client, ioredis pool for dashboard data), `security/` (sessions, rate limiting, API capacity), `cache/` and `http/` helpers.
 - `src/lib/env.ts` validates server environment configuration; `src/config/env.ts` re-exports it for legacy imports.
 - `proxy.ts` adds request correlation and security headers (Middleware renamed in Next.js 16; it must live at `src/proxy.ts` beside the routers).
 - `docker-compose.yml` runs the dashboard beside a local Redis for development.

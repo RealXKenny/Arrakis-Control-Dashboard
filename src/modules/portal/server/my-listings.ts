@@ -1,7 +1,7 @@
 import '../../../lib/assert-server';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import { getDuneClient } from '../../../infrastructure/dune';
-import type { DashboardSession } from '../../../lib/session-store';
+import type { DashboardSession } from '../../../lib/security/session-store';
 import { AppError } from '../../../lib/errors';
 import { record, rows, type DataRow } from '../utils/inventory';
 

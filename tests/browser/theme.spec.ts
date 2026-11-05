@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { test as motionTest } from '@playwright/test';
+import { expect, test } from '../helpers/browser-test';
 import { getThemeScript } from '../../src/modules/theme/bootstrap';
 
 test('applies local themes before body parsing under CSP without changing layout', async ({ page }) => {
@@ -59,3 +60,23 @@ test('holiday accents reach pillbox controls and reset without layout shifts', a
   await expect(button).toHaveCSS('background-color', baseColor);
   expect(await button.boundingBox()).toEqual(baseLayout);
 });
+
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  motionTest.describe(`entrance motion with ${reducedMotion} motion`, () => {
+    motionTest.use({ contextOptions: { reducedMotion } });
+    motionTest('landing cards fly in only when motion is welcome', async ({ page }) => {
+      await page.goto('/');
+      const card = page.locator('.fly-in-stagger > *').first();
+      await expect(card).toBeVisible();
+      const motion = await card.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { name: style.animationName, duration: parseFloat(style.animationDuration) };
+      });
+      if (reducedMotion === 'reduce') expect(motion.name).toBe('none');
+      else {
+        expect(motion.name).toBe('fly-in');
+        expect(motion.duration).toBeGreaterThan(0.2);
+      }
+    });
+  });
+}

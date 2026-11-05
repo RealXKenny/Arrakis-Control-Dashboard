@@ -3,9 +3,9 @@
 import React from 'react';
 import { uniqueMapMarkers } from '../utils/markers';
 import dynamic from 'next/dynamic';
-import type { MapCamera } from '../terrain/MapScene3D';
+import type { MapCamera } from '../terrain/scene/MapScene3D';
 
-const MapScene3D = dynamic(() => import('../terrain/MapScene3D'), { ssr: false });
+const MapScene3D = dynamic(() => import('../terrain/scene/MapScene3D'), { ssr: false });
 
 import MapToolbar from './MapToolbar';
 import MapCanvas from './MapCanvas';
@@ -17,7 +17,7 @@ import useRealtimeData from '../hooks/useRealtimeData';
 import useMapZoom from '../hooks/useMapZoom';
 import useMapDrag from '../hooks/useMapDrag';
 
-import styles from '../map.module.css';
+import styles from '../styles/map.module.css';
 
 const LEGEND_STORAGE_KEY_PREFIX = 'map-legend';
 const DEFAULT_DISABLED_MARKERS = {

@@ -1,4 +1,4 @@
-import { cachedFetch, clearClientReadCache } from '../../../lib/client-cache';
+import { cachedFetch, clearClientReadCache } from '../../../lib/cache/client-cache';
 import { useEffect, useRef, useState } from 'react';
 import { record, rows } from '../utils/inventory';
 

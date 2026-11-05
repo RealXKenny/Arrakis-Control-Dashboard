@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { getServerEnv } from '../../../config/env';
 import { NextResponse } from '../../../infrastructure/pages-api';
-import { checkRateLimit } from '../../../lib/rate-limit';
+import { checkRateLimit } from '../../../lib/security/rate-limit';
 import { readWorld } from '../../portal/server/world';
 
 /** A service credential grants only this guild-wide read, never browser sessions or player impersonation. */

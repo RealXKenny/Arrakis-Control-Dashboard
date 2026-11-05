@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { cookies } from '../../../infrastructure/cookies';
 import { getDuneClient } from '../../../infrastructure/dune';
 import { NextResponse } from '../../../infrastructure/pages-api';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 import { AppError } from '../../../lib/errors';
 import { worldReading, type WorldReading } from '../utils/world';
 import { totalPlayHours } from '../utils/population';

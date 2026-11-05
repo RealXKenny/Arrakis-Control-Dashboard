@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { cookies } from '../../../infrastructure/cookies';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { cacheScope } from '../../../infrastructure/api-read-cache';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 import { getServerEnv } from '../../../config/env';
 export async function GET(req, res) {
   const cookieStore = cookies(req, res);

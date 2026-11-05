@@ -183,7 +183,7 @@ export default function BaseMarketplace() {
         </div>
       )}
       {!error && filtered.length > 0 && (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+        <div className="fly-in-stagger mt-4 grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
           {filtered.map((listing) => (
             <MarketplaceCard
               key={listing.id}

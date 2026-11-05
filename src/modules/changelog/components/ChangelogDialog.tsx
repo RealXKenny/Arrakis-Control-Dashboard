@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { APP_VERSION } from '../../../config/version';
 import type { ChangelogRelease } from '../schema';
-import css from '../changelog-dialog.module.css';
+import css from '../styles/changelog-dialog.module.css';
 
 export default function ChangelogDialog() {
   const [open, setOpen] = useState(false);

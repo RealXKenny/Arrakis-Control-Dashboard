@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { useState } from 'react';
-import css from '../item-image.module.css';
+import css from '../styles/item-image.module.css';
 export default function ItemImage({ src, large = false }: { src: string | null; large?: boolean }) {
   const [failed, setFailed] = useState<string | null>(null);
   return (

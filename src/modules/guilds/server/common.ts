@@ -1,6 +1,6 @@
 import '../../../lib/assert-server';
 import { cookies } from '../../../infrastructure/cookies';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 import { NextResponse } from '../../../infrastructure/pages-api';
 
 export async function getGuildSession(req, res) {

@@ -1,4 +1,4 @@
-export function toNumber(value) {
+function toNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : NaN;
 }

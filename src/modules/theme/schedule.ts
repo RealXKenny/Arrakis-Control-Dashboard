@@ -1,5 +1,5 @@
 /** Calendar rules use one-based months and inclusive local calendar dates. */
-export type CalendarRule =
+type CalendarRule =
   | { kind: 'fixed'; month: number; start: number; end?: number }
   | { kind: 'weekday'; month: number; weekday: number; occurrence: number; before?: number; after?: number }
   | { kind: 'easter'; before: number; after: number }

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import DashboardShell from '../../../components/DashboardShell';
 import type { AdminOperation } from '../types';
-import css from '../admin.module.css';
+import css from '../styles/admin.module.css';
 
 function objectInput(text: string): Record<string, unknown> {
   const value: unknown = JSON.parse(text || '{}');

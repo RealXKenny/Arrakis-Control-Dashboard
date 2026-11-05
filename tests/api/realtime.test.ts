@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import route from '../../src/pages/api/map/realtime';
 import { getDuneClient, DuneConsoleApiError } from '../../src/infrastructure/dune';
-import { getSession } from '../../src/lib/session-store';
+import { getSession } from '../../src/lib/security/session-store';
 import { responseMock } from '../helpers/response';
 import { clearRealtimeReadCache } from '../../src/modules/map/server/realtime';
 
@@ -14,8 +14,8 @@ vi.mock('../../src/infrastructure/dune', async (original) => ({
   ...(await original<typeof import('../../src/infrastructure/dune')>()),
   getDuneClient: vi.fn(),
 }));
-vi.mock('../../src/lib/session-store', () => ({ getSession: vi.fn() }));
-vi.mock('../../src/lib/rate-limit', () => ({
+vi.mock('../../src/lib/security/session-store', () => ({ getSession: vi.fn() }));
+vi.mock('../../src/lib/security/rate-limit', () => ({
   checkRateLimit: async () => ({ allowed: true, remaining: 100, retryAfter: 60 }),
   getClientAddress: () => 'test',
 }));

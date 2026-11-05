@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../helpers/browser-test';
 import operations from '../../src/modules/admin/catalog.json';
 
 test('ordinary members cannot load administration or execute privileged operations', async ({ browser }) => {

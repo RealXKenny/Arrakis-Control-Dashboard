@@ -1,7 +1,7 @@
 import '../../lib/assert-server';
 import { randomUUID } from 'node:crypto';
 import { createLogger } from '../../lib/logger';
-import { readBoundedText } from '../../lib/http-response';
+import { readBoundedText } from '../../lib/http/response';
 
 export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type Provider = 'console' | 'adapter';

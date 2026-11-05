@@ -5,7 +5,7 @@ import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-ap
 import { cookies } from '../../../infrastructure/cookies';
 import { getDiscordRedirectUri, getServerEnv } from '../../../config/env';
 import { logger } from '../../../lib/logger';
-import { saveSession, sessionTtlSeconds } from '../../../lib/session-store';
+import { establishDashboardSession } from './establish';
 import crypto from 'node:crypto';
 
 export async function GET(request, res) {
@@ -57,7 +57,6 @@ export async function GET(request, res) {
     const clientSecret = env.DISCORD_CLIENT_SECRET;
     const guildId = env.DISCORD_GUILD_ID;
     const redirectUri = getDiscordRedirectUri();
-    const appUrl = env.APP_URL || new URL(request.url, getRequestOrigin(request)).origin;
 
     if (!clientId || !clientSecret || !redirectUri) {
       return NextResponse.json(
@@ -80,45 +79,7 @@ export async function GET(request, res) {
       redirectUri,
     });
 
-    const rolesArray = Array.isArray(memberData.roles) ? memberData.roles : [];
-    if (env.VERIFIED_MEMBER_ROLE_ID && !rolesArray.includes(env.VERIFIED_MEMBER_ROLE_ID)) {
-      return NextResponse.json(
-        { ok: false, error: 'The required Discord role is missing.', code: 'ROLE_REQUIRED' },
-        { status: 403 },
-      );
-    }
-
-    const sessionId = crypto.randomBytes(32).toString('hex');
-
-    await saveSession(sessionId, {
-      user: {
-        id: String(userData.id),
-        username: typeof userData.username === 'string' ? userData.username.slice(0, 100) : undefined,
-        global_name: typeof userData.global_name === 'string' ? userData.global_name.slice(0, 100) : undefined,
-        avatar:
-          typeof userData.avatar === 'string' && /^(a_)?[a-f0-9]{32}$/.test(userData.avatar) ? userData.avatar : null,
-      },
-      guildId,
-      roleIds: rolesArray,
-      expiresAt: Date.now() + sessionTtlSeconds() * 1000,
-    });
-
-    cookieStore.set('dashboard_session', sessionId, {
-      httpOnly: true,
-      secure: getServerEnv().NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: sessionTtlSeconds(),
-      path: '/',
-      priority: 'high',
-    });
-
-    logger.info('Login established', {
-      lifetimeSeconds: sessionTtlSeconds(),
-      secureCookie: env.NODE_ENV === 'production',
-      redirectOrigin: new URL(appUrl).origin,
-    });
-
-    return NextResponse.redirect(new URL('/portal', appUrl));
+    return establishDashboardSession(request, res, { userData, memberData }, { guildId, method: 'discord' });
   } catch (error) {
     if (error instanceof AppError) throw error;
     logger.error('Discord callback failed', error);

@@ -25,6 +25,24 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
+      # Defence in depth beyond the job condition: never tag, publish an image, or run
+      # `gh release create` for a commit that is not already on main in this repository.
+      - name: Confirm the release commit is on main
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_EVENT: ${{ github.event.workflow_run.event }}
+        run: |
+          set -euo pipefail
+          test "$HEAD_EVENT" = push || { echo "Releases run only after a push to main (got $HEAD_EVENT)." >&2; exit 1; }
+          test "$HEAD_BRANCH" = main || { echo "Releases run only from main (got $HEAD_BRANCH)." >&2; exit 1; }
+          git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor "$HEAD_SHA" refs/remotes/origin/main || {
+            echo "Commit $HEAD_SHA is not on main; refusing to release." >&2
+            exit 1
+          }
+
       - name: Prepare release
         id: release
         shell: bash
@@ -125,7 +143,7 @@ jobs:
             test "$PWD" = /home/container &&
             test -f /opt/arrakis-dashboard/.next/BUILD_ID &&
             test -f /opt/arrakis-dashboard/src/assets/favicon.ico &&
-            test -f /opt/arrakis-dashboard/src/assets/models/catalog.json.gz &&
+            test -f /opt/arrakis-dashboard/src/assets/models/native/catalog.json.gz &&
             test -f /opt/arrakis-dashboard/src/assets/terrain/hagga.hf.gz &&
             test -f /opt/arrakis-dashboard/src/assets/share/preview-v1.png &&
             test -f /opt/arrakis-dashboard/licenses/MapViewer3D.txt &&
@@ -155,7 +173,7 @@ jobs:
           trap 'docker logs arrakis-dashboard-smoke; docker rm -f arrakis-dashboard-smoke' EXIT
           for attempt in $(seq 1 60); do
             if curl --fail --silent --output /dev/null http://127.0.0.1:2008/favicon.ico; then
-              for asset in models/catalog.json.gz terrain/hagga.hf.gz share/preview-v1.png; do
+              for asset in models/native/catalog.json.gz models/client/catalog.json.gz terrain/hagga.hf.gz share/preview-v1.png; do
                 curl --fail --silent --output /dev/null "http://127.0.0.1:2008/api/assets/$asset"
               done
               exit 0
