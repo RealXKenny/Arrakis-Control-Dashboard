@@ -49,7 +49,7 @@ function VehicleGrid({ vehicles, playerName, vehicleTab, setVehicleTab }) {
           </div>
         </div>
       ) : (
-        <div className="vehicle-grid grid grid-cols-2 gap-4">
+        <div className="vehicle-grid fly-in-stagger grid grid-cols-2 gap-4">
           {visibleVehicles.map((vehicle, index) => {
             const isOddFinalVehicle = visibleVehicles.length % 2 === 1 && index === visibleVehicles.length - 1;
             const vehicleId = getVehicleId(vehicle);

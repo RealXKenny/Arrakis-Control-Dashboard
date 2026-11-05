@@ -22,13 +22,31 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run format:check
-      - run: npm test
+      # Independent static checks share one runner; each keeps its own exit status.
+      - name: Typecheck, lint, format and unit tests
+        shell: bash
+        run: |
+          set -uo pipefail
+          npm run typecheck > typecheck.log 2>&1 & typecheck=$!
+          npm run lint > lint.log 2>&1 & lint=$!
+          npm run format:check > format.log 2>&1 & format=$!
+          npm test > unit.log 2>&1 & unit=$!
+          status=0
+          for check in typecheck lint format unit; do
+            if wait "${!check}"; then echo "::group::$check passed"; else echo "::group::$check FAILED"; status=1; fi
+            cat "$check.log"
+            echo "::endgroup::"
+          done
+          exit "$status"
 
   integration:
+    name: integration (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Software WebGL tests are CPU-bound; separate runners avoid contention instead of sharing one worker.
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,13 +62,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node22-next-${{ hashFiles('package-lock.json') }}-
       - run: npm run build
-      - run: npm run test:production
+      - if: matrix.shard == 1
+        run: npm run test:production
       - run: npx playwright install --with-deps --only-shell chromium
-      - run: npm run test:browser
+      - run: npm run test:browser -- --shard=${{ matrix.shard }}/4
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: browser-failure-traces
+          name: browser-failure-traces-${{ matrix.shard }}
           path: test-results/
           retention-days: 7
 

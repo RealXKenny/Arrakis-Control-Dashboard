@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../helpers/browser-test';
 
 test('Discord reads a complete public preview without JavaScript or authentication', async ({ request }) => {
   for (const path of ['/?theme=halloween&token=not-real', '/portal?view=bases']) {

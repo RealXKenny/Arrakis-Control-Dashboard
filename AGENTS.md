@@ -19,7 +19,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - Standard checks: `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`.
 - Extra checks: `npm run test:production` for runtime/API changes; `npm run test:browser` for UI behavior.
 - `LOG_LEVEL=DEBUG` writes redacted metadata and compact background-poll diagnostics to the colored console only. Successful polling is omitted at `INFO`; warnings and failures remain visible. There are no log files or Sentry.
-- Releases: bump the stable SemVer in `package.json` and add the matching `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md`; successful `main` CI creates the tag and GitHub Release.
+- Releases: bump the stable SemVer in `package.json` and add the matching `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md`; successful `main` CI creates the tag and GitHub Release. The release job also refuses any commit that is not already on `main`. CI shards the browser suite across four runners; `test:production` runs on the first shard.
 - Only a new stable version release publishes `ghcr.io/realxkenny/arrakis-control-dashboard:latest`, `v<version>`, and `sha-<commit>` images after successful `main` CI. The importable egg is `pterodactyl/egg-arrakis-control-dashboard.json`; its allocated `SERVER_PORT` comes from Wings.
 
 ## Map
@@ -29,7 +29,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 
 - Marketplace listing responses derive session-specific `editableBaseId` hints from verified owned-base IDs and the original publisher/base hash, including legacy listings. `MarketplaceCard.tsx` offers **Change picture** only for those listings, captures the published layout, and updates the saved picture through the ownership-checked preview endpoint without republishing.
 
-- `src/components/Topbar.tsx` and `topbar.module.css` provide shared pill navigation across public, member, and admin pages. `src/styles/pillbox-theme.css` owns the neutral Tailwind palette and fluid `workspace-frame` gutters; the page shell uses it without a fixed desktop width cap.
+- `src/components/Topbar.tsx` and `topbar.module.css` provide shared pill navigation across public, member, and admin pages. `src/styles/pillbox-theme.css` owns the neutral Tailwind palette and fluid `workspace-frame` gutters; the page shell uses it without a fixed desktop width cap. It also owns the motion layer: `fly-in`, `fly-in-stagger` (staggered children), `view-enter` (a keyed `display: contents` wrapper that replays portal view entrances), `shimmer` loading placeholders and `lift-hover` cards. Never animate an ancestor of the map or full-screen base preview layers, and keep every animation off under `prefers-reduced-motion`. Playwright runs with reduced motion except the motion test in `theme.spec.ts`.
 
 - `src/pages/`: thin Pages Router pages/API entry points. `/` is the public landing page; `next.config.ts` redirects legacy `/home` links there and preserves query strings. `/portal` remains the signed-in workspace. There is no separate public operations dashboard.
 - `src/modules/<feature>/`: UI, hooks, normalization, utilities, and server handlers for `auth`, `bases`, `changelog`, `guilds`, `home`, `map`, `player`, and `portal`.

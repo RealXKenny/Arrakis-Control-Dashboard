@@ -1,0 +1,18 @@
+{
+  "set": "Neutral",
+  "importedMeshes": 40,
+  "catalogRowsUpdated": 41,
+  "glassAccessories": 1,
+  "correctedDoorModels": 1,
+  "unmatched": 0,
+  "modelPack": {
+    "file": "neut-mtx-models.bin.gz",
+    "compressedBytes": 16449603
+  },
+  "texturePack": {
+    "file": "neut-mtx-textures.bin.gz",
+    "compressedBytes": 1756241
+  },
+  "textureSource": "FModel layered material exports",
+  "glassNote": "Separate window panes use a translucent glass preview material."
+}

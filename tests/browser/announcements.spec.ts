@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../helpers/browser-test';
 
 test('loads the announcement project once and keeps it available after navigation', async ({ page }) => {
   let loads = 0;

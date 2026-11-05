@@ -4,6 +4,8 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.20.5] - 2026-11-05
+
 ### Added
 
 - Added an optional Clerk sign-in. Members still sign in with Discord, and the dashboard still checks that they belong to the community and have the required role. Signing out also ends the Clerk session.
@@ -15,6 +17,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Changed
 
+- Refreshed the dashboard’s look with smoother controls, cards that lift gently on hover, and content that glides into place as it loads. If your device is set to reduce motion, the animations are turned off.
 - Base previews now use full-detail building models taken from the game, with surface textures on most pieces. Detailed previews also download much less data than before.
 - Windows, roofs, and machines from more building sets now show their glass panes, including Smuggler, Water Shipper, Sardaukar, and CHOAM pieces.
 - Desert Mechanic doors now appear in base previews with their own door model.

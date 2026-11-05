@@ -1,5 +1,6 @@
 import { version } from '../../package.json';
-import { test, expect, type Locator } from '@playwright/test';
+import { test, expect } from '../helpers/browser-test';
+import type { Locator } from '@playwright/test';
 import { summarizePopulation } from '../../src/modules/portal/utils/population';
 import { createSectorGridOverlay } from '../../src/modules/map/utils/sectorGrid';
 

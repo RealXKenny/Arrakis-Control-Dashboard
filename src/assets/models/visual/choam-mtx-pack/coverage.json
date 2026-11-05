@@ -1,0 +1,18 @@
+{
+  "set": "CHOAM",
+  "importedMeshes": 57,
+  "catalogRowsUpdated": 50,
+  "glassAccessories": 8,
+  "correctedDoorModels": 0,
+  "unmatched": 0,
+  "modelPack": {
+    "file": "choam-mtx-models.bin.gz",
+    "compressedBytes": 16769764
+  },
+  "texturePack": {
+    "file": "choam-mtx-textures.bin.gz",
+    "compressedBytes": 1372157
+  },
+  "textureSource": "FModel layered material exports",
+  "glassNote": "Separate window panes use a translucent glass preview material."
+}
