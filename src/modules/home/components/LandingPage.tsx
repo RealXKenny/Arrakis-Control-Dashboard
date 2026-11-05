@@ -176,7 +176,7 @@ export default function LandingPage({ isAuthenticated = false }: { isAuthenticat
         </header>
 
         <main id="dashboard-content" className="workspace-frame flex-1 py-6 sm:py-8 lg:py-10">
-          <div className="grid gap-4 xl:grid-cols-12">
+          <div className="fly-in-stagger grid gap-4 xl:grid-cols-12">
             <section className="flex flex-col justify-between rounded-3xl border border-white/5 bg-zinc-900/40 p-6 sm:p-8 lg:p-10 xl:col-span-7">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -303,11 +303,11 @@ export default function LandingPage({ isAuthenticated = false }: { isAuthenticat
                 Live public status here. Detailed world and market readings stay inside your verified workspace.
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="fly-in-stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Link
                 href="/portal"
                 aria-label="Open live server activity"
-                className="group flex min-h-56 flex-col rounded-3xl border border-white/5 bg-zinc-900/40 p-6 no-underline transition-colors hover:border-white/10 hover:bg-zinc-900/60"
+                className="group flex min-h-56 flex-col lift-hover rounded-3xl border border-white/5 bg-zinc-900/40 p-6 no-underline hover:border-white/10 hover:bg-zinc-900/60"
               >
                 <div className="flex items-center justify-between">
                   <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/5 bg-zinc-800/70 text-zinc-400">
@@ -383,7 +383,7 @@ export default function LandingPage({ isAuthenticated = false }: { isAuthenticat
                 Join Crimson Skies ↗
               </a>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
+            <div className="fly-in-stagger grid gap-4 sm:grid-cols-2 lg:col-span-7">
               <Link
                 href="/portal?view=character"
                 className="group rounded-3xl border border-white/5 bg-zinc-900/40 p-6 no-underline transition-colors hover:border-white/10 hover:bg-zinc-900/60 sm:p-8"

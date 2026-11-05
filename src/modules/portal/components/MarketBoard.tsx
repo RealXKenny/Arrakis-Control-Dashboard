@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMarketData } from '../hooks/useMarketData';
 import { formatMarketNumber, getBuybackPercent, getSuggestedSellPrice } from '../utils/market';
-import layout from '../market.module.css';
+import layout from '../styles/market.module.css';
 import ItemImage from './ItemImage';
 import { itemImage } from '../utils/item-image';
 

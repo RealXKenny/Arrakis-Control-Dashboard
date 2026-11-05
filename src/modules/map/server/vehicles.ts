@@ -1,5 +1,5 @@
 import '../../../lib/assert-server';
-export function getVehicleOwner(vehicle) {
+function getVehicleOwner(vehicle) {
   return String(
     vehicle?.owner_name ??
       vehicle?.ownerName ??
@@ -12,7 +12,7 @@ export function getVehicleOwner(vehicle) {
     .toLowerCase();
 }
 
-export function getVehicleOwnerId(vehicle) {
+function getVehicleOwnerId(vehicle) {
   const value =
     vehicle?.owner_id ??
     vehicle?.ownerId ??

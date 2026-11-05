@@ -1,0 +1,18 @@
+{
+  "set": "Atreides",
+  "importedMeshes": 9,
+  "catalogRowsUpdated": 8,
+  "glassAccessories": 1,
+  "correctedDoorModels": 0,
+  "unmatched": 0,
+  "modelPack": {
+    "file": "atreides-mtx-models.bin.gz",
+    "compressedBytes": 5554604
+  },
+  "texturePack": {
+    "file": "atreides-mtx-textures.bin.gz",
+    "compressedBytes": 4272469
+  },
+  "textureSource": "FModel layered material exports",
+  "glassNote": "Separate window panes use a translucent glass preview material."
+}

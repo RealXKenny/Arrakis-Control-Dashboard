@@ -29,9 +29,9 @@ export default function App({ Component, pageProps }) {
       <SharePreview origin={pageProps.shareOrigin} />
       <Component {...pageProps} />
       <Script
-        src="https://announcify.app/widget.js"
+        src="https://www.announcify.app/widget.js"
         data-project-id="cmvsu06fg00001v0xfjofkwxp"
-        data-api-base="https://announcify.app"
+        data-api-base="https://www.announcify.app"
         strategy="afterInteractive"
       />
     </>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { formatCoriolisCountdown } from '../utils/coriolis';
-import styles from '../map.module.css';
+import styles from '../styles/map.module.css';
 
 export default function CoriolisCountdown({ cycleAt }: { cycleAt: string | null }) {
   const [now, setNow] = useState(() => Date.now());

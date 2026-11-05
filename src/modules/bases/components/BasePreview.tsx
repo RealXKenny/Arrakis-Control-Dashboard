@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getBaseId, getBaseName } from '../../portal/utils/bases';
-import css from '../preview.module.css';
+import css from '../styles/preview.module.css';
 
 const BaseModelViewer = dynamic(() => import('./BaseModelViewer'), {
   ssr: false,
@@ -92,7 +92,7 @@ export default function BasePreview({
                   return {
                     id: selected.id,
                     revision,
-                    ...(current ? { assetRefresh: `${Date.now()}-${revision}` } : {}),
+                    assetRefresh: `${Date.now()}-${revision}`,
                   };
                 });
               }

@@ -55,7 +55,7 @@ export default function BaseCard({ base, index, telemetry, selected = false, onS
           onSelect();
         }
       }}
-      className={`min-h-65 min-w-0 rounded-3xl border bg-zinc-900/40 p-6 transition-colors hover:bg-zinc-900/60 ${
+      className={`lift-hover min-h-65 min-w-0 rounded-3xl border bg-zinc-900/40 p-6 hover:bg-zinc-900/60 ${
         isOwned ? 'border-indigo-500/20' : 'border-white/5'
       } ${onSelect ? 'cursor-pointer' : ''} ${selected ? 'ring-2 ring-indigo-500/25 ring-offset-2 ring-offset-zinc-950' : ''}`}
     >

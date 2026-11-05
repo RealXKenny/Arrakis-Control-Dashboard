@@ -99,7 +99,7 @@ export default function MarketplaceCard({
   }
 
   return (
-    <article className="flex min-h-64 flex-col rounded-3xl border border-white/5 bg-zinc-900/40 p-6 transition-colors hover:bg-zinc-900/60">
+    <article className="lift-hover flex min-h-64 flex-col rounded-3xl border border-white/5 bg-zinc-900/40 p-6 hover:bg-zinc-900/60">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-medium tracking-wide text-zinc-500 uppercase">{listing.baseType}</p>

@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { AppError } from '../../../lib/errors';
-import { getSession } from '../../../lib/session-store';
+import { getSession } from '../../../lib/security/session-store';
 import { getMarketplaceRecord, listMarketplaceSummaries } from './store';
 import { getPreviewSettings, previewId } from '../../bases/server/preview-settings';
 import { ownedBaseContext } from '../../bases/server/owned-export';

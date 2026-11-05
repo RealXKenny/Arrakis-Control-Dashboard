@@ -1,4 +1,4 @@
-import { clearClientReadCache } from '../../../lib/client-cache';
+import { clearClientReadCache } from '../../../lib/cache/client-cache';
 import type { Blueprint } from '../schema';
 
 export const IMPORT_UNCONFIRMED = 'Import could not be confirmed. Check your backpack before retrying.';

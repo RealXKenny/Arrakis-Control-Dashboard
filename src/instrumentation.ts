@@ -23,7 +23,7 @@ export async function register() {
 
       const env = validateProductionEnv();
       if (env.REDIS_URL) {
-        const { getRedisPool } = await import('./lib/redis-client');
+        const { getRedisPool } = await import('./lib/redis/pool');
         getRedisPool();
         startup.info('Redis pool configured for dashboard data');
       }

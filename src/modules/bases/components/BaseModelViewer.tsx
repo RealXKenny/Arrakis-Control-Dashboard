@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { BuildingLibrary, type BuildingPartSummary } from '../../map/terrain/buildingModels';
-import { fitTerrainCamera } from '../../map/terrain/sceneFraming';
+import { BuildingLibrary, type BuildingPartSummary } from '../../map/terrain/models/buildingModels';
+import { fitTerrainCamera } from '../../map/terrain/scene/sceneFraming';
 import { BaseModelError, fetchBaseModelExport } from '../utils/model-export';
-import css from '../preview.module.css';
+import css from '../styles/preview.module.css';
 import { baseViewSchema, type BaseView } from '../utils/preview-settings';
 import { fitBaseCamera } from '../utils/preview-camera';
 
@@ -25,6 +25,8 @@ type Controls = {
   face: (degrees: number) => void;
   capture: () => BaseCapture;
   front: () => void;
+  inside: () => void;
+  setAutoRotate: (enabled: boolean) => void;
   setNightMode: (night: boolean) => void;
 };
 
@@ -136,7 +138,9 @@ export default function BaseModelViewer({
   const [fastPreviewRendered, setFastPreviewRendered] = useState(false);
   const [parts, setParts] = useState<BuildingPartSummary[]>([]);
   const [baseFacing, setBaseFacing] = useState(0);
+  const [cameraView, setCameraView] = useState<'iso' | 'top' | 'inside'>('iso');
   const [nightMode, setNightMode] = useState(false);
+  const [autoRotate, setAutoRotate] = useState(false);
   const nightModeRef = useRef(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -220,6 +224,8 @@ export default function BaseModelViewer({
     let hasInstalledModel = false;
     let grid: THREE.GridHelper | null = null;
     let bounds: THREE.Box3 | null = null;
+    let autoRotateFrame = 0;
+    let autoRotateEnabled = false;
     const paint = () => {
       if (!controller.signal.aborted) renderer.render(scene, camera);
     };
@@ -260,6 +266,25 @@ export default function BaseModelViewer({
     controlsRef.current = {
       fit,
       setNightMode: applyNightMode,
+      setAutoRotate: (enabled) => {
+        autoRotateEnabled = enabled;
+        if (!enabled) {
+          window.cancelAnimationFrame(autoRotateFrame);
+          autoRotateFrame = 0;
+          return;
+        }
+        if (autoRotateFrame) return;
+        const rotate = () => {
+          if (controller.signal.aborted || !autoRotateEnabled) {
+            autoRotateFrame = 0;
+            return;
+          }
+          controls.autoRotate = true;
+          controls.update();
+          autoRotateFrame = window.requestAnimationFrame(rotate);
+        };
+        autoRotateFrame = window.requestAnimationFrame(rotate);
+      },
       top: () => {
         const distance = camera.position.distanceTo(controls.target);
         camera.position.copy(controls.target).add(new THREE.Vector3(0, distance, 0.01));
@@ -287,6 +312,21 @@ export default function BaseModelViewer({
         if (back.lengthSq() < 0.01) back.set(0, 0, 1);
         camera.position.copy(controls.target).addScaledVector(back, distance);
         fit();
+      },
+      inside: () => {
+        if (!bounds) return;
+        const size = bounds.getSize(new THREE.Vector3());
+        const center = bounds.getCenter(new THREE.Vector3());
+        const direction = camera.position.clone().sub(controls.target).setY(0).normalize();
+        if (direction.lengthSq() < 0.01) direction.set(0, 0, 1);
+        controls.target.set(center.x, bounds.min.y + size.y * 0.46, center.z);
+        camera.position
+          .copy(controls.target)
+          .addScaledVector(direction, Math.max(0.25, Math.min(size.x, size.z) * 0.28));
+        camera.position.y += size.y * 0.04;
+        controls.minDistance = 0.08;
+        controls.update();
+        paint();
       },
       capture: () => {
         if (!model || !bounds) throw new Error('Preview is not ready');
@@ -506,6 +546,7 @@ export default function BaseModelViewer({
       });
     return () => {
       window.clearInterval(progressTimer);
+      window.cancelAnimationFrame(autoRotateFrame);
       controller.abort();
       observer.disconnect();
       controls.removeEventListener('change', paint);
@@ -529,85 +570,88 @@ export default function BaseModelViewer({
   const ready = status.kind === 'ready' || status.kind === 'partial';
   return (
     <div className={`${css.viewer} ${immersive ? css.immersiveViewer : ''}`} data-base-preview-state={status.kind}>
-      <div className={css.toolbar}>
-        <span>{ready ? status.message : 'Base structure'}</span>
-        <div>
-          <button
-            type="button"
-            disabled={!ready}
-            aria-label="Zoom base preview out"
-            onClick={() => controlsRef.current?.zoom(0.8)}
-          >
-            −
-          </button>
-          <button
-            type="button"
-            disabled={!ready}
-            aria-label="Zoom base preview in"
-            onClick={() => controlsRef.current?.zoom(1.25)}
-          >
-            +
-          </button>
-          <button type="button" disabled={!ready} onClick={() => controlsRef.current?.fit()}>
-            Fit whole base
-          </button>
-          <button type="button" disabled={!ready} onClick={() => controlsRef.current?.top()}>
-            Top view
-          </button>
-          <button type="button" disabled={!ready} onClick={() => controlsRef.current?.front()}>
-            Level front view
-          </button>
-          <button
-            type="button"
-            disabled={!ready}
-            aria-pressed={nightMode}
-            aria-label={nightMode ? 'Switch to daytime lighting' : 'Switch to nighttime lighting'}
-            onClick={() => {
-              const next = !nightModeRef.current;
-              nightModeRef.current = next;
-              setNightMode(next);
-              controlsRef.current?.setNightMode(next);
-            }}
-          >
-            {nightMode ? '☾ Night' : '☼ Day'}
-          </button>
-          {(canSave || onCapture) && (
-            <>
-              <button type="button" disabled={!ready || saving} onClick={() => void save()}>
-                {onCapture ? 'Use this front and picture' : 'Take picture & save front'}
-              </button>
-            </>
-          )}
-          <label className={css.facingControl}>
-            <span>Base facing</span>
-            <input
-              type="range"
-              aria-label="Base facing degrees"
-              min={-180}
-              max={180}
-              step={1}
-              value={baseFacing}
+      <details className={`${immersive ? css.advancedControls : css.fullControls}`} open={!immersive}>
+        <summary>More preview controls</summary>
+        <div className={css.toolbar}>
+          <span>{ready ? status.message : 'Base structure'}</span>
+          <div>
+            <button
+              type="button"
               disabled={!ready}
-              onChange={(event) => {
-                const degrees = THREE.MathUtils.clamp(Number(event.target.value), -180, 180);
-                setBaseFacing(degrees);
-                controlsRef.current?.face(degrees);
+              aria-label="Zoom base preview out"
+              onClick={() => controlsRef.current?.zoom(0.8)}
+            >
+              −
+            </button>
+            <button
+              type="button"
+              disabled={!ready}
+              aria-label="Zoom base preview in"
+              onClick={() => controlsRef.current?.zoom(1.25)}
+            >
+              +
+            </button>
+            <button type="button" disabled={!ready} onClick={() => controlsRef.current?.fit()}>
+              Fit whole base
+            </button>
+            <button type="button" disabled={!ready} onClick={() => controlsRef.current?.top()}>
+              Top view
+            </button>
+            <button type="button" disabled={!ready} onClick={() => controlsRef.current?.front()}>
+              Level front view
+            </button>
+            <button
+              type="button"
+              disabled={!ready}
+              aria-pressed={nightMode}
+              aria-label={nightMode ? 'Switch to daytime lighting' : 'Switch to nighttime lighting'}
+              onClick={() => {
+                const next = !nightModeRef.current;
+                nightModeRef.current = next;
+                setNightMode(next);
+                controlsRef.current?.setNightMode(next);
               }}
-            />
-            <output>{baseFacing}°</output>
-          </label>
-          <button
-            type="button"
-            disabled={!ready || baseFacing === 0}
-            onClick={() => {
-              setBaseFacing(0);
-              controlsRef.current?.face(0);
-            }}
-          >
-            Face 0°
-          </button>
+            >
+              {nightMode ? '☾ Night' : '☼ Day'}
+            </button>
+            {(canSave || onCapture) && (
+              <>
+                <button type="button" disabled={!ready || saving} onClick={() => void save()}>
+                  {onCapture ? 'Use this front and picture' : 'Take picture & save front'}
+                </button>
+              </>
+            )}
+            <label className={css.facingControl}>
+              <span>Base facing</span>
+              <input
+                type="range"
+                aria-label="Base facing degrees"
+                min={-180}
+                max={180}
+                step={1}
+                value={baseFacing}
+                disabled={!ready}
+                onChange={(event) => {
+                  const degrees = THREE.MathUtils.clamp(Number(event.target.value), -180, 180);
+                  setBaseFacing(degrees);
+                  controlsRef.current?.face(degrees);
+                }}
+              />
+              <output>{baseFacing}°</output>
+            </label>
+            <button
+              type="button"
+              disabled={!ready || baseFacing === 0}
+              onClick={() => {
+                setBaseFacing(0);
+                controlsRef.current?.face(0);
+              }}
+            >
+              Face 0°
+            </button>
+          </div>
         </div>
-      </div>
+      </details>
       {saveMessage && (
         <p className={css.caption} role="status">
           {saveMessage}
@@ -637,6 +681,105 @@ export default function BaseModelViewer({
         <div className={css.farMountains} aria-hidden="true" />
         <div className={css.nearMountains} aria-hidden="true" />
         <div className={css.canvas} ref={hostRef} />
+        {immersive && (
+          <>
+            <details className={css.cameraGuide}>
+              <summary>
+                <span aria-hidden="true">♧</span> Camera Guide <span aria-hidden="true">⌄</span>
+              </summary>
+              <div>
+                <b>Orbit</b>
+                <span>Drag to look around</span>
+                <b>Zoom</b>
+                <span>Scroll or use the wheel</span>
+                <b>Pan</b>
+                <span>Right-drag to move the view</span>
+              </div>
+            </details>
+            <div className={css.compass} aria-label="Compass, north is up">
+              <span className={css.compassNorth}>N</span>
+              <span className={css.compassEast}>E</span>
+              <span className={css.compassSouth}>S</span>
+              <span className={css.compassWest}>W</span>
+              <span className={css.compassNeedle} aria-hidden="true">
+                ▲
+              </span>
+            </div>
+            <div className={css.lightingSwitch} role="group" aria-label="Lighting">
+              <button
+                type="button"
+                aria-label="Daytime lighting"
+                aria-pressed={!nightMode}
+                onClick={() => {
+                  nightModeRef.current = false;
+                  setNightMode(false);
+                  controlsRef.current?.setNightMode(false);
+                }}
+              >
+                ☼
+              </button>
+              <button
+                type="button"
+                aria-label="Nighttime lighting"
+                aria-pressed={nightMode}
+                onClick={() => {
+                  nightModeRef.current = true;
+                  setNightMode(true);
+                  controlsRef.current?.setNightMode(true);
+                }}
+              >
+                ☾
+              </button>
+            </div>
+            <div className={css.viewDock} role="group" aria-label="Camera views">
+              <button
+                type="button"
+                aria-pressed={cameraView === 'iso'}
+                disabled={!ready}
+                onClick={() => {
+                  setCameraView('iso');
+                  controlsRef.current?.fit();
+                }}
+              >
+                Iso
+              </button>
+              <button
+                type="button"
+                aria-pressed={cameraView === 'top'}
+                disabled={!ready}
+                onClick={() => {
+                  setCameraView('top');
+                  controlsRef.current?.top();
+                }}
+              >
+                Top
+              </button>
+              <button
+                type="button"
+                aria-pressed={cameraView === 'inside'}
+                disabled={!ready}
+                onClick={() => {
+                  setCameraView('inside');
+                  controlsRef.current?.inside();
+                }}
+              >
+                Inside
+              </button>
+              <button
+                type="button"
+                aria-pressed={autoRotate}
+                disabled={!ready}
+                onClick={() => {
+                  const next = !autoRotate;
+                  setAutoRotate(next);
+                  controlsRef.current?.setAutoRotate(next);
+                }}
+              >
+                {autoRotate ? 'Stop rotation' : 'Auto Rotate'}
+              </button>
+            </div>
+          </>
+        )}
         {!ready && (
           <div className={`${css.overlay} ${fastPreviewRendered ? css.fastPreviewOverlay : ''}`} role="status">
             <span>{status.message}</span>
@@ -656,7 +799,7 @@ export default function BaseModelViewer({
           </div>
         )}
       </div>
-      <p className={css.caption} role="status">
+      <p className={`${css.caption} ${immersive ? css.immersiveCaption : ''}`} role="status">
         {status.kind === 'partial'
           ? 'Partial preview: some pieces are unsupported or exceed the detail budget.'
           : ready

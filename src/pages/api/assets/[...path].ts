@@ -38,11 +38,19 @@ function isTiledMapAsset(segments: string[]) {
 
 function isModelAsset(segments: string[]) {
   return (
-    segments.length === 2 &&
-    segments[0] === 'models' &&
-    /^(?:catalog\.json|meshpack-[0-9]\.bin|visual-catalog\.json|visual-pack-(?:0|[1-9][0-9]{0,3})\.bin)\.gz$/.test(
-      segments[1],
-    )
+    (segments.length === 3 &&
+      segments[0] === 'models' &&
+      ['native', 'client'].includes(segments[1]) &&
+      segments[2] === 'catalog.json.gz') ||
+    (segments.length === 3 &&
+      segments[0] === 'models' &&
+      segments[1] === 'client' &&
+      /^client-(?:meshes|textures)-(?:0|[1-9][0-9]?)\.bin\.gz$/.test(segments[2])) ||
+    (segments.length === 4 &&
+      segments[0] === 'models' &&
+      segments[1] === 'native' &&
+      segments[2] === 'meshpacks' &&
+      /^meshpack-[0-9]\.bin\.gz$/.test(segments[3]))
   );
 }
 
@@ -87,10 +95,10 @@ export default async function handler(req, res) {
     res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
     res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
     res.setHeader('Content-Length', String(body.byteLength));
-    const isVisualCatalog =
-      Array.isArray(req.query.path) && req.query.path.join('/') === 'models/visual-catalog.json.gz';
+    const isPreviewCatalog =
+      Array.isArray(req.query.path) && req.query.path.join('/') === 'models/client/catalog.json.gz';
     // The catalog is small and changes when preview packs are rebuilt; always revalidate it.
-    res.setHeader('Cache-Control', isVisualCatalog ? 'no-cache' : 'public, max-age=3600, must-revalidate');
+    res.setHeader('Cache-Control', isPreviewCatalog ? 'no-cache' : 'public, max-age=3600, must-revalidate');
     if (req.method === 'HEAD') return res.status(200).end();
     return res.status(200).send(body);
   } catch (error) {

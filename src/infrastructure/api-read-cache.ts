@@ -1,8 +1,8 @@
 import '../lib/assert-server';
 import { createHash } from 'node:crypto';
 import { cookies } from './cookies';
-import { getSession } from '../lib/session-store';
-import { ReadCache } from '../lib/read-cache';
+import { getSession } from '../lib/security/session-store';
+import { ReadCache } from '../lib/cache/read-cache';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 type ApiReading = { body: string | null; status: number; headers: Record<string, string> };

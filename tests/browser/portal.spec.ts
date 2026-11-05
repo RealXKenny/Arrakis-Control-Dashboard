@@ -1,5 +1,6 @@
 import { version } from '../../package.json';
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/browser-test';
+import type { Locator } from '@playwright/test';
 import { summarizePopulation } from '../../src/modules/portal/utils/population';
 import { createSectorGridOverlay } from '../../src/modules/map/utils/sectorGrid';
 
@@ -166,8 +167,8 @@ test('navigation and market refresh do not reload player data or request logout'
   await expect(page.getByRole('heading', { name: 'Spice blowing at D5.' })).toBeVisible();
   await page.screenshot({ path: 'test-results/portal-overview.png', fullPage: true });
   const topbar = page.locator('header').first();
-  await expect(topbar).toHaveCSS('position', 'sticky');
-  await expect(topbar).toHaveCSS('z-index', '50');
+  // The navigation scrolls away with the page instead of staying pinned.
+  await expect(topbar).toHaveCSS('position', 'static');
   await expect(topbar.locator('img[src="/favicon.ico"]')).toBeVisible();
   await page.getByRole('link', { name: 'Exchange', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Spice', exact: true })).toBeVisible();
@@ -1568,11 +1569,20 @@ test('owned bases publish to the marketplace and open 3D listing previews', asyn
   await expect(dialog).toHaveCount(0);
 });
 
+/** Full-screen previews collapse the secondary camera and picture controls by default. */
+async function openPreviewControls(preview: Locator) {
+  const controls = preview
+    .locator('details')
+    .filter({ has: preview.page().getByText('More preview controls', { exact: true }) });
+  if (!(await controls.evaluate((element: HTMLDetailsElement) => element.open)))
+    await controls.getByText('More preview controls', { exact: true }).click();
+}
+
 test('Bases loads owned 3D previews on demand and disposes them when switching bases', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
-    if (/THREE.WebGLProgram|shader error|GLTFLoader: Couldn't load texture/i.test(message.text()))
+    if (/THREE.WebGLProgram|shader error|THREE.WebGLRenderer: Texture/i.test(message.text()))
       errors.push(message.text());
   });
   let exports = 0;
@@ -1612,6 +1622,7 @@ test('Bases loads owned 3D previews on demand and disposes them when switching b
   });
   expect(exports).toBe(1);
   await expect(preview.locator('canvas')).toHaveCount(1);
+  await openPreviewControls(preview);
   await preview.getByRole('button', { name: 'Top view', exact: true }).click();
   await preview.getByRole('combobox', { name: 'Base for 3D preview' }).selectOption('1');
   await expect(preview.locator('canvas')).toHaveCount(0);
@@ -1751,6 +1762,7 @@ test('saved front pictures survive reload and marketplace cards skip 3D download
   await page.goto('/portal?view=bases');
   await page.getByRole('button', { name: 'Open full-screen preview' }).click();
   const preview = page.getByRole('region', { name: '3D base preview', exact: true });
+  await openPreviewControls(preview);
   await expect(preview.getByRole('button', { name: 'Take picture & save front', exact: true })).toBeEnabled({
     timeout: 30000,
   });
@@ -1763,6 +1775,7 @@ test('saved front pictures survive reload and marketplace cards skip 3D download
   expect(saved?.view.facing).toBe(73);
   expect(saved?.image).toMatch(/^data:image\/png;base64,/);
   await preview.getByRole('button', { name: 'Reload preview', exact: true }).click();
+  await openPreviewControls(preview);
   await expect(preview.getByLabel('Base facing degrees')).toHaveValue('73', { timeout: 30000 });
   await page.screenshot({ path: 'test-results/saved-base-front.png', fullPage: true });
   const summary = {

@@ -1,4 +1,4 @@
-import { cachedFetch } from '../../../lib/client-cache';
+import { cachedFetch } from '../../../lib/cache/client-cache';
 import { useEffect, useState } from 'react';
 import type { WorldReading } from '../utils/world';
 

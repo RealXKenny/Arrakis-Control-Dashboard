@@ -21,7 +21,7 @@ vi.mock('../../src/modules/marketplace/server/store', () => ({
   listMarketplaceSummaries,
   getMarketplaceRecord,
 }));
-vi.mock('../../src/lib/session-store', () => ({ getSession }));
+vi.mock('../../src/lib/security/session-store', () => ({ getSession }));
 vi.mock('../../src/modules/bases/server/preview-settings', async (original) => ({
   ...(await original()),
   getPreviewSettings: vi.fn(async () => ({ image: 'data:image/png;base64,AAAA' })),

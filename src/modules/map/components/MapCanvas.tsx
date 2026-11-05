@@ -11,7 +11,7 @@ import { worldToMapPoint } from '../utils/coordinates';
 
 import { markerKey } from '../utils/markers';
 
-const DeepDesertTerrain = dynamic(() => import('../terrain/DeepDesertTerrain'), { ssr: false });
+const DeepDesertTerrain = dynamic(() => import('../terrain/scene/DeepDesertTerrain'), { ssr: false });
 
 export default function MapCanvas({
   mapName = 'HaggaBasin',

@@ -8,7 +8,7 @@ import { guildRoleLabel } from '../utils/guild';
 import type { buildCharacter } from '../utils/character';
 import { timeRemaining } from '../utils/world';
 import { useWorldReading } from '../hooks/useWorldReading';
-import css from '../overview.module.css';
+import css from '../styles/overview.module.css';
 import PopulationChart from './PopulationChart';
 
 export default function PortalSummary({

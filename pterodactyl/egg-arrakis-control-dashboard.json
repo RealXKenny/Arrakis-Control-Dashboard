@@ -120,22 +120,22 @@
     },
     {
       "name": "Discord Client ID",
-      "description": "Discord OAuth application client ID.",
+      "description": "Discord OAuth application client ID. Required when the sign-in provider is discord.",
       "env_variable": "DISCORD_CLIENT_ID",
       "default_value": "",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|string",
+      "rules": "nullable|string",
       "field_type": "text"
     },
     {
       "name": "Discord Client Secret",
-      "description": "Discord OAuth application client secret. Treat as a secret.",
+      "description": "Discord OAuth application client secret. Treat as a secret. Required when the sign-in provider is discord.",
       "env_variable": "DISCORD_CLIENT_SECRET",
       "default_value": "",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|string",
+      "rules": "nullable|string",
       "field_type": "text"
     },
     {
@@ -166,6 +166,36 @@
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Sign-in Provider",
+      "description": "discord uses the Discord OAuth client directly; clerk signs in through Clerk while keeping the guild and role checks.",
+      "env_variable": "AUTH_PROVIDER",
+      "default_value": "discord",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:discord,clerk",
+      "field_type": "text"
+    },
+    {
+      "name": "Clerk Secret Key",
+      "description": "Server-only Clerk secret key, required when the sign-in provider is clerk. Treat as a secret.",
+      "env_variable": "CLERK_SECRET_KEY",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Clerk Publishable Key",
+      "description": "Public Clerk publishable key, required when the sign-in provider is clerk.",
+      "env_variable": "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string",
       "field_type": "text"
     },
     {

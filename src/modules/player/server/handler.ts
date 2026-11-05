@@ -6,7 +6,7 @@ import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { getBaseId, normalizeBaseStorage, normalizeBaseWater } from './helpers';
 import { logger } from '../../../lib/logger';
-import { getSession, saveSession } from '../../../lib/session-store';
+import { getSession, saveSession } from '../../../lib/security/session-store';
 import { discordAvatar } from './avatar';
 
 async function loadBaseTelemetry(base, duneClient) {

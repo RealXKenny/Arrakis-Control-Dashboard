@@ -35,6 +35,10 @@ const nextConfig: NextConfig = {
         destination: '/api/auth/login',
       },
       {
+        source: '/auth/complete',
+        destination: '/api/auth/complete',
+      },
+      {
         source: '/auth/logout',
         destination: '/api/auth/logout',
       },
