@@ -10,11 +10,11 @@ async function read(response: Response) {
 
 export default function GuildRequirements({
   guildId,
-  guildName,
+  guildName = '',
   settings = false,
 }: {
   guildId?: string;
-  guildName: string;
+  guildName?: string;
   settings?: boolean;
 }) {
   const [entries, setEntries] = useState<GuildRequirementListing[]>([]);
@@ -150,7 +150,7 @@ export default function GuildRequirements({
       {!loading && !settings && !error && (
         <>
           {entries.length === 0 && (
-            <p>No guilds are recruiting here yet. Guild leaders can create a listing in Settings.</p>
+            <p>No guilds are recruiting here yet. Guild leaders can create a listing under Guild → Settings.</p>
           )}
           <div className={css.cards}>
             {entries.map((entry) => (

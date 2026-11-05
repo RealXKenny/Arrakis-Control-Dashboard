@@ -12,6 +12,7 @@ const portalViews = [
   'base-market',
   'vehicles',
   'guild',
+  'guild-requirements',
 ] as const;
 export type PortalView = (typeof portalViews)[number];
 export function getPortalView(value: string | string[] | undefined): PortalView {
@@ -30,5 +31,11 @@ export function portalNavigation(view: PortalView): NavigationItem[] {
     { label: 'Base preview', group: 'Bases', href: '/portal?view=base-preview', active: view === 'base-preview' },
     { label: 'Vehicles', group: 'Vehicles', href: '/portal?view=vehicles', active: view === 'vehicles' },
     { label: 'Guild', group: 'Community', href: '/portal?view=guild', active: view === 'guild' },
+    {
+      label: 'Guild requirements',
+      group: 'Community',
+      href: '/portal?view=guild-requirements',
+      active: view === 'guild-requirements',
+    },
   ];
 }

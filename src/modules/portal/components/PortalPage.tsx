@@ -51,7 +51,7 @@ export default function PlayerPortal() {
   const vehicles = extractVehicles(player);
   const ownedBases = bases.filter(isOwnedBase);
   const sharedBases = bases.filter((base) => !isOwnedBase(base));
-  const [guildTab, setGuildTab] = useState<'membership' | 'requirements' | 'settings'>('membership');
+  const [guildTab, setGuildTab] = useState<'membership' | 'settings'>('membership');
   const [logoMessage, setLogoMessage] = useState('');
   const [logoUploading, setLogoUploading] = useState(false);
   const guildId = guildData.currentGuild?.guild_id ?? record(character?.guild).id;
@@ -189,6 +189,7 @@ export default function PlayerPortal() {
               )}
               {view === 'market' && <MarketBoard />}
               {view === 'base-market' && <BaseMarketplace />}
+              {view === 'guild-requirements' && <GuildRequirements />}
               {view === 'character' && <CharacterDossier character={character} details={player.details ?? {}} />}
               {view === 'storage' && <StorageWorkspace character={character} inventory={player.details?.inventory} />}
               {view === 'guild' && (
@@ -200,12 +201,6 @@ export default function PlayerPortal() {
                     >
                       My guild
                     </button>
-                    <button
-                      aria-current={guildTab === 'requirements' ? 'page' : undefined}
-                      onClick={() => setGuildTab('requirements')}
-                    >
-                      Guild requirements
-                    </button>
                     {canEditLogo && (
                       <button
                         aria-current={guildTab === 'settings' ? 'page' : undefined}
@@ -215,7 +210,6 @@ export default function PlayerPortal() {
                       </button>
                     )}
                   </nav>
-                  {guildTab === 'requirements' && <GuildRequirements guildName={guildName} />}
                   {guildTab === 'settings' && canEditLogo && (
                     <GuildRequirements key={String(guildId)} settings guildId={String(guildId)} guildName={guildName} />
                   )}

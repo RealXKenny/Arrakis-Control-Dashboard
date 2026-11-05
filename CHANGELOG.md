@@ -8,7 +8,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
-- Added a Guild requirements tab where members can browse guild recruitment listings and joining details.
+- Added a Guild requirements page in Community where members can browse guild recruitment listings and joining details. Leader settings stay under Guild.
 - Added leader-only Guild settings to edit joining requirements and contact details, and publish or unlist a guild.
 
 ### Security

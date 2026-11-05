@@ -880,6 +880,23 @@ test('blueprint import handles uncertain delivery and success without duplicate 
   expect(requests[1].requestId).toBe(requests[0].requestId);
 });
 
+test('guild requirements opens as its own community page', async ({ page }) => {
+  let membershipRequests = 0;
+  await page.route('**/api/guilds?*', (route) => {
+    membershipRequests++;
+    return route.fulfill({ json: { ok: true, data: { rows: [] } } });
+  });
+  await page.route('**/api/guilds/requirements?*', (route) =>
+    route.fulfill({ json: { ok: true, data: { rows: [], hasMore: false } } }),
+  );
+  await page.goto('/portal?view=guild-requirements');
+  await expect(page.getByRole('heading', { name: 'Guild requirements', exact: true, level: 1 })).toBeVisible();
+  await expect(page.getByText('No guilds are recruiting here yet.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Guild tabs' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save guild settings' })).toHaveCount(0);
+  expect(membershipRequests).toBe(0);
+});
+
 test('guild view renders reported membership without inventing a rank', async ({ page }) => {
   await page.goto('/portal?view=guild');
   await expect(page.getByRole('heading', { name: 'Guild membership', exact: true })).toBeVisible();
@@ -938,17 +955,29 @@ for (const { leader, verified } of [
       await expect(tabs.getByRole('button', { name: 'Settings', exact: true })).toHaveCount(0);
       listing.published = true;
     }
-    await tabs.getByRole('button', { name: 'Guild requirements', exact: true }).click();
+    await page
+      .getByRole('navigation', { name: 'Main navigation' })
+      .getByRole('link', { name: 'Guild requirements', exact: true })
+      .click();
+    await expect(page.getByRole('navigation', { name: 'Guild tabs' })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Crimson Skies', exact: true })).toBeVisible();
     await expect(page.getByText(listing.requirements, { exact: true })).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (verified) {
+      await page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('link', { name: 'Guild', exact: true })
+        .click();
       await tabs.getByRole('button', { name: 'Settings', exact: true }).click();
       await page.getByLabel('List my guild for recruitment').uncheck();
       await page.getByRole('button', { name: 'Save guild settings' }).click();
       await expect(page.getByText('Settings saved. Your guild is not listed.', { exact: true })).toBeVisible();
-      await tabs.getByRole('button', { name: 'Guild requirements', exact: true }).click();
+      await page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('link', { name: 'Guild requirements', exact: true })
+        .click();
+      await expect(page.getByRole('navigation', { name: 'Guild tabs' })).toHaveCount(0);
       await expect(page.getByText('No guilds are recruiting here yet.', { exact: false })).toBeVisible();
     }
   });
