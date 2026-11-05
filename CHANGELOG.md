@@ -6,6 +6,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
+- Added an optional Clerk sign-in. Members still sign in with Discord, and the dashboard still checks that they belong to the community and have the required role. Signing out also ends the Clerk session.
 - Added more Choam and Harkonnen building pieces to base previews, with their matching surface textures.
 - Expanded base previews with additional Atreides, CHOAM, and Desert Mechanic building pieces.
 - Added more detailed vertical and horizontal pentashield shapes to base previews.

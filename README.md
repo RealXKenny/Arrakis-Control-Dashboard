@@ -35,7 +35,8 @@ Fill in `.env` before using authentication or server-backed features. Never comm
 Required production variables include:
 
 - `CONSOLE_URL`, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN` for scoped Dune Console access.
-- `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `DISCORD_GUILD_ID` for Discord OAuth.
+- `DISCORD_GUILD_ID` for guild membership checks, plus `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` when `AUTH_PROVIDER` is `discord` (the default).
+- `CLERK_SECRET_KEY` and `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` when `AUTH_PROVIDER` is `clerk`. Clerk handles the Discord sign-in (configure its Discord connection with custom credentials and the `identify guilds.members.read` scopes); the dashboard then re-checks guild membership and `VERIFIED_MEMBER_ROLE_ID` with the member’s Discord token at `/auth/complete` before issuing its normal session. Logout also revokes the Clerk session. The secret key is server-only; the publishable key is public by design.
 - `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/auth/callback`.
 - `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits, persistent sessions, and the dashboard snapshot cache.
 - `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list that switches the optional server snapshot provider to `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index.

@@ -38,8 +38,6 @@ describe('Pterodactyl dashboard egg', () => {
       'CONSOLE_URL',
       'CONSOLE_API_KEY',
       'ADAPTER_TOKEN',
-      'DISCORD_CLIENT_ID',
-      'DISCORD_CLIENT_SECRET',
       'DISCORD_GUILD_ID',
       'VERIFIED_MEMBER_ROLE_ID',
       'APP_URL',
@@ -48,5 +46,17 @@ describe('Pterodactyl dashboard egg', () => {
       expect(variables.get(key)?.default_value, key).toBe('');
       expect(variables.get(key)?.rules, key).toContain('required');
     }
+    // Each sign-in provider needs only its own credentials; the egg validates the provider choice.
+    expect(variables.get('AUTH_PROVIDER')).toMatchObject({
+      default_value: 'discord',
+      rules: 'required|string|in:discord,clerk',
+    });
+    for (const key of ['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'])
+      expect(variables.get(key)?.rules, key).toBe('nullable|string');
+    expect(variables.get('CLERK_SECRET_KEY')).toMatchObject({
+      default_value: '',
+      user_viewable: false,
+      user_editable: false,
+    });
   });
 });

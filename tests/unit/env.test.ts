@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from 'dotenv';
 
@@ -107,4 +107,41 @@ it('requires REDIS_URL in production', async () => {
   vi.stubEnv('REDIS_URL', '');
   const { validateProductionEnv } = await import('../../src/config/env');
   expect(validateProductionEnv).toThrow('Missing server environment configuration: REDIS_URL');
+});
+describe('Clerk sign-in configuration', () => {
+  const publishableKey = `pk_test_${btoa('happy-sandworm-12.clerk.accounts.dev$')}`;
+  const secretKey = 'sk_test_abcdefghijklmnopqrstuvwxyz0123';
+  it('requires both Clerk keys instead of the Discord OAuth client in production', async () => {
+    vi.resetModules();
+    productionFixture();
+    vi.stubEnv('AUTH_PROVIDER', 'clerk');
+    vi.stubEnv('DISCORD_CLIENT_ID', '');
+    vi.stubEnv('DISCORD_CLIENT_SECRET', '');
+    const missing = await import('../../src/config/env');
+    expect(missing.validateProductionEnv).toThrow();
+    vi.resetModules();
+    vi.stubEnv('CLERK_SECRET_KEY', secretKey);
+    vi.stubEnv('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', publishableKey);
+    const ready = await import('../../src/config/env');
+    expect(ready.validateProductionEnv().AUTH_PROVIDER).toBe('clerk');
+    expect(ready.isClerkAuthEnabled()).toBe(true);
+  });
+  it('rejects mixed live and test Clerk keys and malformed key values', async () => {
+    vi.resetModules();
+    productionFixture();
+    vi.stubEnv('AUTH_PROVIDER', 'clerk');
+    vi.stubEnv('CLERK_SECRET_KEY', secretKey.replace('sk_test_', 'sk_live_'));
+    vi.stubEnv('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', publishableKey);
+    expect((await import('../../src/config/env')).validateProductionEnv).toThrow('same instance type');
+    vi.resetModules();
+    vi.stubEnv('CLERK_SECRET_KEY', 'not-a-clerk-key');
+    expect((await import('../../src/config/env')).getServerEnv).toThrow('CLERK_SECRET_KEY');
+  });
+  it('keeps Discord login as the default provider', async () => {
+    vi.resetModules();
+    productionFixture();
+    const env = await import('../../src/config/env');
+    expect(env.validateProductionEnv().AUTH_PROVIDER).toBe('discord');
+    expect(env.isClerkAuthEnabled()).toBe(false);
+  });
 });
