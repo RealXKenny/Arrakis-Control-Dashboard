@@ -23,6 +23,11 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Adjusted the foundation floor’s hex pattern to look closer to the reference.
 - Corrected color handling that made some Atreides surfaces look muddy.
 
+### Security
+
+- Updated the dashboard’s web framework and supporting libraries to versions that close several known security issues.
+- Pages now allow only the scripts the dashboard sends with each visit, keeping the strict script protection in place after the update.
+
 ## [1.20.4] - 2026-10-30
 
 ### Added

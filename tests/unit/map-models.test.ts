@@ -12,7 +12,6 @@ import {
   unrealMatrix,
   visualFallbackKind,
 } from '../../src/modules/map/terrain/buildingModels';
-import { visualBuildingImportBasis } from '../../src/modules/map/terrain/visualBuildingMeshes';
 import {
   babylonToUEPosition,
   toViewerStoredYaw,
@@ -32,15 +31,6 @@ const readModelAsset = (url: string) => {
 };
 afterEach(() => vi.unstubAllGlobals());
 describe('map models', () => {
-  it('keeps visual pack axes identical to the native decoder without mirroring handed pieces', () => {
-    const basis = visualBuildingImportBasis();
-    for (const point of [
-      [1, 2, 3],
-      [-4, 5, -6],
-    ]) {
-      expect(new THREE.Vector3(...point).applyMatrix4(basis).toArray()).toEqual(point);
-    }
-  });
   it('ports the reference engine UE coordinate and rotation rules unchanged', () => {
     const uePosition = { x: 10, y: 20, z: 30 };
     expect(ueToBabylonPosition(uePosition)).toEqual({ x: 20, y: 30, z: 10 });

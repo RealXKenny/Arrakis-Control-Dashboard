@@ -132,11 +132,13 @@ async function main() {
   const native = JSON.parse(gunzipSync(await fs.readFile(path.join(root, 'native', 'catalog.json.gz'))));
   if (JSON.stringify(native.rows) !== JSON.stringify(index.rows))
     throw new Error('buildables/index.json rows differ from the bundled native catalogue');
-  // Earlier visual catalogues carry authoritative build-menu mesh paths and glass accessories.
-  const visual = await fs
-    .readFile(path.join(root, 'visual', 'catalog.json.gz'))
+  // The committed client catalogue keeps authoritative build-menu mesh paths and glass panes across rebuilds.
+  const previous = await fs
+    .readFile(path.join(outputRoot, 'catalog.json.gz'))
     .then((raw) => JSON.parse(gunzipSync(raw)))
     .catch(() => null);
+  const previousPath = (meshId) =>
+    Number.isInteger(meshId) && meshId >= 0 ? previous?.meshes?.[meshId]?.path : undefined;
   const meshes = new Map((await readJsonLines(path.join(client, 'meshes.jsonl'))).map((m) => [packagePath(m.pkg), m]));
   const materials = new Map(
     (await readJsonLines(path.join(client, 'materials.jsonl'))).map((m) => [packagePath(m.pkg), m.slots]),
@@ -236,35 +238,15 @@ async function main() {
     return id;
   };
 
-  const byBasename = new Map();
-  for (const entry of meshes.values()) {
-    const name = packagePath(entry.pkg).split('/').pop();
-    byBasename.set(name, [...(byBasename.get(name) ?? []), entry.pkg]);
-  }
-  const visualPacks = new Map();
-  /** Node names of an earlier exported GLB accessory, read from its JSON chunk only. */
-  const glbNodeNames = async (meta) => {
-    if (!meta?.file || !/^visual\/[a-z0-9-]+-pack\/[a-z0-9-]+\.bin\.gz$/.test(meta.file)) return [];
-    if (!visualPacks.has(meta.file)) visualPacks.set(meta.file, gunzipSync(await fs.readFile(inside(root, meta.file))));
-    const glb = visualPacks.get(meta.file).subarray(meta.offset, meta.offset + meta.length);
-    if (glb.byteLength < 20 || glb.readUInt32LE(0) !== 0x46546c67 || glb.readUInt32LE(16) !== 0x4e4f534a) return [];
-    const json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString());
-    return (json.nodes ?? []).filter((node) => Number.isInteger(node.mesh)).map((node) => String(node.name ?? ''));
-  };
-  /** Separate client glass meshes: `<mesh>_Glass` companions and panes named by earlier exports. */
-  const glassCompanions = async (meshPath, visualRow) => {
+  /** Separate client glass meshes: `<mesh>_Glass` companions plus panes recorded by the previous build. */
+  const glassCompanions = (meshPath, previousRow) => {
     const main = packagePath(meshPath);
     const found = new Set();
     if (meshes.has(`${main}_glass`)) found.add(meshes.get(`${main}_glass`).pkg);
-    for (const accessory of visualRow?.accessories ?? []) {
-      for (const name of await glbNodeNames(visual.meshes[accessory])) {
-        const candidates = byBasename.get(name.toLowerCase()) ?? [];
-        const sameFolder = candidates.filter(
-          (pkg) => packagePath(pkg).split('/').slice(0, -1).join('/') === main.split('/').slice(0, -1).join('/'),
-        );
-        const pick = sameFolder.length === 1 ? sameFolder[0] : candidates.length === 1 ? candidates[0] : null;
-        if (pick && packagePath(pick) !== main) found.add(pick);
-      }
+    for (const accessory of previousRow?.accessories ?? []) {
+      const accessoryPath = previousPath(accessory);
+      if (accessoryPath && packagePath(accessoryPath) !== main && meshes.has(packagePath(accessoryPath)))
+        found.add(accessoryPath);
     }
     return [...found];
   };
@@ -273,29 +255,30 @@ async function main() {
   const mapped = [];
   const unsupported = [];
   const resolved = Object.entries(index.rows).map(([templateId, row]) => {
-    const visualRow = visual?.rows?.[templateId];
-    const visualPath = visualRow && visualRow.mesh >= 0 ? visual.meshes[visualRow.mesh]?.path : undefined;
+    const previousRow = previous?.rows?.[templateId];
     const meshPath =
-      RENDER_MESH_OVERRIDES[templateId] ?? visualPath ?? (row.mesh >= 0 ? nativePath(row.mesh) : undefined);
-    return { templateId, row, visualRow, meshPath };
+      RENDER_MESH_OVERRIDES[templateId] ??
+      previousPath(previousRow?.mesh) ??
+      (row.mesh >= 0 ? nativePath(row.mesh) : undefined);
+    return { templateId, row, previousRow, meshPath };
   });
   // Keep each building set together so a base downloads only the packs its pieces use.
   resolved.sort(
     (a, b) => (a.meshPath ?? '~').localeCompare(b.meshPath ?? '~') || a.templateId.localeCompare(b.templateId),
   );
-  for (const { templateId, row, visualRow, meshPath } of resolved) {
+  for (const { templateId, row, previousRow, meshPath } of resolved) {
     const mesh = meshPath ? await addMesh(meshPath, row.mesh) : -1;
     const accessories = [];
     if (mesh >= 0)
-      for (const accessoryPath of await glassCompanions(meshPath, visualRow)) {
+      for (const accessoryPath of glassCompanions(meshPath, previousRow)) {
         const accessoryId = await addMesh(accessoryPath, -1);
         if (accessoryId >= 0 && accessoryId !== mesh && !accessories.includes(accessoryId))
           accessories.push(accessoryId);
       }
     rows[templateId] = {
       ...row,
-      ...(visualRow?.group === '__shield' ? { group: '__shield' } : {}),
-      ...(visualRow?.name ? { name: visualRow.name } : {}),
+      ...(previousRow?.group === '__shield' ? { group: '__shield' } : {}),
+      ...(typeof previousRow?.name === 'string' ? { name: previousRow.name.slice(0, 200) } : {}),
       mesh,
       ...(accessories.length ? { accessories } : {}),
     };

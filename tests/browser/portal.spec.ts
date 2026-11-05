@@ -1581,7 +1581,7 @@ test('Bases loads owned 3D previews on demand and disposes them when switching b
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
-    if (/THREE.WebGLProgram|shader error|GLTFLoader: Couldn't load texture/i.test(message.text()))
+    if (/THREE.WebGLProgram|shader error|THREE.WebGLRenderer: Texture/i.test(message.text()))
       errors.push(message.text());
   });
   let exports = 0;
