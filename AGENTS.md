@@ -48,7 +48,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/modules/admin/`: admin workspace and the supplied Console API reference catalog. `/admin` and `/api/admin/*` revalidate the exact OAuth-verified admin ID, configured guild, role, and session. The admin route has no navigation links on public or member pages. Separate `ADMIN_CONSOLE_API_KEY`; Console browser-only restrictions remain enforced. Upload/download/event streams are bounded; all API entry points still use the common boundary.
 - `src/lib/security/api-capacity.ts`: per-worker API admission budget before Redis work. Read-cache overflow returns 503; realtime snapshots coalesce for one second after per-request authorization. `tests/load/dashboard.k6.js` is the optional staging load harness.
 - `src/modules/map/server/realtime.ts`: Console snapshots available to all signed-in dashboard members of the configured guild; `hooks/useRealtimeData.ts` polls every two seconds with instance selection. No separate realtime role is required; anonymous player/vehicle objects are excluded.
-- `tests/`: API, architecture, unit, browser, helpers, and `smoke-production.mjs`.
+- `tests/`: API, architecture, unit, browser, helpers, and `smoke-production.mjs`. Unit tests are grouped by area (`unit/lib`, `unit/infrastructure`, `unit/bases`, `unit/map`, `unit/portal`, `unit/app`, `unit/release`); browser specs import `test`/`expect` from `tests/helpers/browser-test.ts`, which disables entrance animation and smooth scrolling for stable measurements.
 - Root runtime behavior: `src/proxy.ts` (Middleware renamed in Next.js 16) and `next.config.ts`. `docker-compose.yml` runs the app beside a local Redis for development.
 
 ## Contracts
