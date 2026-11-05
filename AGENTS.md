@@ -51,6 +51,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/modules/map/server/realtime.ts`: Console snapshots available to all signed-in dashboard members of the configured guild; `hooks/useRealtimeData.ts` polls every two seconds with instance selection. No separate realtime role is required; anonymous player/vehicle objects are excluded.
 - `tests/`: API, architecture, unit, browser, helpers, and `smoke-production.mjs`. Unit tests are grouped by area (`unit/lib`, `unit/infrastructure`, `unit/bases`, `unit/map`, `unit/portal`, `unit/app`, `unit/release`); browser specs import `test`/`expect` from `tests/helpers/browser-test.ts`, which disables entrance animation and smooth scrolling for stable measurements.
 - Root runtime behavior: `src/proxy.ts` (Middleware renamed in Next.js 16) and `next.config.ts`. `docker-compose.yml` runs the app beside a local Redis for development.
+- The Docker image links `.next/cache` into `/home/container/.cache/arrakis-dashboard`. `src/config/server-launcher.mjs` prepares the image cache after the Pterodactyl volume mounts; release checks verify writes as the container user with a read-only image filesystem.
 
 ## Contracts
 

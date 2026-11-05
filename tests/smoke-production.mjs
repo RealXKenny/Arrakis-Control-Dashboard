@@ -150,6 +150,12 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   assert.ok(ready, 'Production server must serve /portal');
+  const optimizedImage = await fetch(`${base}/_next/image?url=%2Fmaps%2Fatreides.webp&w=64&q=75`, {
+    signal: AbortSignal.timeout(10000),
+  });
+  assert.equal(optimizedImage.status, 200, 'image optimizer must serve an image');
+  assert.match(optimizedImage.headers.get('content-type') || '', /^image\//);
+  assert.ok((await optimizedImage.arrayBuffer()).byteLength > 0);
   const readinessMessages = [];
   await announceReadiness(`${base}/portal`, new AbortController().signal, {
     write: (message) => readinessMessages.push(message),
@@ -355,7 +361,7 @@ try {
     );
   assert.doesNotMatch(
     logs,
-    /Failed to load external module|MaxListenersExceededWarning|This module cannot be imported from a Client Component/,
+    /Failed to load external module|MaxListenersExceededWarning|This module cannot be imported from a Client Component|Failed to write image to cache|unhandledRejection/,
   );
   const deniedImport = await fetch(`${base}/api/bases/import`, {
     method: 'POST',

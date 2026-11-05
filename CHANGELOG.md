@@ -15,6 +15,10 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 - Guild settings and logo changes verify the linked character’s guild leadership by character ID. Matching character names cannot authorize edits.
 
+### Fixed
+
+- Moved the image cache into Pterodactyl’s writable server storage and prepare it before startup, preventing image cache directory errors on containers with a read-only application filesystem.
+
 ## [1.20.5] - 2026-11-05
 
 ### Added
