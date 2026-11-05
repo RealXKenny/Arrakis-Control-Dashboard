@@ -14,7 +14,13 @@ concurrency:
 
 jobs:
   checks:
+    name: checks (${{ matrix.task }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # One runner per check: a shared runner made the CPU-heavy unit tests time out.
+        task: [typecheck, lint, format:check, test]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,22 +28,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Independent static checks share one runner; each keeps its own exit status.
-      - name: Typecheck, lint, format and unit tests
-        shell: bash
-        run: |
-          set -uo pipefail
-          npm run typecheck > typecheck.log 2>&1 & typecheck=$!
-          npm run lint > lint.log 2>&1 & lint=$!
-          npm run format:check > format.log 2>&1 & format=$!
-          npm test > unit.log 2>&1 & unit=$!
-          status=0
-          for check in typecheck lint format unit; do
-            if wait "${!check}"; then echo "::group::$check passed"; else echo "::group::$check FAILED"; status=1; fi
-            cat "$check.log"
-            echo "::endgroup::"
-          done
-          exit "$status"
+      - run: npm run ${{ matrix.task }}
 
   integration:
     name: integration (${{ matrix.shard }}/4)

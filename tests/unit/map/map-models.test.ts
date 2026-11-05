@@ -60,6 +60,7 @@ describe('map models', () => {
     expect(visualFallbackKind('MI_Prop_Lights')).toBe('light');
     expect(visualFallbackKind('MI_PB_Light_Blue')).toBeNull();
   });
+  // Decodes every bundled mesh; shared CI runners need more than the 5 s default timeout.
   it('decodes every client mesh and UV channel within the preview limits', () => {
     const packs = new Map<number, Buffer>();
     for (const mesh of clientCatalog.meshes) {
@@ -82,7 +83,7 @@ describe('map models', () => {
       geometry.dispose();
     }
     expect(() => decodeBuildingUv(new ArrayBuffer(12), 2)).toThrow();
-  });
+  }, 30_000);
   it('maps client glass panes and keeps rows aligned with the native template list', () => {
     expect(Object.keys(clientCatalog.rows).sort()).toEqual(Object.keys(catalog.rows).sort());
     const window = clientCatalog.rows.Atreides_Outpost_Window_02;
