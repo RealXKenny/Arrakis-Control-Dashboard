@@ -1,4 +1,4 @@
-import styles from '../map.module.css';
+import styles from '../styles/map.module.css';
 import CoriolisCountdown from './CoriolisCountdown';
 
 export default function MapToolbar({

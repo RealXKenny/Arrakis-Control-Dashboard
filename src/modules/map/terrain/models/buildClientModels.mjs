@@ -7,7 +7,7 @@ import { gunzipSync, gzipSync } from 'node:zlib';
 /**
  * Converts an extracted MapViewer3D `cdn` data tree into the base preview's client model packs.
  *
- * Usage: node src/modules/map/terrain/buildClientModels.mjs <extracted MapViewer3D-cdn folder>
+ * Usage: node src/modules/map/terrain/models/buildClientModels.mjs <extracted MapViewer3D-cdn folder>
  *
  * The source tree is read as untrusted data: every path is resolved inside it, every mesh and
  * UV buffer is validated, and the output is bounded by the same limits the browser enforces.
@@ -16,7 +16,7 @@ const MAX_PACK = 8 * 1024 * 1024;
 const MAX_MESH_TRIANGLES = 1_000_000;
 const MAX_TEXTURE_BYTES = 4 * 1024 * 1024;
 const TEXTURE_MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png' };
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../assets/models');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../assets/models');
 const outputRoot = path.join(root, 'client');
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const packagePath = (value) =>

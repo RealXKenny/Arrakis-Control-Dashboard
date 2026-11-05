@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import { fetchBaseModelExport } from '../../bases/utils/model-export';
-import { BuildingLibrary } from './buildingModels';
-import { createVehicleModel, disposeVehicleModels, vehicleKind } from './vehicleModels';
-import { createSandwormModel } from './sandwormModel';
-import { createWorldModel, worldModelKind, WORLD_MODEL_LIMIT } from './worldModels';
-import { markerKey } from '../utils/markers';
-import { getCoordinate } from '../utils/mapData';
-import { surfaceHeight, type HeightSurface } from './heightSurface';
+import { fetchBaseModelExport } from '../../../bases/utils/model-export';
+import { BuildingLibrary } from '../models/buildingModels';
+import { createVehicleModel, disposeVehicleModels, vehicleKind } from '../models/vehicleModels';
+import { createSandwormModel } from '../models/sandwormModel';
+import { createWorldModel, worldModelKind, WORLD_MODEL_LIMIT } from '../models/worldModels';
+import { markerKey } from '../../utils/markers';
+import { getCoordinate } from '../../utils/mapData';
+import { surfaceHeight, type HeightSurface } from '../surface/heightSurface';
 import { terrainPoint, type MapBounds } from './sceneGeometry';
 export type ModelMarker = Record<string, unknown>;
 type Entry = {

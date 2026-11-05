@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { BuildingLibrary, type BuildingPartSummary } from '../../map/terrain/buildingModels';
-import { fitTerrainCamera } from '../../map/terrain/sceneFraming';
+import { BuildingLibrary, type BuildingPartSummary } from '../../map/terrain/models/buildingModels';
+import { fitTerrainCamera } from '../../map/terrain/scene/sceneFraming';
 import { BaseModelError, fetchBaseModelExport } from '../utils/model-export';
-import css from '../preview.module.css';
+import css from '../styles/preview.module.css';
 import { baseViewSchema, type BaseView } from '../utils/preview-settings';
 import { fitBaseCamera } from '../utils/preview-camera';
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mapPixelsToWorld, visibleWorldRect } from '../../src/modules/map/utils/coordinates';
-import { probeTerrainSupport } from '../../src/modules/map/terrain/terrainSupport';
-import { bundledAsset } from '../../src/modules/map/terrain/terrainAssets';
+import { probeTerrainSupport } from '../../src/modules/map/terrain/surface/terrainSupport';
+import { bundledAsset } from '../../src/modules/map/terrain/surface/terrainAssets';
 import { normalizeMapResolution } from '../../src/modules/map/utils/mapResolution';
 
 const map = {

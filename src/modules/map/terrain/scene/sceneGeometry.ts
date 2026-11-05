@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { surfaceHeight, type HeightSurface } from './heightSurface';
-import { worldToMapPoint } from '../utils/coordinates';
+import { surfaceHeight, type HeightSurface } from '../surface/heightSurface';
+import { worldToMapPoint } from '../../utils/coordinates';
 
 export type MapBounds = {
   minX: number;

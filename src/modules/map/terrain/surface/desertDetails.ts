@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { LayoutAssets, SharedAssets } from './terrainAssets';
 import { dequantizePosition, octDecode } from './terrainGeometry';
-import type { MapBounds } from './sceneGeometry';
+import type { MapBounds } from '../scene/sceneGeometry';
 import { applyDesertMaterial, createDesertTextures } from './desertMaterials';
 
 // MapViewer3D uses Unreal centimetres (Z up); the scene uses metres (Y up).

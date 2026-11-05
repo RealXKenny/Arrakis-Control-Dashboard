@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { z } from 'zod';
-import { gunzip } from './terrainAssets';
+import { gunzip } from '../surface/terrainAssets';
 
 const coordinate = z.number().finite().min(-1e8).max(1e8);
 const piece = z.object({

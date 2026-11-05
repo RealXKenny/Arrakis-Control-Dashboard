@@ -2,11 +2,11 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import MapMarker from '../components/MapMarker';
-import { worldToMapPoint } from '../utils/coordinates';
-import { markerKey } from '../utils/markers';
-import { getCoordinate } from '../utils/mapData';
-import { loadHeightSurface, surfaceHeight } from './heightSurface';
+import MapMarker from '../../components/MapMarker';
+import { worldToMapPoint } from '../../utils/coordinates';
+import { markerKey } from '../../utils/markers';
+import { getCoordinate } from '../../utils/mapData';
+import { loadHeightSurface, surfaceHeight } from '../surface/heightSurface';
 import {
   createSurfaceGeometry,
   loadMapTexture,
@@ -15,8 +15,8 @@ import {
   terrainOccludes,
   type MapBounds,
 } from './sceneGeometry';
-import { loadLayoutAssets, loadSharedAssets } from './terrainAssets';
-import { createDesertDetails, updateDesertDetails } from './desertDetails';
+import { loadLayoutAssets, loadSharedAssets } from '../surface/terrainAssets';
+import { createDesertDetails, updateDesertDetails } from '../surface/desertDetails';
 import { SceneModels } from './sceneModels';
 import { fitTerrainCamera } from './sceneFraming';
 import { colorSurface, createMapMaterial, niceScale } from './mapPresentation';

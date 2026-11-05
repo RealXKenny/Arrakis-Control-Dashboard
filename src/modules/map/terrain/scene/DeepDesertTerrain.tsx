@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { visibleWorldRect } from '../utils/coordinates';
+import { visibleWorldRect } from '../../utils/coordinates';
 import { createDeepDesertRenderer, type DeepDesertRenderer } from './renderer';
-import { loadLayoutAssets, loadSharedAssets } from './terrainAssets';
-import { probeTerrainSupport } from './terrainSupport';
+import { loadLayoutAssets, loadSharedAssets } from '../surface/terrainAssets';
+import { probeTerrainSupport } from '../surface/terrainSupport';
 type MapConfig = {
   width: number;
   height: number;

@@ -1,7 +1,7 @@
-import { BFS, BVS, FS, RFS, RVS, VS } from './shaders';
-import { buildDrawCalls, depthRange, orthoFromWorldRect, applyCanvasSize } from './terrainGeometry';
-import type { LayoutAssets, SharedAssets } from './terrainAssets';
-import type { TerrainDrawCall, TerrainView } from './types';
+import { BFS, BVS, FS, RFS, RVS, VS } from '../surface/shaders';
+import { buildDrawCalls, depthRange, orthoFromWorldRect, applyCanvasSize } from '../surface/terrainGeometry';
+import type { LayoutAssets, SharedAssets } from '../surface/terrainAssets';
+import type { TerrainDrawCall, TerrainView } from '../surface/types';
 const FEATHER = 992;
 const ROCKW = 8.0;
 const OVERLAY = 0;

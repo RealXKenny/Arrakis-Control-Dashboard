@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { SharedAssets } from './terrainAssets';
-import type { MapBounds } from './sceneGeometry';
+import type { MapBounds } from '../scene/sceneGeometry';
 
 export function createDesertTextures(shared: SharedAssets) {
   const texture = (bytes: Uint8Array, size: number) => {

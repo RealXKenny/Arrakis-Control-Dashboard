@@ -3,7 +3,7 @@ import { formatNumber } from '../utils/formatting';
 import { record } from '../utils/inventory';
 import { itemImage } from '../utils/item-image';
 import ItemImage from './ItemImage';
-import css from '../base-inventory.module.css';
+import css from '../styles/base-inventory.module.css';
 
 type InventoryItem = { templateId?: string; name?: string; quantity?: number; image?: string };
 type Container = {

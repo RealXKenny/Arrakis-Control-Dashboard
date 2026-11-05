@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { HeightSurface } from './heightSurface';
+import type { HeightSurface } from '../surface/heightSurface';
 export function colorSurface(geometry: THREE.BufferGeometry, surface: HeightSurface) {
   const position = geometry.getAttribute('position'),
     normal = geometry.getAttribute('normal');

@@ -2,7 +2,7 @@ import Link from './PortalLink';
 import { inventoryItems, journeySummary, label, record, rows } from '../utils/inventory';
 import type { buildCharacter } from '../utils/character';
 import { formatNumber } from '../utils/formatting';
-import css from '../dossier.module.css';
+import css from '../styles/dossier.module.css';
 import ItemImage from './ItemImage';
 import { itemImage } from '../utils/item-image';
 import CharacterAvatar from './CharacterAvatar';

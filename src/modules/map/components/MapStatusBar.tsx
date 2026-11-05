@@ -1,6 +1,6 @@
 'use client';
 
-import styles from '../map.module.css';
+import styles from '../styles/map.module.css';
 
 export default function MapStatusBar({ loading, error, markerCount, zoomPercent, target, view3D }) {
   return (

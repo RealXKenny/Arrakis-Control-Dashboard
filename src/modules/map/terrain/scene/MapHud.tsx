@@ -1,8 +1,8 @@
 'use client';
-import styles from '../map.module.css';
+import styles from '../../styles/map.module.css';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { markerKey } from '../utils/markers';
+import { markerKey } from '../../utils/markers';
 import type { ModelMarker } from './sceneModels';
 import type { QualityChoice } from './renderQuality';
 type Props = {
