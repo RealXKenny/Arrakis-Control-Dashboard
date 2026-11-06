@@ -902,3 +902,99 @@ test('updates and addons screens check read-only and hand restricted writes to t
   });
   await expect(page.getByRole('region', { name: 'Installing, updating and removing addons' })).toBeVisible();
 });
+
+test('guild membership screen separates ranks and confirms leadership, removal and disbanding', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-guilds': { rows: [{ guild_id: '2', guild_name: 'Crimson Skies' }], hasMore: false },
+      'get-guilds-guildid-members': {
+        rows: [
+          { player_id: '4', character_name: 'Leader', role_id: '100' },
+          { player_id: '7', character_name: 'Scout', role_id: '50' },
+          { player_id: '9', character_name: 'Rookie', role_id: '1' },
+        ],
+      },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=guild-tools');
+  await page.getByRole('button', { name: 'Manage Crimson Skies' }).click();
+  await expect(page).toHaveURL(/guild=2/);
+  const roster = page.getByRole('region', { name: 'Guild roster' });
+  await expect(roster.getByRole('row', { name: /Leader Leader/ }).getByRole('button')).toHaveCount(0);
+  await expect(roster.getByRole('row', { name: /Scout Officer/ })).toBeVisible();
+  await roster.getByRole('row', { name: /Scout/ }).getByRole('button', { name: 'Make leader…' }).click();
+  await expect(page.getByRole('dialog')).toContainText('transfers leadership');
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Transfer leadership' })).toBeDisabled();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  await roster
+    .getByRole('row', { name: /Rookie/ })
+    .getByRole('button', { name: 'Remove…' })
+    .click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Disband guild…' }).click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Disband guild', exact: true })).toBeDisabled();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.method !== undefined || /promote|demote|delete-/.test(call.operation))).toBe(false);
+  await roster
+    .getByRole('row', { name: /Rookie/ })
+    .getByRole('button', { name: 'Promote…' })
+    .click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Promote', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Promotion requested.' })).toBeVisible();
+  expect(calls.find((call) => call.operation === 'post-guilds-guildid-members-playerid-promote').path).toEqual({
+    guildId: '2',
+    playerId: '9',
+  });
+});
+
+test('discord and directory screens report configuration honestly and never offer restricted forms', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  let adapter = false;
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        operations,
+        configured: true,
+        adapterConfigured: adapter,
+        consoleOrigin: 'https://console.test',
+      },
+    }),
+  );
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    if (input.operation === 'get-integrations-discord-population')
+      return route.fulfill({ status: 403, json: { ok: false, error: 'The adapter denied population:read.' } });
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: { status: 'ok' } } });
+  });
+  await page.goto('/admin?tab=discord');
+  await expect(page.getByText('The Discord adapter is not configured')).toBeVisible();
+  adapter = true;
+  await page.goto('/admin?tab=discord');
+  await expect(page.getByRole('region', { name: 'Health' })).toContainText('Status');
+  await page.getByRole('button', { name: 'Population & activity', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Population' }).getByRole('alert')).toContainText('population:read');
+  await page.getByRole('button', { name: 'Links & lookups', exact: true }).click();
+  const blocked = page.getByRole('region', { name: 'Not available through this dashboard' });
+  await expect(blocked.getByRole('button')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Verify an account link' })).toBeVisible();
+  await page.goto('/admin?tab=directory');
+  await expect(page.getByRole('region', { name: 'Public directory status' })).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Editing, claiming and global settings' }).getByRole('button'),
+  ).toHaveCount(0);
+});

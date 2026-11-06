@@ -23,7 +23,7 @@ export function useConfirmedAction(operations: AdminOperation[], onDone: (messag
       run: async () => {
         const outcome = await adminCall(operation, input);
         onDone(
-          `${spec.done}${outcome.upstreamStatus === 202 ? ' The Console queued it; it has not completed yet.' : ''}`,
+          `${spec.done}${outcome.warning ? ` ${outcome.warning}` : ''}${outcome.upstreamStatus === 202 ? ' The Console queued it; it has not completed yet.' : ''}`,
         );
         setPending(null);
       },

@@ -20,17 +20,13 @@ export type AdminTabKind =
   | 'care'
   | 'admintools'
   | 'updates'
-  | 'addons';
-export const DEDICATED_KINDS: AdminTabKind[] = [
-  'players',
-  'vehicles',
-  'bases',
-  'maps',
-  'backups',
-  'market',
-  'server',
-  'logs',
-];
+  | 'addons'
+  | 'guildtools'
+  | 'discord'
+  | 'directory';
+const BUILT_IN_KINDS: AdminTabKind[] = ['overview', 'guilds', 'setup', 'reference', 'console', 'operations'];
+/** Every kind with its own manager screen; the generic catalog forms stay behind `advanced=1`. */
+export const isDedicatedKind = (kind: AdminTabKind) => !BUILT_IN_KINDS.includes(kind);
 export type AdminTab = {
   id: string;
   label: string;
@@ -83,7 +79,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'guild-tools',
         label: 'Guild membership',
-        kind: 'operations',
+        kind: 'guildtools',
         groups: ['Guilds'],
         summary: 'Console guild rosters, ranks and disbanding.',
       },
@@ -205,14 +201,14 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'discord',
         label: 'Discord integrations',
-        kind: 'operations',
+        kind: 'discord',
         groups: ['Discord Adapter (Experimental)'],
         summary: 'Adapter health, catalog, links and lookups.',
       },
       {
         id: 'directory',
         label: 'Public directory',
-        kind: 'operations',
+        kind: 'directory',
         groups: ['Settings & Public Directory'],
         summary: 'Directory status; editing and claiming hand off to Console.',
       },

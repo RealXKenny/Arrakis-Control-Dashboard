@@ -15,8 +15,11 @@ import LogsScreen from '../screens/LogsScreen';
 import CareScreen from '../screens/CareScreen';
 import UpdatesScreen from '../screens/UpdatesScreen';
 import AddonsScreen from '../screens/AddonsScreen';
+import GuildToolsScreen from '../screens/GuildToolsScreen';
+import DiscordScreen from '../screens/DiscordScreen';
+import DirectoryScreen from '../screens/DirectoryScreen';
 import AdminToolsScreen from '../screens/AdminToolsScreen';
-import { ADMIN_SECTIONS, DEDICATED_KINDS, adminHref, findAdminTab, tabForOperation } from '../navigation';
+import { ADMIN_SECTIONS, isDedicatedKind, adminHref, findAdminTab, tabForOperation } from '../navigation';
 import DashboardShell from '../../../components/DashboardShell';
 import type { AdminOperation } from '../types';
 import AdminOverviewPanel from './AdminOverviewPanel';
@@ -41,7 +44,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
   const supportUnread = useSupportUnread({ admin: true });
   const router = useRouter();
   const { section, tab } = findAdminTab(router.query.tab);
-  const dedicated = DEDICATED_KINDS.includes(tab.kind);
+  const dedicated = isDedicatedKind(tab.kind);
   const advanced = router.query.advanced === '1';
   const view = dedicated && advanced ? 'operations' : tab.kind;
   const overview = useAdminOverview(view === 'overview' || view === 'setup');
@@ -338,6 +341,11 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
       {!loading && view === 'logs' && <LogsScreen operations={operations} />}
       {!loading && view === 'care' && <CareScreen operations={operations} />}
       {!loading && view === 'updates' && <UpdatesScreen operations={operations} consoleOrigin={consoleOrigin} />}
+      {!loading && view === 'guildtools' && <GuildToolsScreen operations={operations} />}
+      {!loading && view === 'discord' && (
+        <DiscordScreen operations={operations} adapterConfigured={adapterConfigured} consoleOrigin={consoleOrigin} />
+      )}
+      {!loading && view === 'directory' && <DirectoryScreen operations={operations} consoleOrigin={consoleOrigin} />}
       {!loading && view === 'addons' && <AddonsScreen operations={operations} consoleOrigin={consoleOrigin} />}
       {!loading && view === 'admintools' && <AdminToolsScreen operations={operations} />}
       {!loading && dedicated && (

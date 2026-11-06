@@ -25,3 +25,13 @@ it('keeps restricted operations out of working forms by labelling Console-only g
   const restricted = catalog.filter((entry) => entry.restriction && consoleTab.groups.includes(entry.group));
   expect(restricted.length).toBeGreaterThan(0);
 });
+
+it('treats every manager tab as dedicated so Advanced tools always works', async () => {
+  const { isDedicatedKind } = await import('../../../src/modules/admin/navigation');
+  const kinds = ADMIN_SECTIONS.flatMap((section) =>
+    section.tabs.map((tab) => [tab.kind, isDedicatedKind(tab.kind)] as const),
+  );
+  for (const [kind, dedicated] of kinds)
+    expect(dedicated, kind).toBe(!['overview', 'guilds', 'setup', 'reference', 'console', 'operations'].includes(kind));
+  expect(kinds.filter(([, dedicated]) => dedicated).length).toBeGreaterThan(15);
+});

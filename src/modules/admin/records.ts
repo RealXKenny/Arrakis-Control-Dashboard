@@ -51,7 +51,11 @@ export function idFrom(row: Row, kind: string): string {
   return text(row, [`${kind}_id`, `${kind}Id`, 'id']);
 }
 export function nameFrom(row: Row, fallback: string): string {
-  return text(row, ['character_name', 'characterName', 'player_name', 'name', 'display_name', 'title'], fallback);
+  return text(
+    row,
+    ['character_name', 'characterName', 'player_name', 'guild_name', 'guildName', 'name', 'display_name', 'title'],
+    fallback,
+  );
 }
 export function hasMore(value: unknown, page: number, pageSize: number): boolean {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
