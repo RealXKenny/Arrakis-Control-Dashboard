@@ -17,7 +17,7 @@ it('uses unique tab ids and falls back to the overview for unknown tabs', () => 
   expect(new Set(ids).size).toBe(ids.length);
   expect(findAdminTab('nope').tab.id).toBe('overview');
   expect(findAdminTab('market').section.id).toBe('world');
-  expect(adminHref('market', 'get-exchange-stats')).toBe('/admin?tab=market&operation=get-exchange-stats');
+  expect(adminHref('market', 'get-exchange-stats')).toBe('/admin?tab=market&operation=get-exchange-stats&advanced=1');
 });
 
 it('keeps restricted operations out of working forms by labelling Console-only groups', () => {
