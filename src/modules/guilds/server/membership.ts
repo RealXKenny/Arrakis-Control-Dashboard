@@ -33,7 +33,13 @@ export async function removeGuildStorage(guildId: string) {
         redis.call('DEL', chatKey, chatKey .. ':seen')
       end
     end
-    redis.call('DEL', KEYS[1], KEYS[3], KEYS[4], KEYS[5], KEYS[6])
+    for _, encoded in ipairs(redis.call('LRANGE', KEYS[6], -100, -1)) do
+      local valid, message = pcall(cjson.decode, encoded)
+      if valid and type(message) == 'table' and type(message.senderId) == 'string' and type(message.id) == 'string' then
+        redis.call('ZREM', KEYS[7], ARGV[3] .. ':' .. message.senderId .. ':' .. message.id)
+      end
+    end
+    redis.call('DEL', KEYS[1], KEYS[3], KEYS[4], KEYS[5], KEYS[6], KEYS[6] .. ':seen')
     redis.call('ZREM', KEYS[2], ARGV[1])
     return 1
   `,
@@ -44,8 +50,9 @@ export async function removeGuildStorage(guildId: string) {
       `arrakis:guild-applications:${guildId}`,
       `arrakis:guild-applications-index:${guildId}`,
       `arrakis:guild-support:${guildId}`,
+      'arrakis:guild-support-unread',
     ],
-    [`guild:${guildId}`, `arrakis:guild-chat:${guildId}:`],
+    [`guild:${guildId}`, `arrakis:guild-chat:${guildId}:`, guildId],
   );
 }
 

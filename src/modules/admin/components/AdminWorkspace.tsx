@@ -1,3 +1,5 @@
+import useSupportUnread from '../../guilds/hooks/useSupportUnread';
+import UnreadBadge from '../../../components/UnreadBadge';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import DashboardShell from '../../../components/DashboardShell';
@@ -17,6 +19,7 @@ function objectInput(text: string): Record<string, unknown> {
 
 export default function AdminWorkspace({ accountName }: { accountName: string }) {
   const [operations, setOperations] = useState<AdminOperation[]>([]);
+  const supportUnread = useSupportUnread({ admin: true });
   const [view, setView] = useState<'operations' | 'guilds'>('operations');
   const [showFeatures, setShowFeatures] = useState(false);
   const [accessFilter, setAccessFilter] = useState('all');
@@ -219,7 +222,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
       subtitle="Administration"
       navigation={[
         { label: 'Workspace', group: 'Dashboard', href: '/portal' },
-        { label: 'Administration', group: 'Manage', href: '/admin', active: true },
+        { label: 'Administration', group: 'Manage', href: '/admin', active: true, unreadCount: supportUnread.total },
       ]}
       actions={
         <>
@@ -254,8 +257,13 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
         <button aria-pressed={view === 'operations'} disabled={busy} onClick={() => setView('operations')}>
           Operations
         </button>
-        <button aria-pressed={view === 'guilds'} disabled={busy} onClick={() => setView('guilds')}>
-          Guild oversight
+        <button
+          aria-label="Guild oversight"
+          aria-pressed={view === 'guilds'}
+          disabled={busy}
+          onClick={() => setView('guilds')}
+        >
+          Guild oversight <UnreadBadge count={supportUnread.total} />
         </button>
         <button aria-expanded={showFeatures} onClick={() => setShowFeatures(!showFeatures)}>
           Browse features

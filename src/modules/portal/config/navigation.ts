@@ -18,7 +18,7 @@ export type PortalView = (typeof portalViews)[number];
 export function getPortalView(value: string | string[] | undefined): PortalView {
   return portalViews.find((view) => view === value) ?? 'overview';
 }
-export function portalNavigation(view: PortalView): NavigationItem[] {
+export function portalNavigation(view: PortalView, supportUnread = 0): NavigationItem[] {
   return [
     { label: 'Dashboard', group: 'Home', href: '/portal?view=overview', active: view === 'overview' },
     { label: 'Hagga Basin', group: 'Desert', href: '/portal?view=hagga', active: view === 'hagga' },
@@ -36,6 +36,12 @@ export function portalNavigation(view: PortalView): NavigationItem[] {
       href: '/portal?view=guild-requirements',
       active: view === 'guild-requirements',
     },
-    { label: 'My Guild', group: 'Community', href: '/portal?view=guild', active: view === 'guild' },
+    {
+      label: 'My Guild',
+      group: 'Community',
+      href: '/portal?view=guild',
+      active: view === 'guild',
+      unreadCount: supportUnread,
+    },
   ];
 }

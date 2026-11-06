@@ -60,6 +60,12 @@ test.beforeEach(async ({ page }) => {
       },
     }),
   );
+  await page.route('**/api/guilds/*/support/status', (route) =>
+    route.fulfill({ json: { ok: true, data: { unreadCount: 0 } } }),
+  );
+  await page.route('**/api/guilds/*/support/read', (route) =>
+    route.fulfill({ json: { ok: true, data: { unreadCount: 0 } } }),
+  );
   await page.route('**/api/guilds/*/support', (route) => route.fulfill({ json: { ok: true, data: { messages: [] } } }));
   await page.route('**/api/guilds/*/application', (route) =>
     route.request().method() === 'GET' ? route.fulfill({ json: { ok: true, data: null } }) : route.continue(),
@@ -1243,6 +1249,7 @@ test('guild custom applications and private live chat work across the community 
     .getByRole('navigation', { name: 'Guild tabs' })
     .getByRole('button', { name: 'Settings', exact: true })
     .click();
+  await page.getByRole('button', { name: 'Chat with administrators', exact: true }).click();
   const leaderSupport = page.getByRole('region', { name: 'Chat with administrators', exact: true });
   await expect(leaderSupport.getByRole('log')).toContainText('Your recruitment listing looks good.');
   await leaderSupport.getByRole('textbox', { name: 'Message', exact: true }).fill('Thanks for checking.');
@@ -2553,4 +2560,101 @@ test('guild cards keep status separate from unread reviewer chat across reloads'
   await expect(card.getByLabel(/unread messages/)).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('My Guild keeps unread admin support messages until the leader views chat', async ({ page }) => {
+  const messages = [
+    {
+      id: 'a62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      senderId: 'admin',
+      senderName: 'Administrator',
+      role: 'reviewer',
+      text: 'Please check your listing.',
+      sentAt: Date.now(),
+    },
+    {
+      id: 'b62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      senderId: 'admin',
+      senderName: 'Administrator',
+      role: 'reviewer',
+      text: 'We can help with recruitment.',
+      sentAt: Date.now(),
+    },
+    {
+      id: 'c62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      senderId: 'leader',
+      senderName: 'Guild Leader',
+      role: 'applicant',
+      text: 'My earlier reply.',
+      sentAt: Date.now(),
+    },
+  ];
+  const seen = new Set<string>();
+  let receipts = 0;
+  const unread = () => messages.filter((message) => message.role === 'reviewer' && !seen.has(message.id)).length;
+  await page.route('**/api/player', (route) =>
+    route.fulfill({
+      json: { ...player, details: { ...player.details, guild: { id: '2', name: 'Crimson Skies', rank: 100 } } },
+    }),
+  );
+  await page.route('**/api/guilds?*', (route) =>
+    route.fulfill({ json: { ok: true, data: { rows: [{ guild_id: '2', guild_name: 'Crimson Skies' }] } } }),
+  );
+  await page.route('**/api/guilds/2/members', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        canEdit: true,
+        data: { rows: [{ player_id: 'tester', character_name: 'Desert Navigator', role_id: '100' }] },
+      },
+    }),
+  );
+  await page.route('**/api/guilds/2/logo', (route) => route.fulfill({ json: { ok: true, data: { logo: null } } }));
+  await page.route('**/api/guilds/2/requirements', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        data: { guildName: 'Crimson Skies', requirements: 'Be friendly', contact: '', published: true },
+      },
+    }),
+  );
+  await page.route('**/api/guilds/2/support/status', (route) =>
+    route.fulfill({ json: { ok: true, data: { unreadCount: unread() } } }),
+  );
+  await page.route('**/api/guilds/2/support', (route) => route.fulfill({ json: { ok: true, data: { messages } } }));
+  await page.route('**/api/guilds/2/support/read', (route) => {
+    const batch = route.request().postDataJSON().messages;
+    expect(batch.some((message: { senderId: string }) => message.senderId === 'leader')).toBe(false);
+    batch.forEach((message: { id: string }) => seen.add(message.id));
+    receipts++;
+    if (receipts === 1)
+      messages.push({
+        ...messages[0],
+        id: 'd62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+        text: 'A new message during acknowledgement.',
+      });
+    return route.fulfill({ json: { ok: true, data: { unreadCount: unread() } } });
+  });
+  await page.goto('/portal');
+  const nav = page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'My Guild', exact: true });
+  await expect(nav.locator('[data-unread-count="2"]')).toBeVisible();
+  await page.reload();
+  await expect(nav.locator('[data-unread-count="2"]')).toBeVisible();
+  await nav.click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Chat with administrators', exact: true })).toBeVisible();
+  expect(receipts).toBe(0);
+  await expect(nav.locator('[data-unread-count="2"]')).toBeVisible();
+  await page.getByRole('button', { name: 'Chat with administrators', exact: true }).click();
+  await expect(nav.locator('[data-unread-count="1"]')).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Chat with administrators', exact: true }).getByRole('log'),
+  ).toContainText('A new message during acknowledgement.');
+  await expect.poll(unread).toBe(0);
+  await expect(nav.locator('[data-unread-count]')).toHaveCount(0);
+  await page.reload();
+  await expect(nav).toBeVisible();
+  await expect(nav.locator('[data-unread-count]')).toHaveCount(0);
 });

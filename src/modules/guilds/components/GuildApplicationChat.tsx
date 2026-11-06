@@ -8,6 +8,7 @@ export default function GuildApplicationChat({
   applicationId = '',
   title,
   markRead = false,
+  readRole = 'reviewer',
   onUnreadCount,
   conversationUrl,
   support = false,
@@ -16,6 +17,7 @@ export default function GuildApplicationChat({
   applicationId?: string;
   title: string;
   markRead?: boolean;
+  readRole?: 'applicant' | 'reviewer';
   onUnreadCount?: (count: number) => void;
   conversationUrl?: string;
   support?: boolean;
@@ -109,7 +111,7 @@ export default function GuildApplicationChat({
     async function read() {
       if (reading || !visible || document.hidden || !follow.current || controller.signal.aborted) return;
       const pending = messages.filter(
-        (message) => message.role === 'reviewer' && !acknowledged.current.has(message.senderId + ':' + message.id),
+        (message) => message.role === readRole && !acknowledged.current.has(message.senderId + ':' + message.id),
       );
       if (!pending.length) return;
       reading = true;
@@ -122,6 +124,12 @@ export default function GuildApplicationChat({
         if (!controller.signal.aborted) {
           pending.forEach((message) => acknowledged.current.add(message.senderId + ':' + message.id));
           unreadCallback.current?.(data.unreadCount);
+          if (support)
+            window.dispatchEvent(
+              new CustomEvent('guild-support-read', {
+                detail: { guildId, admin: readRole === 'applicant', unreadCount: data.unreadCount },
+              }),
+            );
         }
       } catch {
         /* A later chat poll retries the receipt. */
@@ -142,7 +150,7 @@ export default function GuildApplicationChat({
       element.removeEventListener('scroll', read);
       document.removeEventListener('visibilitychange', read);
     };
-  }, [messages, markRead, url]);
+  }, [messages, markRead, url, readRole, support, guildId]);
 
   useEffect(() => {
     if (markRead) log.current?.scrollIntoView({ block: 'center', behavior: 'auto' });

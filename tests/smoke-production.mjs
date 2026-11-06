@@ -233,7 +233,12 @@ try {
     assert.equal(response.status, 403, 'guild oversight requires the verified administrator');
     await response.text();
   }
-  for (const path of ['admin/guilds/test/messages/send', 'guilds/test/support/send']) {
+  for (const path of [
+    'admin/guilds/test/messages/send',
+    'guilds/test/support/send',
+    'admin/guilds/test/messages/read',
+    'guilds/test/support/read',
+  ]) {
     const response = await fetch(`${base}/api/${path}`, {
       method: 'POST',
       headers: { ...adminHeaders, Origin: 'https://other.example' },
@@ -245,6 +250,9 @@ try {
     assert.equal(wrong.status, 405);
     await wrong.text();
   }
+  const supportStatusDenied = await fetch(`${base}/api/guilds/test/support/status`);
+  assert.equal(supportStatusDenied.status, 401, 'support unread counts require authentication');
+  await supportStatusDenied.text();
   const adminStatus = await fetch(`${base}/api/admin/execute`, {
     method: 'POST',
     headers: adminHeaders,

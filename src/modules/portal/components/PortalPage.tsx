@@ -1,3 +1,5 @@
+import useSupportUnread from '../../guilds/hooks/useSupportUnread';
+import UnreadBadge from '../../../components/UnreadBadge';
 import { clearClientReadCache } from '../../../lib/cache/client-cache';
 import { usePortalView, navigatePortal } from '../hooks/usePortalView';
 import Image from 'next/image';
@@ -64,6 +66,12 @@ export default function PlayerPortal() {
     guildData.currentGuild?.id ??
     record(character?.guild).id;
   const guildName = label(guildData.currentGuild?.guild_name ?? record(character?.guild).name, 'No guild reported');
+  const supportUnread = useSupportUnread({
+    guildId: guildId == null ? undefined : String(guildId),
+    enabled:
+      !sessionExpired &&
+      (guildData.canEdit || ['100', 'leader'].includes(String(record(character?.guild).rank).toLowerCase())),
+  });
   const guildManagement = useGuildManagement(String(guildId ?? ''), () => {
     guildData.refresh();
     retry();
@@ -137,7 +145,7 @@ export default function PlayerPortal() {
     <DashboardShell
       brand="Crimson Skies"
       subtitle="Community workspace"
-      navigation={portalNavigation(view)}
+      navigation={portalNavigation(view, supportUnread.total)}
       onNavigate={navigatePortal}
       actions={
         sessionExpired ? (
@@ -222,15 +230,22 @@ export default function PlayerPortal() {
                     </button>
                     {canEditLogo && (
                       <button
+                        aria-label="Settings"
                         aria-current={guildTab === 'settings' ? 'page' : undefined}
                         onClick={() => setGuildTab('settings')}
                       >
-                        Settings
+                        Settings <UnreadBadge count={supportUnread.total} />
                       </button>
                     )}
                   </nav>
                   {guildTab === 'settings' && canEditLogo && (
-                    <GuildRequirements key={String(guildId)} settings guildId={String(guildId)} guildName={guildName}>
+                    <GuildRequirements
+                      key={String(guildId)}
+                      settings
+                      guildId={String(guildId)}
+                      guildName={guildName}
+                      supportUnreadCount={supportUnread.total}
+                    >
                       <section className={guildStyles.inbox}>
                         <h3>Disband guild</h3>
                         <p>Permanently remove the guild and its members.</p>

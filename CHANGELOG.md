@@ -8,6 +8,8 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
+- Added persistent unread admin-message badges to My Guild and unread leader-reply badges to administration, Guild oversight, and individual guilds. Counts clear only when the relevant support messages are viewed.
+
 - Expanded administration into grouped tools with labeled request forms, filterable/paginated results, and contextual player, guild, base, and vehicle actions. Added guild oversight, administrator member/rank/disband controls, read-only application conversation inspection, and private administrator–guild leader support chats in My Guild Settings.
 
 - Added a Guilds page in Community where members can browse guild recruitment listings and joining details. Leader settings stay under My Guild.

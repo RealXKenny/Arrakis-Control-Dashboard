@@ -1,6 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET, MESSAGES } from '../../src/modules/admin/server/guilds';
-import { GET as LEADER_GET, POST as LEADER_POST, ADMIN_GET, ADMIN_POST } from '../../src/modules/guilds/server/support';
+import {
+  GET as LEADER_GET,
+  POST as LEADER_POST,
+  ADMIN_GET,
+  ADMIN_POST,
+  STATUS,
+  READ,
+  ADMIN_READ,
+  ADMIN_STATUS,
+} from '../../src/modules/guilds/server/support';
 
 const { session, linkedPlayer, request, redis } = vi.hoisted(() => ({
   session: vi.fn(),
@@ -61,6 +70,8 @@ beforeEach(() => {
     if (script.includes('ZRANGE'))
       return Array.from({ length: 21 }, () => JSON.stringify({ ...application, privateExtra: 'stripped' }));
     if (script.includes('RPUSH')) return args[2];
+    if (script.includes("redis.call('ZCOUNT'")) return [2, Array.from({ length: _keys.length - 1 }, () => 2)];
+    if (script.includes('return support_unread')) return 1;
     return [JSON.stringify({ ...message, privateExtra: 'stripped' }), 'bad JSON'];
   });
 });
@@ -127,8 +138,8 @@ describe('guild leader administrator support chat', () => {
     });
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('LTRIM', KEYS[1], -100, -1)"),
-      ['arrakis:guild-support:2'],
-      [generation, admin().user.id, expect.any(String)],
+      ['arrakis:guild-support:2', 'arrakis:guild-support-unread'],
+      [generation, admin().user.id, expect.any(String), '2', expect.any(Number)],
     );
     expect(redis.eval.mock.calls[0][0]).toContain("redis.call('EXPIRE', KEYS[1], 7776000)");
     expect(request).not.toHaveBeenCalled();
@@ -159,6 +170,55 @@ describe('guild leader administrator support chat', () => {
       await expect(handler(req({ text: 'Hello', clientMessageId: 'bad' }), {})).rejects.toMatchObject({
         statusCode: 400,
       });
+    }
+    expect(redis.eval).not.toHaveBeenCalled();
+  });
+});
+
+describe('support unread receipts', () => {
+  it('returns leader counts only after fresh leadership verification', async () => {
+    session.mockResolvedValue({ ...admin(), user: { id: 'leader' } });
+    expect(JSON.parse((await STATUS(req(), {})).body).data.unreadCount).toBe(1);
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '1' }] });
+    await expect(STATUS(req(), {})).rejects.toMatchObject({ statusCode: 403 });
+  });
+  it('keeps administrator and leader receipts separate and acknowledges exact messages', async () => {
+    const body = { messages: [{ id: generation, senderId: 'leader' }] };
+    expect(JSON.parse((await ADMIN_READ(req(body), {})).body).data.unreadCount).toBe(1);
+    expect(redis.eval).toHaveBeenLastCalledWith(
+      expect.stringContaining('message.role == role and seen[key]'),
+      ['arrakis:guild-support:2', 'arrakis:guild-support-unread'],
+      ['admin', JSON.stringify(['leader:' + generation]), '2'],
+    );
+    expect(redis.eval.mock.calls.at(-1)[0]).toContain("if ARGV[1] == 'admin' then redis.call('ZREM'");
+    session.mockResolvedValue({ ...admin(), user: { id: 'leader' } });
+    await READ(req({ messages: [{ id: generation, senderId: 'admin' }] }), {});
+    expect(redis.eval.mock.calls.at(-1)[2][0]).toBe('leader');
+  });
+  it('bounds status batches and totals only non-expired indexed replies for administrators', async () => {
+    const response = await ADMIN_STATUS(req(undefined, { guildIds: '2,3' }), {});
+    expect(JSON.parse(response.body).data).toEqual({ total: 2, guilds: { '2': 2, '3': 2 } });
+    expect(redis.eval).toHaveBeenLastCalledWith(
+      expect.stringContaining("'ZCOUNT', KEYS[1]"),
+      ['arrakis:guild-support-unread', 'arrakis:guild-support:2', 'arrakis:guild-support:3'],
+      [expect.any(Number), '2', '3'],
+    );
+    const calls = redis.eval.mock.calls.length;
+    for (const guildIds of ['2,2', '../bad', Array.from({ length: 21 }, (_, i) => String(i)).join(',')])
+      await expect(ADMIN_STATUS(req(undefined, { guildIds }), {})).rejects.toMatchObject({ statusCode: 400 });
+    expect(redis.eval).toHaveBeenCalledTimes(calls);
+    session.mockResolvedValue({ ...admin(), user: { id: 'member' } });
+    await expect(ADMIN_STATUS(req(), {})).rejects.toMatchObject({ statusCode: 403 });
+    await expect(ADMIN_READ(req({ messages: [] }), {})).rejects.toMatchObject({ statusCode: 403 });
+  });
+  it('rejects foreign origins and oversized read receipts before storage access', async () => {
+    for (const handler of [READ, ADMIN_READ]) {
+      await expect(
+        handler({ ...req({ messages: [] }), headers: { origin: 'https://other.test', host: 'dashboard.test' } }, {}),
+      ).rejects.toMatchObject({ statusCode: 403 });
+      await expect(
+        handler(req({ messages: Array.from({ length: 101 }, () => ({ id: generation, senderId: 'leader' })) }), {}),
+      ).rejects.toMatchObject({ statusCode: 400 });
     }
     expect(redis.eval).not.toHaveBeenCalled();
   });

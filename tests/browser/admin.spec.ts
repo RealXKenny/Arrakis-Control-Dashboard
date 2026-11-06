@@ -1,5 +1,13 @@
 import { expect, test } from '../helpers/browser-test';
 import operations from '../../src/modules/admin/catalog.json';
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/admin/guild-support-status*', (route) =>
+    route.fulfill({ json: { ok: true, data: { total: 0, guilds: {} } } }),
+  );
+  await page.route('**/api/admin/guilds/*/messages/read', (route) =>
+    route.fulfill({ json: { ok: true, data: { unreadCount: 0 } } }),
+  );
+});
 
 test('ordinary members cannot load administration or execute privileged operations', async ({ browser }) => {
   const context = await browser.newContext();
@@ -216,4 +224,103 @@ test('administrator can browse operations, read data, and review changes on desk
   await page.getByRole('button', { name: /POST Create a key/ }).click();
   await expect(page.getByRole('status').filter({ hasText: /browser session/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Execute operation', exact: true })).toHaveCount(0);
+});
+
+test('admin reply badges persist and clear only when leader support replies are viewed', async ({ page, context }) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  await page.route('**/api/admin/execute', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        data: {
+          rows:
+            route.request().postDataJSON().operation === 'get-guilds'
+              ? [{ guild_id: '2', guild_name: 'Crimson Skies' }]
+              : [],
+        },
+      },
+    }),
+  );
+  await page.route('**/api/admin/guilds/2/applications?*', (route) =>
+    route.fulfill({ json: { ok: true, data: { rows: [], hasMore: false, listing: null } } }),
+  );
+  const messages = [
+    {
+      id: 'a62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      senderId: 'leader',
+      senderName: 'Guild Leader',
+      role: 'applicant',
+      text: 'Can you help us?',
+      sentAt: Date.now(),
+    },
+    {
+      id: 'b62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      senderId: 'leader',
+      senderName: 'Guild Leader',
+      role: 'applicant',
+      text: 'We have a question.',
+      sentAt: Date.now(),
+    },
+    {
+      id: 'c62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      senderId: 'admin',
+      senderName: 'Administrator',
+      role: 'reviewer',
+      text: 'My earlier answer.',
+      sentAt: Date.now(),
+    },
+  ];
+  const seen = new Set<string>();
+  let receipts = 0;
+  const unread = () => messages.filter((message) => message.role === 'applicant' && !seen.has(message.id)).length;
+  await page.route('**/api/admin/guild-support-status*', (route) => {
+    const ids = new URL(route.request().url()).searchParams.get('guildIds')?.split(',') ?? [];
+    return route.fulfill({
+      json: {
+        ok: true,
+        data: { total: unread(), guilds: Object.fromEntries(ids.map((id) => [id, id === '2' ? unread() : 0])) },
+      },
+    });
+  });
+  await page.route('**/api/admin/guilds/2/messages', (route) =>
+    route.fulfill({ json: { ok: true, data: { messages } } }),
+  );
+  await page.route('**/api/admin/guilds/2/messages/read', (route) => {
+    const batch = route.request().postDataJSON().messages;
+    expect(batch.some((message: { senderId: string }) => message.senderId === 'admin')).toBe(false);
+    batch.forEach((message: { id: string }) => seen.add(message.id));
+    receipts++;
+    if (receipts === 1)
+      messages.push({
+        ...messages[0],
+        id: 'd62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+        text: 'Another reply during acknowledgement.',
+      });
+    return route.fulfill({ json: { ok: true, data: { unreadCount: unread() } } });
+  });
+  await page.goto('/admin');
+  const tab = page.getByRole('button', { name: 'Guild oversight', exact: true });
+  const nav = page.getByRole('link', { name: 'Administration', exact: true });
+  await expect(tab.locator('[data-unread-count="2"]')).toBeVisible();
+  await expect(nav.locator('[data-unread-count="2"]')).toBeVisible();
+  await page.reload();
+  await expect(tab.locator('[data-unread-count="2"]')).toBeVisible();
+  await tab.click();
+  const card = page.getByRole('button', { name: /Crimson Skies/ });
+  await expect(card.locator('[data-unread-count="2"]')).toBeVisible();
+  await card.click();
+  expect(receipts).toBe(0);
+  await page.getByRole('button', { name: /^Message guild leader/ }).click();
+  await expect(tab.locator('[data-unread-count="1"]')).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Private chat with guild leader', exact: true }).getByRole('log'),
+  ).toContainText('Another reply during acknowledgement.');
+  await expect.poll(unread).toBe(0);
+  await expect(tab.locator('[data-unread-count]')).toHaveCount(0);
+  await page.reload();
+  await expect(tab).toBeVisible();
+  await expect(tab.locator('[data-unread-count]')).toHaveCount(0);
 });

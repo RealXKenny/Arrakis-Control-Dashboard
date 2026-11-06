@@ -1,3 +1,4 @@
+import UnreadBadge from '../../../components/UnreadBadge';
 import { useEffect, useState, type ReactNode } from 'react';
 import { guildRequirementSchema, type GuildRequirement, type GuildRequirementListing } from '../requirements';
 import css from '../styles/requirements.module.css';
@@ -18,13 +19,16 @@ export default function GuildRequirements({
   guildId,
   guildName = '',
   settings = false,
+  supportUnreadCount = 0,
   children,
 }: {
   guildId?: string;
   guildName?: string;
   settings?: boolean;
+  supportUnreadCount?: number;
   children?: ReactNode;
 }) {
+  const [supportOpen, setSupportOpen] = useState(false);
   const [entries, setEntries] = useState<GuildRequirementListing[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -191,7 +195,18 @@ export default function GuildRequirements({
       )}
       {!loading && ready && settings && guildId && <GuildApplicationInbox guildId={guildId} />}
       {!loading && ready && settings && guildId && (
+        <button
+          aria-label="Chat with administrators"
+          aria-expanded={supportOpen}
+          onClick={() => setSupportOpen(!supportOpen)}
+        >
+          Chat with administrators <UnreadBadge count={supportUnreadCount} />
+        </button>
+      )}
+      {!loading && ready && settings && guildId && supportOpen && (
         <GuildApplicationChat
+          guildId={guildId}
+          markRead
           conversationUrl={`/api/guilds/${encodeURIComponent(guildId)}/support`}
           title="Chat with administrators"
           support

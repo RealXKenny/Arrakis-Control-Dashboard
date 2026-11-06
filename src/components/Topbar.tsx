@@ -1,11 +1,12 @@
 'use client';
 
+import UnreadBadge from './UnreadBadge';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { MouseEvent, ReactNode } from 'react';
 
-export type TopbarItem = { label: string; href: string; group?: string; active?: boolean };
+export type TopbarItem = { label: string; href: string; group?: string; active?: boolean; unreadCount?: number };
 export type TopbarProps = {
   brand?: string;
   subtitle?: string;
@@ -108,9 +109,12 @@ export default function Topbar({
                             shallow={item.href.startsWith('/portal?view=')}
                             onClick={(event) => navigate(event, item.href)}
                             aria-current={active ? 'page' : undefined}
+                            aria-label={item.unreadCount ? item.label : undefined}
+                            aria-description={item.unreadCount ? `${item.unreadCount} unread messages` : undefined}
                             className={`inline-flex min-h-9 items-center rounded-full border px-3 py-1.5 text-[11px] font-medium whitespace-nowrap no-underline transition-colors ${active ? 'border-indigo-500/20 bg-indigo-500/10 text-indigo-300' : 'border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}`}
                           >
                             {item.label}
+                            <UnreadBadge count={item.unreadCount ?? 0} />
                           </Link>
                         );
                       })}

@@ -1,3 +1,5 @@
+import useSupportUnread from '../../guilds/hooks/useSupportUnread';
+import UnreadBadge from '../../../components/UnreadBadge';
 import { useEffect, useRef, useState } from 'react';
 import type { AdminOperation } from '../types';
 import { resultRows } from '../operation-fields';
@@ -109,6 +111,15 @@ export default function GuildOversight({
     });
     return () => controller.abort();
   }, [selected, applicationPage, reload]);
+  const supportUnread = useSupportUnread({
+    admin: true,
+    guildIds: [
+      ...new Set([
+        ...(selected ? [selected.id] : []),
+        ...guilds.map((guild) => String(guild.guild_id ?? guild.guildId ?? guild.id ?? '')).filter(Boolean),
+      ]),
+    ],
+  });
   const membersOperation = operations.find((entry) => entry.id === 'get-guilds-guildid-members');
   return (
     <section className={css.oversight} aria-label="Guild oversight">
@@ -157,7 +168,9 @@ export default function GuildOversight({
                 setChatOpen(false);
               }}
             >
-              <strong>{name}</strong>
+              <strong>
+                {name} <UnreadBadge count={supportUnread.guilds[id] ?? 0} />
+              </strong>
               <span>Guild {id}</span>
             </button>
           );
@@ -186,11 +199,15 @@ export default function GuildOversight({
               ) : null;
             })}
             <button onClick={() => setChatOpen(!chatOpen)} aria-expanded={chatOpen}>
-              {chatOpen ? 'Close leader chat' : 'Message guild leader'}
+              {chatOpen ? 'Close leader chat' : 'Message guild leader'}{' '}
+              <UnreadBadge count={supportUnread.guilds[selected.id] ?? 0} />
             </button>
           </div>
           {chatOpen && (
             <GuildApplicationChat
+              guildId={selected.id}
+              markRead
+              readRole="applicant"
               conversationUrl={`/api/admin/guilds/${encodeURIComponent(selected.id)}/messages`}
               title="Private chat with guild leader"
               support
