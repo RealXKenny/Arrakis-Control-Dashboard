@@ -12,6 +12,8 @@ import BackupsScreen from '../screens/BackupsScreen';
 import MarketScreen from '../screens/MarketScreen';
 import ServerScreen from '../screens/ServerScreen';
 import LogsScreen from '../screens/LogsScreen';
+import CareScreen from '../screens/CareScreen';
+import AdminToolsScreen from '../screens/AdminToolsScreen';
 import { ADMIN_SECTIONS, DEDICATED_KINDS, adminHref, findAdminTab, tabForOperation } from '../navigation';
 import DashboardShell from '../../../components/DashboardShell';
 import type { AdminOperation } from '../types';
@@ -332,6 +334,8 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
       {!loading && view === 'market' && <MarketScreen operations={operations} />}
       {!loading && view === 'server' && <ServerScreen operations={operations} />}
       {!loading && view === 'logs' && <LogsScreen operations={operations} />}
+      {!loading && view === 'care' && <CareScreen operations={operations} />}
+      {!loading && view === 'admintools' && <AdminToolsScreen operations={operations} />}
       {!loading && dedicated && (
         <p className={css.advancedLink}>
           <Link

@@ -1,4 +1,7 @@
 import type { ReactNode } from 'react';
+import { findOperation } from '../client';
+import useAdminQuery from '../hooks/useAdminQuery';
+import type { AdminOperation } from '../types';
 import { fieldLabel } from '../operation-fields';
 import { columnsFor, display, facts, resultRows, type Row } from '../records';
 import css from '../styles/admin.module.css';
@@ -91,5 +94,36 @@ export function Table({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** A titled panel that loads one read operation and renders it as facts or a table. */
+export function ReadPanel({
+  operations,
+  id,
+  title,
+  kind = 'facts',
+  empty,
+  query,
+}: {
+  operations: AdminOperation[];
+  id: string;
+  title: string;
+  kind?: 'facts' | 'table';
+  empty?: string;
+  query?: Record<string, string | number | boolean>;
+}) {
+  const result = useAdminQuery(findOperation(operations, id), { query });
+  return (
+    <section className={css.panel} aria-label={title}>
+      <h3>{title}</h3>
+      <QueryState loading={result.loading} error={result.error} onRetry={result.refresh}>
+        {kind === 'table' ? (
+          <Table value={result.data} caption={title} empty={empty ?? 'Nothing was reported.'} />
+        ) : (
+          <Facts value={result.data} />
+        )}
+      </QueryState>
+    </section>
   );
 }

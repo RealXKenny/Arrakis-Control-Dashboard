@@ -780,3 +780,81 @@ test('logs screen selects a service, reads bounded output and streams with stop 
   await expect(page.getByLabel('Live log output')).toContainText('live line 2');
   expect(streams).toBe(2);
 });
+
+test('care package screen keeps scans, enablement and undocumented grants clearly separated', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-care-package-config': { enabled: false },
+      'get-care-package-eligible': { rows: [{ player_id: '9007199254740993123', name: 'Newcomer', eligible: true }] },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=care');
+  await page.getByRole('button', { name: 'Run scan…' }).click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Run scan', exact: true })).toBeDisabled();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation === 'post-care-package-run')).toBe(false);
+  await page.getByRole('button', { name: 'Disable…' }).click();
+  await page.getByRole('dialog').getByRole('textbox').fill('DISABLE CARE PACKAGE');
+  await page.getByRole('dialog').getByRole('button', { name: 'Disable', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Care packages disabled.' })).toBeVisible();
+  expect(calls.find((call) => call.operation === 'post-care-package-disable').body.confirmation).toBe(
+    'DISABLE CARE PACKAGE',
+  );
+  await expect(page.getByRole('link', { name: 'grant to one player' })).toBeVisible();
+  await page.getByRole('button', { name: 'Eligible players', exact: true }).click();
+  await expect(page.getByRole('cell', { name: 'Newcomer' })).toBeVisible();
+  await page.getByLabel(/Only players who are eligible now/).check();
+  await expect(page).toHaveURL(/only=1/);
+  await expect
+    .poll(() =>
+      calls.some((call) => call.operation === 'get-care-package-eligible' && call.query.onlyEligible === true),
+    )
+    .toBe(true);
+});
+
+test('admin tools screen validates broadcasts, searches catalogs and confirms history clearing', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-admin-items-catalog': { rows: [{ template_id: '7', name: 'Spice Melange' }] },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=tools');
+  await page.getByRole('button', { name: 'Review…' }).first().click();
+  await expect(page.getByRole('status').filter({ hasText: 'Enter a title, a message' })).toBeVisible();
+  await page.getByLabel('Title', { exact: true }).fill('Maintenance');
+  await page.getByLabel('Message', { exact: true }).first().fill('Restart soon');
+  await page.getByRole('button', { name: 'Review…' }).first().click();
+  await expect(page.getByRole('dialog')).toContainText('cannot recall');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation === 'post-admin-broadcast')).toBe(false);
+  await page.getByRole('button', { name: 'Catalogs', exact: true }).click();
+  await expect(page.getByRole('cell', { name: 'Spice Melange' })).toBeVisible();
+  await page.getByRole('button', { name: 'Administrator history', exact: true }).click();
+  await expect(page.getByText('not a full audit')).toBeVisible();
+  await page.getByRole('button', { name: 'Clear tool history…' }).click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Clear history', exact: true })).toBeDisabled();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation === 'post-admin-history-clear')).toBe(false);
+});

@@ -16,7 +16,9 @@ export type AdminTabKind =
   | 'backups'
   | 'market'
   | 'server'
-  | 'logs';
+  | 'logs'
+  | 'care'
+  | 'admintools';
 export const DEDICATED_KINDS: AdminTabKind[] = [
   'players',
   'vehicles',
@@ -52,7 +54,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'tools',
         label: 'Admin tools',
-        kind: 'operations',
+        kind: 'admintools',
         groups: ['Admin Tools'],
         summary: 'Cross-cutting administrator reads and actions.',
       },
@@ -86,7 +88,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'care',
         label: 'Care packages',
-        kind: 'operations',
+        kind: 'care',
         groups: ['Care Package System'],
         summary: 'Configuration, eligible players, grants and retries.',
       },
