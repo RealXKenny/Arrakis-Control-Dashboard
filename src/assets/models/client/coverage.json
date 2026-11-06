@@ -57,12 +57,12 @@
   ],
   "meshes": 1231,
   "triangles": 3282662,
-  "textures": 91,
+  "textures": 100,
   "meshPacks": [
     {
       "file": "client/client-meshes-0.bin.gz",
-      "bytes": 8331612,
-      "compressedBytes": 5960311
+      "bytes": 8331512,
+      "compressedBytes": 5960128
     },
     {
       "file": "client/client-meshes-1.bin.gz",
@@ -71,23 +71,23 @@
     },
     {
       "file": "client/client-meshes-2.bin.gz",
-      "bytes": 8361090,
-      "compressedBytes": 5868511
+      "bytes": 8355902,
+      "compressedBytes": 5866600
     },
     {
       "file": "client/client-meshes-3.bin.gz",
-      "bytes": 8354820,
-      "compressedBytes": 5593594
+      "bytes": 8354692,
+      "compressedBytes": 5594347
     },
     {
       "file": "client/client-meshes-4.bin.gz",
-      "bytes": 8363178,
-      "compressedBytes": 5886056
+      "bytes": 8282234,
+      "compressedBytes": 5857045
     },
     {
       "file": "client/client-meshes-5.bin.gz",
-      "bytes": 8377098,
-      "compressedBytes": 5830287
+      "bytes": 8374742,
+      "compressedBytes": 5829478
     },
     {
       "file": "client/client-meshes-6.bin.gz",
@@ -98,9 +98,37 @@
   "texturePacks": [
     {
       "file": "client/client-textures-0.bin.gz",
-      "bytes": 3976600,
-      "compressedBytes": 3864201
+      "bytes": 8190186,
+      "compressedBytes": 8159874
+    },
+    {
+      "file": "client/client-textures-1.bin.gz",
+      "bytes": 7378596,
+      "compressedBytes": 7355284
+    },
+    {
+      "file": "client/client-textures-2.bin.gz",
+      "bytes": 7458424,
+      "compressedBytes": 7459697
+    },
+    {
+      "file": "client/client-textures-3.bin.gz",
+      "bytes": 7646827,
+      "compressedBytes": 7647122
+    },
+    {
+      "file": "client/client-textures-4.bin.gz",
+      "bytes": 6460428,
+      "compressedBytes": 6416687
     }
   ],
-  "failures": []
+  "failures": [],
+  "gamePatch": {
+    "replaced": 163,
+    "texturedFromGame": 75,
+    "keptNoGlb": 441,
+    "keptMismatch": 3,
+    "keptTexture": 624,
+    "failures": []
+  }
 }
