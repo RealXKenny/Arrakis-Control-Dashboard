@@ -7,7 +7,9 @@ import ConsoleOnly from './ConsoleOnly';
 import PlayersScreen from '../screens/PlayersScreen';
 import VehiclesScreen from '../screens/VehiclesScreen';
 import BasesScreen from '../screens/BasesScreen';
-import { ADMIN_SECTIONS, adminHref, findAdminTab, tabForOperation } from '../navigation';
+import MapsScreen from '../screens/MapsScreen';
+import BackupsScreen from '../screens/BackupsScreen';
+import { ADMIN_SECTIONS, DEDICATED_KINDS, adminHref, findAdminTab, tabForOperation } from '../navigation';
 import DashboardShell from '../../../components/DashboardShell';
 import type { AdminOperation } from '../types';
 import AdminOverviewPanel from './AdminOverviewPanel';
@@ -32,7 +34,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
   const supportUnread = useSupportUnread({ admin: true });
   const router = useRouter();
   const { section, tab } = findAdminTab(router.query.tab);
-  const dedicated = tab.kind === 'players' || tab.kind === 'vehicles' || tab.kind === 'bases';
+  const dedicated = DEDICATED_KINDS.includes(tab.kind);
   const advanced = router.query.advanced === '1';
   const view = dedicated && advanced ? 'operations' : tab.kind;
   const overview = useAdminOverview(view === 'overview' || view === 'setup');
@@ -129,12 +131,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
   const urlOperation = typeof router.query.operation === 'string' ? router.query.operation : '';
   useEffect(() => {
     // Browser back/forward and shared links drive the selected tool; the URL is the source of truth.
-    if (
-      !router.isReady ||
-      !operations.length ||
-      !['operations', 'console', 'players', 'vehicles', 'bases'].includes(tab.kind)
-    )
-      return;
+    if (!router.isReady || !operations.length || !(dedicated || ['operations', 'console'].includes(tab.kind))) return;
     const inTab = (entry: AdminOperation) => tab.groups.includes(entry.group);
     const wanted = operations.find((entry) => entry.id === urlOperation && inTab(entry));
     if (wanted) {
@@ -327,6 +324,8 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
       {!loading && view === 'players' && <PlayersScreen operations={operations} />}
       {!loading && view === 'vehicles' && <VehiclesScreen operations={operations} />}
       {!loading && view === 'bases' && <BasesScreen operations={operations} />}
+      {!loading && view === 'maps' && <MapsScreen operations={operations} />}
+      {!loading && view === 'backups' && <BackupsScreen operations={operations} />}
       {!loading && dedicated && (
         <p className={css.advancedLink}>
           <Link

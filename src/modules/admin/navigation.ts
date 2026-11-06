@@ -3,7 +3,18 @@ import type { AdminOperation } from './types';
 /** Browser-safe map from the administration catalog to grouped sections and tabs. */
 
 export type AdminTabKind =
-  'overview' | 'guilds' | 'setup' | 'reference' | 'console' | 'operations' | 'players' | 'vehicles' | 'bases';
+  | 'overview'
+  | 'guilds'
+  | 'setup'
+  | 'reference'
+  | 'console'
+  | 'operations'
+  | 'players'
+  | 'vehicles'
+  | 'bases'
+  | 'maps'
+  | 'backups';
+export const DEDICATED_KINDS: AdminTabKind[] = ['players', 'vehicles', 'bases', 'maps', 'backups'];
 export type AdminTab = {
   id: string;
   label: string;
@@ -103,7 +114,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'maps',
         label: 'Maps & worlds',
-        kind: 'operations',
+        kind: 'maps',
         groups: ['Maps & World'],
         summary: 'Maps, partitions, configuration and terminals.',
       },
@@ -137,7 +148,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'backups',
         label: 'Backups',
-        kind: 'operations',
+        kind: 'backups',
         groups: ['Backups'],
         summary: 'Game and system backups with restore previews.',
       },

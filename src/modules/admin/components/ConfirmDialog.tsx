@@ -9,6 +9,7 @@ export default function ConfirmDialog({
   phrase,
   confirmLabel,
   danger = true,
+  disabled = false,
   children,
   onCancel,
   onConfirm,
@@ -19,6 +20,7 @@ export default function ConfirmDialog({
   phrase?: string;
   confirmLabel: string;
   danger?: boolean;
+  disabled?: boolean;
   children?: ReactNode;
   onCancel: () => void;
   onConfirm: () => Promise<unknown>;
@@ -82,7 +84,7 @@ export default function ConfirmDialog({
         <button
           type="button"
           className={danger ? css.danger : undefined}
-          disabled={busy || (phrase !== undefined && typed !== phrase)}
+          disabled={busy || disabled || (phrase !== undefined && typed !== phrase)}
           onClick={() => void submit()}
         >
           {busy ? 'Working…' : confirmLabel}

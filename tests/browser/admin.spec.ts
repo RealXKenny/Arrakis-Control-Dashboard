@@ -580,3 +580,76 @@ test('bases screen shows maintenance, queued work and cancel-safe removal', asyn
   await expect(page.getByText('queued, not completed')).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Queued Base' })).toBeVisible();
 });
+
+test('backups screen previews a system restore before apply and never reuses the passphrase', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-backups': { rows: [{ backup: 'world-1.tar', size: 10 }] },
+      'get-backups-system': { rows: [{ name: 'system-1.arc', created: 'today' }] },
+      'post-backups-system-name-restore': { willReplace: 'users', files: 4 },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=backups');
+  await page.getByRole('button', { name: 'Restore…' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Replaces the current game data');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation === 'post-backups-restore')).toBe(false);
+  await page.getByRole('button', { name: 'System backups', exact: true }).click();
+  await expect(page).toHaveURL(/view=system/);
+  await expect(page.getByRole('button', { name: 'Apply restore…' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Preview restore…' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: 'Show preview', exact: true })).toBeDisabled();
+  await dialog.getByLabel('Archive passphrase').fill('correct horse battery');
+  await dialog.getByRole('button', { name: 'Show preview', exact: true }).click();
+  const preview = page.getByRole('region', { name: 'Restore preview' });
+  await expect(preview).toContainText('nothing has changed');
+  expect(calls.find((call) => call.operation === 'post-backups-system-name-restore').body.apply).toBe(false);
+  await preview.getByRole('combobox', { name: /Identity data/ }).selectOption('adopt-backup');
+  await preview.getByRole('button', { name: 'Apply restore…' }).click();
+  await expect(page.getByRole('dialog')).toContainText('replaced by the backup');
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Apply restore', exact: true })).toBeDisabled();
+  await page.getByRole('dialog').getByRole('textbox').fill('APPLY RESTORE');
+  await page.getByRole('dialog').getByRole('button', { name: 'Apply restore', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Restore requested.' })).toBeVisible();
+  const applied = calls.filter((call) => call.operation === 'post-backups-system-name-restore').at(-1);
+  expect(applied.body).toMatchObject({ apply: true, identityMode: 'adopt-backup', auditLogMode: 'keep-current' });
+  await expect(page.getByRole('region', { name: 'Restore preview' })).toHaveCount(0);
+  await expect(page.locator('input[type="password"]')).toHaveCount(0);
+});
+
+test('maps screen separates read-only status from confirmed controls', async ({ page, context }) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = { 'get-maps': { rows: [{ map: 'Survival_1', state: 'running' }] } };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=maps');
+  await expect(page.getByRole('cell', { name: 'Survival_1' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Restart a map' })).toBeVisible();
+  await page.getByRole('button', { name: 'Memory & scaling', exact: true }).click();
+  await page.getByRole('button', { name: 'Turn off…' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Memory balancer for all maps');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation === 'post-maps-memory-balancer')).toBe(false);
+  await page.getByRole('link', { name: 'open the autoscaler tool' }).click();
+  await expect(page).toHaveURL(/operation=post-maps-autoscaler/);
+  await expect(page.getByRole('region', { name: 'Selected operation' })).toContainText('AUTOSCALER CHANGE');
+});
