@@ -1,7 +1,12 @@
 import '../../../lib/assert-server';
 import { cookies } from '../../../infrastructure/cookies';
 import { getSession } from '../../../lib/security/session-store';
-import { NextResponse } from '../../../infrastructure/pages-api';
+import { NextResponse, isSameOriginRequest } from '../../../infrastructure/pages-api';
+import { AppError } from '../../../lib/errors';
+
+export function requireGuildMutationOrigin(req) {
+  if (!isSameOriginRequest(req)) throw new AppError('Invalid request origin.', 403, 'INVALID_ORIGIN', true);
+}
 
 export async function getGuildSession(req, res) {
   const sessionId = cookies(req, res).get('dashboard_session')?.value;

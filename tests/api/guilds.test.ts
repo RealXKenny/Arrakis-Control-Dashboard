@@ -24,7 +24,7 @@ const req = (url: string, query = {}) => ({
   method: 'GET',
   url,
   query,
-  headers: { cookie: 'dashboard_session=test-session' },
+  headers: { cookie: 'dashboard_session=test-session', origin: 'http://localhost', host: 'localhost' },
 });
 
 beforeEach(() => {
@@ -168,6 +168,16 @@ describe('guild recruitment settings', () => {
 });
 
 describe('guild API handlers', () => {
+  it('rejects cross-site changes to guild settings and logos', async () => {
+    const invalid = {
+      ...req('/api/guilds/2/requirements', { guildId: '2' }),
+      headers: { cookie: 'dashboard_session=test-session', origin: 'https://other.example', host: 'localhost' },
+    };
+    await expect(saveRequirements(invalid, {})).rejects.toMatchObject({ statusCode: 403, code: 'INVALID_ORIGIN' });
+    await expect(saveLogo(invalid, {})).rejects.toMatchObject({ statusCode: 403, code: 'INVALID_ORIGIN' });
+    expect(redis.eval).not.toHaveBeenCalled();
+    expect(redis.set).not.toHaveBeenCalled();
+  });
   it('requires a session and wraps guild results in the dashboard envelope', async () => {
     request.mockResolvedValue({ capabilities: { guilds: true }, totalCount: 1, rows: [{ guild_id: '2' }] });
     const response = await listGuilds(req('/api/guilds', { page: '0', pageSize: '25' }), {});
@@ -212,5 +222,20 @@ describe('guild API handlers', () => {
     redis.get.mockResolvedValue('data:image/png;base64,stored');
     const response = await getLogo(req('/api/guilds/2/logo'), {});
     expect(JSON.parse(response.body).data.logo).toBe('data:image/png;base64,stored');
+  });
+
+  it('streams a bounded PNG for listing images without embedding it in the catalog', async () => {
+    const bytes = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0]);
+    redis.get.mockResolvedValue(`data:image/png;base64,${bytes.toString('base64')}`);
+    const response = await getLogo(req('/api/guilds/2/logo?image=1', { guildId: '2', image: '1' }), {});
+    expect(response.headers['Content-Type']).toBe('image/png');
+    expect(response.stream.maximumBytes).toBe(512 * 1024);
+    expect((await response.stream.body.getReader().read()).value).toEqual(bytes);
+    redis.get.mockResolvedValue(null);
+    expect((await getLogo(req('/api/guilds/2/logo?image=1', { guildId: '2', image: '1' }), {})).status).toBe(204);
+    redis.get.mockResolvedValue('data:image/png;base64,bm90LXBuZw==');
+    await expect(getLogo(req('/api/guilds/2/logo?image=1', { guildId: '2', image: '1' }), {})).rejects.toMatchObject({
+      statusCode: 404,
+    });
   });
 });

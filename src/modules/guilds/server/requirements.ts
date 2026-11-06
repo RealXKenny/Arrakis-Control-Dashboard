@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { AppError } from '../../../lib/errors';
 import { getRedisClient } from '../../../lib/redis/client';
 import { NextResponse } from '../../../infrastructure/pages-api';
-import { getGuildSession, queryValue } from './common';
+import { getGuildSession, queryValue, requireGuildMutationOrigin } from './common';
 import { requireGuildLeader } from './leader';
 import { guildRequirementSchema } from '../requirements';
 
@@ -32,6 +32,7 @@ export async function GET(req, res) {
 }
 
 export async function POST(req, res) {
+  requireGuildMutationOrigin(req);
   const id = guildId(req);
   await requireGuildLeader(req, res, id);
   const parsed = guildRequirementSchema.safeParse(req.body);

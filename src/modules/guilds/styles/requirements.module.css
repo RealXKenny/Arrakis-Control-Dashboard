@@ -22,7 +22,8 @@
   gap: 8px;
 }
 .form input:not([type='checkbox']),
-.form textarea {
+.form textarea,
+.form select {
   width: 100%;
   padding: 12px;
   color: var(--theme-text);
@@ -30,6 +31,51 @@
   border: 1px solid var(--theme-border);
   border-radius: 8px;
   font: inherit;
+}
+.form select {
+  background: var(--theme-background);
+}
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.identity h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.logo,
+.logoFallback {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  object-fit: contain;
+  border: 1px solid var(--theme-border);
+}
+.logoFallback {
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+.application,
+.inbox {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--theme-border);
+}
+.answers dd {
+  margin: 4px 0 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.answers dt {
+  color: var(--theme-muted);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .form textarea {
   resize: vertical;

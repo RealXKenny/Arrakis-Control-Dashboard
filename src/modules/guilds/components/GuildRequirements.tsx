@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { guildRequirementSchema, type GuildRequirement, type GuildRequirementListing } from '../requirements';
 import css from '../styles/requirements.module.css';
+import GuildListingCard from './GuildListingCard';
+import GuildApplicationInbox from './GuildApplicationInbox';
 
 async function read(response: Response) {
   const body = await response.json();
@@ -147,6 +149,7 @@ export default function GuildRequirements({
           </button>
         </form>
       )}
+      {!loading && ready && settings && guildId && <GuildApplicationInbox guildId={guildId} />}
       {!loading && !settings && !error && (
         <>
           {entries.length === 0 && (
@@ -154,17 +157,7 @@ export default function GuildRequirements({
           )}
           <div className={css.cards}>
             {entries.map((entry) => (
-              <article key={entry.guildId} className={css.card}>
-                <h3>{entry.guildName}</h3>
-                <h4>Joining requirements</h4>
-                <p>{entry.requirements}</p>
-                {entry.contact && (
-                  <>
-                    <h4>How to join</h4>
-                    <p>{entry.contact}</p>
-                  </>
-                )}
-              </article>
+              <GuildListingCard key={entry.guildId} entry={entry} />
             ))}
           </div>
           <nav className={css.paging} aria-label="Guild listing pages">

@@ -48,6 +48,9 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/session', (route) =>
     route.fulfill({ json: { ok: true, cacheScope: 'a'.repeat(64), expiresAt: Date.now() + 43200000 } }),
   );
+  await page.route('**/api/guilds/*/applications?*', (route) =>
+    route.fulfill({ json: { ok: true, data: { rows: [], hasMore: false } } }),
+  );
   await page.route('**/api/changelog', (route) =>
     route.fulfill({
       json: {
@@ -878,6 +881,101 @@ test('blueprint import handles uncertain delivery and success without duplicate 
   await expect(action).toBeDisabled();
   expect(requests).toHaveLength(2);
   expect(requests[1].requestId).toBe(requests[0].requestId);
+});
+
+test('guild logos, applications, and leader decisions work across the community pages', async ({ page }) => {
+  let leader = false;
+  let application: Record<string, unknown> | null = null;
+  let submissions = 0;
+  const listing = {
+    guildId: '2',
+    guildName: 'Crimson Skies',
+    requirements: 'Be friendly',
+    contact: '',
+    published: true,
+  };
+  await page.route('**/api/guilds?*', (route) =>
+    route.fulfill({ json: { ok: true, data: { rows: [{ guild_id: '2', guild_name: 'Crimson Skies' }] } } }),
+  );
+  await page.route('**/api/guilds/2/members', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        canEdit: leader,
+        data: { rows: [{ player_id: 'tester', character_name: 'Desert Navigator', role_id: leader ? '100' : '1' }] },
+      },
+    }),
+  );
+  await page.route('**/api/guilds/2/logo*', (route) =>
+    new URL(route.request().url()).searchParams.has('image')
+      ? route.fulfill({ path: 'src/assets/share/preview-v1.png', contentType: 'image/png' })
+      : route.fulfill({ json: { ok: true, data: { logo: null } } }),
+  );
+  await page.route('**/api/guilds/requirements?*', (route) =>
+    route.fulfill({ json: { ok: true, data: { rows: [listing], hasMore: false } } }),
+  );
+  await page.route('**/api/guilds/2/requirements', (route) => route.fulfill({ json: { ok: true, data: listing } }));
+  await page.route('**/api/guilds/2/application', async (route) => {
+    if (route.request().method() === 'POST') {
+      submissions++;
+      application = {
+        ...route.request().postDataJSON(),
+        id: 'a'.repeat(64),
+        discordId: '123456789',
+        discordName: 'Survivor',
+        characterName: 'Desert Navigator',
+        submittedAt: Date.now(),
+        status: 'pending',
+      };
+    }
+    await route.fulfill({ json: { ok: true, data: application } });
+  });
+  await page.route('**/api/guilds/2/applications*', async (route) => {
+    if (route.request().method() === 'POST') {
+      const { status } = route.request().postDataJSON();
+      application = status === 'remove' ? null : { ...application, status };
+      await route.fulfill({ json: { ok: true, data: application } });
+    } else
+      await route.fulfill({ json: { ok: true, data: { rows: application ? [application] : [], hasMore: false } } });
+  });
+  await page.goto('/portal?view=guild-requirements');
+  const logo = page.getByRole('img', { name: 'Crimson Skies logo', exact: true });
+  await expect(logo).toBeVisible();
+  await expect(logo).toHaveJSProperty('naturalWidth', 1200);
+  await page.getByRole('button', { name: 'Apply to guild', exact: true }).click();
+  const form = page.getByRole('region', { name: 'Application to Crimson Skies', exact: true });
+  await form.getByRole('textbox', { name: 'Time zone', exact: true }).fill('US Eastern');
+  await form.getByRole('textbox', { name: 'Availability', exact: true }).fill('Weekday evenings');
+  await form.getByRole('textbox', { name: 'Experience', exact: true }).fill('Builder and explorer');
+  await form
+    .getByRole('textbox', { name: 'Why would you like to join?', exact: true })
+    .fill('I would like to help build and gather.');
+  await form.getByRole('button', { name: 'Submit application' }).click();
+  await expect(form.getByText('Your application is pending.', { exact: true })).toBeVisible();
+  await expect(form.getByRole('button', { name: 'Submit application' })).toHaveCount(0);
+  expect(submissions).toBe(1);
+  leader = true;
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name: 'My Guild', exact: true })
+    .click();
+  await page
+    .getByRole('navigation', { name: 'Guild tabs' })
+    .getByRole('button', { name: 'Settings', exact: true })
+    .click();
+  const inbox = page.getByRole('region', { name: 'Guild applications', exact: true });
+  await expect(inbox.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
+  await expect(inbox.getByText('I would like to help build and gather.', { exact: true })).toBeVisible();
+  await inbox.getByRole('button', { name: 'Accept application', exact: true }).click();
+  await expect(inbox.getByText('Application accepted.', { exact: true })).toBeVisible();
+  await expect(inbox.getByRole('button', { name: 'Accept application', exact: true })).toBeDisabled();
+  await inbox.getByRole('button', { name: 'Decline application', exact: true }).click();
+  await expect(inbox.getByText('Application declined.', { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/guild-application-inbox-mobile.png', fullPage: true });
+  await inbox.getByRole('button', { name: 'Remove application', exact: true }).click();
+  await expect(inbox.getByText('No applications on this page.', { exact: true })).toBeVisible();
 });
 
 test('guild requirements opens as its own community page', async ({ page }) => {

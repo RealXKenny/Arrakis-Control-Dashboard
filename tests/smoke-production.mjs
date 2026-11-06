@@ -291,6 +291,22 @@ try {
     assert.equal(response.status, 405, route);
     assert.equal((await response.json()).code, 'METHOD_NOT_ALLOWED', route);
   }
+  for (const route of ['guilds/test/application', 'guilds/test/applications']) {
+    const methodDenied = await fetch(`${base}/api/${route}`, { method: 'PUT' });
+    assert.equal(methodDenied.status, 405, route);
+    await methodDenied.text();
+    const unauthorized = await fetch(`${base}/api/${route}`);
+    assert.equal(unauthorized.status, 401, route);
+    assert.equal(unauthorized.headers.get('Cache-Control'), 'private, no-store, max-age=0');
+    await unauthorized.text();
+    const crossOrigin = await fetch(`${base}/api/${route}`, {
+      method: 'POST',
+      headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(crossOrigin.status, 403, route);
+    await crossOrigin.text();
+  }
   for (let attempt = 0; attempt < 20; attempt++) {
     for (const route of ['player', 'map', 'market', 'market/config', 'bases/test/export']) {
       const response = await fetch(`${base}/api/${route}`, { signal: AbortSignal.timeout(5000) });

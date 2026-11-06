@@ -4,7 +4,7 @@ import { logger } from '../../../lib/logger';
 import { getRedisClient } from '../../../lib/redis/client';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { requireGuildLeader } from './leader';
-import { getGuildSession, queryValue } from './common';
+import { getGuildSession, queryValue, requireGuildMutationOrigin } from './common';
 
 const MAX_LOGO_BYTES = 512 * 1024;
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -26,11 +26,31 @@ export async function GET(req, res) {
   const redis = getRedisClient();
   if (!redis) throw new AppError('Guild logo storage is unavailable.', 503, 'STORAGE_UNAVAILABLE', true);
   const logo = await redis.get<string>(logoKey(guildId));
+  if (queryValue(req.query?.image) === '1') {
+    if (!logo) return new NextResponse(null, { status: 204 });
+    if (typeof logo !== 'string' || !/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(logo) || logo.length > 700_000)
+      throw new AppError('Guild logo is unavailable.', 404, 'GUILD_LOGO_NOT_FOUND', true);
+    const bytes = Buffer.from(logo.slice('data:image/png;base64,'.length), 'base64');
+    if (bytes.length > MAX_LOGO_BYTES || !bytes.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE))
+      throw new AppError('Guild logo is unavailable.', 404, 'GUILD_LOGO_NOT_FOUND', true);
+    const response = new NextResponse(null, { headers: { 'Content-Type': 'image/png' } });
+    response.stream = {
+      body: new ReadableStream({
+        start(controller) {
+          controller.enqueue(bytes);
+          controller.close();
+        },
+      }),
+      maximumBytes: MAX_LOGO_BYTES,
+    };
+    return response;
+  }
   return NextResponse.json({ ok: true, data: { logo: logo ?? null } }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function POST(req, res) {
   try {
+    requireGuildMutationOrigin(req);
     const guildId = guildIdFromRequest(req);
     if (!guildId || !/^[a-zA-Z0-9_-]{1,128}$/.test(guildId))
       throw new AppError('Invalid guild ID', 400, 'INVALID_GUILD_ID', true);

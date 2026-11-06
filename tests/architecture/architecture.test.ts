@@ -85,7 +85,7 @@ describe('module boundaries', () => {
     const routes = files.filter(
       (p) => normalize(p).startsWith('pages/api/') && normalize(p) !== 'pages/api/assets/[...path].ts',
     );
-    expect(routes).toHaveLength(30);
+    expect(routes).toHaveLength(32);
     for (const route of routes) {
       const method =
         /\/auth\/logout\/|\/blueprints\/(publish|remove)\.ts$|\/bases\/import\.ts$|\/bases\/\[[^\]]+\]\/marketplace\.ts$|\/admin\/(execute|upload)\.ts$/.test(
