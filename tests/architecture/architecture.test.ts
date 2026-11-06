@@ -85,12 +85,13 @@ describe('module boundaries', () => {
     const routes = files.filter(
       (p) => normalize(p).startsWith('pages/api/') && normalize(p) !== 'pages/api/assets/[...path].ts',
     );
-    expect(routes).toHaveLength(28);
+    expect(routes).toHaveLength(51);
     for (const route of routes) {
-      const method =
-        /\/auth\/logout\/|\/blueprints\/(publish|remove)\.ts$|\/bases\/import\.ts$|\/bases\/\[[^\]]+\]\/marketplace\.ts$|\/admin\/(execute|upload)\.ts$/.test(
-          normalize(route),
-        )
+      const method = /\/guilds\/\[guildId\]\/(index|members\/\[playerId\])\.ts$/.test(normalize(route))
+        ? 'DELETE'
+        : /\/auth\/logout\/|\/blueprints\/(publish|remove)\.ts$|\/bases\/import\.ts$|\/bases\/\[[^\]]+\]\/marketplace\.ts$|\/admin\/(execute|upload)\.ts$|\/(?:messages|support)\/(send|read)\.ts$|\/members\/\[playerId\]\/(promote|demote)\.ts$/.test(
+              normalize(route),
+            )
           ? 'POST'
           : 'GET';
       expect(fs.readFileSync(route, 'utf8').replaceAll("'", '"')).toContain(

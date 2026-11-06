@@ -8,3 +8,6 @@ npm-debug.log*
 tsconfig.tsbuildinfo
 test-results/
 playwright-report/
+# Dune export tool build output
+tools/dune-export/bin/
+tools/dune-export/obj/

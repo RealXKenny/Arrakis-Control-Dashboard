@@ -9,6 +9,7 @@ import { createLogger } from '../../../lib/logger';
 import type { DashboardSession } from '../../../lib/security/session-store';
 import { requireDashboardAdmin } from './access';
 import { parseAdminRequest } from './request';
+import { removeGuildStorage } from '../../guilds/server/membership';
 import { parseAdminJson, sanitizeAdminData } from './sanitize';
 
 const log = createLogger('ADMIN');
@@ -68,6 +69,7 @@ export async function executeOperation(
   session: DashboardSession,
   res,
   upload?: FormData | Blob,
+  options: { timeoutMs?: number } = {},
 ) {
   const { operation, request, route } = parsed;
   const env = getServerEnv();
@@ -131,7 +133,7 @@ export async function executeOperation(
       redirect: 'error',
       signal: AbortSignal.any([
         controller.signal,
-        AbortSignal.timeout(operation.mode === 'download' ? 120_000 : 60_000),
+        AbortSignal.timeout(options.timeoutMs ?? (operation.mode === 'download' ? 120_000 : 60_000)),
       ]),
     });
     log.info('Administrator operation answered', {
@@ -182,6 +184,17 @@ export async function executeOperation(
     const text = await readBoundedText(response, 16 * 1024 * 1024);
     let value: unknown = null;
     if (text.trim()) value = /json/i.test(contentType) ? parseAdminJson(text) : { text };
+    const successful =
+      response.ok && !(value && typeof value === 'object' && (value as Record<string, unknown>).ok === false);
+    let warning: string | undefined;
+    if (successful && operation.id === 'delete-guilds-guildid') {
+      try {
+        await removeGuildStorage(request.path.guildId);
+      } catch {
+        warning =
+          'The guild was disbanded, but saved recruitment or chat data could not be cleared. Do not repeat the disband operation.';
+      }
+    }
     const safe = sanitizeAdminData(value);
     if (response.ok && operation.mode === 'download') {
       return new NextResponse(JSON.stringify(safe.data, null, 2), {
@@ -193,10 +206,11 @@ export async function executeOperation(
     }
     return NextResponse.json(
       {
-        ok: response.ok,
+        ok: successful,
+        ...(warning ? { warning } : {}),
         upstreamStatus: response.status,
         ...safe,
-        ...(response.ok
+        ...(successful
           ? {}
           : {
               error:
@@ -207,7 +221,8 @@ export async function executeOperation(
             }),
       },
       {
-        status: response.status === 204 || response.status === 205 ? 200 : response.status,
+        status:
+          response.ok && !successful ? 502 : response.status === 204 || response.status === 205 ? 200 : response.status,
         headers:
           response.status === 429
             ? {

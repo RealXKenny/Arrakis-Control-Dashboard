@@ -1,106 +1,63 @@
 {
   "templates": 1784,
   "mapped": 1240,
-  "clientDetail": 1240,
-  "simplifiedFallback": 0,
-  "glassAccessoryRows": 51,
   "textured": 1134,
-  "unsupported": 544,
-  "unsupportedByGroup": {
-    "Vehicle": 503,
-    "Functional": 27,
-    "Decoration": 7,
-    "Functional_1510": 7
-  },
-  "unsupportedTemplates": [
-    "CamouflagedStilltent_Placeable",
-    "CeilingGlowGlobe_Player",
-    "Choam_Door_S_SquishUp_Placeable",
-    "Choam_PentashieldSurfaceHorizontalPlacementCorner_Placeable",
-    "Choam_PentashieldSurfaceVerticalPlacementCorner_Placeable",
-    "Choam_TrapDoor_S_Placeable",
-    "CompactSeismicProbe_Placeable",
-    "CompactThumper_Placeable",
-    "ConstructionFabricator_Placeable",
-    "DeathstilOldl_Placeable",
-    "Door_S_SquishUp_Placeable",
-    "Gate_M_SquishUp_Placeable",
-    "GlowGlobe",
-    "GlowGlobe_Player",
-    "Ladder_Placeable",
-    "LongDurationThumper_Placeable",
-    "LongRangeSeismicProbe_Placeable",
-    "MTX_Neut_HarvesterCaptainChair_Placeable",
-    "MTX_Neut_TeleporterDevice_Placeable",
-    "MTX_Sardaukar_Door_Placeable",
-    "MTX_Sardaukar_Door_Placeable_L",
-    "MTX_Sardaukar_GarageDoor_Placeable",
-    "MTX_Sardaukar_PrudenceDoor_Placeable",
-    "MTX_Sardaukar_PrudenceDoor_Placeable_L",
-    "MTX_Sardaukar_TallDoor_Placeable",
-    "MTX_Sardaukar_TallDoor_Placeable_L",
-    "PortableFabricator_Placeable",
-    "ProtectiveStilltent_Placeable",
-    "RespawnBeacon_Placeable",
-    "SeismicProbe_Placeable",
-    "StakingUnit_Placeable",
-    "StakingUnitVertical_Placeable",
-    "Stilltent_Placeable",
-    "Stilltent_Placeable_Unique_01",
-    "Thumper_Placeable",
-    "TotemTemporary_Placeable",
-    "Turret_Placeable",
-    "UniqueThumper_Placeable",
-    "UniqueThumper_Placeable_02",
-    "UniqueThumper_Placeable_03",
-    "WallGlowGlobe_Player"
-  ],
   "meshes": 1231,
   "triangles": 3282662,
-  "textures": 91,
+  "textures": 96,
   "meshPacks": [
     {
       "file": "client/client-meshes-0.bin.gz",
-      "bytes": 8331612,
-      "compressedBytes": 5960311
+      "bytes": 8324636,
+      "compressedBytes": 5964284
     },
     {
       "file": "client/client-meshes-1.bin.gz",
-      "bytes": 8300384,
-      "compressedBytes": 5928479
+      "bytes": 8380932,
+      "compressedBytes": 5969081
     },
     {
       "file": "client/client-meshes-2.bin.gz",
-      "bytes": 8361090,
-      "compressedBytes": 5868511
+      "bytes": 8361776,
+      "compressedBytes": 5891756
     },
     {
       "file": "client/client-meshes-3.bin.gz",
-      "bytes": 8354820,
-      "compressedBytes": 5593594
+      "bytes": 8376226,
+      "compressedBytes": 5606814
     },
     {
       "file": "client/client-meshes-4.bin.gz",
-      "bytes": 8363178,
-      "compressedBytes": 5886056
+      "bytes": 8373422,
+      "compressedBytes": 5912603
     },
     {
       "file": "client/client-meshes-5.bin.gz",
-      "bytes": 8377098,
-      "compressedBytes": 5830287
+      "bytes": 8306086,
+      "compressedBytes": 5791983
     },
     {
       "file": "client/client-meshes-6.bin.gz",
-      "bytes": 6319782,
-      "compressedBytes": 4449493
+      "bytes": 6124414,
+      "compressedBytes": 4322005
     }
   ],
   "texturePacks": [
     {
       "file": "client/client-textures-0.bin.gz",
-      "bytes": 3976600,
-      "compressedBytes": 3864201
+      "bytes": 2270083,
+      "compressedBytes": 2228610
     }
   ],
-  "failures": []
+  "build": {
+    "meshes": 1231,
+    "geometryFromGame": 1226,
+    "geometryKept": 5,
+    "textureFromLayer": 880,
+    "textureFromEmbedded": 156,
+    "textureKeptPrevious": 100,
+    "untextured": 95,
+    "noGlb": 0,
+    "failures": []
+  }
 }

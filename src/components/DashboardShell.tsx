@@ -4,7 +4,7 @@ import Topbar, { type TopbarItem } from './Topbar';
 
 /** Shared public, member, and admin shell with pill navigation and fluid gutters. */
 
-export type NavigationItem = { label: string; href: string; group: string; active?: boolean };
+export type NavigationItem = { label: string; href: string; group: string; active?: boolean; unreadCount?: number };
 
 export default function DashboardShell({
   brand,
@@ -25,7 +25,13 @@ export default function DashboardShell({
   onNavigate?: (href: string) => boolean;
   immersive?: boolean;
 }) {
-  const items: TopbarItem[] = navigation.map(({ label, href, group, active }) => ({ label, href, group, active }));
+  const items: TopbarItem[] = navigation.map(({ label, href, group, active, unreadCount }) => ({
+    label,
+    href,
+    group,
+    active,
+    unreadCount,
+  }));
   return (
     <div className="flex min-h-screen flex-col bg-transparent font-sans text-zinc-200 antialiased">
       <a

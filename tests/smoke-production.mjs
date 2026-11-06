@@ -150,6 +150,12 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   assert.ok(ready, 'Production server must serve /portal');
+  const optimizedImage = await fetch(`${base}/_next/image?url=%2Fmaps%2Fatreides.webp&w=64&q=75`, {
+    signal: AbortSignal.timeout(10000),
+  });
+  assert.equal(optimizedImage.status, 200, 'image optimizer must serve an image');
+  assert.match(optimizedImage.headers.get('content-type') || '', /^image\//);
+  assert.ok((await optimizedImage.arrayBuffer()).byteLength > 0);
   const readinessMessages = [];
   await announceReadiness(`${base}/portal`, new AbortController().signal, {
     write: (message) => readinessMessages.push(message),
@@ -217,7 +223,43 @@ try {
   const memberAdmin = await fetch(`${base}/api/admin/catalog`, { headers: { cookie: sessionCookie } });
   assert.equal(memberAdmin.status, 403, 'ordinary members cannot inspect admin operations');
   const adminCatalog = await fetch(`${base}/api/admin/catalog`, { headers: adminHeaders });
-  assert.equal((await adminCatalog.json()).operations.length, 378);
+  assert.equal((await adminCatalog.json()).operations.length, 383);
+  for (const path of [
+    'admin/overview',
+    'admin/guilds/test/applications',
+    'admin/guilds/test/applications/' + 'a'.repeat(64) + '/messages',
+    'admin/guilds/test/messages',
+  ]) {
+    const response = await fetch(`${base}/api/${path}`, { headers: { cookie: sessionCookie } });
+    assert.equal(response.status, 403, 'guild oversight requires the verified administrator');
+    await response.text();
+  }
+  for (const path of [
+    'admin/guilds/test/messages/send',
+    'guilds/test/support/send',
+    'admin/guilds/test/messages/read',
+    'guilds/test/support/read',
+  ]) {
+    const response = await fetch(`${base}/api/${path}`, {
+      method: 'POST',
+      headers: { ...adminHeaders, Origin: 'https://other.example' },
+      body: '{}',
+    });
+    assert.equal(response.status, 403, 'guild support rejects cross-site sends');
+    await response.text();
+    const wrong = await fetch(`${base}/api/${path}`);
+    assert.equal(wrong.status, 405);
+    await wrong.text();
+  }
+  const supportStatusDenied = await fetch(`${base}/api/guilds/test/support/status`);
+  assert.equal(supportStatusDenied.status, 401, 'support unread counts require authentication');
+  await supportStatusDenied.text();
+  const overviewResponse = await fetch(`${base}/api/admin/overview`, { headers: adminHeaders });
+  assert.equal(overviewResponse.status, 200, 'admin statistics remain usable with partial Console permissions');
+  const overviewData = await overviewResponse.json();
+  assert.equal(overviewData.data.sources.length, 10);
+  assert.equal(overviewData.data.metrics.find((metric) => metric.id === 'health').value, 'READY');
+  assert.doesNotMatch(JSON.stringify(overviewData), /fixture-admin-console-key/);
   const adminStatus = await fetch(`${base}/api/admin/execute`, {
     method: 'POST',
     headers: adminHeaders,
@@ -284,6 +326,78 @@ try {
     });
     assert.equal(response.status, 405, route);
     assert.equal((await response.json()).code, 'METHOD_NOT_ALLOWED', route);
+  }
+  for (const route of ['guilds/test/application', 'guilds/test/applications']) {
+    const methodDenied = await fetch(`${base}/api/${route}`, { method: 'PUT' });
+    assert.equal(methodDenied.status, 405, route);
+    await methodDenied.text();
+    const unauthorized = await fetch(`${base}/api/${route}`);
+    assert.equal(unauthorized.status, 401, route);
+    assert.equal(unauthorized.headers.get('Cache-Control'), 'private, no-store, max-age=0');
+    await unauthorized.text();
+    const crossOrigin = await fetch(`${base}/api/${route}`, {
+      method: 'POST',
+      headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    assert.equal(crossOrigin.status, 403, route);
+    await crossOrigin.text();
+  }
+  const statusRead = await fetch(`${base}/api/guilds/application-status?guildIds=test`);
+  assert.equal(statusRead.status, 401, 'application summaries require a session');
+  await statusRead.text();
+  const chatRoute = `${base}/api/guilds/test/applications/${'a'.repeat(64)}/messages`;
+  const chatRead = await fetch(chatRoute, { signal: AbortSignal.timeout(5000) });
+  assert.equal(chatRead.status, 401, 'application chat requires a session');
+  assert.equal(chatRead.headers.get('Cache-Control'), 'private, no-store, max-age=0');
+  await chatRead.text();
+  const receiptWrite = await fetch(chatRoute + '/read', {
+    method: 'POST',
+    headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  assert.equal(receiptWrite.status, 403, 'read receipts reject cross-site writes');
+  await receiptWrite.text();
+  const receiptWrongMethod = await fetch(chatRoute + '/read');
+  assert.equal(receiptWrongMethod.status, 405, 'read receipts require POST');
+  await receiptWrongMethod.text();
+  const chatWrite = await fetch(`${chatRoute}/send`, {
+    method: 'POST',
+    headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },
+    body: '{}',
+    signal: AbortSignal.timeout(5000),
+  });
+  assert.equal(chatWrite.status, 403, 'application chat rejects cross-site sends');
+  await chatWrite.text();
+  const chatWrongMethod = await fetch(`${chatRoute}/send`, { signal: AbortSignal.timeout(5000) });
+  assert.equal(chatWrongMethod.status, 405, 'chat sends require POST');
+  await chatWrongMethod.text();
+  for (const [path, method] of [
+    ['guilds/test/members', 'POST'],
+    ['guilds/test/members/player', 'DELETE'],
+    ['guilds/test/members/player/promote', 'POST'],
+    ['guilds/test/members/player/demote', 'POST'],
+    ['guilds/test', 'DELETE'],
+  ]) {
+    const deniedMethod = await fetch(`${base}/api/${path}`, { method: 'PUT', signal: AbortSignal.timeout(5000) });
+    assert.equal(deniedMethod.status, 405, path);
+    await deniedMethod.text();
+    const noSession = await fetch(`${base}/api/${path}`, {
+      method,
+      headers: { Origin: base, 'Content-Type': 'application/json' },
+      body: '{}',
+      signal: AbortSignal.timeout(5000),
+    });
+    assert.equal(noSession.status, 401, path);
+    await noSession.text();
+    const foreign = await fetch(`${base}/api/${path}`, {
+      method,
+      headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },
+      body: '{}',
+      signal: AbortSignal.timeout(5000),
+    });
+    assert.equal(foreign.status, 403, path);
+    await foreign.text();
   }
   for (let attempt = 0; attempt < 20; attempt++) {
     for (const route of ['player', 'map', 'market', 'market/config', 'bases/test/export']) {
@@ -355,7 +469,7 @@ try {
     );
   assert.doesNotMatch(
     logs,
-    /Failed to load external module|MaxListenersExceededWarning|This module cannot be imported from a Client Component/,
+    /Failed to load external module|MaxListenersExceededWarning|This module cannot be imported from a Client Component|Failed to write image to cache|unhandledRejection/,
   );
   const deniedImport = await fetch(`${base}/api/bases/import`, {
     method: 'POST',

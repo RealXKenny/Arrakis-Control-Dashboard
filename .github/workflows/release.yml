@@ -137,7 +137,7 @@ jobs:
         env:
           IMAGE: ${{ steps.image.outputs.name }}
         run: |
-          docker run --rm --entrypoint sh "$IMAGE:latest" -c '
+          docker run --rm --read-only --mount type=volume,destination=/home/container --entrypoint sh "$IMAGE:latest" -c '
             test "$(id -un)" = container &&
             test "$HOME" = /home/container &&
             test "$PWD" = /home/container &&
@@ -147,7 +147,11 @@ jobs:
             test -f /opt/arrakis-dashboard/src/assets/terrain/hagga.hf.gz &&
             test -f /opt/arrakis-dashboard/src/assets/share/preview-v1.png &&
             test -f /opt/arrakis-dashboard/licenses/MapViewer3D.txt &&
-            test -f /opt/arrakis-dashboard/CHANGELOG.md
+            test -f /opt/arrakis-dashboard/CHANGELOG.md &&
+            node --input-type=module -e "import { prepareImageCache } from \"/opt/arrakis-dashboard/src/config/server-launcher.mjs\"; await prepareImageCache(\"/opt/arrakis-dashboard\")" &&
+            test -L /opt/arrakis-dashboard/.next/cache &&
+            touch /opt/arrakis-dashboard/.next/cache/images/write-check &&
+            rm /opt/arrakis-dashboard/.next/cache/images/write-check
           '
           test "$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.description" }}' "$IMAGE:latest")" = 'Web dashboard for Dune: Awakening server operations, Discord OAuth, and live telemetry.'
           test "$(docker run --rm -e STARTUP='printf pterodactyl-ready' "$IMAGE:latest")" = pterodactyl-ready
@@ -158,7 +162,8 @@ jobs:
         env:
           IMAGE: ${{ steps.image.outputs.name }}
         run: |
-          docker run -d --name arrakis-dashboard-smoke \
+          docker run -d --name arrakis-dashboard-smoke --read-only \
+            --mount type=volume,destination=/home/container \
             -e SERVER_PORT=2008 \
             -e CONSOLE_URL=http://127.0.0.1:9 \
             -e CONSOLE_API_KEY=fixture-console-key \
@@ -176,6 +181,7 @@ jobs:
               for asset in models/native/catalog.json.gz models/client/catalog.json.gz terrain/hagga.hf.gz share/preview-v1.png; do
                 curl --fail --silent --output /dev/null "http://127.0.0.1:2008/api/assets/$asset"
               done
+              curl --fail --silent --output /dev/null 'http://127.0.0.1:2008/_next/image?url=%2Fmaps%2Fatreides.webp&w=64&q=75'
               exit 0
             fi
             sleep 1
