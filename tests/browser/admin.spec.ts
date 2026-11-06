@@ -440,7 +440,7 @@ test('admin navigation groups sections, syncs the URL and honours browser histor
   await page.getByRole('link', { name: 'Market', exact: true }).click();
   await expect(page).toHaveURL(/tab=market/);
   await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText('World & economy');
-  await expect(page.getByRole('region', { name: 'Selected operation' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Market views' })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/tab=maps/);
   await expect(page.getByRole('heading', { name: 'Maps & worlds', exact: true })).toBeVisible();
@@ -652,4 +652,54 @@ test('maps screen separates read-only status from confirmed controls', async ({ 
   await page.getByRole('link', { name: 'open the autoscaler tool' }).click();
   await expect(page).toHaveURL(/operation=post-maps-autoscaler/);
   await expect(page.getByRole('region', { name: 'Selected operation' })).toContainText('AUTOSCALER CHANGE');
+});
+
+test('market screen filters transactions, separates probes from runs and guards safety backups', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-exchange-stats': { activeListings: 42 },
+      'get-exchange-transactions': { rows: [{ item: 'Spice', price: 100 }], hasMore: false },
+      'post-exchange-market-buyback-probe': { wouldBuy: 3 },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=market');
+  await expect(page.getByText('Active Listings')).toBeVisible();
+  await page.getByRole('button', { name: 'Transactions', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Time range' }).selectOption('24');
+  await expect(page).toHaveURL(/hours=24/);
+  await expect
+    .poll(() => calls.some((call) => call.operation === 'get-exchange-transactions' && call.query.hours === 24))
+    .toBe(true);
+  await expect(page.getByRole('cell', { name: 'Spice' })).toBeVisible();
+  await page.getByRole('button', { name: 'Buyback & seeding', exact: true }).click();
+  await page.getByRole('button', { name: 'Run probe' }).click();
+  await expect(page.getByText('Nothing was bought or changed')).toBeVisible();
+  await page.getByRole('button', { name: 'Run buyback…' }).click();
+  await expect(page.getByRole('dialog')).toContainText('cannot be reversed');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation === 'post-exchange-market-buyback-run')).toBe(false);
+  await page.getByRole('button', { name: 'Turn off…' }).click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Turn off', exact: true })).toBeDisabled();
+  await page.getByRole('dialog').getByRole('textbox').fill('DISABLE MARKET BOT BACKUPS');
+  await page.getByRole('dialog').getByRole('button', { name: 'Turn off', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Safety backups disabled.' })).toBeVisible();
+  expect(calls.find((call) => call.operation === 'post-exchange-market-settings').body).toMatchObject({
+    safetyBackups: false,
+    confirmation: 'DISABLE MARKET BOT BACKUPS',
+  });
+  await page.getByRole('button', { name: 'Sellers', exact: true }).click();
+  await page.getByLabel('Blacklisted owner IDs').fill('abc');
+  await page.getByRole('button', { name: 'Review…' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Owner IDs must be numbers' })).toBeVisible();
 });

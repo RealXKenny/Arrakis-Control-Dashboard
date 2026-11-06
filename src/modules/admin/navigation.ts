@@ -13,8 +13,9 @@ export type AdminTabKind =
   | 'vehicles'
   | 'bases'
   | 'maps'
-  | 'backups';
-export const DEDICATED_KINDS: AdminTabKind[] = ['players', 'vehicles', 'bases', 'maps', 'backups'];
+  | 'backups'
+  | 'market';
+export const DEDICATED_KINDS: AdminTabKind[] = ['players', 'vehicles', 'bases', 'maps', 'backups', 'market'];
 export type AdminTab = {
   id: string;
   label: string;
@@ -128,7 +129,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'market',
         label: 'Market',
-        kind: 'operations',
+        kind: 'market',
         groups: ['Market Board'],
         summary: 'Listings, orders, buyback and seed plans.',
       },

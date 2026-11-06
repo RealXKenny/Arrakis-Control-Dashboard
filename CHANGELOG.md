@@ -8,6 +8,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
+- Dedicated Market screen (statistics, items, time/trader-filtered transactions, read-only probe versus confirmed buyback/seed runs, sweep log, safety-backup toggle with the Console phrase, seed-plan activation/rename/CSV export, seller and blacklist configuration).
 - Dedicated Backups screen (game backups, encrypted system backups with required preview before an explicit apply, passphrases never retained, automatic schedule) and Maps & worlds dashboard (maps/status, memory and scaling, settings and pending restarts, Deep Desert/Sietches/spicefields/terminals).
 - Dedicated Bases & storage screen (base detail with generators/water maintenance, auto-refill enrollment and settings, access, export, deletion; storage container directory with item adds and export; pending-queue cancellation) plus Players and Vehicles administration screens: searchable paginated lists, URL-preserved detail views (profile, inventory, progression, moderation, cargo, access, pending deletions) and accessible confirmation dialogs; the generic API forms stay available under Advanced tools.
 - Grouped administration navigation (six sections, tabs, breadcrumbs, URL/back-forward state, shared `PillNav`), a Console-only handoff screen, and an operation coverage matrix in the generated API report.
