@@ -8,6 +8,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
+- Statistics screen under Control center: a readings table with value, status (available / not reported / source failed / not configured), source and freshness, session-only trends, market and Discord-adapter statistics with their own sources, and explicit limits (no per-player metrics, event history or long-term trends).
 - Accessibility and visual pass on the administration screens: pillbox-styled buttons and visible focus rings for every manager control, underlined accent links, short row-action labels with full accessible names, dialog focus returned to the opener, and a regression test for overflow at desktop/tablet/mobile, unnamed controls and dialog focus.
 - Dedicated Live map screen (capabilities, explicit map and partition selection that never starts a map, player/base/storage/service/marker/spice/POI layers with links to management records, partition-scoped player teleport with confirmation).
 - Dedicated Guild membership screen (guild directory, roster with ranks, promote/demote/make-leader/remove/add with explicit confirmations, disband with cleanup warning), Discord integrations screen (adapter health/version/readiness/services/ports, population and activity, capability catalog, honest not-configured and denied-scope states, restricted adapter writes listed as unavailable) and Public directory status screen with a Console handoff for editing and claiming. Fixed guild rows being labelled generically.

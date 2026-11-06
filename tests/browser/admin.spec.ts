@@ -1058,3 +1058,63 @@ test('live map screen scopes layers to a chosen partition and never teleports wi
   await expect(page.getByRole('status').filter({ hasText: 'never picks one for you' })).toBeVisible();
   expect(calls.some((call) => call.operation === 'post-map-teleport-player')).toBe(false);
 });
+
+test('statistics screen labels sources, shows zero separately from unavailable and keeps trends session-only', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: false } }),
+  );
+  await page.route('**/api/admin/overview', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        data: {
+          observedAt: new Date().toISOString(),
+          metrics: [
+            { id: 'online', label: 'Players online', value: 0, operation: 'get-players-online' },
+            { id: 'players', label: 'Total players', value: null, operation: 'get-players' },
+            { id: 'guilds', label: 'Guilds', value: null, operation: 'get-guilds' },
+          ],
+          services: [],
+          sources: [
+            { operation: 'get-players-online', label: 'Online', state: 'ready', status: 200, durationMs: 4 },
+            { operation: 'get-players', label: 'Players', state: 'ready', status: 200, durationMs: 4 },
+            {
+              operation: 'get-guilds',
+              label: 'Guilds',
+              state: 'error',
+              status: 403,
+              durationMs: 4,
+              error: 'Missing scope.',
+            },
+          ],
+          setup: [],
+        },
+      },
+    }),
+  );
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    return route.fulfill({
+      json: {
+        ok: true,
+        upstreamStatus: 200,
+        data: input.operation === 'get-exchange-stats' ? { activeListings: 0 } : {},
+      },
+    });
+  });
+  await page.goto('/admin?tab=statistics');
+  await expect(page.getByRole('heading', { name: 'Statistics', level: 1 })).toBeVisible();
+  const table = page.getByRole('table', { name: 'Current administration readings' });
+  await expect(table.getByRole('row', { name: /Players online 0 Available/ })).toBeVisible();
+  await expect(table.getByRole('row', { name: /Total players — Not reported/ })).toBeVisible();
+  await expect(table.getByRole('row', { name: /Guilds — Source failed — Missing scope\./ })).toBeVisible();
+  await expect(page.getByText('Last reading')).toBeVisible();
+  await expect(page.getByText('Long-term history is not stored')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Market' })).toContainText('Source:');
+  await expect(page.getByText('Adapter statistics (population')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Advanced tools/ })).toHaveCount(0);
+});

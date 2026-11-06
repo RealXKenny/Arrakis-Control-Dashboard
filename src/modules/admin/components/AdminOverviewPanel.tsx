@@ -2,7 +2,7 @@ import type { AdminOperation } from '../types';
 import type { AdminOverview } from '../overview';
 import css from '../styles/admin.module.css';
 
-function Trend({ values, label }: { values: (number | null)[]; label: string }) {
+export function Trend({ values, label }: { values: (number | null)[]; label: string }) {
   const maximum = Math.max(1, ...values.filter((value): value is number => value !== null));
   const points = values
     .map((value, index) =>
@@ -21,7 +21,9 @@ function Trend({ values, label }: { values: (number | null)[]; label: string }) 
           <polyline points={points} stroke="var(--theme-accent)" strokeWidth="2" fill="none" />
         </svg>
       )}
-      <small>Last {values.length} readings in this session · refreshes every 30 seconds</small>
+      <small>
+        Last {values.length} reading{values.length === 1 ? '' : 's'} in this session · refreshes every 30 seconds
+      </small>
     </article>
   );
 }

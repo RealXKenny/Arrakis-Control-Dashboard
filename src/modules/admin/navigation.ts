@@ -24,8 +24,17 @@ export type AdminTabKind =
   | 'guildtools'
   | 'discord'
   | 'directory'
-  | 'livemap';
-const BUILT_IN_KINDS: AdminTabKind[] = ['overview', 'guilds', 'setup', 'reference', 'console', 'operations'];
+  | 'livemap'
+  | 'statistics';
+const BUILT_IN_KINDS: AdminTabKind[] = [
+  'overview',
+  'statistics',
+  'guilds',
+  'setup',
+  'reference',
+  'console',
+  'operations',
+];
 /** Every kind with its own manager screen; the generic catalog forms stay behind `advanced=1`. */
 export const isDedicatedKind = (kind: AdminTabKind) => !BUILT_IN_KINDS.includes(kind);
 export type AdminTab = {
@@ -49,6 +58,13 @@ export const ADMIN_SECTIONS: AdminSection[] = [
         kind: 'overview',
         groups: [],
         summary: 'Live health, population, trends and connection status.',
+      },
+      {
+        id: 'statistics',
+        label: 'Statistics',
+        kind: 'statistics',
+        groups: [],
+        summary: 'Current readings with their sources, freshness and limits. Nothing is estimated.',
       },
       {
         id: 'tools',
