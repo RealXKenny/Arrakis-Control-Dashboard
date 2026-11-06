@@ -883,6 +883,134 @@ test('blueprint import handles uncertain delivery and success without duplicate 
   expect(requests[1].requestId).toBe(requests[0].requestId);
 });
 
+for (const disbandFlow of [false, true]) {
+  test(`guild leader ${disbandFlow ? 'confirms disbanding' : 'manages member ranks and leadership'}`, async ({
+    page,
+  }) => {
+    let disbanded = false;
+    let members = [
+      { player_id: 'tester', character_name: 'Desert Navigator', role_id: '100' },
+      { player_id: '7', character_name: 'Builder', role_id: '1' },
+      { player_id: '8', character_name: 'Navigator', role_id: '50' },
+    ];
+    const writes: { method: string; path: string; body: Record<string, unknown> }[] = [];
+    await page.route('**/api/player', (route) =>
+      route.fulfill({
+        json: {
+          ...player,
+          details: { ...player.details, guild: disbanded ? null : { id: '2', name: 'Crimson Skies' } },
+        },
+      }),
+    );
+    await page.route('**/api/guilds?*', (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          data: {
+            rows: disbanded ? [] : [{ guild_id: '2', guild_name: 'Crimson Skies', member_count: members.length }],
+          },
+        },
+      }),
+    );
+    await page.route('**/api/guilds/2/logo', (route) => route.fulfill({ json: { ok: true, data: { logo: null } } }));
+    await page.route('**/api/guilds/2/requirements', (route) => route.fulfill({ json: { ok: true, data: null } }));
+    await page.route(/\/api\/guilds\/2(?:\/members(?:\/[^/]+(?:\/(?:promote|demote))?)?)?$/, async (route) => {
+      const method = route.request().method();
+      const path = new URL(route.request().url()).pathname;
+      if (method === 'GET') {
+        await route.fulfill({
+          json: {
+            ok: true,
+            canEdit: !disbanded && members.some((member) => member.player_id === 'tester' && member.role_id === '100'),
+            data: { rows: members },
+          },
+        });
+        return;
+      }
+      const body = route.request().postDataJSON();
+      writes.push({ method, path, body });
+      if (path === '/api/guilds/2') {
+        disbanded = true;
+        members = [];
+      } else if (path === '/api/guilds/2/members')
+        members.push({ player_id: body.playerId, character_name: 'New recruit', role_id: String(body.roleId) });
+      else {
+        const id = path.split('/')[5];
+        const target = members.find((member) => member.player_id === id)!;
+        if (method === 'DELETE') members = members.filter((member) => member.player_id !== id);
+        else if (path.endsWith('/demote')) target.role_id = '1';
+        else if (target.role_id === '1') target.role_id = '50';
+        else {
+          members.forEach((member) => {
+            if (member.role_id === '100') member.role_id = '50';
+          });
+          target.role_id = '100';
+        }
+      }
+      await route.fulfill({
+        json: { ok: true, data: { relogRequired: path.endsWith('/promote') || path.endsWith('/demote') } },
+      });
+    });
+    await page.goto('/portal?view=guild');
+    const dialog = page.getByRole('dialog');
+    if (disbandFlow) {
+      await page
+        .getByRole('navigation', { name: 'Guild tabs' })
+        .getByRole('button', { name: 'Settings', exact: true })
+        .click();
+      await page.getByRole('button', { name: 'Disband guild', exact: true }).click();
+      await expect(dialog.getByRole('button', { name: 'Permanently disband guild', exact: true })).toBeDisabled();
+      await dialog.getByRole('textbox', { name: 'Type DISBAND GUILD to confirm', exact: true }).fill('yes');
+      await expect(dialog.getByRole('button', { name: 'Permanently disband guild', exact: true })).toBeDisabled();
+      await dialog.press('Escape');
+      expect(writes).toHaveLength(0);
+      await page.getByRole('button', { name: 'Disband guild', exact: true }).click();
+      await dialog.getByRole('textbox', { name: 'Type DISBAND GUILD to confirm', exact: true }).fill('DISBAND GUILD');
+      await dialog.getByRole('button', { name: 'Permanently disband guild', exact: true }).click();
+      await expect(page.getByText('Guild disbanded.', { exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('navigation', { name: 'Guild tabs' }).getByRole('button', { name: 'Settings', exact: true }),
+      ).toHaveCount(0);
+      expect(writes[0]).toMatchObject({ method: 'DELETE', body: { confirmation: 'DISBAND GUILD' } });
+    } else {
+      await page.getByRole('button', { name: 'Manage Builder', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Promote to Officer', exact: true }).click();
+      await expect(
+        page.getByRole('list', { name: 'Officer members', exact: true }).getByText('Builder', { exact: true }),
+      ).toBeVisible();
+      await page.getByRole('button', { name: 'Manage Builder', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Demote to Member', exact: true }).click();
+      await expect(
+        page.getByRole('list', { name: 'Member members', exact: true }).getByText('Builder', { exact: true }),
+      ).toBeVisible();
+      await page.getByRole('button', { name: 'Manage Builder', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Remove from guild', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+      expect(writes.filter((write) => write.method === 'DELETE')).toHaveLength(0);
+      await page.getByRole('button', { name: 'Manage Builder', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Remove from guild', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Confirm removal', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Manage Builder', exact: true })).toHaveCount(0);
+      await page.getByRole('button', { name: 'Add member', exact: true }).click();
+      await dialog.getByRole('textbox', { name: 'Player ID', exact: true }).fill('new-member');
+      await dialog.getByRole('combobox', { name: 'Starting rank', exact: true }).selectOption('50');
+      await dialog.getByRole('button', { name: 'Add member', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Manage New recruit', exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'Manage Navigator', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Transfer leadership', exact: true }).click();
+      await expect(dialog).toContainText('lose access to leader controls');
+      await page.setViewportSize({ width: 390, height: 844 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await dialog.getByRole('button', { name: 'Confirm leadership transfer', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Add member', exact: true })).toHaveCount(0);
+      expect(writes.at(-1)?.body.confirmation).toBe('TRANSFER LEADERSHIP');
+      await expect(
+        page.getByRole('list', { name: 'Leader members', exact: true }).getByText('Navigator', { exact: true }),
+      ).toBeVisible();
+    }
+  });
+}
+
 test('guild custom applications and private live chat work across the community pages', async ({ page }) => {
   let leader = false;
   let application: Record<string, unknown> | null = null;

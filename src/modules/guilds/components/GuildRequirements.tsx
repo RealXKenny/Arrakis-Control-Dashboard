@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { guildRequirementSchema, type GuildRequirement, type GuildRequirementListing } from '../requirements';
 import css from '../styles/requirements.module.css';
 import GuildListingCard from './GuildListingCard';
@@ -15,10 +15,12 @@ export default function GuildRequirements({
   guildId,
   guildName = '',
   settings = false,
+  children,
 }: {
   guildId?: string;
   guildName?: string;
   settings?: boolean;
+  children?: ReactNode;
 }) {
   const [entries, setEntries] = useState<GuildRequirementListing[]>([]);
   const [page, setPage] = useState(0);
@@ -155,6 +157,7 @@ export default function GuildRequirements({
         </form>
       )}
       {!loading && ready && settings && guildId && <GuildApplicationInbox guildId={guildId} />}
+      {!loading && ready && settings && children}
       {!loading && !settings && !error && (
         <>
           {entries.length === 0 && (

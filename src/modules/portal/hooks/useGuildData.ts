@@ -29,6 +29,7 @@ export function useGuildData(character, enabled: boolean) {
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const characterRef = useRef(character);
   const reported = record(character?.guild);
   const reportedId = reported.id ?? reported.guild_id ?? reported.guildId;
@@ -102,7 +103,7 @@ export function useGuildData(character, enabled: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, reportedId, reportedName]);
+  }, [enabled, reportedId, reportedName, refreshVersion]);
 
   const currentGuild = guilds.find((guild) => {
     return (
@@ -124,5 +125,10 @@ export function useGuildData(character, enabled: boolean) {
     setLogo,
     loading,
     error,
+    refresh: () => {
+      setCanEdit(false);
+      setMembers([]);
+      setRefreshVersion((value) => value + 1);
+    },
   };
 }

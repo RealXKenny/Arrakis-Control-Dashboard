@@ -323,6 +323,33 @@ try {
   const chatWrongMethod = await fetch(`${chatRoute}/send`, { signal: AbortSignal.timeout(5000) });
   assert.equal(chatWrongMethod.status, 405, 'chat sends require POST');
   await chatWrongMethod.text();
+  for (const [path, method] of [
+    ['guilds/test/members', 'POST'],
+    ['guilds/test/members/player', 'DELETE'],
+    ['guilds/test/members/player/promote', 'POST'],
+    ['guilds/test/members/player/demote', 'POST'],
+    ['guilds/test', 'DELETE'],
+  ]) {
+    const deniedMethod = await fetch(`${base}/api/${path}`, { method: 'PUT', signal: AbortSignal.timeout(5000) });
+    assert.equal(deniedMethod.status, 405, path);
+    await deniedMethod.text();
+    const noSession = await fetch(`${base}/api/${path}`, {
+      method,
+      headers: { Origin: base, 'Content-Type': 'application/json' },
+      body: '{}',
+      signal: AbortSignal.timeout(5000),
+    });
+    assert.equal(noSession.status, 401, path);
+    await noSession.text();
+    const foreign = await fetch(`${base}/api/${path}`, {
+      method,
+      headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },
+      body: '{}',
+      signal: AbortSignal.timeout(5000),
+    });
+    assert.equal(foreign.status, 403, path);
+    await foreign.text();
+  }
   for (let attempt = 0; attempt < 20; attempt++) {
     for (const route of ['player', 'map', 'market', 'market/config', 'bases/test/export']) {
       const response = await fetch(`${base}/api/${route}`, { signal: AbortSignal.timeout(5000) });

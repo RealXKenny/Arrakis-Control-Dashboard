@@ -61,8 +61,8 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
     <section className={css.inbox} aria-label="Guild applications">
       <h3>Applications</h3>
       <p>
-        Review joining requests here. Accepting records your decision; invite accepted applicants in game. Remove old
-        applications to free space in the inbox.
+        Review joining requests here. Accepting records your decision; use My Guild’s Add member controls to add
+        accepted applicants. Remove old applications to free space in the inbox.
       </p>
       <button onClick={() => setReload(reload + 1)} disabled={busy || loading}>
         Refresh applications

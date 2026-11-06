@@ -61,4 +61,5 @@ export async function requireGuildLeader(req, res, guildId: string) {
   const response = await getDuneClient().request('GET', '/api/guilds/' + encodeURIComponent(guildId) + '/members');
   if (!(await isGuildLeader(session, guildId, response)))
     throw new AppError('Only the guild leader can change guild settings.', 403, 'GUILD_LEADER_REQUIRED', true);
+  return response;
 }
