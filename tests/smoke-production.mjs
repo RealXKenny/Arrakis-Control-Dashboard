@@ -225,6 +225,7 @@ try {
   const adminCatalog = await fetch(`${base}/api/admin/catalog`, { headers: adminHeaders });
   assert.equal((await adminCatalog.json()).operations.length, 383);
   for (const path of [
+    'admin/overview',
     'admin/guilds/test/applications',
     'admin/guilds/test/applications/' + 'a'.repeat(64) + '/messages',
     'admin/guilds/test/messages',
@@ -253,6 +254,12 @@ try {
   const supportStatusDenied = await fetch(`${base}/api/guilds/test/support/status`);
   assert.equal(supportStatusDenied.status, 401, 'support unread counts require authentication');
   await supportStatusDenied.text();
+  const overviewResponse = await fetch(`${base}/api/admin/overview`, { headers: adminHeaders });
+  assert.equal(overviewResponse.status, 200, 'admin statistics remain usable with partial Console permissions');
+  const overviewData = await overviewResponse.json();
+  assert.equal(overviewData.data.sources.length, 10);
+  assert.equal(overviewData.data.metrics.find((metric) => metric.id === 'health').value, 'READY');
+  assert.doesNotMatch(JSON.stringify(overviewData), /fixture-admin-console-key/);
   const adminStatus = await fetch(`${base}/api/admin/execute`, {
     method: 'POST',
     headers: adminHeaders,

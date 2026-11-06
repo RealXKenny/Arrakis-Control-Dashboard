@@ -640,3 +640,217 @@
   min-width: 140px;
   margin: 0;
 }
+
+.controlCenter {
+  min-width: 0;
+}
+.controlCenter h2,
+.panel h2 {
+  font-size: 23px;
+  margin: 0 0 8px;
+  letter-spacing: -0.03em;
+}
+.eyebrow {
+  color: var(--theme-accent);
+  font: 10px var(--font-mono);
+  letter-spacing: 0.14em;
+  margin: 0 0 8px;
+}
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+.statCard {
+  text-align: left;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.statCard span {
+  font-size: 12px;
+  color: var(--theme-muted);
+}
+.statCard strong {
+  font-size: clamp(20px, 2.2vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+.statCard small {
+  font-size: 10px;
+  color: var(--theme-muted);
+}
+.trendGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.trend,
+.panel {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--theme-border);
+  border-radius: 20px;
+  background: var(--theme-surface);
+  margin: 0 0 20px;
+}
+.trend h3,
+.panel h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 14px;
+}
+.trend p,
+.panel p {
+  font-size: 12px;
+  color: var(--theme-muted);
+  line-height: 1.8;
+}
+.trend small {
+  font-size: 10px;
+  color: var(--theme-muted);
+}
+.trend svg {
+  width: 100%;
+  max-height: 140px;
+}
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 24px;
+}
+.quickGrid button {
+  text-align: left;
+  color: var(--theme-text);
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 14px;
+  padding: 18px;
+  font-size: 13px;
+}
+.quickGrid span {
+  display: block;
+  margin-top: 9px;
+  font-size: 10px;
+  color: var(--theme-muted);
+}
+.panel button {
+  color: var(--theme-accent);
+  border: 1px solid var(--theme-border);
+  background: var(--theme-raised);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.panel td code,
+.panel td small {
+  display: block;
+  margin-top: 6px;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.serviceList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.serviceList > div {
+  padding: 14px;
+  background: var(--theme-raised);
+  border-radius: 12px;
+  font-size: 12px;
+}
+.serviceList span {
+  display: block;
+  margin-top: 8px;
+  color: var(--theme-muted);
+}
+.setupList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.setupList article {
+  padding: 18px;
+  border: 1px solid var(--theme-border);
+  border-radius: 14px;
+}
+.setupList header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.ready,
+.needsAttention {
+  font-size: 10px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--theme-raised);
+}
+.ready {
+  color: #86efac;
+}
+.needsAttention {
+  color: #fcd34d;
+}
+.operationGuide {
+  margin: 18px 0;
+  padding: 14px;
+  background: var(--theme-raised);
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+}
+.operationGuide dl {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.operationGuide dt {
+  font-size: 10px;
+  color: var(--theme-muted);
+}
+.operationGuide dd {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1000px) {
+  .statGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .quickGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .statCard {
+    padding: 16px;
+  }
+  .trendGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .panel,
+  .trend {
+    padding: 18px;
+  }
+  .setupList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

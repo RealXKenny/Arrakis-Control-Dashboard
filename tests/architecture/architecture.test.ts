@@ -85,7 +85,7 @@ describe('module boundaries', () => {
     const routes = files.filter(
       (p) => normalize(p).startsWith('pages/api/') && normalize(p) !== 'pages/api/assets/[...path].ts',
     );
-    expect(routes).toHaveLength(50);
+    expect(routes).toHaveLength(51);
     for (const route of routes) {
       const method = /\/guilds\/\[guildId\]\/(index|members\/\[playerId\])\.ts$/.test(normalize(route))
         ? 'DELETE'

@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import DashboardShell from '../../../components/DashboardShell';
 import type { AdminOperation } from '../types';
+import AdminOverviewPanel from './AdminOverviewPanel';
+import ApiReference from './ApiReference';
+import OperationGuide from './OperationGuide';
+import useAdminOverview from '../hooks/useAdminOverview';
 import OperationFields from './OperationFields';
 import AdminResults from './AdminResults';
 import GuildOversight from './GuildOversight';
@@ -20,7 +24,8 @@ function objectInput(text: string): Record<string, unknown> {
 export default function AdminWorkspace({ accountName }: { accountName: string }) {
   const [operations, setOperations] = useState<AdminOperation[]>([]);
   const supportUnread = useSupportUnread({ admin: true });
-  const [view, setView] = useState<'operations' | 'guilds'>('operations');
+  const [view, setView] = useState<'overview' | 'operations' | 'guilds' | 'setup' | 'reference'>('overview');
+  const overview = useAdminOverview(view === 'overview' || view === 'setup');
   const [showFeatures, setShowFeatures] = useState(false);
   const [accessFilter, setAccessFilter] = useState('all');
   const [validFields, setValidFields] = useState(true);
@@ -254,6 +259,9 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
         </article>
       </div>
       <nav className={css.viewTabs} aria-label="Administration sections">
+        <button aria-pressed={view === 'overview'} disabled={busy} onClick={() => setView('overview')}>
+          Overview
+        </button>
         <button aria-pressed={view === 'operations'} disabled={busy} onClick={() => setView('operations')}>
           Operations
         </button>
@@ -264,6 +272,12 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
           onClick={() => setView('guilds')}
         >
           Guild oversight <UnreadBadge count={supportUnread.total} />
+        </button>
+        <button aria-pressed={view === 'reference'} disabled={busy} onClick={() => setView('reference')}>
+          API reference
+        </button>
+        <button aria-pressed={view === 'setup'} disabled={busy} onClick={() => setView('setup')}>
+          Setup & connections
         </button>
         <button aria-expanded={showFeatures} onClick={() => setShowFeatures(!showFeatures)}>
           Browse features
@@ -296,6 +310,20 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
             ))}
         </nav>
       )}
+      {!loading && (view === 'overview' || view === 'setup') && (
+        <AdminOverviewPanel
+          data={overview.data}
+          loading={overview.loading}
+          error={overview.error}
+          history={overview.history}
+          setupOnly={view === 'setup'}
+          operations={operations}
+          onSelect={select}
+          onSetup={() => setView('setup')}
+          onRefresh={overview.refresh}
+        />
+      )}
+      {!loading && view === 'reference' && <ApiReference operations={operations} onSelect={select} />}
       {!loading && view === 'guilds' && <GuildOversight operations={operations} onSelect={select} />}
       {loading ? (
         <p role="status">Loading administration…</p>
@@ -367,6 +395,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
                 </div>
                 <h2>{operation.title}</h2>
                 <code className={css.route}>{operation.route}</code>
+                <OperationGuide operation={operation} />
                 {operation.id === 'post-guilds-guildid-members-playerid-promote' && (
                   <p className={css.notice}>
                     Promoting an Officer transfers leadership and demotes the current leader. Check the current rank

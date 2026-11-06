@@ -1,6 +1,36 @@
 import { expect, test } from '../helpers/browser-test';
 import operations from '../../src/modules/admin/catalog.json';
+const overviewFixture = {
+  observedAt: '2026-11-05T23:00:00.000Z',
+  metrics: [
+    { id: 'health', label: 'Server status', value: 'READY', operation: 'get-server-status' },
+    { id: 'cpu', label: 'CPU usage', value: 24.5, unit: '%', operation: 'get-server-performance' },
+    { id: 'memory', label: 'Memory usage', value: 62, unit: '%', operation: 'get-server-performance' },
+    { id: 'online', label: 'Players online', value: 17, operation: 'get-players-online' },
+    { id: 'players', label: 'Total players', value: 250, operation: 'get-players' },
+    { id: 'guilds', label: 'Guilds', value: 8, operation: 'get-guilds' },
+    { id: 'bases', label: 'Bases', value: 42, operation: 'get-bases' },
+    { id: 'vehicles', label: 'Vehicles', value: 12, operation: 'get-vehicles' },
+    { id: 'maps', label: 'Maps', value: 3, operation: 'get-maps' },
+    { id: 'backups', label: 'Game backups', value: 4, operation: 'get-backups' },
+  ],
+  services: [
+    { name: 'Game service', state: 'Running' },
+    { name: 'Database', state: 'Healthy' },
+  ],
+  sources: [{ operation: 'get-server-status', label: 'Server health', state: 'ready', status: 200, durationMs: 12 }],
+  setup: [
+    { id: 'console', label: 'Console connection', ready: true, instruction: 'Configure CONSOLE_URL.' },
+    {
+      id: 'admin-key',
+      label: 'Administrative credential',
+      ready: true,
+      instruction: 'Configure ADMIN_CONSOLE_API_KEY.',
+    },
+  ],
+};
 test.beforeEach(async ({ page }) => {
+  await page.route('**/api/admin/overview', (route) => route.fulfill({ json: { ok: true, data: overviewFixture } }));
   await page.route('**/api/admin/guild-support-status*', (route) =>
     route.fulfill({ json: { ok: true, data: { total: 0, guilds: {} } } }),
   );
@@ -22,6 +52,68 @@ test('ordinary members cannot load administration or execute privileged operatio
   });
   expect(execute.status()).toBe(403);
   await context.close();
+});
+
+test('admin overview shows live statistics, trends and connection setup on desktop and mobile', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  let reads = 0;
+  await page.route('**/api/admin/overview', (route) => {
+    reads++;
+    return route.fulfill({
+      json: {
+        ok: true,
+        data: {
+          ...overviewFixture,
+          metrics: overviewFixture.metrics.map((metric) =>
+            metric.id === 'cpu' ? { ...metric, value: reads === 1 ? 24.5 : 35.6 } : metric,
+          ),
+        },
+      },
+    });
+  });
+  await page.goto('/admin');
+  const overview = page.getByRole('region', { name: 'Administration overview', exact: true });
+  await expect(overview.getByRole('heading', { name: 'Server overview', exact: true })).toBeVisible();
+  await expect(overview.getByRole('button', { name: /^Players online/ })).toContainText('17');
+  await expect(overview.getByRole('button', { name: /^CPU usage/ })).toContainText('24.5%');
+  await expect(overview.getByText('Game service', { exact: true })).toBeVisible();
+  await overview.getByRole('button', { name: 'Refresh statistics', exact: true }).click();
+  await expect(overview.getByRole('button', { name: /^CPU usage/ })).toContainText('35.6%');
+  await expect(overview.getByRole('img', { name: 'Online player trend', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/admin-control-center-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/admin-control-center-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: 'Setup & connections', exact: true }).click();
+  const setup = page.getByRole('region', { name: 'Administration setup', exact: true });
+  await expect(setup.getByRole('heading', { name: 'Setup checklist', exact: true })).toBeVisible();
+  await expect(setup).toContainText('ADMIN_CONSOLE_API_KEY');
+  await expect(setup.getByRole('heading', { name: 'API connection checks', exact: true })).toBeVisible();
+});
+
+test('admin API reference explains and opens tools while retaining write confirmation', async ({ page, context }) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  await page.goto('/admin');
+  await page.getByRole('button', { name: 'API reference', exact: true }).click();
+  const reference = page.getByRole('region', { name: 'Administration API reference', exact: true });
+  await reference.getByRole('combobox', { name: 'Feature group', exact: true }).selectOption('Guilds');
+  await reference.getByRole('combobox', { name: 'HTTP method', exact: true }).selectOption('DELETE');
+  await expect(reference).toContainText('2 matching APIs');
+  const row = reference.getByRole('row').filter({ hasText: 'Disband a guild' });
+  await row.getByRole('button', { name: 'Open tool', exact: true }).click();
+  const detail = page.getByRole('region', { name: 'Selected operation', exact: true });
+  await expect(detail.getByRole('heading', { name: 'Disband a guild', exact: true })).toBeVisible();
+  await expect(detail).toContainText('Changes server state');
+  await expect(detail.getByRole('button', { name: 'Execute operation', exact: true })).toBeDisabled();
 });
 
 test('admin forms paginate players and prefill related actions without raw JSON', async ({ page, context }) => {
@@ -47,6 +139,7 @@ test('admin forms paginate players and prefill related actions without raw JSON'
     });
   });
   await page.goto('/admin');
+  await page.getByRole('button', { name: 'Operations', exact: true }).click();
   await page.getByRole('searchbox', { name: 'Find an operation' }).fill('/api/players');
   await page.getByRole('button', { name: /GET List players/ }).click();
   await page.getByLabel(/^Search query/).fill('Scout');
@@ -203,6 +296,7 @@ test('administrator can browse operations, read data, and review changes on desk
   });
   await page.goto('/admin');
   await expect(page.getByRole('heading', { name: 'Your server. Under control.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Operations', exact: true }).click();
   await page.getByRole('button', { name: 'Run read', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Example player' })).toBeVisible();
   expect(submitted[0].operation).toBe('get-server-status');

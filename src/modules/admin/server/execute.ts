@@ -69,6 +69,7 @@ export async function executeOperation(
   session: DashboardSession,
   res,
   upload?: FormData | Blob,
+  options: { timeoutMs?: number } = {},
 ) {
   const { operation, request, route } = parsed;
   const env = getServerEnv();
@@ -132,7 +133,7 @@ export async function executeOperation(
       redirect: 'error',
       signal: AbortSignal.any([
         controller.signal,
-        AbortSignal.timeout(operation.mode === 'download' ? 120_000 : 60_000),
+        AbortSignal.timeout(options.timeoutMs ?? (operation.mode === 'download' ? 120_000 : 60_000)),
       ]),
     });
     log.info('Administrator operation answered', {
