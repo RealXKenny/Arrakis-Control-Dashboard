@@ -998,3 +998,63 @@ test('discord and directory screens report configuration honestly and never offe
     page.getByRole('region', { name: 'Editing, claiming and global settings' }).getByRole('button'),
   ).toHaveCount(0);
 });
+
+test('live map screen scopes layers to a chosen partition and never teleports without one', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-map-partitions': {
+        rows: [
+          { map: 'Survival_1', partition_id: '0' },
+          { map: 'Survival_1', partition_id: '1' },
+          { map: 'DeepDesert_1', partition_id: '0' },
+        ],
+      },
+      'get-map-players': { rows: [{ player_id: '9007199254740993123', name: 'Scout' }] },
+      'get-map-markers': { rows: [{ id: 'm1', kind: 'spice' }] },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=live-map');
+  await expect(page.getByRole('combobox', { name: 'Map' })).toHaveValue('');
+  expect(calls.some((call) => call.operation === 'get-map-players')).toBe(false);
+  await page.getByRole('combobox', { name: 'Map' }).selectOption('Survival_1');
+  await expect(page).toHaveURL(/map=Survival_1/);
+  await expect(page.getByRole('combobox', { name: 'Partition' }).locator('option')).toHaveCount(3);
+  await expect(page.getByRole('cell', { name: 'Scout' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open player' })).toHaveAttribute('href', /player=9007199254740993123/);
+  await page.getByRole('combobox', { name: 'Partition' }).selectOption('1');
+  await page.getByRole('button', { name: 'Markers', exact: true }).click();
+  await expect
+    .poll(() =>
+      calls.some(
+        (call) =>
+          call.operation === 'get-map-markers' && call.query.partitionId === '1' && call.query.map === 'Survival_1',
+      ),
+    )
+    .toBe(true);
+  await page.getByLabel('Player ID').fill('4');
+  for (const [label, value] of [
+    ['X', '1'],
+    ['Y', '2'],
+    ['Z', '3'],
+  ])
+    await page.getByLabel(label, { exact: true }).fill(value);
+  await page.getByRole('button', { name: 'Review…' }).click();
+  await expect(page.getByRole('dialog')).toContainText('partition 1');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation === 'post-map-teleport-player')).toBe(false);
+  await page.getByRole('combobox', { name: 'Partition' }).selectOption('');
+  await page.getByRole('button', { name: 'Review…' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'never picks one for you' })).toBeVisible();
+  expect(calls.some((call) => call.operation === 'post-map-teleport-player')).toBe(false);
+});

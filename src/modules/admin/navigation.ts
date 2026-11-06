@@ -23,7 +23,8 @@ export type AdminTabKind =
   | 'addons'
   | 'guildtools'
   | 'discord'
-  | 'directory';
+  | 'directory'
+  | 'livemap';
 const BUILT_IN_KINDS: AdminTabKind[] = ['overview', 'guilds', 'setup', 'reference', 'console', 'operations'];
 /** Every kind with its own manager screen; the generic catalog forms stay behind `advanced=1`. */
 export const isDedicatedKind = (kind: AdminTabKind) => !BUILT_IN_KINDS.includes(kind);
@@ -133,7 +134,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'live-map',
         label: 'Live map',
-        kind: 'operations',
+        kind: 'livemap',
         groups: ['Live Map'],
         summary: 'Partitions, markers, players and supported teleportation.',
       },

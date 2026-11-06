@@ -18,6 +18,7 @@ import AddonsScreen from '../screens/AddonsScreen';
 import GuildToolsScreen from '../screens/GuildToolsScreen';
 import DiscordScreen from '../screens/DiscordScreen';
 import DirectoryScreen from '../screens/DirectoryScreen';
+import LiveMapScreen from '../screens/LiveMapScreen';
 import AdminToolsScreen from '../screens/AdminToolsScreen';
 import { ADMIN_SECTIONS, isDedicatedKind, adminHref, findAdminTab, tabForOperation } from '../navigation';
 import DashboardShell from '../../../components/DashboardShell';
@@ -345,6 +346,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
       {!loading && view === 'discord' && (
         <DiscordScreen operations={operations} adapterConfigured={adapterConfigured} consoleOrigin={consoleOrigin} />
       )}
+      {!loading && view === 'livemap' && <LiveMapScreen operations={operations} />}
       {!loading && view === 'directory' && <DirectoryScreen operations={operations} consoleOrigin={consoleOrigin} />}
       {!loading && view === 'addons' && <AddonsScreen operations={operations} consoleOrigin={consoleOrigin} />}
       {!loading && view === 'admintools' && <AdminToolsScreen operations={operations} />}
