@@ -1,20 +1,22 @@
 import { z } from 'zod';
+import { guildQuestionTypeSchema } from './requirements';
 
 export const guildApplicationInputSchema = z.object({
-  playStyle: z.enum(['PvE', 'PvP', 'Both']),
-  timezone: z.string().trim().min(1).max(80),
-  availability: z.string().trim().min(1).max(300),
-  experience: z.string().trim().min(1).max(800),
-  message: z.string().trim().min(1).max(1500),
   answers: z
-    .record(z.uuid(), z.string().trim().max(1000))
+    .record(z.uuid(), z.union([z.string().trim().max(1000), z.boolean()]))
     .refine((answers) => Object.keys(answers).length <= 8)
     .optional(),
-  questionVersion: z.string().max(4096).optional(),
+  questionVersion: z.string().max(40000).optional(),
 });
 export const guildApplicationSchema = guildApplicationInputSchema
   .omit({ answers: true, questionVersion: true })
   .extend({
+    // Older submissions keep their original standard answers for review.
+    playStyle: z.enum(['PvE', 'PvP', 'Both']).optional(),
+    timezone: z.string().trim().max(80).optional(),
+    availability: z.string().trim().max(300).optional(),
+    experience: z.string().trim().max(800).optional(),
+    message: z.string().trim().max(1500).optional(),
     id: z.string().regex(/^[a-f0-9]{64}$/),
     discordId: z.string().min(1).max(128),
     discordName: z.string().min(1).max(200),
@@ -27,7 +29,8 @@ export const guildApplicationSchema = guildApplicationInputSchema
         z.object({
           questionId: z.uuid(),
           question: z.string().trim().min(1).max(200),
-          answer: z.string().trim().max(1000),
+          type: guildQuestionTypeSchema.optional(),
+          answer: z.union([z.string().trim().max(1000), z.boolean()]),
         }),
       )
       .max(8)

@@ -12,8 +12,8 @@ export default function GuildQuestionEditor({
     <fieldset className={css.questions}>
       <legend>Application questions</legend>
       <p>
-        Add up to eight questions alongside the standard application fields. Existing applications keep their original
-        questions and answers.
+        Build the entire application with up to eight questions. Add at least one to enable applications. Existing
+        applications keep their original questions and answers.
       </p>
       {questions.map((question, index) => (
         <fieldset key={question.id} className={css.question}>
@@ -33,6 +33,54 @@ export default function GuildQuestionEditor({
               }
             />
           </label>
+          <label>
+            Question type
+            <select
+              value={question.type ?? 'longText'}
+              onChange={(event) =>
+                onChange(
+                  questions.map((current) =>
+                    current.id === question.id
+                      ? {
+                          ...current,
+                          type: event.target.value as GuildApplicationQuestion['type'],
+                          options: event.target.value === 'dropdown' ? (current.options ?? ['', '']) : undefined,
+                        }
+                      : current,
+                  ),
+                )
+              }
+            >
+              <option value="shortText">Short answer</option>
+              <option value="longText">Paragraph</option>
+              <option value="dropdown">Dropdown</option>
+              <option value="timezone">Time zone</option>
+              <option value="checkbox">Checkbox</option>
+              <option value="number">Number</option>
+            </select>
+          </label>
+          {question.type === 'dropdown' && (
+            <label>
+              Choices (one per line)
+              <textarea
+                required
+                rows={4}
+                maxLength={3030}
+                value={(question.options ?? []).join('\n')}
+                placeholder={'First choice\nSecond choice'}
+                onChange={(event) =>
+                  onChange(
+                    questions.map((current) =>
+                      current.id === question.id ? { ...current, options: event.target.value.split('\n') } : current,
+                    ),
+                  )
+                }
+              />
+            </label>
+          )}
+          {question.type === 'timezone' && (
+            <p>Applicants choose from the full supported time-zone list, including UTC.</p>
+          )}
           <label className={css.checkbox}>
             <input
               type="checkbox"
@@ -55,7 +103,9 @@ export default function GuildQuestionEditor({
       <button
         type="button"
         disabled={questions.length >= 8}
-        onClick={() => onChange([...questions, { id: crypto.randomUUID(), label: '', required: true }])}
+        onClick={() =>
+          onChange([...questions, { id: crypto.randomUUID(), label: '', required: true, type: 'shortText' }])
+        }
       >
         Add application question
       </button>

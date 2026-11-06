@@ -8,6 +8,7 @@ import { getGuildSession, queryValue, requireGuildMutationOrigin } from './commo
 import { requireGuildLeader } from './leader';
 import { guildApplicationInputSchema, guildApplicationReviewSchema, guildApplicationSchema } from '../applications';
 import { guildRequirementSchema } from '../requirements';
+import { canonicalGuildQuestions, guildAnswerError, guildQuestionType, guildQuestionVersion } from '../question-fields';
 
 const TTL_SECONDS = 90 * 24 * 60 * 60;
 export async function applicationContext(req, res) {
@@ -60,9 +61,16 @@ export async function POST(req, res) {
   if (!listing.success || !listing.data.published)
     throw new AppError('This guild is not accepting applications.', 409, 'GUILD_NOT_RECRUITING', true);
   const questions = listing.data.applicationQuestions ?? [];
+  if (!questions.length)
+    throw new AppError(
+      'This guild has not set up its application questions yet.',
+      409,
+      'GUILD_APPLICATION_NOT_CONFIGURED',
+      true,
+    );
   if (
     (questions.length > 0 || input.data.questionVersion !== undefined) &&
-    input.data.questionVersion !== JSON.stringify(questions)
+    input.data.questionVersion !== guildQuestionVersion(questions)
   )
     throw new AppError(
       'This guild updated its application questions. Refresh Guilds and try again.',
@@ -71,11 +79,8 @@ export async function POST(req, res) {
       true,
     );
   const answers = input.data.answers ?? {};
-  if (
-    Object.keys(answers).some((id) => !questions.some((question) => question.id === id)) ||
-    questions.some((question) => question.required && !answers[question.id]?.trim())
-  )
-    throw new AppError('Answer every required guild question.', 400, 'INVALID_GUILD_APPLICATION_ANSWERS', true);
+  const answerError = guildAnswerError(questions, answers);
+  if (answerError) throw new AppError(answerError, 400, 'INVALID_GUILD_APPLICATION_ANSWERS', true);
   const player = await getLinkedPlayer({
     guildId: ctx.session.guildId,
     channelId: 'dashboard',
@@ -107,7 +112,8 @@ export async function POST(req, res) {
       ? questions.map((question) => ({
           questionId: question.id,
           question: question.label,
-          answer: answers[question.id] ?? '',
+          type: guildQuestionType(question),
+          answer: answers[question.id] ?? (guildQuestionType(question) === 'checkbox' ? false : ''),
         }))
       : undefined,
   });
@@ -120,7 +126,11 @@ export async function POST(req, res) {
     local expected = cjson.decode(ARGV[5])
     if #questions ~= #expected then return -4 end
     for i, question in ipairs(questions) do
-      if question.id ~= expected[i].id or question.label ~= expected[i].label or question.required ~= expected[i].required then return -4 end
+      if question.id ~= expected[i].id or question.label ~= expected[i].label or question.required ~= expected[i].required or (question.type or 'longText') ~= expected[i].type then return -4 end
+      local choices = question.options or {}
+      local expectedChoices = expected[i].options or {}
+      if #choices ~= #expectedChoices then return -4 end
+      for option, choice in ipairs(choices) do if choice ~= expectedChoices[option] then return -4 end end
     end
     if redis.call('HEXISTS', KEYS[1], ARGV[1]) == 1 then return -2 end
     if redis.call('HLEN', KEYS[1]) >= 200 then return -3 end
@@ -131,7 +141,13 @@ export async function POST(req, res) {
     return 1
   `,
     [ctx.records, ctx.index, `arrakis:guild-requirements:${ctx.guildId}`],
-    [ctx.id, JSON.stringify(application), -application.submittedAt, TTL_SECONDS, JSON.stringify(questions)],
+    [
+      ctx.id,
+      JSON.stringify(application),
+      -application.submittedAt,
+      TTL_SECONDS,
+      JSON.stringify(canonicalGuildQuestions(questions)),
+    ],
   );
   if (Number(result) === -1)
     throw new AppError('This guild is not accepting applications.', 409, 'GUILD_NOT_RECRUITING', true);

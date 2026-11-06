@@ -65,7 +65,20 @@ export default function GuildRequirements({
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    const parsed = guildRequirementSchema.safeParse(form);
+    const parsed = guildRequirementSchema.safeParse({
+      ...form,
+      ...(form.applicationQuestions
+        ? {
+            applicationQuestions: form.applicationQuestions.map((question) => ({
+              ...question,
+              options:
+                question.type === 'dropdown'
+                  ? (question.options ?? []).map((option) => option.trim()).filter(Boolean)
+                  : undefined,
+            })),
+          }
+        : {}),
+    });
     if (!parsed.success) {
       setError('Enter a guild name, joining requirements, and valid application questions.');
       return;

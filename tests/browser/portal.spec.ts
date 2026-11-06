@@ -48,6 +48,9 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/session', (route) =>
     route.fulfill({ json: { ok: true, cacheScope: 'a'.repeat(64), expiresAt: Date.now() + 43200000 } }),
   );
+  await page.route('**/api/guilds/*/application', (route) =>
+    route.request().method() === 'GET' ? route.fulfill({ json: { ok: true, data: null } }) : route.continue(),
+  );
   await page.route('**/api/guilds/*/applications?*', (route) =>
     route.fulfill({ json: { ok: true, data: { rows: [], hasMore: false } } }),
   );
@@ -1023,6 +1026,27 @@ test('guild custom applications and private live chat work across the community 
     published: true,
     applicationQuestions: [
       { id: '915c1a9c-13a6-4eef-833b-121c513f9a5a', label: 'What would you contribute?', required: true },
+      {
+        id: '925c1a9c-13a6-4eef-833b-121c513f9a5a',
+        label: 'What time zone are you in?',
+        required: true,
+        type: 'timezone',
+      },
+      {
+        id: '935c1a9c-13a6-4eef-833b-121c513f9a5a',
+        label: 'Preferred play style',
+        required: true,
+        type: 'dropdown',
+        options: ['PvE', 'PvP', 'Both'],
+      },
+      {
+        id: '945c1a9c-13a6-4eef-833b-121c513f9a5a',
+        label: 'I agree to the guild rules',
+        required: true,
+        type: 'checkbox',
+      },
+      { id: '955c1a9c-13a6-4eef-833b-121c513f9a5a', label: 'Availability', required: true, type: 'shortText' },
+      { id: '965c1a9c-13a6-4eef-833b-121c513f9a5a', label: 'Character level', required: false, type: 'number' },
     ],
   };
   await page.route('**/api/guilds?*', (route) =>
@@ -1107,12 +1131,15 @@ test('guild custom applications and private live chat work across the community 
   await expect(logo).toHaveJSProperty('naturalWidth', 1200);
   await page.getByRole('button', { name: 'Apply to guild', exact: true }).click();
   const form = page.getByRole('region', { name: 'Application to Crimson Skies', exact: true });
-  await form.getByRole('textbox', { name: 'Time zone', exact: true }).fill('US Eastern');
-  await form.getByRole('textbox', { name: 'Availability', exact: true }).fill('Weekday evenings');
-  await form.getByRole('textbox', { name: 'Experience', exact: true }).fill('Builder and explorer');
-  await form
-    .getByRole('textbox', { name: 'Why would you like to join?', exact: true })
-    .fill('I would like to help build and gather.');
+  await expect(form.getByRole('textbox', { name: 'Experience', exact: true })).toHaveCount(0);
+  await expect(form.getByRole('textbox', { name: 'Why would you like to join?', exact: true })).toHaveCount(0);
+  const timezone = form.getByRole('combobox', { name: 'What time zone are you in? (required)', exact: true });
+  expect(await timezone.locator('option').count()).toBeGreaterThan(400);
+  await timezone.selectOption('America/New_York');
+  await form.getByRole('combobox', { name: 'Preferred play style (required)', exact: true }).selectOption('Both');
+  await form.getByRole('checkbox', { name: 'I agree to the guild rules (required)', exact: true }).check();
+  await form.getByRole('textbox', { name: 'Availability (required)', exact: true }).fill('Weekday evenings');
+  await form.getByRole('textbox', { name: 'Character level (optional)', exact: true }).fill('0');
   await form.getByRole('button', { name: 'Submit application' }).click();
   expect(submissions).toBe(0);
   await form
@@ -1154,17 +1181,20 @@ test('guild custom applications and private live chat work across the community 
     .click();
   const inbox = page.getByRole('region', { name: 'Guild applications', exact: true });
   await expect(inbox.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
-  await expect(inbox.getByText('I would like to help build and gather.', { exact: true })).toBeVisible();
+  await expect(inbox.getByText('America/New_York', { exact: true })).toBeVisible();
+  await expect(inbox.getByText('Yes', { exact: true })).toBeVisible();
   await expect(inbox.getByText('I can build guild facilities.', { exact: true })).toBeVisible();
   const questionEditor = page.getByRole('group', { name: 'Application questions', exact: true });
   await questionEditor
     .getByRole('textbox', { name: 'Question text', exact: true })
+    .first()
     .fill('Updated question for new applicants');
   await questionEditor.getByRole('button', { name: 'Add application question', exact: true }).click();
-  const secondQuestion = questionEditor.getByRole('group', { name: 'Question 2', exact: true });
+  const secondQuestion = questionEditor.getByRole('group', { name: 'Question 7', exact: true });
   await secondQuestion
     .getByRole('textbox', { name: 'Question text', exact: true })
     .fill('What is your preferred role?');
+  await secondQuestion.getByRole('combobox', { name: 'Question type', exact: true }).selectOption('timezone');
   await secondQuestion.getByRole('checkbox', { name: 'Required answer', exact: true }).uncheck();
   await page.getByRole('button', { name: 'Save guild settings', exact: true }).click();
   await expect(page.getByText('Guild requirements published.', { exact: true })).toBeVisible();
@@ -1271,6 +1301,13 @@ for (const { leader, verified } of [
     await expect(page.getByRole('navigation', { name: 'Guild tabs' })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Crimson Skies', exact: true })).toBeVisible();
     await expect(page.getByText(listing.requirements, { exact: true })).toBeVisible();
+    if (!verified) {
+      await page.getByRole('button', { name: 'Apply to guild', exact: true }).click();
+      await expect(
+        page.getByText('This guild has not set up application questions yet.', { exact: false }),
+      ).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Submit application', exact: true })).toHaveCount(0);
+    }
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (verified) {

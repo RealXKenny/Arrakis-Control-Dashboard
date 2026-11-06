@@ -4,6 +4,8 @@ import { guildApplicationInputSchema, type GuildApplication, type GuildApplicati
 import css from '../styles/requirements.module.css';
 import type { GuildApplicationQuestion } from '../requirements';
 import GuildApplicationChat from './GuildApplicationChat';
+import GuildQuestionInput from './GuildQuestionInput';
+import { formatGuildAnswer, guildAnswerError, guildQuestionVersion } from '../question-fields';
 
 export default function GuildApplicationForm({
   guildId,
@@ -14,13 +16,7 @@ export default function GuildApplicationForm({
   guildName: string;
   questions?: GuildApplicationQuestion[];
 }) {
-  const [form, setForm] = useState<GuildApplicationInput>({
-    playStyle: 'Both',
-    timezone: '',
-    availability: '',
-    experience: '',
-    message: '',
-  });
+  const [form, setForm] = useState<GuildApplicationInput>({ answers: {} });
   const [application, setApplication] = useState<GuildApplication | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,13 +52,13 @@ export default function GuildApplicationForm({
     event.preventDefault();
     const parsed = guildApplicationInputSchema.safeParse({
       ...form,
-      questionVersion: JSON.stringify(questions.map(({ id, label, required }) => ({ id, label, required }))),
+      questionVersion: guildQuestionVersion(questions),
     });
-    if (
-      !parsed.success ||
-      questions.some((question) => question.required && !parsed.data?.answers?.[question.id]?.trim())
-    ) {
-      setError('Complete every application field within its character limit.');
+    const answerError = parsed.success
+      ? guildAnswerError(questions, parsed.data.answers ?? {})
+      : 'Complete each question within its character limit.';
+    if (answerError || !parsed.success) {
+      setError(answerError || 'Invalid answers.');
       return;
     }
     setSaving(true);
@@ -88,13 +84,13 @@ export default function GuildApplicationForm({
       {!loading && application && (
         <div>
           <p role="status">Your application is {application.status}.</p>
-          <p>{application.message}</p>
+          {application.message !== undefined && <p>{application.message}</p>}
           {application.customAnswers?.length ? (
             <dl className={css.answers}>
               {application.customAnswers.map((answer) => (
                 <div key={answer.questionId}>
                   <dt>{answer.question}</dt>
-                  <dd>{answer.answer || 'No answer provided'}</dd>
+                  <dd>{formatGuildAnswer(answer.answer)}</dd>
                 </div>
               ))}
             </dl>
@@ -107,78 +103,23 @@ export default function GuildApplicationForm({
           )}
         </div>
       )}
-      {!loading && loaded && !application && (
+      {!loading && loaded && !application && !questions.length && (
+        <p>
+          This guild has not set up application questions yet. Check its joining details or contact the guild leader.
+        </p>
+      )}
+      {!loading && loaded && !application && questions.length > 0 && (
         <form className={css.form} onSubmit={submit}>
           <p>
             Your verified character and Discord identity will be shared with the guild leader along with your answers.
           </p>
-          <label>
-            Play style
-            <select
-              value={form.playStyle}
-              onChange={(e) => setForm({ ...form, playStyle: e.target.value as GuildApplicationInput['playStyle'] })}
-            >
-              <option>PvE</option>
-              <option>PvP</option>
-              <option>Both</option>
-            </select>
-          </label>
-          <label>
-            Time zone
-            <input
-              required
-              maxLength={80}
-              value={form.timezone}
-              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-              placeholder="e.g. US Eastern"
-            />
-          </label>
-          <label>
-            Availability
-            <textarea
-              required
-              rows={2}
-              maxLength={300}
-              value={form.availability}
-              onChange={(e) => setForm({ ...form, availability: e.target.value })}
-              placeholder="Days and times you usually play"
-            />
-          </label>
-          <label>
-            Experience
-            <textarea
-              required
-              rows={3}
-              maxLength={800}
-              value={form.experience}
-              onChange={(e) => setForm({ ...form, experience: e.target.value })}
-              placeholder="Your experience and what you enjoy doing"
-            />
-          </label>
-          <label>
-            Why would you like to join?
-            <textarea
-              required
-              rows={4}
-              maxLength={1500}
-              value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
-            />
-          </label>
           {questions.map((question) => (
-            <label key={question.id}>
-              {question.label}
-              {question.required ? ' (required)' : ' (optional)'}
-              <textarea
-                required={question.required}
-                rows={3}
-                maxLength={1000}
-                value={form.answers?.[question.id] ?? ''}
-                onChange={(event) =>
-                  setForm({ ...form, answers: { ...form.answers, [question.id]: event.target.value } })
-                }
-              />
-            </label>
+            <GuildQuestionInput
+              key={question.id}
+              question={question}
+              value={form.answers?.[question.id]}
+              onChange={(value) => setForm({ ...form, answers: { ...form.answers, [question.id]: value } })}
+            />
           ))}
           <button type="submit" disabled={saving}>
             {saving ? 'Submitting…' : 'Submit application'}

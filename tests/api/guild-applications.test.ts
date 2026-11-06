@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET, POST, LIST, REVIEW } from '../../src/modules/guilds/server/applications';
+import { canonicalGuildQuestions, guildQuestionVersion } from '../../src/modules/guilds/question-fields';
 
 const { session, linkedPlayer, request, redis } = vi.hoisted(() => ({
   session: vi.fn(),
@@ -18,16 +19,23 @@ const req = (body?: unknown, query = {}) => ({
   headers: { cookie: 'dashboard_session=test', origin: 'http://localhost', host: 'localhost' },
   body,
 });
+const defaultQuestion = {
+  id: '915c1a9c-13a6-4eef-833b-121c513f9a5a',
+  label: 'Why would you like to join?',
+  required: true,
+  type: 'longText' as const,
+};
 const input = {
+  answers: { [defaultQuestion.id]: 'I would like to help build and gather.' },
+  questionVersion: guildQuestionVersion([defaultQuestion]),
+};
+const id = createHash('sha256').update('2:discord-user').digest('hex');
+const application = {
   playStyle: 'Both',
   timezone: 'US Eastern',
   availability: 'Weekday evenings',
   experience: 'Explorer and builder',
   message: 'I would like to help build and gather.',
-};
-const id = createHash('sha256').update('2:discord-user').digest('hex');
-const application = {
-  ...input,
   id,
   discordId: 'discord-user',
   discordName: 'Discord Survivor',
@@ -51,11 +59,61 @@ beforeEach(() => {
     requirements: 'Be friendly',
     contact: '',
     published: true,
+    applicationQuestions: [defaultQuestion],
   });
   redis.eval.mockResolvedValue(1);
 });
 
 describe('guild applications', () => {
+  it('requires an owner-configured form and validates typed answers on the server', async () => {
+    redis.get.mockResolvedValue({ guildName: 'No form', requirements: 'Be friendly', contact: '', published: true });
+    await expect(POST(req({ answers: {}, questionVersion: '[]' }), {})).rejects.toMatchObject({
+      code: 'GUILD_APPLICATION_NOT_CONFIGURED',
+    });
+    const questions = [
+      { ...defaultQuestion, type: 'timezone' as const },
+      {
+        ...defaultQuestion,
+        id: '925c1a9c-13a6-4eef-833b-121c513f9a5a',
+        type: 'dropdown' as const,
+        options: ['PvE', 'PvP'],
+      },
+      { ...defaultQuestion, id: '935c1a9c-13a6-4eef-833b-121c513f9a5a', type: 'checkbox' as const },
+      { ...defaultQuestion, id: '945c1a9c-13a6-4eef-833b-121c513f9a5a', type: 'number' as const },
+    ];
+    redis.get.mockResolvedValue({
+      guildName: 'Custom form',
+      requirements: 'Be friendly',
+      contact: '',
+      published: true,
+      applicationQuestions: questions,
+    });
+    const valid = {
+      questionVersion: guildQuestionVersion(questions),
+      answers: {
+        [questions[0].id]: 'Pacific/Auckland',
+        [questions[1].id]: 'PvE',
+        [questions[2].id]: true,
+        [questions[3].id]: '9007199254740993123',
+      },
+    };
+    for (const [index, value] of [
+      [0, 'Invalid/Zone'],
+      [1, 'Not an option'],
+      [2, 'true'],
+      [3, 'NaN'],
+    ] as const)
+      await expect(
+        POST(req({ ...valid, answers: { ...valid.answers, [questions[index].id]: value } }), {}),
+      ).rejects.toMatchObject({ statusCode: 400, code: 'INVALID_GUILD_APPLICATION_ANSWERS' });
+    const response = await POST(req(valid), {});
+    expect(JSON.parse(response.body).data.customAnswers.map((answer) => answer.answer)).toEqual([
+      'Pacific/Auckland',
+      'PvE',
+      true,
+      '9007199254740993123',
+    ]);
+  });
   it('validates required custom answers and snapshots the server’s question wording', async () => {
     const question = {
       id: '915c1a9c-13a6-4eef-833b-121c513f9a5a',
@@ -63,7 +121,7 @@ describe('guild applications', () => {
       required: true,
     };
     const optional = { id: '925c1a9c-13a6-4eef-833b-121c513f9a5a', label: 'Anything else?', required: false };
-    const customInput = { ...input, questionVersion: JSON.stringify([question, optional]) };
+    const customInput = { answers: {}, questionVersion: guildQuestionVersion([question, optional]) };
     redis.get.mockResolvedValue({
       guildName: 'Crimson Skies',
       requirements: 'Be friendly',
@@ -101,8 +159,8 @@ describe('guild applications', () => {
     );
     const data = JSON.parse(response.body).data;
     expect(data.customAnswers).toEqual([
-      { questionId: question.id, question: question.label, answer: 'Building' },
-      { questionId: optional.id, question: optional.label, answer: '' },
+      { questionId: question.id, question: question.label, type: 'longText', answer: 'Building' },
+      { questionId: optional.id, question: optional.label, type: 'longText', answer: '' },
     ]);
     expect(data.answers).toBeUndefined();
     expect(data.conversationId).toMatch(/^[a-f0-9-]{36}$/);
@@ -134,11 +192,26 @@ describe('guild applications', () => {
     );
     expect(response.status).toBe(201);
     const data = JSON.parse(response.body).data;
-    expect(data).toMatchObject({ ...application, submittedAt: expect.any(Number) });
+    expect(data).toMatchObject({
+      id,
+      discordId: 'discord-user',
+      characterName: 'Survivor',
+      status: 'pending',
+      submittedAt: expect.any(Number),
+    });
+    expect(data.playStyle).toBeUndefined();
+    expect(data.timezone).toBeUndefined();
+    expect(data.message).toBeUndefined();
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('HEXISTS'"),
       ['arrakis:guild-applications:2', 'arrakis:guild-applications-index:2', 'arrakis:guild-requirements:2'],
-      [id, JSON.stringify(data), -data.submittedAt, 90 * 86400, '[]'],
+      [
+        id,
+        JSON.stringify(data),
+        -data.submittedAt,
+        90 * 86400,
+        JSON.stringify(canonicalGuildQuestions([defaultQuestion])),
+      ],
     );
   });
 
@@ -160,16 +233,22 @@ describe('guild applications', () => {
     }
     redis.get.mockResolvedValue({ guildName: 'Closed', requirements: '', contact: '', published: false });
     await expect(POST(req(input), {})).rejects.toMatchObject({ statusCode: 409, code: 'GUILD_NOT_RECRUITING' });
-    redis.get.mockResolvedValue({ guildName: 'Open', requirements: 'Be friendly', contact: '', published: true });
+    redis.get.mockResolvedValue({
+      guildName: 'Open',
+      requirements: 'Be friendly',
+      contact: '',
+      published: true,
+      applicationQuestions: [defaultQuestion],
+    });
     linkedPlayer.mockResolvedValue({ linked: false });
     await expect(POST(req(input), {})).rejects.toMatchObject({ statusCode: 403 });
   });
 
   it('validates answers, IDs, and paging before accessing inbox data', async () => {
     for (const body of [
-      { ...input, message: 'x'.repeat(1501) },
-      { ...input, timezone: '' },
-      { ...input, playStyle: 'anything' },
+      { ...input, answers: { [defaultQuestion.id]: 'x'.repeat(1001) } },
+      { ...input, answers: {} },
+      { ...input, answers: { [defaultQuestion.id]: true } },
     ])
       await expect(POST(req(body), {})).rejects.toMatchObject({ statusCode: 400 });
     await expect(GET(req(undefined, { guildId: '../bad' }), {})).rejects.toMatchObject({ statusCode: 400 });

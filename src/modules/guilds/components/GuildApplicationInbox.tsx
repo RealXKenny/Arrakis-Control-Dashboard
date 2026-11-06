@@ -3,6 +3,7 @@ import { guildRequest } from '../client-api';
 import type { GuildApplication } from '../applications';
 import css from '../styles/requirements.module.css';
 import GuildApplicationChat from './GuildApplicationChat';
+import { formatGuildAnswer } from '../question-fields';
 
 export default function GuildApplicationInbox({ guildId }: { guildId: string }) {
   const [entries, setEntries] = useState<GuildApplication[]>([]);
@@ -84,20 +85,40 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
                   Status: {entry.status} · {new Date(entry.submittedAt).toLocaleString()}
                 </p>
                 <dl className={css.answers}>
-                  <dt>Play style</dt>
-                  <dd>{entry.playStyle}</dd>
-                  <dt>Time zone</dt>
-                  <dd>{entry.timezone}</dd>
-                  <dt>Availability</dt>
-                  <dd>{entry.availability}</dd>
-                  <dt>Experience</dt>
-                  <dd>{entry.experience}</dd>
-                  <dt>Why they want to join</dt>
-                  <dd>{entry.message}</dd>
+                  {entry.playStyle !== undefined && (
+                    <>
+                      <dt>Play style</dt>
+                      <dd>{entry.playStyle}</dd>
+                    </>
+                  )}
+                  {entry.timezone !== undefined && (
+                    <>
+                      <dt>Time zone</dt>
+                      <dd>{entry.timezone}</dd>
+                    </>
+                  )}
+                  {entry.availability !== undefined && (
+                    <>
+                      <dt>Availability</dt>
+                      <dd>{entry.availability}</dd>
+                    </>
+                  )}
+                  {entry.experience !== undefined && (
+                    <>
+                      <dt>Experience</dt>
+                      <dd>{entry.experience}</dd>
+                    </>
+                  )}
+                  {entry.message !== undefined && (
+                    <>
+                      <dt>Why they want to join</dt>
+                      <dd>{entry.message}</dd>
+                    </>
+                  )}
                   {entry.customAnswers?.map((answer) => (
                     <div key={answer.questionId}>
                       <dt>{answer.question}</dt>
-                      <dd>{answer.answer || 'No answer provided'}</dd>
+                      <dd>{formatGuildAnswer(answer.answer)}</dd>
                     </div>
                   ))}
                 </dl>

@@ -1,7 +1,7 @@
 import { runPagesApiHandler } from '../../../../infrastructure/pages-api';
 import { GET, POST } from '../../../../modules/guilds/server/requirements';
 
-export const config = { api: { bodyParser: { sizeLimit: '32kb' } } };
+export const config = { api: { bodyParser: { sizeLimit: '128kb' } } };
 
 export default function handler(req, res) {
   if (req.method === 'POST') return runPagesApiHandler(req, res, 'POST', POST);
