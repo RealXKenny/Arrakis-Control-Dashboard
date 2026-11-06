@@ -139,7 +139,7 @@ test('admin forms paginate players and prefill related actions without raw JSON'
       },
     });
   });
-  await page.goto('/admin?tab=players');
+  await page.goto('/admin?tab=players&advanced=1');
   await page.getByRole('searchbox', { name: 'Find an operation' }).fill('/api/players');
   await page.getByRole('button', { name: /GET List players/ }).click();
   await page.getByLabel(/^Search query/).fill('Scout');
@@ -394,7 +394,7 @@ test('admin reply badges persist and clear only when leader support replies are 
       });
     return route.fulfill({ json: { ok: true, data: { unreadCount: unread() } } });
   });
-  await page.goto('/admin?tab=players');
+  await page.goto('/admin?tab=players&advanced=1');
   const tab = page.getByRole('link', { name: 'Guilds', exact: true });
   const nav = page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Administration' });
   await expect(tab.locator('[data-unread-count="2"]')).toBeVisible();
@@ -448,6 +448,96 @@ test('admin navigation groups sections, syncs the URL and honours browser histor
   const panel = page.getByRole('region', { name: 'Console-only administration' });
   await expect(panel).toContainText('Database');
   await expect(panel.getByRole('link', { name: 'Open Console ↗' })).toHaveAttribute('href', 'https://console.test');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('players screen searches, opens a record, keeps history and confirms moderation in a dialog', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-players': {
+        rows: [{ player_id: '9007199254740993123', character_name: 'Scout', online: true }],
+        hasMore: false,
+      },
+      'get-players-playerid': { character_name: 'Scout', level: 12 },
+      'get-players-playerid-ban': { banned: false },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=players');
+  await page.getByRole('searchbox', { name: 'Search players' }).fill('Sco');
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await expect(page).toHaveURL(/q=Sco/);
+  await page.getByRole('button', { name: 'Open Scout' }).click();
+  await expect(page).toHaveURL(/player=9007199254740993123/);
+  await expect(page.getByRole('heading', { name: 'Scout', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Moderation', exact: true }).click();
+  await expect(page.getByText('Not banned')).toBeVisible();
+  await page.getByRole('button', { name: 'Ban…', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('9007199254740993123');
+  await expect(dialog.getByRole('button', { name: 'Ban player', exact: true })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  expect(calls.some((call) => call.operation === 'post-players-playerid-ban')).toBe(false);
+  await page.getByRole('button', { name: 'Ban…', exact: true }).click();
+  await page.getByRole('dialog').getByRole('textbox').fill('BAN PLAYER');
+  await page.getByRole('dialog').getByRole('button', { name: 'Ban player', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Ban requested.' })).toBeVisible();
+  const ban = calls.find((call) => call.operation === 'post-players-playerid-ban');
+  expect(ban.path.playerId).toBe('9007199254740993123');
+  expect(ban.body.confirmation).toBe('BAN PLAYER');
+  expect(ban.acknowledgement).toBe('POST /api/players/{playerId}/ban');
+  await page.goBack();
+  await page.goBack();
+  await expect(page.getByRole('searchbox', { name: 'Search players' })).toBeVisible();
+  await page.getByRole('link', { name: /Advanced tools/ }).click();
+  await expect(page).toHaveURL(/advanced=1/);
+});
+
+test('vehicles screen shows cargo removal and pending deletions with cancel-safe dialogs', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-vehicles': { rows: [{ vehicle_id: '11', name: 'Sandbike' }], hasMore: false },
+      'get-vehicles-vehicleid-storage': { rows: [{ item_id: '5', name: 'Spice' }] },
+      'get-vehicles-pending-deletes': { rows: [{ vehicle_id: '12', name: 'Buggy' }] },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=vehicles');
+  await page.getByRole('button', { name: 'Open Sandbike' }).click();
+  await page.getByRole('button', { name: 'Cargo', exact: true }).click();
+  await expect(page.getByRole('cell', { name: 'Spice' })).toBeVisible();
+  await page.getByRole('button', { name: 'Empty all cargo…' }).click();
+  await expect(page.getByRole('dialog')).toContainText('cannot be undone');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation.startsWith('delete-'))).toBe(false);
+  await page.goto('/admin?tab=vehicles&view=pending');
+  await expect(page.getByText('queued, not completed')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel deletion' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel deletion' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Cancellation requested.' })).toBeVisible();
+  expect(calls.at(-2)?.operation ?? calls.at(-1)?.operation).toContain('queued-delete');
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

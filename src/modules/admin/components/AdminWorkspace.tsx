@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import PillNav from '../../../components/PillNav';
 import ConsoleOnly from './ConsoleOnly';
+import PlayersScreen from '../screens/PlayersScreen';
+import VehiclesScreen from '../screens/VehiclesScreen';
 import { ADMIN_SECTIONS, adminHref, findAdminTab, tabForOperation } from '../navigation';
 import DashboardShell from '../../../components/DashboardShell';
 import type { AdminOperation } from '../types';
@@ -29,7 +31,9 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
   const supportUnread = useSupportUnread({ admin: true });
   const router = useRouter();
   const { section, tab } = findAdminTab(router.query.tab);
-  const view = tab.kind;
+  const dedicated = tab.kind === 'players' || tab.kind === 'vehicles';
+  const advanced = router.query.advanced === '1';
+  const view = dedicated && advanced ? 'operations' : tab.kind;
   const overview = useAdminOverview(view === 'overview' || view === 'setup');
   const [accessFilter, setAccessFilter] = useState('all');
   const [validFields, setValidFields] = useState(true);
@@ -124,7 +128,8 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
   const urlOperation = typeof router.query.operation === 'string' ? router.query.operation : '';
   useEffect(() => {
     // Browser back/forward and shared links drive the selected tool; the URL is the source of truth.
-    if (!router.isReady || !operations.length || !['operations', 'console'].includes(tab.kind)) return;
+    if (!router.isReady || !operations.length || !['operations', 'console', 'players', 'vehicles'].includes(tab.kind))
+      return;
     const inTab = (entry: AdminOperation) => tab.groups.includes(entry.group);
     const wanted = operations.find((entry) => entry.id === urlOperation && inTab(entry));
     if (wanted) {
@@ -314,6 +319,21 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
       )}
       {!loading && view === 'reference' && <ApiReference operations={operations} onSelect={select} />}
       {!loading && view === 'guilds' && <GuildOversight operations={operations} onSelect={select} />}
+      {!loading && view === 'players' && <PlayersScreen operations={operations} />}
+      {!loading && view === 'vehicles' && <VehiclesScreen operations={operations} />}
+      {!loading && dedicated && (
+        <p className={css.advancedLink}>
+          <Link
+            href={{ pathname: '/admin', query: advanced ? { tab: tab.id } : { tab: tab.id, advanced: '1' } }}
+            shallow
+            scroll={false}
+          >
+            {advanced
+              ? `← Back to the ${tab.label.toLowerCase()} manager`
+              : 'Advanced tools: every API operation for this area'}
+          </Link>
+        </p>
+      )}
       {!loading && view === 'console' && <ConsoleOnly operations={operations} consoleOrigin={consoleOrigin} />}
       {loading ? (
         <p role="status">Loading administration…</p>

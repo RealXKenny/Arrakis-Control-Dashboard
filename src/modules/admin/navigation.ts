@@ -2,7 +2,8 @@ import type { AdminOperation } from './types';
 
 /** Browser-safe map from the administration catalog to grouped sections and tabs. */
 
-export type AdminTabKind = 'overview' | 'guilds' | 'setup' | 'reference' | 'console' | 'operations';
+export type AdminTabKind =
+  'overview' | 'guilds' | 'setup' | 'reference' | 'console' | 'operations' | 'players' | 'vehicles';
 export type AdminTab = {
   id: string;
   label: string;
@@ -41,7 +42,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'players',
         label: 'Players',
-        kind: 'operations',
+        kind: 'players',
         groups: ['Players'],
         summary: 'Profiles, inventories, moderation and player actions.',
       },
@@ -75,7 +76,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'vehicles',
         label: 'Vehicles',
-        kind: 'operations',
+        kind: 'vehicles',
         groups: ['Vehicles'],
         summary: 'Owned and stored vehicles, access and cargo.',
       },
@@ -220,6 +221,9 @@ export function tabForOperation(operation: Pick<AdminOperation, 'group'>) {
 
 export function adminHref(tab: string, operation?: string) {
   const params = new URLSearchParams({ tab });
-  if (operation) params.set('operation', operation);
+  if (operation) {
+    params.set('operation', operation);
+    params.set('advanced', '1');
+  }
   return `/admin?${params.toString()}`;
 }

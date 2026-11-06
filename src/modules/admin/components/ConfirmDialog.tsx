@@ -1,0 +1,93 @@
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import css from '../styles/admin.module.css';
+
+/** Modal confirmation: states the target and consequences, optionally requires a typed phrase. */
+export default function ConfirmDialog({
+  title,
+  target,
+  consequences,
+  phrase,
+  confirmLabel,
+  danger = true,
+  children,
+  onCancel,
+  onConfirm,
+}: {
+  title: string;
+  target: string;
+  consequences: string[];
+  phrase?: string;
+  confirmLabel: string;
+  danger?: boolean;
+  children?: ReactNode;
+  onCancel: () => void;
+  onConfirm: () => Promise<unknown>;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState('');
+  useEffect(() => {
+    const dialog = ref.current;
+    if (dialog && !dialog.open) dialog.showModal();
+    return () => dialog?.close();
+  }, []);
+  async function submit() {
+    setBusy(true);
+    setFailure('');
+    try {
+      await onConfirm();
+    } catch (error) {
+      // An uncertain outcome is never retried automatically.
+      setFailure(`${(error as Error).message} Check the current state before trying again.`);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <dialog
+      ref={ref}
+      className={css.dialog}
+      aria-labelledby="admin-dialog-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!busy) onCancel();
+      }}
+    >
+      <h2 id="admin-dialog-title">{title}</h2>
+      <p className={css.dialogTarget}>
+        Target: <strong>{target}</strong>
+      </p>
+      <ul>
+        {consequences.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+      {children}
+      {phrase && (
+        <label className={css.field}>
+          Type <code>{phrase}</code> to continue
+          <input autoComplete="off" value={typed} onChange={(event) => setTyped(event.target.value)} />
+        </label>
+      )}
+      {failure && (
+        <p role="alert" className={css.error}>
+          {failure}
+        </p>
+      )}
+      <div className={css.actions}>
+        <button type="button" onClick={onCancel} disabled={busy}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className={danger ? css.danger : undefined}
+          disabled={busy || (phrase !== undefined && typed !== phrase)}
+          onClick={() => void submit()}
+        >
+          {busy ? 'Working…' : confirmLabel}
+        </button>
+      </div>
+    </dialog>
+  );
+}
