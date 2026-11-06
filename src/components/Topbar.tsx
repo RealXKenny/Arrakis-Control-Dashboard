@@ -1,6 +1,7 @@
 'use client';
 
 import UnreadBadge from './UnreadBadge';
+import { pillClass } from './PillNav';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -111,7 +112,7 @@ export default function Topbar({
                             aria-current={active ? 'page' : undefined}
                             aria-label={item.unreadCount ? item.label : undefined}
                             aria-description={item.unreadCount ? `${item.unreadCount} unread messages` : undefined}
-                            className={`inline-flex min-h-9 items-center rounded-full border px-3 py-1.5 text-[11px] font-medium whitespace-nowrap no-underline transition-colors ${active ? 'border-indigo-500/20 bg-indigo-500/10 text-indigo-300' : 'border-transparent text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}`}
+                            className={pillClass(Boolean(active))}
                           >
                             {item.label}
                             <UnreadBadge count={item.unreadCount ?? 0} />

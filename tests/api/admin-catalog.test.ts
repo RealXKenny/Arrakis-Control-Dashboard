@@ -5,6 +5,8 @@ import catalog from '../../src/modules/admin/catalog.json';
 import { POST as execute } from '../../src/modules/admin/server/execute';
 import { POST as upload } from '../../src/modules/admin/server/upload';
 import { responseMock } from '../helpers/response';
+import { tabForOperation } from '../../src/modules/admin/navigation';
+import type { AdminOperation } from '../../src/modules/admin/types';
 
 const { fetcher } = vi.hoisted(() => ({ fetcher: vi.fn() }));
 vi.mock('../../src/config/env', () => ({
@@ -130,12 +132,24 @@ it.each(catalog)('$method $route — $title', async (operation) => {
 
 afterAll(() => {
   mkdirSync('test-results', { recursive: true });
-  const rows = catalog.map(
-    (entry) =>
-      `| ${entry.method} | ${entry.route} | ${entry.title.replaceAll('|', '/')} | ${entry.parameters.replaceAll('|', '/')} | ${passed.get(entry.id) ?? 'Failed or not completed'} |`,
-  );
+  const cell = (value: string) => value.replaceAll('|', '/');
+  const rows = (catalog as AdminOperation[]).map((entry) => {
+    const owner = tabForOperation(entry);
+    const screen = owner ? `${owner.section.label} › ${owner.tab.label}` : 'UNMAPPED';
+    const credential = entry.provider === 'adapter' ? 'ADAPTER_TOKEN (bound actor)' : 'ADMIN_CONSOLE_API_KEY';
+    const params = entry.pathParameters.length ? `path: ${entry.pathParameters.join(', ')}` : 'no path parameters';
+    const interfaceKind = entry.restriction
+      ? 'Console handoff, no form'
+      : entry.mode === 'json'
+        ? 'Typed form and result table'
+        : `Typed form, ${entry.mode} transport`;
+    const gap = entry.restriction
+      ? `Console-only: ${entry.restriction}`
+      : 'Live support not verified without deployment credentials';
+    return `| ${entry.method} | ${entry.route} | ${cell(entry.title)} | ${screen} | ${credential} | ${params}; ${cell(entry.parameters)} | ${entry.mode} | ${interfaceKind} | ${passed.get(entry.id) ?? 'Failed or not completed'} | ${cell(gap)} |`;
+  });
   writeFileSync(
     'test-results/admin-api-report.md',
-    `# Administrative API contract report\n\n${passed.size}/${catalog.length} catalog entries verified.\n\nTests use mocked Console responses and synthetic parameters. They verify routing, methods, credentials, restrictions, redaction, uploads, downloads, and event streams. They do not certify live Console business rules, installed capabilities, or key scopes, and do not mutate a live game server.\n\n| Method | Route | Purpose | Parameters | Result |\n| --- | --- | --- | --- | --- |\n${rows.join('\n')}\n`,
+    `# Administrative API contract report and coverage matrix\n\n${passed.size}/${catalog.length} catalog entries verified.\n\nTests use mocked Console responses and synthetic parameters. They verify routing, methods, credentials, restrictions, redaction, uploads, downloads, and event streams. They do not certify live Console business rules, installed capabilities, or key scopes, and do not mutate a live game server.\n\n| Method | Route | Purpose | Navigation screen | Credential | Parameters | Transport | Interface | Verification | Gap or restriction |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n${rows.join('\n')}\n`,
   );
 });

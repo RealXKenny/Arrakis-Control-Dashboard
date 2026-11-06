@@ -8,6 +8,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
+- Grouped administration navigation (six sections, tabs, breadcrumbs, URL/back-forward state, shared `PillNav`), a Console-only handoff screen, and an operation coverage matrix in the generated API report.
 - Added an admin control-center overview with API-backed server health, CPU/memory, player/guild/base/vehicle/map/backup statistics, service status, session trends, and per-source response times. Added Setup & connections diagnostics, a searchable complete API reference, and operation purpose/credential/behavior guides. Missing data and scope failures remain visible without hiding successful readings.
 
 - Added persistent unread admin-message badges to My Guild and unread leader-reply badges to administration, Guild oversight, and individual guilds. Counts clear only when the relevant support messages are viewed.

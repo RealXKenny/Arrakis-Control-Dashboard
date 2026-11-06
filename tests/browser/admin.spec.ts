@@ -90,7 +90,9 @@ test('admin overview shows live statistics, trends and connection setup on deskt
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/admin-control-center-mobile.png', fullPage: true });
-  await page.getByRole('button', { name: 'Setup & connections', exact: true }).click();
+  await page.getByRole('link', { name: 'Configuration & advanced', exact: true }).click();
+  await page.getByRole('link', { name: 'Setup & connections', exact: true }).click();
+  await expect(page).toHaveURL(/tab=setup/);
   const setup = page.getByRole('region', { name: 'Administration setup', exact: true });
   await expect(setup.getByRole('heading', { name: 'Setup checklist', exact: true })).toBeVisible();
   await expect(setup).toContainText('ADMIN_CONSOLE_API_KEY');
@@ -102,8 +104,7 @@ test('admin API reference explains and opens tools while retaining write confirm
   await page.route('**/api/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
-  await page.goto('/admin');
-  await page.getByRole('button', { name: 'API reference', exact: true }).click();
+  await page.goto('/admin?tab=reference');
   const reference = page.getByRole('region', { name: 'Administration API reference', exact: true });
   await reference.getByRole('combobox', { name: 'Feature group', exact: true }).selectOption('Guilds');
   await reference.getByRole('combobox', { name: 'HTTP method', exact: true }).selectOption('DELETE');
@@ -138,8 +139,7 @@ test('admin forms paginate players and prefill related actions without raw JSON'
       },
     });
   });
-  await page.goto('/admin');
-  await page.getByRole('button', { name: 'Operations', exact: true }).click();
+  await page.goto('/admin?tab=players');
   await page.getByRole('searchbox', { name: 'Find an operation' }).fill('/api/players');
   await page.getByRole('button', { name: /GET List players/ }).click();
   await page.getByLabel(/^Search query/).fill('Scout');
@@ -249,8 +249,7 @@ test('admin guild oversight inspects conversations, messages leaders and prepare
     messages.push(message);
     return route.fulfill({ json: { ok: true, data: message } });
   });
-  await page.goto('/admin');
-  await page.getByRole('button', { name: 'Guild oversight', exact: true }).click();
+  await page.goto('/admin?tab=guild-oversight');
   await page.getByRole('button', { name: /Crimson Skies/ }).click();
   const guild = page.getByRole('region', { name: 'Managing Crimson Skies', exact: true });
   await expect(guild.getByRole('cell', { name: 'Scout', exact: true })).toBeVisible();
@@ -294,9 +293,8 @@ test('administrator can browse operations, read data, and review changes on desk
       json: { ok: true, upstreamStatus: 200, data: { rows: [{ name: 'Example player', online: true }] } },
     });
   });
-  await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Your server. Under control.' })).toBeVisible();
-  await page.getByRole('button', { name: 'Operations', exact: true }).click();
+  await page.goto('/admin?tab=server');
+  await expect(page.getByRole('heading', { name: 'Server', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Run read', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Example player' })).toBeVisible();
   expect(submitted[0].operation).toBe('get-server-status');
@@ -314,6 +312,7 @@ test('administrator can browse operations, read data, and review changes on desk
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: 'test-results/admin-mobile.png', fullPage: true });
+  await page.goto('/admin?tab=console');
   await page.getByRole('searchbox', { name: 'Find an operation' }).fill('/api/settings/api-keys');
   await page.getByRole('button', { name: /POST Create a key/ }).click();
   await expect(page.getByRole('status').filter({ hasText: /browser session/ })).toBeVisible();
@@ -395,9 +394,9 @@ test('admin reply badges persist and clear only when leader support replies are 
       });
     return route.fulfill({ json: { ok: true, data: { unreadCount: unread() } } });
   });
-  await page.goto('/admin');
-  const tab = page.getByRole('button', { name: 'Guild oversight', exact: true });
-  const nav = page.getByRole('link', { name: 'Administration', exact: true });
+  await page.goto('/admin?tab=players');
+  const tab = page.getByRole('link', { name: 'Guilds', exact: true });
+  const nav = page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Administration' });
   await expect(tab.locator('[data-unread-count="2"]')).toBeVisible();
   await expect(nav.locator('[data-unread-count="2"]')).toBeVisible();
   await page.reload();
@@ -417,4 +416,38 @@ test('admin reply badges persist and clear only when leader support replies are 
   await page.reload();
   await expect(tab).toBeVisible();
   await expect(tab.locator('[data-unread-count]')).toHaveCount(0);
+});
+
+test('admin navigation groups sections, syncs the URL and honours browser history', async ({ page, context }) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({
+      json: { ok: true, operations, configured: true, adapterConfigured: true, consoleOrigin: 'https://console.test' },
+    }),
+  );
+  await page.goto('/admin');
+  const sections = page.getByRole('navigation', { name: 'Administration sections' });
+  for (const name of [
+    'Control center',
+    'Players & community',
+    'Game assets',
+    'World & economy',
+    'Operations',
+    'Configuration & advanced',
+  ])
+    await expect(sections.getByRole('link', { name, exact: true })).toBeVisible();
+  await sections.getByRole('link', { name: 'World & economy', exact: true }).click();
+  await page.getByRole('link', { name: 'Market', exact: true }).click();
+  await expect(page).toHaveURL(/tab=market/);
+  await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText('World & economy');
+  await expect(page.getByRole('region', { name: 'Selected operation' })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/tab=maps/);
+  await expect(page.getByRole('heading', { name: 'Maps & worlds', exact: true })).toBeVisible();
+  await page.goto('/admin?tab=console');
+  const panel = page.getByRole('region', { name: 'Console-only administration' });
+  await expect(panel).toContainText('Database');
+  await expect(panel.getByRole('link', { name: 'Open Console ↗' })).toHaveAttribute('href', 'https://console.test');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

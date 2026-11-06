@@ -854,3 +854,41 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  color: var(--theme-muted);
+  font-size: 12px;
+}
+.breadcrumb a {
+  color: var(--theme-soft);
+  text-decoration: none;
+}
+.breadcrumb a:hover,
+.breadcrumb a:focus-visible {
+  color: var(--theme-accent);
+}
+.breadcrumb [aria-current='page'] {
+  color: var(--theme-text);
+}
+.sectionNav {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 24px;
+  min-width: 0;
+}
+.workspaceNarrow {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .workspaceNarrow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

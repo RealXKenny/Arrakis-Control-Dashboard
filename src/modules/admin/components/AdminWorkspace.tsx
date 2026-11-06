@@ -1,7 +1,10 @@
 import useSupportUnread from '../../guilds/hooks/useSupportUnread';
-import UnreadBadge from '../../../components/UnreadBadge';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
+import PillNav from '../../../components/PillNav';
+import ConsoleOnly from './ConsoleOnly';
+import { ADMIN_SECTIONS, adminHref, findAdminTab, tabForOperation } from '../navigation';
 import DashboardShell from '../../../components/DashboardShell';
 import type { AdminOperation } from '../types';
 import AdminOverviewPanel from './AdminOverviewPanel';
@@ -24,9 +27,10 @@ function objectInput(text: string): Record<string, unknown> {
 export default function AdminWorkspace({ accountName }: { accountName: string }) {
   const [operations, setOperations] = useState<AdminOperation[]>([]);
   const supportUnread = useSupportUnread({ admin: true });
-  const [view, setView] = useState<'overview' | 'operations' | 'guilds' | 'setup' | 'reference'>('overview');
+  const router = useRouter();
+  const { section, tab } = findAdminTab(router.query.tab);
+  const view = tab.kind;
   const overview = useAdminOverview(view === 'overview' || view === 'setup');
-  const [showFeatures, setShowFeatures] = useState(false);
   const [accessFilter, setAccessFilter] = useState('all');
   const [validFields, setValidFields] = useState(true);
   const [fieldRevision, setFieldRevision] = useState(0);
@@ -59,9 +63,6 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
         setConfigured(data.configured);
         setAdapterConfigured(data.adapterConfigured === true);
         setConsoleOrigin(data.consoleOrigin);
-        setOperation(
-          data.operations.find((entry: AdminOperation) => entry.id === 'get-server-status') ?? data.operations[0],
-        );
       })
       .catch((failure) => {
         if (!controller.signal.aborted) setError(failure.message);
@@ -75,8 +76,9 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
     };
   }, []);
 
-  const groups = ['All operations', ...new Set(operations.map((entry) => entry.group))];
-  const filtered = operations.filter(
+  const tabOperations = operations.filter((entry) => tab.groups.includes(entry.group));
+  const groups = ['All operations', ...tab.groups];
+  const filtered = tabOperations.filter(
     (entry) =>
       (group === 'All operations' || entry.group === group) &&
       (accessFilter === 'all' || (accessFilter === 'supported' ? !entry.restriction : !!entry.restriction)) &&
@@ -94,8 +96,14 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
 
   function select(next: AdminOperation, context: Record<string, string> = {}) {
     if (busy) return;
+    const owner = tabForOperation(next);
+    const href = adminHref(owner?.tab.id ?? tab.id, next.id);
+    apply(next, context);
+    void router.push(href, undefined, { shallow: true, scroll: false });
+  }
+
+  function apply(next: AdminOperation, context: Record<string, string> = {}) {
     setOperation(next);
-    setView('operations');
     setValidFields(true);
     setFieldRevision((value) => value + 1);
     if (Object.keys(context).length) setGroup(next.group);
@@ -112,6 +120,25 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
     setStatus('');
     setTruncated(false);
   }
+
+  const urlOperation = typeof router.query.operation === 'string' ? router.query.operation : '';
+  useEffect(() => {
+    // Browser back/forward and shared links drive the selected tool; the URL is the source of truth.
+    if (!router.isReady || !operations.length || !['operations', 'console'].includes(tab.kind)) return;
+    const inTab = (entry: AdminOperation) => tab.groups.includes(entry.group);
+    const wanted = operations.find((entry) => entry.id === urlOperation && inTab(entry));
+    if (wanted) {
+      if (wanted.id !== operation?.id) apply(wanted);
+    } else if (!operation || !inTab(operation)) {
+      const first = operations.find((entry) => inTab(entry) && !entry.restriction) ?? operations.find(inTab);
+      if (first) apply(first);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady, urlOperation, tab.id, operations]);
+  useEffect(() => {
+    setGroup('All operations');
+    setSearch('');
+  }, [tab.id]);
 
   async function run(queryOverride?: Record<string, unknown>) {
     if (!operation || busy || blocked || !validFields) return;
@@ -238,78 +265,40 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
     >
       <header className={css.header}>
         <div>
-          <p>Administration</p>
-          <h1>Your server. Under control.</h1>
-          <span>Inspect data, manage operations, and review changes from one workspace.</span>
+          <nav aria-label="Breadcrumb" className={css.breadcrumb}>
+            <Link href={adminHref('overview')} shallow>
+              Administration
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span>{section.label}</span>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{tab.label}</span>
+          </nav>
+          <h1>{tab.label}</h1>
+          <span>{tab.summary}</span>
         </div>
         <span className={css.access}>Administrator access</span>
       </header>
-      <div className={css.metrics}>
-        <article>
-          <strong>{operations.length || '—'}</strong>
-          <span>Documented operations</span>
-        </article>
-        <article>
-          <strong>{operations.filter((entry) => !entry.restriction).length || '—'}</strong>
-          <span>API-key compatible</span>
-        </article>
-        <article>
-          <strong>{operations.filter((entry) => entry.restriction).length || '—'}</strong>
-          <span>Restricted or planned</span>
-        </article>
+      <div className={css.sectionNav}>
+        <PillNav
+          label="Administration sections"
+          items={ADMIN_SECTIONS.map((entry) => ({
+            label: entry.label,
+            href: adminHref(entry.tabs[0].id),
+            active: entry.id === section.id,
+            unreadCount: entry.id === 'community' ? supportUnread.total : 0,
+          }))}
+        />
+        <PillNav
+          label={`${section.label} pages`}
+          items={section.tabs.map((entry) => ({
+            label: entry.label,
+            href: adminHref(entry.id),
+            active: entry.id === tab.id,
+            unreadCount: entry.kind === 'guilds' ? supportUnread.total : 0,
+          }))}
+        />
       </div>
-      <nav className={css.viewTabs} aria-label="Administration sections">
-        <button aria-pressed={view === 'overview'} disabled={busy} onClick={() => setView('overview')}>
-          Overview
-        </button>
-        <button aria-pressed={view === 'operations'} disabled={busy} onClick={() => setView('operations')}>
-          Operations
-        </button>
-        <button
-          aria-label="Guild oversight"
-          aria-pressed={view === 'guilds'}
-          disabled={busy}
-          onClick={() => setView('guilds')}
-        >
-          Guild oversight <UnreadBadge count={supportUnread.total} />
-        </button>
-        <button aria-pressed={view === 'reference'} disabled={busy} onClick={() => setView('reference')}>
-          API reference
-        </button>
-        <button aria-pressed={view === 'setup'} disabled={busy} onClick={() => setView('setup')}>
-          Setup & connections
-        </button>
-        <button aria-expanded={showFeatures} onClick={() => setShowFeatures(!showFeatures)}>
-          Browse features
-        </button>
-      </nav>
-      {showFeatures && (
-        <nav className={css.featureGrid} aria-label="Admin features">
-          {groups
-            .filter((name) => name !== 'All operations')
-            .map((name) => (
-              <button
-                key={name}
-                disabled={busy}
-                onClick={() => {
-                  setGroup(name);
-                  setSearch('');
-                  setView('operations');
-                  setShowFeatures(false);
-                  const first =
-                    operations.find((entry) => entry.group === name && !entry.restriction) ??
-                    operations.find((entry) => entry.group === name);
-                  if (first) select(first);
-                }}
-              >
-                <strong>{name}</strong>
-                <span>
-                  {operations.filter((entry) => entry.group === name && !entry.restriction).length} supported tools
-                </span>
-              </button>
-            ))}
-        </nav>
-      )}
       {!loading && (view === 'overview' || view === 'setup') && (
         <AdminOverviewPanel
           data={overview.data}
@@ -319,37 +308,40 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
           setupOnly={view === 'setup'}
           operations={operations}
           onSelect={select}
-          onSetup={() => setView('setup')}
+          onSetup={() => void router.push(adminHref('setup'), undefined, { shallow: true, scroll: false })}
           onRefresh={overview.refresh}
         />
       )}
       {!loading && view === 'reference' && <ApiReference operations={operations} onSelect={select} />}
       {!loading && view === 'guilds' && <GuildOversight operations={operations} onSelect={select} />}
+      {!loading && view === 'console' && <ConsoleOnly operations={operations} consoleOrigin={consoleOrigin} />}
       {loading ? (
         <p role="status">Loading administration…</p>
-      ) : view === 'operations' ? (
-        <div className={css.workspace}>
-          <aside className={css.sidebar} aria-label="API categories">
-            <h2>Browse categories</h2>
-            {groups.map((name) => (
-              <button
-                key={name}
-                aria-pressed={name === group}
-                disabled={busy}
-                onClick={() => {
-                  setGroup(name);
-                  setSearch('');
-                }}
-              >
-                {name}
-                <span>
-                  {name === 'All operations'
-                    ? operations.length
-                    : operations.filter((entry) => entry.group === name).length}
-                </span>
-              </button>
-            ))}
-          </aside>
+      ) : view === 'operations' || view === 'console' ? (
+        <div className={groups.length > 2 ? css.workspace : css.workspaceNarrow}>
+          {groups.length > 2 && (
+            <aside className={css.sidebar} aria-label="API categories">
+              <h2>Browse categories</h2>
+              {groups.map((name) => (
+                <button
+                  key={name}
+                  aria-pressed={name === group}
+                  disabled={busy}
+                  onClick={() => {
+                    setGroup(name);
+                    setSearch('');
+                  }}
+                >
+                  {name}
+                  <span>
+                    {name === 'All operations'
+                      ? tabOperations.length
+                      : operations.filter((entry) => entry.group === name).length}
+                  </span>
+                </button>
+              ))}
+            </aside>
+          )}
           <section className={css.operations} aria-label="Console operations">
             <label className={css.search}>
               Find an operation
