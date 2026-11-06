@@ -4,6 +4,7 @@ import css from '../styles/requirements.module.css';
 import GuildListingCard from './GuildListingCard';
 import GuildApplicationInbox from './GuildApplicationInbox';
 import GuildQuestionEditor from './GuildQuestionEditor';
+import useApplicationStatuses from '../hooks/useApplicationStatuses';
 import listings from '../styles/listings.module.css';
 
 async function read(response: Response) {
@@ -63,6 +64,8 @@ export default function GuildRequirements({
       cancelled = true;
     };
   }, [settings, guildId, guildName, page, reload]);
+
+  const { statuses, update } = useApplicationStatuses(settings ? [] : entries.map((entry) => entry.guildId));
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -194,7 +197,7 @@ export default function GuildRequirements({
           )}
           <div className={listings.grid}>
             {entries.map((entry) => (
-              <GuildListingCard key={entry.guildId} entry={entry} />
+              <GuildListingCard key={entry.guildId} entry={entry} summary={statuses[entry.guildId]} onUpdate={update} />
             ))}
           </div>
           <nav className={css.paging} aria-label="Guild listing pages">

@@ -17,6 +17,8 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Changed
 
+- Existing applications show Check status and Chat with reviewer on guild cards, with a persistent unread reply badge that clears when messages are viewed.
+
 - Refreshed Guilds listings with larger logo tiles, recruiting badges, compact requirement previews, question counts, and aligned actions. Details and applications expand across the row for easier reading on desktop and mobile.
 
 ### Security

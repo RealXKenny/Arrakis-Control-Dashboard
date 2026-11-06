@@ -262,3 +262,33 @@ section.directory {
     transition: none;
   }
 }
+
+.chatButton {
+  position: relative;
+}
+.unreadBadge {
+  position: absolute;
+  top: -9px;
+  right: -7px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #dc2626;
+  color: white;
+  border: 2px solid var(--panel-bg, #171717);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.detailLink {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  text-decoration: underline;
+  padding: 4px 0;
+  cursor: pointer;
+  font-size: 12px;
+}

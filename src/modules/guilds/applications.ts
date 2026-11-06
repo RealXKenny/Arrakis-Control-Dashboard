@@ -42,6 +42,12 @@ export const guildApplicationReviewSchema = z.object({
 });
 export type GuildApplicationInput = z.infer<typeof guildApplicationInputSchema>;
 export type GuildApplication = z.infer<typeof guildApplicationSchema>;
+export const guildApplicationSummarySchema = z.object({
+  id: z.string().regex(/^[a-f0-9]{64}$/),
+  status: z.enum(['pending', 'accepted', 'declined']),
+  unreadCount: z.number().int().min(0).max(100),
+});
+export type GuildApplicationSummary = z.infer<typeof guildApplicationSummarySchema>;
 
 export const guildChatInputSchema = z.object({ clientMessageId: z.uuid(), text: z.string().trim().min(1).max(1000) });
 export const guildChatMessageSchema = z.object({

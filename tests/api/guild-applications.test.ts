@@ -283,7 +283,7 @@ describe('guild applications', () => {
     redis.eval.mockResolvedValue('removed');
     expect(JSON.parse((await REVIEW(req({ applicationId: id, status: 'remove' }), {})).body).data).toBeNull();
     expect(redis.eval).toHaveBeenLastCalledWith(
-      expect.stringContaining("redis.call('DEL', KEYS[3]"),
+      expect.stringContaining("redis.call('DEL', chatKey"),
       ['arrakis:guild-applications:2', 'arrakis:guild-applications-index:2', `arrakis:guild-chat:2:${id}`],
       [id, 'remove'],
     );

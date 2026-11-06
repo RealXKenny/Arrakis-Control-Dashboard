@@ -28,7 +28,10 @@ async function removeGuildStorage(guildId: string) {
     local apps = redis.call('HGETALL', KEYS[4])
     for i = 1, #apps, 2 do
       local valid, application = pcall(cjson.decode, apps[i + 1])
-      if valid then redis.call('DEL', ARGV[2] .. apps[i] .. ':' .. (application.conversationId or tostring(application.submittedAt))) end
+      if valid then
+        local chatKey = ARGV[2] .. apps[i] .. ':' .. (application.conversationId or tostring(application.submittedAt))
+        redis.call('DEL', chatKey, chatKey .. ':seen')
+      end
     end
     redis.call('DEL', KEYS[1], KEYS[3], KEYS[4], KEYS[5])
     redis.call('ZREM', KEYS[2], ARGV[1])

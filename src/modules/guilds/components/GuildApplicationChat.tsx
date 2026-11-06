@@ -7,10 +7,14 @@ export default function GuildApplicationChat({
   guildId,
   applicationId,
   title,
+  markRead = false,
+  onUnreadCount,
 }: {
   guildId: string;
   applicationId: string;
   title: string;
+  markRead?: boolean;
+  onUnreadCount?: (count: number) => void;
 }) {
   const [messages, setMessages] = useState<GuildChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -21,6 +25,11 @@ export default function GuildApplicationChat({
   const [sendError, setSendError] = useState('');
   const [reload, setReload] = useState(0);
   const revision = useRef(0);
+  const unreadCallback = useRef(onUnreadCount);
+  useEffect(() => {
+    unreadCallback.current = onUnreadCount;
+  }, [onUnreadCount]);
+  const acknowledged = useRef(new Set<string>());
   const pending = useRef<{ text: string; id: string } | null>(null);
   const sendController = useRef<AbortController | null>(null);
   const log = useRef<HTMLOListElement>(null);
@@ -84,6 +93,54 @@ export default function GuildApplicationChat({
   useEffect(() => {
     if (log.current && follow.current) log.current.scrollTop = log.current.scrollHeight;
   }, [messages]);
+
+  useEffect(() => {
+    if (!markRead || !log.current) return;
+    const controller = new AbortController();
+    const element = log.current;
+    let visible = false;
+    let reading = false;
+    async function read() {
+      if (reading || !visible || document.hidden || !follow.current || controller.signal.aborted) return;
+      const pending = messages.filter(
+        (message) => message.role === 'reviewer' && !acknowledged.current.has(message.senderId + ':' + message.id),
+      );
+      if (!pending.length) return;
+      reading = true;
+      try {
+        const data = await guildRequest(
+          url + '/read',
+          { messages: pending.map(({ id, senderId }) => ({ id, senderId })) },
+          AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
+        );
+        if (!controller.signal.aborted) {
+          pending.forEach((message) => acknowledged.current.add(message.senderId + ':' + message.id));
+          unreadCallback.current?.(data.unreadCount);
+        }
+      } catch {
+        /* A later chat poll retries the receipt. */
+      } finally {
+        reading = false;
+      }
+    }
+    const observer = new IntersectionObserver((entries) => {
+      visible = entries[0]?.isIntersecting ?? false;
+      void read();
+    });
+    observer.observe(element);
+    element.addEventListener('scroll', read);
+    document.addEventListener('visibilitychange', read);
+    return () => {
+      controller.abort();
+      observer.disconnect();
+      element.removeEventListener('scroll', read);
+      document.removeEventListener('visibilitychange', read);
+    };
+  }, [messages, markRead, url]);
+
+  useEffect(() => {
+    if (markRead) log.current?.scrollIntoView({ block: 'center', behavior: 'auto' });
+  }, [markRead]);
 
   async function send(event: React.FormEvent) {
     event.preventDefault();

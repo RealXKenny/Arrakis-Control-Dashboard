@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GET, POST } from '../../src/modules/guilds/server/chat';
+import { GET, POST, READ } from '../../src/modules/guilds/server/chat';
 
 const { session, linkedPlayer, request, redis } = vi.hoisted(() => ({
   session: vi.fn(),
@@ -55,6 +55,7 @@ beforeEach(() => {
   request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
   redis.eval.mockImplementation(async (script: string, _keys, args) => {
     if (script === "return redis.call('HGET', KEYS[1], ARGV[1])") return JSON.stringify(application);
+    if (script.includes("redis.call('SET', KEYS[2] .. ':seen'")) return 1;
     if (script.includes('RPUSH')) return args[4];
     return [JSON.stringify({ ...message, secret: 'omitted' }), 'invalid JSON'];
   });
@@ -147,5 +148,32 @@ describe('private application chat', () => {
     });
     redis.eval.mockResolvedValue(null);
     await expect(GET(req(), {})).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe('applicant read receipts', () => {
+  it('acknowledges only specified reviewer messages in the current submission and returns remaining unread messages', async () => {
+    const response = await READ(req({ messages: [{ id: messageId, senderId: 'leader' }] }), {});
+    expect(JSON.parse(response.body).data).toEqual({ unreadCount: 1 });
+    const [script, keys, args] = redis.eval.mock.calls[1];
+    expect(keys).toEqual(['arrakis:guild-applications:2', `arrakis:guild-chat:2:${id}:${generation}`]);
+    expect(args).toEqual([id, generation, JSON.stringify(['leader:' + messageId])]);
+    expect(script).toContain('if seen[key] then table.insert(retained, key) end');
+    expect(script).toContain("'EX', ttl");
+  });
+  it('rejects foreign origins, oversized receipts, reviewers and replaced submissions', async () => {
+    await expect(
+      READ({ ...req({ messages: [] }), headers: { origin: 'https://evil.example', host: 'localhost' } }, {}),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    await expect(
+      READ(req({ messages: Array.from({ length: 101 }, () => ({ id: messageId, senderId: 'leader' })) }), {}),
+    ).rejects.toMatchObject({ statusCode: 400 });
+    session.mockResolvedValue({ user: { id: 'reviewer' }, expiresAt: Date.now() + 60000 });
+    await expect(READ(req({ messages: [] }), {})).rejects.toMatchObject({ statusCode: 403 });
+    session.mockResolvedValue({ user: { id: 'discord-user' }, expiresAt: Date.now() + 60000 });
+    redis.eval.mockImplementation(async (script) =>
+      script === "return redis.call('HGET', KEYS[1], ARGV[1])" ? JSON.stringify(application) : null,
+    );
+    await expect(READ(req({ messages: [] }), {})).rejects.toMatchObject({ statusCode: 404 });
   });
 });

@@ -307,11 +307,24 @@ try {
     assert.equal(crossOrigin.status, 403, route);
     await crossOrigin.text();
   }
+  const statusRead = await fetch(`${base}/api/guilds/application-status?guildIds=test`);
+  assert.equal(statusRead.status, 401, 'application summaries require a session');
+  await statusRead.text();
   const chatRoute = `${base}/api/guilds/test/applications/${'a'.repeat(64)}/messages`;
   const chatRead = await fetch(chatRoute, { signal: AbortSignal.timeout(5000) });
   assert.equal(chatRead.status, 401, 'application chat requires a session');
   assert.equal(chatRead.headers.get('Cache-Control'), 'private, no-store, max-age=0');
   await chatRead.text();
+  const receiptWrite = await fetch(chatRoute + '/read', {
+    method: 'POST',
+    headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  assert.equal(receiptWrite.status, 403, 'read receipts reject cross-site writes');
+  await receiptWrite.text();
+  const receiptWrongMethod = await fetch(chatRoute + '/read');
+  assert.equal(receiptWrongMethod.status, 405, 'read receipts require POST');
+  await receiptWrongMethod.text();
   const chatWrite = await fetch(`${chatRoute}/send`, {
     method: 'POST',
     headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },

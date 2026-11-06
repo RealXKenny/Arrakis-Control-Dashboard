@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { guildRequest } from '../client-api';
 import { guildApplicationInputSchema, type GuildApplication, type GuildApplicationInput } from '../applications';
 import css from '../styles/requirements.module.css';
@@ -11,10 +11,18 @@ export default function GuildApplicationForm({
   guildId,
   guildName,
   questions = [],
+  showChat = false,
+  refreshKey = 0,
+  onApplication,
+  onUnreadCount,
 }: {
   guildId: string;
   guildName: string;
   questions?: GuildApplicationQuestion[];
+  showChat?: boolean;
+  refreshKey?: number;
+  onApplication?: (application: GuildApplication | null) => void;
+  onUnreadCount?: (count: number) => void;
 }) {
   const [form, setForm] = useState<GuildApplicationInput>({ answers: {} });
   const [application, setApplication] = useState<GuildApplication | null>(null);
@@ -23,7 +31,10 @@ export default function GuildApplicationForm({
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [reload, setReload] = useState(0);
-  const [chatOpen, setChatOpen] = useState(false);
+  const notify = useRef(onApplication);
+  useEffect(() => {
+    notify.current = onApplication;
+  }, [onApplication]);
   const url = `/api/guilds/${encodeURIComponent(guildId)}/application`;
   useEffect(() => {
     let cancelled = false;
@@ -34,6 +45,7 @@ export default function GuildApplicationForm({
       .then((data) => {
         if (!cancelled) {
           setApplication(data);
+          notify.current?.(data);
           setLoaded(true);
         }
       })
@@ -46,7 +58,7 @@ export default function GuildApplicationForm({
     return () => {
       cancelled = true;
     };
-  }, [url, reload]);
+  }, [url, reload, refreshKey]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -64,7 +76,9 @@ export default function GuildApplicationForm({
     setSaving(true);
     setError('');
     try {
-      setApplication(await guildRequest(url, parsed.data));
+      const saved = await guildRequest(url, parsed.data);
+      setApplication(saved);
+      notify.current?.(saved);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to submit application.');
     } finally {
@@ -74,7 +88,7 @@ export default function GuildApplicationForm({
 
   return (
     <section className={css.application} aria-label={`Application to ${guildName}`}>
-      <h4>Apply to {guildName}</h4>
+      <h4>{application ? `Application to ${guildName}` : `Apply to ${guildName}`}</h4>
       {loading && <p role="status">Checking your application…</p>}
       {error && (
         <p role="alert">
@@ -95,11 +109,14 @@ export default function GuildApplicationForm({
               ))}
             </dl>
           ) : null}
-          <button type="button" aria-expanded={chatOpen} onClick={() => setChatOpen(!chatOpen)}>
-            {chatOpen ? 'Close chat' : 'Chat with reviewer'}
-          </button>
-          {chatOpen && (
-            <GuildApplicationChat guildId={guildId} applicationId={application.id} title="Chat with guild reviewer" />
+          {showChat && (
+            <GuildApplicationChat
+              guildId={guildId}
+              applicationId={application.id}
+              title="Chat with guild reviewer"
+              markRead
+              onUnreadCount={onUnreadCount}
+            />
           )}
         </div>
       )}

@@ -48,6 +48,18 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/session', (route) =>
     route.fulfill({ json: { ok: true, cacheScope: 'a'.repeat(64), expiresAt: Date.now() + 43200000 } }),
   );
+  await page.route('**/api/guilds/application-status?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        data: {
+          applications: Object.fromEntries(
+            (new URL(route.request().url()).searchParams.get('guildIds') ?? '').split(',').map((id) => [id, null]),
+          ),
+        },
+      },
+    }),
+  );
   await page.route('**/api/guilds/*/application', (route) =>
     route.request().method() === 'GET' ? route.fulfill({ json: { ok: true, data: null } }) : route.continue(),
   );
@@ -1018,6 +1030,18 @@ test('guild custom applications and private live chat work across the community 
   let leader = false;
   let application: Record<string, unknown> | null = null;
   let submissions = 0;
+  await page.route('**/api/guilds/application-status?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        data: {
+          applications: {
+            '2': application ? { id: application.id, status: application.status, unreadCount: 0 } : null,
+          },
+        },
+      },
+    }),
+  );
   const listing = {
     guildId: '2',
     guildName: 'Crimson Skies',
@@ -1104,7 +1128,11 @@ test('guild custom applications and private live chat work across the community 
   const messages: Record<string, unknown>[] = [];
   const sendIds: string[] = [];
   let failNextSend = true;
-  await page.route(/\/api\/guilds\/2\/applications\/[a-f0-9]{64}\/messages(?:\/send)?$/, async (route) => {
+  await page.route(/\/api\/guilds\/2\/applications\/[a-f0-9]{64}\/messages(?:\/(?:send|read))?$/, async (route) => {
+    if (route.request().url().endsWith('/read')) {
+      await route.fulfill({ json: { ok: true, data: { unreadCount: 0 } } });
+      return;
+    }
     if (route.request().method() === 'POST') {
       const { text, clientMessageId } = route.request().postDataJSON();
       sendIds.push(clientMessageId);
@@ -1149,7 +1177,7 @@ test('guild custom applications and private live chat work across the community 
   await expect(form.getByText('Your application is pending.', { exact: true })).toBeVisible();
   await expect(form.getByRole('button', { name: 'Submit application' })).toHaveCount(0);
   expect(submissions).toBe(1);
-  await form.getByRole('button', { name: 'Chat with reviewer', exact: true }).click();
+  await page.getByRole('button', { name: 'Chat with reviewer', exact: true }).click();
   const applicantChat = page.getByRole('region', { name: 'Chat with guild reviewer', exact: true });
   await expect(applicantChat.getByText('Live · private conversation', { exact: true })).toBeVisible();
   await applicantChat.getByRole('textbox', { name: 'Message', exact: true }).fill('When can we meet in game?');
@@ -2404,4 +2432,79 @@ test('base storage matches the dark workspace and keeps long container lists usa
   await expect(dialog).toHaveCount(0);
   await expect(card).toBeFocused();
   expect(await page.evaluate(() => document.body.style.overflow)).not.toBe('hidden');
+});
+
+test('guild cards keep status separate from unread reviewer chat across reloads', async ({ page }) => {
+  const id = 'a'.repeat(64);
+  const application = { id, status: 'pending', customAnswers: [] };
+  const messages = [
+    {
+      id: 'a62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      senderId: 'leader',
+      senderName: 'Guild Leader',
+      role: 'reviewer',
+      text: 'Welcome! When can we meet?',
+      sentAt: Date.now(),
+    },
+    {
+      id: 'b62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      senderId: 'leader',
+      senderName: 'Guild Leader',
+      role: 'reviewer',
+      text: 'We have space for you.',
+      sentAt: Date.now(),
+    },
+  ];
+  const seen = new Set<string>();
+  let receiptCalls = 0;
+  const unread = () => messages.filter((message) => !seen.has(message.id)).length;
+  await page.route('**/api/guilds/requirements?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        data: {
+          rows: [{ guildId: '2', guildName: 'Crimson Skies', requirements: 'Be friendly', published: true }],
+          hasMore: false,
+        },
+      },
+    }),
+  );
+  await page.route('**/api/guilds/application-status?*', (route) =>
+    route.fulfill({ json: { ok: true, data: { applications: { '2': { ...application, unreadCount: unread() } } } } }),
+  );
+  await page.route('**/api/guilds/2/application', (route) => route.fulfill({ json: { ok: true, data: application } }));
+  await page.route('**/api/guilds/2/logo?image=1', (route) => route.fulfill({ status: 204 }));
+  await page.route(/\/api\/guilds\/2\/applications\/[a-f0-9]{64}\/messages(?:\/read)?$/, async (route) => {
+    if (route.request().method() === 'POST') {
+      receiptCalls++;
+      for (const message of route.request().postDataJSON().messages) seen.add(message.id);
+      // A reply arriving during acknowledgement must remain unread.
+      if (receiptCalls === 1)
+        messages.push({ ...messages[0], id: 'c62f594e-7a04-47d7-b3f9-94f9abf8aaab', text: 'One more question.' });
+      await route.fulfill({ json: { ok: true, data: { unreadCount: unread() } } });
+    } else await route.fulfill({ json: { ok: true, data: { messages } } });
+  });
+  await page.goto('/portal?view=guild-requirements');
+  const card = page.getByRole('article', { name: 'Crimson Skies', exact: true });
+  await expect(card.getByRole('button', { name: 'Apply to guild', exact: true })).toHaveCount(0);
+  await expect(card.getByLabel('2 unread messages')).toBeVisible();
+  await card.getByRole('button', { name: 'Check status', exact: true }).click();
+  await expect(card.getByText('Your application is pending.', { exact: true })).toBeVisible();
+  expect(receiptCalls).toBe(0);
+  await expect(card.getByLabel('2 unread messages')).toBeVisible();
+  await page.reload();
+  await expect(card.getByLabel('2 unread messages')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await card.screenshot({ path: 'test-results/guild-application-actions-mobile.png' });
+  await card.getByRole('button', { name: /Chat with reviewer/ }).click();
+  await expect(card.getByRole('log')).toContainText('Welcome! When can we meet?');
+  await expect.poll(() => receiptCalls).toBeGreaterThan(0);
+  await expect(card.getByRole('log')).toContainText('One more question.');
+  await expect.poll(unread).toBe(0);
+  await expect(card.getByLabel(/unread messages/)).toHaveCount(0);
+  await page.reload();
+  await expect(card.getByRole('button', { name: 'Chat with reviewer', exact: true })).toBeVisible();
+  await expect(card.getByLabel(/unread messages/)).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

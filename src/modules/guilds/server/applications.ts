@@ -207,7 +207,8 @@ export async function REVIEW(req, res) {
     if not value then return false end
     if ARGV[2] == 'remove' then
       local application = cjson.decode(value)
-      redis.call('DEL', KEYS[3] .. ':' .. (application.conversationId or tostring(application.submittedAt)))
+      local chatKey = KEYS[3] .. ':' .. (application.conversationId or tostring(application.submittedAt))
+      redis.call('DEL', chatKey, chatKey .. ':seen')
       redis.call('HDEL', KEYS[1], ARGV[1])
       redis.call('ZREM', KEYS[2], ARGV[1])
       return 'removed'
