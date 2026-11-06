@@ -73,7 +73,9 @@ export default function ConfirmDialog({
       {children}
       {phrase && (
         <label className={css.field}>
-          Type <code>{phrase}</code> to continue
+          <span>
+            Type <code>{phrase}</code> to continue
+          </span>
           <input autoComplete="off" value={typed} onChange={(event) => setTyped(event.target.value)} />
         </label>
       )}

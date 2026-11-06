@@ -1097,3 +1097,18 @@
 .panel li {
   padding-left: 2px;
 }
+
+/* A modal <dialog> centres through auto margins, which the global reset removes. */
+.dialog {
+  margin: auto;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+.dialog .field > span {
+  color: var(--theme-soft);
+  font-size: 12px;
+}
+.dialog .field > span code {
+  font-family: var(--font-mono);
+  color: var(--theme-text);
+}

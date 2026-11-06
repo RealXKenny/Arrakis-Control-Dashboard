@@ -96,6 +96,11 @@ test('confirmation dialogs trap focus, close on Escape and return focus to their
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAccessibleName('Ban player');
   expect(await page.evaluate(() => Boolean(document.activeElement?.closest('dialog')))).toBe(true);
+  // The modal must sit in the middle of the viewport, not the top-left corner.
+  const box = (await dialog.boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThan(4);
+  expect(Math.abs(box.y + box.height / 2 - viewport.height / 2)).toBeLessThan(viewport.height / 3);
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(trigger).toBeFocused();
