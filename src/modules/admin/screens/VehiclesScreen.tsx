@@ -343,8 +343,12 @@ export default function VehiclesScreen({ operations }: { operations: AdminOperat
               action={(row) => {
                 const id = idFrom(row, 'vehicle');
                 return id ? (
-                  <button type="button" onClick={() => url.update({ vehicle: id, section: null })}>
-                    Open {nameFrom(row, 'vehicle')}
+                  <button
+                    aria-label={`Open ${nameFrom(row, 'vehicle')}`}
+                    type="button"
+                    onClick={() => url.update({ vehicle: id, section: null })}
+                  >
+                    Open
                   </button>
                 ) : null;
               }}

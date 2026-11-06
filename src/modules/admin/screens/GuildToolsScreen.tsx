@@ -307,8 +307,12 @@ export default function GuildToolsScreen({ operations }: { operations: AdminOper
           action={(row: Row) => {
             const id = idFrom(row, 'guild');
             return id ? (
-              <button type="button" onClick={() => url.update({ guild: id })}>
-                Manage {nameFrom(row, 'guild')}
+              <button
+                aria-label={`Manage ${nameFrom(row, 'guild')}`}
+                type="button"
+                onClick={() => url.update({ guild: id })}
+              >
+                Manage
               </button>
             ) : null;
           }}

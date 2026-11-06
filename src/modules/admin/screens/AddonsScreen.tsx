@@ -99,8 +99,8 @@ export default function AddonsScreen({
               action={(row: Row) => {
                 const id = text(row, ['id', 'addon_id', 'name']);
                 return id ? (
-                  <button type="button" onClick={() => url.update({ addon: id })}>
-                    Inspect {id}
+                  <button aria-label={`Inspect ${id}`} type="button" onClick={() => url.update({ addon: id })}>
+                    Inspect
                   </button>
                 ) : null;
               }}

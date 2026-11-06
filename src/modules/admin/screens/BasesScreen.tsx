@@ -565,8 +565,12 @@ function StorageScreen({ operations }: { operations: AdminOperation[] }) {
             action={(row) => {
               const id = text(row, ['storage_id', 'storageId', 'id']);
               return id ? (
-                <button type="button" onClick={() => url.update({ storage: id })}>
-                  Open {nameFrom(row, 'container')}
+                <button
+                  aria-label={`Open ${nameFrom(row, 'container')}`}
+                  type="button"
+                  onClick={() => url.update({ storage: id })}
+                >
+                  Open
                 </button>
               ) : null;
             }}
@@ -715,8 +719,12 @@ export default function BasesScreen({ operations }: { operations: AdminOperation
               action={(row) => {
                 const id = idFrom(row, 'base');
                 return id ? (
-                  <button type="button" onClick={() => url.update({ base: id, section: null })}>
-                    Open {nameFrom(row, 'base')}
+                  <button
+                    aria-label={`Open ${nameFrom(row, 'base')}`}
+                    type="button"
+                    onClick={() => url.update({ base: id, section: null })}
+                  >
+                    Open
                   </button>
                 ) : null;
               }}

@@ -31,8 +31,13 @@ export default function ConfirmDialog({
   const [failure, setFailure] = useState('');
   useEffect(() => {
     const dialog = ref.current;
+    // Return focus to whatever opened the dialog so keyboard users keep their place.
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (dialog && !dialog.open) dialog.showModal();
-    return () => dialog?.close();
+    return () => {
+      dialog?.close();
+      if (opener?.isConnected) opener.focus();
+    };
   }, []);
   async function submit() {
     setBusy(true);

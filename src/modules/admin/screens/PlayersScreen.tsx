@@ -465,8 +465,12 @@ export default function PlayersScreen({ operations }: { operations: AdminOperati
           action={(row) => {
             const id = idFrom(row, 'player');
             return id ? (
-              <button type="button" onClick={() => url.update({ player: id, section: null })}>
-                Open {text(row, ['character_name', 'name'], 'player')}
+              <button
+                aria-label={`Open ${text(row, ['character_name', 'name'], 'player')}`}
+                type="button"
+                onClick={() => url.update({ player: id, section: null })}
+              >
+                Open
               </button>
             ) : null;
           }}

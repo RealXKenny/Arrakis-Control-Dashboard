@@ -152,6 +152,7 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
               const service = text(row, ['service', 'name', 'id']);
               return service ? (
                 <button
+                  aria-label={`Restart ${service}…`}
                   type="button"
                   className={css.danger}
                   onClick={() =>
@@ -171,7 +172,7 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
                     )
                   }
                 >
-                  Restart {service}…
+                  Restart…
                 </button>
               ) : null;
             }}
