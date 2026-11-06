@@ -989,3 +989,19 @@
   margin: 16px 0 0;
   font-size: 12px;
 }
+
+.logView {
+  max-height: 420px;
+  margin: 12px 0 0;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid var(--theme-border);
+  border-radius: 16px;
+  background: rgb(9 9 11 / 0.7);
+  color: var(--theme-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

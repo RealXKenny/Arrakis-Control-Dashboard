@@ -293,7 +293,7 @@ test('administrator can browse operations, read data, and review changes on desk
       json: { ok: true, upstreamStatus: 200, data: { rows: [{ name: 'Example player', online: true }] } },
     });
   });
-  await page.goto('/admin?tab=server');
+  await page.goto('/admin?tab=server&advanced=1');
   await expect(page.getByRole('heading', { name: 'Server', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Run read', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Example player' })).toBeVisible();
@@ -702,4 +702,81 @@ test('market screen filters transactions, separates probes from runs and guards 
   await page.getByLabel('Blacklisted owner IDs').fill('abc');
   await page.getByRole('button', { name: 'Review…' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Owner IDs must be numbers' })).toBeVisible();
+});
+
+test('server screen guards restarts and keeps the Funcom token out of view', async ({ page, context }) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-server-status': { state: 'READY' },
+      'get-server-services': { rows: [{ name: 'game-1', state: 'running' }] },
+      'get-server-restart-queue': { rows: [{ id: 'q1', reason: 'Scheduled' }] },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=server');
+  await expect(page.getByText('READY')).toBeVisible();
+  await page.getByRole('button', { name: 'Restart…', exact: true }).click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Restart server', exact: true })).toBeDisabled();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Restart game-1…' }).click();
+  await expect(page.getByRole('dialog')).toContainText('game-1');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation.startsWith('post-server-restart'))).toBe(false);
+  await page.getByRole('button', { name: 'Restarts & automation', exact: true }).click();
+  await expect(page.getByText('pending, not completed')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel countdown' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Countdown cancelled.' })).toBeVisible();
+  expect(calls.find((call) => call.operation === 'post-server-restart-queue-cancel').body).toEqual({ id: 'q1' });
+  await page.getByRole('button', { name: 'Title & Funcom token', exact: true }).click();
+  await page.getByLabel('Token', { exact: true }).fill('fixture-token-value');
+  await page.getByRole('button', { name: 'Submit token…' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Submit token', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Token submitted.' })).toBeVisible();
+  await expect(page.getByLabel('Token', { exact: true })).toHaveValue('');
+  expect(calls.find((call) => call.operation === 'post-server-funcom-token').body.token).toBe('fixture-token-value');
+});
+
+test('logs screen selects a service, reads bounded output and streams with stop and reconnect', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  let streams = 0;
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    if (input.operation === 'get-logs-service-stream') {
+      streams++;
+      return route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+        body: `data: {"message":"live line ${streams}"}\n\n`,
+      });
+    }
+    const data: Record<string, unknown> = {
+      'get-logs-services': { services: ['game-1', 'database'] },
+      'get-logs-service': { logs: ['boot ok', 'map ready'] },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=logs');
+  await page.getByRole('combobox', { name: 'Service' }).selectOption('game-1');
+  await expect(page).toHaveURL(/service=game-1/);
+  await expect(page.getByText('map ready')).toBeVisible();
+  await page.getByRole('button', { name: 'Start live stream' }).click();
+  await expect(page.getByLabel('Live log output')).toContainText('live line 1');
+  await expect(page.getByRole('status').filter({ hasText: 'stream ended' })).toBeVisible();
+  await page.getByRole('button', { name: 'Reconnect' }).click();
+  await expect(page.getByLabel('Live log output')).toContainText('live line 2');
+  expect(streams).toBe(2);
 });

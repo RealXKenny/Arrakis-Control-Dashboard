@@ -14,8 +14,19 @@ export type AdminTabKind =
   | 'bases'
   | 'maps'
   | 'backups'
-  | 'market';
-export const DEDICATED_KINDS: AdminTabKind[] = ['players', 'vehicles', 'bases', 'maps', 'backups', 'market'];
+  | 'market'
+  | 'server'
+  | 'logs';
+export const DEDICATED_KINDS: AdminTabKind[] = [
+  'players',
+  'vehicles',
+  'bases',
+  'maps',
+  'backups',
+  'market',
+  'server',
+  'logs',
+];
 export type AdminTab = {
   id: string;
   label: string;
@@ -142,7 +153,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'server',
         label: 'Server',
-        kind: 'operations',
+        kind: 'server',
         groups: ['Server Operations'],
         summary: 'Start, stop, restart, schedules, health and diagnostics.',
       },
@@ -156,7 +167,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'logs',
         label: 'Logs',
-        kind: 'operations',
+        kind: 'logs',
         groups: ['Logs & Monitoring'],
         summary: 'Bounded log reads and live streams.',
       },
