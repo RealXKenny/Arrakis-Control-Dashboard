@@ -1219,6 +1219,63 @@ test('guild custom applications and private live chat work across the community 
   await expect(reviewerChat).toHaveCount(0);
 });
 
+test('guild directory cards stay tidy and expand details and applications across desktop and mobile', async ({
+  page,
+}) => {
+  const requirements = 'A friendly guild for builders, explorers, and spice runners. '.repeat(9);
+  const entries = [
+    {
+      guildId: '2',
+      guildName: 'Crimson Skies',
+      requirements,
+      contact: 'Ask the leader about our weekend runs.',
+      published: true,
+      applicationQuestions: [
+        { id: '915c1a9c-13a6-4eef-833b-121c513f9a5a', label: 'Introduce yourself', type: 'longText', required: true },
+      ],
+    },
+    {
+      guildId: '3',
+      guildName: 'Sietch Vanguard',
+      requirements: 'Teamwork and exploration, open to every experience level.',
+      contact: '',
+      published: true,
+    },
+    {
+      guildId: '4',
+      guildName: 'TheVeryLongGuildNameThatShouldNeverBreakTheCardOrPushButtonsOffTheScreen',
+      requirements: 'Long names fit without horizontal scrolling.',
+      contact: '',
+      published: true,
+    },
+  ];
+  await page.route('**/api/guilds/requirements?*', (route) =>
+    route.fulfill({ json: { ok: true, data: { rows: entries, hasMore: false } } }),
+  );
+  await page.route('**/api/guilds/*/logo?image=1', (route) =>
+    route.request().url().includes('/2/')
+      ? route.fulfill({ path: 'src/assets/share/mark-v1.png', contentType: 'image/png' })
+      : route.fulfill({ status: 204 }),
+  );
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.goto('/portal?view=guild-requirements');
+  const card = page.getByRole('article', { name: 'Crimson Skies', exact: true });
+  await expect(card.getByText('Recruiting', { exact: true })).toBeVisible();
+  await expect(page.getByText('3 guilds on this page', { exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/guild-cards-desktop.png', fullPage: true });
+  await card.getByRole('button', { name: 'View details', exact: true }).click();
+  await expect(card.getByText(entries[0].contact, { exact: true })).toBeVisible();
+  await card.getByRole('button', { name: 'Less detail', exact: true }).click();
+  await card.getByRole('button', { name: 'Apply to guild', exact: true }).click();
+  await expect(card.getByRole('textbox', { name: 'Introduce yourself (required)', exact: true })).toBeVisible();
+  const box = await card.boundingBox();
+  expect(box!.width).toBeGreaterThan(1000);
+  await card.getByRole('button', { name: 'Close application', exact: true }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/guild-cards-mobile.png', fullPage: true });
+});
+
 test('guild requirements opens as its own community page', async ({ page }) => {
   let membershipRequests = 0;
   await page.route('**/api/guilds?*', (route) => {

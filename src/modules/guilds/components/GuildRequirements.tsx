@@ -4,6 +4,7 @@ import css from '../styles/requirements.module.css';
 import GuildListingCard from './GuildListingCard';
 import GuildApplicationInbox from './GuildApplicationInbox';
 import GuildQuestionEditor from './GuildQuestionEditor';
+import listings from '../styles/listings.module.css';
 
 async function read(response: Response) {
   const body = await response.json();
@@ -104,13 +105,28 @@ export default function GuildRequirements({
   }
 
   return (
-    <section className={css.workspace} aria-label={settings ? 'Guild settings' : 'Guilds'}>
-      <h2>{settings ? 'Guild settings' : 'Guilds'}</h2>
-      <p>
-        {settings
-          ? 'Publish your guild’s joining requirements. Only the guild leader can edit these settings.'
-          : 'Find a guild recruiting new members and read their joining requirements.'}
-      </p>
+    <section
+      className={`${css.workspace} ${settings ? '' : listings.directory}`}
+      aria-label={settings ? 'Guild settings' : 'Guilds'}
+    >
+      {settings ? (
+        <>
+          <h2>Guild settings</h2>
+          <p>Publish your guild’s joining requirements. Only the guild leader can edit these settings.</p>
+        </>
+      ) : (
+        <div className={listings.directoryHeader}>
+          <div>
+            <h2>Recruiting guilds</h2>
+            <p>Read the requirements and find a team that suits you.</p>
+          </div>
+          {!loading && !error && (
+            <span className={listings.count}>
+              {entries.length} {entries.length === 1 ? 'guild' : 'guilds'} on this page
+            </span>
+          )}
+        </div>
+      )}
       {loading && <p role="status">Loading guild requirements…</p>}
       {error && (
         <div role="alert">
@@ -176,7 +192,7 @@ export default function GuildRequirements({
           {entries.length === 0 && (
             <p>No guilds are recruiting here yet. Guild leaders can create a listing under My Guild → Settings.</p>
           )}
-          <div className={css.cards}>
+          <div className={listings.grid}>
             {entries.map((entry) => (
               <GuildListingCard key={entry.guildId} entry={entry} />
             ))}

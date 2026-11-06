@@ -15,6 +15,10 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Application forms are now built entirely by the guild owner, with no preset fields. Questions support short answers, paragraphs, dropdown choices, time-zone dropdowns, checkboxes, and numbers. Existing submissions retain their original answers.
 - Guild leaders can manage members beside each name: promote Members to Officers, demote Officers, confirm leadership transfers, and remove members. Added member invitations and a typed-confirmation disband action in Settings. Every change rechecks current leadership and member ranks; disbanding also clears saved recruitment data.
 
+### Changed
+
+- Refreshed Guilds listings with larger logo tiles, recruiting badges, compact requirement previews, question counts, and aligned actions. Details and applications expand across the row for easier reading on desktop and mobile.
+
 ### Security
 
 - Guild settings and logo changes verify the linked character’s guild leadership by character ID. Matching character names cannot authorize edits.
