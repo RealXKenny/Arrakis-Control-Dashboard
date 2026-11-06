@@ -814,7 +814,7 @@ test('care package screen keeps scans, enablement and undocumented grants clearl
   await expect(page.getByRole('link', { name: 'grant to one player' })).toBeVisible();
   await page.getByRole('button', { name: 'Eligible players', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Newcomer' })).toBeVisible();
-  await page.getByLabel(/Only players who are eligible now/).check();
+  await page.getByLabel(/Only players who are eligible now/).click();
   await expect(page).toHaveURL(/only=1/);
   await expect
     .poll(() =>
@@ -857,4 +857,48 @@ test('admin tools screen validates broadcasts, searches catalogs and confirms hi
   await expect(page.getByRole('dialog').getByRole('button', { name: 'Clear history', exact: true })).toBeDisabled();
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
   expect(calls.some((call) => call.operation === 'post-admin-history-clear')).toBe(false);
+});
+
+test('updates and addons screens check read-only and hand restricted writes to the Console', async ({
+  page,
+  context,
+}) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({
+      json: { ok: true, operations, configured: true, adapterConfigured: true, consoleOrigin: 'https://console.test' },
+    }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'post-updates-check-game': { updateAvailable: false },
+      'get-addons-installed': { rows: [{ id: 'sample-addon', version: '1.0.0' }] },
+      'get-addons-installed-id-content-path': 'Sample addon readme',
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=updates');
+  const handoff = page.getByRole('region', { name: 'Applying updates and repairs' });
+  await expect(handoff).toContainText('Console API keys cannot perform update or addon writes');
+  await expect(handoff.getByRole('button')).toHaveCount(0);
+  await expect(handoff.getByRole('link', { name: 'Open Console ↗' })).toHaveAttribute('href', 'https://console.test');
+  await page.getByRole('region', { name: 'Game update check' }).getByRole('button', { name: 'Check now' }).click();
+  await expect(page.getByText('Checked at')).toBeVisible();
+  expect(calls.find((call) => call.operation === 'post-updates-check-game')).toBeTruthy();
+  expect(calls.some((call) => call.operation === 'post-updates-apply-game')).toBe(false);
+  await page.goto('/admin?tab=addons');
+  await page.getByRole('button', { name: 'Inspect sample-addon' }).click();
+  await page.getByLabel('File path inside the addon').fill('../secret');
+  await expect(page.getByRole('button', { name: 'Read file' })).toBeDisabled();
+  await page.getByLabel('File path inside the addon').fill('README.md');
+  await page.getByRole('button', { name: 'Read file' }).click();
+  await expect(page.getByText('Sample addon readme')).toBeVisible();
+  expect(calls.find((call) => call.operation === 'get-addons-installed-id-content-path').path).toEqual({
+    id: 'sample-addon',
+    path: 'README.md',
+  });
+  await expect(page.getByRole('region', { name: 'Installing, updating and removing addons' })).toBeVisible();
 });

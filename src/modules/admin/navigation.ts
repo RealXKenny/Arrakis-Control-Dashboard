@@ -18,7 +18,9 @@ export type AdminTabKind =
   | 'server'
   | 'logs'
   | 'care'
-  | 'admintools';
+  | 'admintools'
+  | 'updates'
+  | 'addons';
 export const DEDICATED_KINDS: AdminTabKind[] = [
   'players',
   'vehicles',
@@ -176,14 +178,14 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'updates',
         label: 'Updates',
-        kind: 'operations',
+        kind: 'updates',
         groups: ['Updates'],
         summary: 'Update checks; restricted writes hand off to Console.',
       },
       {
         id: 'addons',
         label: 'Addons',
-        kind: 'operations',
+        kind: 'addons',
         groups: ['Addons'],
         summary: 'Catalog and installed addons; restricted writes hand off to Console.',
       },

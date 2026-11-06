@@ -8,6 +8,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
+- Dedicated Updates screen (game and stack update checks that only look, automatic-update settings) and Addons screen (installed and community lists, bounded addon file inspection) with an explicit Console handoff for every restricted apply, repair, install, enable, disable and removal.
 - Dedicated Care packages screen (capabilities, enable/disable and scan with Console phrases, eligible players, grants/history) and Admin tools screen (broadcast and map chat, item/vehicle/skill-module catalogs, Landsraad overview and task goals, message of the day/announcement/transfer settings with restore-defaults, administrator history). Grants and other writes whose confirmation wording is undocumented stay in the full forms.
 - Dedicated Server screen (status, guarded start/stop/restart and per-service restart, shutdown protection, readiness/ports/doctor with repairs and cleanup, restart schedule and countdown cancel/restart-now, IP-change restart, title, write-only Funcom token) and Logs screen (service selection, bounded sanitized output, download, SSE live stream with stop/reconnect and a 64 KiB tail). The Console records no administrator command history, so none is shown.
 - Dedicated Market screen (statistics, items, time/trader-filtered transactions, read-only probe versus confirmed buyback/seed runs, sweep log, safety-backup toggle with the Console phrase, seed-plan activation/rename/CSV export, seller and blacklist configuration).
