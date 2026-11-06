@@ -3,6 +3,7 @@ import { guildRequirementSchema, type GuildRequirement, type GuildRequirementLis
 import css from '../styles/requirements.module.css';
 import GuildListingCard from './GuildListingCard';
 import GuildApplicationInbox from './GuildApplicationInbox';
+import GuildQuestionEditor from './GuildQuestionEditor';
 
 async function read(response: Response) {
   const body = await response.json();
@@ -64,7 +65,7 @@ export default function GuildRequirements({
     event.preventDefault();
     const parsed = guildRequirementSchema.safeParse(form);
     if (!parsed.success) {
-      setError('Enter a guild name and joining requirements before publishing.');
+      setError('Enter a guild name, joining requirements, and valid application questions.');
       return;
     }
     setSaving(true);
@@ -144,6 +145,10 @@ export default function GuildRequirements({
             />
             List my guild for recruitment
           </label>
+          <GuildQuestionEditor
+            questions={form.applicationQuestions ?? []}
+            onChange={(applicationQuestions) => setForm({ ...form, applicationQuestions })}
+          />
           <button type="submit" disabled={saving}>
             {saving ? 'Saving…' : 'Save guild settings'}
           </button>

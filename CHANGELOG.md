@@ -11,6 +11,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Added a Guilds page in Community where members can browse guild recruitment listings and joining details. Leader settings stay under My Guild.
 - Added leader-only Guild settings to edit joining requirements and contact details, and publish or unlist a guild.
 - Guild listings now show their saved logos and offer a joining application form. Applicants can check their application status; guild leaders can review, accept, decline, and remove applications in My Guild → Settings.
+- Guild leaders can add required or optional application questions. Submitted answers keep their original question wording. Applicants and the current guild leader can exchange private live chat messages from the application and review inbox.
 
 ### Security
 

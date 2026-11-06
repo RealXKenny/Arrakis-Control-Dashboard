@@ -883,7 +883,7 @@ test('blueprint import handles uncertain delivery and success without duplicate 
   expect(requests[1].requestId).toBe(requests[0].requestId);
 });
 
-test('guild logos, applications, and leader decisions work across the community pages', async ({ page }) => {
+test('guild custom applications and private live chat work across the community pages', async ({ page }) => {
   let leader = false;
   let application: Record<string, unknown> | null = null;
   let submissions = 0;
@@ -893,6 +893,9 @@ test('guild logos, applications, and leader decisions work across the community 
     requirements: 'Be friendly',
     contact: '',
     published: true,
+    applicationQuestions: [
+      { id: '915c1a9c-13a6-4eef-833b-121c513f9a5a', label: 'What would you contribute?', required: true },
+    ],
   };
   await page.route('**/api/guilds?*', (route) =>
     route.fulfill({ json: { ok: true, data: { rows: [{ guild_id: '2', guild_name: 'Crimson Skies' }] } } }),
@@ -914,7 +917,10 @@ test('guild logos, applications, and leader decisions work across the community 
   await page.route('**/api/guilds/requirements?*', (route) =>
     route.fulfill({ json: { ok: true, data: { rows: [listing], hasMore: false } } }),
   );
-  await page.route('**/api/guilds/2/requirements', (route) => route.fulfill({ json: { ok: true, data: listing } }));
+  await page.route('**/api/guilds/2/requirements', (route) => {
+    if (route.request().method() === 'POST') Object.assign(listing, route.request().postDataJSON());
+    return route.fulfill({ json: { ok: true, data: listing } });
+  });
   await page.route('**/api/guilds/2/application', async (route) => {
     if (route.request().method() === 'POST') {
       submissions++;
@@ -926,6 +932,11 @@ test('guild logos, applications, and leader decisions work across the community 
         characterName: 'Desert Navigator',
         submittedAt: Date.now(),
         status: 'pending',
+        customAnswers: listing.applicationQuestions.map((question) => ({
+          questionId: question.id,
+          question: question.label,
+          answer: route.request().postDataJSON().answers?.[question.id] ?? '',
+        })),
       };
     }
     await route.fulfill({ json: { ok: true, data: application } });
@@ -937,6 +948,30 @@ test('guild logos, applications, and leader decisions work across the community 
       await route.fulfill({ json: { ok: true, data: application } });
     } else
       await route.fulfill({ json: { ok: true, data: { rows: application ? [application] : [], hasMore: false } } });
+  });
+  const messages: Record<string, unknown>[] = [];
+  const sendIds: string[] = [];
+  let failNextSend = true;
+  await page.route(/\/api\/guilds\/2\/applications\/[a-f0-9]{64}\/messages(?:\/send)?$/, async (route) => {
+    if (route.request().method() === 'POST') {
+      const { text, clientMessageId } = route.request().postDataJSON();
+      sendIds.push(clientMessageId);
+      if (failNextSend) {
+        failNextSend = false;
+        await route.fulfill({ status: 503, json: { ok: false, error: 'Chat temporarily unavailable.' } });
+        return;
+      }
+      const message = {
+        id: clientMessageId,
+        text,
+        senderId: leader ? 'leader' : 'applicant',
+        senderName: leader ? 'Guild Leader' : 'Survivor',
+        role: leader ? 'reviewer' : 'applicant',
+        sentAt: Date.now(),
+      };
+      messages.push(message);
+      await route.fulfill({ json: { ok: true, data: message } });
+    } else await route.fulfill({ json: { ok: true, data: { messages } } });
   });
   await page.goto('/portal?view=guild-requirements');
   const logo = page.getByRole('img', { name: 'Crimson Skies logo', exact: true });
@@ -951,9 +986,35 @@ test('guild logos, applications, and leader decisions work across the community 
     .getByRole('textbox', { name: 'Why would you like to join?', exact: true })
     .fill('I would like to help build and gather.');
   await form.getByRole('button', { name: 'Submit application' }).click();
+  expect(submissions).toBe(0);
+  await form
+    .getByRole('textbox', { name: 'What would you contribute? (required)', exact: true })
+    .fill('I can build guild facilities.');
+  await form.getByRole('button', { name: 'Submit application' }).click();
   await expect(form.getByText('Your application is pending.', { exact: true })).toBeVisible();
   await expect(form.getByRole('button', { name: 'Submit application' })).toHaveCount(0);
   expect(submissions).toBe(1);
+  await form.getByRole('button', { name: 'Chat with reviewer', exact: true }).click();
+  const applicantChat = page.getByRole('region', { name: 'Chat with guild reviewer', exact: true });
+  await expect(applicantChat.getByText('Live · private conversation', { exact: true })).toBeVisible();
+  await applicantChat.getByRole('textbox', { name: 'Message', exact: true }).fill('When can we meet in game?');
+  await applicantChat.getByRole('button', { name: 'Send message', exact: true }).click();
+  await expect(applicantChat.getByRole('alert')).toContainText('Chat temporarily unavailable.');
+  await expect(applicantChat.getByRole('textbox', { name: 'Message', exact: true })).toHaveValue(
+    'When can we meet in game?',
+  );
+  await applicantChat.getByRole('button', { name: 'Send message', exact: true }).click();
+  await expect(applicantChat.getByRole('log')).toContainText('When can we meet in game?');
+  expect(sendIds[0]).toBe(sendIds[1]);
+  messages.push({
+    id: 'a62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+    text: 'We can meet this evening.',
+    senderId: 'leader',
+    senderName: 'Guild Leader',
+    role: 'reviewer',
+    sentAt: Date.now(),
+  });
+  await expect(applicantChat.getByRole('log')).toContainText('We can meet this evening.', { timeout: 7000 });
   leader = true;
   await page
     .getByRole('navigation', { name: 'Main navigation' })
@@ -966,9 +1027,30 @@ test('guild logos, applications, and leader decisions work across the community 
   const inbox = page.getByRole('region', { name: 'Guild applications', exact: true });
   await expect(inbox.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
   await expect(inbox.getByText('I would like to help build and gather.', { exact: true })).toBeVisible();
+  await expect(inbox.getByText('I can build guild facilities.', { exact: true })).toBeVisible();
+  const questionEditor = page.getByRole('group', { name: 'Application questions', exact: true });
+  await questionEditor
+    .getByRole('textbox', { name: 'Question text', exact: true })
+    .fill('Updated question for new applicants');
+  await questionEditor.getByRole('button', { name: 'Add application question', exact: true }).click();
+  const secondQuestion = questionEditor.getByRole('group', { name: 'Question 2', exact: true });
+  await secondQuestion
+    .getByRole('textbox', { name: 'Question text', exact: true })
+    .fill('What is your preferred role?');
+  await secondQuestion.getByRole('checkbox', { name: 'Required answer', exact: true }).uncheck();
+  await page.getByRole('button', { name: 'Save guild settings', exact: true }).click();
+  await expect(page.getByText('Guild requirements published.', { exact: true })).toBeVisible();
+  await expect(inbox.getByText('What would you contribute?', { exact: true })).toBeVisible();
+  await inbox.getByRole('button', { name: 'Chat with applicant', exact: true }).click();
+  const reviewerChat = page.getByRole('region', { name: 'Chat with Desert Navigator', exact: true });
+  await expect(reviewerChat.getByRole('log')).toContainText('When can we meet in game?');
+  await reviewerChat.getByRole('textbox', { name: 'Message', exact: true }).fill('Please meet us at the guild base.');
+  await reviewerChat.getByRole('button', { name: 'Send message', exact: true }).click();
+  await expect(reviewerChat.getByRole('log')).toContainText('Please meet us at the guild base.');
   await inbox.getByRole('button', { name: 'Accept application', exact: true }).click();
   await expect(inbox.getByText('Application accepted.', { exact: true })).toBeVisible();
   await expect(inbox.getByRole('button', { name: 'Accept application', exact: true })).toBeDisabled();
+  await expect(reviewerChat.getByRole('log')).toContainText('Please meet us at the guild base.');
   await inbox.getByRole('button', { name: 'Decline application', exact: true }).click();
   await expect(inbox.getByText('Application declined.', { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -976,6 +1058,7 @@ test('guild logos, applications, and leader decisions work across the community 
   await page.screenshot({ path: 'test-results/guild-application-inbox-mobile.png', fullPage: true });
   await inbox.getByRole('button', { name: 'Remove application', exact: true }).click();
   await expect(inbox.getByText('No applications on this page.', { exact: true })).toBeVisible();
+  await expect(reviewerChat).toHaveCount(0);
 });
 
 test('guild requirements opens as its own community page', async ({ page }) => {

@@ -41,7 +41,11 @@ export default function GuildListingCard({ entry }: { entry: GuildRequirementLis
       </button>
       {open && (
         <div id={applicationId}>
-          <GuildApplicationForm guildId={entry.guildId} guildName={entry.guildName} />
+          <GuildApplicationForm
+            guildId={entry.guildId}
+            guildName={entry.guildName}
+            questions={entry.applicationQuestions ?? []}
+          />
         </div>
       )}
     </article>

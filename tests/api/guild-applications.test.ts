@@ -56,6 +56,62 @@ beforeEach(() => {
 });
 
 describe('guild applications', () => {
+  it('validates required custom answers and snapshots the server’s question wording', async () => {
+    const question = {
+      id: '915c1a9c-13a6-4eef-833b-121c513f9a5a',
+      label: 'What would you contribute?',
+      required: true,
+    };
+    const optional = { id: '925c1a9c-13a6-4eef-833b-121c513f9a5a', label: 'Anything else?', required: false };
+    const customInput = { ...input, questionVersion: JSON.stringify([question, optional]) };
+    redis.get.mockResolvedValue({
+      guildName: 'Crimson Skies',
+      requirements: 'Be friendly',
+      contact: '',
+      published: true,
+      applicationQuestions: [question, optional],
+    });
+    await expect(POST(req(input), {})).rejects.toMatchObject({
+      statusCode: 409,
+      code: 'GUILD_APPLICATION_FORM_CHANGED',
+    });
+    await expect(POST(req(customInput), {})).rejects.toMatchObject({
+      statusCode: 400,
+      code: 'INVALID_GUILD_APPLICATION_ANSWERS',
+    });
+    await expect(POST(req({ ...customInput, answers: { [question.id]: '  ' } }), {})).rejects.toMatchObject({
+      statusCode: 400,
+    });
+    await expect(
+      POST(
+        req({
+          ...customInput,
+          answers: { [question.id]: 'Building', '935c1a9c-13a6-4eef-833b-121c513f9a5a': 'Unknown question' },
+        }),
+        {},
+      ),
+    ).rejects.toMatchObject({ statusCode: 400 });
+    const response = await POST(
+      req({
+        ...customInput,
+        answers: { [question.id]: ' Building ' },
+        customAnswers: [{ question: 'Forged prompt', answer: 'Forged answer' }],
+      }),
+      {},
+    );
+    const data = JSON.parse(response.body).data;
+    expect(data.customAnswers).toEqual([
+      { questionId: question.id, question: question.label, answer: 'Building' },
+      { questionId: optional.id, question: optional.label, answer: '' },
+    ]);
+    expect(data.answers).toBeUndefined();
+    expect(data.conversationId).toMatch(/^[a-f0-9-]{36}$/);
+    redis.eval.mockResolvedValue(-4);
+    await expect(POST(req({ ...customInput, answers: { [question.id]: 'Building' } }), {})).rejects.toMatchObject({
+      statusCode: 409,
+      code: 'GUILD_APPLICATION_FORM_CHANGED',
+    });
+  });
   it('rejects missing or cross-site mutation origins before storing or reviewing answers', async () => {
     for (const origin of [undefined, 'https://other.example']) {
       const invalid = { ...req(input), headers: { cookie: 'dashboard_session=test', host: 'localhost', origin } };
@@ -82,7 +138,7 @@ describe('guild applications', () => {
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('HEXISTS'"),
       ['arrakis:guild-applications:2', 'arrakis:guild-applications-index:2', 'arrakis:guild-requirements:2'],
-      [id, JSON.stringify(data), -data.submittedAt, 90 * 86400],
+      [id, JSON.stringify(data), -data.submittedAt, 90 * 86400, '[]'],
     );
   });
 
@@ -147,6 +203,11 @@ describe('guild applications', () => {
     }
     redis.eval.mockResolvedValue('removed');
     expect(JSON.parse((await REVIEW(req({ applicationId: id, status: 'remove' }), {})).body).data).toBeNull();
+    expect(redis.eval).toHaveBeenLastCalledWith(
+      expect.stringContaining("redis.call('DEL', KEYS[3]"),
+      ['arrakis:guild-applications:2', 'arrakis:guild-applications-index:2', `arrakis:guild-chat:2:${id}`],
+      [id, 'remove'],
+    );
     redis.eval.mockResolvedValue(null);
     await expect(REVIEW(req({ applicationId: id, status: 'accepted' }), {})).rejects.toMatchObject({ statusCode: 404 });
   });

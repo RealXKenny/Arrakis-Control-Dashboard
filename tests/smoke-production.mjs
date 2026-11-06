@@ -307,6 +307,22 @@ try {
     assert.equal(crossOrigin.status, 403, route);
     await crossOrigin.text();
   }
+  const chatRoute = `${base}/api/guilds/test/applications/${'a'.repeat(64)}/messages`;
+  const chatRead = await fetch(chatRoute, { signal: AbortSignal.timeout(5000) });
+  assert.equal(chatRead.status, 401, 'application chat requires a session');
+  assert.equal(chatRead.headers.get('Cache-Control'), 'private, no-store, max-age=0');
+  await chatRead.text();
+  const chatWrite = await fetch(`${chatRoute}/send`, {
+    method: 'POST',
+    headers: { cookie: sessionCookie, Origin: 'https://other.example', 'Content-Type': 'application/json' },
+    body: '{}',
+    signal: AbortSignal.timeout(5000),
+  });
+  assert.equal(chatWrite.status, 403, 'application chat rejects cross-site sends');
+  await chatWrite.text();
+  const chatWrongMethod = await fetch(`${chatRoute}/send`, { signal: AbortSignal.timeout(5000) });
+  assert.equal(chatWrongMethod.status, 405, 'chat sends require POST');
+  await chatWrongMethod.text();
   for (let attempt = 0; attempt < 20; attempt++) {
     for (const route of ['player', 'map', 'market', 'market/config', 'bases/test/export']) {
       const response = await fetch(`${base}/api/${route}`, { signal: AbortSignal.timeout(5000) });

@@ -1,5 +1,5 @@
 import '../../../lib/assert-server';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { AppError } from '../../../lib/errors';
 import { getRedisClient } from '../../../lib/redis/client';
 import { NextResponse } from '../../../infrastructure/pages-api';
@@ -10,7 +10,7 @@ import { guildApplicationInputSchema, guildApplicationReviewSchema, guildApplica
 import { guildRequirementSchema } from '../requirements';
 
 const TTL_SECONDS = 90 * 24 * 60 * 60;
-async function context(req, res) {
+export async function applicationContext(req, res) {
   const session = await getGuildSession(req, res);
   if (!session) throw new AppError('Unauthorized', 401, 'UNAUTHORIZED', true);
   const guildId = queryValue(req.query?.guildId);
@@ -29,7 +29,7 @@ async function context(req, res) {
   };
 }
 
-function parseStored(value: unknown) {
+export function parseStoredApplication(value: unknown) {
   if (typeof value !== 'string') return null;
   try {
     const parsed = guildApplicationSchema.safeParse(JSON.parse(value));
@@ -40,13 +40,13 @@ function parseStored(value: unknown) {
 }
 
 export async function GET(req, res) {
-  const ctx = await context(req, res);
+  const ctx = await applicationContext(req, res);
   const value = await ctx.redis.eval("return redis.call('HGET', KEYS[1], ARGV[1])", [ctx.records], [ctx.id]);
-  return NextResponse.json({ ok: true, data: parseStored(value) });
+  return NextResponse.json({ ok: true, data: parseStoredApplication(value) });
 }
 
 export async function POST(req, res) {
-  const ctx = await context(req, res);
+  const ctx = await applicationContext(req, res);
   requireGuildMutationOrigin(req);
   const input = guildApplicationInputSchema.safeParse(req.body);
   if (!input.success)
@@ -59,6 +59,23 @@ export async function POST(req, res) {
   const listing = guildRequirementSchema.safeParse(await ctx.redis.get(`arrakis:guild-requirements:${ctx.guildId}`));
   if (!listing.success || !listing.data.published)
     throw new AppError('This guild is not accepting applications.', 409, 'GUILD_NOT_RECRUITING', true);
+  const questions = listing.data.applicationQuestions ?? [];
+  if (
+    (questions.length > 0 || input.data.questionVersion !== undefined) &&
+    input.data.questionVersion !== JSON.stringify(questions)
+  )
+    throw new AppError(
+      'This guild updated its application questions. Refresh Guilds and try again.',
+      409,
+      'GUILD_APPLICATION_FORM_CHANGED',
+      true,
+    );
+  const answers = input.data.answers ?? {};
+  if (
+    Object.keys(answers).some((id) => !questions.some((question) => question.id === id)) ||
+    questions.some((question) => question.required && !answers[question.id]?.trim())
+  )
+    throw new AppError('Answer every required guild question.', 400, 'INVALID_GUILD_APPLICATION_ANSWERS', true);
   const player = await getLinkedPlayer({
     guildId: ctx.session.guildId,
     channelId: 'dashboard',
@@ -85,12 +102,26 @@ export async function POST(req, res) {
     characterName: player.characterName,
     submittedAt: Date.now(),
     status: 'pending',
+    conversationId: randomUUID(),
+    customAnswers: questions.length
+      ? questions.map((question) => ({
+          questionId: question.id,
+          question: question.label,
+          answer: answers[question.id] ?? '',
+        }))
+      : undefined,
   });
   // Dev note: one application per survivor; even a sandworm cannot cut this queue twice.
   const result = await ctx.redis.eval(
     `
     local listing = redis.call('GET', KEYS[3])
     if not listing or not cjson.decode(listing).published then return -1 end
+    local questions = cjson.decode(listing).applicationQuestions or {}
+    local expected = cjson.decode(ARGV[5])
+    if #questions ~= #expected then return -4 end
+    for i, question in ipairs(questions) do
+      if question.id ~= expected[i].id or question.label ~= expected[i].label or question.required ~= expected[i].required then return -4 end
+    end
     if redis.call('HEXISTS', KEYS[1], ARGV[1]) == 1 then return -2 end
     if redis.call('HLEN', KEYS[1]) >= 200 then return -3 end
     redis.call('HSET', KEYS[1], ARGV[1], ARGV[2])
@@ -100,12 +131,19 @@ export async function POST(req, res) {
     return 1
   `,
     [ctx.records, ctx.index, `arrakis:guild-requirements:${ctx.guildId}`],
-    [ctx.id, JSON.stringify(application), -application.submittedAt, TTL_SECONDS],
+    [ctx.id, JSON.stringify(application), -application.submittedAt, TTL_SECONDS, JSON.stringify(questions)],
   );
   if (Number(result) === -1)
     throw new AppError('This guild is not accepting applications.', 409, 'GUILD_NOT_RECRUITING', true);
   if (Number(result) === -2)
     throw new AppError('You have already applied to this guild.', 409, 'GUILD_APPLICATION_EXISTS', true);
+  if (Number(result) === -4)
+    throw new AppError(
+      'This guild updated its application questions. Refresh Guilds and try again.',
+      409,
+      'GUILD_APPLICATION_FORM_CHANGED',
+      true,
+    );
   if (Number(result) !== 1)
     throw new AppError(
       'This guild’s application inbox is full. Contact the guild leader.',
@@ -117,7 +155,7 @@ export async function POST(req, res) {
 }
 
 export async function LIST(req, res) {
-  const ctx = await context(req, res);
+  const ctx = await applicationContext(req, res);
   await requireGuildLeader(req, res, ctx.guildId);
   const page = queryValue(req.query?.page) ?? '0';
   if (!/^\d{1,2}$/.test(page) || Number(page) > 9)
@@ -136,12 +174,12 @@ export async function LIST(req, res) {
     [ctx.records, ctx.index],
     [start, start + 20],
   );
-  const rows = Array.isArray(values) ? values.map(parseStored).filter((value) => value !== null) : [];
+  const rows = Array.isArray(values) ? values.map(parseStoredApplication).filter((value) => value !== null) : [];
   return NextResponse.json({ ok: true, data: { rows: rows.slice(0, 20), hasMore: rows.length > 20 } });
 }
 
 export async function REVIEW(req, res) {
-  const ctx = await context(req, res);
+  const ctx = await applicationContext(req, res);
   requireGuildMutationOrigin(req);
   await requireGuildLeader(req, res, ctx.guildId);
   const parsed = guildApplicationReviewSchema.safeParse(req.body);
@@ -152,6 +190,8 @@ export async function REVIEW(req, res) {
     local value = redis.call('HGET', KEYS[1], ARGV[1])
     if not value then return false end
     if ARGV[2] == 'remove' then
+      local application = cjson.decode(value)
+      redis.call('DEL', KEYS[3] .. ':' .. (application.conversationId or tostring(application.submittedAt)))
       redis.call('HDEL', KEYS[1], ARGV[1])
       redis.call('ZREM', KEYS[2], ARGV[1])
       return 'removed'
@@ -162,9 +202,9 @@ export async function REVIEW(req, res) {
     redis.call('HSET', KEYS[1], ARGV[1], updated)
     return updated
   `,
-    [ctx.records, ctx.index],
+    [ctx.records, ctx.index, `arrakis:guild-chat:${ctx.guildId}:${applicationId}`],
     [applicationId, status],
   );
   if (!value) throw new AppError('Application not found', 404, 'GUILD_APPLICATION_NOT_FOUND', true);
-  return NextResponse.json({ ok: true, data: value === 'removed' ? null : parseStored(value) });
+  return NextResponse.json({ ok: true, data: value === 'removed' ? null : parseStoredApplication(value) });
 }

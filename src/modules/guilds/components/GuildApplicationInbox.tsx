@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { guildRequest } from '../client-api';
 import type { GuildApplication } from '../applications';
 import css from '../styles/requirements.module.css';
+import GuildApplicationChat from './GuildApplicationChat';
 
 export default function GuildApplicationInbox({ guildId }: { guildId: string }) {
   const [entries, setEntries] = useState<GuildApplication[]>([]);
@@ -12,6 +13,7 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [reload, setReload] = useState(0);
+  const [chatApplication, setChatApplication] = useState<string | null>(null);
   const url = `/api/guilds/${encodeURIComponent(guildId)}/applications`;
   useEffect(() => {
     let cancelled = false;
@@ -40,9 +42,14 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
     setError('');
     setMessage('');
     try {
-      await guildRequest(url, { applicationId, status });
+      const updated = await guildRequest(url, { applicationId, status });
+      setEntries((current) =>
+        status === 'remove'
+          ? current.filter((entry) => entry.id !== applicationId)
+          : current.map((entry) => (entry.id === applicationId ? updated : entry)),
+      );
+      if (status === 'remove' && chatApplication === applicationId) setChatApplication(null);
       setMessage(status === 'remove' ? 'Application removed.' : `Application ${status}.`);
-      setReload(reload + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to review application.');
     } finally {
@@ -87,6 +94,12 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
                   <dd>{entry.experience}</dd>
                   <dt>Why they want to join</dt>
                   <dd>{entry.message}</dd>
+                  {entry.customAnswers?.map((answer) => (
+                    <div key={answer.questionId}>
+                      <dt>{answer.question}</dt>
+                      <dd>{answer.answer || 'No answer provided'}</dd>
+                    </div>
+                  ))}
                 </dl>
                 <div className={css.actions}>
                   <button disabled={busy || entry.status === 'accepted'} onClick={() => review(entry.id, 'accepted')}>
@@ -98,7 +111,21 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
                   <button disabled={busy} onClick={() => review(entry.id, 'remove')}>
                     Remove application
                   </button>
+                  <button
+                    type="button"
+                    aria-expanded={chatApplication === entry.id}
+                    onClick={() => setChatApplication(chatApplication === entry.id ? null : entry.id)}
+                  >
+                    {chatApplication === entry.id ? 'Close chat' : 'Chat with applicant'}
+                  </button>
                 </div>
+                {chatApplication === entry.id && (
+                  <GuildApplicationChat
+                    guildId={guildId}
+                    applicationId={entry.id}
+                    title={`Chat with ${entry.characterName}`}
+                  />
+                )}
               </article>
             ))}
           </div>

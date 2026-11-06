@@ -51,6 +51,32 @@ const requirements = {
 };
 
 describe('guild recruitment settings', () => {
+  it('allows leaders to configure bounded, uniquely identified application questions', async () => {
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
+    const question = { id: '915c1a9c-13a6-4eef-833b-121c513f9a5a', label: 'What do you enjoy doing?', required: false };
+    const data = { ...requirements, applicationQuestions: [question] };
+    expect(
+      JSON.parse(
+        (await saveRequirements({ ...req('/api/guilds/2/requirements', { guildId: '2' }), body: data }, {})).body,
+      ).data,
+    ).toEqual(data);
+    for (const questions of [
+      [question, question],
+      [{ ...question, label: '' }],
+      [{ ...question, id: '__proto__' }],
+      Array.from({ length: 9 }, () => question),
+    ])
+      await expect(
+        saveRequirements(
+          {
+            ...req('/api/guilds/2/requirements', { guildId: '2' }),
+            body: { ...requirements, applicationQuestions: questions },
+          },
+          {},
+        ),
+      ).rejects.toMatchObject({ statusCode: 400 });
+    expect(redis.eval).toHaveBeenCalledTimes(1);
+  });
   it('verifies the controller ID as well as the pawn ID, ignoring a stale session identity', async () => {
     const currentSession = await session();
     session.mockResolvedValue({ ...currentSession, linkedPlayerId: 'old-pawn' });

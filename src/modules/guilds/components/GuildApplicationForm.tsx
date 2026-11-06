@@ -2,8 +2,18 @@ import { useEffect, useState } from 'react';
 import { guildRequest } from '../client-api';
 import { guildApplicationInputSchema, type GuildApplication, type GuildApplicationInput } from '../applications';
 import css from '../styles/requirements.module.css';
+import type { GuildApplicationQuestion } from '../requirements';
+import GuildApplicationChat from './GuildApplicationChat';
 
-export default function GuildApplicationForm({ guildId, guildName }: { guildId: string; guildName: string }) {
+export default function GuildApplicationForm({
+  guildId,
+  guildName,
+  questions = [],
+}: {
+  guildId: string;
+  guildName: string;
+  questions?: GuildApplicationQuestion[];
+}) {
   const [form, setForm] = useState<GuildApplicationInput>({
     playStyle: 'Both',
     timezone: '',
@@ -17,6 +27,7 @@ export default function GuildApplicationForm({ guildId, guildName }: { guildId: 
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [reload, setReload] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
   const url = `/api/guilds/${encodeURIComponent(guildId)}/application`;
   useEffect(() => {
     let cancelled = false;
@@ -43,8 +54,14 @@ export default function GuildApplicationForm({ guildId, guildName }: { guildId: 
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const parsed = guildApplicationInputSchema.safeParse(form);
-    if (!parsed.success) {
+    const parsed = guildApplicationInputSchema.safeParse({
+      ...form,
+      questionVersion: JSON.stringify(questions.map(({ id, label, required }) => ({ id, label, required }))),
+    });
+    if (
+      !parsed.success ||
+      questions.some((question) => question.required && !parsed.data?.answers?.[question.id]?.trim())
+    ) {
       setError('Complete every application field within its character limit.');
       return;
     }
@@ -69,9 +86,25 @@ export default function GuildApplicationForm({ guildId, guildName }: { guildId: 
         </p>
       )}
       {!loading && application && (
-        <div role="status">
-          <p>Your application is {application.status}.</p>
+        <div>
+          <p role="status">Your application is {application.status}.</p>
           <p>{application.message}</p>
+          {application.customAnswers?.length ? (
+            <dl className={css.answers}>
+              {application.customAnswers.map((answer) => (
+                <div key={answer.questionId}>
+                  <dt>{answer.question}</dt>
+                  <dd>{answer.answer || 'No answer provided'}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          <button type="button" aria-expanded={chatOpen} onClick={() => setChatOpen(!chatOpen)}>
+            {chatOpen ? 'Close chat' : 'Chat with reviewer'}
+          </button>
+          {chatOpen && (
+            <GuildApplicationChat guildId={guildId} applicationId={application.id} title="Chat with guild reviewer" />
+          )}
         </div>
       )}
       {!loading && loaded && !application && (
@@ -132,6 +165,21 @@ export default function GuildApplicationForm({ guildId, guildName }: { guildId: 
               onChange={(e) => setForm({ ...form, message: e.target.value })}
             />
           </label>
+          {questions.map((question) => (
+            <label key={question.id}>
+              {question.label}
+              {question.required ? ' (required)' : ' (optional)'}
+              <textarea
+                required={question.required}
+                rows={3}
+                maxLength={1000}
+                value={form.answers?.[question.id] ?? ''}
+                onChange={(event) =>
+                  setForm({ ...form, answers: { ...form.answers, [question.id]: event.target.value } })
+                }
+              />
+            </label>
+          ))}
           <button type="submit" disabled={saving}>
             {saving ? 'Submitting…' : 'Submit application'}
           </button>

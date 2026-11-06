@@ -64,6 +64,59 @@
   padding-top: 20px;
   border-top: 1px solid var(--theme-border);
 }
+.questions {
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 0;
+}
+.questions > p {
+  color: var(--theme-muted);
+  margin: 8px 0 16px;
+}
+.question {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--theme-border);
+  border-radius: 10px;
+  min-width: 0;
+}
+.chat {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--theme-border);
+  min-width: 0;
+}
+.chatMessages {
+  list-style: none;
+  padding: 12px;
+  margin: 16px 0;
+  height: 280px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--theme-border);
+  border-radius: 10px;
+}
+.chatMessages li {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--theme-border);
+  overflow-wrap: anywhere;
+}
+.chatMessages small {
+  display: block;
+  color: var(--theme-muted);
+}
+.chatMessages p {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat .form {
+  margin-top: 12px;
+}
 .answers dd {
   margin: 4px 0 16px;
   white-space: pre-wrap;
