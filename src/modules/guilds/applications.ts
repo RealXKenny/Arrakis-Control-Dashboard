@@ -21,6 +21,10 @@ export const guildApplicationSchema = guildApplicationInputSchema
     discordId: z.string().min(1).max(128),
     discordName: z.string().min(1).max(200),
     characterName: z.string().min(1).max(200),
+    playerId: z
+      .string()
+      .regex(/^[a-zA-Z0-9_-]{1,128}$/)
+      .optional(),
     submittedAt: z.number().int().positive().safe(),
     status: z.enum(['pending', 'accepted', 'declined']),
     conversationId: z.uuid().optional(),

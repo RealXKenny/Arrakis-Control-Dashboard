@@ -6,6 +6,7 @@ import { NextResponse } from '../../../infrastructure/pages-api';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import { getGuildSession, queryValue, requireGuildMutationOrigin } from './common';
 import { requireGuildLeader } from './leader';
+import { addAcceptedApplicant, linkedGuildPlayerIds } from './acceptance';
 import { guildApplicationInputSchema, guildApplicationReviewSchema, guildApplicationSchema } from '../applications';
 import { guildRequirementSchema } from '../requirements';
 import { canonicalGuildQuestions, guildAnswerError, guildQuestionType, guildQuestionVersion } from '../question-fields';
@@ -97,7 +98,7 @@ export async function POST(req, res) {
       true,
     );
   });
-  if (!player.linked || (!player.pawnId && !player.controllerId) || !player.characterName?.trim())
+  if (!linkedGuildPlayerIds(player).length || !player.characterName?.trim())
     throw new AppError('Link your character before applying to a guild.', 403, 'LINKED_PLAYER_REQUIRED', true);
   const application = guildApplicationSchema.parse({
     ...input.data,
@@ -105,6 +106,7 @@ export async function POST(req, res) {
     discordId: ctx.session.user.id,
     discordName: ctx.session.user.global_name || ctx.session.user.username || ctx.session.user.id,
     characterName: player.characterName,
+    playerId: linkedGuildPlayerIds(player)[0],
     submittedAt: Date.now(),
     status: 'pending',
     conversationId: randomUUID(),
@@ -197,31 +199,109 @@ export async function LIST(req, res) {
 export async function REVIEW(req, res) {
   const ctx = await applicationContext(req, res);
   requireGuildMutationOrigin(req);
-  await requireGuildLeader(req, res, ctx.guildId);
+  const roster = await requireGuildLeader(req, res, ctx.guildId);
   const parsed = guildApplicationReviewSchema.safeParse(req.body);
   if (!parsed.success) throw new AppError('Invalid application review', 400, 'INVALID_GUILD_APPLICATION_REVIEW', true);
   const { applicationId, status } = parsed.data;
-  const value = await ctx.redis.eval(
+  const token = randomUUID();
+  const lock = `arrakis:guild-application-review:${ctx.guildId}:${applicationId}`;
+  const original = await ctx.redis.eval(
     `
     local value = redis.call('HGET', KEYS[1], ARGV[1])
     if not value then return false end
-    if ARGV[2] == 'remove' then
-      local application = cjson.decode(value)
-      local chatKey = KEYS[3] .. ':' .. (application.conversationId or tostring(application.submittedAt))
-      redis.call('DEL', chatKey, chatKey .. ':seen')
-      redis.call('HDEL', KEYS[1], ARGV[1])
-      redis.call('ZREM', KEYS[2], ARGV[1])
-      return 'removed'
-    end
-    local application = cjson.decode(value)
-    application.status = ARGV[2]
-    local updated = cjson.encode(application)
-    redis.call('HSET', KEYS[1], ARGV[1], updated)
-    return updated
+    if not redis.call('SET', KEYS[2], ARGV[2], 'NX', 'EX', 120) then return -1 end
+    return value
   `,
-    [ctx.records, ctx.index, `arrakis:guild-chat:${ctx.guildId}:${applicationId}`],
-    [applicationId, status],
+    [ctx.records, lock],
+    [applicationId, token],
   );
-  if (!value) throw new AppError('Application not found', 404, 'GUILD_APPLICATION_NOT_FOUND', true);
-  return NextResponse.json({ ok: true, data: value === 'removed' ? null : parseStoredApplication(value) });
+  if (original === -1)
+    throw new AppError(
+      'This application is already being reviewed. Refresh and try again.',
+      409,
+      'GUILD_APPLICATION_BUSY',
+      true,
+    );
+  if (!original) throw new AppError('Application not found', 404, 'GUILD_APPLICATION_NOT_FOUND', true);
+  try {
+    const application = parseStoredApplication(original);
+    if (
+      !application ||
+      application.id !== applicationId ||
+      createHash('sha256').update(`${ctx.guildId}:${application.discordId}`).digest('hex') !== applicationId
+    )
+      throw new AppError('Application not found', 404, 'GUILD_APPLICATION_NOT_FOUND', true);
+    if (status === 'declined' && application.status === 'accepted')
+      throw new AppError(
+        'This application is already accepted. Manage their membership in My Guild, or remove the application to archive it.',
+        409,
+        'GUILD_APPLICATION_ACCEPTED',
+        true,
+      );
+    const assertCurrent = async () => {
+      const current = await ctx.redis.eval(
+        "return redis.call('GET', KEYS[2]) == ARGV[2] and redis.call('HGET', KEYS[1], ARGV[1]) == ARGV[3] and 1 or 0",
+        [ctx.records, lock],
+        [applicationId, token, original as string],
+      );
+      if (current !== 1)
+        throw new AppError(
+          'This application changed. Refresh before trying again.',
+          409,
+          'GUILD_APPLICATION_CHANGED',
+          true,
+        );
+    };
+    if (status === 'accepted') await addAcceptedApplicant(ctx.session, ctx.guildId, application, roster, assertCurrent);
+    const value = await ctx.redis
+      .eval(
+        `
+      if redis.call('GET', KEYS[4]) ~= ARGV[3] then return false end
+      local value = redis.call('HGET', KEYS[1], ARGV[1])
+      if not value or value ~= ARGV[4] then return false end
+      local application = cjson.decode(value)
+      if ARGV[2] == 'remove' then
+        local chatKey = KEYS[3] .. ':' .. (application.conversationId or tostring(application.submittedAt))
+        redis.call('DEL', chatKey, chatKey .. ':seen')
+        redis.call('HDEL', KEYS[1], ARGV[1])
+        redis.call('ZREM', KEYS[2], ARGV[1])
+        return 'removed'
+      end
+      application.status = ARGV[2]
+      local updated = cjson.encode(application)
+      redis.call('HSET', KEYS[1], ARGV[1], updated)
+      return updated
+    `,
+        [ctx.records, ctx.index, `arrakis:guild-chat:${ctx.guildId}:${applicationId}`, lock],
+        [applicationId, status, token, original as string],
+      )
+      .catch(() => {
+        throw new AppError(
+          status === 'accepted'
+            ? 'Guild membership was confirmed, but the application status could not be saved. Refresh the guild and application before trying again.'
+            : 'The review could not be saved. Refresh the application before trying again.',
+          503,
+          'GUILD_APPLICATION_SAVE_UNAVAILABLE',
+          true,
+        );
+      });
+    if (!value)
+      throw new AppError(
+        'The application changed while reviewing it. Membership may already have changed; refresh the guild and application before trying again.',
+        409,
+        'GUILD_APPLICATION_CHANGED',
+        true,
+      );
+    return NextResponse.json({ ok: true, data: value === 'removed' ? null : parseStoredApplication(value) });
+  } finally {
+    await ctx.redis
+      .eval(
+        "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end return 0",
+        [lock],
+        [token],
+      )
+      .catch(() => {
+        /* The short lease expires if storage is temporarily unavailable. */
+      });
+  }
 }

@@ -50,7 +50,13 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
           : current.map((entry) => (entry.id === applicationId ? updated : entry)),
       );
       if (status === 'remove' && chatApplication === applicationId) setChatApplication(null);
-      setMessage(status === 'remove' ? 'Application removed.' : `Application ${status}.`);
+      setMessage(
+        status === 'remove'
+          ? 'Application removed.'
+          : status === 'accepted'
+            ? 'Application accepted. Applicant added to the guild as a Member.'
+            : 'Application declined.',
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to review application.');
     } finally {
@@ -62,8 +68,9 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
     <section className={css.inbox} aria-label="Guild applications">
       <h3>Applications</h3>
       <p>
-        Review joining requests here. Accepting records your decision; use My Guild’s Add member controls to add
-        accepted applicants. Remove old applications to free space in the inbox.
+        Review joining requests here. Accepting adds the applicant’s verified linked character to the guild as a Member.
+        The server checks member limits, faction compatibility, and existing membership. Remove old applications to free
+        space in the inbox.
       </p>
       <button onClick={() => setReload(reload + 1)} disabled={busy || loading}>
         Refresh applications
@@ -126,7 +133,10 @@ export default function GuildApplicationInbox({ guildId }: { guildId: string }) 
                   <button disabled={busy || entry.status === 'accepted'} onClick={() => review(entry.id, 'accepted')}>
                     Accept application
                   </button>
-                  <button disabled={busy || entry.status === 'declined'} onClick={() => review(entry.id, 'declined')}>
+                  <button
+                    disabled={busy || entry.status === 'declined' || entry.status === 'accepted'}
+                    onClick={() => review(entry.id, 'declined')}
+                  >
                     Decline application
                   </button>
                   <button disabled={busy} onClick={() => review(entry.id, 'remove')}>

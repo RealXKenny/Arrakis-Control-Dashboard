@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DuneConsoleApiError } from '../../src/infrastructure/dunedocker/transport';
 import { GET, POST, LIST, REVIEW } from '../../src/modules/guilds/server/applications';
 import { canonicalGuildQuestions, guildQuestionVersion } from '../../src/modules/guilds/question-fields';
 
@@ -43,6 +44,16 @@ const application = {
   submittedAt: 123456789,
   status: 'pending',
 };
+
+function mockReview(stored = application) {
+  redis.eval.mockImplementation(async (script, _keys, args) => {
+    if (script.includes("'NX', 'EX', 120")) return JSON.stringify(stored);
+    if (script.includes('and 1 or 0')) return 1;
+    if (script.includes("redis.call('HSET'"))
+      return args[1] === 'remove' ? 'removed' : JSON.stringify({ ...stored, status: args[1] });
+    return 1;
+  });
+}
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -187,7 +198,7 @@ describe('guild applications', () => {
 
   it('submits bounded answers with server-verified identity instead of submitted identity', async () => {
     const response = await POST(
-      req({ ...input, discordId: 'forged', characterName: 'Forged', status: 'accepted' }),
+      req({ ...input, discordId: 'forged', characterName: 'Forged', status: 'accepted', playerId: 'forged' }),
       {},
     );
     expect(response.status).toBe(201);
@@ -196,6 +207,7 @@ describe('guild applications', () => {
       id,
       discordId: 'discord-user',
       characterName: 'Survivor',
+      playerId: '4',
       status: 'pending',
       submittedAt: expect.any(Number),
     });
@@ -276,18 +288,151 @@ describe('guild applications', () => {
       [20, 40],
     );
     for (const status of ['accepted', 'declined']) {
-      redis.eval.mockResolvedValue(JSON.stringify({ ...application, status }));
+      mockReview();
       const response = await REVIEW(req({ applicationId: id, status }), {});
       expect(JSON.parse(response.body).data.status).toBe(status);
     }
-    redis.eval.mockResolvedValue('removed');
+    mockReview();
     expect(JSON.parse((await REVIEW(req({ applicationId: id, status: 'remove' }), {})).body).data).toBeNull();
-    expect(redis.eval).toHaveBeenLastCalledWith(
+    expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('DEL', chatKey"),
-      ['arrakis:guild-applications:2', 'arrakis:guild-applications-index:2', `arrakis:guild-chat:2:${id}`],
-      [id, 'remove'],
+      [
+        'arrakis:guild-applications:2',
+        'arrakis:guild-applications-index:2',
+        `arrakis:guild-chat:2:${id}`,
+        `arrakis:guild-application-review:2:${id}`,
+      ],
+      [id, 'remove', expect.any(String), JSON.stringify(application)],
     );
     redis.eval.mockResolvedValue(null);
     await expect(REVIEW(req({ applicationId: id, status: 'accepted' }), {})).rejects.toMatchObject({ statusCode: 404 });
+  });
+});
+
+describe('acceptance joins the live guild', () => {
+  const applicantId = createHash('sha256').update('2:applicant').digest('hex');
+  const playerId = '9007199254740993123';
+  const applicant = { ...application, id: applicantId, discordId: 'applicant', playerId };
+  const accept = () =>
+    REVIEW(req({ applicationId: applicantId, status: 'accepted', playerId: 'forged', roleId: 100 }), {});
+  beforeEach(() => {
+    mockReview(applicant);
+    linkedPlayer.mockImplementation(async (actor) =>
+      actor.userId === 'applicant'
+        ? { linked: true, pawnId: playerId, characterName: 'Applicant' }
+        : { linked: true, pawnId: '4', characterName: 'Leader' },
+    );
+    request.mockImplementation(async (method) =>
+      method === 'GET' ? { rows: [{ player_id: '4', role_id: '100' }] } : { ok: true, secret: 'hidden' },
+    );
+  });
+  it('adds the freshly verified applicant as Member before saving acceptance and ignores client identity/rank', async () => {
+    const response = await accept();
+    expect(JSON.parse(response.body).data).toMatchObject({ id: applicantId, status: 'accepted', playerId });
+    expect(request).toHaveBeenLastCalledWith('POST', '/api/guilds/2/members', {
+      body: { playerId, roleId: 1 },
+      retryRead: false,
+    });
+    expect(linkedPlayer).toHaveBeenLastCalledWith(expect.objectContaining({ userId: 'applicant', roleIds: [] }));
+    const save = redis.eval.mock.calls.findIndex(([script]) => script.includes("redis.call('HSET'"));
+    expect(request.mock.invocationCallOrder[1]).toBeLessThan(redis.eval.mock.invocationCallOrder[save]);
+    expect(JSON.stringify(JSON.parse(response.body))).not.toContain('hidden');
+  });
+  it.each([400, 409, 403, 500])(
+    'does not mark accepted or retry when Console refuses or fails (%s)',
+    async (status) => {
+      request.mockImplementation(async (method) => {
+        if (method === 'GET') return { rows: [{ player_id: '4', role_id: '100' }] };
+        throw new DuneConsoleApiError('private provider details', status);
+      });
+      await expect(accept()).rejects.toMatchObject({
+        statusCode: [400, 409].includes(status) ? 409 : status === 403 ? 403 : 502,
+      });
+      expect(request.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+      expect(redis.eval.mock.calls.some(([script]) => script.includes("redis.call('HSET'"))).toBe(false);
+      expect(redis.eval.mock.calls.at(-1)?.[0]).toContain("redis.call('DEL', KEYS[1])");
+    },
+  );
+  it('reconciles an already-present applicant without issuing another add', async () => {
+    request.mockResolvedValue({
+      rows: [
+        { player_id: '4', role_id: '100' },
+        { controller_id: playerId, role_id: '1' },
+      ],
+    });
+    expect(JSON.parse((await accept()).body).data.status).toBe('accepted');
+    expect(request.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+  it('keeps old applications usable by resolving their verified Discord owner', async () => {
+    const { playerId: _previousId, ...legacy } = applicant;
+    mockReview(legacy);
+    await accept();
+    expect(request).toHaveBeenLastCalledWith('POST', '/api/guilds/2/members', {
+      body: { playerId, roleId: 1 },
+      retryRead: false,
+    });
+  });
+  it('rejects unlinked or changed characters and unsafe linked IDs before any membership write', async () => {
+    for (const player of [
+      { linked: false },
+      { linked: true, pawnId: 'different' },
+      { linked: true, pawnId: '../bad' },
+    ]) {
+      linkedPlayer.mockImplementation(async (actor) =>
+        actor.userId === 'applicant' ? player : { linked: true, pawnId: '4' },
+      );
+      await expect(accept()).rejects.toMatchObject({ statusCode: 409 });
+    }
+    expect(request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+    expect(redis.eval.mock.calls.some(([script]) => script.includes("redis.call('HSET'"))).toBe(false);
+  });
+  it('rejects concurrent or replaced reviews before writing membership', async () => {
+    redis.eval.mockResolvedValueOnce(-1);
+    await expect(accept()).rejects.toMatchObject({ code: 'GUILD_APPLICATION_BUSY' });
+    mockReview(applicant);
+    const normal = redis.eval.getMockImplementation()!;
+    redis.eval.mockImplementation(async (...args) => (args[0].includes('and 1 or 0') ? 0 : normal(...args)));
+    await expect(accept()).rejects.toMatchObject({ code: 'GUILD_APPLICATION_CHANGED' });
+    expect(request.mock.calls.some(([method]) => method === 'POST')).toBe(false);
+  });
+  it('does not overwrite a replaced application after a successful join', async () => {
+    const normal = redis.eval.getMockImplementation()!;
+    redis.eval.mockImplementation(async (...args) => (args[0].includes("redis.call('HSET'") ? null : normal(...args)));
+    await expect(accept()).rejects.toMatchObject({ code: 'GUILD_APPLICATION_CHANGED' });
+    expect(request.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+  });
+  it('recovers a lost join response by checking membership before a repeated acceptance', async () => {
+    let joined = false;
+    request.mockImplementation(async (method) => {
+      if (method === 'GET')
+        return {
+          rows: [{ player_id: '4', role_id: '100' }, ...(joined ? [{ player_id: playerId, role_id: '1' }] : [])],
+        };
+      joined = true;
+      throw new Error('connection lost after server commit');
+    });
+    await expect(accept()).rejects.toMatchObject({ code: 'GUILD_CHANGE_UNAVAILABLE' });
+    expect(JSON.parse((await accept()).body).data.status).toBe('accepted');
+    expect(request.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+  });
+  it('reports a status-storage failure after confirmed membership without reporting acceptance', async () => {
+    const normal = redis.eval.getMockImplementation()!;
+    redis.eval.mockImplementation(async (...args) => {
+      if (args[0].includes("redis.call('HSET'")) throw new Error('private storage details');
+      return normal(...args);
+    });
+    await expect(accept()).rejects.toMatchObject({
+      statusCode: 503,
+      code: 'GUILD_APPLICATION_SAVE_UNAVAILABLE',
+      message: expect.stringContaining('Guild membership was confirmed'),
+    });
+    expect(request.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+  });
+  it('cannot reverse accepted membership through a declined decision', async () => {
+    mockReview({ ...applicant, status: 'accepted' });
+    await expect(REVIEW(req({ applicationId: applicantId, status: 'declined' }), {})).rejects.toMatchObject({
+      code: 'GUILD_APPLICATION_ACCEPTED',
+    });
+    expect(request.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
   });
 });

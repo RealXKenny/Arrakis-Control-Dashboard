@@ -1029,6 +1029,7 @@ for (const disbandFlow of [false, true]) {
 test('guild custom applications and private live chat work across the community pages', async ({ page }) => {
   let leader = false;
   let application: Record<string, unknown> | null = null;
+  let rejectNextAcceptance = true;
   let submissions = 0;
   await page.route('**/api/guilds/application-status?*', (route) =>
     route.fulfill({
@@ -1120,6 +1121,14 @@ test('guild custom applications and private live chat work across the community 
   await page.route('**/api/guilds/2/applications*', async (route) => {
     if (route.request().method() === 'POST') {
       const { status } = route.request().postDataJSON();
+      if (status === 'accepted' && rejectNextAcceptance) {
+        rejectNextAcceptance = false;
+        await route.fulfill({
+          status: 409,
+          json: { ok: false, error: 'The guild is full. The application was not accepted.' },
+        });
+        return;
+      }
       application = status === 'remove' ? null : { ...application, status };
       await route.fulfill({ json: { ok: true, data: application } });
     } else
@@ -1234,11 +1243,16 @@ test('guild custom applications and private live chat work across the community 
   await reviewerChat.getByRole('button', { name: 'Send message', exact: true }).click();
   await expect(reviewerChat.getByRole('log')).toContainText('Please meet us at the guild base.');
   await inbox.getByRole('button', { name: 'Accept application', exact: true }).click();
-  await expect(inbox.getByText('Application accepted.', { exact: true })).toBeVisible();
+  await expect(inbox.getByRole('alert')).toContainText('The guild is full. The application was not accepted.');
+  expect(application?.status).toBe('pending');
+  await inbox.getByRole('button', { name: 'Refresh applications', exact: true }).click();
+  await inbox.getByRole('button', { name: 'Accept application', exact: true }).click();
+  await expect(
+    inbox.getByText('Application accepted. Applicant added to the guild as a Member.', { exact: true }),
+  ).toBeVisible();
   await expect(inbox.getByRole('button', { name: 'Accept application', exact: true })).toBeDisabled();
   await expect(reviewerChat.getByRole('log')).toContainText('Please meet us at the guild base.');
-  await inbox.getByRole('button', { name: 'Decline application', exact: true }).click();
-  await expect(inbox.getByText('Application declined.', { exact: true })).toBeVisible();
+  await expect(inbox.getByRole('button', { name: 'Decline application', exact: true })).toBeDisabled();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/guild-application-inbox-mobile.png', fullPage: true });
