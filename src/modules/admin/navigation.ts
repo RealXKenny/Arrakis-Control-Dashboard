@@ -3,7 +3,7 @@ import type { AdminOperation } from './types';
 /** Browser-safe map from the administration catalog to grouped sections and tabs. */
 
 export type AdminTabKind =
-  'overview' | 'guilds' | 'setup' | 'reference' | 'console' | 'operations' | 'players' | 'vehicles';
+  'overview' | 'guilds' | 'setup' | 'reference' | 'console' | 'operations' | 'players' | 'vehicles' | 'bases';
 export type AdminTab = {
   id: string;
   label: string;
@@ -83,7 +83,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
       {
         id: 'bases',
         label: 'Bases & storage',
-        kind: 'operations',
+        kind: 'bases',
         groups: ['Bases & Storage'],
         summary: 'Bases, containers, refills, permissions and exports.',
       },

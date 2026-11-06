@@ -49,3 +49,25 @@ export async function adminCall(
     upstreamStatus: typeof result.upstreamStatus === 'number' ? result.upstreamStatus : undefined,
   };
 }
+
+/** A native same-origin form post keeps large exports out of client-side JavaScript memory. */
+export function downloadAdmin(operation: AdminOperation, input: AdminInput = {}) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/api/admin/execute';
+  form.target = '_blank';
+  const field = document.createElement('input');
+  field.type = 'hidden';
+  field.name = 'request';
+  field.value = JSON.stringify({
+    operation: operation.id,
+    path: input.path ?? {},
+    query: input.query ?? {},
+    body: input.body ?? {},
+    acknowledgement: '',
+  });
+  form.append(field);
+  document.body.append(form);
+  form.submit();
+  form.remove();
+}

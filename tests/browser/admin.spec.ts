@@ -541,3 +541,42 @@ test('vehicles screen shows cargo removal and pending deletions with cancel-safe
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+test('bases screen shows maintenance, queued work and cancel-safe removal', async ({ page, context }) => {
+  await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.route('**/api/admin/catalog', (route) =>
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
+  );
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/admin/execute', (route) => {
+    const input = route.request().postDataJSON();
+    calls.push(input);
+    const data: Record<string, unknown> = {
+      'get-bases': { rows: [{ base_id: '9007199254740993123', name: 'Hagga Outpost' }], hasMore: false },
+      'get-bases-auto-refill': { rows: [] },
+      'get-bases-auto-refill-water': { rows: [{ base_id: '9007199254740993123', name: 'Hagga Outpost' }] },
+      'get-bases-baseid-water': { stored: 120 },
+      'get-bases-pending-refills': { rows: [{ base_id: '4', name: 'Queued Base' }] },
+    };
+    return route.fulfill({ json: { ok: true, upstreamStatus: 202, data: data[input.operation] ?? {} } });
+  });
+  await page.goto('/admin?tab=bases');
+  await page.getByRole('button', { name: 'Open Hagga Outpost' }).click();
+  await expect(page).toHaveURL(/base=9007199254740993123/);
+  await page.getByRole('button', { name: 'Generators & water', exact: true }).click();
+  await expect(page.getByText('Generators: Not enrolled')).toBeVisible();
+  await expect(page.getByText('Water: Enrolled')).toBeVisible();
+  await page.getByRole('button', { name: 'Refill generators…' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Refill generators', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'has not completed yet' })).toBeVisible();
+  const refill = calls.find((call) => call.operation === 'post-bases-baseid-refill-generators');
+  expect(refill.path.baseId).toBe('9007199254740993123');
+  await page.getByRole('button', { name: 'Export & removal', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete base…' }).click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Delete base', exact: true })).toBeDisabled();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(calls.some((call) => call.operation === 'delete-bases-baseid')).toBe(false);
+  await page.goto('/admin?tab=bases&view=queues');
+  await expect(page.getByText('queued, not completed')).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Queued Base' })).toBeVisible();
+});
