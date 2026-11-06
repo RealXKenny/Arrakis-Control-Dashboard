@@ -4,17 +4,21 @@ import type { GuildChatMessage } from '../applications';
 import css from '../styles/requirements.module.css';
 
 export default function GuildApplicationChat({
-  guildId,
-  applicationId,
+  guildId = '',
+  applicationId = '',
   title,
   markRead = false,
   onUnreadCount,
+  conversationUrl,
+  support = false,
 }: {
-  guildId: string;
-  applicationId: string;
+  guildId?: string;
+  applicationId?: string;
   title: string;
   markRead?: boolean;
   onUnreadCount?: (count: number) => void;
+  conversationUrl?: string;
+  support?: boolean;
 }) {
   const [messages, setMessages] = useState<GuildChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -34,7 +38,9 @@ export default function GuildApplicationChat({
   const sendController = useRef<AbortController | null>(null);
   const log = useRef<HTMLOListElement>(null);
   const follow = useRef(true);
-  const url = `/api/guilds/${encodeURIComponent(guildId)}/applications/${encodeURIComponent(applicationId)}/messages`;
+  const url =
+    conversationUrl ??
+    `/api/guilds/${encodeURIComponent(guildId)}/applications/${encodeURIComponent(applicationId)}/messages`;
   useEffect(() => () => sendController.current?.abort(), []);
 
   useEffect(() => {
@@ -185,6 +191,10 @@ export default function GuildApplicationChat({
   return (
     <section className={css.chat} aria-label={title}>
       <h4>{title}</h4>
+      {support && (
+        <p>Private to dashboard administrators and the current guild leader. New leaders can see earlier messages.</p>
+      )}
+      {!support && <p>Administrators can review this application conversation.</p>}
       <p>{loading ? 'Connecting…' : connectionError ? 'Disconnected' : 'Live · private conversation'}</p>
       {connectionError && (
         <p role="alert">
@@ -210,7 +220,14 @@ export default function GuildApplicationChat({
           <li key={`${message.senderId}:${message.id}`}>
             <strong>{message.senderName}</strong>{' '}
             <small>
-              {message.role === 'reviewer' ? 'Reviewer' : 'Applicant'} · {new Date(message.sentAt).toLocaleString()}
+              {support
+                ? message.role === 'reviewer'
+                  ? 'Administrator'
+                  : 'Guild leader'
+                : message.role === 'reviewer'
+                  ? 'Reviewer'
+                  : 'Applicant'}{' '}
+              · {new Date(message.sentAt).toLocaleString()}
             </small>
             <p>{message.text}</p>
           </li>

@@ -2,6 +2,10 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import DashboardShell from '../../../components/DashboardShell';
 import type { AdminOperation } from '../types';
+import OperationFields from './OperationFields';
+import AdminResults from './AdminResults';
+import GuildOversight from './GuildOversight';
+import { defaultQuery, operationFields, resultHasNext } from '../operation-fields';
 import css from '../styles/admin.module.css';
 
 function objectInput(text: string): Record<string, unknown> {
@@ -11,51 +15,14 @@ function objectInput(text: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-/** Tables for ordinary lists, expandable JSON for nested provider-specific results. */
-function ResultView({ value }: { value: unknown }) {
-  const record = value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
-  const rows = Array.isArray(value) ? value : Array.isArray(record.rows) ? record.rows : null;
-  const columns = rows?.[0] && typeof rows[0] === 'object' ? Object.keys(rows[0]).slice(0, 8) : [];
-  return (
-    <>
-      {rows && columns.length > 0 && (
-        <div className={css.tableScroll}>
-          <table>
-            <thead>
-              <tr>
-                {columns.map((key) => (
-                  <th key={key}>{key.replaceAll('_', ' ')}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, 100).map((row, index) => (
-                <tr key={index}>
-                  {columns.map((key) => (
-                    <td key={key}>
-                      {row[key] == null
-                        ? '—'
-                        : typeof row[key] === 'object'
-                          ? JSON.stringify(row[key])
-                          : String(row[key])}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <details open={!rows}>
-        <summary>Inspect response{rows ? ` · ${rows.length} rows (table shows up to 100)` : ''}</summary>
-        <pre>{JSON.stringify(value, null, 2)}</pre>
-      </details>
-    </>
-  );
-}
-
 export default function AdminWorkspace({ accountName }: { accountName: string }) {
   const [operations, setOperations] = useState<AdminOperation[]>([]);
+  const [view, setView] = useState<'operations' | 'guilds'>('operations');
+  const [showFeatures, setShowFeatures] = useState(false);
+  const [accessFilter, setAccessFilter] = useState('all');
+  const [validFields, setValidFields] = useState(true);
+  const [fieldRevision, setFieldRevision] = useState(0);
+  const [adapterConfigured, setAdapterConfigured] = useState(false);
   const [configured, setConfigured] = useState(false);
   const [consoleOrigin, setConsoleOrigin] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,6 +49,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
         if (!response.ok) throw new Error(data.error ?? 'Administration is unavailable.');
         setOperations(data.operations);
         setConfigured(data.configured);
+        setAdapterConfigured(data.adapterConfigured === true);
         setConsoleOrigin(data.consoleOrigin);
         setOperation(
           data.operations.find((entry: AdminOperation) => entry.id === 'get-server-status') ?? data.operations[0],
@@ -103,6 +71,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
   const filtered = operations.filter(
     (entry) =>
       (group === 'All operations' || entry.group === group) &&
+      (accessFilter === 'all' || (accessFilter === 'supported' ? !entry.restriction : !!entry.restriction)) &&
       `${entry.title} ${entry.route} ${entry.method}`.toLowerCase().includes(search.toLowerCase()),
   );
   const confirmation = operation ? `${operation.method} ${operation.route}` : '';
@@ -111,13 +80,22 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
     operation?.restriction ||
     (operation?.provider === 'console' && !configured
       ? 'Set ADMIN_CONSOLE_API_KEY on the server to enable these operations.'
-      : '');
+      : operation?.provider === 'adapter' && !adapterConfigured
+        ? 'Configure ADAPTER_TOKEN on the server to enable adapter operations.'
+        : '');
 
-  function select(next: AdminOperation) {
+  function select(next: AdminOperation, context: Record<string, string> = {}) {
     if (busy) return;
     setOperation(next);
-    setPath({});
-    setQuery('{}');
+    setView('operations');
+    setValidFields(true);
+    setFieldRevision((value) => value + 1);
+    if (Object.keys(context).length) setGroup(next.group);
+    setSearch('');
+    setPath(
+      Object.fromEntries(next.pathParameters.filter((name) => context[name]).map((name) => [name, context[name]])),
+    );
+    setQuery(JSON.stringify(defaultQuery(next)));
     setBody('{}');
     setFiles({});
     setAcknowledgement('');
@@ -127,18 +105,28 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
     setTruncated(false);
   }
 
-  async function run() {
-    if (!operation || busy || blocked) return;
+  async function run(queryOverride?: Record<string, unknown>) {
+    if (!operation || busy || blocked || !validFields) return;
     setError('');
     setResult(undefined);
     setStatus('');
     setTruncated(false);
     let payload;
     try {
-      payload = { operation: operation.id, path, query: objectInput(query), body: objectInput(body), acknowledgement };
+      payload = {
+        operation: operation.id,
+        path,
+        query: queryOverride ?? objectInput(query),
+        body: objectInput(body),
+        acknowledgement,
+      };
     } catch (failure) {
       setError(failure.message);
       return;
+    }
+    if (queryOverride) {
+      setQuery(JSON.stringify(queryOverride));
+      setFieldRevision((value) => value + 1);
     }
     if (operation.mode === 'download') {
       // A native same-origin form keeps large transfers out of client-side JavaScript memory.
@@ -201,7 +189,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
         const data = await response.json();
         setResult(data.data ?? data);
         setTruncated(data.truncated === true);
-        setStatus(`HTTP ${data.upstreamStatus ?? response.status}`);
+        setStatus(`HTTP ${data.upstreamStatus ?? response.status}${data.warning ? ` · ${data.warning}` : ''}`);
         if (!response.ok)
           setError(`${data.error ?? 'Request failed.'}${data.requestId ? ` Request ID: ${data.requestId}` : ''}`);
       }
@@ -220,6 +208,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
       if (mutation) {
         setBody('{}');
         setFiles({});
+        setFieldRevision((value) => value + 1);
       }
     }
   }
@@ -261,14 +250,61 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
           <span>Restricted or planned</span>
         </article>
       </div>
+      <nav className={css.viewTabs} aria-label="Administration sections">
+        <button aria-pressed={view === 'operations'} disabled={busy} onClick={() => setView('operations')}>
+          Operations
+        </button>
+        <button aria-pressed={view === 'guilds'} disabled={busy} onClick={() => setView('guilds')}>
+          Guild oversight
+        </button>
+        <button aria-expanded={showFeatures} onClick={() => setShowFeatures(!showFeatures)}>
+          Browse features
+        </button>
+      </nav>
+      {showFeatures && (
+        <nav className={css.featureGrid} aria-label="Admin features">
+          {groups
+            .filter((name) => name !== 'All operations')
+            .map((name) => (
+              <button
+                key={name}
+                disabled={busy}
+                onClick={() => {
+                  setGroup(name);
+                  setSearch('');
+                  setView('operations');
+                  setShowFeatures(false);
+                  const first =
+                    operations.find((entry) => entry.group === name && !entry.restriction) ??
+                    operations.find((entry) => entry.group === name);
+                  if (first) select(first);
+                }}
+              >
+                <strong>{name}</strong>
+                <span>
+                  {operations.filter((entry) => entry.group === name && !entry.restriction).length} supported tools
+                </span>
+              </button>
+            ))}
+        </nav>
+      )}
+      {!loading && view === 'guilds' && <GuildOversight operations={operations} onSelect={select} />}
       {loading ? (
         <p role="status">Loading administration…</p>
-      ) : (
+      ) : view === 'operations' ? (
         <div className={css.workspace}>
           <aside className={css.sidebar} aria-label="API categories">
             <h2>Browse categories</h2>
             {groups.map((name) => (
-              <button key={name} aria-pressed={name === group} onClick={() => setGroup(name)}>
+              <button
+                key={name}
+                aria-pressed={name === group}
+                disabled={busy}
+                onClick={() => {
+                  setGroup(name);
+                  setSearch('');
+                }}
+              >
                 {name}
                 <span>
                   {name === 'All operations'
@@ -287,6 +323,14 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
+            </label>
+            <label className={css.search}>
+              Availability
+              <select value={accessFilter} onChange={(event) => setAccessFilter(event.target.value)}>
+                <option value="all">All tools</option>
+                <option value="supported">Supported tools</option>
+                <option value="restricted">Requires Console</option>
+              </select>
             </label>
             <p className={css.count}>{filtered.length} operations</p>
             <div className={css.operationList}>
@@ -315,6 +359,12 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
                 </div>
                 <h2>{operation.title}</h2>
                 <code className={css.route}>{operation.route}</code>
+                {operation.id === 'post-guilds-guildid-members-playerid-promote' && (
+                  <p className={css.notice}>
+                    Promoting an Officer transfers leadership and demotes the current leader. Check the current rank
+                    before confirming.
+                  </p>
+                )}
                 {blocked ? (
                   <div className={css.notice} role="status">
                     <p>{blocked}</p>
@@ -340,48 +390,77 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
                         {name.replace(/([a-z])([A-Z])/g, '$1 $2')}
                         <input
                           required
+                          aria-label={name.replace(/([a-z])([A-Z])/g, '$1 $2')}
                           value={path[name] ?? ''}
                           disabled={busy}
                           onChange={(event) => {
                             setPath({ ...path, [name]: event.target.value });
+                            setResult(undefined);
                             setAcknowledgement('');
                           }}
                         />
                       </label>
                     ))}
-                    <label className={css.field}>
-                      Query parameters <span>JSON object · IDs may be decimal strings</span>
-                      <textarea
-                        spellCheck={false}
-                        value={query}
-                        disabled={busy}
-                        onChange={(event) => {
-                          setQuery(event.target.value);
-                          setAcknowledgement('');
-                        }}
-                        rows={3}
-                      />
-                    </label>
-                    {mutation && (
+                    <OperationFields
+                      key={operation.id + '-' + fieldRevision}
+                      operation={operation}
+                      query={query}
+                      body={body}
+                      disabled={busy}
+                      onValidityChange={setValidFields}
+                      onChange={(location, value) => {
+                        if (location === 'query') setQuery(value);
+                        else setBody(value);
+                        setAcknowledgement('');
+                        setResult(undefined);
+                      }}
+                    />
+                    <details className={css.help}>
+                      <summary>Advanced request fields</summary>
+                      <p>
+                        Use JSON for nested settings or additional fields documented by Console. These values are shared
+                        with the form above.
+                      </p>
                       <label className={css.field}>
-                        Request fields{' '}
-                        <span>
-                          {operation.mode === 'multipart'
-                            ? 'Non-file form fields as a JSON object'
-                            : 'JSON object · include any required Console confirmation phrase'}
-                        </span>
+                        Query parameters <span>JSON object · IDs may be decimal strings</span>
                         <textarea
                           spellCheck={false}
-                          value={body}
+                          value={query}
                           disabled={busy}
                           onChange={(event) => {
-                            setBody(event.target.value);
+                            setQuery(event.target.value);
+                            setFieldRevision((value) => value + 1);
+                            setValidFields(true);
+                            setResult(undefined);
                             setAcknowledgement('');
                           }}
-                          rows={6}
+                          rows={3}
                         />
                       </label>
-                    )}
+                      {mutation && (
+                        <label className={css.field}>
+                          Request fields{' '}
+                          <span>
+                            {operation.mode === 'multipart'
+                              ? 'Non-file form fields as a JSON object'
+                              : 'JSON object · include any required Console confirmation phrase'}
+                          </span>
+                          <textarea
+                            spellCheck={false}
+                            value={body}
+                            disabled={busy}
+                            onChange={(event) => {
+                              setBody(event.target.value);
+                              setFieldRevision((value) => value + 1);
+                              setValidFields(true);
+                              setResult(undefined);
+                              setAcknowledgement('');
+                            }}
+                            rows={6}
+                          />
+                        </label>
+                      )}
+                    </details>
                     {operation.files?.map((name) => (
                       <label className={css.field} key={name}>
                         {name} file <span>Combined upload limit: 8 MiB</span>
@@ -414,7 +493,7 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
                     )}
                     <div className={css.actions}>
                       <button
-                        disabled={busy || (mutation && acknowledgement !== confirmation)}
+                        disabled={busy || !validFields || (mutation && acknowledgement !== confirmation)}
                         onClick={() => void run()}
                       >
                         {busy
@@ -451,12 +530,49 @@ export default function AdminWorkspace({ accountName }: { accountName: string })
             {result !== undefined && (
               <div className={css.result}>
                 <h3>Result</h3>
-                <ResultView value={result} />
+                <AdminResults
+                  key={operation?.id + '-' + status}
+                  value={result}
+                  operation={operation!}
+                  operations={operations}
+                  path={path}
+                  busy={busy}
+                  onSelect={select}
+                />
+                {operation &&
+                  operationFields(operation).some((field) => field.name === 'page' && field.location === 'query') && (
+                    <nav className={css.actions} aria-label="Provider result pages">
+                      <button
+                        disabled={busy || Number(objectInput(query).page ?? 0) <= 0}
+                        onClick={() =>
+                          void run({ ...objectInput(query), page: Number(objectInput(query).page ?? 0) - 1 })
+                        }
+                      >
+                        Previous page
+                      </button>
+                      <span>Page {Number(objectInput(query).page ?? 0) + 1}</span>
+                      <button
+                        disabled={
+                          busy ||
+                          !resultHasNext(
+                            result,
+                            Number(objectInput(query).page ?? 0),
+                            Number(objectInput(query).pageSize ?? 20),
+                          )
+                        }
+                        onClick={() =>
+                          void run({ ...objectInput(query), page: Number(objectInput(query).page ?? 0) + 1 })
+                        }
+                      >
+                        Next page
+                      </button>
+                    </nav>
+                  )}
               </div>
             )}
           </section>
         </div>
-      )}
+      ) : null}
       {!loading && !operations.length && error && (
         <p className={css.error} role="alert">
           {error}

@@ -8,6 +8,8 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Added
 
+- Expanded administration into grouped tools with labeled request forms, filterable/paginated results, and contextual player, guild, base, and vehicle actions. Added guild oversight, administrator member/rank/disband controls, read-only application conversation inspection, and private administrator–guild leader support chats in My Guild Settings.
+
 - Added a Guilds page in Community where members can browse guild recruitment listings and joining details. Leader settings stay under My Guild.
 - Added leader-only Guild settings to edit joining requirements and contact details, and publish or unlist a guild.
 - Accepting an application now adds the applicant’s verified linked character to the guild as a Member. Failed joins keep the previous application status; Console enforces guild capacity, faction compatibility, and existing membership.

@@ -60,6 +60,7 @@ test.beforeEach(async ({ page }) => {
       },
     }),
   );
+  await page.route('**/api/guilds/*/support', (route) => route.fulfill({ json: { ok: true, data: { messages: [] } } }));
   await page.route('**/api/guilds/*/application', (route) =>
     route.request().method() === 'GET' ? route.fulfill({ json: { ok: true, data: null } }) : route.continue(),
   );
@@ -1029,6 +1030,32 @@ for (const disbandFlow of [false, true]) {
 test('guild custom applications and private live chat work across the community pages', async ({ page }) => {
   let leader = false;
   let application: Record<string, unknown> | null = null;
+  const supportMessages: Record<string, unknown>[] = [
+    {
+      id: 'd62f594e-7a04-47d7-b3f9-94f9abf8aaab',
+      text: 'Your recruitment listing looks good.',
+      senderId: 'admin',
+      senderName: 'Administrator',
+      role: 'reviewer',
+      sentAt: Date.now(),
+    },
+  ];
+  await page.route('**/api/guilds/2/support', (route) =>
+    route.fulfill({ json: { ok: true, data: { messages: supportMessages } } }),
+  );
+  await page.route('**/api/guilds/2/support/send', (route) => {
+    const input = route.request().postDataJSON();
+    const message = {
+      id: input.clientMessageId,
+      text: input.text,
+      senderId: 'leader',
+      senderName: 'Guild Leader',
+      role: 'applicant',
+      sentAt: Date.now(),
+    };
+    supportMessages.push(message);
+    return route.fulfill({ json: { ok: true, data: message } });
+  });
   let rejectNextAcceptance = true;
   let submissions = 0;
   await page.route('**/api/guilds/application-status?*', (route) =>
@@ -1216,6 +1243,11 @@ test('guild custom applications and private live chat work across the community 
     .getByRole('navigation', { name: 'Guild tabs' })
     .getByRole('button', { name: 'Settings', exact: true })
     .click();
+  const leaderSupport = page.getByRole('region', { name: 'Chat with administrators', exact: true });
+  await expect(leaderSupport.getByRole('log')).toContainText('Your recruitment listing looks good.');
+  await leaderSupport.getByRole('textbox', { name: 'Message', exact: true }).fill('Thanks for checking.');
+  await leaderSupport.getByRole('button', { name: 'Send message', exact: true }).click();
+  await expect(leaderSupport.getByRole('log')).toContainText('Thanks for checking.');
   const inbox = page.getByRole('region', { name: 'Guild applications', exact: true });
   await expect(inbox.getByRole('heading', { name: 'Desert Navigator', exact: true })).toBeVisible();
   await expect(inbox.getByText('America/New_York', { exact: true })).toBeVisible();

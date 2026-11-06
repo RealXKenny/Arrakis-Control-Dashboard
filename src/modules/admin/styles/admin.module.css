@@ -481,3 +481,162 @@
     font-size: 16px;
   }
 }
+
+.viewTabs,
+.directoryHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.viewTabs {
+  justify-content: flex-start;
+}
+.viewTabs button,
+.oversight button {
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  padding: 10px 14px;
+  font-size: 12px;
+}
+.viewTabs button[aria-pressed='true'],
+.guildGrid button[aria-pressed='true'] {
+  border-color: var(--theme-accent);
+  color: var(--theme-accent);
+}
+.featureGrid,
+.guildGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.featureGrid button,
+.guildGrid button {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  padding: 18px;
+  border: 1px solid var(--theme-border);
+  border-radius: 16px;
+  background: var(--theme-surface);
+  color: var(--theme-text);
+}
+.featureGrid span,
+.guildGrid span,
+.directoryHeading p {
+  color: var(--theme-muted);
+  font-size: 12px;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0 16px;
+}
+.formGrid .field {
+  min-width: 0;
+}
+.field select,
+.search select,
+.tableScroll select {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  border: 1px solid var(--theme-border);
+  border-radius: 10px;
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  font-size: 12px;
+}
+.tableScroll td {
+  max-width: 320px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.tableScroll select {
+  min-width: 150px;
+}
+.oversight {
+  min-width: 0;
+  padding: 24px;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 24px;
+}
+.oversight h2 {
+  font-size: 20px;
+}
+.oversight h3 {
+  font-size: 16px;
+  margin-top: 30px;
+}
+.oversight p {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.guildDetail {
+  border-top: 1px solid var(--theme-border);
+  margin-top: 28px;
+  padding-top: 20px;
+}
+.applicationRecord {
+  padding: 16px;
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.applicationRecord summary {
+  cursor: pointer;
+}
+.conversation {
+  padding: 16px 30px;
+  max-height: 450px;
+  overflow: auto;
+}
+.conversation li {
+  padding: 12px 0;
+  overflow-wrap: anywhere;
+}
+.conversation small {
+  color: var(--theme-muted);
+}
+@media (max-width: 500px) {
+  .formGrid,
+  .featureGrid,
+  .guildGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .oversight {
+    padding: 16px;
+  }
+  .tableScroll {
+    max-width: 100%;
+  }
+}
+
+.tableScroll table {
+  min-width: 640px;
+}
+.tableScroll th {
+  white-space: nowrap;
+}
+.tableScroll td {
+  min-width: 100px;
+}
+.guildGrid strong {
+  overflow-wrap: anywhere;
+}
+.oversight form {
+  align-items: end;
+}
+.oversight form .field {
+  flex: 1;
+  min-width: 140px;
+  margin: 0;
+}

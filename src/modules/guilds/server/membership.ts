@@ -20,7 +20,7 @@ function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
-async function removeGuildStorage(guildId: string) {
+export async function removeGuildStorage(guildId: string) {
   const redis = getRedisClient();
   if (!redis) throw new Error('Storage unavailable');
   await redis.eval(
@@ -33,7 +33,7 @@ async function removeGuildStorage(guildId: string) {
         redis.call('DEL', chatKey, chatKey .. ':seen')
       end
     end
-    redis.call('DEL', KEYS[1], KEYS[3], KEYS[4], KEYS[5])
+    redis.call('DEL', KEYS[1], KEYS[3], KEYS[4], KEYS[5], KEYS[6])
     redis.call('ZREM', KEYS[2], ARGV[1])
     return 1
   `,
@@ -43,6 +43,7 @@ async function removeGuildStorage(guildId: string) {
       `arrakis:guild-logo:${guildId}`,
       `arrakis:guild-applications:${guildId}`,
       `arrakis:guild-applications-index:${guildId}`,
+      `arrakis:guild-support:${guildId}`,
     ],
     [`guild:${guildId}`, `arrakis:guild-chat:${guildId}:`],
   );

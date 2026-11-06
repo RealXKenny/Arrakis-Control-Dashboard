@@ -128,7 +128,8 @@ export default function GuildApplicationForm({
       {!loading && loaded && !application && questions.length > 0 && (
         <form className={css.form} onSubmit={submit}>
           <p>
-            Your verified character and Discord identity will be shared with the guild leader along with your answers.
+            Your verified character, Discord identity, answers, and application conversation can be reviewed by the
+            guild leader and dashboard administrators.
           </p>
           {questions.map((question) => (
             <GuildQuestionInput

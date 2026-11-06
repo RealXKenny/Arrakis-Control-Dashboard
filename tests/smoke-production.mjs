@@ -223,7 +223,28 @@ try {
   const memberAdmin = await fetch(`${base}/api/admin/catalog`, { headers: { cookie: sessionCookie } });
   assert.equal(memberAdmin.status, 403, 'ordinary members cannot inspect admin operations');
   const adminCatalog = await fetch(`${base}/api/admin/catalog`, { headers: adminHeaders });
-  assert.equal((await adminCatalog.json()).operations.length, 378);
+  assert.equal((await adminCatalog.json()).operations.length, 383);
+  for (const path of [
+    'admin/guilds/test/applications',
+    'admin/guilds/test/applications/' + 'a'.repeat(64) + '/messages',
+    'admin/guilds/test/messages',
+  ]) {
+    const response = await fetch(`${base}/api/${path}`, { headers: { cookie: sessionCookie } });
+    assert.equal(response.status, 403, 'guild oversight requires the verified administrator');
+    await response.text();
+  }
+  for (const path of ['admin/guilds/test/messages/send', 'guilds/test/support/send']) {
+    const response = await fetch(`${base}/api/${path}`, {
+      method: 'POST',
+      headers: { ...adminHeaders, Origin: 'https://other.example' },
+      body: '{}',
+    });
+    assert.equal(response.status, 403, 'guild support rejects cross-site sends');
+    await response.text();
+    const wrong = await fetch(`${base}/api/${path}`);
+    assert.equal(wrong.status, 405);
+    await wrong.text();
+  }
   const adminStatus = await fetch(`${base}/api/admin/execute`, {
     method: 'POST',
     headers: adminHeaders,

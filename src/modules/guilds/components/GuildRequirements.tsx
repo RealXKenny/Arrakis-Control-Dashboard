@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { guildRequirementSchema, type GuildRequirement, type GuildRequirementListing } from '../requirements';
 import css from '../styles/requirements.module.css';
 import GuildListingCard from './GuildListingCard';
+import GuildApplicationChat from './GuildApplicationChat';
 import GuildApplicationInbox from './GuildApplicationInbox';
 import GuildQuestionEditor from './GuildQuestionEditor';
 import useApplicationStatuses from '../hooks/useApplicationStatuses';
@@ -189,6 +190,13 @@ export default function GuildRequirements({
         </form>
       )}
       {!loading && ready && settings && guildId && <GuildApplicationInbox guildId={guildId} />}
+      {!loading && ready && settings && guildId && (
+        <GuildApplicationChat
+          conversationUrl={`/api/guilds/${encodeURIComponent(guildId)}/support`}
+          title="Chat with administrators"
+          support
+        />
+      )}
       {!loading && ready && settings && children}
       {!loading && !settings && !error && (
         <>
