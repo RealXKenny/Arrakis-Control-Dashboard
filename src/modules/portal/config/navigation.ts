@@ -30,12 +30,12 @@ export function portalNavigation(view: PortalView): NavigationItem[] {
     { label: 'My bases', group: 'Bases', href: '/portal?view=bases', active: view === 'bases' },
     { label: 'Base preview', group: 'Bases', href: '/portal?view=base-preview', active: view === 'base-preview' },
     { label: 'Vehicles', group: 'Vehicles', href: '/portal?view=vehicles', active: view === 'vehicles' },
-    { label: 'My Guild', group: 'Community', href: '/portal?view=guild', active: view === 'guild' },
     {
       label: 'Guilds',
       group: 'Community',
       href: '/portal?view=guild-requirements',
       active: view === 'guild-requirements',
     },
+    { label: 'My Guild', group: 'Community', href: '/portal?view=guild', active: view === 'guild' },
   ];
 }
