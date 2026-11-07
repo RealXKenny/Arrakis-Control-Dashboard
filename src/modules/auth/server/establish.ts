@@ -10,14 +10,14 @@ type DiscordIdentity = { userData: Record<string, unknown>; memberData: { roles:
 
 /**
  * Turn verified Discord identity and guild-role evidence into the dashboard's Redis session.
- * Both sign-in paths (direct Discord OAuth and Clerk) end here, so every downstream guard,
- * admin check and ownership check keeps reading the same OAuth-verified Discord user ID.
+ * The Discord OAuth callback ends here, so every downstream guard, admin check and ownership
+ * check reads the same OAuth-verified Discord user ID.
  */
 export async function establishDashboardSession(
   request,
   res,
   identity: DiscordIdentity,
-  options: { guildId: string; method: 'discord' | 'clerk'; clerkSessionId?: string },
+  options: { guildId: string; method: 'discord' },
 ) {
   const env = getServerEnv();
   const { userData, memberData } = identity;
@@ -39,7 +39,6 @@ export async function establishDashboardSession(
     },
     guildId: options.guildId,
     roleIds: roles,
-    ...(options.clerkSessionId ? { clerkSessionId: options.clerkSessionId } : {}),
     expiresAt: Date.now() + sessionTtlSeconds() * 1000,
   });
   cookies(request, res).set('dashboard_session', sessionId, {

@@ -9,8 +9,6 @@ export type DashboardSession = {
   roleIds: string[];
   linkedPlayerId?: string;
   linkedPlayerName?: string;
-  /** Present only for Clerk sign-ins, so logout can revoke the matching Clerk session. */
-  clerkSessionId?: string;
   expiresAt: number;
 };
 
@@ -45,8 +43,6 @@ function validSession(value: unknown): value is DashboardSession {
     session.roleIds.every((role) => typeof role === 'string' && role.length > 0 && role.length <= 64) &&
     optionalText(session.linkedPlayerId, 128) &&
     optionalText(session.linkedPlayerName, 200) &&
-    (session.clerkSessionId === undefined ||
-      (typeof session.clerkSessionId === 'string' && /^sess_[A-Za-z0-9]{1,64}$/.test(session.clerkSessionId))) &&
     typeof session.expiresAt === 'number' &&
     Number.isFinite(session.expiresAt) &&
     session.expiresAt <= Date.now() + SESSION_TTL_SECONDS * 1000 + 60_000,

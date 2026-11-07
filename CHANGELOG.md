@@ -34,6 +34,10 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Application forms are now built entirely by the guild owner, with no preset fields. Questions support short answers, paragraphs, dropdown choices, time-zone dropdowns, checkboxes, and numbers. Existing submissions retain their original answers.
 - Guild leaders can manage members beside each name: promote Members to Officers, demote Officers, confirm leadership transfers, and remove members. Added member invitations and a typed-confirmation disband action in Settings. Every change rechecks current leadership and member ranks; disbanding also clears saved recruitment data.
 
+### Removed
+
+- Clerk sign-in. Discord OAuth is the only sign-in: the `/sign-in` page, the `/auth/complete` bridge, the Clerk middleware, `AUTH_PROVIDER`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and the `@clerk/nextjs` dependency are gone, and `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` are always required in production.
+
 ### Changed
 
 - Existing applications show Check status and Chat with reviewer on guild cards, with a persistent unread reply badge that clears when messages are viewed.
