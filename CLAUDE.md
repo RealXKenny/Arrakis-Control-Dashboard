@@ -25,7 +25,7 @@ Guidance for Claude Code. Next.js 16 here has breaking changes from older versio
 - Browser code must not import infrastructure, `src/config/env.ts`, `server` directories, or server-only Redis/session/rate-limit/logger modules. Architecture tests enforce this.
 - Normalize external payloads from `unknown`. Never expose raw errors, credentials, admin payloads, or unbounded data. Keep unsafe-size numbers as decimal strings until display.
 - Redis is the only persistent store. Do not add PostgreSQL or another database.
-- Auth: Discord OAuth by default, or Clerk. Both end in `establishDashboardSession`, which re-verifies the guild role and keys the session to the Discord user ID. Never trust a Clerk user ID for ownership or admin checks.
+- Auth: Discord OAuth only. The callback ends in `establishDashboardSession`, which re-verifies the guild role and keys the session to the Discord user ID.
 - Dune Console uses `Authorization: Bearer <CONSOLE_API_KEY>`. Do not restore password login, session cookies, CSRF, or automatic reauthentication. `ADAPTER_TOKEN` and `CONSOLE_API_KEY` are distinct; never merge them.
 - Preserve request-ID sanitizing, method checks, no-store and security headers, same-origin mutation checks, POST-only logout, ownership checks, bounded provider calls, host-prefixed production cookies, and recursive secret redaction.
 - Do not recreate `public/`; `/items/*`, `/maps/*`, and `/favicon.ico` rewrite to the asset route backed by `src/assets/`.

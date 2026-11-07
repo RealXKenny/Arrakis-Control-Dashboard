@@ -52,8 +52,7 @@ export async function exchangeDiscordIdentity(
 }
 
 /**
- * Verify a Discord user access token and its guild membership. Shared by the direct OAuth
- * callback and the Clerk bridge, so both apply exactly the same identity and role evidence.
+ * Verify a Discord user access token and its guild membership for the OAuth callback.
  */
 export async function readDiscordIdentity(accessToken: string, guildId: string) {
   if (!accessToken || accessToken.length > 4096 || !/^[!-~]+$/.test(accessToken))

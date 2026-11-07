@@ -46,17 +46,10 @@ describe('Pterodactyl dashboard egg', () => {
       expect(variables.get(key)?.default_value, key).toBe('');
       expect(variables.get(key)?.rules, key).toContain('required');
     }
-    // Each sign-in provider needs only its own credentials; the egg validates the provider choice.
-    expect(variables.get('AUTH_PROVIDER')).toMatchObject({
-      default_value: 'discord',
-      rules: 'required|string|in:discord,clerk',
-    });
-    for (const key of ['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'])
-      expect(variables.get(key)?.rules, key).toBe('nullable|string');
-    expect(variables.get('CLERK_SECRET_KEY')).toMatchObject({
-      default_value: '',
-      user_viewable: false,
-      user_editable: false,
-    });
+    // Discord OAuth is the only sign-in, so its client credentials are always required.
+    for (const key of ['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET'])
+      expect(variables.get(key)?.rules, key).toBe('required|string');
+    for (const key of ['AUTH_PROVIDER', 'CLERK_SECRET_KEY', 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'])
+      expect(variables.has(key), key).toBe(false);
   });
 });

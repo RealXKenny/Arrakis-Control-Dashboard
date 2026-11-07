@@ -1607,6 +1607,66 @@
     "confirmationPhrases": []
   },
   {
+    "group": "Guilds",
+    "provider": "console",
+    "mode": "json",
+    "confirmationPhrases": [],
+    "id": "post-guilds-guildid-members",
+    "method": "POST",
+    "route": "/api/guilds/{guildId}/members",
+    "title": "Add a guild member",
+    "parameters": "playerId, roleId? (1-99; default 1)",
+    "pathParameters": ["guildId"]
+  },
+  {
+    "group": "Guilds",
+    "provider": "console",
+    "mode": "json",
+    "confirmationPhrases": [],
+    "id": "delete-guilds-guildid-members-playerid",
+    "method": "DELETE",
+    "route": "/api/guilds/{guildId}/members/{playerId}",
+    "title": "Remove a guild member",
+    "parameters": "guildId, playerId",
+    "pathParameters": ["guildId", "playerId"]
+  },
+  {
+    "group": "Guilds",
+    "provider": "console",
+    "mode": "json",
+    "confirmationPhrases": [],
+    "id": "post-guilds-guildid-members-playerid-promote",
+    "method": "POST",
+    "route": "/api/guilds/{guildId}/members/{playerId}/promote",
+    "title": "Promote a guild member",
+    "parameters": "guildId, playerId (Officer promotion transfers leadership)",
+    "pathParameters": ["guildId", "playerId"]
+  },
+  {
+    "group": "Guilds",
+    "provider": "console",
+    "mode": "json",
+    "confirmationPhrases": [],
+    "id": "post-guilds-guildid-members-playerid-demote",
+    "method": "POST",
+    "route": "/api/guilds/{guildId}/members/{playerId}/demote",
+    "title": "Demote a guild member",
+    "parameters": "guildId, playerId",
+    "pathParameters": ["guildId", "playerId"]
+  },
+  {
+    "group": "Guilds",
+    "provider": "console",
+    "mode": "json",
+    "confirmationPhrases": ["DISBAND GUILD"],
+    "id": "delete-guilds-guildid",
+    "method": "DELETE",
+    "route": "/api/guilds/{guildId}",
+    "title": "Disband a guild",
+    "parameters": "confirmation: \"DISBAND GUILD\"",
+    "pathParameters": ["guildId"]
+  },
+  {
     "id": "get-bases",
     "method": "GET",
     "route": "/api/bases",
