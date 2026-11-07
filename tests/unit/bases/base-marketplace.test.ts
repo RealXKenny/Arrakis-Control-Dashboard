@@ -106,7 +106,7 @@ describe('Base Marketplace schema and Redis store', () => {
     await publishMarketplaceRecord(record('b'.repeat(24), 'Two', '2026-10-26T12:00:00.000Z'));
     await publishMarketplaceRecord(record('c'.repeat(24), 'Three'));
     expect((await listMarketplaceSummaries(2)).map((listing) => listing.title)).toEqual(['Three', 'Two']);
-    expect(redis.zrange).toHaveBeenLastCalledWith('arrakis:base-marketplace:listings', 0, 1, { byScore: false });
+    expect(redis.zrange).toHaveBeenLastCalledWith('arrakis:{bm}:v1:listings', 0, 1, { byScore: false });
     expect((await getMarketplaceRecord('a'.repeat(24)))?.summary.title).toBe('One');
     expect(await getMarketplaceRecord('not-an-id')).toBeNull();
   });

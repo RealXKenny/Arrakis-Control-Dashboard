@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Arrakis">
+  <rect width="64" height="64" fill="#09090b"/>
+  <path d="M6 46 L24 18 L34 32 L42 22 L58 46 Z" fill="#ee8209"/>
+  <path d="M6 46 L24 18 L24 46 Z" fill="#ae4508"/>
+  <rect x="6" y="50" width="52" height="4" fill="#e3d6b9"/>
+</svg>

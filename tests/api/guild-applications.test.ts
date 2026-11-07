@@ -216,7 +216,7 @@ describe('guild applications', () => {
     expect(data.message).toBeUndefined();
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('HEXISTS'"),
-      ['arrakis:guild-applications:2', 'arrakis:guild-applications-index:2', 'arrakis:guild-requirements:2'],
+      ['arrakis:{guilds}:applications:2', 'arrakis:{guilds}:applications-index:2', 'arrakis:{guilds}:requirements:2'],
       [
         id,
         JSON.stringify(data),
@@ -231,7 +231,7 @@ describe('guild applications', () => {
     redis.eval.mockResolvedValue(JSON.stringify({ ...application, secret: 'stripped' }));
     const response = await GET(req(undefined, { applicationId: 'another-user' }), {});
     expect(JSON.parse(response.body).data).toEqual(application);
-    expect(redis.eval).toHaveBeenCalledWith(expect.any(String), ['arrakis:guild-applications:2'], [id]);
+    expect(redis.eval).toHaveBeenCalledWith(expect.any(String), ['arrakis:{guilds}:applications:2'], [id]);
   });
 
   it('rejects closed listings, duplicate applications, full inboxes, and unlinked players', async () => {
@@ -284,7 +284,7 @@ describe('guild applications', () => {
     expect(JSON.parse(inbox.body).data).toEqual({ rows: Array.from({ length: 20 }, () => application), hasMore: true });
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('ZRANGE'"),
-      ['arrakis:guild-applications:2', 'arrakis:guild-applications-index:2'],
+      ['arrakis:{guilds}:applications:2', 'arrakis:{guilds}:applications-index:2'],
       [20, 40],
     );
     for (const status of ['accepted', 'declined']) {
@@ -297,10 +297,10 @@ describe('guild applications', () => {
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('DEL', chatKey"),
       [
-        'arrakis:guild-applications:2',
-        'arrakis:guild-applications-index:2',
-        `arrakis:guild-chat:2:${id}`,
-        `arrakis:guild-application-review:2:${id}`,
+        'arrakis:{guilds}:applications:2',
+        'arrakis:{guilds}:applications-index:2',
+        `arrakis:{guilds}:chat:2:${id}`,
+        `arrakis:{guilds}:application-review:2:${id}`,
       ],
       [id, 'remove', expect.any(String), JSON.stringify(application)],
     );

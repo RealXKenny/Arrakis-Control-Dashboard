@@ -98,3 +98,45 @@ export async function readDiscordIdentity(accessToken: string, guildId: string) 
 
   return { userData, memberData };
 }
+
+/**
+ * Re-verify a returning email/password user against Discord using the refresh token stored at signup.
+ * Guild membership and roles are read fresh, so a member who left the guild or lost the role cannot
+ * keep signing in with a password. Discord rotates refresh tokens: persist the returned one.
+ */
+export async function refreshDiscordIdentity(
+  refreshToken: string,
+  config: { clientId: string; clientSecret: string; guildId: string },
+) {
+  if (!refreshToken || refreshToken.length > 4096 || !/^[!-~]+$/.test(refreshToken))
+    throw new AppError('Authentication was declined.', 400, 'OAUTH_REJECTED', true);
+  const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(10000),
+  });
+  // Only a 400/401 means Discord refused this refresh token (revoked, expired or already rotated).
+  // Rate limits and server errors are transient: callers must not treat them as a revocation.
+  if (tokenResponse.status !== 400 && tokenResponse.status !== 401 && !tokenResponse.ok) {
+    await tokenResponse.body?.cancel().catch(() => undefined);
+    throw new AppError('Discord is unavailable.', 503, 'DISCORD_UNAVAILABLE', true);
+  }
+  const tokenData = await discordJson(tokenResponse);
+  if (!tokenResponse.ok) throw new AppError('Authentication was declined.', 400, 'OAUTH_REJECTED', true);
+  if (typeof tokenData.access_token !== 'string' || !tokenData.access_token || tokenData.access_token.length > 4096) {
+    throw new AppError('Invalid response from Discord.', 502, 'OAUTH_PROVIDER_ERROR', true);
+  }
+  const identity = await readDiscordIdentity(tokenData.access_token, config.guildId);
+  const nextRefresh =
+    typeof tokenData.refresh_token === 'string' && tokenData.refresh_token.length <= 4096
+      ? tokenData.refresh_token
+      : refreshToken;
+  return { ...identity, refreshToken: nextRefresh };
+}

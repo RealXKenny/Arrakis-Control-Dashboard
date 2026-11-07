@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatCoriolisCountdown, normalizeCoriolisCycleAt } from '../../../src/modules/map/utils/coriolis';
+import { formatCoriolisCountdown, normalizeCoriolisCycleAt } from '../../../src/features/map/utils/coriolis';
 
 describe('Coriolis countdown', () => {
   it('formats a second-accurate countdown with stable clock columns', () => {

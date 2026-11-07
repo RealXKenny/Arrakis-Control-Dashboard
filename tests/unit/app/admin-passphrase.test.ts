@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { passphraseProblem } from '../../../src/modules/admin/screens/BackupsScreen';
+import { passphraseProblem } from '../../../src/app/(workspace)/admin/_components/screens/BackupsScreen';
 
 it('applies the Console passphrase rules before a system backup is requested', () => {
   expect(passphraseProblem('short')).toMatch(/12/);

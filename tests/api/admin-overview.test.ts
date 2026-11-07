@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { GET } from '../../src/modules/admin/server/overview';
-import { summarizeAdminMetrics } from '../../src/modules/admin/overview';
+import { GET } from '../../src/app/api/v2/admin/overview/route';
+import { summarizeAdminMetrics } from '../../src/features/admin/overview';
 const { config, session, fetcher } = vi.hoisted(() => ({
   config: {
     CONSOLE_URL: 'https://console.test',
@@ -15,11 +15,13 @@ const { config, session, fetcher } = vi.hoisted(() => ({
   session: vi.fn(),
   fetcher: vi.fn(),
 }));
-vi.mock('../../src/config/env', () => ({ getServerEnv: () => config }));
+vi.mock('../../src/lib/env', () => ({ getServerEnv: () => config }));
+vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'fixture' }) }) }));
+vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
 vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
 afterEach(() => vi.unstubAllGlobals());
-const req = { headers: { cookie: 'dashboard_session=fixture' } };
-const res = {};
+const call = () => GET(new Request('https://dashboard.test/api/v2/admin/overview'));
+const read = async () => (await (await call()).json()).data;
 const fixtures: Record<string, unknown> = {
   '/api/server/status': { data: { summary: { overall: 'READY' } } },
   '/api/server/performance': { cpuPercent: 24.5, memoryPercent: 62 },
@@ -57,7 +59,7 @@ beforeEach(() => {
   );
 });
 it('returns normalized real readings and setup flags through read-only bounded requests', async () => {
-  const data = JSON.parse((await GET(req, res)).body).data;
+  const data = await read();
   const values = Object.fromEntries(data.metrics.map((entry) => [entry.id, entry.value]));
   expect(values).toEqual({
     health: 'READY',
@@ -96,7 +98,7 @@ it('keeps working sources available when another scope is refused', async () => 
         },
       ),
   );
-  const data = JSON.parse((await GET(req, res)).body).data;
+  const data = await read();
   expect(data.metrics.find((entry) => entry.id === 'guilds').value).toBeNull();
   expect(data.metrics.find((entry) => entry.id === 'players').value).toBe(250);
   expect(data.sources.find((source) => source.operation === 'get-guilds')).toMatchObject({
@@ -106,12 +108,12 @@ it('keeps working sources available when another scope is refused', async () => 
 });
 it('reports setup requirements without making requests when credentials or secure transport are missing', async () => {
   config.ADMIN_CONSOLE_API_KEY = '';
-  let data = JSON.parse((await GET(req, res)).body).data;
+  let data = await read();
   expect(data.setup.find((entry) => entry.id === 'admin-key').ready).toBe(false);
   expect(fetcher).not.toHaveBeenCalled();
   config.ADMIN_CONSOLE_API_KEY = 'fixture-admin-key';
   config.CONSOLE_URL = 'http://remote.test';
-  data = JSON.parse((await GET(req, res)).body).data;
+  data = await read();
   expect(data.setup.find((entry) => entry.id === 'console').ready).toBe(false);
   expect(data.sources.every((source) => source.state === 'unconfigured')).toBe(true);
   expect(fetcher).not.toHaveBeenCalled();
@@ -122,7 +124,7 @@ it('checks administrator authority before any statistics or configuration data i
     { user: { id: 'member' }, guildId: 'guild', roleIds: ['verified'], expiresAt: Date.now() + 60000 },
   ]) {
     session.mockResolvedValue(who);
-    await expect(GET(req, res)).rejects.toMatchObject({ statusCode: who ? 403 : 401 });
+    expect((await call()).status).toBe(who ? 403 : 401);
   }
   expect(fetcher).not.toHaveBeenCalled();
 });
@@ -136,7 +138,7 @@ it('limits concurrent provider reads and sanitizes connection failures', async (
     active--;
     throw new Error('private connection data');
   });
-  const data = JSON.parse((await GET(req, res)).body).data;
+  const data = await read();
   expect(maximum).toBeLessThanOrEqual(4);
   expect(data.sources.every((source) => source.state === 'error')).toBe(true);
   expect(JSON.stringify(data)).not.toContain('private connection data');

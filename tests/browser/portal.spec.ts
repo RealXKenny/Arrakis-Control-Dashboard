@@ -2,7 +2,7 @@ import { version } from '../../package.json';
 import { test, expect } from '../helpers/browser-test';
 import type { Locator } from '@playwright/test';
 import { summarizePopulation } from '../../src/modules/portal/utils/population';
-import { createSectorGridOverlay } from '../../src/modules/map/utils/sectorGrid';
+import { createSectorGridOverlay } from '../../src/features/map/utils/sectorGrid';
 
 const player = {
   avatarUrl: 'https://cdn.discordapp.com/avatars/12345/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png?size=128',

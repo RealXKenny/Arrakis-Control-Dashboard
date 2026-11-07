@@ -68,7 +68,7 @@ describe('private application chat', () => {
     expect(request).not.toHaveBeenCalled();
     expect(redis.eval).toHaveBeenLastCalledWith(
       expect.stringContaining("'LRANGE', KEYS[2], -100, -1"),
-      ['arrakis:guild-applications:2', `arrakis:guild-chat:2:${id}:${generation}`],
+      ['arrakis:{guilds}:applications:2', `arrakis:{guilds}:chat:2:${id}:${generation}`],
       [id, generation],
     );
   });
@@ -137,7 +137,7 @@ describe('private application chat', () => {
     expect(script).toContain("redis.call('LTRIM', KEYS[2], -100, -1)");
     expect(script).toContain('existing.id == ARGV[3] and existing.senderId == ARGV[4]');
     expect(script).toContain("redis.call('EXPIRE', KEYS[2], ttl)");
-    expect(keys[1]).toBe(`arrakis:guild-chat:2:${id}:${generation}`);
+    expect(keys[1]).toBe(`arrakis:{guilds}:chat:2:${id}:${generation}`);
     expect(args.slice(0, 4)).toEqual([id, generation, messageId, 'discord-user']);
     redis.eval.mockImplementation(async (nextScript: string) =>
       nextScript === "return redis.call('HGET', KEYS[1], ARGV[1])" ? JSON.stringify(application) : null,
@@ -156,7 +156,7 @@ describe('applicant read receipts', () => {
     const response = await READ(req({ messages: [{ id: messageId, senderId: 'leader' }] }), {});
     expect(JSON.parse(response.body).data).toEqual({ unreadCount: 1 });
     const [script, keys, args] = redis.eval.mock.calls[1];
-    expect(keys).toEqual(['arrakis:guild-applications:2', `arrakis:guild-chat:2:${id}:${generation}`]);
+    expect(keys).toEqual(['arrakis:{guilds}:applications:2', `arrakis:{guilds}:chat:2:${id}:${generation}`]);
     expect(args).toEqual([id, generation, JSON.stringify(['leader:' + messageId])]);
     expect(script).toContain('if seen[key] then table.insert(retained, key) end');
     expect(script).toContain("'EX', ttl");

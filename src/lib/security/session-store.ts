@@ -9,10 +9,21 @@ export type DashboardSession = {
   roleIds: string[];
   linkedPlayerId?: string;
   linkedPlayerName?: string;
+  /** Discord-verified email, used to link a password login. Never sent to the browser as-is. */
+  email?: string;
+  /** True until a Discord-registered user has chosen a password for their email. */
+  needsPassword?: boolean;
+  /** When Discord last confirmed guild membership and roles (login, or a background re-check). */
+  verifiedAt?: number;
   expiresAt: number;
 };
 
-const SESSION_TTL_SECONDS = 12 * 60 * 60;
+/** Persistent login: 30 days, ended by sign-out or by a failed role re-check (see SESSION_REVERIFY_MS). */
+const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
+/** A session older than this is re-confirmed with Discord before it is used again. */
+export const SESSION_REVERIFY_MS = 30 * 60_000;
+/** If Discord cannot be reached, a session verified within this window keeps working; older ones end. */
+export const SESSION_MAX_STALE_MS = 6 * 60 * 60_000;
 const sessionGlobals = globalThis as typeof globalThis & {
   arrakisDevelopmentSessions?: Map<string, DashboardSession>;
 };
@@ -43,6 +54,10 @@ function validSession(value: unknown): value is DashboardSession {
     session.roleIds.every((role) => typeof role === 'string' && role.length > 0 && role.length <= 64) &&
     optionalText(session.linkedPlayerId, 128) &&
     optionalText(session.linkedPlayerName, 200) &&
+    optionalText(session.email, 320) &&
+    (session.needsPassword === undefined || typeof session.needsPassword === 'boolean') &&
+    (session.verifiedAt === undefined ||
+      (typeof session.verifiedAt === 'number' && Number.isFinite(session.verifiedAt))) &&
     typeof session.expiresAt === 'number' &&
     Number.isFinite(session.expiresAt) &&
     session.expiresAt <= Date.now() + SESSION_TTL_SECONDS * 1000 + 60_000,
@@ -85,10 +100,22 @@ export async function saveSession(sessionId: string, session: DashboardSession):
   await redis.set(sessionKey(sessionId), session, { ex: ttl });
 }
 
+/**
+ * Every reader goes through getSession, so this is the one place that keeps a long-lived session honest:
+ * a member who left the guild or lost the required role stops working within SESSION_REVERIFY_MS.
+ */
+async function freshen(sessionId: string, session: DashboardSession | null): Promise<DashboardSession | null> {
+  if (!session) return null;
+  if (session.verifiedAt !== undefined && Date.now() - session.verifiedAt < SESSION_REVERIFY_MS) return session;
+  // Loaded on demand: the verifier depends on Discord and account storage, which this module must not import eagerly.
+  const { reverifySession } = await import('../../server/auth/reverify');
+  return reverifySession(sessionId, session);
+}
+
 export async function getSession(sessionId: string): Promise<DashboardSession | null> {
   if (!validSessionId(sessionId)) return null;
   const redis = getRedisClient();
-  if (!redis) return getDevelopmentSession(sessionId);
+  if (!redis) return freshen(sessionId, getDevelopmentSession(sessionId));
   const stored = await redis.get<unknown>(sessionKey(sessionId));
   const session = validSession(stored) ? stored : null;
   if (!session || session.expiresAt <= Date.now()) {
@@ -99,7 +126,7 @@ export async function getSession(sessionId: string): Promise<DashboardSession | 
     if (stored) await deleteSession(sessionId);
     return null;
   }
-  return session;
+  return freshen(sessionId, session);
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {

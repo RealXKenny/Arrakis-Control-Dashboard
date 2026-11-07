@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { solidoKeys } from '../../../lib/redis/keys';
 import { getRedisClient } from '../../../lib/redis/client';
 import { AppError } from '../../../lib/errors';
 import { withTimeout } from '../../../lib/http/timeout';
@@ -8,7 +9,7 @@ function client() {
   if (!redis) throw new AppError('Import tracking is unavailable.', 503, 'STORAGE_UNAVAILABLE', true);
   return redis;
 }
-const key = (owner: string, day = new Date().toISOString().slice(0, 10)) => `arrakis:solido:${owner}:${day}`;
+const key = (owner: string, day = new Date().toISOString().slice(0, 10)) => solidoKeys.history(owner, day);
 export async function reserveImport(owner: string, record: ImportRecord) {
   const result = await withTimeout(
     client().eval(
@@ -21,7 +22,7 @@ export async function reserveImport(owner: string, record: ImportRecord) {
     redis.call('EXPIRE', KEYS[1], 172800)
     return 'NEW'
   `,
-      [key(owner), `arrakis:solido:operation:${owner}:${record.id}`],
+      [key(owner), solidoKeys.operation(owner, record.id)],
       [record.id, JSON.stringify(record)],
     ),
     12000,
@@ -34,7 +35,7 @@ export async function finishImport(owner: string, record: ImportRecord) {
   await withTimeout(
     client().eval(
       `redis.call('SET', KEYS[2], ARGV[2], 'EX', 172800); redis.call('HSET', KEYS[1], ARGV[1], ARGV[2]); redis.call('EXPIRE', KEYS[1], 172800); return 1`,
-      [key(owner, record.at.slice(0, 10)), `arrakis:solido:operation:${owner}:${record.id}`],
+      [key(owner, record.at.slice(0, 10)), solidoKeys.operation(owner, record.id)],
       [record.id, JSON.stringify(record)],
     ),
     12000,

@@ -1,5 +1,6 @@
 import './assert-server';
 import { z } from 'zod';
+import { isDiscordWebhookUrl } from './discord-webhook-url';
 
 /**
  * Canonical server environment contract for the dashboard.
@@ -45,6 +46,8 @@ const serverEnvSchema = z.object({
     .default('127.0.0.1'),
   SERVER_PORT: z.coerce.number().int().min(1).max(65_535).default(2008),
   API_MAX_CONCURRENCY: z.coerce.number().int().min(1).max(10_000).default(100),
+  /** Reverse proxies in front of the app. Rate limits trust only the X-Forwarded-For entry the last of them appended. */
+  TRUSTED_PROXY_COUNT: z.coerce.number().int().min(0).max(5).default(1),
   API_GLOBAL_READ_LIMIT: z.coerce.number().int().min(1).max(100_000_000).default(2400),
   BOT_API_TOKEN: z.string().min(32).max(256).optional(),
   CONSOLE_URL: z.string().url().optional(),
@@ -54,9 +57,18 @@ const serverEnvSchema = z.object({
   DISCORD_CLIENT_ID: z.string().min(1).optional(),
   DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
   APP_URL: z.string().url().optional(),
+  /** Signs and encrypts Auth.js state and the stored Discord refresh token. At least 32 random characters. */
+  AUTH_SECRET: z.string().min(32).max(256).optional(),
   DISCORD_GUILD_ID: z.string().min(1).optional(),
   VERIFIED_MEMBER_ROLE_ID: z.string().min(1).optional(),
   REDIS_URL: redisUrlSchema.optional(),
+  /** Discord webhook that receives changelog and progress announcements. A secret: never log or expose it. */
+  CHANGELOG_WEBHOOK_URL: z.string().refine(isDiscordWebhookUrl, 'Must be a Discord webhook URL').optional(),
+  /** When "true", a newly deployed release in CHANGELOG.md is announced once, automatically. */
+  CHANGELOG_AUTO_ANNOUNCE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   /**
    * Optional comma-separated `host:port` list. When set, the dashboard data
    * provider connects through `ioredis` Cluster (with automatic failover and
@@ -102,7 +114,7 @@ export function requireServerEnv(...keys: Array<keyof ServerEnv>): ServerEnv {
 
 export function getDiscordRedirectUri(): string | undefined {
   const appUrl = getServerEnv().APP_URL;
-  return appUrl ? new URL('/auth/callback', appUrl).toString() : undefined;
+  return appUrl ? new URL('/api/auth/callback/discord', appUrl).toString() : undefined;
 }
 
 /** Secrets and origins that must exist before production traffic is served. */
@@ -114,6 +126,7 @@ const PRODUCTION_REQUIREMENTS: ReadonlyArray<keyof ServerEnv> = [
   'VERIFIED_MEMBER_ROLE_ID',
   'APP_URL',
   'REDIS_URL',
+  'AUTH_SECRET',
 ];
 
 export function validateProductionEnv(): ServerEnv {

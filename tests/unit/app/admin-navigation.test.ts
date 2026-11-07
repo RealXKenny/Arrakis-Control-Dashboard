@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
-import catalog from '../../../src/modules/admin/catalog.json';
-import { ADMIN_SECTIONS, adminHref, findAdminTab, tabForOperation } from '../../../src/modules/admin/navigation';
+import catalog from '../../../src/features/admin/catalog.json';
+import { ADMIN_SECTIONS, adminHref, findAdminTab, tabForOperation } from '../../../src/features/admin/navigation';
 
 it('hosts every catalog operation on exactly one screen', () => {
   for (const operation of catalog) {
@@ -27,7 +27,7 @@ it('keeps restricted operations out of working forms by labelling Console-only g
 });
 
 it('treats every manager tab as dedicated so Advanced tools always works', async () => {
-  const { isDedicatedKind } = await import('../../../src/modules/admin/navigation');
+  const { isDedicatedKind } = await import('../../../src/features/admin/navigation');
   const kinds = ADMIN_SECTIONS.flatMap((section) =>
     section.tabs.map((tab) => [tab.kind, isDedicatedKind(tab.kind)] as const),
   );

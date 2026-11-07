@@ -1,10 +1,10 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { SceneModels } from '../../../src/modules/map/terrain/scene/sceneModels';
-import { createSandwormModel } from '../../../src/modules/map/terrain/models/sandwormModel';
-import { disposeVehicleModels } from '../../../src/modules/map/terrain/models/vehicleModels';
+import { SceneModels } from '../../../src/features/map/terrain/scene/sceneModels';
+import { createSandwormModel } from '../../../src/features/map/terrain/models/sandwormModel';
+import { disposeVehicleModels } from '../../../src/features/map/terrain/models/vehicleModels';
 
-vi.mock('../../../src/modules/map/terrain/models/buildingModels', () => ({
+vi.mock('../../../src/features/map/terrain/models/buildingModels', () => ({
   BuildingLibrary: class {
     async build() {
       return { group: new THREE.Group(), origin: [0, 0, 0], pieces: 1, total: 1 };

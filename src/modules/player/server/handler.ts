@@ -6,7 +6,7 @@ import { NextResponse } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
 import { getBaseId, normalizeBaseStorage, normalizeBaseWater } from './helpers';
 import { logger } from '../../../lib/logger';
-import { getSession, saveSession } from '../../../lib/security/session-store';
+import { getSession, saveSession, type DashboardSession } from '../../../lib/security/session-store';
 import { discordAvatar } from './avatar';
 
 async function loadBaseTelemetry(base, duneClient) {
@@ -137,6 +137,136 @@ async function loadPlayerGuild(playerId, playerName, duneClient) {
   return null;
 }
 
+/**
+ * Everything the portal knows about the signed-in player: linked identity plus all telemetry.
+ * Shared by the legacy API route and the App Router pages, so both read identical data.
+ */
+export async function loadPlayerProfile(session: DashboardSession, sessionId: string) {
+  const actor = {
+    guildId: session.guildId,
+    channelId: 'dashboard',
+    userId: session.user.id,
+    username: session.user.username,
+    roleIds: session.roleIds || [],
+    interactionId: `dashboard-${Date.now()}`,
+    commandName: 'portal',
+  };
+
+  const duneClient = getDuneClient();
+  const data = await getLinkedPlayer(actor);
+
+  if (data?.linked !== true) {
+    return data;
+  }
+
+  const playerId = data.pawnId ?? data.controllerId;
+
+  if (!playerId) {
+    return {
+      ...data,
+      linked: false,
+      error: 'Unable to determine your Dune player ID.',
+    };
+  }
+
+  try {
+    await saveSession(sessionId, {
+      ...session,
+      linkedPlayerId: String(playerId),
+      linkedPlayerName: data.characterName,
+    });
+  } catch (error) {
+    logger.warn('Unable to cache linked player identity for dashboard features', { error });
+  }
+
+  // Dev note: telemetry travels as one convoy instead of eleven lonely desert trips.
+  const coreEndpoints = [
+    'currency',
+    'solaris-coin',
+    'factions',
+    'intel',
+    'specs',
+    'progression',
+    'vitals',
+    'bases',
+    'vehicles',
+    'inventory',
+    'journey',
+  ];
+
+  const details = await Promise.all(
+    coreEndpoints.map(async (name) => {
+      try {
+        const playerEndpoint = `/api/players/${encodeURIComponent(playerId)}/${name}`;
+
+        const resData = await duneClient.request('GET', playerEndpoint);
+
+        if (name === 'bases') {
+          // Dev note: provider payloads come in layers, like onions with API keys.
+          const bases = Array.isArray(resData)
+            ? resData
+            : Array.isArray(record(resData).rows)
+              ? record(resData).rows
+              : Array.isArray(record(resData).data)
+                ? record(resData).data
+                : Array.isArray(record(resData).bases)
+                  ? record(resData).bases
+                  : [];
+
+          const enrichedBases = await Promise.all(
+            (Array.isArray(bases) ? bases : []).map(async (base) => loadBaseTelemetry(base, duneClient)),
+          );
+
+          let result;
+
+          if (Array.isArray(resData)) {
+            result = enrichedBases;
+          } else if (resData && typeof resData === 'object') {
+            result = {
+              ...resData,
+              rows: enrichedBases,
+            };
+
+            if (Array.isArray(record(resData).data)) {
+              result.data = enrichedBases;
+            }
+
+            if (Array.isArray(record(resData).bases)) {
+              result.bases = enrichedBases;
+            }
+          } else {
+            result = {
+              rows: enrichedBases,
+            };
+          }
+
+          return [name, result];
+        }
+
+        return [name, resData];
+      } catch (error) {
+        // Dev note: optional telemetry may miss the bus; the portal still opens on time.
+        logger.error(`Failed to load player telemetry`, { endpoint: name, error });
+
+        return [name, null];
+      }
+    }),
+  );
+
+  const guild = await loadPlayerGuild(playerId, data.characterName, duneClient);
+
+  const responseData = {
+    ...data,
+    avatarUrl: discordAvatar(session.user),
+    details: {
+      ...Object.fromEntries(details),
+      guild,
+    },
+  };
+
+  return responseData;
+}
+
 export async function GET(request, res) {
   try {
     const cookieStore = cookies(request, res);
@@ -168,136 +298,9 @@ export async function GET(request, res) {
       );
     }
 
-    const actor = {
-      guildId: session.guildId,
-      channelId: 'dashboard',
-      userId: session.user.id,
-      username: session.user.username,
-      roleIds: session.roleIds || [],
-      interactionId: `dashboard-${Date.now()}`,
-      commandName: 'portal',
-    };
+    const body = await loadPlayerProfile(session, sessionId);
 
-    const duneClient = getDuneClient();
-    const data = await getLinkedPlayer(actor);
-
-    if (data?.linked !== true) {
-      return NextResponse.json(data, {
-        status: 200,
-      });
-    }
-
-    const playerId = data.pawnId ?? data.controllerId;
-
-    if (!playerId) {
-      return NextResponse.json(
-        {
-          ...data,
-          linked: false,
-          error: 'Unable to determine your Dune player ID.',
-        },
-        {
-          status: 200,
-        },
-      );
-    }
-
-    try {
-      await saveSession(sessionId, {
-        ...session,
-        linkedPlayerId: String(playerId),
-        linkedPlayerName: data.characterName,
-      });
-    } catch (error) {
-      logger.warn('Unable to cache linked player identity for dashboard features', { error });
-    }
-
-    // Dev note: telemetry travels as one convoy instead of eleven lonely desert trips.
-    const coreEndpoints = [
-      'currency',
-      'solaris-coin',
-      'factions',
-      'intel',
-      'specs',
-      'progression',
-      'vitals',
-      'bases',
-      'vehicles',
-      'inventory',
-      'journey',
-    ];
-
-    const details = await Promise.all(
-      coreEndpoints.map(async (name) => {
-        try {
-          const playerEndpoint = `/api/players/${encodeURIComponent(playerId)}/${name}`;
-
-          const resData = await duneClient.request('GET', playerEndpoint);
-
-          if (name === 'bases') {
-            // Dev note: provider payloads come in layers, like onions with API keys.
-            const bases = Array.isArray(resData)
-              ? resData
-              : Array.isArray(record(resData).rows)
-                ? record(resData).rows
-                : Array.isArray(record(resData).data)
-                  ? record(resData).data
-                  : Array.isArray(record(resData).bases)
-                    ? record(resData).bases
-                    : [];
-
-            const enrichedBases = await Promise.all(
-              (Array.isArray(bases) ? bases : []).map(async (base) => loadBaseTelemetry(base, duneClient)),
-            );
-
-            let result;
-
-            if (Array.isArray(resData)) {
-              result = enrichedBases;
-            } else if (resData && typeof resData === 'object') {
-              result = {
-                ...resData,
-                rows: enrichedBases,
-              };
-
-              if (Array.isArray(record(resData).data)) {
-                result.data = enrichedBases;
-              }
-
-              if (Array.isArray(record(resData).bases)) {
-                result.bases = enrichedBases;
-              }
-            } else {
-              result = {
-                rows: enrichedBases,
-              };
-            }
-
-            return [name, result];
-          }
-
-          return [name, resData];
-        } catch (error) {
-          // Dev note: optional telemetry may miss the bus; the portal still opens on time.
-          logger.error(`Failed to load player telemetry`, { endpoint: name, error });
-
-          return [name, null];
-        }
-      }),
-    );
-
-    const guild = await loadPlayerGuild(playerId, data.characterName, duneClient);
-
-    const responseData = {
-      ...data,
-      avatarUrl: discordAvatar(session.user),
-      details: {
-        ...Object.fromEntries(details),
-        guild,
-      },
-    };
-
-    return NextResponse.json(responseData, {
+    return NextResponse.json(body, {
       status: 200,
     });
   } catch (error) {

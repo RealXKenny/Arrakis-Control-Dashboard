@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { markerKey, uniqueMapMarkers } from '../../../src/modules/map/utils/markers';
+import { markerKey, uniqueMapMarkers } from '../../../src/features/map/utils/markers';
 
 describe('map marker identity', () => {
   it('preserves a named object across snapshot reordering and movement', () => {

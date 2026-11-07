@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { guildKeys } from '../../../lib/redis/keys';
 import { AppError } from '../../../lib/errors';
 import { getRedisClient } from '../../../lib/redis/client';
 import { NextResponse } from '../../../infrastructure/pages-api';
@@ -6,8 +7,8 @@ import { getGuildSession, queryValue, requireGuildMutationOrigin } from './commo
 import { requireGuildLeader } from './leader';
 import { guildRequirementSchema } from '../requirements';
 
-const indexKey = 'arrakis:guild-requirements';
-const key = (id: string) => `${indexKey}:${id}`;
+const indexKey = guildKeys.requirementsIndex;
+const key = (id: string) => guildKeys.requirements(id);
 
 async function storage(req, res) {
   if (!(await getGuildSession(req, res))) throw new AppError('Unauthorized', 401, 'UNAUTHORIZED', true);
@@ -22,13 +23,17 @@ function guildId(req): string {
   return id;
 }
 
+/** The saved settings for a guild, or null when none were saved (or they no longer parse). */
+export async function readGuildRequirement(redis: NonNullable<ReturnType<typeof getRedisClient>>, id: string) {
+  const parsed = guildRequirementSchema.safeParse(await redis.get(key(id)));
+  return parsed.success ? parsed.data : null;
+}
+
 export async function GET(req, res) {
   const id = guildId(req);
   await requireGuildLeader(req, res, id);
   const redis = await storage(req, res);
-  const value = await redis.get(key(id));
-  const parsed = guildRequirementSchema.safeParse(value);
-  return NextResponse.json({ ok: true, data: parsed.success ? parsed.data : null });
+  return NextResponse.json({ ok: true, data: await readGuildRequirement(redis, id) });
 }
 
 export async function POST(req, res) {
@@ -61,19 +66,26 @@ export async function POST(req, res) {
   return NextResponse.json({ ok: true, data: parsed.data });
 }
 
-export async function LIST(req, res) {
-  const redis = await storage(req, res);
-  const rawPage = queryValue(req.query?.page) ?? '0';
-  if (!/^\d{1,4}$/.test(rawPage)) throw new AppError('Invalid page', 400, 'INVALID_GUILD_QUERY', true);
-  const start = Number(rawPage) * 20;
-  const ids = await redis.zrange<string[]>(indexKey, start, start + 20, { byScore: false });
+const PAGE_SIZE = 20;
+
+/** Published listings, newest first. Shared by the legacy LIST route and the V2 directory page. */
+export async function listRecruitingGuilds(redis: NonNullable<ReturnType<typeof getRedisClient>>, page: number) {
+  const start = page * PAGE_SIZE;
+  const ids = await redis.zrange<string[]>(indexKey, start, start + PAGE_SIZE, { byScore: false });
   const entries = await Promise.all(
-    ids.slice(0, 20).map(async (entry) => {
+    ids.slice(0, PAGE_SIZE).map(async (entry) => {
       const id = typeof entry === 'string' && entry.startsWith('guild:') ? entry.slice(6) : '';
       if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(id)) return null;
       const parsed = guildRequirementSchema.safeParse(await redis.get(key(id)));
       return parsed.success && parsed.data.published ? { ...parsed.data, guildId: id } : null;
     }),
   );
-  return NextResponse.json({ ok: true, data: { rows: entries.filter(Boolean), hasMore: ids.length > 20 } });
+  return { rows: entries.filter((entry) => entry !== null), hasMore: ids.length > PAGE_SIZE };
+}
+
+export async function LIST(req, res) {
+  const redis = await storage(req, res);
+  const rawPage = queryValue(req.query?.page) ?? '0';
+  if (!/^\d{1,4}$/.test(rawPage)) throw new AppError('Invalid page', 400, 'INVALID_GUILD_QUERY', true);
+  return NextResponse.json({ ok: true, data: await listRecruitingGuilds(redis, Number(rawPage)) });
 }

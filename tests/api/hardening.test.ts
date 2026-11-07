@@ -24,6 +24,7 @@ describe('shared production hardening', () => {
       user: { id: '42', username: 'tester' },
       guildId: 'guild',
       roleIds: ['member'],
+      verifiedAt: Date.now(),
       expiresAt: Date.now() + 60_000,
     };
     await saveSession(sessionId, session);

@@ -1,6 +1,6 @@
 import { expect, test } from '../helpers/browser-test';
-import operations from '../../src/modules/admin/catalog.json';
-import { ADMIN_SECTIONS } from '../../src/modules/admin/navigation';
+import operations from '../../src/features/admin/catalog.json';
+import { ADMIN_SECTIONS } from '../../src/features/admin/navigation';
 
 const row = {
   id: '1',
@@ -19,7 +19,7 @@ const sizes = [
 
 test.beforeEach(async ({ page, context }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({
       json: { ok: true, operations, configured: true, adapterConfigured: true, consoleOrigin: 'https://console.test' },
     }),
@@ -27,7 +27,7 @@ test.beforeEach(async ({ page, context }) => {
   await page.route('**/api/admin/guild-support-status*', (route) =>
     route.fulfill({ json: { ok: true, data: { total: 3, guilds: { '2': 3 } } } }),
   );
-  await page.route('**/api/admin/overview', (route) =>
+  await page.route('**/api/v2/admin/overview', (route) =>
     route.fulfill({
       json: {
         ok: true,
@@ -41,7 +41,7 @@ test.beforeEach(async ({ page, context }) => {
       },
     }),
   );
-  await page.route('**/api/admin/execute', (route) =>
+  await page.route('**/api/v2/admin/execute', (route) =>
     route.fulfill({
       json: {
         ok: true,

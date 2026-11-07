@@ -1,8 +1,8 @@
 import { expect, it } from 'vitest';
-import catalog from '../../../src/modules/admin/catalog.json';
-import { freshness, readingRows } from '../../../src/modules/admin/screens/StatisticsScreen';
-import type { AdminOverview } from '../../../src/modules/admin/overview';
-import type { AdminOperation } from '../../../src/modules/admin/types';
+import catalog from '../../../src/features/admin/catalog.json';
+import { freshness, readingRows } from '../../../src/app/(workspace)/admin/_components/screens/StatisticsScreen';
+import type { AdminOverview } from '../../../src/features/admin/overview';
+import type { AdminOperation } from '../../../src/features/admin/types';
 
 const operations = catalog as AdminOperation[];
 const base: AdminOverview = {

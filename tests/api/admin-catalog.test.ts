@@ -1,15 +1,14 @@
-import { Readable } from 'node:stream';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { afterAll, afterEach, beforeEach, expect, it, vi } from 'vitest';
-import catalog from '../../src/modules/admin/catalog.json';
-import { POST as execute } from '../../src/modules/admin/server/execute';
-import { POST as upload } from '../../src/modules/admin/server/upload';
-import { responseMock } from '../helpers/response';
-import { tabForOperation } from '../../src/modules/admin/navigation';
-import type { AdminOperation } from '../../src/modules/admin/types';
+import catalog from '../../src/features/admin/catalog.json';
+import { POST as execute } from '../../src/app/api/v2/admin/execute/route';
+import { POST as upload } from '../../src/app/api/v2/admin/upload/route';
+import { adminPost, adminUpload } from '../helpers/admin-v2';
+import { tabForOperation } from '../../src/features/admin/navigation';
+import type { AdminOperation } from '../../src/features/admin/types';
 
 const { fetcher } = vi.hoisted(() => ({ fetcher: vi.fn() }));
-vi.mock('../../src/config/env', () => ({
+vi.mock('../../src/lib/env', () => ({
   getServerEnv: () => ({
     CONSOLE_URL: 'https://console.test',
     APP_URL: 'https://dashboard.test',
@@ -28,12 +27,9 @@ vi.mock('../../src/lib/security/session-store', () => ({
     expiresAt: Date.now() + 60000,
   }),
 }));
+vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'fixture' }) }) }));
+vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => ({ eval: async () => 1 }) }));
-const headers = {
-  cookie: 'dashboard_session=fixture',
-  origin: 'https://dashboard.test',
-  'content-type': 'application/json',
-};
 const passed = new Map<string, string>();
 beforeEach(() => {
   vi.clearAllMocks();
@@ -58,12 +54,10 @@ it.each(catalog)('$method $route — $title', async (operation) => {
           },
     acknowledgement: `${operation.method} ${operation.route}`,
   };
-  const req = { headers, body: metadata };
   if (operation.restriction) {
-    await expect(execute(req, responseMock())).rejects.toMatchObject({
-      statusCode: 403,
-      code: 'CONSOLE_OPERATION_RESTRICTED',
-    });
+    const refused = await execute(adminPost('/api/v2/admin/execute', metadata));
+    expect(refused.status).toBe(403);
+    expect(await refused.json()).toMatchObject({ code: 'CONSOLE_OPERATION_RESTRICTED' });
     expect(fetcher).not.toHaveBeenCalled();
     passed.set(operation.id, 'Restricted as documented');
     return;
@@ -79,17 +73,16 @@ it.each(catalog)('$method $route — $title', async (operation) => {
             headers: { 'Content-Type': 'application/json' },
           }),
   );
-  let response;
+  let response: Response;
   if (['multipart', 'upload'].includes(operation.mode)) {
-    const form = new FormData();
-    form.set('request', JSON.stringify(metadata));
-    for (const name of operation.files ?? [])
-      form.set(name, new File(['{"fixture":true}'], `${name}.json`, { type: 'application/json' }));
-    const encoded = new Request('https://upload.test', { method: 'POST', body: form });
-    const incoming = Readable.from([Buffer.from(await encoded.arrayBuffer())]);
-    Object.assign(incoming, { headers: { ...headers, 'content-type': encoded.headers.get('content-type')! } });
-    response = await upload(incoming, responseMock());
-  } else response = await execute(req, responseMock());
+    const files = Object.fromEntries(
+      (operation.files ?? []).map((name) => [
+        name,
+        new File(['{"fixture":true}'], `${name}.json`, { type: 'application/json' }),
+      ]),
+    );
+    response = await upload(await adminUpload('/api/v2/admin/upload', metadata, files));
+  } else response = await execute(adminPost('/api/v2/admin/execute', metadata));
   expect(response.status).toBe(200);
   expect(fetcher).toHaveBeenCalledTimes(1);
   const [url, options] = fetcher.mock.calls[0];
@@ -113,16 +106,16 @@ it.each(catalog)('$method $route — $title', async (operation) => {
   if (operation.method === 'GET') expect(options.body).toBeUndefined();
   if (operation.mode === 'multipart') expect(options.body).toBeInstanceOf(FormData);
   if (operation.mode === 'upload') expect(options.body).toBeInstanceOf(Blob);
-  if (response.stream) {
-    const text = await new Response(response.stream.body).text();
+  const streamed = operation.mode === 'events' || response.headers.get('Content-Type') === 'application/octet-stream';
+  if (streamed) {
+    const text = await response.text();
     expect(text).toContain(operation.mode === 'events' ? 'fixture event' : 'fixture download');
     if (operation.mode === 'events') expect(text).not.toContain('private');
-    response.stream.cleanup?.();
   } else if (operation.mode === 'download') {
-    expect(response.headers['Content-Type']).toContain('text/plain');
-    expect(JSON.parse(response.body!).text).toBe('fixture download');
+    expect(response.headers.get('Content-Type')).toContain('text/plain');
+    expect(JSON.parse(await response.text()).text).toBe('fixture download');
   } else {
-    const result = JSON.parse(response.body!);
+    const result = await response.json();
     expect(result.ok).toBe(true);
     expect(result.data.rows[0].id).toBe('9007199254740993123');
     expect(result.data.token).toBe('[REDACTED]');

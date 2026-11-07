@@ -19,8 +19,8 @@ describe('own application card summaries', () => {
     });
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining('application.discordId ~= ARGV[2]'),
-      ['arrakis:guild-applications:2'],
-      [id, 'user', `arrakis:guild-chat:2:${id}:`],
+      ['arrakis:{guilds}:applications:2'],
+      [id, 'user', `arrakis:{guilds}:chat:2:${id}:`],
     );
   });
   it('requires authentication and bounds distinct guild IDs before storage access', async () => {

@@ -1,0 +1,161 @@
+/* V2 "Modern Dune" entry stylesheet. Imported only by the App Router root layout. */
+@import 'tailwindcss' source(none);
+@config '../../tailwind.config.ts';
+@import './tokens.css';
+
+/* Scan only V2 code; src/assets is huge and holds no class names. */
+@source './';
+@source '../ui';
+@source '../features';
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    background-color: var(--color-obsidian-950);
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-obsidian-950);
+    color: var(--color-sand-200);
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-sand-50);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: var(--color-spice-500);
+    color: var(--color-obsidian-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-spice-400);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* Fremen visor: translucent sand glass over obsidian. Flat edges, no glow. */
+  .panel {
+    position: relative;
+    background-color: rgb(241 233 216 / 0.04);
+    border: 1px solid rgb(241 233 216 / 0.1);
+    box-shadow:
+      inset 0 1px 0 0 rgb(241 233 216 / 0.08),
+      6px 6px 0 0 rgb(0 0 0 / 0.6);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    backdrop-filter: blur(14px) saturate(1.1);
+  }
+
+  .panel-interactive {
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .panel-interactive:hover {
+    transform: translate(-2px, -2px);
+    border-color: rgb(249 161 31 / 0.55);
+    box-shadow:
+      inset 0 1px 0 0 rgb(241 233 216 / 0.1),
+      8px 8px 0 0 rgb(174 69 8 / 0.85);
+  }
+
+  /* Solid sand surface for high-contrast callouts. */
+  .panel-sand {
+    background-color: var(--color-sand-200);
+    color: var(--color-obsidian-950);
+    border: 1px solid var(--color-sand-400);
+    box-shadow: 6px 6px 0 0 rgb(0 0 0 / 0.6);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--color-spice-400);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    min-height: 2.75rem;
+    padding: 0 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease,
+      background-color 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .btn-primary {
+    background-color: var(--color-spice-500);
+    color: var(--color-obsidian-950);
+    border: 1px solid var(--color-spice-300);
+    box-shadow: 4px 4px 0 0 var(--color-spice-800);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-spice-400);
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 0 var(--color-spice-800);
+  }
+
+  .btn-primary:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 0 var(--color-spice-800);
+  }
+
+  .btn-ghost {
+    color: var(--color-sand-100);
+    border: 1px solid rgb(241 233 216 / 0.25);
+    background-color: rgb(241 233 216 / 0.03);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--color-spice-400);
+    color: var(--color-spice-300);
+  }
+}
+
+@utility bg-noise {
+  /* Static film grain; an inline SVG keeps this free of network requests. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.9 0 0 0 0 0.75 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Every animation and transition is off for users who ask for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

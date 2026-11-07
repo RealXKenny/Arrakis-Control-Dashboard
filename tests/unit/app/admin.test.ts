@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from 'vitest';
-import operations from '../../../src/modules/admin/catalog.json';
+import operations from '../../../src/features/admin/catalog.json';
 import { parseAdminRequest } from '../../../src/modules/admin/server/request';
 import { parseAdminJson, sanitizeAdminData } from '../../../src/modules/admin/server/sanitize';
 import { isDashboardAdmin } from '../../../src/modules/admin/server/access';

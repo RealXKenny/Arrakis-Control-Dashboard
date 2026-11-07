@@ -11,7 +11,7 @@ import {
   toSceneMatrix,
   unrealMatrix,
   visualFallbackKind,
-} from '../../../src/modules/map/terrain/models/buildingModels';
+} from '../../../src/features/map/terrain/models/buildingModels';
 import {
   babylonToUEPosition,
   toViewerStoredYaw,
@@ -19,13 +19,13 @@ import {
   ueRollToBabylonRoll,
   ueToBabylonPosition,
   ueYawToBabylonYaw,
-} from '../../../src/modules/map/terrain/models/ueTransform';
+} from '../../../src/features/map/terrain/models/ueTransform';
 import {
   createVehicleModel,
   disposeVehicleModels,
   vehicleKind,
-} from '../../../src/modules/map/terrain/models/vehicleModels';
-import { niceScale } from '../../../src/modules/map/terrain/scene/mapPresentation';
+} from '../../../src/features/map/terrain/models/vehicleModels';
+import { niceScale } from '../../../src/features/map/terrain/scene/mapPresentation';
 const catalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/native/catalog.json.gz')).toString());
 const clientCatalog = JSON.parse(gunzipSync(readFileSync('src/assets/models/client/catalog.json.gz')).toString());
 const readModelAsset = (url: string) => {

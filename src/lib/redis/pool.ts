@@ -1,7 +1,8 @@
 import '../assert-server';
-import { Redis, RedisOptions, Cluster, ClusterNode, ClusterOptions } from 'ioredis';
+import { Redis, Cluster, ClusterOptions } from 'ioredis';
 import { getServerEnv } from '../env';
 import { createLogger } from '../logger';
+import { clusterNodesFromEnv, parseRedisUrl } from './connection';
 
 /**
  * Production Redis access layer for the App Router data provider.
@@ -43,44 +44,6 @@ export type RedisKeyValueLike = {
 };
 
 type Client = Redis | Cluster;
-
-function parseRedisUrl(url: string): RedisOptions {
-  const parsed = new URL(url);
-  const options: RedisOptions = {
-    host: parsed.hostname,
-    port: parsed.port ? Number(parsed.port) : 6379,
-    // Dev note: lazy connections keep builds and cold starts sand-free.
-    lazyConnect: true,
-    connectTimeout: 5_000,
-    keepAlive: 10_000,
-    noDelay: true,
-    maxRetriesPerRequest: 2,
-    enableOfflineQueue: false,
-    retryStrategy: (attempt) => {
-      if (attempt > 8) return null; // stop trying; the breaker takes over
-      const base = Math.min(2 ** attempt * 200, 5_000);
-      return base + Math.floor(Math.random() * 250);
-    },
-    reconnectOnError: (error) => /READONLY|ETIMEDOUT|ECONNRESET/u.test(error.message),
-  };
-  if (parsed.protocol === 'rediss:') options.tls = {};
-  if (parsed.username) options.username = decodeURIComponent(parsed.username);
-  if (parsed.password) options.password = decodeURIComponent(parsed.password);
-  const database = parsed.pathname.replace('/', '');
-  if (database) options.db = Number(database);
-  return options;
-}
-
-function clusterNodesFromEnv(value: string): ClusterNode[] {
-  return value
-    .split(',')
-    .map((node) => node.trim())
-    .filter(Boolean)
-    .map((node) => {
-      const hostPort = node.replace(/^\[|\]$/g, '').split(':');
-      return { host: hostPort[0], port: hostPort[1] ? Number(hostPort[1]) : 6379 };
-    });
-}
 
 /** Circuit breaker states: closed (flow) -> open (reject) -> half-open (probe). */
 type BreakerState = 'closed' | 'open' | 'half-open';

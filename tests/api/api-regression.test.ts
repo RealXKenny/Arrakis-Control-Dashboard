@@ -1,9 +1,6 @@
 import { clearApiReadCache } from '../../src/infrastructure/api-read-cache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import login from '../../src/pages/api/auth/login';
 import session from '../../src/pages/api/session';
-import callback from '../../src/pages/api/auth/callback';
-import logout from '../../src/pages/api/auth/logout';
 import map from '../../src/pages/api/map';
 import player from '../../src/pages/api/player';
 import market from '../../src/pages/api/market';
@@ -14,7 +11,7 @@ import status from '../../src/pages/api/server/status';
 import world from '../../src/pages/api/portal/world';
 import { runPagesApiHandler, NextResponse } from '../../src/infrastructure/pages-api';
 import { getDuneClient, getDiscordPlayer } from '../../src/infrastructure/dune';
-import { getSession, saveSession, deleteSession } from '../../src/lib/security/session-store';
+import { getSession } from '../../src/lib/security/session-store';
 import { checkRateLimit } from '../../src/lib/security/rate-limit';
 import { responseMock } from '../helpers/response';
 
@@ -36,13 +33,10 @@ vi.mock('../../src/config/env', () => ({
     VERIFIED_MEMBER_ROLE_ID: '222222222222222222',
     APP_URL: 'https://dashboard.test',
   }),
-  getDiscordRedirectUri: () => 'https://dashboard.test/auth/callback',
+  getDiscordRedirectUri: () => 'https://dashboard.test/api/auth/callback/discord',
 }));
 
 const routes = [
-  ['/api/auth/login', login],
-  ['/api/auth/callback', callback],
-  ['/api/auth/logout', logout],
   ['/api/map', map],
   ['/api/player', player],
   ['/api/market', market],
@@ -313,53 +307,6 @@ describe('route contracts after extraction', () => {
     expect(request).toHaveBeenCalledTimes(1);
     expect(request.mock.calls[0][1]).not.toContain('/export');
   });
-  it.each(['/api/auth/logout', '/_next/data/build/api/auth/logout.json'])(
-    'does not revoke sessions on a prefetched GET %s',
-    async (url) => {
-      const res = responseMock();
-      await logout({ method: 'GET', url, headers: { cookie: 'dashboard_session=session', purpose: 'prefetch' } }, res);
-      expect(res.statusCode).toBe(405);
-      expect(deleteSession).not.toHaveBeenCalled();
-      expect(res.getHeader('Set-Cookie')).toBeUndefined();
-    },
-  );
-
-  it('revokes sessions only on intentional same-origin POST', async () => {
-    const res = responseMock();
-    await logout(
-      {
-        method: 'POST',
-        url: '/api/auth/logout',
-        headers: {
-          host: 'dashboard.test',
-          origin: 'https://dashboard.test',
-          'x-forwarded-proto': 'https',
-          cookie: 'dashboard_session=session',
-        },
-      },
-      res,
-    );
-    expect(deleteSession).toHaveBeenCalledWith('session');
-    expect(res.statusCode).toBe(303);
-    expect(res.getHeader('Location')).toBe('https://dashboard.test/');
-    expect(String(res.getHeader('Set-Cookie'))).toContain('Max-Age=0');
-  });
-
-  it('rejects cross-origin logout without deleting the session', async () => {
-    const res = responseMock();
-    await logout(
-      {
-        method: 'POST',
-        url: '/api/auth/logout',
-        headers: { host: 'dashboard.test', origin: 'https://other.test', cookie: 'dashboard_session=session' },
-      },
-      res,
-    );
-    expect(res.statusCode).toBe(403);
-    expect(deleteSession).not.toHaveBeenCalled();
-    expect(res.getHeader('Set-Cookie')).toBeUndefined();
-  });
-
   it('searches upstream and tolerates unavailable optional market configuration', async () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: 'user' },
@@ -391,14 +338,14 @@ describe('route contracts after extraction', () => {
 
   it.each(routes)('rejects unsupported methods at %s before accessing providers', async (url, handler) => {
     const res = responseMock();
-    await handler({ method: url.endsWith('/logout') ? 'GET' : 'POST', url, headers: { 'x-request-id': 'trace' } }, res);
+    await handler({ method: 'POST', url, headers: { 'x-request-id': 'trace' } }, res);
     expect(res.statusCode).toBe(405);
-    expect(res.getHeader('Allow')).toBe(url.endsWith('/logout') ? 'POST' : 'GET');
+    expect(res.getHeader('Allow')).toBe('GET');
     expect(res.body).toMatchObject({ requestId: 'trace', code: 'METHOD_NOT_ALLOWED' });
     expect(getDuneClient).not.toHaveBeenCalled();
   });
 
-  it.each(routes.slice(3, 8))('requires a session at %s before accessing providers', async (url, handler) => {
+  it.each(routes.slice(0, 5))('requires a session at %s before accessing providers', async (url, handler) => {
     const res = responseMock();
     await handler({ method: 'GET', url, headers: {} }, res);
     expect(res.statusCode).toBe(401);
@@ -484,71 +431,5 @@ describe('route contracts after extraction', () => {
       requestId: res.getHeader('X-Request-ID'),
     });
     expect(res.body).not.toContain('provider-secret');
-  });
-
-  it('persists an opaque session and clears OAuth state after a successful callback', async () => {
-    const oauthState = 'a'.repeat(64);
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(Response.json({ access_token: 'provider-secret' }))
-      .mockResolvedValueOnce(Response.json({ id: '111111111111111111', username: 'tester' }))
-      .mockResolvedValueOnce(Response.json({ roles: ['222222222222222222'] }));
-    vi.stubGlobal('fetch', fetchMock);
-    const res = responseMock();
-    await callback(
-      {
-        method: 'GET',
-        url: `/api/auth/callback?code=code&state=${oauthState}`,
-        headers: { host: 'dashboard.test', cookie: `oauth_state=${oauthState}` },
-      },
-      res,
-    );
-    expect(res.statusCode).toBe(307);
-    expect(res.getHeader('Location')).toBe('https://dashboard.test/portal');
-    expect((fetchMock.mock.calls[0][1]?.body as URLSearchParams).get('redirect_uri')).toBe(
-      'https://dashboard.test/auth/callback',
-    );
-    expect(fetchMock.mock.calls[2][0]).toBe('https://discord.com/api/users/@me/guilds/guild/member');
-    expect(saveSession).toHaveBeenCalledWith(
-      expect.stringMatching(/^[a-f0-9]{64}$/),
-      expect.objectContaining({
-        user: expect.objectContaining({ id: '111111111111111111' }),
-        roleIds: ['222222222222222222'],
-      }),
-    );
-    const cookies = res.getHeader('Set-Cookie') as string[];
-    const sessionCookie = cookies.find((cookie) => cookie.startsWith('dashboard_session='));
-    const stateCookie = cookies.find((cookie) => cookie.startsWith('oauth_state='));
-    expect(sessionCookie).toMatch(/^dashboard_session=[a-f0-9]{64};/);
-    expect(sessionCookie).toContain('HttpOnly');
-    expect(sessionCookie).toContain('Max-Age=43200');
-    expect(sessionCookie).toContain('Priority=High');
-    expect(stateCookie).toContain('oauth_state=; Max-Age=0');
-    expect(stateCookie).toContain('Path=/auth/callback');
-    expect(JSON.stringify([cookies, vi.mocked(saveSession).mock.calls])).not.toContain('provider-secret');
-  });
-
-  it('refuses login when the verified Discord role is missing', async () => {
-    const oauthState = 'b'.repeat(64);
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn()
-        .mockResolvedValueOnce(Response.json({ access_token: 'provider-secret' }))
-        .mockResolvedValueOnce(Response.json({ id: '111111111111111111', username: 'tester' }))
-        .mockResolvedValueOnce(Response.json({ roles: ['333333333333333333'] })),
-    );
-    const res = responseMock();
-    await callback(
-      {
-        method: 'GET',
-        url: `/api/auth/callback?code=code&state=${oauthState}`,
-        headers: { host: 'dashboard.test', cookie: `oauth_state=${oauthState}` },
-      },
-      res,
-    );
-    expect(res.statusCode).toBe(403);
-    expect(JSON.parse(res.body as string)).toMatchObject({ code: 'ROLE_REQUIRED' });
-    expect(saveSession).not.toHaveBeenCalled();
   });
 });

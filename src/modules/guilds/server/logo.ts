@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { guildKeys } from '../../../lib/redis/keys';
 import { AppError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
 import { getRedisClient } from '../../../lib/redis/client';
@@ -10,7 +11,7 @@ const MAX_LOGO_BYTES = 512 * 1024;
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
 function logoKey(guildId: string) {
-  return `arrakis:guild-logo:${guildId}`;
+  return guildKeys.logo(guildId);
 }
 
 function guildIdFromRequest(req) {

@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import catalog from '../../../src/modules/admin/catalog.json';
+import catalog from '../../../src/features/admin/catalog.json';
 import {
   defaultQuery,
   fieldValue,
@@ -7,7 +7,7 @@ import {
   resultRows,
   resultHasNext,
   rowContext,
-} from '../../../src/modules/admin/operation-fields';
+} from '../../../src/features/admin/operation-fields';
 const operation = (id: string) => catalog.find((entry) => entry.id === id)!;
 it('provides valid unique fields without repeating targets, files or adapter capability names', () => {
   for (const entry of catalog) {

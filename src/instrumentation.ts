@@ -37,6 +37,14 @@ export async function register() {
       startPopulationRecorder();
       startup.info('Population recorder started');
       startup.info('Dashboard services ready');
+
+      // Fire and forget: an announcement hiccup must never delay or fail startup.
+      const { announceLatestRelease } = await import('./server/changelog-announce');
+      void announceLatestRelease()
+        .then((outcome) => {
+          if (outcome !== 'disabled') startup.info('Changelog announcer checked', { outcome });
+        })
+        .catch((error) => startup.warn('Changelog announcer failed', { error }));
     } catch (error) {
       startup.error('Dashboard startup failed', error);
       return;

@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { baseKeys } from '../../../lib/redis/keys';
 import { createHash, randomBytes } from 'node:crypto';
 import { inflateSync } from 'node:zlib';
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -11,7 +12,7 @@ import { baseViewSchema, previewSettingsSchema, type PreviewSettings } from '../
 
 export const previewId = (userId: string, baseId: string) =>
   createHash('sha256').update(`${userId}:${baseId}`).digest('hex').slice(0, 24);
-export const previewKey = (id: string) => `arrakis:base-preview:${id}`;
+export const previewKey = (id: string) => baseKeys.preview(id);
 
 export async function getPreviewSettings(id: string): Promise<PreviewSettings | null> {
   const redis = getRedisClient();
@@ -91,12 +92,7 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
     end
     return 1
   `,
-      [
-        previewKey(id),
-        `arrakis:base-marketplace:listing:${id}`,
-        `arrakis:base-marketplace:summary-state:${id}`,
-        'arrakis:base-marketplace:listings',
-      ],
+      [previewKey(id), baseKeys.listing(id), baseKeys.summaryState(id), baseKeys.listings],
       [JSON.stringify(preview)],
     ),
     12000,

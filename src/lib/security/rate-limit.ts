@@ -11,13 +11,34 @@ const MAX_BUCKETS = 10_000;
 export type RateLimitRule = { limit: number; windowMs: number };
 export type RateLimitResult = { allowed: boolean; remaining: number; retryAfter: number; storageUnavailable?: boolean };
 
+/** How many reverse proxies sit in front of the app (TRUSTED_PROXY_COUNT). The deployment guide assumes one. */
+function trustedProxyCount(): number {
+  try {
+    const configured = getServerEnv().TRUSTED_PROXY_COUNT;
+    return typeof configured === 'number' && Number.isInteger(configured) && configured >= 0 ? configured : 1;
+  } catch {
+    return 1;
+  }
+}
+
 export function getClientAddress(req: {
   headers: { [key: string]: string | string[] | undefined };
   socket?: { remoteAddress?: string };
 }): string {
   const forwarded = req.headers['x-forwarded-for'];
-  const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-  const candidates = [...(value?.split(',').slice(0, 10) ?? []), req.socket?.remoteAddress ?? ''];
+  const value = Array.isArray(forwarded) ? forwarded.join(',') : forwarded;
+  // Every proxy in front of us appends the address it saw, so only the entries *we* appended are trustworthy:
+  // anything to their left was supplied by the client. Reading the first entry would let a caller pick their
+  // own address (and so their own rate-limit bucket) with a forged header.
+  const entries = (
+    value
+      ?.split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean) ?? []
+  ).slice(-20);
+  const proxies = trustedProxyCount();
+  const viaProxy = proxies > 0 && entries.length >= proxies ? [entries[entries.length - proxies]] : [];
+  const candidates = [...viaProxy, req.socket?.remoteAddress ?? ''];
   for (const candidate of candidates) {
     const address = candidate
       .trim()

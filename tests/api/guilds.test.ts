@@ -133,7 +133,7 @@ describe('guild recruitment settings', () => {
       expect(JSON.parse(response.body).data).toEqual({ ...requirements, published });
       expect(redis.eval).toHaveBeenLastCalledWith(
         expect.stringContaining("redis.call('ZREM'"),
-        ['arrakis:guild-requirements:2', 'arrakis:guild-requirements'],
+        ['arrakis:{guilds}:requirements:2', 'arrakis:{guilds}:requirements-index'],
         [JSON.stringify({ ...requirements, published }), published ? '1' : '0', expect.any(Number), 'guild:2'],
       );
     }
@@ -187,7 +187,7 @@ describe('guild recruitment settings', () => {
     );
     const response = await listRequirements(req('/api/guilds/requirements', { page: '1' }), {});
     expect(JSON.parse(response.body).data).toEqual({ rows: [{ ...requirements, guildId: '2' }], hasMore: false });
-    expect(redis.zrange).toHaveBeenCalledWith('arrakis:guild-requirements', 20, 40, { byScore: false });
+    expect(redis.zrange).toHaveBeenCalledWith('arrakis:{guilds}:requirements-index', 20, 40, { byScore: false });
     session.mockResolvedValue(null);
     await expect(listRequirements(req('/api/guilds/requirements'), {})).rejects.toMatchObject({ statusCode: 401 });
   });
@@ -235,7 +235,7 @@ describe('guild API handlers', () => {
       {},
     );
     expect(response.status).toBe(200);
-    expect(redis.set).toHaveBeenCalledWith('arrakis:guild-logo:2', `data:image/png;base64,${png}`);
+    expect(redis.set).toHaveBeenCalledWith('arrakis:{guilds}:logo:2', `data:image/png;base64,${png}`);
 
     request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '1' }] });
     const denied = await expect(

@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { guildKeys } from '../../../lib/redis/keys';
 import { requireDashboardAdmin } from './access';
 import { getRedisClient } from '../../../lib/redis/client';
 import { NextResponse } from '../../../infrastructure/pages-api';
@@ -16,7 +17,7 @@ async function context(req, res) {
     throw new AppError('Invalid guild ID', 400, 'INVALID_GUILD_ID', true);
   const redis = getRedisClient();
   if (!redis) throw new AppError('Guild storage unavailable.', 503, 'STORAGE_UNAVAILABLE', true);
-  return { session, guildId, redis, records: `arrakis:guild-applications:${guildId}` };
+  return { session, guildId, redis, records: guildKeys.applications(guildId) };
 }
 export async function GET(req, res) {
   const ctx = await context(req, res);
@@ -32,11 +33,11 @@ export async function GET(req, res) {
     end
     return rows
   `,
-    [ctx.records, `arrakis:guild-applications-index:${ctx.guildId}`],
+    [ctx.records, guildKeys.applicationsIndex(ctx.guildId)],
     [start, start + 20],
   );
   const rows = Array.isArray(values) ? values.map(parseStoredApplication).filter((value) => value !== null) : [];
-  const listing = guildRequirementSchema.safeParse(await ctx.redis.get(`arrakis:guild-requirements:${ctx.guildId}`));
+  const listing = guildRequirementSchema.safeParse(await ctx.redis.get(guildKeys.requirements(ctx.guildId)));
   createLogger('ADMIN').info('Administrator inspected guild applications', {
     actorId: ctx.session.user.id,
     guildId: ctx.guildId,
@@ -66,7 +67,7 @@ export async function MESSAGES(req, res) {
     if (app.conversationId or tostring(app.submittedAt)) ~= ARGV[2] then return false end
     return redis.call('LRANGE', KEYS[2], -100, -1)
   `,
-    [ctx.records, `arrakis:guild-chat:${ctx.guildId}:${id}:${generation}`],
+    [ctx.records, guildKeys.chat(ctx.guildId, id, generation)],
     [id, generation],
   );
   if (!Array.isArray(values)) throw new AppError('Application not found', 404, 'GUILD_APPLICATION_NOT_FOUND', true);

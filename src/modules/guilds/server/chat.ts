@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { guildKeys } from '../../../lib/redis/keys';
 import { AppError } from '../../../lib/errors';
 import { NextResponse } from '../../../infrastructure/pages-api';
 import { applicationContext, parseStoredApplication } from './applications';
@@ -26,7 +27,7 @@ async function conversation(req, res) {
     own,
     applicationId,
     generation,
-    chatKey: `arrakis:guild-chat:${ctx.guildId}:${applicationId}:${generation}`,
+    chatKey: guildKeys.chat(ctx.guildId, applicationId, generation),
   };
 }
 

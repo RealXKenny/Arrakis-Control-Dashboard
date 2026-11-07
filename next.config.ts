@@ -21,23 +21,15 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     // Dev note: one front door is plenty; query strings travel with the visitor.
-    return [{ source: '/home', destination: '/', permanent: false }];
+    return [
+      { source: '/home', destination: '/', permanent: false },
+      // Old sign-in links keep working now that Auth.js owns the login screen.
+      { source: '/auth/login', destination: '/login', permanent: false },
+    ];
   },
 
   async rewrites() {
     return [
-      {
-        source: '/auth/callback',
-        destination: '/api/auth/callback',
-      },
-      {
-        source: '/auth/login',
-        destination: '/api/auth/login',
-      },
-      {
-        source: '/auth/logout',
-        destination: '/api/auth/logout',
-      },
       {
         source: '/items/:path*',
         destination: '/api/assets/items/:path*',

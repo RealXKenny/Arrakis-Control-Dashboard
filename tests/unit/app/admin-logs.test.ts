@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { logText, serviceNames } from '../../../src/modules/admin/screens/LogsScreen';
+import { logText, serviceNames } from '../../../src/app/(workspace)/admin/_components/screens/LogsScreen';
 
 it('reads service names and log text from varied provider shapes', () => {
   expect(serviceNames(['a', 'b', 'a'])).toEqual(['a', 'b']);

@@ -1,6 +1,6 @@
 # Arrakis Control Dashboard
 
-Arrakis Control is a Next.js dashboard for authorized Dune server operations. It provides Discord OAuth login, player telemetry, base and vehicle data, market information, map data, and base export functionality.
+Arrakis Control is a Next.js dashboard for authorized Dune server operations. It provides Discord OAuth and linked email/password login, player telemetry, base and vehicle data, market information, map data, and base export functionality.
 
 The public landing page is `/`; legacy `/home` links redirect there while preserving query parameters. The signed-in workspace is `/portal`.
 
@@ -36,9 +36,11 @@ Required production variables include:
 
 - `CONSOLE_URL`, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN` for scoped Dune Console access.
 - `DISCORD_GUILD_ID` for guild membership checks, plus `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` for the Discord OAuth sign-in.
-- `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/auth/callback`.
+- `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/api/auth/callback/discord`. `AUTH_SECRET` (at least 32 random characters, for example `openssl rand -base64 48`) signs Auth.js state and encrypts stored Discord refresh tokens; it is required in production.
 - `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits, persistent sessions, and the dashboard snapshot cache.
-- `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list that switches the optional server snapshot provider to `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index.
+- `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list (IPv6 as `[::1]:7000`) that switches all Redis access (sessions, rate limits, caches, marketplace, announcements) to an `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index (ignored by clusters). Every multi-key Lua script keeps its keys in one hash slot through `{hash tags}` (see `src/lib/redis/keys.ts`). Upgrading an existing deployment needs a one-time key rename, see Redis cluster migration below.
+- `CHANGELOG_WEBHOOK_URL` (optional, secret) Discord webhook for changelog and progress announcements; only `discord.com` webhook URLs are accepted. `CHANGELOG_AUTO_ANNOUNCE=true` additionally announces each newly deployed release once. Announcements use link buttons and never ping; the administrator composer lives at `/admin/changelog`.
+- `TRUSTED_PROXY_COUNT` (default `1`) is the number of reverse proxies in front of the dashboard. Rate limits and login throttling use only the `X-Forwarded-For` entry the last trusted proxy appended; set `0` if the dashboard is exposed directly, or the proxy count if you chain several.
 
 Optional server binding variables:
 
@@ -46,6 +48,17 @@ Optional server binding variables:
 - `SERVER_PORT` selects the TCP port. It defaults to `2008` and must be between `1` and `65535`.
 
 See [.env.example](.env.example) for the complete configuration template.
+
+## Redis cluster migration
+
+Releases that use hash-tagged Redis keys (guild recruitment, chat and support, base import history, base previews and the legacy marketplace) need a one-time rename of existing keys. The rename is atomic, keeps expiry times, and never overwrites a key that already exists.
+
+1. Stop the dashboard.
+2. `npm run redis:rekey` for a dry run that counts what will move, then `npm run redis:rekey -- --apply`. Run it against the original single node, with `REDIS_CLUSTER_NODES` unset.
+3. Start the release that uses the new key names.
+4. Only then, to adopt a cluster, copy the data to it (`RENAME` cannot cross slots) and set `REDIS_CLUSTER_NODES`.
+
+The command exits with status 2 and lists any conflicts (an old key whose new name already exists) so you can decide which copy to keep. Sessions, rate limits and caches are single-key and are not touched.
 
 ## Administration
 
@@ -59,7 +72,7 @@ Run `npx vitest run tests/api/admin-catalog.test.ts` to check every catalog entr
 
 Administration is organised into six grouped sections (Control center, Players & community, Game assets, World & economy, Operations, Configuration & advanced) with tabs, breadcrumbs and shareable `/admin?tab=<id>&operation=<id>` URLs that respect browser history. Every catalog operation belongs to exactly one tab; operations the scoped API key cannot perform are listed under **Console-only** as a handoff, with no working form. Players, Vehicles, Bases & storage, Maps & worlds, Backups, Market, Server, Logs, Care packages, Admin tools, Updates, Addons, Guild membership, Discord integrations, Public directory, Statistics and Live map have dedicated list/detail screens with confirmation dialogs (field names are read defensively because response shapes are unverified against a live Console); every other tab still uses the typed catalog forms and result tables, and further dedicated screens remain future work. The generated `test-results/admin-api-report.md` is the operation coverage matrix.
 
-The searchable catalog at `src/modules/admin/catalog.json` contains 383 unique method/path operations: the 378 unique entries from the supplied August 2026 reference plus five guild membership controls. It includes server operations, players, guilds, bases, storage, vehicles, exchange/market automation, blueprints, maps, admin tools, care packages, addons, monitoring, IAM, API-key management, setup, database, and adapter entries. Browse feature groups, select a tool, fill its labeled controls, and inspect the bounded sanitized response. Advanced request fields remain available for complex nested payloads. List responses support filtering, paging, and contextual actions that prefill verified target IDs. Guild oversight provides searchable guilds, member/rank controls, recruitment and application inspection, and private in-dashboard chats with guild leaders. Leaders reply under My Guild → Settings. My Guild and the support button show unread administrator messages; administration, Guild oversight, and each guild show unread leader replies. Counts persist across reloads and clear only when opposite-party messages are visible in the opened support chat. Administrators can inspect application conversations without marking messages read; inspection metadata is recorded in the server console. Support chats retain at most 100 messages for 90 days since the latest message and are removed when disband cleanup succeeds. The catalog is an explicit allowlist: requests cannot select arbitrary provider URLs or headers.
+The searchable catalog at `src/features/admin/catalog.json` contains 383 unique method/path operations: the 378 unique entries from the supplied August 2026 reference plus five guild membership controls. It includes server operations, players, guilds, bases, storage, vehicles, exchange/market automation, blueprints, maps, admin tools, care packages, addons, monitoring, IAM, API-key management, setup, database, and adapter entries. Browse feature groups, select a tool, fill its labeled controls, and inspect the bounded sanitized response. Advanced request fields remain available for complex nested payloads. List responses support filtering, paging, and contextual actions that prefill verified target IDs. Guild oversight provides searchable guilds, member/rank controls, recruitment and application inspection, and private in-dashboard chats with guild leaders. Leaders reply under My Guild → Settings. My Guild and the support button show unread administrator messages; administration, Guild oversight, and each guild show unread leader replies. Counts persist across reloads and clear only when opposite-party messages are visible in the opened support chat. Administrators can inspect application conversations without marking messages read; inspection metadata is recorded in the server console. Support chats retain at most 100 messages for 90 days since the latest message and are removed when disband cleanup succeeds. The catalog is an explicit allowlist: requests cannot select arbitrary provider URLs or headers.
 
 Guild leaders can manage membership from **My Guild** using **Manage** beside a member’s name, or **Add member** above the roster. Officers can be demoted or promoted to Leader; leadership transfers and removals require confirmation. **Settings → Disband guild** requires typing `DISBAND GUILD`. These actions use the dashboard’s scoped `CONSOLE_API_KEY`, which must permit the corresponding Console guild writes; no admin key is sent to the browser. The Console enforces member limits, existing membership, and faction compatibility. The dashboard rechecks current leadership before every write and does not retry uncertain writes automatically. Online players may need to relog after rank changes.
 
@@ -174,7 +187,7 @@ Import [the dashboard egg](pterodactyl/egg-arrakis-control-dashboard.json) into 
 
 The image links Next.js’s `.next/cache` to `/home/container/.cache/arrakis-dashboard` so optimized images can be cached on the writable server volume. The production launcher creates and checks the image cache before starting Next.js, including after a fresh volume is mounted. Keep that directory writable by the container user.
 
-Set `APP_URL` to the public HTTPS origin served by your reverse proxy, then configure the Discord OAuth redirect URI as `<APP_URL>/auth/callback`. The assigned port is the dashboard's internal HTTP port; terminate public HTTPS at the proxy. `CONSOLE_URL` and `REDIS_URL` must resolve and be reachable from inside the container. Use `rediss://` when Redis requires TLS. If the GHCR package is private, grant the Pterodactyl host access to pull it or make the package public.
+Set `APP_URL` to the public HTTPS origin served by your reverse proxy, then configure the Discord OAuth redirect URI as `<APP_URL>/api/auth/callback/discord`. The assigned port is the dashboard's internal HTTP port; terminate public HTTPS at the proxy. `CONSOLE_URL` and `REDIS_URL` must resolve and be reachable from inside the container. Use `rediss://` when Redis requires TLS. If the GHCR package is private, grant the Pterodactyl host access to pull it or make the package public.
 
 For a direct Docker deployment, supply the required production variables with `--env-file` and map the same port on the host and container; set `SERVER_HOSTNAME=0.0.0.0`. Keep the environment file outside the image and repository.
 
@@ -204,7 +217,7 @@ Important boundaries:
 - `src/pages/` contains the Pages Router pages and API routes; `next.config.ts` redirects legacy `/home` links to `/`.
 - `src/modules/` contains feature-specific UI, hooks, normalization, and server helpers.
 - `src/infrastructure/` contains the Dune client, cookie helpers, and API boundary utilities.
-- `src/lib/` contains shared logging and errors, plus `redis/` (node-redis client, ioredis pool for dashboard data), `security/` (sessions, rate limiting, API capacity), `cache/` and `http/` helpers.
+- `src/lib/` contains shared logging and errors, plus `redis/` (ioredis command client for standalone or Cluster, plus the pooled reader for dashboard data), `security/` (sessions, rate limiting, API capacity), `cache/` and `http/` helpers.
 - `src/lib/env.ts` validates server environment configuration; `src/config/env.ts` re-exports it for legacy imports.
 - `proxy.ts` adds request correlation and security headers (Middleware renamed in Next.js 16; it must live at `src/proxy.ts` beside the routers).
 - `docker-compose.yml` runs the dashboard beside a local Redis for development.
@@ -223,7 +236,7 @@ Important boundaries:
 ## Production Deployment
 
 1. Provision a Redis server reachable over TCP and configure `REDIS_URL` with any required credentials.
-2. Configure Discord OAuth redirect URI as `<APP_URL>/auth/callback`.
+2. Configure Discord OAuth redirect URI as `<APP_URL>/api/auth/callback/discord`.
 3. Set all required server-only variables from `.env.example` in the deployment platform.
 4. Run the verification commands locally or in CI:
 

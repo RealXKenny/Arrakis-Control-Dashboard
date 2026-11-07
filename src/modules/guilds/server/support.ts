@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { guildKeys } from '../../../lib/redis/keys';
 import { z } from 'zod';
 import { SUPPORT_UNREAD_INDEX, supportReceiptFunctions } from './support-receipts';
 import { AppError } from '../../../lib/errors';
@@ -18,7 +19,7 @@ async function context(req, res, admin: boolean) {
   if (!admin) await requireGuildLeader(req, res, guildId);
   const redis = getRedisClient();
   if (!redis) throw new AppError('Chat storage unavailable.', 503, 'STORAGE_UNAVAILABLE', true);
-  return { session, redis, guildId, party: admin ? 'admin' : 'leader', key: `arrakis:guild-support:${guildId}` };
+  return { session, redis, guildId, party: admin ? 'admin' : 'leader', key: guildKeys.support(guildId) };
 }
 
 async function read(req, res, admin: boolean) {
@@ -154,7 +155,7 @@ export async function ADMIN_STATUS(req, res) {
     local total = redis.call('ZCOUNT', KEYS[1], '(' .. ARGV[1], '+inf')
     return {total, counts}
   `,
-    [SUPPORT_UNREAD_INDEX, ...ids.map((id) => `arrakis:guild-support:${id}`)],
+    [SUPPORT_UNREAD_INDEX, ...ids.map((id) => guildKeys.support(id))],
     [now, ...ids],
   );
   if (

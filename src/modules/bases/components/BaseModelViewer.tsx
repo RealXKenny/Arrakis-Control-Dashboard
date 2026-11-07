@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { BuildingLibrary, type BuildingPartSummary } from '../../map/terrain/models/buildingModels';
-import { fitTerrainCamera } from '../../map/terrain/scene/sceneFraming';
+import { BuildingLibrary, type BuildingPartSummary } from '../../../features/map/terrain/models/buildingModels';
+import { fitTerrainCamera } from '../../../features/map/terrain/scene/sceneFraming';
 import { BaseModelError, fetchBaseModelExport } from '../utils/model-export';
 import css from '../styles/preview.module.css';
 import { baseViewSchema, type BaseView } from '../utils/preview-settings';
@@ -795,7 +795,7 @@ export default function BaseModelViewer({
                 <span className={css.progressFill} style={{ width: `${status.progress ?? 0}%` }} />
               </div>
             )}
-            {status.needsSignIn && <a href="/auth/login">Sign in again</a>}
+            {status.needsSignIn && <a href="/login">Sign in again</a>}
           </div>
         )}
       </div>

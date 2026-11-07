@@ -1,6 +1,7 @@
 import '../../../lib/assert-server';
+import { guildKeys } from '../../../lib/redis/keys';
 
-export const SUPPORT_UNREAD_INDEX = 'arrakis:guild-support-unread';
+export const SUPPORT_UNREAD_INDEX = guildKeys.supportUnread;
 export const supportReceiptFunctions = `
   local function decode(value)
     local ok, result = pcall(cjson.decode, value or '{}')

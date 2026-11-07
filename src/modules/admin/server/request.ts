@@ -1,7 +1,7 @@
 import '../../../lib/assert-server';
 import { z } from 'zod';
-import operations from '../catalog.json';
-import type { AdminOperation } from '../types';
+import operations from '../../../features/admin/catalog.json';
+import type { AdminOperation } from '../../../features/admin/types';
 import { AppError } from '../../../lib/errors';
 
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;

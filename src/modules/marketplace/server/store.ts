@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { baseKeys } from '../../../lib/redis/keys';
 import { AppError } from '../../../lib/errors';
 import { getRedisClient } from '../../../lib/redis/client';
 import { withTimeout } from '../../../lib/http/timeout';
@@ -11,9 +12,9 @@ import {
   type MarketplaceSummary,
 } from '../schema';
 
-const INDEX_KEY = 'arrakis:base-marketplace:listings';
-const recordKey = (id: string) => `arrakis:base-marketplace:listing:${id}`;
-const summaryStateKey = (id: string) => `arrakis:base-marketplace:summary-state:${id}`;
+const INDEX_KEY = baseKeys.listings;
+const recordKey = (id: string) => baseKeys.listing(id);
+const summaryStateKey = (id: string) => baseKeys.summaryState(id);
 
 function client() {
   const redis = getRedisClient();

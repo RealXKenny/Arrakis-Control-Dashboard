@@ -104,7 +104,7 @@ describe('administrator guild oversight', () => {
     });
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining('ZRANGE'),
-      ['arrakis:guild-applications:2', 'arrakis:guild-applications-index:2'],
+      ['arrakis:{guilds}:applications:2', 'arrakis:{guilds}:applications-index:2'],
       [20, 40],
     );
     await expect(GET(req(undefined, { page: '10' }), {})).rejects.toMatchObject({ statusCode: 400 });
@@ -115,7 +115,7 @@ describe('administrator guild oversight', () => {
     expect(JSON.parse(response.body).data.messages).toEqual([message]);
     expect(redis.eval).toHaveBeenLastCalledWith(
       expect.stringContaining('~= ARGV[2]'),
-      ['arrakis:guild-applications:2', `arrakis:guild-chat:2:${id}:${generation}`],
+      ['arrakis:{guilds}:applications:2', `arrakis:{guilds}:chat:2:${id}:${generation}`],
       [id, generation],
     );
     expect(redis.eval.mock.calls.every(([script]) => !script.includes("redis.call('SET'"))).toBe(true);
@@ -138,7 +138,7 @@ describe('guild leader administrator support chat', () => {
     });
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining("redis.call('LTRIM', KEYS[1], -100, -1)"),
-      ['arrakis:guild-support:2', 'arrakis:guild-support-unread'],
+      ['arrakis:{guilds}:support:2', 'arrakis:{guilds}:support-unread'],
       [generation, admin().user.id, expect.any(String), '2', expect.any(Number)],
     );
     expect(redis.eval.mock.calls[0][0]).toContain("redis.call('EXPIRE', KEYS[1], 7776000)");
@@ -187,7 +187,7 @@ describe('support unread receipts', () => {
     expect(JSON.parse((await ADMIN_READ(req(body), {})).body).data.unreadCount).toBe(1);
     expect(redis.eval).toHaveBeenLastCalledWith(
       expect.stringContaining('message.role == role and seen[key]'),
-      ['arrakis:guild-support:2', 'arrakis:guild-support-unread'],
+      ['arrakis:{guilds}:support:2', 'arrakis:{guilds}:support-unread'],
       ['admin', JSON.stringify(['leader:' + generation]), '2'],
     );
     expect(redis.eval.mock.calls.at(-1)[0]).toContain("if ARGV[1] == 'admin' then redis.call('ZREM'");
@@ -200,7 +200,7 @@ describe('support unread receipts', () => {
     expect(JSON.parse(response.body).data).toEqual({ total: 2, guilds: { '2': 2, '3': 2 } });
     expect(redis.eval).toHaveBeenLastCalledWith(
       expect.stringContaining("'ZCOUNT', KEYS[1]"),
-      ['arrakis:guild-support-unread', 'arrakis:guild-support:2', 'arrakis:guild-support:3'],
+      ['arrakis:{guilds}:support-unread', 'arrakis:{guilds}:support:2', 'arrakis:{guilds}:support:3'],
       [expect.any(Number), '2', '3'],
     );
     const calls = redis.eval.mock.calls.length;

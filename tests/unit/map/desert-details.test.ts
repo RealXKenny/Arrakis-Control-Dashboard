@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import * as THREE from 'three';
-import { createDesertDetails, updateDesertDetails } from '../../../src/modules/map/terrain/surface/desertDetails';
-import type { SharedAssets, LayoutAssets } from '../../../src/modules/map/terrain/surface/terrainAssets';
+import { createDesertDetails, updateDesertDetails } from '../../../src/features/map/terrain/surface/desertDetails';
+import type { SharedAssets, LayoutAssets } from '../../../src/features/map/terrain/surface/terrainAssets';
 
 const unpack = (name: string) => new Uint8Array(gunzipSync(readFileSync(`src/assets/terrain/${name}.gz`)));
 const shared: SharedAssets = {

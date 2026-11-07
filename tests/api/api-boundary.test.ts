@@ -1,7 +1,6 @@
 import { responseMock } from '../helpers/response';
 import { describe, expect, it } from 'vitest';
 import { NextResponse, runPagesApiHandler } from '../../src/infrastructure/pages-api';
-import authCallback from '../../src/pages/api/auth/callback/index';
 import marketConfig from '../../src/pages/api/market/config/index';
 import { acquireApiCapacity } from '../../src/lib/security/api-capacity';
 
@@ -78,15 +77,6 @@ describe('Pages API boundary', () => {
     });
     expect(res.statusCode).toBe(500);
     expect(res.body).toMatchObject({ ok: false, error: 'Internal server error', code: 'INTERNAL_ERROR' });
-  });
-
-  it('rejects an OAuth callback with an invalid state', async () => {
-    const req = { method: 'GET', url: '/api/auth/callback?code=code&state=invalid', headers: {} };
-    const res = responseMock();
-    await authCallback(req, res);
-    expect(res.statusCode).toBe(400);
-    expect(JSON.parse(res.body as string)).toMatchObject({ ok: false, code: 'INVALID_OAUTH_STATE' });
-    expect(String(res.getHeader('Set-Cookie'))).toContain('oauth_state=; Max-Age=0');
   });
 
   it('rejects protected routes without a session', async () => {

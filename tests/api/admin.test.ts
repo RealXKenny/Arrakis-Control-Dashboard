@@ -1,12 +1,11 @@
-import { Readable } from 'node:stream';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import catalog from '../../src/pages/api/admin/catalog';
-import execute from '../../src/pages/api/admin/execute';
-import upload from '../../src/pages/api/admin/upload';
+import { GET as catalog } from '../../src/app/api/v2/admin/catalog/route';
+import { POST as execute } from '../../src/app/api/v2/admin/execute/route';
+import { POST as upload } from '../../src/app/api/v2/admin/upload/route';
 import { getSession } from '../../src/lib/security/session-store';
-import { sanitizedEvents, executeOperation } from '../../src/modules/admin/server/execute';
+import { executeAdminOperation, limitBytes, sanitizedEvents } from '../../src/server/admin/execute';
 import { parseAdminRequest } from '../../src/modules/admin/server/request';
-import { responseMock } from '../helpers/response';
+import { adminGet, adminPost, adminUpload } from '../helpers/admin-v2';
 
 const config = vi.hoisted(() => ({
   NODE_ENV: 'test',
@@ -19,12 +18,12 @@ const config = vi.hoisted(() => ({
   CONSOLE_API_KEY: 'ordinary-key',
   ADAPTER_TOKEN: 'separate-adapter-key',
 }));
-vi.mock('../../src/config/env', () => ({ getServerEnv: () => config }));
+vi.mock('../../src/lib/env', () => ({ getServerEnv: () => config }));
+vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'admin' }) }) }));
+vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
 vi.mock('../../src/lib/security/session-store', () => ({ getSession: vi.fn() }));
-vi.mock('../../src/lib/security/rate-limit', () => ({
-  checkRateLimit: async () => ({ allowed: true, remaining: 20, retryAfter: 60 }),
-  getClientAddress: () => 'test',
-}));
+vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => ({ eval: async () => 1 }) }));
+
 const session = () => ({
   user: { id: '456084885220884480' },
   guildId: 'guild',
@@ -32,15 +31,9 @@ const session = () => ({
   expiresAt: Date.now() + 60_000,
 });
 const fetcher = vi.fn();
-const request = (body = {}, headers: Record<string, string> = {}) => ({
-  method: 'POST',
-  url: '/api/admin/execute',
-  headers: { cookie: 'dashboard_session=admin', origin: 'https://dashboard.test', ...headers } as Record<
-    string,
-    string
-  >,
-  body,
-});
+const run = (body: unknown, headers: Record<string, string> = {}) =>
+  execute(adminPost('/api/v2/admin/execute', body, headers));
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal('fetch', fetcher);
@@ -62,57 +55,61 @@ it('rejects anonymous and non-admin users on every administrative API', async ()
     { ...session(), roleIds: [] },
   ]) {
     vi.mocked(getSession).mockResolvedValue(who);
-    for (const route of [catalog, execute, upload]) {
-      const req = {
-        ...request(),
-        method: route === catalog ? 'GET' : 'POST',
-        url: route === catalog ? '/api/admin/catalog' : '/api/admin/execute',
-      };
-      const res = responseMock();
-      await route(req, res);
-      expect(res.statusCode).toBe(who === null ? 401 : 403);
-    }
+    const expected = who === null ? 401 : 403;
+    expect((await catalog(adminGet('/api/v2/admin/catalog'))).status).toBe(expected);
+    expect((await run({ operation: 'get-server-status' })).status).toBe(expected);
+    expect((await upload(adminPost('/api/v2/admin/upload', '', {}, 'multipart/form-data; boundary=x'))).status).toBe(
+      expected,
+    );
   }
   expect(fetcher).not.toHaveBeenCalled();
 });
 
 it('returns an authorized catalog without exposing any configured credential', async () => {
-  const res = responseMock();
-  await catalog({ ...request(), method: 'GET', url: '/api/admin/catalog' }, res);
-  const body = JSON.parse(String(res.body));
+  const response = await catalog(adminGet('/api/v2/admin/catalog'));
+  const text = await response.text();
+  const body = JSON.parse(text);
   expect(body.operations).toHaveLength(383);
   expect(body.configured).toBe(true);
-  expect(String(res.body)).not.toContain('separate-admin-key');
-  expect(res.getHeader('Cache-Control')).toContain('no-store');
+  expect(text).not.toContain('separate-admin-key');
+  expect(response.headers.get('Cache-Control')).toContain('no-store');
 });
 
 it('rejects cross-origin requests and missing confirmations before contacting Console', async () => {
-  for (const req of [
-    request({ operation: 'get-server-status' }, { origin: 'https://evil.test' }),
-    request({ operation: 'post-server-stop' }),
-  ]) {
-    const res = responseMock();
-    await execute(req, res);
-    expect(res.statusCode).toBeGreaterThanOrEqual(400);
-  }
+  for (const response of [
+    await run({ operation: 'get-server-status' }, { origin: 'https://evil.test' }),
+    await run({ operation: 'get-server-status' }, { 'sec-fetch-site': 'cross-site' }),
+    await run({ operation: 'post-server-stop' }),
+  ])
+    expect(response.status).toBeGreaterThanOrEqual(400);
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+it('bounds request bodies and rejects malformed JSON', async () => {
+  expect((await execute(adminPost('/api/v2/admin/execute', 'x'.repeat(129 * 1024)))).status).toBe(413);
+  expect((await execute(adminPost('/api/v2/admin/execute', '{not json'))).status).toBe(400);
   expect(fetcher).not.toHaveBeenCalled();
 });
 
 it('uses the independent administrator credential and normalizes responses', async () => {
-  const res = responseMock();
-  await execute(request({ operation: 'get-server-status' }), res);
-  expect(res.statusCode).toBe(200);
+  const response = await run({ operation: 'get-server-status' });
+  expect(response.status).toBe(200);
   expect(fetcher.mock.calls[0][0].toString()).toBe('https://console.test/api/server/status?raw=0');
   expect(fetcher.mock.calls[0][1]).toMatchObject({
     headers: { Authorization: 'Bearer separate-admin-key' },
     redirect: 'error',
   });
-  expect(JSON.parse(String(res.body)).data.secret).toBe('[REDACTED]');
+  expect((await response.json()).data.secret).toBe('[REDACTED]');
+});
+
+it('accepts a native form post for downloads', async () => {
+  const body = new URLSearchParams({ request: JSON.stringify({ operation: 'get-server-status' }) }).toString();
+  const response = await execute(adminPost('/api/v2/admin/execute', body, {}, 'application/x-www-form-urlencoded'));
+  expect(response.status).toBe(200);
 });
 
 it('binds adapter actor identity to the verified session and never interchanges keys', async () => {
-  const res = responseMock();
-  await execute(request({ operation: 'get-integrations-discord-players-me', query: { actor: 'forged' } }), res);
+  await run({ operation: 'get-integrations-discord-players-me', query: { actor: 'forged' } });
   const url = new URL(fetcher.mock.calls[0][0]);
   expect(JSON.parse(url.searchParams.get('actor')!).userId).toBe('456084885220884480');
   expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer separate-adapter-key');
@@ -120,10 +117,9 @@ it('binds adapter actor identity to the verified session and never interchanges 
 
 it('never retries an uncertain mutation and retains queued/conflict responses', async () => {
   fetcher.mockRejectedValueOnce(new Error('private internal connection error'));
-  const res = responseMock();
-  await execute(request({ operation: 'post-server-restart', acknowledgement: 'POST /api/server/restart' }), res);
-  expect(res.statusCode).toBe(502);
-  expect(res.body).toMatchObject({ code: 'OPERATION_OUTCOME_UNKNOWN' });
+  const failed = await run({ operation: 'post-server-restart', acknowledgement: 'POST /api/server/restart' });
+  expect(failed.status).toBe(502);
+  expect(await failed.json()).toMatchObject({ code: 'OPERATION_OUTCOME_UNKNOWN' });
   expect(fetcher).toHaveBeenCalledTimes(1);
   fetcher.mockResolvedValueOnce(
     new Response(JSON.stringify({ queued: true, task: { id: 'task-one' } }), {
@@ -131,20 +127,15 @@ it('never retries an uncertain mutation and retains queued/conflict responses', 
       headers: { 'Content-Type': 'application/json' },
     }),
   );
-  const queued = responseMock();
-  await execute(request({ operation: 'post-server-restart', acknowledgement: 'POST /api/server/restart' }), queued);
-  expect(queued.statusCode).toBe(202);
-  expect(JSON.parse(String(queued.body)).data.queued).toBe(true);
+  const queued = await run({ operation: 'post-server-restart', acknowledgement: 'POST /api/server/restart' });
+  expect(queued.status).toBe(202);
+  expect((await queued.json()).data.queued).toBe(true);
 });
 
 it('rejects restricted operations and insecure admin transport', async () => {
-  const denied = responseMock();
-  await execute(request({ operation: 'post-database-query' }), denied);
-  expect(denied.statusCode).toBe(403);
+  expect((await run({ operation: 'post-database-query' })).status).toBe(403);
   config.CONSOLE_URL = 'http://remote-console.test';
-  const insecure = responseMock();
-  await execute(request({ operation: 'get-server-status' }), insecure);
-  expect(insecure.statusCode).toBe(503);
+  expect((await run({ operation: 'get-server-status' })).status).toBe(503);
   expect(fetcher).not.toHaveBeenCalled();
 });
 
@@ -158,17 +149,28 @@ it('provides bounded download streams with safe attachment headers', async () =>
       },
     }),
   );
-  const response = await executeOperation(
+  const response = await executeAdminOperation(
     parseAdminRequest({ operation: 'get-backups-backup-download', path: { backup: 'fixture' } }),
     session(),
-    responseMock(),
   );
-  expect(response.headers['Content-Type']).toBe('application/octet-stream');
-  expect(response.headers['Set-Cookie']).toBeUndefined();
-  expect(response.headers['Content-Disposition']).not.toContain('unsafe.html');
-  expect(response.stream?.maximumBytes).toBe(128 * 1024 * 1024);
-  expect(await new Response(response.stream!.body).text()).toBe('fixture backup');
-  response.stream?.cleanup?.();
+  expect(response.headers.get('Content-Type')).toBe('application/octet-stream');
+  expect(response.headers.get('Set-Cookie')).toBeNull();
+  expect(response.headers.get('Content-Disposition')).not.toContain('unsafe.html');
+  expect(await response.text()).toBe('fixture backup');
+});
+
+it('stops a relayed stream at its byte limit and releases the provider', async () => {
+  const stop = vi.fn();
+  const source = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new Uint8Array(6));
+      controller.enqueue(new Uint8Array(6));
+      controller.close();
+    },
+  });
+  const received = new Uint8Array(await new Response(limitBytes(source, 8, stop)).arrayBuffer());
+  expect(received.byteLength).toBe(6);
+  expect(stop).toHaveBeenCalled();
 });
 
 it('redacts streamed events even when frames and CRLF boundaries span chunks', async () => {
@@ -187,52 +189,64 @@ it('redacts streamed events even when frames and CRLF boundaries span chunks', a
 });
 
 it('uploads multipart files only after authorization and explicit confirmation', async () => {
-  const form = new FormData();
-  form.set(
-    'request',
-    JSON.stringify({
+  const request = await adminUpload(
+    '/api/v2/admin/upload',
+    {
       operation: 'post-blueprints-import',
       acknowledgement: 'POST /api/blueprints/import',
       body: { player_id: '90071992547409931' },
-    }),
+    },
+    { file: new File(['{"name":"fixture"}'], 'fixture.json', { type: 'application/json' }) },
   );
-  form.set('file', new File(['{"name":"fixture"}'], 'fixture.json', { type: 'application/json' }));
-  const encoded = new Request('http://upload.test', { method: 'POST', body: form });
-  const req = Readable.from([Buffer.from(await encoded.arrayBuffer())]) as unknown as ReturnType<typeof request>;
-  req.method = 'POST';
-  req.url = '/api/admin/upload';
-  req.headers = { ...request().headers, 'content-type': encoded.headers.get('content-type')! };
-  const res = responseMock();
-  await upload(req, res);
-  expect(res.statusCode).toBe(200);
+  const response = await upload(request);
+  expect(response.status).toBe(200);
   const outgoing = fetcher.mock.calls[0][1].body as FormData;
   expect(outgoing.get('player_id')).toBe('90071992547409931');
   expect((outgoing.get('file') as File).name).toBe('fixture.json');
 });
 
-it('forwards guild membership controls with the separate admin key and stable player IDs', async () => {
-  const res = responseMock();
-  await execute(
-    request({
-      operation: 'post-guilds-guildid-members',
-      path: { guildId: '2' },
-      body: { playerId: '9007199254740993123', roleId: 1 },
-      acknowledgement: 'POST /api/guilds/{guildId}/members',
-    }),
-    res,
+it('refuses uploads with an unexpected field, a missing confirmation, or a cross-origin post', async () => {
+  const metadata = {
+    operation: 'post-blueprints-import',
+    acknowledgement: 'POST /api/blueprints/import',
+    body: {},
+  };
+  const file = new File(['{}'], 'fixture.json');
+  const extra = await upload(await adminUpload('/api/v2/admin/upload', metadata, { file, stray: file }));
+  expect(extra.status).toBe(400);
+  const unconfirmed = await upload(
+    await adminUpload('/api/v2/admin/upload', { ...metadata, acknowledgement: '' }, { file }),
   );
-  expect(res.statusCode).toBe(200);
+  expect(unconfirmed.status).toBe(400);
+  const cross = await adminUpload('/api/v2/admin/upload', metadata, { file });
+  const foreign = new Request(cross.url, {
+    method: 'POST',
+    headers: new Headers([...cross.headers, ['origin', 'https://evil.test']]),
+    body: await cross.arrayBuffer(),
+  });
+  expect((await upload(foreign)).status).toBe(403);
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+it('forwards guild membership controls with the separate admin key and stable player IDs', async () => {
+  const response = await run({
+    operation: 'post-guilds-guildid-members',
+    path: { guildId: '2' },
+    body: { playerId: '9007199254740993123', roleId: 1 },
+    acknowledgement: 'POST /api/guilds/{guildId}/members',
+  });
+  expect(response.status).toBe(200);
   expect(String(fetcher.mock.calls[0][0])).toBe('https://console.test/api/guilds/2/members');
   expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer separate-admin-key');
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ playerId: '9007199254740993123', roleId: 1 });
 });
+
 it('treats an explicit Console refusal in an HTTP 200 response as a failed operation', async () => {
   fetcher.mockResolvedValueOnce(
     new Response(JSON.stringify({ ok: false, error: 'refused' }), { headers: { 'Content-Type': 'application/json' } }),
   );
-  const res = responseMock();
-  await execute(request({ operation: 'post-server-restart', acknowledgement: 'POST /api/server/restart' }), res);
-  expect(res.statusCode).toBe(502);
-  expect(JSON.parse(String(res.body)).ok).toBe(false);
+  const response = await run({ operation: 'post-server-restart', acknowledgement: 'POST /api/server/restart' });
+  expect(response.status).toBe(502);
+  expect((await response.json()).ok).toBe(false);
   expect(fetcher).toHaveBeenCalledTimes(1);
 });

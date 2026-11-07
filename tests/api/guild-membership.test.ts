@@ -105,8 +105,8 @@ describe('leader-only live guild membership', () => {
     });
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining('application.conversationId'),
-      expect.arrayContaining(['arrakis:guild-applications:2']),
-      ['guild:2', 'arrakis:guild-chat:2:', '2'],
+      expect.arrayContaining(['arrakis:{guilds}:applications:2']),
+      ['guild:2', 'arrakis:{guilds}:chat:2:', '2'],
     );
     redis.eval.mockRejectedValue(new Error('storage offline'));
     const response = await DISBAND(req({ confirmation: 'DISBAND GUILD' }), {});

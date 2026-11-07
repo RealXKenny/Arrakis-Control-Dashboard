@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { guildKeys } from '../../../lib/redis/keys';
 import { createHash, randomUUID } from 'node:crypto';
 import { AppError } from '../../../lib/errors';
 import { getRedisClient } from '../../../lib/redis/client';
@@ -26,8 +27,8 @@ export async function applicationContext(req, res) {
     guildId,
     redis,
     id,
-    records: `arrakis:guild-applications:${guildId}`,
-    index: `arrakis:guild-applications-index:${guildId}`,
+    records: guildKeys.applications(guildId),
+    index: guildKeys.applicationsIndex(guildId),
   };
 }
 
@@ -58,7 +59,7 @@ export async function POST(req, res) {
       'INVALID_GUILD_APPLICATION',
       true,
     );
-  const listing = guildRequirementSchema.safeParse(await ctx.redis.get(`arrakis:guild-requirements:${ctx.guildId}`));
+  const listing = guildRequirementSchema.safeParse(await ctx.redis.get(guildKeys.requirements(ctx.guildId)));
   if (!listing.success || !listing.data.published)
     throw new AppError('This guild is not accepting applications.', 409, 'GUILD_NOT_RECRUITING', true);
   const questions = listing.data.applicationQuestions ?? [];
@@ -142,7 +143,7 @@ export async function POST(req, res) {
     redis.call('EXPIRE', KEYS[2], ARGV[4])
     return 1
   `,
-    [ctx.records, ctx.index, `arrakis:guild-requirements:${ctx.guildId}`],
+    [ctx.records, ctx.index, guildKeys.requirements(ctx.guildId)],
     [
       ctx.id,
       JSON.stringify(application),
@@ -204,7 +205,7 @@ export async function REVIEW(req, res) {
   if (!parsed.success) throw new AppError('Invalid application review', 400, 'INVALID_GUILD_APPLICATION_REVIEW', true);
   const { applicationId, status } = parsed.data;
   const token = randomUUID();
-  const lock = `arrakis:guild-application-review:${ctx.guildId}:${applicationId}`;
+  const lock = guildKeys.reviewLock(ctx.guildId, applicationId);
   const original = await ctx.redis.eval(
     `
     local value = redis.call('HGET', KEYS[1], ARGV[1])
@@ -272,7 +273,7 @@ export async function REVIEW(req, res) {
       redis.call('HSET', KEYS[1], ARGV[1], updated)
       return updated
     `,
-        [ctx.records, ctx.index, `arrakis:guild-chat:${ctx.guildId}:${applicationId}`, lock],
+        [ctx.records, ctx.index, `${guildKeys.chatPrefix(ctx.guildId)}${applicationId}`, lock],
         [applicationId, status, token, original as string],
       )
       .catch(() => {

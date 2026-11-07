@@ -55,6 +55,7 @@ function productionFixture() {
     DISCORD_GUILD_ID: 'guild',
     VERIFIED_MEMBER_ROLE_ID: '222222222222222222',
     APP_URL: 'https://portal.test',
+    AUTH_SECRET: 'test-secret-test-secret-test-secret-1234',
     REDIS_URL: 'redis://default:test@redis.test:6379/0',
   };
   for (const [key, value] of Object.entries(values)) vi.stubEnv(key, value);
@@ -69,7 +70,7 @@ it('derives the Discord callback from the application URL', async () => {
   vi.resetModules();
   productionFixture();
   const { getDiscordRedirectUri } = await import('../../../src/config/env');
-  expect(getDiscordRedirectUri()).toBe('https://portal.test/auth/callback');
+  expect(getDiscordRedirectUri()).toBe('https://portal.test/api/auth/callback/discord');
 });
 it('rejects an HTTP Redis URL without disclosing credentials', async () => {
   vi.resetModules();

@@ -1,0 +1,44 @@
+/*
+ * Design tokens consumed by the CSS modules of the map and the 3D base preview. They keep the
+ * older `--theme-*` names but resolve to the Modern Dune palette. New code should use Tailwind.
+ */
+:root {
+  --theme-text: #f1e9d8;
+  --theme-muted: #bba374;
+  --theme-accent: #f9a11f;
+  --theme-on-accent: #09090b;
+  --theme-border: rgb(241 233 216 / 0.1);
+  --theme-background: #09090b;
+  --theme-surface: #121215;
+  --theme-raised: #1c1c21;
+  --theme-hover: #2a2a30;
+  --theme-soft: #d1bf96;
+  --theme-success: #7fa66a;
+  --theme-danger: #c8503c;
+  --theme-masthead: rgb(9 9 11 / 0.8);
+  --workspace-gutter: clamp(16px, 2.5vw, 80px);
+}
+
+/* Live-map marker glyphs (global because the markers are created outside the module scope). */
+.realtime-symbol {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: var(--theme-surface);
+  color: #d6a264;
+  font-size: 16px;
+}
+
+.marker-realtime_npc .realtime-symbol {
+  color: #d88d80;
+}
+.marker-civilian .realtime-symbol {
+  color: #85bdb3;
+}
+.marker-storm .realtime-symbol,
+.marker-coriolis .realtime-symbol {
+  color: #bca7cf;
+}

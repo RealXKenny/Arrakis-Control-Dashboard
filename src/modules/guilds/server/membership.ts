@@ -1,4 +1,5 @@
 import '../../../lib/assert-server';
+import { guildKeys } from '../../../lib/redis/keys';
 import { z } from 'zod';
 import { AppError } from '../../../lib/errors';
 import { getDuneClient } from '../../../infrastructure/dune';
@@ -44,15 +45,15 @@ export async function removeGuildStorage(guildId: string) {
     return 1
   `,
     [
-      `arrakis:guild-requirements:${guildId}`,
-      'arrakis:guild-requirements',
-      `arrakis:guild-logo:${guildId}`,
-      `arrakis:guild-applications:${guildId}`,
-      `arrakis:guild-applications-index:${guildId}`,
-      `arrakis:guild-support:${guildId}`,
-      'arrakis:guild-support-unread',
+      guildKeys.requirements(guildId),
+      guildKeys.requirementsIndex,
+      guildKeys.logo(guildId),
+      guildKeys.applications(guildId),
+      guildKeys.applicationsIndex(guildId),
+      guildKeys.support(guildId),
+      guildKeys.supportUnread,
     ],
-    [`guild:${guildId}`, `arrakis:guild-chat:${guildId}:`, guildId],
+    [`guild:${guildId}`, guildKeys.chatPrefix(guildId), guildId],
   );
 }
 

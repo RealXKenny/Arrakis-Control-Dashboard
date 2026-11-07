@@ -1,5 +1,5 @@
 import { expect, test } from '../helpers/browser-test';
-import operations from '../../src/modules/admin/catalog.json';
+import operations from '../../src/features/admin/catalog.json';
 const overviewFixture = {
   observedAt: '2026-11-05T23:00:00.000Z',
   metrics: [
@@ -30,7 +30,7 @@ const overviewFixture = {
   ],
 };
 test.beforeEach(async ({ page }) => {
-  await page.route('**/api/admin/overview', (route) => route.fulfill({ json: { ok: true, data: overviewFixture } }));
+  await page.route('**/api/v2/admin/overview', (route) => route.fulfill({ json: { ok: true, data: overviewFixture } }));
   await page.route('**/api/admin/guild-support-status*', (route) =>
     route.fulfill({ json: { ok: true, data: { total: 0, guilds: {} } } }),
   );
@@ -45,8 +45,8 @@ test('ordinary members cannot load administration or execute privileged operatio
   const page = await context.newPage();
   const response = await page.goto('/admin');
   expect(response?.status()).toBe(404);
-  expect((await context.request.get('/api/admin/catalog')).status()).toBe(403);
-  const execute = await context.request.post('/api/admin/execute', {
+  expect((await context.request.get('/api/v2/admin/catalog')).status()).toBe(403);
+  const execute = await context.request.post('/api/v2/admin/execute', {
     headers: { Origin: 'http://127.0.0.1:3100' },
     data: { operation: 'get-server-status' },
   });
@@ -54,38 +54,19 @@ test('ordinary members cannot load administration or execute privileged operatio
   await context.close();
 });
 
-test('admin overview shows live statistics, trends and connection setup on desktop and mobile', async ({
+test('admin overview is server-rendered with linked metrics, trends and connection setup on desktop and mobile', async ({
   page,
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
-    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
-  );
-  let reads = 0;
-  await page.route('**/api/admin/overview', (route) => {
-    reads++;
-    return route.fulfill({
-      json: {
-        ok: true,
-        data: {
-          ...overviewFixture,
-          metrics: overviewFixture.metrics.map((metric) =>
-            metric.id === 'cpu' ? { ...metric, value: reads === 1 ? 24.5 : 35.6 } : metric,
-          ),
-        },
-      },
-    });
-  });
+  // The overview is a Server Component: readings come from the server-side Console loader, so the
+  // assertions check structure and navigation rather than mocked values.
   await page.goto('/admin');
   const overview = page.getByRole('region', { name: 'Administration overview', exact: true });
   await expect(overview.getByRole('heading', { name: 'Server overview', exact: true })).toBeVisible();
-  await expect(overview.getByRole('button', { name: /^Players online/ })).toContainText('17');
-  await expect(overview.getByRole('button', { name: /^CPU usage/ })).toContainText('24.5%');
-  await expect(overview.getByText('Game service', { exact: true })).toBeVisible();
-  await overview.getByRole('button', { name: 'Refresh statistics', exact: true }).click();
-  await expect(overview.getByRole('button', { name: /^CPU usage/ })).toContainText('35.6%');
-  await expect(overview.getByRole('img', { name: 'Online player trend', exact: true })).toBeVisible();
+  await expect(overview.getByRole('link', { name: /^Players online/ })).toHaveAttribute('href', /tab=players/);
+  await expect(overview.getByRole('button', { name: 'Refresh statistics', exact: true })).toBeVisible();
+  await expect(overview.getByRole('heading', { name: 'API connection checks', exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/admin-control-center-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -101,7 +82,7 @@ test('admin overview shows live statistics, trends and connection setup on deskt
 
 test('admin API reference explains and opens tools while retaining write confirmation', async ({ page, context }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   await page.goto('/admin?tab=reference');
@@ -110,7 +91,7 @@ test('admin API reference explains and opens tools while retaining write confirm
   await reference.getByRole('combobox', { name: 'HTTP method', exact: true }).selectOption('DELETE');
   await expect(reference).toContainText('2 matching APIs');
   const row = reference.getByRole('row').filter({ hasText: 'Disband a guild' });
-  await row.getByRole('button', { name: 'Open tool', exact: true }).click();
+  await row.getByRole('link', { name: 'Open tool', exact: true }).click();
   const detail = page.getByRole('region', { name: 'Selected operation', exact: true });
   await expect(detail.getByRole('heading', { name: 'Disband a guild', exact: true })).toBeVisible();
   await expect(detail).toContainText('Changes server state');
@@ -119,11 +100,11 @@ test('admin API reference explains and opens tools while retaining write confirm
 
 test('admin forms paginate players and prefill related actions without raw JSON', async ({ page, context }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const submitted: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     submitted.push(input);
     return route.fulfill({
@@ -171,10 +152,10 @@ test('admin guild oversight inspects conversations, messages leaders and prepare
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     return route.fulfill({
       json: {
@@ -281,13 +262,13 @@ test('administrator can browse operations, read data, and review changes on desk
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({
       json: { ok: true, operations, configured: true, adapterConfigured: true, consoleOrigin: 'https://console.test' },
     }),
   );
   const submitted: Record<string, unknown>[] = [];
-  await page.route('**/api/admin/execute', async (route) => {
+  await page.route('**/api/v2/admin/execute', async (route) => {
     submitted.push(route.request().postDataJSON());
     await route.fulfill({
       json: { ok: true, upstreamStatus: 200, data: { rows: [{ name: 'Example player', online: true }] } },
@@ -321,10 +302,10 @@ test('administrator can browse operations, read data, and review changes on desk
 
 test('admin reply badges persist and clear only when leader support replies are viewed', async ({ page, context }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
-  await page.route('**/api/admin/execute', (route) =>
+  await page.route('**/api/v2/admin/execute', (route) =>
     route.fulfill({
       json: {
         ok: true,
@@ -420,7 +401,7 @@ test('admin reply badges persist and clear only when leader support replies are 
 
 test('admin navigation groups sections, syncs the URL and honours browser history', async ({ page, context }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({
       json: { ok: true, operations, configured: true, adapterConfigured: true, consoleOrigin: 'https://console.test' },
     }),
@@ -457,11 +438,11 @@ test('players screen searches, opens a record, keeps history and confirms modera
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -510,11 +491,11 @@ test('vehicles screen shows cargo removal and pending deletions with cancel-safe
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -544,11 +525,11 @@ test('vehicles screen shows cargo removal and pending deletions with cancel-safe
 
 test('bases screen shows maintenance, queued work and cancel-safe removal', async ({ page, context }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -586,11 +567,11 @@ test('backups screen previews a system restore before apply and never reuses the
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -631,11 +612,11 @@ test('backups screen previews a system restore before apply and never reuses the
 
 test('maps screen separates read-only status from confirmed controls', async ({ page, context }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = { 'get-maps': { rows: [{ map: 'Survival_1', state: 'running' }] } };
@@ -659,11 +640,11 @@ test('market screen filters transactions, separates probes from runs and guards 
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -706,11 +687,11 @@ test('market screen filters transactions, separates probes from runs and guards 
 
 test('server screen guards restarts and keeps the Funcom token out of view', async ({ page, context }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -749,11 +730,11 @@ test('logs screen selects a service, reads bounded output and streams with stop 
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   let streams = 0;
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     if (input.operation === 'get-logs-service-stream') {
       streams++;
@@ -786,11 +767,11 @@ test('care package screen keeps scans, enablement and undocumented grants clearl
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -828,11 +809,11 @@ test('admin tools screen validates broadcasts, searches catalogs and confirms hi
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -864,13 +845,13 @@ test('updates and addons screens check read-only and hand restricted writes to t
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({
       json: { ok: true, operations, configured: true, adapterConfigured: true, consoleOrigin: 'https://console.test' },
     }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -908,11 +889,11 @@ test('guild membership screen separates ranks and confirms leadership, removal a
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -964,7 +945,7 @@ test('discord and directory screens report configuration honestly and never offe
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
   let adapter = false;
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({
       json: {
         ok: true,
@@ -975,7 +956,7 @@ test('discord and directory screens report configuration honestly and never offe
       },
     }),
   );
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     if (input.operation === 'get-integrations-discord-population')
       return route.fulfill({ status: 403, json: { ok: false, error: 'The adapter denied population:read.' } });
@@ -1004,11 +985,11 @@ test('live map screen scopes layers to a chosen partition and never teleports wi
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   const calls: Record<string, any>[] = [];
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     calls.push(input);
     const data: Record<string, unknown> = {
@@ -1064,10 +1045,10 @@ test('statistics screen labels sources, shows zero separately from unavailable a
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.route('**/api/admin/catalog', (route) =>
+  await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: false } }),
   );
-  await page.route('**/api/admin/overview', (route) =>
+  await page.route('**/api/v2/admin/overview', (route) =>
     route.fulfill({
       json: {
         ok: true,
@@ -1096,7 +1077,7 @@ test('statistics screen labels sources, shows zero separately from unavailable a
       },
     }),
   );
-  await page.route('**/api/admin/execute', (route) => {
+  await page.route('**/api/v2/admin/execute', (route) => {
     const input = route.request().postDataJSON();
     return route.fulfill({
       json: {
