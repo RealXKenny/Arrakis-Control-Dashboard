@@ -189,7 +189,7 @@ export default function PortalSummary({
             )}
           </div>
           <Link className={css.panelAction} href="/portal?view=guild">
-            View guild <span aria-hidden="true">↗</span>
+            View my guild <span aria-hidden="true">↗</span>
           </Link>
         </section>
         <section className={css.panel} aria-labelledby="holdings-summary">

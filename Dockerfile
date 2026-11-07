@@ -42,6 +42,11 @@ COPY --from=build --chown=container:container /opt/arrakis-dashboard/CHANGELOG.m
 COPY --from=build --chown=container:container /opt/arrakis-dashboard/src/modules/map/terrain/MAPVIEWER3D-LICENSE.txt ./licenses/MapViewer3D.txt
 COPY --chown=container:container docker/entrypoint.sh /entrypoint.sh
 
+# Keep runtime caches on the writable server volume, including read-only Wings containers.
+# Discard the build cache and let the launcher create this target after the volume mounts.
+RUN rm -rf /opt/arrakis-dashboard/.next/cache \
+    && ln -s /home/container/.cache/arrakis-dashboard /opt/arrakis-dashboard/.next/cache
+
 WORKDIR /home/container
 USER container
 EXPOSE 2008

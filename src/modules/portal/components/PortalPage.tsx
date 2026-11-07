@@ -1,3 +1,5 @@
+import useSupportUnread from '../../guilds/hooks/useSupportUnread';
+import UnreadBadge from '../../../components/UnreadBadge';
 import { clearClientReadCache } from '../../../lib/cache/client-cache';
 import { usePortalView, navigatePortal } from '../hooks/usePortalView';
 import Image from 'next/image';
@@ -23,6 +25,12 @@ import { portalPageCopy } from '../config/page-copy';
 import MapWindow from '../../map/components/MapWindow';
 import { useGuildData } from '../hooks/useGuildData';
 import { guildRoleLabel } from '../utils/guild';
+import GuildRequirements from '../../guilds/components/GuildRequirements';
+import guildStyles from '../../guilds/styles/requirements.module.css';
+import managementStyles from '../../guilds/styles/management.module.css';
+import { useGuildManagement } from '../../guilds/hooks/useGuildManagement';
+import GuildManagementDialog from '../../guilds/components/GuildManagementDialog';
+import { guildMemberId, guildMemberName, guildMemberRole } from '../../guilds/members';
 
 export default function PlayerPortal() {
   const view = usePortalView();
@@ -49,10 +57,25 @@ export default function PlayerPortal() {
   const vehicles = extractVehicles(player);
   const ownedBases = bases.filter(isOwnedBase);
   const sharedBases = bases.filter((base) => !isOwnedBase(base));
+  const [guildTab, setGuildTab] = useState<'membership' | 'settings'>('membership');
   const [logoMessage, setLogoMessage] = useState('');
   const [logoUploading, setLogoUploading] = useState(false);
-  const guildId = guildData.currentGuild?.guild_id ?? record(character?.guild).id;
+  const guildId =
+    guildData.currentGuild?.guild_id ??
+    guildData.currentGuild?.guildId ??
+    guildData.currentGuild?.id ??
+    record(character?.guild).id;
   const guildName = label(guildData.currentGuild?.guild_name ?? record(character?.guild).name, 'No guild reported');
+  const supportUnread = useSupportUnread({
+    guildId: guildId == null ? undefined : String(guildId),
+    enabled:
+      !sessionExpired &&
+      (guildData.canEdit || ['100', 'leader'].includes(String(record(character?.guild).rank).toLowerCase())),
+  });
+  const guildManagement = useGuildManagement(String(guildId ?? ''), () => {
+    guildData.refresh();
+    retry();
+  });
   const factionName = label(
     guildData.currentGuild?.guild_faction_name ?? guildData.currentGuild?.guild_faction,
     'Not reported',
@@ -68,18 +91,25 @@ export default function PlayerPortal() {
     { label: 'Leader', roleId: '100' },
     { label: 'Officer', roleId: '50' },
     { label: 'Member', roleId: '1' },
-  ].map((group) => ({
-    ...group,
-    members: guildData.members
-      .filter((member) => String(member.role_id) === group.roleId)
-      .sort((a, b) =>
-        String(a.character_name ?? '').localeCompare(String(b.character_name ?? ''), undefined, {
-          sensitivity: 'base',
-        }),
-      ),
-  }));
-  const guildOwner = guildData.members.find((member) => String(member.role_id) === '100');
-  const canEditLogo = guildData.currentMember?.role_id != null && String(guildData.currentMember.role_id) === '100';
+    { label: 'Other ranks', roleId: 'other' },
+  ]
+    .map((group) => ({
+      ...group,
+      members: guildData.members
+        .filter((member) =>
+          group.roleId === 'other'
+            ? ![1, 50, 100].includes(guildMemberRole(member))
+            : String(guildMemberRole(member)) === group.roleId,
+        )
+        .sort((a, b) =>
+          String(a.character_name ?? '').localeCompare(String(b.character_name ?? ''), undefined, {
+            sensitivity: 'base',
+          }),
+        ),
+    }))
+    .filter((group) => group.roleId !== 'other' || group.members.length > 0);
+  const guildOwner = guildData.members.find((member) => guildMemberRole(member) === 100);
+  const canEditLogo = guildData.canEdit;
 
   async function uploadGuildLogo(file: File) {
     if (!guildId || file.type !== 'image/png' || file.size > 512 * 1024) {
@@ -115,7 +145,7 @@ export default function PlayerPortal() {
     <DashboardShell
       brand="Crimson Skies"
       subtitle="Community workspace"
-      navigation={portalNavigation(view)}
+      navigation={portalNavigation(view, supportUnread.total)}
       onNavigate={navigatePortal}
       actions={
         sessionExpired ? (
@@ -186,9 +216,51 @@ export default function PlayerPortal() {
               )}
               {view === 'market' && <MarketBoard />}
               {view === 'base-market' && <BaseMarketplace />}
+              {view === 'guild-requirements' && <GuildRequirements />}
               {view === 'character' && <CharacterDossier character={character} details={player.details ?? {}} />}
               {view === 'storage' && <StorageWorkspace character={character} inventory={player.details?.inventory} />}
               {view === 'guild' && (
+                <>
+                  <nav className={guildStyles.tabs} aria-label="Guild tabs">
+                    <button
+                      aria-current={guildTab === 'membership' ? 'page' : undefined}
+                      onClick={() => setGuildTab('membership')}
+                    >
+                      My Guild
+                    </button>
+                    {canEditLogo && (
+                      <button
+                        aria-label="Settings"
+                        aria-current={guildTab === 'settings' ? 'page' : undefined}
+                        onClick={() => setGuildTab('settings')}
+                      >
+                        Settings <UnreadBadge count={supportUnread.total} />
+                      </button>
+                    )}
+                  </nav>
+                  {guildTab === 'settings' && canEditLogo && (
+                    <GuildRequirements
+                      key={String(guildId)}
+                      settings
+                      guildId={String(guildId)}
+                      guildName={guildName}
+                      supportUnreadCount={supportUnread.total}
+                    >
+                      <section className={guildStyles.inbox}>
+                        <h3>Disband guild</h3>
+                        <p>Permanently remove the guild and its members.</p>
+                        <button
+                          disabled={guildManagement.busy}
+                          onClick={() => guildManagement.open({ kind: 'disband' })}
+                        >
+                          Disband guild
+                        </button>
+                      </section>
+                    </GuildRequirements>
+                  )}
+                </>
+              )}
+              {view === 'guild' && (guildTab === 'membership' || !canEditLogo) && (
                 <section className={`${dossier.panel} ${dossier.guildPanel}`}>
                   <h2>Guild membership</h2>
                   <div className={dossier.identity}>
@@ -232,7 +304,7 @@ export default function PlayerPortal() {
                           {character.guild
                             ? `Your rank: ${
                                 guildData.currentMember
-                                  ? guildRoleLabel(guildData.currentMember.role_id)
+                                  ? guildRoleLabel(guildMemberRole(guildData.currentMember))
                                   : label(record(character.guild).rank, 'Not reported')
                               }`
                             : 'No membership was returned by the server. Refresh telemetry after joining a guild in game.'}
@@ -264,6 +336,16 @@ export default function PlayerPortal() {
                   {logoMessage && <p role="status">{logoMessage}</p>}
                   {guildData.loading && <p role="status">Loading guild members…</p>}
                   {guildData.error && <p role="alert">{guildData.error}</p>}
+                  {canEditLogo && (
+                    <div className={managementStyles.toolbar}>
+                      <button
+                        disabled={guildManagement.busy || guildData.loading}
+                        onClick={() => guildManagement.open({ kind: 'add' })}
+                      >
+                        Add member
+                      </button>
+                    </div>
+                  )}
                   <div className={`${dossier.rankGrid} fly-in-stagger`}>
                     {rankGroups.map((group) => (
                       <section
@@ -279,7 +361,26 @@ export default function PlayerPortal() {
                           <ul className={dossier.rankMembers} aria-label={`${group.label} members`}>
                             {group.members.map((member, index) => (
                               <li key={String(member.player_id ?? index)}>
-                                <strong>{label(member.character_name, 'Unknown member')}</strong>
+                                <strong>{guildMemberName(member)}</strong>
+                                {canEditLogo && (
+                                  <button
+                                    className={managementStyles.manage}
+                                    aria-label={
+                                      guildMemberRole(member) === 100
+                                        ? `${guildMemberName(member)} is guild leader`
+                                        : `Manage ${guildMemberName(member)}`
+                                    }
+                                    disabled={
+                                      guildManagement.busy ||
+                                      !guildMemberId(member) ||
+                                      guildMemberRole(member) === null ||
+                                      guildMemberRole(member) === 100
+                                    }
+                                    onClick={() => guildManagement.open({ kind: 'member', member })}
+                                  >
+                                    {guildMemberRole(member) === 100 ? 'Leader' : 'Manage'}
+                                  </button>
+                                )}
                               </li>
                             ))}
                           </ul>
@@ -289,8 +390,14 @@ export default function PlayerPortal() {
                       </section>
                     ))}
                   </div>
-                  <p className={dossier.guildFooter}>Manage your guild and membership in game.</p>
+                  <p className={dossier.guildFooter}>Online players may need to relog after rank changes.</p>
                 </section>
+              )}
+              {view === 'guild' && (
+                <>
+                  {guildManagement.message && <p role="status">{guildManagement.message}</p>}
+                  <GuildManagementDialog management={guildManagement} guildName={guildName} />
+                </>
               )}
               {view === 'bases' && (
                 <BaseSection

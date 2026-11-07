@@ -80,7 +80,7 @@ it('returns an authorized catalog without exposing any configured credential', a
   const res = responseMock();
   await catalog({ ...request(), method: 'GET', url: '/api/admin/catalog' }, res);
   const body = JSON.parse(String(res.body));
-  expect(body.operations).toHaveLength(378);
+  expect(body.operations).toHaveLength(383);
   expect(body.configured).toBe(true);
   expect(String(res.body)).not.toContain('separate-admin-key');
   expect(res.getHeader('Cache-Control')).toContain('no-store');
@@ -208,4 +208,31 @@ it('uploads multipart files only after authorization and explicit confirmation',
   const outgoing = fetcher.mock.calls[0][1].body as FormData;
   expect(outgoing.get('player_id')).toBe('90071992547409931');
   expect((outgoing.get('file') as File).name).toBe('fixture.json');
+});
+
+it('forwards guild membership controls with the separate admin key and stable player IDs', async () => {
+  const res = responseMock();
+  await execute(
+    request({
+      operation: 'post-guilds-guildid-members',
+      path: { guildId: '2' },
+      body: { playerId: '9007199254740993123', roleId: 1 },
+      acknowledgement: 'POST /api/guilds/{guildId}/members',
+    }),
+    res,
+  );
+  expect(res.statusCode).toBe(200);
+  expect(String(fetcher.mock.calls[0][0])).toBe('https://console.test/api/guilds/2/members');
+  expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer separate-admin-key');
+  expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ playerId: '9007199254740993123', roleId: 1 });
+});
+it('treats an explicit Console refusal in an HTTP 200 response as a failed operation', async () => {
+  fetcher.mockResolvedValueOnce(
+    new Response(JSON.stringify({ ok: false, error: 'refused' }), { headers: { 'Content-Type': 'application/json' } }),
+  );
+  const res = responseMock();
+  await execute(request({ operation: 'post-server-restart', acknowledgement: 'POST /api/server/restart' }), res);
+  expect(res.statusCode).toBe(502);
+  expect(JSON.parse(String(res.body)).ok).toBe(false);
+  expect(fetcher).toHaveBeenCalledTimes(1);
 });

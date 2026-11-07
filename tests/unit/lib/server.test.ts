@@ -1,8 +1,46 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { announceReadiness, resolveReadinessUrl, resolveServerOptions } from '../../../src/config/server-launcher.mjs';
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  announceReadiness,
+  prepareImageCache,
+  resolveReadinessUrl,
+  resolveServerOptions,
+} from '../../../src/config/server-launcher.mjs';
 
 describe('server launcher', () => {
   afterEach(() => vi.useRealTimers());
+
+  it.each([false, true])('prepares an image cache with a missing target (linked: %s)', async (linked) => {
+    const root = await mkdtemp(join(tmpdir(), 'arrakis-image-cache-'));
+    try {
+      const app = join(root, 'app');
+      const cache = join(app, '.next', 'cache');
+      const target = linked ? join(root, 'server-volume', '.cache', 'arrakis-dashboard') : cache;
+      if (linked) {
+        await mkdir(join(app, '.next'), { recursive: true });
+        await symlink(target, cache, process.platform === 'win32' ? 'junction' : 'dir');
+      }
+      await prepareImageCache(app);
+      await writeFile(join(cache, 'images', 'cached-image'), 'image bytes');
+      await prepareImageCache(app);
+      expect(await readFile(join(target, 'images', 'cached-image'), 'utf8')).toBe('image bytes');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('fails before startup when the cache path cannot be a directory', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'arrakis-image-cache-'));
+    try {
+      await mkdir(join(root, '.next'));
+      await writeFile(join(root, '.next', 'cache'), 'not a directory');
+      await expect(prepareImageCache(root)).rejects.toThrow();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 
   it.each([
     [['--hostname', '0.0.0.0', '--port', '3010'], 'http://127.0.0.1:3010/portal'],

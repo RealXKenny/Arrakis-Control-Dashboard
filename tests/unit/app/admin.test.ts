@@ -35,9 +35,9 @@ it('permits only the specified OAuth identity with a current matching guild and 
 });
 
 it('catalogs every unique reference entry with stable operation IDs and explicit key restrictions', () => {
-  expect(operations).toHaveLength(378);
-  expect(new Set(operations.map((entry) => entry.id)).size).toBe(378);
-  expect(new Set(operations.map((entry) => `${entry.method} ${entry.route}`)).size).toBe(378);
+  expect(operations).toHaveLength(383);
+  expect(new Set(operations.map((entry) => entry.id)).size).toBe(383);
+  expect(new Set(operations.map((entry) => `${entry.method} ${entry.route}`)).size).toBe(383);
   for (const operation of operations) {
     expect(operation.route).toMatch(/^\/api\//);
     expect(operation.route).not.toMatch(/[?#\\]/);
