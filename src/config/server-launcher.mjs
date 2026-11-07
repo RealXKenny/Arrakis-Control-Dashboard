@@ -2,6 +2,9 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { get } from 'node:http';
+import { access, lstat, mkdir, readlink } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';
 
 const DEFAULT_HOSTNAME = '127.0.0.1';
@@ -110,6 +113,21 @@ export function resolveServerOptions(env, forwardedArgs = []) {
   return serverArgs;
 }
 
+/** Prepare the image cache after Wings mounts the writable server volume. */
+export async function prepareImageCache(directory = process.cwd()) {
+  const cache = resolve(directory, '.next', 'cache');
+  let target = cache;
+  try {
+    // Dev note: a dangling cache link needs a home before the image spice can flow.
+    if ((await lstat(cache)).isSymbolicLink()) target = resolve(dirname(cache), await readlink(cache));
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  const images = resolve(target, 'images');
+  await mkdir(images, { recursive: true });
+  await access(images, constants.W_OK);
+}
+
 export async function runServer([command, ...forwardedArgs] = process.argv.slice(2)) {
   if (!['dev', 'start'].includes(command)) {
     throw new Error('Server command must be either "dev" or "start".');
@@ -118,6 +136,7 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
   // Dev note: load the environment before Next pitches its server tent.
   dotenv.config({ quiet: true });
   const serverArgs = resolveServerOptions(process.env, forwardedArgs);
+  if (command === 'start') await prepareImageCache();
   const readinessUrl = resolveReadinessUrl([...serverArgs, ...forwardedArgs]);
   const nextBin = require.resolve('next/dist/bin/next');
   const child = spawn(process.execPath, [nextBin, command, ...serverArgs, ...forwardedArgs], {

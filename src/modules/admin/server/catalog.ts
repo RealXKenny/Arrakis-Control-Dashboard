@@ -14,5 +14,11 @@ export async function GET(req, res) {
       (url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)))
       ? url.origin
       : null;
-  return NextResponse.json({ ok: true, operations, configured: Boolean(env.ADMIN_CONSOLE_API_KEY), consoleOrigin });
+  return NextResponse.json({
+    ok: true,
+    operations,
+    configured: Boolean(env.ADMIN_CONSOLE_API_KEY),
+    adapterConfigured: Boolean(env.ADAPTER_TOKEN),
+    consoleOrigin,
+  });
 }

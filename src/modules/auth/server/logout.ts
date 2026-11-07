@@ -2,8 +2,7 @@ import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
 import { NextResponse, getRequestOrigin, isSameOriginRequest } from '../../../infrastructure/pages-api';
 import { cookies } from '../../../infrastructure/cookies';
-import { deleteSession, getSession } from '../../../lib/security/session-store';
-import { revokeClerkSession } from './clerk-complete';
+import { deleteSession } from '../../../lib/security/session-store';
 
 export async function POST(req, res) {
   const requestOrigin = getRequestOrigin(req);
@@ -14,9 +13,7 @@ export async function POST(req, res) {
   const sessionId = cookieStore.get('dashboard_session')?.value;
 
   if (sessionId) {
-    const session = await getSession(sessionId);
     await deleteSession(sessionId);
-    await revokeClerkSession(session?.clerkSessionId);
   }
 
   cookieStore.set('dashboard_session', '', {

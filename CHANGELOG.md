@@ -4,6 +4,55 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [1.20.6] - 2026-11-05
+
+### Added
+
+- Confirmation dialogs now open centred and lay out their typed-phrase prompt on one line (found while recording showcase footage); a test guards the position.
+- Statistics screen under Control center: a readings table with value, status (available / not reported / source failed / not configured), source and freshness, session-only trends, market and Discord-adapter statistics with their own sources, and explicit limits (no per-player metrics, event history or long-term trends).
+- Accessibility and visual pass on the administration screens: pillbox-styled buttons and visible focus rings for every manager control, underlined accent links, short row-action labels with full accessible names, dialog focus returned to the opener, and a regression test for overflow at desktop/tablet/mobile, unnamed controls and dialog focus.
+- Dedicated Live map screen (capabilities, explicit map and partition selection that never starts a map, player/base/storage/service/marker/spice/POI layers with links to management records, partition-scoped player teleport with confirmation).
+- Dedicated Guild membership screen (guild directory, roster with ranks, promote/demote/make-leader/remove/add with explicit confirmations, disband with cleanup warning), Discord integrations screen (adapter health/version/readiness/services/ports, population and activity, capability catalog, honest not-configured and denied-scope states, restricted adapter writes listed as unavailable) and Public directory status screen with a Console handoff for editing and claiming. Fixed guild rows being labelled generically.
+- Dedicated Updates screen (game and stack update checks that only look, automatic-update settings) and Addons screen (installed and community lists, bounded addon file inspection) with an explicit Console handoff for every restricted apply, repair, install, enable, disable and removal.
+- Dedicated Care packages screen (capabilities, enable/disable and scan with Console phrases, eligible players, grants/history) and Admin tools screen (broadcast and map chat, item/vehicle/skill-module catalogs, Landsraad overview and task goals, message of the day/announcement/transfer settings with restore-defaults, administrator history). Grants and other writes whose confirmation wording is undocumented stay in the full forms.
+- Dedicated Server screen (status, guarded start/stop/restart and per-service restart, shutdown protection, readiness/ports/doctor with repairs and cleanup, restart schedule and countdown cancel/restart-now, IP-change restart, title, write-only Funcom token) and Logs screen (service selection, bounded sanitized output, download, SSE live stream with stop/reconnect and a 64 KiB tail). The Console records no administrator command history, so none is shown.
+- Dedicated Market screen (statistics, items, time/trader-filtered transactions, read-only probe versus confirmed buyback/seed runs, sweep log, safety-backup toggle with the Console phrase, seed-plan activation/rename/CSV export, seller and blacklist configuration).
+- Dedicated Backups screen (game backups, encrypted system backups with required preview before an explicit apply, passphrases never retained, automatic schedule) and Maps & worlds dashboard (maps/status, memory and scaling, settings and pending restarts, Deep Desert/Sietches/spicefields/terminals).
+- Dedicated Bases & storage screen (base detail with generators/water maintenance, auto-refill enrollment and settings, access, export, deletion; storage container directory with item adds and export; pending-queue cancellation) plus Players and Vehicles administration screens: searchable paginated lists, URL-preserved detail views (profile, inventory, progression, moderation, cargo, access, pending deletions) and accessible confirmation dialogs; the generic API forms stay available under Advanced tools.
+- Grouped administration navigation (six sections, tabs, breadcrumbs, URL/back-forward state, shared `PillNav`), a Console-only handoff screen, and an operation coverage matrix in the generated API report.
+- Added an admin control-center overview with API-backed server health, CPU/memory, player/guild/base/vehicle/map/backup statistics, service status, session trends, and per-source response times. Added Setup & connections diagnostics, a searchable complete API reference, and operation purpose/credential/behavior guides. Missing data and scope failures remain visible without hiding successful readings.
+
+- Added persistent unread admin-message badges to My Guild and unread leader-reply badges to administration, Guild oversight, and individual guilds. Counts clear only when the relevant support messages are viewed.
+
+- Expanded administration into grouped tools with labeled request forms, filterable/paginated results, and contextual player, guild, base, and vehicle actions. Added guild oversight, administrator member/rank/disband controls, read-only application conversation inspection, and private administrator–guild leader support chats in My Guild Settings.
+
+- Added a Guilds page in Community where members can browse guild recruitment listings and joining details. Leader settings stay under My Guild.
+- Added leader-only Guild settings to edit joining requirements and contact details, and publish or unlist a guild.
+- Accepting an application now adds the applicant’s verified linked character to the guild as a Member. Failed joins keep the previous application status; Console enforces guild capacity, faction compatibility, and existing membership.
+- Guild listings now show their saved logos and offer a joining application form. Applicants can check their application status; guild leaders can review, accept, decline, and remove applications in My Guild → Settings.
+- Guild leaders can add required or optional application questions. Submitted answers keep their original question wording. Applicants and the current guild leader can exchange private live chat messages from the application and review inbox.
+- Application forms are now built entirely by the guild owner, with no preset fields. Questions support short answers, paragraphs, dropdown choices, time-zone dropdowns, checkboxes, and numbers. Existing submissions retain their original answers.
+- Guild leaders can manage members beside each name: promote Members to Officers, demote Officers, confirm leadership transfers, and remove members. Added member invitations and a typed-confirmation disband action in Settings. Every change rechecks current leadership and member ranks; disbanding also clears saved recruitment data.
+
+### Removed
+
+- Clerk sign-in. Discord OAuth is the only sign-in: the `/sign-in` page, the `/auth/complete` bridge, the Clerk middleware, `AUTH_PROVIDER`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and the `@clerk/nextjs` dependency are gone, and `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` are always required in production.
+
+### Changed
+
+- Existing applications show Check status and Chat with reviewer on guild cards, with a persistent unread reply badge that clears when messages are viewed.
+
+- Refreshed Guilds listings with larger logo tiles, recruiting badges, compact requirement previews, question counts, and aligned actions. Details and applications expand across the row for easier reading on desktop and mobile.
+
+### Security
+
+- Guild settings and logo changes verify the linked character’s guild leadership by character ID. Matching character names cannot authorize edits.
+
+### Fixed
+
+- Moved the image cache into Pterodactyl’s writable server storage and prepare it before startup, preventing image cache directory errors on containers with a read-only application filesystem.
+- Guild leader settings now verify both linked pawn and controller IDs instead of relying on a cached single ID. Settings visibility uses the same server-verified permission as saving changes.
+
 ## [1.20.5] - 2026-11-05
 
 ### Added

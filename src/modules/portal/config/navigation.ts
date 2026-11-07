@@ -12,12 +12,13 @@ const portalViews = [
   'base-market',
   'vehicles',
   'guild',
+  'guild-requirements',
 ] as const;
 export type PortalView = (typeof portalViews)[number];
 export function getPortalView(value: string | string[] | undefined): PortalView {
   return portalViews.find((view) => view === value) ?? 'overview';
 }
-export function portalNavigation(view: PortalView): NavigationItem[] {
+export function portalNavigation(view: PortalView, supportUnread = 0): NavigationItem[] {
   return [
     { label: 'Dashboard', group: 'Home', href: '/portal?view=overview', active: view === 'overview' },
     { label: 'Hagga Basin', group: 'Desert', href: '/portal?view=hagga', active: view === 'hagga' },
@@ -29,6 +30,18 @@ export function portalNavigation(view: PortalView): NavigationItem[] {
     { label: 'My bases', group: 'Bases', href: '/portal?view=bases', active: view === 'bases' },
     { label: 'Base preview', group: 'Bases', href: '/portal?view=base-preview', active: view === 'base-preview' },
     { label: 'Vehicles', group: 'Vehicles', href: '/portal?view=vehicles', active: view === 'vehicles' },
-    { label: 'Guild', group: 'Community', href: '/portal?view=guild', active: view === 'guild' },
+    {
+      label: 'Guilds',
+      group: 'Community',
+      href: '/portal?view=guild-requirements',
+      active: view === 'guild-requirements',
+    },
+    {
+      label: 'My Guild',
+      group: 'Community',
+      href: '/portal?view=guild',
+      active: view === 'guild',
+      unreadCount: supportUnread,
+    },
   ];
 }

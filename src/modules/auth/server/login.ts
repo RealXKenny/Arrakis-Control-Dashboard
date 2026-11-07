@@ -1,15 +1,13 @@
 import '../../../lib/assert-server';
-import { NextResponse, getRequestOrigin } from '../../../infrastructure/pages-api';
+import { NextResponse } from '../../../infrastructure/pages-api';
 import { randomBytes } from 'node:crypto';
 import { cookies } from '../../../infrastructure/cookies';
-import { getDiscordRedirectUri, getServerEnv, isClerkAuthEnabled } from '../../../config/env';
+import { getDiscordRedirectUri, getServerEnv } from '../../../config/env';
 
 export async function GET(req, res) {
   try {
     // Dev note: login takes everything personally, especially credentials.
     const env = getServerEnv();
-    // Clerk mode hands the Discord OAuth round trip to Clerk; /auth/complete re-verifies the guild role.
-    if (isClerkAuthEnabled()) return NextResponse.redirect(new URL('/sign-in', env.APP_URL || getRequestOrigin(req)));
     const clientId = env.DISCORD_CLIENT_ID;
     const redirectUri = getDiscordRedirectUri();
 

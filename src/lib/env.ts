@@ -56,17 +56,6 @@ const serverEnvSchema = z.object({
   APP_URL: z.string().url().optional(),
   DISCORD_GUILD_ID: z.string().min(1).optional(),
   VERIFIED_MEMBER_ROLE_ID: z.string().min(1).optional(),
-  /** `discord` keeps the direct OAuth callback; `clerk` signs in through Clerk's Discord connection. */
-  AUTH_PROVIDER: z.enum(['discord', 'clerk']).default('discord'),
-  CLERK_SECRET_KEY: z
-    .string()
-    .regex(/^sk_(?:test|live)_[A-Za-z0-9_-]{20,200}$/)
-    .optional(),
-  /** Public by design: identifies the Clerk instance to the browser. Never put a secret here. */
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z
-    .string()
-    .regex(/^pk_(?:test|live)_[A-Za-z0-9+/=_-]{10,300}$/)
-    .optional(),
   REDIS_URL: redisUrlSchema.optional(),
   /**
    * Optional comma-separated `host:port` list. When set, the dashboard data
@@ -130,18 +119,7 @@ const PRODUCTION_REQUIREMENTS: ReadonlyArray<keyof ServerEnv> = [
 export function validateProductionEnv(): ServerEnv {
   const env = getServerEnv();
   if (env.NODE_ENV !== 'production') return env;
-  requireServerEnv(
-    ...PRODUCTION_REQUIREMENTS,
-    // Clerk owns the Discord OAuth client in `clerk` mode; the guild and role checks stay here.
-    ...(env.AUTH_PROVIDER === 'clerk'
-      ? (['CLERK_SECRET_KEY', 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'] as const)
-      : (['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET'] as const)),
-  );
-  if (env.AUTH_PROVIDER === 'clerk' && env.CLERK_SECRET_KEY && env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    const live = (key: string) => /^[sp]k_live_/.test(key);
-    if (live(env.CLERK_SECRET_KEY) !== live(env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY))
-      throw new Error('Clerk secret and publishable keys must belong to the same instance type');
-  }
+  requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET');
   const names = ['CONSOLE_URL', 'APP_URL'] as const;
   for (const name of names) {
     const value = env[name];
@@ -159,9 +137,4 @@ export function validateProductionEnv(): ServerEnv {
       throw new Error(`Production HTTPS is required: ${name}`);
   }
   return env;
-}
-
-/** True only when Clerk is selected and fully configured; otherwise the Discord callback stays in charge. */
-export function isClerkAuthEnabled(env: ServerEnv = getServerEnv()): boolean {
-  return env.AUTH_PROVIDER === 'clerk' && Boolean(env.CLERK_SECRET_KEY && env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 }
