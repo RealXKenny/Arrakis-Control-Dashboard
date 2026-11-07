@@ -171,7 +171,8 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+// `node -e` imports (such as the image smoke test) have no entry script, so argv[1] can be undefined.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runServer().catch((error) => {
     console.error(error instanceof Error ? error.message : 'Unable to start the server.');
     process.exitCode = 1;

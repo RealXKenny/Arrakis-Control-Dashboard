@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
+import { promisify } from 'node:util';
 import { join } from 'node:path';
 import {
   announceReadiness,
@@ -9,7 +11,23 @@ import {
   resolveServerOptions,
 } from '../../../src/config/server-launcher.mjs';
 
+const run = promisify(execFile);
+
 describe('server launcher', () => {
+  it('can be imported from node -e without an entry script', async () => {
+    // The release image check imports the launcher this way, where process.argv[1] is undefined.
+    const root = await mkdtemp(join(tmpdir(), 'arrakis-import-'));
+    try {
+      const launcher = new URL('../../../src/config/server-launcher.mjs', import.meta.url).href;
+      await run(process.execPath, [
+        '--input-type=module',
+        '-e',
+        `import { prepareImageCache } from ${JSON.stringify(launcher)}; await prepareImageCache(${JSON.stringify(root)})`,
+      ]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
   afterEach(() => vi.useRealTimers());
 
   it.each([false, true])('prepares an image cache with a missing target (linked: %s)', async (linked) => {
