@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { createPterodactylEgg } from '../../../scripts/deployment/build-pterodactyl-egg.mjs';
+import { createPterodactylEgg, SECRET_VARIABLES } from '../../../scripts/deployment/build-pterodactyl-egg.mjs';
 
 const egg = createPterodactylEgg();
 
@@ -112,5 +112,46 @@ describe('release integrity', () => {
     expect(pattern.test('456084885220884480, 123')).toBe(true);
     expect(pattern.test('everyone')).toBe(false);
     expect(pattern.test('1;2')).toBe(false);
+  });
+
+  it('hides every credential variable from panel users and subusers without dropping any of them', () => {
+    expect([...SECRET_VARIABLES].sort()).toEqual(
+      [
+        'ADAPTER_TOKEN',
+        'ADMIN_CONSOLE_API_KEY',
+        'AUTH_SECRET',
+        'BOT_API_TOKEN',
+        'CHANGELOG_WEBHOOK_URL',
+        'CONSOLE_API_KEY',
+        'DISCORD_CLIENT_SECRET',
+        'OWNER_KEY_SECRET',
+        'REDIS_URL',
+      ].sort(),
+    );
+    const byName = new Map<
+      string,
+      { rules: string; user_viewable: boolean; user_editable: boolean; default_value: string }
+    >(egg.variables.map((variable) => [variable.env_variable, variable] as const));
+    for (const name of SECRET_VARIABLES) {
+      expect(byName.get(name), name).toMatchObject({ user_viewable: false, user_editable: false });
+    }
+    // Required settings stay required, so installation and startup validation still demand them.
+    for (const name of ['AUTH_SECRET', 'REDIS_URL', 'CONSOLE_API_KEY', 'ADAPTER_TOKEN', 'DISCORD_CLIENT_SECRET'])
+      expect(byName.get(name)?.rules, name).toContain('required');
+    // Ordinary operational settings stay editable.
+    for (const name of ['APP_URL', 'TRUSTED_PROXY_COUNT', 'ADMIN_DISCORD_IDS', 'RELEASE_TAG'])
+      expect(byName.get(name), name).toMatchObject({ user_viewable: true, user_editable: true });
+    expect(byName.get('ADMIN_DISCORD_IDS')?.rules).toMatch(/^required|/);
+  });
+
+  it('keeps anonymous Next.js telemetry off during installation and at runtime', () => {
+    expect(egg.variables.find((variable) => variable.env_variable === 'NEXT_TELEMETRY_DISABLED')).toMatchObject({
+      default_value: '1',
+      user_editable: false,
+    });
+    expect(script.indexOf('export NEXT_TELEMETRY_DISABLED=1')).toBeGreaterThan(-1);
+    expect(script.indexOf('export NEXT_TELEMETRY_DISABLED=1')).toBeLessThan(script.indexOf('npm ci'));
+    const launcher = readFileSync('scripts/server-launcher.mjs', 'utf8');
+    expect(launcher).toContain("NEXT_TELEMETRY_DISABLED: '1'");
   });
 });

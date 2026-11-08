@@ -283,3 +283,51 @@ None known in the code. Required before a production deployment: complete the ma
 Code: `RELEASE_TAG` pins a previous verified release; the installer refuses unverifiable ones. Data: the migration has a
 tested rollback from its own backup, and a Redis backup restores everything else. Secrets: recovery steps are in
 `PRODUCTION_DEPLOYMENT_CHECKLIST.md` section 4. No irreversible change is made by this pass.
+
+## Final hardening pass (SEC-31 to SEC-34, SEC-08, SEC-11, SEC-22, SEC-23)
+
+Supersedes the status of those items in the tables above. Nothing was committed.
+
+### Fixed
+
+| ID | Change |
+| --- | --- |
+| SEC-31 | `src/features/admin/server/risk.ts` classifies operations centrally. Downloads, uploads, multipart, `DELETE` and confirmation-phrase operations are high risk; **every other non-GET operation is high risk unless it is on a short, reviewed low-risk list** (update checks, probes, listings, link verification, login/logout/preflight). New catalog operations are therefore strict by default. `/api/v2/admin/upload` is always high risk. All 37 previously under-protected operations are covered by a test, plus a catalog-wide sweep. The 60-minute window itself is unchanged. |
+| SEC-32 | Production startup requires `ADMIN_DISCORD_IDS` (clear error naming the variable); `isDashboardAdmin` also returns false for everyone in production if it is empty. Development and test keep the project-owner fallback. The egg now marks the variable required. Playwright and the smoke test set it explicitly. |
+| SEC-33 | `SECRET_VARIABLES` (`AUTH_SECRET`, `REDIS_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY`, `ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, `BOT_API_TOKEN`, `OWNER_KEY_SECRET`, plus `CHANGELOG_WEBHOOK_URL`) are `user_viewable: false, user_editable: false`. Required rules are unchanged. This is panel access control only: panel administrators, and anyone who can read the running server's files, environment or console, can still see them. Side effect: owners can no longer edit these in the Startup tab; a panel administrator must. |
+| SEC-34 | `NEXT_TELEMETRY_DISABLED=1` is exported by the installer before `npm ci`/build, forced by the launcher for the Next.js child, and defined as a fixed egg variable. |
+| SEC-08 (part) | `DELETE /api/v2/admin/sessions`: same-origin, verified administrator, sign-in within the high-risk window, rate budget, audit event `admin.sessions_revoked`. It revokes **only the caller's own sessions** (no target parameter exists). Implemented as a per-member revocation marker in Redis: any session whose interactive sign-in is not newer than the marker is rejected and deleted on read, so it applies immediately to every session, and a background write with an old stamp cannot resurrect one. A fresh sign-in afterwards works. |
+
+### Deferred (not implemented, by design)
+
+- **SEC-08 remainder:** a button in the administrator UI, revoking other members' sessions (would need an explicit
+  authorization model), a session index to list devices, and MFA.
+- **SEC-11:** `next-auth` stays at the pinned v5 beta. Accepted temporary risk (owner approval still required). Compensating
+  controls already in place: opaque Redis-backed session IDs (the JWT carries no authority), hashed session keys,
+  server-side revocation, 30-minute Discord re-verification, step-up for administrators, same-origin checks, rate limits
+  and audit logging. Re-evaluate when v5 is stable.
+- **SEC-22:** the fail-closed SHA-256 verification is unchanged. GitHub build-provenance attestation would need
+  `id-token`/`attestations: write` on the release job, a pinned attest action, and `gh attestation verify` in the installer
+  container (the gh CLI is not installed there and a failure must not break installs). Follow-up release-pipeline work.
+- **SEC-23:** quotas unchanged. Stale-listing cleanup was not added: it needs an expiry policy decision and must reconcile
+  the counters atomically with the migration tooling.
+
+### Operational requirements and owner approvals
+
+- Set `ADMIN_DISCORD_IDS` before the next production start or the site will answer every request with HTTP 500.
+- A panel administrator enters the hidden credentials in the Startup tab; confirm that workflow on a throwaway server.
+- Approvals still open: SEC-11 acceptance, SEC-22 follow-up, SEC-23 expiry policy, MFA, whether to add the sign-out button.
+
+### Tests executed in this pass
+
+- `format:check`, `typecheck`, `lint`: passed.
+- `npm test`: 1034 tests; all passed after allowlisting three community files (`CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `SECURITY.md`) that arrived with your merge and tripped the root-file architecture test (run with `jq` on PATH, so installer tests ran).
+- New: risk classification (37 operations plus catalog sweep), production admin requirement, egg contract, telemetry, sign-out route (3).
+- Redis 7.4.11 standalone, `redis-platform` suite (22, including 3 revocation tests); a temporary local Redis was started and stopped.
+- `npm run build`, `npm run test:production`: passed. `npm run test:browser`: passed (81 expected; see summary).
+
+### Tests not run in this pass
+
+Redis Cluster failover and marketplace migration suites (no changes to those paths); `npm run test:browser` (see
+below if run); real Pterodactyl install, GitHub Actions, real Discord OAuth (unchanged blockers). The new sign-out route
+and the production-admin requirement were not exercised against a live OAuth login.

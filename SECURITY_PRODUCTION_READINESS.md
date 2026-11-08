@@ -203,3 +203,11 @@ six-node Cluster including a live failover), ran the real egg installer end to e
 fixed five issues (SEC-26 to SEC-30). The classification remains **CONDITIONALLY READY — MANUAL ACTIONS REQUIRED**.
 See `SECURITY_FINAL_SIGNOFF.md` for the evidence, remaining unverified items and owner decisions, and
 `PRODUCTION_DEPLOYMENT_CHECKLIST.md` for the deployment, verification and rollback procedure.
+
+## Update: final hardening pass
+
+Closed: SEC-31 (explicit high-risk classification, strict by default), SEC-32 (production requires `ADMIN_DISCORD_IDS`;
+no built-in administrator), SEC-33 (credential variables hidden in the egg), SEC-34 (telemetry off), and SEC-08 in part
+(administrator "sign out everywhere" API; no UI, no MFA). Deferred with reasons and the verification that was and was not
+run: see `SECURITY_FINAL_SIGNOFF.md`, section "Final hardening pass". Classification unchanged: **CONDITIONALLY READY —
+MANUAL ACTIONS REQUIRED**.

@@ -25,6 +25,14 @@ describe('administrator identity', () => {
     expect(isDashboardAdmin(session('123'))).toBe(false);
   });
 
+  it('grants nobody administrator access in production when no IDs are configured', async () => {
+    env.values.NODE_ENV = 'production';
+    const { isDashboardAdmin } = await import('../../../src/features/admin/server/access');
+    expect(isDashboardAdmin(session(OWNER))).toBe(false);
+    env.values.ADMIN_DISCORD_IDS = OWNER;
+    expect(isDashboardAdmin(session(OWNER))).toBe(true);
+  });
+
   it('uses ADMIN_DISCORD_IDS exclusively when configured', async () => {
     env.values.ADMIN_DISCORD_IDS = '111, 222';
     const { isDashboardAdmin } = await import('../../../src/features/admin/server/access');

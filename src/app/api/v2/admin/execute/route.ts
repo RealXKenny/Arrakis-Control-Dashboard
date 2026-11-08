@@ -5,6 +5,7 @@ import { parseAdminJson } from '../../../../../features/admin/server/sanitize';
 import { assertSameOrigin, route } from '../../../../../server/http';
 import { requireRecentSignIn } from '../../../../../features/admin/server/access';
 import { requireApiAdmin, spendAdminBudget } from '../../../../../features/admin/server/api-access';
+import { isHighRiskOperation } from '../../../../../features/admin/server/risk';
 import { executeAdminOperation } from '../../../../../features/admin/server/execute';
 
 export const dynamic = 'force-dynamic';
@@ -35,10 +36,9 @@ export const POST = route(async (request) => {
   const parsed = parseAdminRequest(body);
   if (['multipart', 'upload'].includes(parsed.operation.mode))
     throw new AppError('This operation requires the upload form.', 400, 'UPLOAD_REQUIRED', true);
-  // Writes, and downloads of archives, backups and exports, are high-risk: both need a recent interactive sign-in.
+  // Every destructive or sensitive operation is high risk (see features/admin/server/risk.ts); unknown ones default to strict.
   const { operation } = parsed;
-  const highRisk =
-    operation.method === 'DELETE' || operation.mode === 'download' || (operation.confirmationPhrases?.length ?? 0) > 0;
+  const highRisk = isHighRiskOperation(operation);
   if (operation.method !== 'GET' || operation.mode === 'download') requireRecentSignIn(session, { highRisk });
   return executeAdminOperation(parsed, session, { signal: request.signal });
 });

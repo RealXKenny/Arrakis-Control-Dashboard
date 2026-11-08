@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 export const POST = route(async (request) => {
   assertSameOrigin(request);
   const session = await requireApiAdmin();
-  requireRecentSignIn(session);
+  // Uploads replace data on the server (backups, blueprints, plans): always high risk.
+  requireRecentSignIn(session, { highRisk: true });
   await spendAdminBudget(session);
   const { parsed, upload } = await readAdminUpload(request);
   return executeAdminOperation(parsed, session, { signal: request.signal, upload });

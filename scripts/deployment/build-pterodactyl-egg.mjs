@@ -76,12 +76,32 @@ if [ -n "$bad_link" ]; then
   exit 1
 fi
 cd /mnt/server
+# Anonymous framework telemetry stays off during the build.
+export NEXT_TELEMETRY_DISABLED=1
 # Dependency install scripts never run as root during installation; the build needs none.
 npm ci --ignore-scripts --no-audit --no-fund
 npm run build
 npm prune --omit=dev --no-audit --no-fund
 chown -R 1000:1000 /mnt/server
 `;
+
+/**
+ * Variables that hold credentials. Pterodactyl hides a non-viewable variable from the Startup tab of the server owner
+ * and subusers; only panel administrators can read or change it (Admin > Servers > Startup). That is access control
+ * in the panel, not encryption: anyone who can read the server's files, process environment or console can still see
+ * these values once the server runs.
+ */
+export const SECRET_VARIABLES = Object.freeze([
+  'AUTH_SECRET',
+  'REDIS_URL',
+  'CONSOLE_API_KEY',
+  'ADMIN_CONSOLE_API_KEY',
+  'ADAPTER_TOKEN',
+  'DISCORD_CLIENT_SECRET',
+  'BOT_API_TOKEN',
+  'OWNER_KEY_SECRET',
+  'CHANGELOG_WEBHOOK_URL',
+]);
 
 function variable(name, description, envVariable, defaultValue = '', overrides = {}) {
   return {
@@ -97,7 +117,7 @@ function variable(name, description, envVariable, defaultValue = '', overrides =
   };
 }
 
-export function createPterodactylEgg() {
+function buildEgg() {
   return {
     _comment:
       'Import this PTDL_v2 egg into a Pterodactyl nest. Installation downloads a GitHub release and verifies its checksum.',
@@ -237,6 +257,13 @@ export function createPterodactylEgg() {
         { rules: 'required|string|in:true,false' },
       ),
       variable(
+        'Disable Next.js Telemetry',
+        'Keeps anonymous Next.js usage telemetry off. Fixed at 1.',
+        'NEXT_TELEMETRY_DISABLED',
+        '1',
+        { user_viewable: false, user_editable: false, rules: 'required|string|in:1' },
+      ),
+      variable(
         'Allow Insecure Redis',
         'Leave false. Only true accepts plain-text, passwordless Redis on a public-looking host.',
         'REDIS_ALLOW_INSECURE',
@@ -254,10 +281,10 @@ export function createPterodactylEgg() {
       ),
       variable(
         'Administrator Discord IDs',
-        'Comma-separated Discord user IDs allowed to use the administrator workspace. Empty keeps the built-in project owner as the only administrator.',
+        'Required. Comma-separated Discord user IDs allowed to use the administrator workspace.',
         'ADMIN_DISCORD_IDS',
         '',
-        { rules: 'nullable|regex:/^\\d{1,25}(\\s*,\\s*\\d{1,25})*$/' },
+        { rules: 'required|regex:/^\\d{1,25}(\\s*,\\s*\\d{1,25})*$/' },
       ),
       variable(
         'Administrator High-Risk Reauthentication Minutes',
@@ -329,4 +356,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     console.error(error instanceof Error ? error.message : 'Unable to generate the Pterodactyl egg.');
     process.exitCode = 1;
   });
+}
+
+export function createPterodactylEgg() {
+  const egg = buildEgg();
+  egg.variables = egg.variables.map((entry) =>
+    SECRET_VARIABLES.includes(entry.env_variable) ? { ...entry, user_viewable: false, user_editable: false } : entry,
+  );
+  return egg;
 }

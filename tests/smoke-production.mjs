@@ -120,6 +120,7 @@ const child = spawn(
       DISCORD_CLIENT_SECRET: 'fixture-secret',
       DISCORD_GUILD_ID: 'fixture-guild',
       VERIFIED_MEMBER_ROLE_ID: 'fixture-role',
+      ADMIN_DISCORD_IDS: '456084885220884480',
       APP_URL: base,
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
       REDIS_CLUSTER_NODES: '',

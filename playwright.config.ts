@@ -20,6 +20,7 @@ export default defineConfig({
       DISCORD_CLIENT_SECRET: 'browser-test-placeholder',
       DISCORD_GUILD_ID: 'browser-test-guild',
       VERIFIED_MEMBER_ROLE_ID: 'browser-test-role',
+      ADMIN_DISCORD_IDS: '456084885220884480',
       ADMIN_CONSOLE_API_KEY: 'browser-test-admin-placeholder',
       APP_URL: 'http://127.0.0.1:3100',
       REDIS_URL: 'redis://127.0.0.1:9',

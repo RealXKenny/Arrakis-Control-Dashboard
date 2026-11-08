@@ -49,7 +49,7 @@ const serverEnvSchema = z.object({
   /** Reverse proxies in front of the app. Rate limits trust only the X-Forwarded-For entry the last of them appended. */
   TRUSTED_PROXY_COUNT: z.coerce.number().int().min(0).max(5).default(1),
   API_GLOBAL_READ_LIMIT: z.coerce.number().int().min(1).max(100_000_000).default(2400),
-  /** Comma-separated Discord user IDs allowed to use the administrator workspace. Defaults to the project owner. */
+  /** Comma-separated Discord user IDs allowed to use the administrator workspace. Required in production; development defaults to the project owner. */
   ADMIN_DISCORD_IDS: z
     .string()
     .regex(/^\d{1,25}(\s*,\s*\d{1,25})*$/, 'Must be a comma-separated list of Discord user IDs')
@@ -164,7 +164,8 @@ const PRODUCTION_REQUIREMENTS: ReadonlyArray<keyof ServerEnv> = [
 export function validateProductionEnv(): ServerEnv {
   const env = getServerEnv();
   if (env.NODE_ENV !== 'production') return env;
-  requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET');
+  // ADMIN_DISCORD_IDS has no production default: no administrator is implied by the code.
+  requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'ADMIN_DISCORD_IDS');
   const redisUrl = new URL(env.REDIS_URL!);
   // Sessions and sealed refresh tokens live in Redis: never serve traffic against an open, unauthenticated, unencrypted one.
   if (

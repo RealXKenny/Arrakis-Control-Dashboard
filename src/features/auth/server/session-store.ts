@@ -72,6 +72,36 @@ function sessionKey(sessionId: string): string {
   return `arrakis:session:${createHash('sha256').update(sessionId).digest('hex')}`;
 }
 
+/**
+ * "Sign out everywhere": one timestamp per member. A session whose interactive sign-in is not newer than it is dead,
+ * so every existing session (and any background write that still carries the old sign-in time) stops working at once,
+ * while a fresh sign-in afterwards is unaffected. Sessions are only ever matched by their own member's key.
+ */
+function epochKey(userId: string): string {
+  return `arrakis:session-epoch:${createHash('sha256').update(userId).digest('hex')}`;
+}
+const developmentEpochs = sessionGlobals as { arrakisDevelopmentEpochs?: Map<string, number> };
+developmentEpochs.arrakisDevelopmentEpochs ??= new Map();
+
+function revokedBy(session: DashboardSession, epoch: unknown): boolean {
+  return typeof epoch === 'number' && Number.isFinite(epoch) && (session.authenticatedAt ?? 0) <= epoch;
+}
+
+export async function revokeAllSessionsForUser(userId: string): Promise<void> {
+  if (!userId || userId.length > 64) throw new Error('Invalid member');
+  const now = Date.now();
+  const redis = getRedisClient();
+  if (!redis) {
+    developmentEpochs.arrakisDevelopmentEpochs!.set(userId, now);
+    return;
+  }
+  const ttl = SESSION_TTL_SECONDS;
+  // Never move the marker backwards (two revocations racing, clock jitter): keep the larger value.
+  const previous = await redis.get<unknown>(epochKey(userId));
+  const value = typeof previous === 'number' && Number.isFinite(previous) ? Math.max(previous, now) : now;
+  await redis.set(epochKey(userId), value, { ex: ttl });
+}
+
 function getDevelopmentSession(sessionId: string): DashboardSession | null {
   // Dev note: Next reloads modules; this fallback refuses to respawn with each sunrise.
   const session = developmentSessions.get(sessionId);
@@ -119,7 +149,14 @@ export async function saveSession(
 export async function readSession(sessionId: string): Promise<DashboardSession | null> {
   if (!validSessionId(sessionId)) return null;
   const redis = getRedisClient();
-  if (!redis) return getDevelopmentSession(sessionId);
+  if (!redis) {
+    const local = getDevelopmentSession(sessionId);
+    if (local && revokedBy(local, developmentEpochs.arrakisDevelopmentEpochs!.get(local.user.id))) {
+      developmentSessions.delete(sessionId);
+      return null;
+    }
+    return local;
+  }
   const stored = await redis.get<unknown>(sessionKey(sessionId));
   const session = validSession(stored) ? stored : null;
   if (!session || session.expiresAt <= Date.now()) {
@@ -128,6 +165,11 @@ export async function readSession(sessionId: string): Promise<DashboardSession |
       storage: 'redis',
     });
     if (stored) await deleteSession(sessionId);
+    return null;
+  }
+  if (revokedBy(session, await redis.get<unknown>(epochKey(session.user.id)))) {
+    await deleteSession(sessionId);
+    logger.warn('Login record unavailable', { reason: 'revoked', storage: 'redis' });
     return null;
   }
   return session;

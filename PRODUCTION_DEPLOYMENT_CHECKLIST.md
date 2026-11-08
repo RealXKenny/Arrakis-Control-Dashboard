@@ -30,7 +30,7 @@ Strongly recommended settings (all optional in the schema, so they are easy to f
 | --------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `OWNER_KEY_SECRET`                                  | derived from `AUTH_SECRET` | Dedicated HMAC secret for marketplace ownership. Set it before publishing listings you intend to keep. Changing it later orphans listings (see 2.7).                     |
 | `REDIS_REQUIRE_TLS`                                 | `false`                    | `true` makes startup refuse a plain `redis://` URL.                                                                                                                      |
-| `ADMIN_DISCORD_IDS`                                 | project owner's ID         | Comma-separated Discord IDs allowed into `/admin`. When empty, **a built-in default ID is the only administrator** (see owner decisions in `SECURITY_FINAL_SIGNOFF.md`). |
+| `ADMIN_DISCORD_IDS`                                 | **required**               | Comma-separated Discord IDs allowed into `/admin`. Production refuses to serve without it; no built-in administrator exists. |
 | `ADMIN_REAUTH_HOURS`                                | `12`                       | Step-up window for administrator changes (1 to 168).                                                                                                                     |
 | `ADMIN_HIGH_RISK_REAUTH_MINUTES`                    | `60`                       | Step-up window for deletes, downloads and operations that carry a confirmation phrase (5 to 1440).                                                                       |
 | `TRUSTED_PROXY_COUNT`                               | `1`                        | Number of reverse proxies in front of the app (0 to 5). Every per-address limit trusts only that forwarded entry. Use `0` with no proxy.                                 |
@@ -88,7 +88,8 @@ that is not an egg variable cannot reach the application.
 - Decide who is an administrator and set `ADMIN_DISCORD_IDS` explicitly. Each ID must belong to `DISCORD_GUILD_ID` and
   hold `VERIFIED_MEMBER_ROLE_ID`.
 - Administrators must sign in interactively (Discord or password) within the step-up windows to make changes.
-- MFA and "sign out everywhere" are **not implemented**; they are listed as owner decisions in `SECURITY_FINAL_SIGNOFF.md`.
+- MFA is **not implemented** (owner decision). "Sign out everywhere" exists as an API only: `DELETE /api/v2/admin/sessions` (same-origin, administrator, sign-in within the high-risk window) ends all of the caller's sessions. There is no button yet; use it from an authenticated browser session if an administrator cookie may have leaked, then also rotate what the session could reach.
+- Every mutating administrator operation, upload and download needs the high-risk window unless it is on the reviewed low-risk list in `src/features/admin/server/risk.ts`.
 
 ### 1.7 Release artifact verification
 
@@ -135,7 +136,7 @@ Releases created before checksums were published (no archive assets) do not inst
 ### 2.3 Environment configuration
 
 Fill every required Startup variable in the panel (section 1.1), including the strongly recommended ones. Keep secrets
-hidden from subusers where the panel allows it. The egg already hides `ADMIN_CONSOLE_API_KEY` and `OWNER_KEY_SECRET`.
+hidden from subusers. The egg hides all credentials (`AUTH_SECRET`, `REDIS_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY`, `ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, `BOT_API_TOKEN`, `OWNER_KEY_SECRET`, `CHANGELOG_WEBHOOK_URL`), so a **panel administrator** must enter them under Admin > Servers > Startup. Hidden is not encrypted: anyone with file, process or console access to the running server can still read them. `NEXT_TELEMETRY_DISABLED=1` is set by the egg, installer and launcher.
 
 ### 2.4 Startup
 

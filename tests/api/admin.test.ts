@@ -339,14 +339,8 @@ it('asks destructive operations for a sign-in from the last hour even when an or
       entry.pathParameters.length === 0 &&
       entry.confirmationPhrases.length > 0,
   )!;
-  const ordinary = operations.find(
-    (entry) =>
-      entry.method === 'POST' &&
-      !entry.restriction &&
-      entry.mode === 'json' &&
-      entry.pathParameters.length === 0 &&
-      entry.confirmationPhrases.length === 0,
-  )!;
+  // A reviewed low-risk change (an update check) passes the ordinary window; everything else mutating is strict.
+  const ordinary = operations.find((entry) => entry.id === 'post-updates-check-game')!;
   vi.mocked(getSession).mockResolvedValue({ ...session(), authenticatedAt: Date.now() - 3 * 60 * 60_000 });
   const body = (entry: typeof destructive) => ({
     operation: entry.id,

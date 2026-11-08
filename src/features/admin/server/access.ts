@@ -6,13 +6,15 @@ import { recordAudit } from '../../../lib/security/audit';
 import { type DashboardSession } from '../../auth/server/session-store';
 import { getSession } from '../../auth/server/session';
 
-/** The project owner stays an administrator unless ADMIN_DISCORD_IDS names someone else. */
+/** Local development convenience only: production never falls back to a built-in administrator. */
 const DEFAULT_ADMIN_DISCORD_USER_ID = '456084885220884480';
 
 function administratorIds(): string[] {
   const configured = getServerEnv().ADMIN_DISCORD_IDS;
   const ids = configured ? configured.split(',').map((id) => id.trim()) : [];
-  return ids.length ? ids : [DEFAULT_ADMIN_DISCORD_USER_ID];
+  if (ids.length) return ids;
+  // Fail closed: an empty list in production grants nobody access (startup validation also refuses to run).
+  return getServerEnv().NODE_ENV === 'production' ? [] : [DEFAULT_ADMIN_DISCORD_USER_ID];
 }
 
 /** Authority comes exclusively from the OAuth-verified server session, never a client flag. */

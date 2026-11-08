@@ -108,6 +108,45 @@ describe('sessions', () => {
     for (const id of ['wrong-shape', 'already-expired']) expect(await direct.exists(sessionKey(id))).toBe(0);
   });
 
+  it('sign out everywhere ends every session of that member at once, and only theirs', async () => {
+    const past = Date.now() - 5_000;
+    await sessions.saveSession('mine-1', liveSession('1001', { authenticatedAt: past }));
+    await sessions.saveSession('mine-2', liveSession('1001', { authenticatedAt: past }));
+    await sessions.saveSession('mine-3', liveSession('1001', { verifiedAt: Date.now() }));
+    await sessions.saveSession('theirs', liveSession('2002', { authenticatedAt: past }));
+    await sessions.revokeAllSessionsForUser('1001');
+    for (const id of ['mine-1', 'mine-2', 'mine-3']) expect(await sessions.readSession(id), id).toBeNull();
+    expect((await sessions.readSession('theirs'))?.user.id).toBe('2002');
+    // Revoked sessions are also removed, so they cannot come back by any later write with the old stamp.
+    for (const id of ['mine-1', 'mine-2', 'mine-3']) expect(await direct.exists(sessionKey(id))).toBe(0);
+  });
+
+  it('a revoked session cannot be resurrected, but signing in again afterwards works', async () => {
+    await sessions.saveSession('old', liveSession('1001', { authenticatedAt: Date.now() - 1_000 }));
+    await sessions.revokeAllSessionsForUser('1001');
+    // A background update that still carries the old sign-in time writes only if the session still exists.
+    expect(
+      await sessions.saveSession('old', liveSession('1001', { authenticatedAt: Date.now() - 1_000 }), {
+        onlyIfExists: true,
+      }),
+    ).toBe(true);
+    expect(await sessions.readSession('old')).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await sessions.saveSession('fresh', liveSession('1001', { authenticatedAt: Date.now() }));
+    expect((await sessions.readSession('fresh'))?.user.id).toBe('1001');
+  });
+
+  it('revocation markers expire with the longest possible session and never move backwards', async () => {
+    await sessions.revokeAllSessionsForUser('1001');
+    const key = (await direct.keys('arrakis:session-epoch:*'))[0];
+    const first = Number(await direct.get(key));
+    expect(await direct.ttl(key)).toBeGreaterThan(29 * 86_400);
+    await direct.set(key, String(first + 60_000));
+    await sessions.revokeAllSessionsForUser('1001');
+    expect(Number(await direct.get(key))).toBe(first + 60_000);
+    await expect(sessions.revokeAllSessionsForUser('')).rejects.toThrow();
+  });
+
   it('rejects ids that are not well formed without touching Redis', async () => {
     expect(await sessions.readSession('../etc/passwd')).toBeNull();
     expect(await sessions.readSession('x'.repeat(200))).toBeNull();
