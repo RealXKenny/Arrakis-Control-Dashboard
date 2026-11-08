@@ -132,7 +132,14 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - Never commit generated `.next/`, `coverage/`, `test-results/`, `playwright-report/`, or `tsconfig.tsbuildinfo` output.
 
-- The permanent documentation center is `docs/README.md` (getting-started, installation, configuration, features, integrations, administration, security, api, development, deployment, troubleshooting, reference). Run `npm run docs:check` after editing Markdown; it validates relative links and anchors. Keep behaviour descriptions in step with the code, and attribute RedBlink material (see `NOTICE.md`).
+- The permanent documentation center is `docs/README.md` (getting-started, installation, configuration, features, integrations, administration, security, api, development, deployment, troubleshooting, reference). Run `npm run docs:check` and `npm run docs:format:check` after editing Markdown; they validate relative links/anchors and formatting of changed docs. Keep behaviour descriptions in step with the code, and attribute RedBlink material (see `NOTICE.md`).
 - Keep documentation in `docs/` and executable tools in `scripts/` according to the organization guide. Do not recreate removed `public/`, debug-output folders, Sentry files, PostgreSQL configuration, `src/modules/`, or `src/infrastructure/`.
 
 - Preserve unrelated user changes. Do not perform broad cleanup outside the requested scope.
+
+**## GitHub automation**
+
+- `CI / Required Checks` in `.github/workflows/ci.yml` is the stable required status check. Keep its pull-request, protected-branch push, and merge-queue triggers free of path filters, and include every mandatory CI job in its `needs` list.
+- Keep workflows least-privileged, secret-free for pull requests, explicit about job timeouts, and pinned to verified immutable action SHAs. Do not execute untrusted pull-request code in privileged triggers.
+- Run `npm run workflows:check` for workflow and Dependabot YAML, permission, action-pin, dependency, and aggregate-gate validation. CI also runs actionlint.
+- See [GitHub Actions](docs/development/github-actions.md) and [GitHub branch rulesets](docs/development/github-branch-rulesets.md) for workflow behavior, exact check names, and manual GitHub configuration. Never modify remote rulesets or publish releases without explicit approval.

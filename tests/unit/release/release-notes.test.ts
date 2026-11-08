@@ -48,27 +48,35 @@ describe('release notes', () => {
     expect(release).toContain('gh release create "$RELEASE_TAG" "$EGG_FILE"');
   });
 
-  it('keeps all CI checks required when jobs run in parallel and cancels only outdated PRs', () => {
+  it('keeps every mandatory CI job in the stable aggregate and cancels only outdated PRs', () => {
     const ci = fs.readFileSync(path.resolve('.github/workflows/ci.yml'), 'utf8');
     expect(ci).toContain('group: ci-${{ github.event.pull_request.number || github.run_id }}');
     expect(ci).toContain("cancel-in-progress: ${{ github.event_name == 'pull_request' }}");
-    const checks = ci.slice(ci.indexOf('  checks:'), ci.indexOf('  integration:'));
-    const integration = ci.slice(ci.indexOf('  integration:'), ci.indexOf('  verify:'));
-    // Each check runs on its own runner through a matrix, so none can be silently dropped.
-    expect(checks).toContain('task: [typecheck, lint, format:check, docs:check, test]');
-    expect(checks).toContain('npm run ${{ matrix.task }}');
-    expect(checks).toContain('fail-fast: false');
+    const quality = ci.slice(ci.indexOf('  quality:'), ci.indexOf('  workflow-validation:'));
+    const documentation = ci.slice(ci.indexOf('  documentation:'), ci.indexOf('  integration:'));
+    const integration = ci.slice(ci.indexOf('  integration:'), ci.indexOf('  redis-integration:'));
+    expect(ci).toContain('merge_group:');
+    expect(ci).toContain('types: [checks_requested]');
+    expect(ci).not.toContain('paths-ignore:');
+    expect(ci).toContain('name: CI / Required Checks');
+    expect(ci).toContain('needs: [quality, workflow-validation, documentation, integration, redis-integration]');
+    expect(ci).toContain('if: always()');
+    expect(ci).toContain('job.result !== "success"');
+    // Independent runners preserve the existing CPU-heavy tests without a large build matrix.
+    expect(quality).toContain('task: [typecheck, lint, format:check, ai:check, workflows:check, test]');
+    expect(quality).toContain('npm run "$TASK"');
+    expect(quality).toContain('fail-fast: false');
+    expect(documentation).toContain('npm run docs:check');
+    expect(documentation).toContain('npm run docs:format:check');
+    expect(documentation).toContain('fetch-depth: 0');
     expect(integration).not.toContain('needs:');
     for (const command of ['build', 'test:production', 'test:browser'])
       expect(integration).toContain(`npm run ${command}`);
     expect(integration).toContain('npx playwright install --with-deps --only-shell chromium');
     expect(integration).toContain('path: .next/cache');
-    expect(ci).toMatch(/verify:\s+if: always\(\)\s+needs: \[checks, integration, redis-integration\]/);
-    expect(ci).toContain(
-      'run: test "$CHECKS_RESULT" = success && test "$INTEGRATION_RESULT" = success && test "$REDIS_RESULT" = success',
-    );
     // The marketplace scripts run against a real Redis service, never a mock.
     expect(ci).toContain('npm run test:integration');
     expect(ci).toMatch(/redis-integration:[\s\S]*services:\s+redis:/);
+    expect(ci).toContain('persist-credentials: false');
   });
 });

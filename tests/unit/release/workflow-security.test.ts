@@ -43,7 +43,7 @@ describe('GitHub Actions workflows', () => {
         const granted = Object.entries(job.permissions ?? {}).filter(([, level]) => level !== 'read');
         if (granted.length) {
           expect(file).toBe('release.yml');
-          expect(name).toBe('release');
+          expect(name).toBe('publish');
           expect(granted).toEqual([['contents', 'write']]);
         }
       }
@@ -66,7 +66,7 @@ describe('GitHub Actions workflows', () => {
 
   it('only releases from a successful CI run of a push to main in this repository', () => {
     const release = workflows.find(({ file }) => file === 'release.yml')!;
-    const condition = String((release.workflow.jobs.release as unknown as { if: string }).if);
+    const condition = String((release.workflow.jobs.validate as unknown as { if: string }).if);
     for (const part of [
       "workflow_run.conclusion == 'success'",
       "workflow_run.event == 'push'",
@@ -74,6 +74,19 @@ describe('GitHub Actions workflows', () => {
       'head_repository.full_name == github.repository',
     ])
       expect(condition).toContain(part);
+  });
+
+  it('builds and validates release assets before granting publish permission', () => {
+    const release = workflows.find(({ file }) => file === 'release.yml')!;
+    const validate = release.workflow.jobs.validate;
+    const publish = release.workflow.jobs.publish;
+    expect(release.text).toContain("lock_version=$(node -p \"require('./package-lock.json').packages[''].version\")");
+    expect(validate.steps?.some((step) => step.uses?.startsWith('actions/upload-artifact@'))).toBe(true);
+    expect(release.text).toContain('retention-days: 1');
+    expect(publish.steps?.some((step) => step.uses?.startsWith('actions/download-artifact@'))).toBe(true);
+    expect(publish.steps?.some((step) => step.run?.includes('gh release create'))).toBe(true);
+    expect(publish.steps?.some((step) => step.run?.includes('build-pterodactyl-egg.mjs'))).toBe(false);
+    expect(publish.permissions).toEqual({ contents: 'write' });
   });
 
   it('publishes a checksum alongside the archive that the installer verifies', () => {
@@ -85,18 +98,19 @@ describe('GitHub Actions workflows', () => {
 
   it('runs the Redis integration suites on Redis 7.4 and bounds their runtime', () => {
     const ci = workflows.find(({ file }) => file === 'ci.yml')!;
+    const cluster = workflows.find(({ file }) => file === 'redis-cluster.yml')!;
     expect(ci.text).toContain('redis:7.4-alpine');
-    for (const name of ['redis-integration', 'redis-cluster-integration']) {
-      const job = ci.workflow.jobs[name];
-      expect(job, name).toBeDefined();
-      expect(job['timeout-minutes'], name).toBeLessThanOrEqual(30);
-      expect(
-        job.steps?.some((step) => step.run === 'npm run test:integration'),
-        name,
-      ).toBe(true);
-    }
-    expect(JSON.stringify(ci.workflow.jobs['redis-cluster-integration'])).toContain('TEST_REDIS_CLUSTER_NODES');
-    expect(JSON.stringify(ci.workflow.jobs['redis-cluster-integration'])).toContain('--cluster-replicas 1');
+    const standalone = ci.workflow.jobs['redis-integration'];
+    const clusterJob = cluster.workflow.jobs.integration;
+    expect(standalone['timeout-minutes']).toBeLessThanOrEqual(30);
+    expect(standalone.steps?.some((step) => step.run === 'npm run test:integration')).toBe(true);
+    expect(clusterJob['timeout-minutes']).toBeLessThanOrEqual(30);
+    expect(clusterJob.steps?.some((step) => step.run === 'npm run test:integration')).toBe(true);
+    expect(JSON.stringify(clusterJob)).toContain('TEST_REDIS_CLUSTER_NODES');
+    expect(JSON.stringify(clusterJob)).toContain('--cluster-replicas 1');
+    expect(JSON.stringify(ci.workflow.jobs.required)).not.toContain('redis-cluster');
+    expect(cluster.workflow.on).toHaveProperty('schedule');
+    expect(cluster.workflow.on).toHaveProperty('workflow_dispatch');
   });
 
   it('keeps Dependabot watching both workflows and npm dependencies', () => {

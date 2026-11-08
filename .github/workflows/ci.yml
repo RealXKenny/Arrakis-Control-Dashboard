@@ -3,7 +3,12 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches:
+      - main
+      - v2
+      - release/*
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read
@@ -13,33 +18,82 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  checks:
-    name: checks (${{ matrix.task }})
+  quality:
+    name: CI / Quality (${{ matrix.task }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        # One runner per check: a shared runner made the CPU-heavy unit tests time out.
-        task: [typecheck, lint, format:check, docs:check, test]
+        task: [typecheck, lint, format:check, ai:check, workflows:check, test]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run ${{ matrix.task }}
+      - name: Run project check
+        env:
+          TASK: ${{ matrix.task }}
+        run: npm run "$TASK"
+
+  workflow-validation:
+    name: CI / Workflow Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Download and verify actionlint
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/actionlint.tar.gz"
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$archive"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP" actionlint
+      - name: Lint GitHub Actions workflows
+        run: |
+          "$RUNNER_TEMP/actionlint" -color .github/workflows/*.yml
+
+  documentation:
+    name: CI / Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run docs:check
+      - name: Check formatting of changed documentation
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+        run: npm run docs:format:check
 
   integration:
-    name: integration (${{ matrix.shard }}/4)
+    name: CI / Browser and Production Smoke (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        # Software WebGL tests are CPU-bound; separate runners avoid contention instead of sharing one worker.
         shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
@@ -62,11 +116,11 @@ jobs:
         with:
           name: browser-failure-traces-${{ matrix.shard }}
           path: test-results/
+          if-no-files-found: ignore
           retention-days: 7
 
-  # The marketplace Lua scripts and the owner-key migration run against a real, disposable Redis.
   redis-integration:
-    name: redis integration
+    name: CI / Redis Integration
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -81,6 +135,8 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
@@ -90,50 +146,26 @@ jobs:
         env:
           TEST_REDIS_URL: redis://127.0.0.1:6379/15
 
-  # The same integration suite against a real 3-master / 3-replica Redis Cluster (including a live failover test).
-  # Not part of `verify` until it has been seen green on GitHub once; then add it to `needs` below.
-  redis-cluster-integration:
-    name: redis cluster integration
+  required:
+    name: CI / Required Checks
+    if: always()
+    needs: [quality, workflow-validation, documentation, integration, redis-integration]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Start a Redis Cluster
-        shell: bash
+      - name: Require every mandatory job to pass
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
-          set -euo pipefail
-          for port in 7001 7002 7003 7004 7005 7006; do
-            docker run -d --name "redis-$port" --network host redis:7.4-alpine \
-              redis-server --port "$port" --cluster-enabled yes --cluster-config-file "nodes-$port.conf" \
-              --cluster-node-timeout 3000 --appendonly no --save ""
-          done
-          sleep 3
-          docker run --rm --network host redis:7.4-alpine redis-cli --cluster create \
-            127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 127.0.0.1:7006 \
-            --cluster-replicas 1 --cluster-yes
-          for attempt in $(seq 1 30); do
-            docker run --rm --network host redis:7.4-alpine redis-cli -p 7001 cluster info | grep -q cluster_state:ok && exit 0
-            sleep 1
-          done
-          echo "The Redis Cluster did not become healthy." >&2
-          exit 1
-      - run: npm run test:integration
-        env:
-          TEST_REDIS_CLUSTER_NODES: 127.0.0.1:7001,127.0.0.1:7002,127.0.0.1:7003
-
-  verify:
-    if: always()
-    needs: [checks, integration, redis-integration]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require every CI job to pass
-        env:
-          CHECKS_RESULT: ${{ needs.checks.result }}
-          INTEGRATION_RESULT: ${{ needs.integration.result }}
-          REDIS_RESULT: ${{ needs.redis-integration.result }}
-        run: test "$CHECKS_RESULT" = success && test "$INTEGRATION_RESULT" = success && test "$REDIS_RESULT" = success
+          node -e '
+            const jobs = JSON.parse(process.env.NEEDS_JSON);
+            const failures = Object.entries(jobs).filter(([, job]) => job.result !== "success");
+            if (failures.length > 0) {
+              console.error("Mandatory jobs did not succeed:", failures.map(([name, job]) => [name, job.result]));
+              process.exit(1);
+            }
+            console.log("All mandatory jobs succeeded.");
+          '

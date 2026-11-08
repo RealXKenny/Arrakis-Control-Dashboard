@@ -10,20 +10,20 @@ the upstream source.
 
 ## Start here
 
-| I want to…                                                  | Read                                                                                                         |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Understand what the dashboard is and what it needs          | [Getting started](getting-started/README.md)                                                                 |
-| Go from an empty Linux host to a working dashboard          | [End-to-end setup](getting-started/end-to-end-redblink-setup.md)                                             |
-| Install it (local, production, Pterodactyl, reverse proxy)  | [Installation](installation/README.md)                                                                       |
-| Configure Discord, Redis, the Console and administrators    | [Configuration](configuration/README.md)                                                                     |
-| Learn what each screen does                                 | [Features](features/README.md)                                                                               |
-| Connect the RedBlink Dune Docker Console, Discord, webhooks | [Integrations](integrations/README.md)                                                                       |
-| Run and maintain a live deployment                          | [Administration](administration/README.md)                                                                   |
-| Harden and verify a production deployment                   | [Security](security/README.md), [Deployment](deployment/README.md)                                           |
-| Call the HTTP APIs                                          | [API reference](api/README.md)                                                                               |
-| Work on the code                                            | [Development](development/README.md)                                                                        |
-| Fix a problem                                               | [Troubleshooting](troubleshooting/README.md)                                                                 |
-| Look something up                                           | [Reference](reference/README.md)                                                                             |
+| I want to…                                                  | Read                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| Understand what the dashboard is and what it needs          | [Getting started](getting-started/README.md)                       |
+| Go from an empty Linux host to a working dashboard          | [End-to-end setup](getting-started/end-to-end-redblink-setup.md)   |
+| Install it (local, production, Pterodactyl, reverse proxy)  | [Installation](installation/README.md)                             |
+| Configure Discord, Redis, the Console and administrators    | [Configuration](configuration/README.md)                           |
+| Learn what each screen does                                 | [Features](features/README.md)                                     |
+| Connect the RedBlink Dune Docker Console, Discord, webhooks | [Integrations](integrations/README.md)                             |
+| Run and maintain a live deployment                          | [Administration](administration/README.md)                         |
+| Harden and verify a production deployment                   | [Security](security/README.md), [Deployment](deployment/README.md) |
+| Call the HTTP APIs                                          | [API reference](api/README.md)                                     |
+| Work on the code                                            | [Development](development/README.md)                               |
+| Fix a problem                                               | [Troubleshooting](troubleshooting/README.md)                       |
+| Look something up                                           | [Reference](reference/README.md)                                   |
 
 ## Sections
 
@@ -35,7 +35,7 @@ the upstream source.
 - [Administration](administration/README.md): administrator setup, sessions, backups and restore, maintenance, monitoring, disaster recovery.
 - [Security](security/README.md): overview and known limitations, production hardening, secrets, Redis, release verification, incident response.
 - [API reference](api/README.md): authentication, administrator, player, guild, marketplace, server and map endpoints, errors and rate limits.
-- [Development](development/README.md): architecture, structure, workflow, testing, debugging.
+- [Development](development/README.md): architecture, structure, workflow, testing, GitHub Actions, branch rulesets, debugging.
 - [Deployment](deployment/README.md): checklist, GitHub Actions, staging, release, rollback, migration.
 - [Troubleshooting](troubleshooting/README.md): symptom-first fixes.
 - [Reference](reference/README.md): commands, platforms, configuration examples, glossary, FAQ.

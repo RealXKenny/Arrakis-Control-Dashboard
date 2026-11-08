@@ -6,23 +6,26 @@
 
 ## Scripts (`package.json`)
 
-| Command                          | What it does                                                                         |
-| -------------------------------- | ------------------------------------------------------------------------------------ |
-| `npm run dev`                    | `node scripts/server-launcher.mjs dev`                                                |
-| `npm run build`                  | `next build`                                                                          |
-| `npm start`                      | `node scripts/server-launcher.mjs start` (production server)                           |
-| `npm run lint`                   | `eslint . --max-warnings 0`                                                           |
-| `npm run typecheck`              | `tsc --noEmit`                                                                        |
-| `npm test`                       | `vitest run` (unit, API, architecture, deployment; integration excluded unless a test Redis is configured) |
-| `npm run test:watch`             | `vitest`                                                                              |
-| `npm run test:coverage`          | `vitest run --coverage`                                                               |
-| `npm run test:integration`       | `vitest run tests/integration --no-file-parallelism` (needs `TEST_REDIS_URL` or `TEST_REDIS_CLUSTER_NODES`) |
-| `npm run test:production`        | `node tests/production/smoke.mjs` (after `npm run build`)                              |
-| `npm run test:browser`           | `playwright test`                                                                      |
-| `npm run format` / `format:check` | Prettier on `src tests scripts` (write / check)                                       |
-| `npm run docs:check`             | Validate relative links and anchors in Markdown                                        |
-| `npm run redis:rekey`            | Legacy key renaming for hash tags                                                      |
-| `npm run marketplace:rekey`      | Marketplace owner-key migration                                                        |
+| Command                           | What it does                                                                                                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | `node scripts/server-launcher.mjs dev`                                                                      |
+| `npm run build`                   | `next build`                                                                                                |
+| `npm start`                       | `node scripts/server-launcher.mjs start` (production server)                                                |
+| `npm run lint`                    | `eslint . --max-warnings 0`                                                                                 |
+| `npm run typecheck`               | `tsc --noEmit`                                                                                              |
+| `npm test`                        | `vitest run` (unit, API, architecture, deployment; integration excluded unless a test Redis is configured)  |
+| `npm run test:watch`              | `vitest`                                                                                                    |
+| `npm run test:coverage`           | `vitest run --coverage`                                                                                     |
+| `npm run test:integration`        | `vitest run tests/integration --no-file-parallelism` (needs `TEST_REDIS_URL` or `TEST_REDIS_CLUSTER_NODES`) |
+| `npm run test:production`         | `node tests/production/smoke.mjs` (after `npm run build`)                                                   |
+| `npm run test:browser`            | `playwright test`                                                                                           |
+| `npm run format` / `format:check` | Prettier on `src tests scripts` (write / check)                                                             |
+| `npm run docs:check`              | Validate relative links and anchors in Markdown                                                             |
+| `npm run docs:format:check`       | Check Prettier formatting for changed files under `docs/`                                                   |
+| `npm run ai:check`                | Validate AI assistant configuration files                                                                   |
+| `npm run workflows:check`         | Validate workflow YAML, permissions, action pins, job dependencies, and the CI gate                         |
+| `npm run redis:rekey`             | Legacy key renaming for hash tags                                                                           |
+| `npm run marketplace:rekey`       | Marketplace owner-key migration                                                                             |
 
 ## Conventions
 

@@ -23,3 +23,11 @@ Read and follow repository-root `AGENTS.md` before making changes. It is the aut
 - Report changes, tests, documentation, security implications and unverified items clearly.
 
 Use `.github/instructions/*.instructions.md` for path-specific rules. If any instructions conflict, `AGENTS.md` and live repository code are authoritative; surface the conflict.
+
+## GitHub automation
+- `CI / Required Checks` is the stable required status check. Preserve pull-request, protected-branch push, and merge-queue coverage without path filters.
+- Keep mandatory jobs in the aggregate, reject failed/cancelled/skipped results, and do not use `continue-on-error` for required checks.
+- Workflows must use least-privilege permissions, avoid secrets on untrusted PRs, set timeouts, and pin third-party actions to verified full commit SHAs.
+- Run `npm run workflows:check` when changing workflows or Dependabot configuration; CI also runs actionlint.
+- Run `npm run docs:check` and `npm run docs:format:check` when changing documentation.
+- Consult [GitHub Actions](../docs/development/github-actions.md) and [branch ruleset guidance](../docs/development/github-branch-rulesets.md). Never modify remote rulesets or publish releases without explicit approval.

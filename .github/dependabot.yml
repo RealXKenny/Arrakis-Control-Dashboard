@@ -4,6 +4,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+      day-of-week: monday
     open-pull-requests-limit: 5
     groups:
       minor-and-patch:
@@ -14,4 +15,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+      day-of-week: monday
     open-pull-requests-limit: 3
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch

@@ -18,8 +18,10 @@
     "redis:rekey": "node scripts/maintenance/rekey-redis.mjs",
     "marketplace:rekey": "node scripts/maintenance/rekey-marketplace.mjs",
     "docs:check": "node scripts/maintenance/check-docs.mjs",
+    "docs:format:check": "node scripts/maintenance/check-changed-markdown.mjs",
     "test:integration": "vitest run tests/integration --no-file-parallelism",
-    "ai:check": "node scripts/maintenance/validate-ai-config.mjs"
+    "ai:check": "node scripts/maintenance/validate-ai-config.mjs",
+    "workflows:check": "node scripts/maintenance/check-workflows.mjs"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",

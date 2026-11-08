@@ -13,19 +13,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  validate:
+    name: Release / Validate
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 20
+    outputs:
+      create: ${{ steps.release.outputs.create }}
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
 
-      # Defence in depth beyond the job condition: never tag or run `gh release create`
-      # for a commit that is not already on main in this repository.
       - name: Confirm the release commit is on main
         shell: bash
         env:
@@ -42,13 +48,18 @@ jobs:
             exit 1
           }
 
-      - name: Prepare release
+      - name: Validate release version and notes
         id: release
         shell: bash
         run: |
           set -euo pipefail
 
           current_version=$(node -p "require('./package.json').version")
+          lock_version=$(node -p "require('./package-lock.json').packages[''].version")
+          if [ "$current_version" != "$lock_version" ]; then
+            echo "package.json ($current_version) and package-lock.json ($lock_version) versions differ." >&2
+            exit 1
+          fi
           tag="v$current_version"
 
           if git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null; then
@@ -81,7 +92,7 @@ jobs:
           }
           NODE
 
-          notes_file="$RUNNER_TEMP/$tag-notes.md"
+          notes_file="$RUNNER_TEMP/release-notes.md"
           awk -v heading="## Patch Notes v$current_version" '
             { sub(/\r$/, "") }
             $0 == heading { found = 1; next }
@@ -101,7 +112,6 @@ jobs:
           echo "create=true" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$current_version" >> "$GITHUB_OUTPUT"
-          echo "notes_file=$notes_file" >> "$GITHUB_OUTPUT"
 
       - name: Build Pterodactyl egg
         if: steps.release.outputs.create == 'true'
@@ -112,7 +122,6 @@ jobs:
           node scripts/deployment/build-pterodactyl-egg.mjs "$EGG_FILE"
           node -e "JSON.parse(require('node:fs').readFileSync(process.env.EGG_FILE, 'utf8'))"
 
-      # The egg installs this archive and refuses it unless the published SHA-256 matches.
       - name: Build checksummed source archive
         if: steps.release.outputs.create == 'true'
         shell: bash
@@ -124,17 +133,55 @@ jobs:
           name="arrakis-control-dashboard-$RELEASE_VERSION.tar.gz"
           git archive --format=tar.gz --prefix=arrakis-control-dashboard/ --output="$RUNNER_TEMP/$name" "$RELEASE_SHA"
           (cd "$RUNNER_TEMP" && sha256sum "$name" > "$name.sha256" && sha256sum --check "$name.sha256")
-          echo "ARCHIVE_FILE=$RUNNER_TEMP/$name" >> "$GITHUB_ENV"
+
+      - name: Upload validated release assets
+        if: steps.release.outputs.create == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-assets
+          path: |
+            ${{ runner.temp }}/egg-arrakis-control-dashboard.json
+            ${{ runner.temp }}/arrakis-control-dashboard-${{ steps.release.outputs.version }}.tar.gz
+            ${{ runner.temp }}/arrakis-control-dashboard-${{ steps.release.outputs.version }}.tar.gz.sha256
+            ${{ runner.temp }}/release-notes.md
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Release / Publish
+    needs: validate
+    if: needs.validate.outputs.create == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-assets
+          path: ${{ runner.temp }}/release-assets
+
+      - name: Verify release assets
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          release_dir="$RUNNER_TEMP/release-assets"
+          archive="arrakis-control-dashboard-$RELEASE_VERSION.tar.gz"
+          (cd "$release_dir" && sha256sum --check "$archive.sha256")
+          jq -e . "$release_dir/egg-arrakis-control-dashboard.json" >/dev/null
+          test -s "$release_dir/release-notes.md"
 
       - name: Create GitHub Release
-        if: steps.release.outputs.create == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          EGG_FILE: ${{ runner.temp }}/egg-arrakis-control-dashboard.json
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          RELEASE_VERSION: ${{ steps.release.outputs.version }}
-          RELEASE_NOTES: ${{ steps.release.outputs.notes_file }}
+          EGG_FILE: ${{ runner.temp }}/release-assets/egg-arrakis-control-dashboard.json
+          ARCHIVE_FILE: ${{ runner.temp }}/release-assets/arrakis-control-dashboard-${{ needs.validate.outputs.version }}.tar.gz
+          RELEASE_NOTES: ${{ runner.temp }}/release-assets/release-notes.md
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: >-
           gh release create "$RELEASE_TAG" "$EGG_FILE" "$ARCHIVE_FILE" "$ARCHIVE_FILE.sha256"
