@@ -1,0 +1,20 @@
+---
+name: Arrakis engineering rules
+description: Shared repository architecture and safety guidance
+alwaysApply: true
+---
+
+# Arrakis Control Dashboard — Shared Agent Contract
+
+Read `AGENTS.md` first; it is authoritative. Follow `docs/architecture/file-organization.md` and inspect the live repository before edits.
+
+- Runtime: Next.js 16, React 19, TypeScript, Tailwind v4, Node.js 22+, Redis standalone/Cluster. **Redis is the only persistent store**.
+- Place business logic in `src/features/<domain>/`, shared UI in `src/components/`, infrastructure in `src/server/` and `src/lib/`; keep App Router and legacy Pages API handlers thin.
+- Do not recreate `src/modules/`, `src/infrastructure/`, or `public/`. Preserve browser/server import boundaries.
+- Preserve session and Discord-role re-verification, CSP nonce, bounded APIs, secret redaction, Redis Cluster support, and distinct Console/adapter/bot credentials.
+- Preserve Obsidian/Sand/Spice design, responsive accessibility, reduced-motion behavior, and map/base-preview lifecycle safety.
+- Before changing Next.js behavior, consult the installed `node_modules/next/dist/docs/` guide required by `AGENTS.md`.
+- Validate with `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`; add build, production smoke and browser tests when relevant.
+- Treat historical browser failures as historical only; rerun before claiming a baseline.
+- Keep docs and tests current. Never print secrets or modify `.env`. Never commit, push, merge, rebase, delete branches, deploy or perform production maintenance without explicit approval.
+- Report changed files, tests actually run, remaining failures and risks. Preserve unrelated user changes.

@@ -10,6 +10,8 @@ This is the post-migration architecture inventory. Generated dependency/build di
   workflows/
 docs/
   architecture/
+  assets/
+    screenshots/
 scripts/
   deployment/
   maintenance/
@@ -558,6 +560,16 @@ LICENSE
 README.md
 docs/architecture/file-organization.md
 docs/architecture/repository-inventory.md
+docs/assets/screenshots/admin-workspace.webp
+docs/assets/screenshots/dashboard-overview.webp
+docs/assets/screenshots/dashboard-settings.webp
+docs/assets/screenshots/guild-applications.webp
+docs/assets/screenshots/guild-management.webp
+docs/assets/screenshots/guild-recruitment.webp
+docs/assets/screenshots/mobile-dashboard.webp
+docs/assets/screenshots/player-profiles.webp
+docs/assets/screenshots/server-management.webp
+docs/assets/screenshots/server-monitoring.webp
 eslint.config.mjs
 next-env.d.ts
 next.config.ts

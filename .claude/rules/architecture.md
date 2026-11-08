@@ -1,0 +1,11 @@
+# Architecture and ownership
+- Read `AGENTS.md` and `docs/architecture/file-organization.md` before moving or creating files.
+- `src/app/`: routing and framework entry points only. `src/pages/api/`: supported thin legacy handlers.
+- `src/features/`: business domains: admin, auth, bases, bot, changelog, guilds, landing, map, market, player, portal, server-status, vehicles.
+- `src/components/`: shared brand, feedback, layout, navigation and UI primitives.
+- `src/server/`: shared request infrastructure and external integrations.
+- `src/lib/`: focused shared modules; `src/config/env.ts`: canonical environment schema; `src/types/`: shared contracts; `src/styles/`: global styles and tokens.
+- `src/assets/`: large binary assets; avoid broad enumeration. `scripts/deployment/` and `scripts/maintenance/` own their tools.
+- Do not recreate retired `src/modules/`, `src/infrastructure/`, or `public/`.
+- Keep import dependency graph acyclic and server-only modules out of client bundles.
+- Update architecture docs for intentional structural changes.

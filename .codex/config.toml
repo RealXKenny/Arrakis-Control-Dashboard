@@ -1,0 +1,7 @@
+# Arrakis Control Dashboard — Codex project configuration
+# Keep model selection in your Codex account/CLI; avoid pinning an unverified ID.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = false
