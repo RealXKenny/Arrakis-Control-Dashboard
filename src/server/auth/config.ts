@@ -148,8 +148,7 @@ function discordConfig() {
 const canonicalOrigin = getServerEnv().APP_URL;
 // Development trusts the request host instead, so the OAuth redirect_uri is identical at authorize and token time
 // even when APP_URL points at a public domain while you browse localhost.
-if (process.env.NODE_ENV === 'production' && !process.env.AUTH_URL && canonicalOrigin)
-  process.env.AUTH_URL = new URL(canonicalOrigin).origin;
+if (process.env.NODE_ENV === 'production' && canonicalOrigin) process.env.AUTH_URL = new URL(canonicalOrigin).origin;
 
 const config = (): NextAuthConfig => {
   const env = getServerEnv();
@@ -159,8 +158,8 @@ const config = (): NextAuthConfig => {
 
   return {
     secret: env.AUTH_SECRET,
-    // Production always has APP_URL (see validateProductionEnv), so the Host header is trusted in development only.
-    trustHost: !production,
+    // AUTH_URL replaces the request origin with APP_URL in production; Auth.js still requires explicit host trust.
+    trustHost: true,
     useSecureCookies: production,
     pages: { signIn: '/login', error: '/login' },
     session: { strategy: 'jwt', maxAge: sessionTtlSeconds() },

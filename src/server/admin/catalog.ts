@@ -1,6 +1,6 @@
 import '../../lib/assert-server';
 import { getServerEnv } from '../../lib/env';
-import operations from '../../features/admin/catalog.json';
+import operations from '../../features/admin/catalog.json' with { type: 'json' };
 import { isSecureConsoleOrigin } from './execute';
 
 /** Non-secret catalog plus which credentials are configured; the Console origin only when it is safe to link. */

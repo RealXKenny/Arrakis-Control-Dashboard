@@ -11,7 +11,7 @@ const DEFAULT_HOSTNAME = '127.0.0.1';
 const DEFAULT_PORT = '2008';
 const require = createRequire(import.meta.url);
 
-// Kept in this standalone launcher so the production image needs no TypeScript log imports.
+// Kept in this standalone launcher so production startup needs no TypeScript log imports.
 function formatLogLine(scope, level, message) {
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
   return `\u001b[2m[${timestamp}]\u001b[0m \u001b[32m● [${level}]\u001b[0m \u001b[93m[${scope}]\u001b[0m ${message}`;
@@ -113,7 +113,7 @@ export function resolveServerOptions(env, forwardedArgs = []) {
   return serverArgs;
 }
 
-/** Prepare the image cache after Wings mounts the writable server volume. */
+/** Prepare the Next.js image-optimization cache on the writable server volume. */
 export async function prepareImageCache(directory = process.cwd()) {
   const cache = resolve(directory, '.next', 'cache');
   let target = cache;

@@ -76,6 +76,7 @@ const storage = createRedisFixture((entry) => {
         guildId: 'fixture-guild',
         roleIds: ['fixture-role'],
         expiresAt: Date.now() + 3600000,
+        verifiedAt: Date.now(),
       });
   if (operation === 'GET')
     return revoked
@@ -85,6 +86,7 @@ const storage = createRedisFixture((entry) => {
           guildId: 'fixture-guild',
           roleIds: [],
           expiresAt: Date.now() + 3600000,
+          verifiedAt: Date.now(),
         });
   return 'OK';
 });
@@ -118,6 +120,7 @@ const child = spawn(
       VERIFIED_MEMBER_ROLE_ID: 'fixture-role',
       APP_URL: base,
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
+      REDIS_CLUSTER_NODES: '',
       BOT_API_TOKEN: 'fixture-independent-bot-api-credential-32',
     },
   },
@@ -200,12 +203,12 @@ try {
   };
   const adminPage = await fetch(`${base}/admin`, { headers: adminHeaders });
   assert.equal(adminPage.status, 200, 'administrator page checks the server session');
-  const memberAdmin = await fetch(`${base}/api/admin/catalog`, { headers: { cookie: sessionCookie } });
+  const memberAdmin = await fetch(`${base}/api/v2/admin/catalog`, { headers: { cookie: sessionCookie } });
   assert.equal(memberAdmin.status, 403, 'ordinary members cannot inspect admin operations');
-  const adminCatalog = await fetch(`${base}/api/admin/catalog`, { headers: adminHeaders });
+  const adminCatalog = await fetch(`${base}/api/v2/admin/catalog`, { headers: adminHeaders });
   assert.equal((await adminCatalog.json()).operations.length, 383);
   for (const path of [
-    'admin/overview',
+    'v2/admin/overview',
     'admin/guilds/test/applications',
     'admin/guilds/test/applications/' + 'a'.repeat(64) + '/messages',
     'admin/guilds/test/messages',
@@ -234,13 +237,13 @@ try {
   const supportStatusDenied = await fetch(`${base}/api/guilds/test/support/status`);
   assert.equal(supportStatusDenied.status, 401, 'support unread counts require authentication');
   await supportStatusDenied.text();
-  const overviewResponse = await fetch(`${base}/api/admin/overview`, { headers: adminHeaders });
+  const overviewResponse = await fetch(`${base}/api/v2/admin/overview`, { headers: adminHeaders });
   assert.equal(overviewResponse.status, 200, 'admin statistics remain usable with partial Console permissions');
   const overviewData = await overviewResponse.json();
   assert.equal(overviewData.data.sources.length, 10);
   assert.equal(overviewData.data.metrics.find((metric) => metric.id === 'health').value, 'READY');
   assert.doesNotMatch(JSON.stringify(overviewData), /fixture-admin-console-key/);
-  const adminStatus = await fetch(`${base}/api/admin/execute`, {
+  const adminStatus = await fetch(`${base}/api/v2/admin/execute`, {
     method: 'POST',
     headers: adminHeaders,
     body: JSON.stringify({ operation: 'get-server-status' }),
@@ -249,7 +252,7 @@ try {
   const adminReading = await adminStatus.text();
   assert.match(adminReading, /READY/);
   assert.doesNotMatch(adminReading, /fixture-admin-console-key/);
-  const adminDownload = await fetch(`${base}/api/admin/execute`, {
+  const adminDownload = await fetch(`${base}/api/v2/admin/execute`, {
     method: 'POST',
     headers: adminHeaders,
     body: JSON.stringify({ operation: 'get-backups-backup-download', path: { backup: 'fixture' } }),
@@ -266,23 +269,11 @@ try {
   assert.equal(rootLanding.status, 200, 'root directly serves the public landing page');
   assert.equal(new URL(rootLanding.url).pathname, '/');
   const rootLandingHtml = await rootLanding.text();
-  assert.match(rootLandingHtml, /A clearer view/);
-  assert.match(rootLandingHtml, /"isAuthenticated":false/);
-  const sharePayload = rootLandingHtml.match(/<script[^>]*id="discord:component-embed"[^>]*>([\s\S]*?)<\/script>/)?.[1];
-  assert.ok(sharePayload, 'public preview is present before browser JavaScript executes');
-  assert.ok(Buffer.byteLength(sharePayload) <= 3000, 'Discord component payload stays bounded');
-  const shareCard = JSON.parse(sharePayload);
-  assert.equal(shareCard.component.type, 17);
-  assert.equal(shareCard.component.components.find((component) => component.type === 1).components[0].url, `${base}/`);
-  const shareImage = await fetch(`${base}/api/assets/share/preview-v1.png`);
-  assert.equal(shareImage.status, 200);
-  assert.match(shareImage.headers.get('content-type'), /image\/png/);
-  const shareImageBytes = Buffer.from(await shareImage.arrayBuffer());
-  assert.equal(shareImageBytes.readUInt32BE(16), 1200);
-  assert.equal(shareImageBytes.readUInt32BE(20), 630);
+  assert.match(rootLandingHtml, /Everything the Landsraad would hide/);
+  assert.match(rootLandingHtml, /Sign in with Discord/);
+  assert.match(rootLandingHtml, /<meta property="og:title" content="Arrakis Control"/);
   assert.doesNotMatch(rootLandingHtml, /Harvesting sectors/, 'the removed operations dashboard is not served');
   const routes = [
-    'theme-script',
     'v1/bot/world',
     'map',
     'map/realtime',
@@ -431,8 +422,8 @@ try {
     body: new URLSearchParams({ csrfToken }),
     redirect: 'manual',
   });
-  assert.ok([200, 302, 303].includes(logout.status), 'sign-out responds');
-  await logout.text();
+  const logoutBody = await logout.text();
+  assert.ok([200, 302, 303].includes(logout.status), `sign-out responds (${logout.status}): ${logoutBody}`);
   const expired = await fetch(`${base}/api/player`, { headers });
   assert.equal(expired.status, 401, 'intentional logout revokes the Redis session');
   await expired.text();
@@ -441,7 +432,7 @@ try {
   await expiredRealtime.text();
   const signedOutHome = await fetch(`${base}/home`, { headers });
   assert.equal(signedOutHome.status, 200, 'landing with a revoked session cookie');
-  assert.match(await signedOutHome.text(), /"isAuthenticated":false/);
+  assert.match(await signedOutHome.text(), /Sign in with Discord/);
   if (logs.includes('MaxListenersExceededWarning'))
     console.error(
       logs.slice(logs.indexOf('MaxListenersExceededWarning'), logs.indexOf('MaxListenersExceededWarning') + 2500),

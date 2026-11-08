@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import catalog from '../../../src/features/admin/catalog.json';
+import catalog from '../../../src/features/admin/catalog.json' with { type: 'json' };
 import { freshness, readingRows } from '../../../src/app/(workspace)/admin/_components/screens/StatisticsScreen';
 import type { AdminOverview } from '../../../src/features/admin/overview';
 import type { AdminOperation } from '../../../src/features/admin/types';

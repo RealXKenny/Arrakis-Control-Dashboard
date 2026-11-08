@@ -40,7 +40,7 @@ Required production variables include:
 - `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits, persistent sessions, and the dashboard snapshot cache.
 - `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list (IPv6 as `[::1]:7000`) that switches all Redis access (sessions, rate limits, caches, marketplace, announcements) to an `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index (ignored by clusters). Every multi-key Lua script keeps its keys in one hash slot through `{hash tags}` (see `src/lib/redis/keys.ts`). Upgrading an existing deployment needs a one-time key rename, see Redis cluster migration below.
 - `CHANGELOG_WEBHOOK_URL` (optional, secret) Discord webhook for changelog and progress announcements; only `discord.com` webhook URLs are accepted. `CHANGELOG_AUTO_ANNOUNCE=true` additionally announces each newly deployed release once. Announcements use link buttons and never ping; the administrator composer lives at `/admin/changelog`.
-- `TRUSTED_PROXY_COUNT` (default `1`) is the number of reverse proxies in front of the dashboard. Rate limits and login throttling use only the `X-Forwarded-For` entry the last trusted proxy appended; set `0` if the dashboard is exposed directly, or the proxy count if you chain several.
+- `TRUSTED_PROXY_COUNT` (default `1`) is the number of reverse proxies in front of the dashboard. Rate limits and login throttling trust only the `X-Forwarded-For` entry appended by the last trusted proxy. Set it to `0` if the dashboard is exposed directly, or to the exact proxy count if you chain several. An incorrect production value can let clients forge the address used for rate limits.
 
 Optional server binding variables:
 
@@ -177,19 +177,15 @@ npm run test:watch     Run Vitest in watch mode
 npm run test:coverage  Run tests with V8 coverage
 ```
 
-CI runs typecheck, lint, tests, the production build, production smoke checks, and browser checks for pushes to `main` and pull requests. After successful `main` CI, the release workflow publishes a Docker image only when `package.json` has a new stable version with a matching changelog section.
+CI runs typecheck, lint, tests, the production build, production smoke checks, and browser checks for pushes to `main` and pull requests. After successful `main` CI, the release workflow creates a GitHub Release and attaches a generated Pterodactyl egg only when `package.json` has a new stable version with a matching changelog section.
 
-## Docker and Pterodactyl
+## Pterodactyl
 
-The production image is published as [`ghcr.io/realxkenny/arrakis-control-dashboard:latest`](https://github.com/RealXKenny/Arrakis-Control-Dashboard/pkgs/container/arrakis-control-dashboard). Each new version release updates `latest` and adds `v<version>` and `sha-<commit>` tags; ordinary pushes leave the published image unchanged. The image contains the built Next.js app, bundled assets, and changelog; do not run `npm install` in the server's `/home/container` directory.
+Download `egg-arrakis-control-dashboard.json` from the [latest GitHub Release](https://github.com/RealXKenny/Arrakis-Control-Dashboard/releases/latest) and import it into a Pterodactyl nest. Create a server with the standard Node.js 22 runtime, assign a port, and fill every required Startup setting. Pterodactyl supplies the allocated port as `SERVER_PORT`; the egg binds `SERVER_HOSTNAME` to `0.0.0.0` and starts the app from `/home/container`.
 
-Import [the dashboard egg](pterodactyl/egg-arrakis-control-dashboard.json) into a Pterodactyl nest, create a server with its GHCR image, and assign a port. Pterodactyl supplies that allocation as `SERVER_PORT`; the egg binds `SERVER_HOSTNAME` to `0.0.0.0`. Leave its startup command pointing at `/opt/arrakis-dashboard` because the app is in the image, not `/home/container`. Use the egg's Startup settings to fill every required variable before starting the server.
+During installation, the egg queries GitHub's latest-release API, downloads that release's source tarball, runs `npm ci`, builds the application, and prunes development dependencies. The installation environment needs outbound HTTPS access to GitHub and enough time and resources for a production Next.js build. Reinstall the server to update it to the latest release. There is no custom application image or GHCR package to pull.
 
-The image links Next.js’s `.next/cache` to `/home/container/.cache/arrakis-dashboard` so optimized images can be cached on the writable server volume. The production launcher creates and checks the image cache before starting Next.js, including after a fresh volume is mounted. Keep that directory writable by the container user.
-
-Set `APP_URL` to the public HTTPS origin served by your reverse proxy, then configure the Discord OAuth redirect URI as `<APP_URL>/api/auth/callback/discord`. The assigned port is the dashboard's internal HTTP port; terminate public HTTPS at the proxy. `CONSOLE_URL` and `REDIS_URL` must resolve and be reachable from inside the container. Use `rediss://` when Redis requires TLS. If the GHCR package is private, grant the Pterodactyl host access to pull it or make the package public.
-
-For a direct Docker deployment, supply the required production variables with `--env-file` and map the same port on the host and container; set `SERVER_HOSTNAME=0.0.0.0`. Keep the environment file outside the image and repository.
+The launcher creates and checks `.next/cache/images` before starting Next.js. Keep the server volume writable by the runtime user. Set `APP_URL` to the public HTTPS origin served by your reverse proxy, then configure the Discord OAuth redirect URI as `<APP_URL>/api/auth/callback/discord`. Terminate public HTTPS at the proxy and set `TRUSTED_PROXY_COUNT` to the exact proxy count. `CONSOLE_URL` and `REDIS_URL` must resolve and be reachable from inside the container; use `rediss://` when Redis requires TLS.
 
 ## Releases
 
@@ -220,7 +216,7 @@ Important boundaries:
 - `src/lib/` contains shared logging and errors, plus `redis/` (ioredis command client for standalone or Cluster, plus the pooled reader for dashboard data), `security/` (sessions, rate limiting, API capacity), `cache/` and `http/` helpers.
 - `src/lib/env.ts` validates server environment configuration; `src/config/env.ts` re-exports it for legacy imports.
 - `proxy.ts` adds request correlation and security headers (Middleware renamed in Next.js 16; it must live at `src/proxy.ts` beside the routers).
-- `docker-compose.yml` runs the dashboard beside a local Redis for development.
+- `src/config/pterodactyl-egg.mjs` generates the release asset that installs and builds the latest GitHub release.
 - `tests/` contains focused unit and API-boundary tests.
 
 ## Security and Reliability
@@ -228,6 +224,8 @@ Important boundaries:
 - API routes receive request IDs, method checks, structured logging, safe error responses, and shared rate limiting.
 - Production rate limits use Redis and fail closed if the storage service is unavailable.
 - OAuth sessions use Redis TTL records; cookies contain only random opaque session IDs.
+- Discord membership and the required role are re-confirmed when a session's last successful check is over 30 minutes old. A definitive refusal deletes the session. Discord outages and rate limits allow at most 6 hours of grace after the last confirmation; sessions created before verification stamps were introduced receive no grace and must sign in again once after deployment.
+- Password login allows 10 attempts per 15 minutes per email, in addition to per-address limits, so forged source addresses cannot bypass throttling. Discord sign-in remains available if the email limit is exhausted.
 - OAuth access tokens are not persisted.
 - Logs redact passwords, tokens, cookies, authorization headers, and session values.
 - Security headers are applied by middleware, including CSP, frame protection, referrer policy, and HSTS in production.
@@ -255,7 +253,7 @@ Do not deploy with placeholder environment values, disabled HTTPS, or missing Re
 
 CI runs static checks and unit tests in parallel with a production build, runtime smoke checks, and browser tests. The final `verify` job requires both jobs to succeed. Superseded pull-request runs are canceled; main-branch runs are not canceled. The integration job caches only `.next/cache` and installs Chromium's headless shell for Playwright.
 
-Releases still require successful main-branch CI. Docker Buildx reuses a separate GitHub Actions layer cache, loads the versioned image locally, and runs container content and startup checks before registry login, image publication, and GitHub Release creation. No image is pushed by the cached build step. Cache benefits depend on a prior successful cache export; the first run may be cold.
+Releases still require successful main-branch CI. The release job generates the Pterodactyl egg from the exact release commit and attaches it to the GitHub Release. No container registry login, image build, or image publication remains.
 
 The dashboard expects the Dune Console and Discord provider to be reachable at runtime. Provider failures are logged with correlation IDs and returned as safe errors where possible. The local development fallback for Redis-backed state is intentionally not suitable for production.
 

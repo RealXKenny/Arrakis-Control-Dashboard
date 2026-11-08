@@ -1,6 +1,6 @@
 import '../../../lib/assert-server';
 import { z } from 'zod';
-import operations from '../../../features/admin/catalog.json';
+import operations from '../../../features/admin/catalog.json' with { type: 'json' };
 import type { AdminOperation } from '../../../features/admin/types';
 import { AppError } from '../../../lib/errors';
 

@@ -21,7 +21,7 @@ const mono = JetBrains_Mono({
   display: 'swap',
 });
 
-// APP_URL is a runtime variable (Docker), so this layout must never be prerendered at build time.
+// APP_URL is a runtime variable, so this layout must never be prerendered at build time.
 export const dynamic = 'force-dynamic';
 
 const DESCRIPTION =

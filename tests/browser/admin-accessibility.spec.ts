@@ -1,5 +1,5 @@
 import { expect, test } from '../helpers/browser-test';
-import operations from '../../src/features/admin/catalog.json';
+import operations from '../../src/features/admin/catalog.json' with { type: 'json' };
 import { ADMIN_SECTIONS } from '../../src/features/admin/navigation';
 
 const row = {

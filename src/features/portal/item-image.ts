@@ -1,4 +1,4 @@
-import files from './item-images.json';
+import files from './item-images.json' with { type: 'json' };
 import { record } from './inventory';
 const normalize = (value: string) =>
   value

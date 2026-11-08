@@ -29,31 +29,23 @@ describe('release notes', () => {
     expect(section).not.toBe('');
   });
 
-  it('publishes the container only for a new version release', () => {
+  it('attaches a generated Pterodactyl egg only for a new version release', () => {
     const ci = fs.readFileSync(path.resolve('.github/workflows/ci.yml'), 'utf8');
     const release = fs.readFileSync(path.resolve('.github/workflows/release.yml'), 'utf8');
 
     expect(ci).not.toContain('docker push');
+    expect(release).not.toContain('docker');
+    expect(release).not.toContain('packages: write');
     expect(release).toContain('if git rev-parse --verify --quiet "refs/tags/$tag"');
-    expect(release).toMatch(/- name: Build versioned image\r?\n\s+if: steps\.release\.outputs\.create == 'true'/);
-    expect(release).toMatch(/- name: Publish versioned image\r?\n\s+if: steps\.release\.outputs\.create == 'true'/);
-    expect(release).toContain('${{ steps.image.outputs.name }}:${{ steps.release.outputs.tag }}');
+    expect(release).toMatch(/- name: Build Pterodactyl egg\r?\n\s+if: steps\.release\.outputs\.create == 'true'/);
+    expect(release).toContain('node src/config/pterodactyl-egg.mjs "$EGG_FILE"');
     expect(release).toContain("github.event.workflow_run.conclusion == 'success'");
     expect(release).toContain("github.event.workflow_run.event == 'push'");
     expect(release).toContain("github.event.workflow_run.head_branch == 'main'");
-    expect(release).toContain('load: true');
-    expect(release).toContain('push: false');
-    expect(release).not.toContain('push: true');
-    const build = release.indexOf('- name: Build versioned image');
-    const contents = release.indexOf('- name: Check image contents and Pterodactyl user');
-    const startup = release.indexOf('- name: Check image startup and asset route');
-    const publish = release.indexOf('- name: Publish versioned image');
-    expect(build).toBeLessThan(contents);
-    expect(contents).toBeLessThan(startup);
-    expect(startup).toBeLessThan(publish);
-    expect(release.indexOf('- name: Publish versioned image')).toBeLessThan(
-      release.indexOf('- name: Create GitHub Release'),
-    );
+    const build = release.indexOf('- name: Build Pterodactyl egg');
+    const publish = release.indexOf('- name: Create GitHub Release');
+    expect(build).toBeLessThan(publish);
+    expect(release).toContain('gh release create "$RELEASE_TAG" "$EGG_FILE"');
   });
 
   it('keeps all CI checks required when jobs run in parallel and cancels only outdated PRs', () => {

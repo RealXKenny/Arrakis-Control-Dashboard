@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { afterAll, afterEach, beforeEach, expect, it, vi } from 'vitest';
-import catalog from '../../src/features/admin/catalog.json';
+import catalog from '../../src/features/admin/catalog.json' with { type: 'json' };
 import { POST as execute } from '../../src/app/api/v2/admin/execute/route';
 import { POST as upload } from '../../src/app/api/v2/admin/upload/route';
 import { adminPost, adminUpload } from '../helpers/admin-v2';

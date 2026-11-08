@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { createHash } from 'node:crypto';
 import { createRedisFixture } from './redis-resp.mjs';
 
-// Isolated browser fixture only; the production Docker build excludes tests/.
+// Isolated browser fixture only; never used by the production runtime.
 const sessionKey = (id) => `arrakis:session:${createHash('sha256').update(id).digest('hex')}`;
 const storage = createRedisFixture(([operation, key]) => {
   if (operation.toUpperCase() === 'EVAL') return [1, 60000];
@@ -20,6 +20,7 @@ const storage = createRedisFixture(([operation, key]) => {
           guildId: 'browser-test-guild',
           roleIds: ['browser-test-role'],
           expiresAt: Date.now() + 3600000,
+          verifiedAt: Date.now(),
         })
       : null;
   }
@@ -34,7 +35,11 @@ const child = spawn(
   {
     windowsHide: true,
     stdio: 'inherit',
-    env: { ...process.env, REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0` },
+    env: {
+      ...process.env,
+      REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
+      REDIS_CLUSTER_NODES: '',
+    },
   },
 );
 const stop = () => child.kill();

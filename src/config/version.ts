@@ -1,2 +1,2 @@
-import { version } from '../../package.json';
-export const APP_VERSION = version;
+import packageJson from '../../package.json' with { type: 'json' };
+export const APP_VERSION = packageJson.version;

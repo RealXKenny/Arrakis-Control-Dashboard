@@ -1,5 +1,5 @@
 import { expect, test } from '../helpers/browser-test';
-import operations from '../../src/features/admin/catalog.json';
+import operations from '../../src/features/admin/catalog.json' with { type: 'json' };
 const overviewFixture = {
   observedAt: '2026-11-05T23:00:00.000Z',
   metrics: [

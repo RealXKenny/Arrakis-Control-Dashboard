@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import catalog from '../../../src/features/admin/catalog.json';
+import catalog from '../../../src/features/admin/catalog.json' with { type: 'json' };
 import { ADMIN_SECTIONS, adminHref, findAdminTab, tabForOperation } from '../../../src/features/admin/navigation';
 
 it('hosts every catalog operation on exactly one screen', () => {
