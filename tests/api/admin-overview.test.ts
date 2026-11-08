@@ -15,10 +15,13 @@ const { config, session, fetcher } = vi.hoisted(() => ({
   session: vi.fn(),
   fetcher: vi.fn(),
 }));
-vi.mock('../../src/lib/env', () => ({ getServerEnv: () => config }));
+vi.mock('../../src/config/env', () => ({ getServerEnv: () => config }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'fixture' }) }) }));
 vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
 afterEach(() => vi.unstubAllGlobals());
 const call = () => GET(new Request('https://dashboard.test/api/v2/admin/overview'));
 const read = async () => (await (await call()).json()).data;

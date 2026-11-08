@@ -1,12 +1,12 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import route from '../../src/pages/api/v1/bot/world';
 import { responseMock } from '../helpers/response';
-import { readWorld } from '../../src/modules/portal/server/world';
+import { readWorld } from '../../src/features/portal/server/world';
 import { checkRateLimit } from '../../src/lib/security/rate-limit';
 
 const config = vi.hoisted(() => ({ BOT_API_TOKEN: 'independent-bot-credential-32-characters' as string | undefined }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => ({ NODE_ENV: 'test', LOG_LEVEL: 'FATAL', ...config }) }));
-vi.mock('../../src/modules/portal/server/world', () => ({ readWorld: vi.fn() }));
+vi.mock('../../src/features/portal/server/world', () => ({ readWorld: vi.fn() }));
 vi.mock('../../src/lib/security/rate-limit', () => ({ checkRateLimit: vi.fn(), getClientAddress: () => 'test' }));
 
 async function call(authorization?: string, url = '/api/v1/bot/world?map=DeepDesert', method = 'GET') {

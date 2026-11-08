@@ -1,5 +1,5 @@
-import { record, rows, label } from './inventory';
-import { getNumber } from './formatting';
+import { record, rows, label } from '../player/inventory';
+import { getNumber } from '../../lib/format';
 import type { PopulationHistory } from './population';
 
 export type WorldReading = {

@@ -4,8 +4,8 @@ import {
   summarizePopulation,
   populationSegments,
   totalPlayHours,
-} from '../../../src/modules/portal/utils/population';
-import { recordPopulation, readPopulationHistory } from '../../../src/modules/portal/server/population';
+} from '../../../src/features/portal/population';
+import { recordPopulation, readPopulationHistory } from '../../../src/features/portal/server/population';
 
 const mocks = vi.hoisted(() => ({
   set: vi.fn(),
@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   request: vi.fn(),
 }));
 vi.mock('../../../src/lib/redis/client', () => ({ getRedisClient: () => mocks }));
-vi.mock('../../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
+vi.mock('../../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
 vi.mock('../../../src/config/env', () => ({
   getServerEnv: () => ({ CONSOLE_URL: 'https://console.test', LOG_LEVEL: 'INFO' }),
 }));

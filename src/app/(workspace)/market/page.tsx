@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MARKET_OWNERS, MARKET_SORTS, marketHref, parseMarketQuery } from '../../../features/market/normalize';
-import { formatDecimal } from '../../../features/format';
-import { loadMarket } from '../../../server/market';
-import { requireSession } from '../../../server/session';
-import { Notice, PageHeader } from '../_components/page-header';
-import { MarketGrid } from './_components/market-grid';
+import { formatDecimal } from '../../../lib/format';
+import { loadMarket } from '../../../features/market/server/load';
+import { requireSession } from '../../../features/auth/server/session';
+import { Notice, PageHeader } from '../../../components/ui/page-header';
+import { MarketGrid } from '../../../features/market/components/market-grid';
 
 export const metadata: Metadata = { title: 'Market' };
 

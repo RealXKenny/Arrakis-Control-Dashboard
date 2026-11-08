@@ -1,6 +1,6 @@
 import '../assert-server';
 import { Redis, Cluster, ClusterOptions } from 'ioredis';
-import { getServerEnv } from '../env';
+import { getServerEnv } from '../../config/env';
 import { createLogger } from '../logger';
 import { clusterNodesFromEnv, parseRedisUrl } from './connection';
 

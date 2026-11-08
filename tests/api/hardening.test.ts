@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppError, getSafeError } from '../../src/lib/errors';
 import { createLogger, logger, logRequestAccess } from '../../src/lib/logger';
 import { checkRateLimit } from '../../src/lib/security/rate-limit';
-import { deleteSession, getSession, saveSession } from '../../src/lib/security/session-store';
-import { getRequestCookie } from '../../src/infrastructure/cookies';
+import { deleteSession, saveSession } from '../../src/features/auth/server/session-store';
+import { getSession } from '../../src/features/auth/server/session';
+import { getRequestCookie } from '../../src/server/cookies';
 
 describe('shared production hardening', () => {
   afterEach(() => {

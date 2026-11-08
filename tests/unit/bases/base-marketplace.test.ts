@@ -9,12 +9,12 @@ const { redis } = vi.hoisted(() => ({
 }));
 vi.mock('../../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 
-import { createMarketplaceRecord, parseMarketplaceLayout } from '../../../src/modules/marketplace/schema';
+import { createMarketplaceRecord, parseMarketplaceLayout } from '../../../src/features/bases/marketplace/schema';
 import {
   getMarketplaceRecord,
   listMarketplaceSummaries,
   publishMarketplaceRecord,
-} from '../../../src/modules/marketplace/server/store';
+} from '../../../src/features/bases/marketplace/server/store';
 
 const summaries = new Map<string, string>();
 const records = new Map<string, string>();

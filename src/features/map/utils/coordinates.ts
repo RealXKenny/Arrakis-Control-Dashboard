@@ -1,4 +1,4 @@
-import { getCoordinate } from './mapData';
+import { getCoordinate } from './map-data';
 
 export function worldToMapPoint(marker, map) {
   const x = getCoordinate(marker, 'x');

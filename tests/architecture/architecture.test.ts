@@ -97,7 +97,96 @@ describe('module boundaries', () => {
       expect(fs.readFileSync(route, 'utf8').replaceAll("'", '"')).toContain(
         `return runPagesApiHandler(req, res, "${method}", ${method})`,
       );
-      expect(imports(route).some((spec) => spec.includes('/modules/'))).toBe(true);
+      expect(imports(route).some((spec) => spec.includes('/features/'))).toBe(true);
     }
+  });
+});
+
+describe('repository organization', () => {
+  it('retires obsolete homes and keeps feature implementations out of route folders', () => {
+    for (const file of files) {
+      expect(normalize(file)).not.toMatch(/^(modules|infrastructure)\//);
+      expect(normalize(file)).not.toMatch(/^app\/.*\/_components\//);
+      expect(normalize(file)).not.toMatch(/^app\/(globals|tokens|legacy-bridge)\.css$/);
+    }
+  });
+
+  it('uses predictable kebab-case source filenames with framework exceptions', () => {
+    const special = /^(page|layout|route|loading|error|not-found|template|default|global-error|instrumentation)\.tsx?$/;
+    for (const file of files) {
+      const name = path.basename(file);
+      if (special.test(name) || name.startsWith('[') || name === 'next-auth.d.ts') continue;
+      expect(name, normalize(file)).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.d)?\.(ts|tsx)$/);
+    }
+  });
+
+  it('detects static and dynamic dependency cycles', () => {
+    const available = new Set(files.map((file) => path.resolve(file)));
+    const graph = new Map<string, string[]>();
+    for (const file of files) {
+      const absolute = path.resolve(file);
+      const edges = [];
+      for (const spec of imports(file)) {
+        if (!spec.startsWith('.')) continue;
+        const base = path.resolve(path.dirname(absolute), spec);
+        const resolved = [
+          base,
+          `${base}.ts`,
+          `${base}.tsx`,
+          path.join(base, 'index.ts'),
+          path.join(base, 'index.tsx'),
+        ].find((candidate) => available.has(candidate));
+        if (resolved) edges.push(resolved);
+      }
+      graph.set(absolute, edges);
+    }
+    const state = new Map<string, number>();
+    const stack: string[] = [];
+    const cycles: string[] = [];
+    function visit(file: string) {
+      if (state.get(file) === 2) return;
+      if (state.get(file) === 1) {
+        const start = stack.indexOf(file);
+        cycles.push([...stack.slice(start), file].map((entry) => normalize(entry)).join(' -> '));
+        return;
+      }
+      state.set(file, 1);
+      stack.push(file);
+      for (const dependency of graph.get(file) ?? []) visit(dependency);
+      stack.pop();
+      state.set(file, 2);
+    }
+    for (const file of graph.keys()) visit(file);
+    expect(cycles).toEqual([]);
+  });
+
+  it('allows only documented files in the repository root', () => {
+    const allowed = new Set([
+      '.env',
+      '.env.example',
+      '.gitattributes',
+      '.gitignore',
+      '.prettierignore',
+      '.prettierrc.json',
+      'AGENTS.md',
+      'CHANGELOG.md',
+      'LICENSE',
+      'README.md',
+      'eslint.config.mjs',
+      'next-env.d.ts',
+      'next.config.ts',
+      'package-lock.json',
+      'package.json',
+      'playwright.config.ts',
+      'postcss.config.mjs',
+      'tailwind.config.ts',
+      'tsconfig.json',
+      'vitest.config.mjs',
+    ]);
+    const rootFiles = fs
+      .readdirSync(path.dirname(root), { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name !== 'tsconfig.tsbuildinfo')
+      .map((entry) => entry.name);
+    expect(rootFiles.filter((file) => !allowed.has(file))).toEqual([]);
   });
 });

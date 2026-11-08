@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { loadGuildDirectory } from '../../../server/guilds';
-import { requireSession } from '../../../server/session';
-import { Notice, PageHeader } from '../_components/page-header';
-import { GuildDirectory } from './_components/guild-directory';
+import { loadGuildDirectory } from '../../../features/guilds/server/load';
+import { requireSession } from '../../../features/auth/server/session';
+import { Notice, PageHeader } from '../../../components/ui/page-header';
+import { GuildDirectory } from '../../../features/guilds/components/guild-directory';
 
 export const metadata: Metadata = { title: 'Guilds' };
 

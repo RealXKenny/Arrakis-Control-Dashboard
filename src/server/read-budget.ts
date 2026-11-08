@@ -1,6 +1,6 @@
 import '../lib/assert-server';
 import { headers } from 'next/headers';
-import { getServerEnv } from '../lib/env';
+import { getServerEnv } from '../config/env';
 import { checkRateLimit, getClientAddress, type RateLimitRule } from '../lib/security/rate-limit';
 
 /** V2 read budget: API_GLOBAL_READ_LIMIT (default 2400) reads/min across the app, 120 reads/min per client IP. */

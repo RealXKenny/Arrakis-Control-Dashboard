@@ -38,7 +38,7 @@ describe('release notes', () => {
     expect(release).not.toContain('packages: write');
     expect(release).toContain('if git rev-parse --verify --quiet "refs/tags/$tag"');
     expect(release).toMatch(/- name: Build Pterodactyl egg\r?\n\s+if: steps\.release\.outputs\.create == 'true'/);
-    expect(release).toContain('node src/config/pterodactyl-egg.mjs "$EGG_FILE"');
+    expect(release).toContain('node scripts/deployment/build-pterodactyl-egg.mjs "$EGG_FILE"');
     expect(release).toContain("github.event.workflow_run.conclusion == 'success'");
     expect(release).toContain("github.event.workflow_run.event == 'push'");
     expect(release).toContain("github.event.workflow_run.head_branch == 'main'");

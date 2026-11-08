@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { requireSession } from '../../server/session';
+import { requireSession } from '../../features/auth/server/session';
 
 export default async function WorkspaceLayout({ children }: { children: ReactNode }) {
   // Early redirect only; each page re-checks, because layouts are skipped on partial navigation.

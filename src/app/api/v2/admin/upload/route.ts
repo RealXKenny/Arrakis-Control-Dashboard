@@ -1,7 +1,7 @@
 import { assertSameOrigin, route } from '../../../../../server/http';
-import { requireApiAdmin } from '../../../../../server/admin/access';
-import { executeAdminOperation } from '../../../../../server/admin/execute';
-import { readAdminUpload } from '../../../../../server/admin/upload';
+import { requireApiAdmin } from '../../../../../features/admin/server/api-access';
+import { executeAdminOperation } from '../../../../../features/admin/server/execute';
+import { readAdminUpload } from '../../../../../features/admin/server/upload';
 
 export const dynamic = 'force-dynamic';
 

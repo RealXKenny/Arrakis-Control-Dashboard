@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GET, POST, READ } from '../../src/modules/guilds/server/chat';
+import { GET, POST, READ } from '../../src/features/guilds/server/chat';
 
 const { session, linkedPlayer, request, redis } = vi.hoisted(() => ({
   session: vi.fn(),
@@ -8,9 +8,12 @@ const { session, linkedPlayer, request, redis } = vi.hoisted(() => ({
   request: vi.fn(),
   redis: { eval: vi.fn() },
 }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
-vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
-vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request }) }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
+vi.mock('../../src/features/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
+vi.mock('../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request }) }));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 const id = createHash('sha256').update('2:discord-user').digest('hex');
 const generation = 'a62f594e-7a04-47d7-b3f9-94f9abf8aaab';

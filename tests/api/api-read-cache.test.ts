@@ -1,8 +1,11 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { cachedApiReading, clearApiReadCache } from '../../src/infrastructure/api-read-cache';
+import { cachedApiReading, clearApiReadCache } from '../../src/server/api-read-cache';
 const { session } = vi.hoisted(() => ({ session: vi.fn() }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
 beforeEach(() => {
   clearApiReadCache();
   session.mockReset();

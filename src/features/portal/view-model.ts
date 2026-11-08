@@ -10,11 +10,11 @@ import {
   getStorageData,
   getWaterData,
   isOwnedBase,
-} from './bases';
-import { buildCharacter } from './character';
-import { clampPercent, formatStorage, formatVolume } from './formatting';
+} from '../bases/view-model';
+import { buildCharacter } from '../player/character';
+import { clampPercent, formatStorage, formatVolume } from '../../lib/format';
 import { guildRoleLabel } from './guild';
-import { label, record } from './inventory';
+import { label, record } from '../player/inventory';
 
 /**
  * Typed, display-ready view of the legacy player profile. Built once on the server so pages receive

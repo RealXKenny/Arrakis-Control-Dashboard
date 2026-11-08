@@ -1,4 +1,4 @@
-import { guildMemberId, guildMemberName, guildMemberRole } from '../../modules/guilds/members';
+import { guildMemberId, guildMemberName, guildMemberRole } from './member-identity';
 
 export interface GuildMemberView {
   /** Provider player ID, or null when the roster row did not carry a safe one. */

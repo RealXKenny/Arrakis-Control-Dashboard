@@ -2,9 +2,9 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { GET as catalog } from '../../src/app/api/v2/admin/catalog/route';
 import { POST as execute } from '../../src/app/api/v2/admin/execute/route';
 import { POST as upload } from '../../src/app/api/v2/admin/upload/route';
-import { getSession } from '../../src/lib/security/session-store';
-import { executeAdminOperation, limitBytes, sanitizedEvents } from '../../src/server/admin/execute';
-import { parseAdminRequest } from '../../src/modules/admin/server/request';
+import { getSession } from '../../src/features/auth/server/session';
+import { executeAdminOperation, limitBytes, sanitizedEvents } from '../../src/features/admin/server/execute';
+import { parseAdminRequest } from '../../src/features/admin/server/request';
 import { adminGet, adminPost, adminUpload } from '../helpers/admin-v2';
 
 const config = vi.hoisted(() => ({
@@ -18,10 +18,13 @@ const config = vi.hoisted(() => ({
   CONSOLE_API_KEY: 'ordinary-key',
   ADAPTER_TOKEN: 'separate-adapter-key',
 }));
-vi.mock('../../src/lib/env', () => ({ getServerEnv: () => config }));
+vi.mock('../../src/config/env', () => ({ getServerEnv: () => config }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'admin' }) }) }));
 vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: vi.fn() }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = vi.fn();
+  return { getSession, currentSession: () => getSession() };
+});
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => ({ eval: async () => 1 }) }));
 
 const session = () => ({

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import MapWindow from '../../../features/map/components/MapWindow';
+import MapWindow from '../../../features/map/components/map-window';
 import { MAP_LABELS, resolveMapName } from '../../../features/map/maps';
 import { spendReadBudget } from '../../../server/read-budget';
-import { requireSession } from '../../../server/session';
-import { Notice, PageHeader } from '../_components/page-header';
-import { MapSwitch } from './_components/map-switch';
+import { requireSession } from '../../../features/auth/server/session';
+import { Notice, PageHeader } from '../../../components/ui/page-header';
+import { MapSwitch } from '../../../features/map/components/map-switch';
 
 export const metadata: Metadata = { title: 'Live map' };
 

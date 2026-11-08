@@ -1,5 +1,5 @@
-import { runPagesApiHandler } from '../../../../infrastructure/pages-api';
-import { GET, POST } from '../../../../modules/guilds/server/requirements';
+import { runPagesApiHandler } from '../../../../server/pages-api';
+import { GET, POST } from '../../../../features/guilds/server/requirements';
 
 export const config = { api: { bodyParser: { sizeLimit: '128kb' } } };
 

@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BASE_SORTS, baseBrowseHref, parseBaseQuery } from '../../../features/bases/browse';
-import { loadBaseBrowse } from '../../../server/base-marketplace';
-import { requireSession } from '../../../server/session';
-import { ArrowRightIcon, UploadIcon } from '../../_components/icons';
-import { Notice, PageHeader } from '../_components/page-header';
-import { BaseCard } from './_components/base-card';
+import { loadBaseBrowse } from '../../../features/bases/server/marketplace';
+import { requireSession } from '../../../features/auth/server/session';
+import { ArrowRightIcon, UploadIcon } from '../../../components/icons';
+import { Notice, PageHeader } from '../../../components/ui/page-header';
+import { BaseCard } from '../../../features/bases/components/marketplace/base-card';
 
 export const metadata: Metadata = { title: 'Base Marketplace' };
 

@@ -1,8 +1,8 @@
 import { Suspense, type ReactNode } from 'react';
 import { notFound } from 'next/navigation';
-import { isDashboardAdmin } from '../../../modules/admin/server/access';
-import { requireSession } from '../../../server/session';
-import { AdminNav } from './_components/admin-nav';
+import { isDashboardAdmin } from '../../../features/admin/server/access';
+import { requireSession } from '../../../features/auth/server/session';
+import { AdminNav } from '../../../features/admin/components/admin-nav';
 
 /**
  * Shared administrator frame for `/admin` and `/admin/changelog`. This is an early gate only:

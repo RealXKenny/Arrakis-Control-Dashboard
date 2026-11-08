@@ -1,4 +1,4 @@
-import { getNumber } from './formatting';
+import { getNumber } from '../../lib/format';
 
 export function getCurrencyValue(...values) {
   for (const value of values) {

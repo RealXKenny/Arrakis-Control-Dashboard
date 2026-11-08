@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { pieceBreakdown, prettyPieceName } from '../../../../features/bases/schema';
-import { loadBaseDetail } from '../../../../server/base-marketplace';
-import { requireSession } from '../../../../server/session';
-import { Notice } from '../../_components/page-header';
-import { Thumbnail } from '../_components/base-card';
-import { DeleteButton } from '../_components/delete-button';
-import { ImportButton } from '../_components/import-button';
+import { loadBaseDetail } from '../../../../features/bases/server/marketplace';
+import { requireSession } from '../../../../features/auth/server/session';
+import { Notice } from '../../../../components/ui/page-header';
+import { Thumbnail } from '../../../../features/bases/components/marketplace/base-card';
+import { DeleteButton } from '../../../../features/bases/components/marketplace/delete-button';
+import { ImportButton } from '../../../../features/bases/components/marketplace/import-button';
 
 export const metadata: Metadata = { title: 'Base' };
 

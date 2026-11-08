@@ -8,7 +8,7 @@ import { tabForOperation } from '../../src/features/admin/navigation';
 import type { AdminOperation } from '../../src/features/admin/types';
 
 const { fetcher } = vi.hoisted(() => ({ fetcher: vi.fn() }));
-vi.mock('../../src/lib/env', () => ({
+vi.mock('../../src/config/env', () => ({
   getServerEnv: () => ({
     CONSOLE_URL: 'https://console.test',
     APP_URL: 'https://dashboard.test',
@@ -19,14 +19,15 @@ vi.mock('../../src/lib/env', () => ({
     LOG_LEVEL: 'FATAL',
   }),
 }));
-vi.mock('../../src/lib/security/session-store', () => ({
-  getSession: async () => ({
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = async () => ({
     user: { id: '456084885220884480', username: 'Administrator' },
     guildId: 'guild',
     roleIds: ['verified'],
     expiresAt: Date.now() + 60000,
-  }),
-}));
+  });
+  return { getSession, currentSession: () => getSession() };
+});
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'fixture' }) }) }));
 vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => ({ eval: async () => 1 }) }));

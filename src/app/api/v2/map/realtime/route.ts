@@ -1,7 +1,7 @@
 import { AppError } from '../../../../../lib/errors';
-import { loadRealtime } from '../../../../../modules/map/server/realtime-snapshot';
+import { loadRealtime } from '../../../../../features/map/server/realtime-snapshot';
 import { json, route } from '../../../../../server/http';
-import { currentSession } from '../../../../../server/session';
+import { currentSession } from '../../../../../features/auth/server/session';
 
 export const dynamic = 'force-dynamic';
 

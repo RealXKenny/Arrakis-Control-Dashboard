@@ -1,9 +1,9 @@
 import '../lib/assert-server';
 import { AppError } from '../lib/errors';
-import { getServerEnv } from '../lib/env';
+import { getServerEnv } from '../config/env';
 import { logger } from '../lib/logger';
-import type { DashboardSession } from '../lib/security/session-store';
-import { currentSession } from './session';
+import type { DashboardSession } from '../features/auth/server/session-store';
+import { currentSession } from '../features/auth/server/session';
 
 const NO_STORE = { 'Cache-Control': 'no-store' } as const;
 

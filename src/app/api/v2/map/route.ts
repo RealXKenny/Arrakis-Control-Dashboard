@@ -1,8 +1,8 @@
 import { AppError } from '../../../../lib/errors';
-import { REALTIME_MAPS } from '../../../../modules/map/server/realtime-snapshot';
-import { loadMapData } from '../../../../modules/map/server/load-map';
+import { REALTIME_MAPS } from '../../../../features/map/server/realtime-snapshot';
+import { loadMapData } from '../../../../features/map/server/load-map';
 import { json, route } from '../../../../server/http';
-import { currentSession } from '../../../../server/session';
+import { currentSession } from '../../../../features/auth/server/session';
 
 export const dynamic = 'force-dynamic';
 

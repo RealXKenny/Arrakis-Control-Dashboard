@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { loadPortalProfile } from '../../../server/portal';
-import { requireSession } from '../../../server/session';
-import { ProfileFailure } from '../_components/gauge-notice';
-import { Notice, PageHeader } from '../_components/page-header';
-import { SegmentedNav } from '../_components/segmented-nav';
-import { HoldingCard } from './_components/base-card';
+import { loadPortalProfile } from '../../../features/portal/server/load';
+import { requireSession } from '../../../features/auth/server/session';
+import { ProfileFailure } from '../../../components/feedback/gauge-notice';
+import { Notice, PageHeader } from '../../../components/ui/page-header';
+import { SegmentedNav } from '../../../components/ui/segmented-nav';
+import { HoldingCard } from '../../../features/bases/components/holdings/base-card';
 
 export const metadata: Metadata = { title: 'Holdings' };
 
@@ -28,7 +28,6 @@ export default async function HoldingsPage({
 
   const owned = result.profile.bases.filter((base) => base.owned);
   const shared = result.profile.bases.filter((base) => !base.owned);
-  // Same rule as vehicles: the switcher only exists when there is something to switch between.
   const showBar = owned.length > 0 && shared.length > 0;
   const view = !showBar ? (owned.length ? 'owned' : 'shared') : requested === 'shared' ? 'shared' : 'owned';
   const visible = view === 'owned' ? owned : shared;

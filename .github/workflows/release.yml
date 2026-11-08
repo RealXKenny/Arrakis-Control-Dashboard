@@ -109,7 +109,7 @@ jobs:
         env:
           EGG_FILE: ${{ runner.temp }}/egg-arrakis-control-dashboard.json
         run: |
-          node src/config/pterodactyl-egg.mjs "$EGG_FILE"
+          node scripts/deployment/build-pterodactyl-egg.mjs "$EGG_FILE"
           node -e "JSON.parse(require('node:fs').readFileSync(process.env.EGG_FILE, 'utf8'))"
 
       - name: Create GitHub Release

@@ -1,8 +1,11 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GET } from '../../src/modules/guilds/server/application-status';
+import { GET } from '../../src/features/guilds/server/application-status';
 const { session, redis } = vi.hoisted(() => ({ session: vi.fn(), redis: { eval: vi.fn() } }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 const id = createHash('sha256').update('2:user').digest('hex');
 const req = (guildIds = '2,3') => ({ query: { guildIds }, headers: { cookie: 'dashboard_session=test' } });

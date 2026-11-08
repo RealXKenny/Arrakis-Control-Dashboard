@@ -12,7 +12,7 @@ import {
   parseLayoutJson,
   uploadMetaSchema,
 } from '../../../../../features/bases/schema';
-import { ownerKeyFor, publishBase, MAX_LISTINGS_PER_USER } from '../../../../../server/base-marketplace';
+import { ownerKeyFor, publishBase, MAX_LISTINGS_PER_USER } from '../../../../../features/bases/server/marketplace';
 import { assertSameOrigin, json, requireApiSession, route } from '../../../../../server/http';
 
 // Uploads are user content and cost Redis memory: 10 per hour per member, on top of the 25-listing cap.

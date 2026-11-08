@@ -1,7 +1,7 @@
 import { responseMock } from '../helpers/response';
 import { describe, expect, it } from 'vitest';
-import { NextResponse, runPagesApiHandler } from '../../src/infrastructure/pages-api';
-import marketConfig from '../../src/pages/api/market/config/index';
+import { NextResponse, runPagesApiHandler } from '../../src/server/pages-api';
+import marketConfig from '../../src/pages/api/market/config';
 import { acquireApiCapacity } from '../../src/lib/security/api-capacity';
 
 describe('Pages API boundary', () => {

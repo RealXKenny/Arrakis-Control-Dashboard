@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { safeNextPath } from '../../features/auth/schemas';
-import { currentSession } from '../../server/session';
-import { LoginPanel } from './_components/login-panel';
+import { currentSession } from '../../features/auth/server/session';
+import { LoginPanel } from '../../features/auth/components/login-panel';
 
 export const metadata: Metadata = { title: 'Sign in' };
 

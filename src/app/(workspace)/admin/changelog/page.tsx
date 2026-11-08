@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getServerEnv } from '../../../../lib/env';
-import { isDashboardAdmin } from '../../../../modules/admin/server/access';
-import { readChangelog } from '../../../../modules/changelog/server/read';
-import { getAnnouncementStatus } from '../../../../server/changelog-announce';
-import { requireSession } from '../../../../server/session';
-import { PageHeader } from '../../_components/page-header';
-import { Composer } from './_components/composer';
+import { getServerEnv } from '../../../../config/env';
+import { isDashboardAdmin } from '../../../../features/admin/server/access';
+import { readChangelog } from '../../../../features/changelog/server/read';
+import { getAnnouncementStatus } from '../../../../features/changelog/server/announce';
+import { requireSession } from '../../../../features/auth/server/session';
+import { PageHeader } from '../../../../components/ui/page-header';
+import { Composer } from '../../../../features/admin/components/changelog/composer';
 
 export const metadata: Metadata = { title: 'Discord announcements' };
 

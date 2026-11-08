@@ -15,7 +15,9 @@ afterEach(() => {
 });
 
 // Lifetime is under test here; the Discord re-check has its own tests (tests/unit/lib/session-reverify.test.ts).
-vi.mock('../../src/server/auth/reverify', () => ({ reverifySession: async (_id: string, record: unknown) => record }));
+vi.mock('../../src/features/auth/server/reverify', () => ({
+  reverifySession: async (_id: string, record: unknown) => record,
+}));
 
 const session = () => ({
   user: { id: 'tester' },
@@ -25,12 +27,12 @@ const session = () => ({
 });
 
 it('keeps a login across module reloads and expires it at thirty days', async () => {
-  const first = await import('../../src/lib/security/session-store');
+  const first = await import('../../src/features/auth/server/session-store');
   expect(first.sessionTtlSeconds()).toBe(2592000);
   await first.saveSession('reload-test', session());
   vi.advanceTimersByTime(2 * 60 * 1000);
   vi.resetModules();
-  const reloaded = await import('../../src/lib/security/session-store');
+  const reloaded = await import('../../src/features/auth/server/session');
   expect(await reloaded.getSession('reload-test')).not.toBeNull();
   vi.advanceTimersByTime((30 * 24 * 60 * 60 - 121) * 1000);
   expect(await reloaded.getSession('reload-test')).not.toBeNull();
@@ -40,7 +42,7 @@ it('keeps a login across module reloads and expires it at thirty days', async ()
 
 it('writes the thirty-day lifetime to Redis and preserves logout revocation', async () => {
   storage.enabled = true;
-  const store = await import('../../src/lib/security/session-store');
+  const store = await import('../../src/features/auth/server/session-store');
   const value = session();
   await store.saveSession('redis-test', value);
   expect(storage.set).toHaveBeenCalledWith(expect.stringMatching(/^arrakis:session:/), value, { ex: 2592000 });
@@ -50,7 +52,7 @@ it('writes the thirty-day lifetime to Redis and preserves logout revocation', as
 
 it('uses remaining lifetime when saving an already-running session', async () => {
   storage.enabled = true;
-  const store = await import('../../src/lib/security/session-store');
+  const store = await import('../../src/features/auth/server/session-store');
   const value = session();
   vi.advanceTimersByTime(6 * 60 * 60 * 1000);
   await store.saveSession('remaining-test', value);
@@ -60,6 +62,6 @@ it('uses remaining lifetime when saving an already-running session', async () =>
 it('does not treat a Redis outage as an expired login or use a local fallback', async () => {
   storage.enabled = true;
   storage.get.mockRejectedValueOnce(new Error('storage unavailable'));
-  const store = await import('../../src/lib/security/session-store');
+  const store = await import('../../src/features/auth/server/session');
   await expect(store.getSession('outage-test')).rejects.toThrow('storage unavailable');
 });

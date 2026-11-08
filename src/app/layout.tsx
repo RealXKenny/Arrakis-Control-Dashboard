@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from 'next';
 import { Archivo, JetBrains_Mono } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { navIdentity } from '../features/auth/identity';
-import { getServerEnv } from '../lib/env';
-import { currentSession } from '../server/session';
-import { isDashboardAdmin } from '../modules/admin/server/access';
-import { SiteFooter } from './_components/site-footer';
-import { TopNavigation } from './_components/top-navigation';
-import './globals.css';
+import { getServerEnv } from '../config/env';
+import { currentSession } from '../features/auth/server/session';
+import { isDashboardAdmin } from '../features/admin/server/access';
+import { SiteFooter } from '../components/layout/site-footer';
+import { TopNavigation } from '../components/navigation/top-navigation';
+import '../styles/globals.css';
 
 // Archivo's width axis gives the monolithic, wide-set headline voice; Mono carries data and labels.
 const sans = Archivo({

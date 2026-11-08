@@ -2,8 +2,8 @@ import { AppError } from '../../../../../lib/errors';
 import { readBoundedBody } from '../../../../../lib/http/bounded-body';
 import { checkRateLimit } from '../../../../../lib/security/rate-limit';
 import { announcementInputSchema } from '../../../../../features/changelog/discord';
-import { isDashboardAdmin } from '../../../../../modules/admin/server/access';
-import { announce } from '../../../../../server/changelog-announce';
+import { isDashboardAdmin } from '../../../../../features/admin/server/access';
+import { announce } from '../../../../../features/changelog/server/announce';
 import { assertSameOrigin, json, requireApiSession, route } from '../../../../../server/http';
 
 const MAX_BODY_BYTES = 64 * 1024;

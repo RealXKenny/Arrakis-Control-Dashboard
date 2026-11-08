@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { gunzipSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
-import { surfaceHeight, type HeightSurface } from '../../../src/features/map/terrain/surface/heightSurface';
+import { surfaceHeight, type HeightSurface } from '../../../src/features/map/terrain/surface/height-surface';
 import {
   createSurfaceGeometry,
   terrainPoint,
   renderedSurfaceHeight,
   terrainOccludes,
-} from '../../../src/features/map/terrain/scene/sceneGeometry';
+} from '../../../src/features/map/terrain/scene/scene-geometry';
 import * as THREE from 'three';
-import { renderQuality } from '../../../src/features/map/terrain/scene/renderQuality';
-import { fitTerrainCamera } from '../../../src/features/map/terrain/scene/sceneFraming';
+import { renderQuality } from '../../../src/features/map/terrain/scene/render-quality';
+import { fitTerrainCamera } from '../../../src/features/map/terrain/scene/scene-framing';
 
 const map = { width: 100, height: 100, minX: 0, maxX: 100, minY: 0, maxY: 100 };
 const surface: HeightSurface = {

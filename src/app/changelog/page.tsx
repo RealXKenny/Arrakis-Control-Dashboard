@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Fragment } from 'react';
-import { readChangelog } from '../../modules/changelog/server/read';
+import { readChangelog } from '../../features/changelog/server/read';
 
 export const metadata: Metadata = { title: 'Changelog' };
 

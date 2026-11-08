@@ -1,5 +1,5 @@
 import { AppError } from '../../../../../../../lib/errors';
-import { getBaseImage } from '../../../../../../../server/base-marketplace';
+import { getBaseImage } from '../../../../../../../features/bases/server/marketplace';
 import { requireApiSession, route } from '../../../../../../../server/http';
 
 type Context = { params: Promise<{ id: string }> };

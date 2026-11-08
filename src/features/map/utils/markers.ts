@@ -1,4 +1,4 @@
-import { getCoordinate } from './mapData';
+import { getCoordinate } from './map-data';
 
 const movingTypes = new Set(['player', 'vehicle', 'worm', 'realtime_npc', 'civilian', 'storm', 'coriolis']);
 

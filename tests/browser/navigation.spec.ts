@@ -4,7 +4,7 @@ test('desktop uses one active topbar with accessible dropdowns, notifications, a
   page,
 }) => {
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
-  await page.setViewportSize({ width: 1536, height: 900 });
+  await page.setViewportSize({ width: 1600, height: 900 });
   await page.goto('/holdings');
 
   const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
@@ -35,7 +35,7 @@ test('desktop uses one active topbar with accessible dropdowns, notifications, a
   const menuBounds = await basesMenu.boundingBox();
   expect(menuBounds).not.toBeNull();
   expect(menuBounds!.x).toBeGreaterThanOrEqual(0);
-  expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(1536);
+  expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(1600);
   await primary.getByRole('button', { name: 'Guilds', exact: true }).click();
   await expect(page.getByRole('menu', { name: 'Bases', exact: true })).toHaveCount(0);
   await expect(page.getByRole('menu', { name: 'Guilds', exact: true })).toBeVisible();
@@ -95,7 +95,7 @@ test('administration stays restricted and mobile keeps every destination in a fo
 
 test('tablet moves lower-priority destinations into More without horizontal overflow', async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
-  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/holdings');
   const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
   await expect(primary.getByRole('link', { name: 'Character', exact: true })).toHaveCount(0);

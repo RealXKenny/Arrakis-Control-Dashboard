@@ -1,5 +1,5 @@
-import { requireApiAdmin } from '../../../../../server/admin/access';
-import { adminCatalog } from '../../../../../server/admin/catalog';
+import { requireApiAdmin } from '../../../../../features/admin/server/api-access';
+import { adminCatalog } from '../../../../../features/admin/server/catalog';
 import { json, route } from '../../../../../server/http';
 
 export const dynamic = 'force-dynamic';

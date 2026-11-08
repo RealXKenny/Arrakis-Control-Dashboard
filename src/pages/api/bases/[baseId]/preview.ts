@@ -1,5 +1,5 @@
-import { runPagesApiHandler } from '../../../../infrastructure/pages-api';
-import { GET, POST } from '../../../../modules/bases/server/preview-settings';
+import { runPagesApiHandler } from '../../../../server/pages-api';
+import { GET, POST } from '../../../../features/bases/server/preview-settings';
 
 export const config = { api: { bodyParser: { sizeLimit: '1500kb' } } };
 

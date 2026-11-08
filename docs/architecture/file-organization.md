@@ -4,22 +4,22 @@ Arrakis Control uses feature ownership with a small set of shared infrastructure
 
 ## Top-level ownership
 
-| Directory | Owns |
-| --- | --- |
-| `.github/workflows/` | CI and release automation |
-| `docs/` | Architecture, development, deployment, and API documentation |
-| `scripts/` | Executable development, maintenance, runtime, and deployment tools |
-| `src/app/` | App Router routes, layouts, metadata, route handlers, and Next.js special files |
-| `src/pages/api/` | The remaining legacy Pages Router API entry points |
-| `src/components/` | Shared application components and design-system primitives |
-| `src/features/` | Business domains and their components, hooks, schemas, services, types, and utilities |
-| `src/server/` | Shared request infrastructure and external-service integrations |
-| `src/lib/` | Shared utilities and focused Redis, cache, security, and HTTP modules |
-| `src/config/` | Canonical environment validation and application configuration |
-| `src/types/` | TypeScript contracts shared across otherwise unrelated domains |
-| `src/styles/` | Global styles and design tokens |
-| `src/assets/` | Bundled images, models, terrain, attribution, and other static resources |
-| `tests/` | API, architecture, browser, load, and domain-organized unit tests |
+| Directory            | Owns                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| `.github/workflows/` | CI and release automation                                                             |
+| `docs/`              | Architecture, development, deployment, and API documentation                          |
+| `scripts/`           | Executable development, maintenance, runtime, and deployment tools                    |
+| `src/app/`           | App Router routes, layouts, metadata, route handlers, and Next.js special files       |
+| `src/pages/api/`     | The remaining legacy Pages Router API entry points                                    |
+| `src/components/`    | Shared application components and design-system primitives                            |
+| `src/features/`      | Business domains and their components, hooks, schemas, services, types, and utilities |
+| `src/server/`        | Shared request infrastructure and external-service integrations                       |
+| `src/lib/`           | Shared utilities and focused Redis, cache, security, and HTTP modules                 |
+| `src/config/`        | Canonical environment validation and application configuration                        |
+| `src/types/`         | TypeScript contracts shared across otherwise unrelated domains                        |
+| `src/styles/`        | Global styles and design tokens                                                       |
+| `src/assets/`        | Bundled images, models, terrain, attribution, and other static resources              |
+| `tests/`             | API, architecture, browser, load, and domain-organized unit tests                     |
 
 Generated directories such as `.next/`, `node_modules/`, `coverage/`, `test-results/`, and `playwright-report/` are not source directories. Never commit them. `tsconfig.tsbuildinfo` is also generated and ignored.
 

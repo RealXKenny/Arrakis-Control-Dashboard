@@ -1,0 +1,336 @@
+/* V2 "Modern Dune" entry stylesheet. Imported only by the App Router root layout. */
+@import 'tailwindcss' source(none);
+@config '../../tailwind.config.ts';
+@import './tokens.css';
+
+/* Scan only V2 code; src/assets is huge and holds no class names. */
+@source '../app';
+@source '../components';
+@source '../features';
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    background-color: var(--color-obsidian-950);
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-obsidian-950);
+    color: var(--color-sand-200);
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-sand-50);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: var(--color-spice-500);
+    color: var(--color-obsidian-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-spice-400);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* Fremen visor: translucent sand glass over obsidian. Flat edges, no glow. */
+  .panel {
+    position: relative;
+    background-color: rgb(241 233 216 / 0.04);
+    border: 1px solid rgb(241 233 216 / 0.1);
+    box-shadow:
+      inset 0 1px 0 0 rgb(241 233 216 / 0.08),
+      6px 6px 0 0 rgb(0 0 0 / 0.6);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    backdrop-filter: blur(14px) saturate(1.1);
+  }
+
+  .panel-interactive {
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .panel-interactive:hover {
+    transform: translate(-2px, -2px);
+    border-color: rgb(249 161 31 / 0.55);
+    box-shadow:
+      inset 0 1px 0 0 rgb(241 233 216 / 0.1),
+      8px 8px 0 0 rgb(174 69 8 / 0.85);
+  }
+
+  /* Solid sand surface for high-contrast callouts. */
+  .panel-sand {
+    background-color: var(--color-sand-200);
+    color: var(--color-obsidian-950);
+    border: 1px solid var(--color-sand-400);
+    box-shadow: 6px 6px 0 0 rgb(0 0 0 / 0.6);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.32em;
+    color: var(--color-spice-400);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    min-height: 2.75rem;
+    padding: 0 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease,
+      background-color 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .btn-primary {
+    background-color: var(--color-spice-500);
+    color: var(--color-obsidian-950);
+    border: 1px solid var(--color-spice-300);
+    box-shadow: 4px 4px 0 0 var(--color-spice-800);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-spice-400);
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 0 var(--color-spice-800);
+  }
+
+  .btn-primary:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 0 var(--color-spice-800);
+  }
+
+  .btn-ghost {
+    color: var(--color-sand-100);
+    border: 1px solid rgb(241 233 216 / 0.25);
+    background-color: rgb(241 233 216 / 0.03);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--color-spice-400);
+    color: var(--color-spice-300);
+  }
+}
+
+@utility bg-noise {
+  /* Static film grain; an inline SVG keeps this free of network requests. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.9 0 0 0 0 0.75 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.command-header {
+  background-image:
+    radial-gradient(circle at 22% 0%, rgb(240 160 32 / 0.07), transparent 32%),
+    linear-gradient(90deg, rgb(200 164 106 / 0.025), transparent 35%, rgb(240 160 32 / 0.025));
+}
+
+/*
+ * Top-level navigation controls. Sizes step up with the viewport instead of being fixed:
+ * compact up to 2000px (so every item still fits beside the account controls), roomier above it.
+ *
+ * Two states are deliberately different:
+ *  - data-current: the page you are on. Quiet and persistent: amber text and a thin underline, no box.
+ *  - data-open:    the menu that is expanded right now. Loud and temporary: a lit amber box.
+ */
+.command-nav-control {
+  position: relative;
+  min-height: 3rem;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid transparent;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  color: #c8bda9;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  white-space: nowrap;
+}
+
+@media (min-width: 1840px) {
+  .command-nav-control {
+    padding: 0 0.875rem;
+  }
+}
+
+/* Only very wide screens get the larger controls: all nine items plus the account block must still fit. */
+@media (min-width: 2000px) {
+  .command-nav-control {
+    min-height: 3.25rem;
+    gap: 0.5625rem;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+.command-nav-control:hover {
+  border-color: rgb(200 164 106 / 0.25);
+  background: rgb(200 164 106 / 0.055);
+  color: #f1e9d8;
+}
+
+.command-nav-control[data-current='true'],
+.command-nav-control[data-overflow-current='true'] {
+  color: #f6c56d;
+}
+
+.command-nav-control[data-current='true']::after,
+.command-nav-control[data-overflow-current='true']::after {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.3125rem;
+  left: 0.75rem;
+  height: 2px;
+  background: #f0a020;
+  content: '';
+}
+
+.command-nav-control[data-open='true'],
+.command-utility[data-open='true'] {
+  border-color: #d78d1c;
+  background: linear-gradient(180deg, rgb(240 160 32 / 0.26), rgb(174 69 8 / 0.14));
+  color: #ffe0a6;
+  box-shadow:
+    inset 0 1px 0 rgb(255 224 166 / 0.16),
+    0 0 20px rgb(240 160 32 / 0.16);
+}
+
+/* More holds the overflow items below 1560px; it only signals "current" while they are tucked inside it. */
+@media (min-width: 1560px) {
+  .command-nav-control[data-overflow-current='true'] {
+    color: #c8bda9;
+  }
+
+  .command-nav-control[data-overflow-current='true']::after {
+    display: none;
+  }
+}
+
+.command-menu {
+  background-image:
+    radial-gradient(circle at 12% 0%, rgb(240 160 32 / 0.08), transparent 34%),
+    linear-gradient(145deg, #171714, #0d0e10 70%);
+  box-shadow:
+    inset 0 2px 0 rgb(240 160 32 / 0.5),
+    0 22px 65px rgb(0 0 0 / 0.65);
+  transform-origin: top center;
+}
+
+/* The pointer sits under the trigger that opened the menu; its position is measured in the component. */
+.command-menu::before {
+  position: absolute;
+  top: -5px;
+  left: var(--menu-arrow-x, 2rem);
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border-top: 1px solid #d78d1c;
+  border-left: 1px solid #d78d1c;
+  background: #d78d1c;
+  content: '';
+  transform: rotate(45deg);
+}
+
+.command-menu[data-state='open'] {
+  animation: nav-menu-enter 180ms ease-out both;
+}
+
+.command-menu[data-state='closed'] {
+  animation: nav-menu-exit 120ms ease-in both;
+  pointer-events: none;
+}
+
+.command-summary {
+  background-image:
+    linear-gradient(145deg, rgb(240 160 32 / 0.1), transparent 60%),
+    repeating-linear-gradient(135deg, transparent 0 18px, rgb(200 164 106 / 0.025) 18px 19px);
+}
+
+/* Footer: one quiet amber hairline above the border, nothing glowing. */
+.site-footer {
+  background-image: linear-gradient(90deg, transparent, rgb(240 160 32 / 0.5) 50%, transparent);
+  background-position: top;
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+}
+
+@keyframes nav-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes nav-menu-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+}
+
+@keyframes nav-drawer-enter {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes nav-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Every animation and transition is off for users who ask for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

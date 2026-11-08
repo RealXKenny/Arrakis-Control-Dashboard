@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertSingleSlot, clusterNodesFromEnv, keySlot } from '../../../src/lib/redis/connection';
 import { createDashboardRedis } from '../../../src/lib/redis/client';
-import { baseMarketplaceKeys as keys } from '../../../src/server/base-marketplace';
+import { baseMarketplaceKeys as keys } from '../../../src/features/bases/server/marketplace';
 
 describe('Redis Cluster slot maths', () => {
   it('matches the server for known keys', () => {

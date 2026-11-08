@@ -1,4 +1,4 @@
-import type { GuildApplicationQuestion } from '../../modules/guilds/requirements';
+import type { GuildApplicationQuestion } from './requirements';
 
 export const MAX_QUESTIONS = 8;
 

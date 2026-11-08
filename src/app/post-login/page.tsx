@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { safeNextPath } from '../../features/auth/schemas';
-import { requireSession } from '../../server/session';
+import { requireSession } from '../../features/auth/server/session';
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

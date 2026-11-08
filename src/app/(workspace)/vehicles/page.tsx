@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { groupVehicles } from '../../../features/vehicles/normalize';
-import { loadVehicles } from '../../../server/vehicles';
-import { requireSession } from '../../../server/session';
-import { Notice, PageHeader } from '../_components/page-header';
-import { AccessBar } from './_components/access-bar';
-import { VehicleCard } from './_components/vehicle-card';
+import { loadVehicles } from '../../../features/vehicles/server/load';
+import { requireSession } from '../../../features/auth/server/session';
+import { Notice, PageHeader } from '../../../components/ui/page-header';
+import { AccessBar } from '../../../features/vehicles/components/access-bar';
+import { VehicleCard } from '../../../features/vehicles/components/vehicle-card';
 
 export const metadata: Metadata = { title: 'Vehicles' };
 

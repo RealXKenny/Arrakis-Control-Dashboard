@@ -1,20 +1,23 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import route from '../../src/pages/api/map/realtime';
-import { getDuneClient, DuneConsoleApiError } from '../../src/infrastructure/dune';
-import { getSession } from '../../src/lib/security/session-store';
+import { getDuneClient, DuneConsoleApiError } from '../../src/server/integrations/dune';
+import { getSession } from '../../src/features/auth/server/session';
 import { responseMock } from '../helpers/response';
-import { clearRealtimeReadCache } from '../../src/modules/map/server/realtime';
+import { clearRealtimeReadCache } from '../../src/features/map/server/realtime';
 
 const config = vi.hoisted(() => ({
   DISCORD_GUILD_ID: 'guild',
   CONSOLE_URL: 'https://console.test',
 }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => ({ NODE_ENV: 'test', LOG_LEVEL: 'FATAL', ...config }) }));
-vi.mock('../../src/infrastructure/dune', async (original) => ({
-  ...(await original<typeof import('../../src/infrastructure/dune')>()),
+vi.mock('../../src/server/integrations/dune', async (original) => ({
+  ...(await original<typeof import('../../src/server/integrations/dune')>()),
   getDuneClient: vi.fn(),
 }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: vi.fn() }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = vi.fn();
+  return { getSession, currentSession: () => getSession() };
+});
 vi.mock('../../src/lib/security/rate-limit', () => ({
   checkRateLimit: async () => ({ allowed: true, remaining: 100, retryAfter: 60 }),
   getClientAddress: () => 'test',

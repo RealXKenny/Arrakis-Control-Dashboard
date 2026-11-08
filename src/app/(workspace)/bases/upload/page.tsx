@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { requireSession } from '../../../../server/session';
-import { PageHeader } from '../../_components/page-header';
-import { UploadForm } from './_components/upload-form';
+import { requireSession } from '../../../../features/auth/server/session';
+import { PageHeader } from '../../../../components/ui/page-header';
+import { UploadForm } from '../../../../features/bases/components/upload-form';
 
 export const metadata: Metadata = { title: 'Share a base' };
 

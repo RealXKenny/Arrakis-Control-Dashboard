@@ -9,7 +9,7 @@ import {
   ProviderReadError,
   RedisDashboardDataProvider,
 } from '../../../src/lib/redis/data-provider';
-import type { DashboardSnapshot, LoadProfile } from '../../../src/lib/types';
+import type { DashboardSnapshot, LoadProfile } from '../../../src/types/dashboard';
 
 const FIXED_NOW = Date.parse('2026-10-26T12:00:00.000Z');
 

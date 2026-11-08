@@ -1,5 +1,5 @@
 import { AppError } from '../../../../../../lib/errors';
-import { deleteBase, getBase, ownerKeyFor } from '../../../../../../server/base-marketplace';
+import { deleteBase, getBase, ownerKeyFor } from '../../../../../../features/bases/server/marketplace';
 import { assertSameOrigin, json, requireApiSession, route } from '../../../../../../server/http';
 import { spendReadBudget } from '../../../../../../server/read-budget';
 

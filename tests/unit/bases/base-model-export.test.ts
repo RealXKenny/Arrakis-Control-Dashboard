@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BaseModelError, fetchBaseModelExport } from '../../../src/modules/bases/utils/model-export';
+import { BaseModelError, fetchBaseModelExport } from '../../../src/features/bases/utils/model-export';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('private base preview export', () => {

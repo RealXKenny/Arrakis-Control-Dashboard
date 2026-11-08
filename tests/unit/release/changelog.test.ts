@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseChangelog } from '../../../src/modules/changelog/server/read';
+import { parseChangelog } from '../../../src/features/changelog/server/read';
 
 describe('changelog parser', () => {
   it('turns release markdown into display-ready sections', () => {

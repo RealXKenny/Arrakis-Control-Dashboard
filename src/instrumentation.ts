@@ -28,18 +28,18 @@ export async function register() {
         startup.info('Redis pool configured for dashboard data');
       }
 
-      const { warmupDuneClient } = await import('./infrastructure/dune');
+      const { warmupDuneClient } = await import('./server/integrations/dune');
       startup.info('Connecting to Dune Console');
       await warmupDuneClient();
       startup.info('Dune Console connection ready');
 
-      const { startPopulationRecorder } = await import('./modules/portal/server/population');
+      const { startPopulationRecorder } = await import('./features/portal/server/population');
       startPopulationRecorder();
       startup.info('Population recorder started');
       startup.info('Dashboard services ready');
 
       // Fire and forget: an announcement hiccup must never delay or fail startup.
-      const { announceLatestRelease } = await import('./server/changelog-announce');
+      const { announceLatestRelease } = await import('./features/changelog/server/announce');
       void announceLatestRelease()
         .then((outcome) => {
           if (outcome !== 'disabled') startup.info('Changelog announcer checked', { outcome });

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GET as listGuilds } from '../../src/modules/guilds/server/list';
-import { GET as listMembers } from '../../src/modules/guilds/server/members';
-import { GET as getLogo, POST as saveLogo } from '../../src/modules/guilds/server/logo';
+import { GET as listGuilds } from '../../src/features/guilds/server/list';
+import { GET as listMembers } from '../../src/features/guilds/server/members';
+import { GET as getLogo, POST as saveLogo } from '../../src/features/guilds/server/logo';
 import {
   GET as getRequirements,
   POST as saveRequirements,
   LIST as listRequirements,
-} from '../../src/modules/guilds/server/requirements';
+} from '../../src/features/guilds/server/requirements';
 
 const { request, session, linkedPlayer, redis } = vi.hoisted(() => ({
   request: vi.fn(),
@@ -15,9 +15,12 @@ const { request, session, linkedPlayer, redis } = vi.hoisted(() => ({
   redis: { get: vi.fn(), set: vi.fn(), eval: vi.fn(), zrange: vi.fn() },
 }));
 
-vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request }) }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
-vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
+vi.mock('../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request }) }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
+vi.mock('../../src/features/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 
 const req = (url: string, query = {}) => ({

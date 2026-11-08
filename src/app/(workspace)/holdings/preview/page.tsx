@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import { loadPortalProfile } from '../../../../server/portal';
-import { requireSession } from '../../../../server/session';
-import { ProfileFailure } from '../../_components/gauge-notice';
-import { Notice, PageHeader } from '../../_components/page-header';
-import { PreviewHost } from './_components/preview-host';
+import { loadPortalProfile } from '../../../../features/portal/server/load';
+import { requireSession } from '../../../../features/auth/server/session';
+import { ProfileFailure } from '../../../../components/feedback/gauge-notice';
+import { Notice, PageHeader } from '../../../../components/ui/page-header';
+import { PreviewHost } from '../../../../features/bases/components/holdings/preview-host';
 
 export const metadata: Metadata = { title: 'Base preview' };
 

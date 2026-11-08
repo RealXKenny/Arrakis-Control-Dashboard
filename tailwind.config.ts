@@ -11,7 +11,12 @@ import type { Config } from 'tailwindcss';
  *  - Headers are wide-tracked and uppercase to read as monolithic.
  */
 const config = {
-  content: ['./src/app/**/*.{ts,tsx}', './src/ui/**/*.{ts,tsx}', './src/features/**/*.{ts,tsx}'],
+  content: [
+    './src/app/**/*.{ts,tsx}',
+    './src/components/**/*.{ts,tsx}',
+    './src/features/**/*.{ts,tsx}',
+    './src/ui/**/*.{ts,tsx}',
+  ],
   darkMode: 'class',
   theme: {
     // Sharp corners everywhere; `full` survives for status dots only.

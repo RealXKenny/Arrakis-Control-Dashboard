@@ -3,7 +3,7 @@ import {
   createSectorGridOverlay,
   deepDesertSectorForWorldPoint,
   withMapSector,
-} from '../../../src/features/map/utils/sectorGrid';
+} from '../../../src/features/map/utils/sector-grid';
 
 const deepDesert = {
   width: 8192,

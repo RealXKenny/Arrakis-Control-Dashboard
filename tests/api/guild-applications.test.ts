@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DuneConsoleApiError } from '../../src/infrastructure/dunedocker/transport';
-import { GET, POST, LIST, REVIEW } from '../../src/modules/guilds/server/applications';
-import { canonicalGuildQuestions, guildQuestionVersion } from '../../src/modules/guilds/question-fields';
+import { DuneConsoleApiError } from '../../src/server/integrations/dunedocker/transport';
+import { GET, POST, LIST, REVIEW } from '../../src/features/guilds/server/applications';
+import { canonicalGuildQuestions, guildQuestionVersion } from '../../src/features/guilds/question-fields';
 
 const { session, linkedPlayer, request, redis } = vi.hoisted(() => ({
   session: vi.fn(),
@@ -10,9 +10,12 @@ const { session, linkedPlayer, request, redis } = vi.hoisted(() => ({
   request: vi.fn(),
   redis: { get: vi.fn(), eval: vi.fn() },
 }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
-vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
-vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request }) }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
+vi.mock('../../src/features/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
+vi.mock('../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request }) }));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 const req = (body?: unknown, query = {}) => ({
   url: '/api/guilds/2/application',

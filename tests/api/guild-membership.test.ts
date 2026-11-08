@@ -1,15 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ADD, REMOVE, PROMOTE, DEMOTE, DISBAND } from '../../src/modules/guilds/server/membership';
-import { DuneConsoleApiError } from '../../src/infrastructure/dunedocker/transport';
+import { ADD, REMOVE, PROMOTE, DEMOTE, DISBAND } from '../../src/features/guilds/server/membership';
+import { DuneConsoleApiError } from '../../src/server/integrations/dunedocker/transport';
 const { request, session, linkedPlayer, redis } = vi.hoisted(() => ({
   request: vi.fn(),
   session: vi.fn(),
   linkedPlayer: vi.fn(),
   redis: { eval: vi.fn() },
 }));
-vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request }) }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
-vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
+vi.mock('../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request }) }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
+vi.mock('../../src/features/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 let members;
 const req = (body = {}, query = {}) => ({

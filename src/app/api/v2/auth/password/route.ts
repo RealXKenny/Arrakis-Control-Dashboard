@@ -2,11 +2,11 @@ import { setPasswordSchema } from '../../../../../features/auth/schemas';
 import { AppError } from '../../../../../lib/errors';
 import { readBoundedBody } from '../../../../../lib/http/bounded-body';
 import { checkRateLimit } from '../../../../../lib/security/rate-limit';
-import { saveSession } from '../../../../../lib/security/session-store';
-import { hashPassword } from '../../../../../server/auth/password';
-import { getAccount, saveAccount } from '../../../../../server/auth/users';
+import { saveSession } from '../../../../../features/auth/server/session-store';
+import { hashPassword } from '../../../../../features/auth/server/password';
+import { getAccount, saveAccount } from '../../../../../features/auth/server/users';
 import { assertSameOrigin, json, requireApiSession, route } from '../../../../../server/http';
-import { currentSessionId } from '../../../../../server/session';
+import { currentSessionId } from '../../../../../features/auth/server/session';
 
 const MAX_BODY_BYTES = 2048;
 

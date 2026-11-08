@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
-import { getCurrencyValue } from '../../../src/modules/portal/utils/telemetry';
-import { buildCharacter } from '../../../src/modules/portal/utils/character';
-import { getNumber, formatNumber } from '../../../src/modules/portal/utils/formatting';
+import { getCurrencyValue } from '../../../src/features/portal/telemetry';
+import { buildCharacter } from '../../../src/features/player/character';
+import { getNumber, formatNumber } from '../../../src/lib/format';
 
 it('does not invent full health or zero balances when telemetry is missing', () => {
   const character = buildCharacter({ linked: true });

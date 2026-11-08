@@ -1,7 +1,7 @@
 import { gzipSync } from 'node:zlib';
 import * as THREE from 'three';
 import { afterEach, expect, it, vi } from 'vitest';
-import { BuildingLibrary, toSceneMatrix, unrealMatrix } from '../../../src/features/map/terrain/models/buildingModels';
+import { BuildingLibrary, toSceneMatrix, unrealMatrix } from '../../../src/features/map/terrain/models/building-models';
 
 /** One-triangle DML1 mesh in the client pack format. */
 function triangleMesh() {

@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { safeNextPath } from '../../features/auth/schemas';
-import { requireSession } from '../../server/session';
-import { SetPasswordForm } from './_components/set-password-form';
+import { requireSession } from '../../features/auth/server/session';
+import { SetPasswordForm } from '../../features/auth/components/set-password-form';
 
 export const metadata: Metadata = { title: 'Complete your profile' };
 

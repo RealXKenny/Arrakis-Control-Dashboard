@@ -1,10 +1,10 @@
 import { AppError } from '../../../../../lib/errors';
 import { readBoundedBody } from '../../../../../lib/http/bounded-body';
-import { parseAdminRequest } from '../../../../../modules/admin/server/request';
-import { parseAdminJson } from '../../../../../modules/admin/server/sanitize';
+import { parseAdminRequest } from '../../../../../features/admin/server/request';
+import { parseAdminJson } from '../../../../../features/admin/server/sanitize';
 import { assertSameOrigin, route } from '../../../../../server/http';
-import { requireApiAdmin } from '../../../../../server/admin/access';
-import { executeAdminOperation } from '../../../../../server/admin/execute';
+import { requireApiAdmin } from '../../../../../features/admin/server/api-access';
+import { executeAdminOperation } from '../../../../../features/admin/server/execute';
 
 export const dynamic = 'force-dynamic';
 

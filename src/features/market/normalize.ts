@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { toDecimalString } from '../format';
+import { toDecimalString } from '../../lib/format';
 
 /**
  * Market Grid contract: a strict 5 x 5 board, 25 listings per page.

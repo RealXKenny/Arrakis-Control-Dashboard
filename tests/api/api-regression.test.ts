@@ -1,4 +1,4 @@
-import { clearApiReadCache } from '../../src/infrastructure/api-read-cache';
+import { clearApiReadCache } from '../../src/server/api-read-cache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import session from '../../src/pages/api/session';
 import map from '../../src/pages/api/map';
@@ -9,19 +9,17 @@ import marketConfig from '../../src/pages/api/market/config';
 import exportBase from '../../src/pages/api/bases/[baseId]/export';
 import status from '../../src/pages/api/server/status';
 import world from '../../src/pages/api/portal/world';
-import { runPagesApiHandler, NextResponse } from '../../src/infrastructure/pages-api';
-import { getDuneClient, getDiscordPlayer } from '../../src/infrastructure/dune';
-import { getSession } from '../../src/lib/security/session-store';
+import { runPagesApiHandler, NextResponse } from '../../src/server/pages-api';
+import { getDuneClient, getDiscordPlayer } from '../../src/server/integrations/dune';
+import { getSession } from '../../src/features/auth/server/session';
 import { checkRateLimit } from '../../src/lib/security/rate-limit';
 import { responseMock } from '../helpers/response';
 
-vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: vi.fn(), getDiscordPlayer: vi.fn() }));
-vi.mock('../../src/lib/security/session-store', () => ({
-  getSession: vi.fn(),
-  saveSession: vi.fn(),
-  deleteSession: vi.fn(),
-  sessionTtlSeconds: () => 43200,
-}));
+vi.mock('../../src/server/integrations/dune', () => ({ getDuneClient: vi.fn(), getDiscordPlayer: vi.fn() }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = vi.fn();
+  return { getSession, currentSession: () => getSession() };
+});
 vi.mock('../../src/lib/security/rate-limit', () => ({ checkRateLimit: vi.fn(), getClientAddress: () => 'test' }));
 vi.mock('../../src/config/env', () => ({
   getServerEnv: () => ({
