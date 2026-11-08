@@ -36,7 +36,7 @@ export function AdminNav() {
   const currentTabId = announcements ? ANNOUNCEMENTS.id : located.tab.id;
   const tabLabel = announcements ? ANNOUNCEMENTS.label : located.tab.label;
 
-  const bar = 'mx-auto flex max-w-shell gap-1 overflow-x-auto px-4 sm:px-6';
+  const bar = 'flex gap-1 overflow-x-auto';
   const link = (active: boolean, small = false) =>
     `flex items-center whitespace-nowrap border-b-2 px-3 font-bold uppercase ${
       small ? 'h-9 text-[0.625rem] tracking-[0.16em]' : 'h-11 text-[0.6875rem] tracking-[0.2em]'
@@ -44,7 +44,7 @@ export function AdminNav() {
 
   return (
     <div className="border-b border-sand-200/10 bg-obsidian-900/40">
-      <nav aria-label="Breadcrumb" className="mx-auto max-w-shell px-4 pt-4 sm:px-6">
+      <nav aria-label="Breadcrumb" className="pt-4">
         <ol className="flex flex-wrap items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">
           <li>
             <Link href={adminHref('overview')} className="hover:text-spice-300">

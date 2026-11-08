@@ -108,10 +108,11 @@ export function createDashboardRedis(url: string | undefined, options: { cluster
       const value = await command(['GET', key]);
       return value === null ? null : decode<T>(String(value));
     },
-    set(key: string, value: unknown, options: { ex?: number; nx?: boolean } = {}) {
+    set(key: string, value: unknown, options: { ex?: number; nx?: boolean; xx?: boolean } = {}) {
       const args: Array<string | number> = ['SET', key, encode(value)];
       if (options.ex !== undefined) args.push('EX', options.ex);
       if (options.nx) args.push('NX');
+      if (options.xx) args.push('XX');
       return command(args);
     },
     del(key: string) {

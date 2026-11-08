@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatTimestamp } from '../../../../lib/time';
 import { adminCall, findOperation } from '../../client';
 import ConsoleHandoff from '../console-handoff';
 import { Facts, ReadPanel } from '../data-panel';
@@ -37,9 +38,9 @@ function Checker({
     setBusy(true);
     try {
       const outcome = await adminCall(operation, { body: fresh && forceFresh ? { fresh: true } : {} });
-      setResult({ at: new Date().toLocaleTimeString(), data: outcome.data });
+      setResult({ at: formatTimestamp(Date.now(), { variant: 'time' }), data: outcome.data });
     } catch (error) {
-      setResult({ at: new Date().toLocaleTimeString(), error: (error as Error).message });
+      setResult({ at: formatTimestamp(Date.now(), { variant: 'time' }), error: (error as Error).message });
     } finally {
       setBusy(false);
     }

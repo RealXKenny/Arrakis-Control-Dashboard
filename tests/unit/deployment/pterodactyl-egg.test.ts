@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createPterodactylEgg } from '../../../scripts/deployment/build-pterodactyl-egg.mjs';
 
@@ -13,10 +14,13 @@ describe('Pterodactyl dashboard egg', () => {
     expect(egg.meta.version).toBe('PTDL_v2');
     expect(Object.values(egg.docker_images)).toEqual(['ghcr.io/pterodactyl/yolks:nodejs_22']);
     expect(egg.startup).toContain('/home/container');
-    expect(egg.startup).toContain('server-launcher.mjs start');
+    expect(egg.startup).toContain('scripts/server-launcher.mjs start');
+    // The launcher the egg starts must exist in the repository, or a fresh install cannot boot.
+    expect(existsSync(egg.startup.match(/node (\S+) start/)![1])).toBe(true);
     expect(JSON.parse(egg.config.startup)).toEqual({ done: 'Arrakis Control Dashboard is listening' });
-    expect(egg.scripts.installation.script).toContain('/releases/latest');
-    expect(egg.scripts.installation.script).toContain('npm ci');
+    expect(egg.scripts.installation.script).toContain('repos/RealXKenny/Arrakis-Control-Dashboard/releases');
+    expect(egg.scripts.installation.script).toContain('$api/latest');
+    expect(egg.scripts.installation.script).toContain('npm ci --ignore-scripts');
     expect(egg.scripts.installation.script).toContain('npm run build');
     expect(egg.scripts.installation.script).toContain('npm prune --omit=dev');
     expect(JSON.stringify(egg)).not.toContain('ghcr.io/realxkenny');
@@ -48,5 +52,36 @@ describe('Pterodactyl dashboard egg', () => {
       expect(variables.get(key)?.rules, key).toBe('required|string');
     for (const key of ['AUTH_PROVIDER', 'CLERK_SECRET_KEY', 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'])
       expect(variables.has(key), key).toBe(false);
+  });
+});
+
+describe('release integrity', () => {
+  const script = egg.scripts.installation.script;
+
+  it('verifies the published SHA-256 before extracting or building anything', () => {
+    expect(script).toContain('sha256sum --check');
+    expect(script.indexOf('sha256sum --check')).toBeLessThan(script.indexOf('tar -xzf'));
+    expect(script.indexOf('tar -xzf')).toBeLessThan(script.indexOf('npm ci'));
+    // Releases without a checksum still install, but say so loudly instead of passing silently.
+    expect(script).toContain('WARNING: this release has no published checksum');
+  });
+
+  it('lets an installation pin an exact release and rejects anything else', () => {
+    expect(script).toContain('RELEASE_TAG');
+    expect(script).toContain("grep -Eq '^v[0-9]+\\.[0-9]+\\.[0-9]+$'");
+    const tag = egg.variables.find((variable) => variable.env_variable === 'RELEASE_TAG');
+    expect(tag).toMatchObject({ default_value: 'latest' });
+  });
+
+  it('hides the dedicated owner-key secret from panel users', () => {
+    const secret = egg.variables.find((variable) => variable.env_variable === 'OWNER_KEY_SECRET');
+    expect(secret).toMatchObject({ user_viewable: false, default_value: '' });
+  });
+
+  it('is published together with a checksummed source archive by the release workflow', () => {
+    const workflow = readFileSync('.github/workflows/release.yml', 'utf8');
+    expect(workflow).toContain('git archive');
+    expect(workflow).toContain('sha256sum --check');
+    expect(workflow).toMatch(/gh release create[^\n]*ARCHIVE_FILE[^\n]*ARCHIVE_FILE\.sha256/);
   });
 });

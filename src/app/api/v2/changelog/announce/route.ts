@@ -2,7 +2,8 @@ import { AppError } from '../../../../../lib/errors';
 import { readBoundedBody } from '../../../../../lib/http/bounded-body';
 import { checkRateLimit } from '../../../../../lib/security/rate-limit';
 import { announcementInputSchema } from '../../../../../features/changelog/discord';
-import { isDashboardAdmin } from '../../../../../features/admin/server/access';
+import { isDashboardAdmin, requireRecentSignIn } from '../../../../../features/admin/server/access';
+import { recordAudit } from '../../../../../lib/security/audit';
 import { announce } from '../../../../../features/changelog/server/announce';
 import { assertSameOrigin, json, requireApiSession, route } from '../../../../../server/http';
 
@@ -15,6 +16,7 @@ export const POST = route(async (request) => {
   // Authority comes from the OAuth-verified server session only, never from the request body.
   if (!isDashboardAdmin(session)) throw new AppError('Administrator access required.', 403, 'FORBIDDEN', true);
 
+  requireRecentSignIn(session);
   const limit = await checkRateLimit(`v2:changelog:announce:${session.user.id}`, ANNOUNCEMENTS_PER_HOUR);
   if (!limit.allowed) {
     throw new AppError(`Announcement limit reached. Try again in ${limit.retryAfter}s.`, 429, 'RATE_LIMITED', true);
@@ -36,5 +38,11 @@ export const POST = route(async (request) => {
   }
 
   const result = await announce(parsed.data, session.user.username ?? session.user.id);
+  void recordAudit({
+    event: 'admin.announcement',
+    outcome: 'success',
+    actor: session.user.id,
+    data: { edited: result.edited },
+  });
   return json({ ok: true, edited: result.edited });
 });

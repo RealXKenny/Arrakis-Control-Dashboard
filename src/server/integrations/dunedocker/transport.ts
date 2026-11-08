@@ -71,6 +71,8 @@ export async function sendProviderRequest(options: {
         headers,
         body,
         cache: 'no-store',
+        // A Console never legitimately redirects an API call; refuse to carry the bearer credential anywhere else.
+        redirect: 'error',
         signal: AbortSignal.timeout(timeoutMs),
       });
     } catch {

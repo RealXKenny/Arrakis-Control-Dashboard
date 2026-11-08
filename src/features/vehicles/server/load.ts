@@ -20,10 +20,21 @@ const playerVehicles = new ReadCache<Vehicle[]>(
   { ttlMs: 15_000, maxEntries: 200 },
 );
 
-async function resolvePlayer(session: DashboardSession): Promise<{ id: string; name: string } | null> {
-  if (session.linkedPlayerId && session.linkedPlayerName) {
-    return { id: session.linkedPlayerId, name: session.linkedPlayerName };
-  }
+/**
+ * The character link is read from the adapter, never from the 30-day session record: a member who unlinks or
+ * re-links must not keep seeing the previous character's vehicles. Cached briefly per member to spare the adapter.
+ */
+const linkedPlayers = new ReadCache<{ id: string; name: string } | null>(
+  (value) => JSON.stringify(value).length,
+  () => true,
+  { ttlMs: 30_000, maxEntries: 200 },
+);
+
+function resolvePlayer(session: DashboardSession): Promise<{ id: string; name: string } | null> {
+  return linkedPlayers.get(`link:${session.user.id}`, () => lookupPlayer(session)).then((entry) => entry.data);
+}
+
+async function lookupPlayer(session: DashboardSession): Promise<{ id: string; name: string } | null> {
   const player = await getLinkedPlayer({
     guildId: session.guildId,
     channelId: 'dashboard',

@@ -56,7 +56,7 @@ export default async function VehiclesPage({
           {groups.showAccessBar && (
             <AccessBar view={groups.view} owned={groups.owned.length} shared={groups.shared.length} />
           )}
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {visible.map((vehicle) => (
               <li key={vehicle.id} className="min-w-0">
                 <VehicleCard vehicle={vehicle} />

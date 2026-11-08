@@ -1,16 +1,11 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { safeNextPath } from '../../features/auth/schemas';
+import { signInNotice } from '../../features/auth/notices';
 import { currentSession } from '../../features/auth/server/session';
 import { LoginPanel } from '../../features/auth/components/login-panel';
 
 export const metadata: Metadata = { title: 'Sign in' };
-
-const NOTICES: Record<string, string> = {
-  role: 'Your Discord account does not have the required guild role yet.',
-  guild: 'Join the Discord server first, then sign in again.',
-  unavailable: 'Discord could not be reached. Please try again in a moment.',
-};
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -22,7 +17,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   if (await currentSession().catch(() => null)) redirect(next);
 
   const error = first(params.error);
-  const notice = error ? (NOTICES[error] ?? 'Sign-in failed. Please try again.') : undefined;
+  const notice = signInNotice(error);
 
   return (
     <div className="mx-auto grid w-full max-w-shell gap-6 px-4 py-12 sm:px-6 lg:grid-cols-5 lg:py-20">

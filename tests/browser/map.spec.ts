@@ -1,11 +1,17 @@
 import { test, expect } from '../helpers/browser-test';
-import '../helpers/portal-browser';
 import { createSectorGridOverlay } from '../../src/features/map/utils/sector-grid';
+import { fakeConsole } from '../helpers/fake-console-client';
+
+// The map is a signed-in page: every test starts as its own member, with the fake Console's default map.
+test.beforeEach(async ({ context }) => {
+  const member = await fakeConsole.newMember('Cartographer', { guild: null });
+  await context.setExtraHTTPHeaders({ Cookie: member.cookie });
+});
 
 test('realtime layer updates, filters instances, clears failures and switches maps', async ({ page }) => {
   let realtimeReads = 0;
   let unavailable = false;
-  await page.route('**/api/map?*', (route) =>
+  await page.route('**/api/v2/map?*', (route) =>
     route.fulfill({
       json: {
         ok: true,
@@ -14,7 +20,7 @@ test('realtime layer updates, filters instances, clears failures and switches ma
       },
     }),
   );
-  await page.route('**/api/map/realtime?*', (route) => {
+  await page.route('**/api/v2/map/realtime?*', (route) => {
     realtimeReads++;
     if (unavailable) return route.fulfill({ status: 503, json: { error: 'Realtime agent is unavailable.' } });
     const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
@@ -92,7 +98,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   let holdMapRead = false;
   let releaseMapRead = () => {};
 
-  await page.route('**/api/map?*', async (route) => {
+  await page.route('**/api/v2/map?*', async (route) => {
     mapReads++;
     if (holdMapRead) {
       holdMapRead = false;
@@ -306,7 +312,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
       errors.push(message.text());
   });
   let samples = 0;
-  await page.route('**/api/map/realtime?*', (route) => {
+  await page.route('**/api/v2/map/realtime?*', (route) => {
     samples++;
     const markers = [
       {
@@ -330,7 +336,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
       },
     });
   });
-  await page.route('**/api/map?*', (route) => {
+  await page.route('**/api/v2/map?*', (route) => {
     const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
     const map = deep
       ? { width: 8192, height: 8192, minX: -1177656, maxX: 1072344, minY: -1177066, maxY: 1072934, flipY: false }
@@ -476,10 +482,10 @@ for (const mapName of ['Hagga Basin', 'Deep Desert']) {
       if (/same key|unique.*key/i.test(message.text())) identityWarnings.push(message.text());
     });
     await page.setViewportSize({ width: 1100, height: 800 });
-    await page.route('**/api/map/realtime?*', (route) =>
+    await page.route('**/api/v2/map/realtime?*', (route) =>
       route.fulfill({ json: { ok: true, gen: 1, sources: [], markers: [] } }),
     );
-    await page.route('**/api/map?*', (route) => {
+    await page.route('**/api/v2/map?*', (route) => {
       const deep = new URL(route.request().url()).searchParams.get('map') === 'DeepDesert';
       const map = deep
         ? { width: 8192, height: 8192, minX: -1177656, maxX: 1072344, minY: -1177066, maxY: 1072934 }
@@ -623,7 +629,7 @@ test('sandworm models appear up close, update in place, and respect the realtime
       errors.push(message.text());
   });
   let samples = 0;
-  await page.route('**/api/map/realtime?*', (route) => {
+  await page.route('**/api/v2/map/realtime?*', (route) => {
     samples++;
     return route.fulfill({
       json: {
@@ -646,7 +652,7 @@ test('sandworm models appear up close, update in place, and respect the realtime
       },
     });
   });
-  await page.route('**/api/map?*', (route) =>
+  await page.route('**/api/v2/map?*', (route) =>
     route.fulfill({
       json: {
         ok: true,
@@ -713,10 +719,10 @@ test('base models render from the full map and vehicles appear up close with map
   for (const y of [-512, 0, 512])
     for (const x of [-768, 768])
       pieces.push({ building_type: 'Atreides_Outpost_Wall_01', x, y, z: 384, rotation: x > 0 ? 90 : -90 });
-  await page.route('**/api/map/realtime?*', (r) =>
+  await page.route('**/api/v2/map/realtime?*', (r) =>
     r.fulfill({ json: { ok: true, gen: 1, capturedAt: Date.now(), sources: [], markers: [] } }),
   );
-  await page.route('**/api/map?*', (r) =>
+  await page.route('**/api/v2/map?*', (r) =>
     r.fulfill({
       json: {
         ok: true,
@@ -806,10 +812,10 @@ test('spice fields, shipwrecks, and flour sand have terrain models that follow l
   page.on('console', (message) => {
     if (/THREE.WebGLProgram|shader error|same key/i.test(message.text())) errors.push(message.text());
   });
-  await page.route('**/api/map/realtime?*', (route) =>
+  await page.route('**/api/v2/map/realtime?*', (route) =>
     route.fulfill({ json: { ok: true, gen: 1, sources: [], markers: [] } }),
   );
-  await page.route('**/api/map?*', (route) =>
+  await page.route('**/api/v2/map?*', (route) =>
     route.fulfill({
       json: {
         ok: true,

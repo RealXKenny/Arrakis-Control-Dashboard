@@ -2,6 +2,7 @@ import '../lib/assert-server';
 import { AppError } from '../lib/errors';
 import { getServerEnv } from '../config/env';
 import { logger } from '../lib/logger';
+import { recordAudit } from '../lib/security/audit';
 import type { DashboardSession } from '../features/auth/server/session-store';
 import { currentSession } from '../features/auth/server/session';
 
@@ -51,6 +52,11 @@ function expectedOrigins(request: Request): string[] {
 export function assertSameOrigin(request: Request): void {
   const origin = request.headers.get('origin');
   if (!origin || request.headers.get('sec-fetch-site') === 'cross-site') {
+    void recordAudit({
+      event: 'security.origin_rejected',
+      outcome: 'denied',
+      data: { path: new URL(request.url).pathname },
+    });
     throw new AppError('Invalid request origin.', 403, 'INVALID_ORIGIN', true);
   }
   let ok = false;
@@ -59,5 +65,12 @@ export function assertSameOrigin(request: Request): void {
   } catch {
     ok = false;
   }
-  if (!ok) throw new AppError('Invalid request origin.', 403, 'INVALID_ORIGIN', true);
+  if (!ok) {
+    void recordAudit({
+      event: 'security.origin_rejected',
+      outcome: 'denied',
+      data: { path: new URL(request.url).pathname },
+    });
+    throw new AppError('Invalid request origin.', 403, 'INVALID_ORIGIN', true);
+  }
 }

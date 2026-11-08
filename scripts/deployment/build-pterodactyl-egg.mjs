@@ -1,30 +1,58 @@
 import { writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
+// Backslashes and dollar signs below are written for bash. In this JavaScript template a backslash must be doubled
+// and "${" must be escaped, so every shell expansion is spelled without braces except RELEASE_TAG's default.
 const installationScript = `#!/bin/bash
 set -euo pipefail
 
 apt-get update
-apt-get install --yes --no-install-recommends ca-certificates curl jq tar
+apt-get install --yes --no-install-recommends ca-certificates curl jq tar coreutils
 rm -rf /var/lib/apt/lists/*
 
-release_file=$(mktemp)
-archive_file=$(mktemp)
-trap 'rm -f "$release_file" "$archive_file"' EXIT
+work_dir=$(mktemp -d)
+trap 'rm -rf "$work_dir"' EXIT
+release_file="$work_dir/release.json"
+archive_file="$work_dir/source.tar.gz"
+api='https://api.github.com/repos/RealXKenny/Arrakis-Control-Dashboard/releases'
 
-curl --fail --silent --show-error --location --retry 3 \
-  --header 'Accept: application/vnd.github+json' \
-  --header 'X-GitHub-Api-Version: 2022-11-28' \
-  'https://api.github.com/repos/RealXKenny/Arrakis-Control-Dashboard/releases/latest' \
-  --output "$release_file"
-download_url=$(jq --exit-status --raw-output '.tarball_url // empty' "$release_file")
-test -n "$download_url"
+# RELEASE_TAG pins an exact version (for example v2.1.0). Empty or "latest" installs the newest release.
+tag="\${RELEASE_TAG:-latest}"
+if [ "$tag" = "latest" ] || [ -z "$tag" ]; then
+  release_url="$api/latest"
+elif printf '%s' "$tag" | grep -Eq '^v[0-9]+\\.[0-9]+\\.[0-9]+$'; then
+  release_url="$api/tags/$tag"
+else
+  echo "RELEASE_TAG must be latest or a version such as v2.1.0." >&2
+  exit 1
+fi
 
-curl --fail --silent --show-error --location --retry 3 "$download_url" --output "$archive_file"
+curl --fail --silent --show-error --location --retry 3 --header 'Accept: application/vnd.github+json' --header 'X-GitHub-Api-Version: 2022-11-28' "$release_url" --output "$release_file"
+
+# Releases publish a source archive and its SHA-256 as assets. The archive is verified before anything in it runs.
+asset_url=$(jq --raw-output '[.assets[]? | select(.name | test("^arrakis-control-dashboard-[0-9]+\\\\.[0-9]+\\\\.[0-9]+\\\\.tar\\\\.gz$"))][0].browser_download_url // empty' "$release_file")
+sum_url=$(jq --raw-output '[.assets[]? | select(.name | test("^arrakis-control-dashboard-[0-9]+\\\\.[0-9]+\\\\.[0-9]+\\\\.tar\\\\.gz\\\\.sha256$"))][0].browser_download_url // empty' "$release_file")
+
+if [ -n "$asset_url" ] && [ -n "$sum_url" ]; then
+  curl --fail --silent --show-error --location --retry 3 "$asset_url" --output "$archive_file"
+  curl --fail --silent --show-error --location --retry 3 "$sum_url" --output "$work_dir/source.sha256"
+  expected=$(awk '{print $1}' "$work_dir/source.sha256" | head -n 1)
+  printf '%s' "$expected" | grep -Eq '^[0-9a-f]{64}$'
+  echo "$expected  $archive_file" | sha256sum --check --status
+  echo "Source archive checksum verified."
+else
+  # Releases created before checksums were published: keep installing, but say plainly that nothing was verified.
+  echo "WARNING: this release has no published checksum; installing the unverified GitHub source tarball." >&2
+  download_url=$(jq --exit-status --raw-output '.tarball_url // empty' "$release_file")
+  test -n "$download_url"
+  curl --fail --silent --show-error --location --retry 3 "$download_url" --output "$archive_file"
+fi
+
 mkdir -p /mnt/server
 tar -xzf "$archive_file" --strip-components=1 -C /mnt/server
 cd /mnt/server
-npm ci --no-audit --no-fund
+# Dependency install scripts never run as root during installation; the build needs none.
+npm ci --ignore-scripts --no-audit --no-fund
 npm run build
 npm prune --omit=dev --no-audit --no-fund
 chown -R 1000:1000 /mnt/server
@@ -46,16 +74,17 @@ function variable(name, description, envVariable, defaultValue = '', overrides =
 
 export function createPterodactylEgg() {
   return {
-    _comment: 'Import this PTDL_v2 egg into a Pterodactyl nest. Installation downloads the latest GitHub release.',
+    _comment:
+      'Import this PTDL_v2 egg into a Pterodactyl nest. Installation downloads a GitHub release and verifies its checksum.',
     meta: { version: 'PTDL_v2', update_url: null },
     name: 'Arrakis Control Dashboard',
     author: 'realxkenny@users.noreply.github.com',
     description:
-      'Dune: Awakening dashboard built from the latest GitHub release. Configure Dune Console, Discord OAuth, the public URL, and Redis before starting.',
+      'Dune: Awakening dashboard built from a GitHub release. Configure Dune Console, Discord OAuth, the public URL, and Redis before starting.',
     features: null,
     docker_images: { 'Node.js 22': 'ghcr.io/pterodactyl/yolks:nodejs_22' },
     file_denylist: [],
-    startup: 'cd /home/container && exec node src/config/server-launcher.mjs start',
+    startup: 'cd /home/container && exec node scripts/server-launcher.mjs start',
     config: {
       files: '{}',
       startup: '{"done":"Arrakis Control Dashboard is listening"}',
@@ -70,6 +99,20 @@ export function createPterodactylEgg() {
       },
     },
     variables: [
+      variable(
+        'Release Tag',
+        'Version to install, such as v2.1.0. Leave as latest to install the newest release.',
+        'RELEASE_TAG',
+        'latest',
+        { rules: 'required|string|max:16' },
+      ),
+      variable(
+        'Owner Key Secret',
+        'Optional dedicated 32+ character secret for marketplace owner identifiers; derived from AUTH_SECRET when empty.',
+        'OWNER_KEY_SECRET',
+        '',
+        { user_viewable: false, user_editable: true, rules: 'nullable|string|min:32|max:256' },
+      ),
       variable(
         'Admin Console API Key',
         'Optional privileged Console key; hidden from ordinary panel users.',
@@ -155,6 +198,13 @@ export function createPterodactylEgg() {
       variable('Verified Member Role ID', 'Discord role required for dashboard access.', 'VERIFIED_MEMBER_ROLE_ID'),
       variable('Redis URL', 'Redis TCP URL with credentials; use rediss:// for TLS.', 'REDIS_URL'),
       variable(
+        'Require Redis TLS',
+        'Set to true to refuse to start unless Redis uses rediss://.',
+        'REDIS_REQUIRE_TLS',
+        'false',
+        { rules: 'required|string|in:true,false' },
+      ),
+      variable(
         'Redis Cluster Nodes',
         'Optional comma-separated host:port bootstrap list for Redis Cluster.',
         'REDIS_CLUSTER_NODES',
@@ -162,6 +212,20 @@ export function createPterodactylEgg() {
         {
           rules: 'nullable|string',
         },
+      ),
+      variable(
+        'Administrator Reauthentication Hours',
+        'Administrator changes need an interactive sign-in this recent (1-168).',
+        'ADMIN_REAUTH_HOURS',
+        '12',
+        { rules: 'required|integer|min:1|max:168' },
+      ),
+      variable(
+        'Audit Log Retention Days',
+        'Days of security audit events kept in Redis (1-3650).',
+        'AUDIT_LOG_RETENTION_DAYS',
+        '90',
+        { rules: 'required|integer|min:1|max:3650' },
       ),
       variable(
         'Changelog Webhook URL',
@@ -186,7 +250,7 @@ export function createPterodactylEgg() {
 }
 
 async function writeEgg(path) {
-  if (!path) throw new Error('Usage: node src/config/pterodactyl-egg.mjs <output.json>');
+  if (!path) throw new Error('Usage: node scripts/deployment/build-pterodactyl-egg.mjs <output.json>');
   await writeFile(path, `${JSON.stringify(createPterodactylEgg(), null, 2)}\n`, 'utf8');
 }
 

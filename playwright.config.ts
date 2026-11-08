@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './tests/browser',
   fullyParallel: true,
   // Software WebGL contexts share CPU; bound renderer-test contention.
-  workers: process.env.CI ? 1 : 2,
+  workers: 1,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   use: { baseURL: 'http://127.0.0.1:3100', trace: 'retain-on-failure' },
@@ -12,7 +12,8 @@ export default defineConfig({
   webServer: {
     // Dev note: production credentials are not invited to this test party.
     env: {
-      CONSOLE_URL: 'http://127.0.0.1:9',
+      // browser-server.mjs points this at the local fake Console it starts.
+      CONSOLE_URL: 'http://127.0.0.1:3101',
       CONSOLE_API_KEY: 'browser-test-placeholder',
       ADAPTER_TOKEN: 'browser-test-placeholder',
       DISCORD_CLIENT_ID: 'browser-test-client',

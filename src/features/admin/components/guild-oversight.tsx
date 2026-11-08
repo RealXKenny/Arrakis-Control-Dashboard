@@ -1,4 +1,5 @@
 import useSupportUnread from '../../guilds/hooks/use-support-unread';
+import { LocalTime } from '../../../components/ui/local-time';
 import { UnreadPill } from '../../../components/ui/form-controls';
 import { GuildChat } from '../../guilds/components/guild-chat';
 import { useEffect, useRef, useState } from 'react';
@@ -304,7 +305,7 @@ export default function GuildOversight({
                     <small>
                       {' '}
                       · {message.role === 'reviewer' ? 'Reviewer' : 'Applicant'} ·{' '}
-                      {new Date(message.sentAt).toLocaleString()}
+                      {<LocalTime value={message.sentAt} />}
                     </small>
                     <p>{message.text}</p>
                   </li>

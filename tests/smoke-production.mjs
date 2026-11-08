@@ -75,6 +75,7 @@ const storage = createRedisFixture((entry) => {
         user: { id: '456084885220884480' },
         guildId: 'fixture-guild',
         roleIds: ['fixture-role'],
+        authenticatedAt: Date.now(),
         expiresAt: Date.now() + 3600000,
         verifiedAt: Date.now(),
       });
@@ -85,6 +86,7 @@ const storage = createRedisFixture((entry) => {
           user: { id: 'user' },
           guildId: 'fixture-guild',
           roleIds: [],
+          authenticatedAt: Date.now(),
           expiresAt: Date.now() + 3600000,
           verifiedAt: Date.now(),
         });

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { LocalTime } from '../../../../components/ui/local-time';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { pieceBreakdown, prettyPieceName } from '../../../../features/bases/schema';
@@ -74,10 +75,7 @@ export default async function BaseDetailPage({ params }: { params: Promise<{ id:
           </dl>
 
           <p className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">
-            Published{' '}
-            <time dateTime={summary.publishedAt}>
-              {new Date(summary.publishedAt).toLocaleDateString('en-US', { dateStyle: 'medium', timeZone: 'UTC' })}
-            </time>
+            Published <LocalTime value={summary.publishedAt} variant="date" />
           </p>
 
           <div className="flex flex-wrap items-start gap-4">

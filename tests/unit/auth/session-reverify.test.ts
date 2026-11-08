@@ -110,6 +110,26 @@ describe('session re-verification', () => {
     expect(await store.getSession(SID)).toBeNull();
   });
 
+  it('does not resurrect a session that was signed out while Discord was being asked', async () => {
+    const { store } = await setup({ verifiedAt: Date.now() - HOUR });
+    refresh.mockImplementation(async () => {
+      await store.deleteSession(SID);
+      return identity(['555']);
+    });
+    expect(await store.getSession(SID)).toBeNull();
+    expect(await store.readSession(SID)).toBeNull();
+  });
+
+  it('only writes background session updates when the session still exists', async () => {
+    const { store } = await setup({ verifiedAt: Date.now() });
+    const live = (await store.readSession(SID))!;
+    await store.deleteSession(SID);
+    expect(await store.saveSession(SID, live, { onlyIfExists: true })).toBe(false);
+    expect(await store.readSession(SID)).toBeNull();
+    expect(await store.saveSession(SID, live)).toBe(true);
+    expect(await store.readSession(SID)).not.toBeNull();
+  });
+
   it('ends a session whose member has no stored refresh token', async () => {
     const { store, users } = await setup({ verifiedAt: Date.now() - HOUR });
     await users.saveAccount({ discordId: DISCORD_ID, createdAt: 1 });

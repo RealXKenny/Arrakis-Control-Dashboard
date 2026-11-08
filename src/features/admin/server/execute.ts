@@ -5,6 +5,7 @@ import { AppError } from '../../../lib/errors';
 import { getServerEnv } from '../../../config/env';
 import { readBoundedText } from '../../../lib/http/response';
 import { createLogger } from '../../../lib/logger';
+import { recordAudit } from '../../../lib/security/audit';
 import type { DashboardSession } from '../../auth/server/session-store';
 import { removeGuildStorage } from '../../guilds/server/membership';
 import type { parseAdminRequest } from './request';
@@ -155,7 +156,19 @@ export async function executeAdminOperation(
   };
   let streaming = false;
   const mutation = operation.method !== 'GET';
-  log.info('Administrator operation requested', { actorId: session.user.id, operation: operation.id, mutation });
+  // Targets are catalog-validated identifiers (guild, player, base IDs), never request bodies or credentials.
+  log.info('Administrator operation requested', {
+    actorId: session.user.id,
+    operation: operation.id,
+    mutation,
+    ...(Object.keys(request.path).length ? { target: request.path } : {}),
+  });
+  const audited = mutation || operation.mode === 'download';
+  const auditBase = {
+    event: 'admin.operation',
+    actor: session.user.id,
+    data: { operation: operation.id, method: operation.method, ...request.path },
+  } as const;
   try {
     const response = await fetch(url, {
       method: operation.method,
@@ -173,6 +186,12 @@ export async function executeAdminOperation(
       operation: operation.id,
       status: response.status,
     });
+    if (audited)
+      void recordAudit({
+        ...auditBase,
+        outcome: response.ok ? 'success' : 'failure',
+        data: { ...auditBase.data, status: response.status },
+      });
     const contentType = response.headers.get('content-type') ?? '';
     if (response.ok && operation.mode === 'events' && contentType.includes('text/event-stream') && response.body) {
       streaming = true;
@@ -266,6 +285,7 @@ export async function executeAdminOperation(
       },
     );
   } catch (error) {
+    if (audited) void recordAudit({ ...auditBase, outcome: 'failure', data: { ...auditBase.data, status: 0 } });
     if (error instanceof AppError) throw error;
     throw new AppError(
       mutation

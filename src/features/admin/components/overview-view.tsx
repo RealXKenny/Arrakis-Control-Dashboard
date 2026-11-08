@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LocalTime } from '../../../components/ui/local-time';
 import type { AdminOverview } from '../overview';
 import { operationHref } from '../navigation';
 import type { AdminOperation } from '../types';
@@ -40,7 +41,15 @@ export function OverviewView({
         <div>
           <p className={ui.eyebrow}>{setupOnly ? 'CONNECTIONS & CONFIGURATION' : 'CONTROL CENTER'}</p>
           <h2>{setupOnly ? 'Set up administration' : 'Server overview'}</h2>
-          <p>{data ? `Last reading ${new Date(data.observedAt).toLocaleString()}` : 'No reading is available.'}</p>
+          <p>
+            {data ? (
+              <>
+                Last reading <LocalTime value={data.observedAt} />
+              </>
+            ) : (
+              'No reading is available.'
+            )}
+          </p>
         </div>
         <div className={ui.actions}>
           <OverviewRefresh />

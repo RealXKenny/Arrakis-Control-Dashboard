@@ -2,6 +2,7 @@ import '../../../lib/assert-server';
 import { refreshDiscordIdentity } from '../../../server/integrations/discord';
 import { getServerEnv } from '../../../config/env';
 import { logger } from '../../../lib/logger';
+import { recordAudit } from '../../../lib/security/audit';
 import { getRedisClient } from '../../../lib/redis/client';
 import { SESSION_MAX_STALE_MS, deleteSession, saveSession, type DashboardSession } from './session-store';
 import { openSecret, sealSecret } from './password';
@@ -44,6 +45,7 @@ async function releaseLock(key: string): Promise<void> {
 
 async function end(sessionId: string, reason: string): Promise<null> {
   logger.warn('Session ended by Discord re-check', { reason });
+  void recordAudit({ event: 'auth.session_revoked', outcome: 'success', data: { reason } });
   await deleteSession(sessionId);
   return null;
 }
@@ -98,7 +100,8 @@ async function verify(sessionId: string, session: DashboardSession): Promise<Das
       roleIds: identity.memberData.roles.slice(0, 250),
       verifiedAt: Date.now(),
     };
-    await saveSession(sessionId, next);
+    // The member may have signed out while Discord was being asked: never bring a deleted session back.
+    if (!(await saveSession(sessionId, next, { onlyIfExists: true }))) return null;
     return next;
   } finally {
     await releaseLock(lockKey);

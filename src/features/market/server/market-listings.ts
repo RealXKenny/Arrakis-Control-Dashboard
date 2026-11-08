@@ -7,6 +7,22 @@ import { getSession } from '../../auth/server/session';
 import { AppError } from '../../../lib/errors';
 import { ownedListings } from './my-listings';
 
+/**
+ * Price ladders list other members' sell orders. The Console tags each with the seller's internal player ID,
+ * which the page never shows; dropping it keeps those identifiers out of every member's browser.
+ */
+export function withoutSellerIds(value: unknown, depth = 0): unknown {
+  if (depth > 6) return value;
+  if (Array.isArray(value)) return value.map((entry) => withoutSellerIds(entry, depth + 1));
+  if (value && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => key !== 'owner_id' && key !== 'ownerId')
+        .map(([key, entry]) => [key, withoutSellerIds(entry, depth + 1)]),
+    );
+  return value;
+}
+
 export async function GET(req, res) {
   const id = cookies(req, res).get('dashboard_session')?.value;
   const session = id ? await getSession(id) : null;
@@ -26,7 +42,7 @@ export async function GET(req, res) {
     const data =
       owner === 'player'
         ? { rows: await ownedListings(session, templateId, quality) }
-        : await getDuneClient().request('GET', `/api/exchange/listings?${params}`);
+        : withoutSellerIds(await getDuneClient().request('GET', `/api/exchange/listings?${params}`));
     return NextResponse.json({ ok: true, ...record(data) }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     if (error instanceof AppError) throw error;

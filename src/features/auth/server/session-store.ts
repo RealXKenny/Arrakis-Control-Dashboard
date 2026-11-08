@@ -15,6 +15,8 @@ export type DashboardSession = {
   needsPassword?: boolean;
   /** When Discord last confirmed guild membership and roles (login, or a background re-check). */
   verifiedAt?: number;
+  /** When the member last signed in interactively (Discord or password). Never advanced by background checks. */
+  authenticatedAt?: number;
   expiresAt: number;
 };
 
@@ -58,6 +60,8 @@ function validSession(value: unknown): value is DashboardSession {
     (session.needsPassword === undefined || typeof session.needsPassword === 'boolean') &&
     (session.verifiedAt === undefined ||
       (typeof session.verifiedAt === 'number' && Number.isFinite(session.verifiedAt))) &&
+    (session.authenticatedAt === undefined ||
+      (typeof session.authenticatedAt === 'number' && Number.isFinite(session.authenticatedAt))) &&
     typeof session.expiresAt === 'number' &&
     Number.isFinite(session.expiresAt) &&
     session.expiresAt <= Date.now() + SESSION_TTL_SECONDS * 1000 + 60_000,
@@ -82,22 +86,33 @@ function getDevelopmentSession(sessionId: string): DashboardSession | null {
   return session;
 }
 
-export async function saveSession(sessionId: string, session: DashboardSession): Promise<void> {
+/**
+ * `onlyIfExists` is for background updates of a session that is already live (re-verification, password setup):
+ * if the member signed out or the record was revoked while Discord was being asked, the write is dropped instead
+ * of resurrecting the deleted session. Returns false when nothing was written.
+ */
+export async function saveSession(
+  sessionId: string,
+  session: DashboardSession,
+  options: { onlyIfExists?: boolean } = {},
+): Promise<boolean> {
   if (!validSessionId(sessionId) || !validSession(session)) throw new Error('Invalid session data');
   const ttl = Math.min(SESSION_TTL_SECONDS, Math.ceil((session.expiresAt - Date.now()) / 1000));
   if (ttl <= 0) {
     await deleteSession(sessionId);
-    return;
+    return false;
   }
   const redis = getRedisClient();
   if (!redis) {
     for (const [id, existing] of developmentSessions) {
       if (existing.expiresAt <= Date.now()) developmentSessions.delete(id);
     }
+    if (options.onlyIfExists && !developmentSessions.has(sessionId)) return false;
     developmentSessions.set(sessionId, session);
-    return;
+    return true;
   }
-  await redis.set(sessionKey(sessionId), session, { ex: ttl });
+  const written = await redis.set(sessionKey(sessionId), session, { ex: ttl, xx: options.onlyIfExists });
+  return written !== null;
 }
 
 /** Raw persistence only. The auth session service owns Discord freshness checks. */

@@ -37,3 +37,16 @@ it('never caches exports or mutations and separates query filters', async () => 
   await cachedApiReading(req('one', '/api/bases/1/export'), {} as NextApiResponse, load);
   expect(load).toHaveBeenCalledTimes(4);
 });
+it('limits how often one session can bypass the cache with a refresh header', async () => {
+  const load = vi.fn().mockResolvedValue(result('one'));
+  const refreshing = (id: string) =>
+    ({
+      method: 'GET',
+      url: '/api/player',
+      headers: { cookie: `dashboard_session=${id}`, 'x-refresh-cache': '1' },
+    }) as unknown as NextApiRequest;
+  for (let index = 0; index < 10; index += 1)
+    await cachedApiReading(refreshing('refresher'), {} as NextApiResponse, load);
+  // Six refreshes are honoured; the rest are served from the cache the last one filled.
+  expect(load).toHaveBeenCalledTimes(6);
+});

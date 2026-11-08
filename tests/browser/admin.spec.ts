@@ -376,27 +376,29 @@ test('admin reply badges persist and clear only when leader support replies are 
     return route.fulfill({ json: { ok: true, data: { unreadCount: unread() } } });
   });
   await page.goto('/admin?tab=players&advanced=1');
-  const tab = page.getByRole('link', { name: 'Guilds', exact: true });
-  const nav = page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Administration' });
-  await expect(tab.locator('[data-unread-count="2"]')).toBeVisible();
-  await expect(nav.locator('[data-unread-count="2"]')).toBeVisible();
+  // The unread badge is an aria-labelled pill inside the Guilds tab of the administration page bar.
+  const pages = page.getByRole('navigation', { name: /pages$/ });
+  const tab = pages.getByRole('link', { name: /^Guilds/ });
+  const unreadBadge = (count: number) => tab.getByLabel(`${count} unread`, { exact: true });
+  await expect(unreadBadge(2)).toBeVisible();
   await page.reload();
-  await expect(tab.locator('[data-unread-count="2"]')).toBeVisible();
+  await expect(unreadBadge(2)).toBeVisible();
   await tab.click();
   const card = page.getByRole('button', { name: /Crimson Skies/ });
-  await expect(card.locator('[data-unread-count="2"]')).toBeVisible();
+  await expect(card.getByLabel('2 unread messages')).toBeVisible();
   await card.click();
+  // Opening a conversation alone never marks anything read.
   expect(receipts).toBe(0);
   await page.getByRole('button', { name: /^Message guild leader/ }).click();
-  await expect(tab.locator('[data-unread-count="1"]')).toBeVisible();
+  await expect(unreadBadge(1)).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Private chat with guild leader', exact: true }).getByRole('log'),
   ).toContainText('Another reply during acknowledgement.');
   await expect.poll(unread).toBe(0);
-  await expect(tab.locator('[data-unread-count]')).toHaveCount(0);
+  await expect(tab.getByLabel(/\d+ unread/)).toHaveCount(0);
   await page.reload();
   await expect(tab).toBeVisible();
-  await expect(tab.locator('[data-unread-count]')).toHaveCount(0);
+  await expect(tab.getByLabel(/\d+ unread/)).toHaveCount(0);
 });
 
 test('admin navigation groups sections, syncs the URL and honours browser history', async ({ page, context }) => {
@@ -428,7 +430,7 @@ test('admin navigation groups sections, syncs the URL and honours browser histor
   await page.goto('/admin?tab=console');
   const panel = page.getByRole('region', { name: 'Console-only administration' });
   await expect(panel).toContainText('Database');
-  await expect(panel.getByRole('link', { name: 'Open Console ↗' })).toHaveAttribute('href', 'https://console.test');
+  await expect(panel.getByRole('link', { name: 'Open Console ↗' })).toHaveAttribute('href', 'http://127.0.0.1:3101');
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
@@ -865,7 +867,7 @@ test('updates and addons screens check read-only and hand restricted writes to t
   const handoff = page.getByRole('region', { name: 'Applying updates and repairs' });
   await expect(handoff).toContainText('Console API keys cannot perform update or addon writes');
   await expect(handoff.getByRole('button')).toHaveCount(0);
-  await expect(handoff.getByRole('link', { name: 'Open Console ↗' })).toHaveAttribute('href', 'https://console.test');
+  await expect(handoff.getByRole('link', { name: 'Open Console ↗' })).toHaveAttribute('href', 'http://127.0.0.1:3101');
   await page.getByRole('region', { name: 'Game update check' }).getByRole('button', { name: 'Check now' }).click();
   await expect(page.getByText('Checked at')).toBeVisible();
   expect(calls.find((call) => call.operation === 'post-updates-check-game')).toBeTruthy();
@@ -944,14 +946,13 @@ test('discord and directory screens report configuration honestly and never offe
   context,
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  let adapter = false;
   await page.route('**/api/v2/admin/catalog', (route) =>
     route.fulfill({
       json: {
         ok: true,
         operations,
         configured: true,
-        adapterConfigured: adapter,
+        adapterConfigured: true,
         consoleOrigin: 'https://console.test',
       },
     }),
@@ -962,9 +963,7 @@ test('discord and directory screens report configuration honestly and never offe
       return route.fulfill({ status: 403, json: { ok: false, error: 'The adapter denied population:read.' } });
     return route.fulfill({ json: { ok: true, upstreamStatus: 200, data: { status: 'ok' } } });
   });
-  await page.goto('/admin?tab=discord');
-  await expect(page.getByText('The Discord adapter is not configured')).toBeVisible();
-  adapter = true;
+  // The unconfigured-adapter notice depends on server environment; it is covered by tests/unit/admin/adapter-notice.test.ts.
   await page.goto('/admin?tab=discord');
   await expect(page.getByRole('region', { name: 'Health' })).toContainText('Status');
   await page.getByRole('button', { name: 'Population & activity', exact: true }).click();
@@ -1046,7 +1045,7 @@ test('statistics screen labels sources, shows zero separately from unavailable a
 }) => {
   await context.setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
   await page.route('**/api/v2/admin/catalog', (route) =>
-    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: false } }),
+    route.fulfill({ json: { ok: true, operations, configured: true, adapterConfigured: true } }),
   );
   await page.route('**/api/v2/admin/overview', (route) =>
     route.fulfill({
@@ -1096,6 +1095,8 @@ test('statistics screen labels sources, shows zero separately from unavailable a
   await expect(page.getByText('Last reading')).toBeVisible();
   await expect(page.getByText('Long-term history is not stored')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Market' })).toContainText('Source:');
-  await expect(page.getByText('Adapter statistics (population')).toBeVisible();
+  // The server is configured with an adapter token, so adapter panels are offered; the unconfigured notice is
+  // covered by tests/unit/admin/adapter-notice.test.ts.
+  await expect(page.getByText('Population (Discord adapter)')).toBeVisible();
   await expect(page.getByRole('link', { name: /Advanced tools/ })).toHaveCount(0);
 });

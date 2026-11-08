@@ -49,6 +49,28 @@ const serverEnvSchema = z.object({
   /** Reverse proxies in front of the app. Rate limits trust only the X-Forwarded-For entry the last of them appended. */
   TRUSTED_PROXY_COUNT: z.coerce.number().int().min(0).max(5).default(1),
   API_GLOBAL_READ_LIMIT: z.coerce.number().int().min(1).max(100_000_000).default(2400),
+  /** Comma-separated Discord user IDs allowed to use the administrator workspace. Defaults to the project owner. */
+  ADMIN_DISCORD_IDS: z
+    .string()
+    .regex(/^\d{1,25}(\s*,\s*\d{1,25})*$/, 'Must be a comma-separated list of Discord user IDs')
+    .optional(),
+  /** Administrator changes need an interactive sign-in within this many hours; reads are unaffected. */
+  /** Destructive administrator operations (deletes, confirmed actions, archive downloads) need a sign-in this recent. */
+  ADMIN_HIGH_RISK_REAUTH_MINUTES: z.coerce.number().int().min(5).max(1440).default(60),
+  ADMIN_REAUTH_HOURS: z.coerce.number().int().min(1).max(168).default(12),
+  /** Server-only HMAC secret for marketplace owner keys. Optional: derived from AUTH_SECRET when absent. */
+  OWNER_KEY_SECRET: z.string().min(32).max(256).optional(),
+  /** Security audit trail: JSON lines on stdout (for log shipping) and a bounded Redis sorted set. */
+  AUDIT_LOG_STDOUT: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  AUDIT_LOG_REDIS: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  AUDIT_LOG_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
+  AUDIT_LOG_MAX_ENTRIES: z.coerce.number().int().min(100).max(1_000_000).default(10_000),
   BOT_API_TOKEN: z.string().min(32).max(256).optional(),
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_API_KEY: z.string().min(1).optional(),
@@ -62,6 +84,16 @@ const serverEnvSchema = z.object({
   DISCORD_GUILD_ID: z.string().min(1).optional(),
   VERIFIED_MEMBER_ROLE_ID: z.string().min(1).optional(),
   REDIS_URL: redisUrlSchema.optional(),
+  /** When "true", production refuses to start unless Redis is reached over TLS (rediss://). Opt-in so existing deployments keep booting. */
+  /** Escape hatch for the one combination production refuses: plain-text Redis on a public-looking host with no password. */
+  REDIS_ALLOW_INSECURE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+  REDIS_REQUIRE_TLS: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   /** Discord webhook that receives changelog and progress announcements. A secret: never log or expose it. */
   CHANGELOG_WEBHOOK_URL: z.string().refine(isDiscordWebhookUrl, 'Must be a Discord webhook URL').optional(),
   /** When "true", a newly deployed release in CHANGELOG.md is announced once, automatically. */
@@ -133,6 +165,19 @@ export function validateProductionEnv(): ServerEnv {
   const env = getServerEnv();
   if (env.NODE_ENV !== 'production') return env;
   requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET');
+  const redisUrl = new URL(env.REDIS_URL!);
+  // Sessions and sealed refresh tokens live in Redis: never serve traffic against an open, unauthenticated, unencrypted one.
+  if (
+    redisUrl.protocol === 'redis:' &&
+    !redisUrl.password &&
+    !PRIVATE_HOST.test(redisUrl.hostname) &&
+    !env.REDIS_ALLOW_INSECURE
+  )
+    throw new Error(
+      'REDIS_URL is plain-text and unauthenticated on a public-looking host. Add a password or TLS (rediss://), or set REDIS_ALLOW_INSECURE=true to accept the risk.',
+    );
+  if (env.REDIS_REQUIRE_TLS && redisUrl.protocol !== 'rediss:')
+    throw new Error('REDIS_REQUIRE_TLS is enabled: REDIS_URL must use rediss://');
   const names = ['CONSOLE_URL', 'APP_URL'] as const;
   for (const name of names) {
     const value = env[name];
@@ -150,4 +195,27 @@ export function validateProductionEnv(): ServerEnv {
       throw new Error(`Production HTTPS is required: ${name}`);
   }
   return env;
+}
+
+const PRIVATE_HOST = /^(localhost$|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$|[^.]+$)/i;
+
+/**
+ * Plain-text Redis is acceptable on loopback or a private network, but sessions and sealed refresh tokens live
+ * there. Returns human-readable warnings (never credentials) for production deployments that look exposed.
+ */
+export function redisTransportWarnings(
+  env: Pick<ServerEnv, 'NODE_ENV' | 'REDIS_URL' | 'REDIS_CLUSTER_NODES'>,
+): string[] {
+  if (env.NODE_ENV !== 'production' || !env.REDIS_URL) return [];
+  const url = new URL(env.REDIS_URL);
+  const warnings: string[] = [];
+  if (url.protocol === 'redis:' && !PRIVATE_HOST.test(url.hostname))
+    warnings.push('REDIS_URL uses unencrypted redis:// to a public-looking host; use rediss:// or a private network.');
+  if (env.REDIS_CLUSTER_NODES && url.protocol !== 'rediss:')
+    warnings.push(
+      'REDIS_CLUSTER_NODES takes its TLS setting from REDIS_URL; use rediss:// if the cluster requires TLS.',
+    );
+  if (!url.password)
+    warnings.push('REDIS_URL carries no password; make sure Redis is not reachable from untrusted networks.');
+  return warnings;
 }

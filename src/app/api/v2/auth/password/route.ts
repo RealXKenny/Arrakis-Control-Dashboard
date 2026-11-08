@@ -2,6 +2,7 @@ import { setPasswordSchema } from '../../../../../features/auth/schemas';
 import { AppError } from '../../../../../lib/errors';
 import { readBoundedBody } from '../../../../../lib/http/bounded-body';
 import { checkRateLimit } from '../../../../../lib/security/rate-limit';
+import { recordAudit } from '../../../../../lib/security/audit';
 import { saveSession } from '../../../../../features/auth/server/session-store';
 import { hashPassword } from '../../../../../features/auth/server/password';
 import { getAccount, saveAccount } from '../../../../../features/auth/server/users';
@@ -43,6 +44,7 @@ export const POST = route(async (request) => {
   }
 
   await saveAccount({ ...account, passwordHash: await hashPassword(parsed.data.password) });
-  await saveSession(sessionId, { ...session, needsPassword: false });
+  await saveSession(sessionId, { ...session, needsPassword: false }, { onlyIfExists: true });
+  void recordAudit({ event: 'auth.password_set', outcome: 'success', actor: session.user.id });
   return json({ ok: true });
 });

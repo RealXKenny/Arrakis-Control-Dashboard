@@ -8,7 +8,9 @@ import { loginSchema } from '../schemas';
 import { readDiscordIdentity, refreshDiscordIdentity } from '../../../server/integrations/discord';
 import { getServerEnv, requireServerEnv } from '../../../config/env';
 import { logger } from '../../../lib/logger';
-import { checkRateLimit, getClientAddress } from '../../../lib/security/rate-limit';
+import { recordAudit } from '../../../lib/security/audit';
+import { getClientAddress } from '../../../lib/security/rate-limit';
+import { checkPasswordLoginLimits } from './login-limits';
 import { deleteSession, saveSession, sessionTtlSeconds, type DashboardSession } from './session-store';
 import { getSession } from './session';
 import { randomBytes } from 'node:crypto';
@@ -107,6 +109,7 @@ function toRecord(token: JWT): DashboardSession {
     email: token.email ?? undefined,
     needsPassword: token.needsPassword,
     verifiedAt: token.verifiedAt,
+    authenticatedAt: token.authenticatedAt,
     expiresAt: token.expiresAt ?? Date.now() + sessionTtlSeconds() * 1000,
   };
 }
@@ -128,6 +131,7 @@ function toToken(sid: string, record: DashboardSession): JWT {
     email: record.email,
     needsPassword: record.needsPassword ?? false,
     verifiedAt: record.verifiedAt,
+    authenticatedAt: record.authenticatedAt,
     expiresAt: record.expiresAt,
     ign: identity.ign,
     picture: identity.avatarUrl,
@@ -168,7 +172,13 @@ const config = (): NextAuthConfig => {
       maxAge: sessionTtlSeconds(),
       async encode({ token }) {
         if (!token) return '';
-        const sid = typeof token.sid === 'string' ? token.sid : randomBytes(32).toString('hex');
+        // Auth.js re-encodes the token on every session read to slide the cookie. Such a write-back belongs to a
+        // session that already exists: it must never recreate one that was signed out or revoked in the meantime.
+        if (typeof token.sid === 'string') {
+          await saveSession(token.sid, toRecord(token), { onlyIfExists: true });
+          return token.sid;
+        }
+        const sid = randomBytes(32).toString('hex');
         await saveSession(sid, toRecord(token));
         return sid;
       },
@@ -190,7 +200,14 @@ const config = (): NextAuthConfig => {
             const config = discordConfig();
             const identity = await readDiscordIdentity(String(tokens.access_token ?? ''), config.guildId);
             const claims = await claimsFromDiscord(identity, tokens.refresh_token, config.guildId);
-            if (claims === 'role') return { id: String(identity.userData.id), denied: 'role' };
+            if (claims === 'role') {
+              void recordAudit({
+                event: 'auth.login_failed',
+                outcome: 'denied',
+                data: { method: 'discord', reason: 'role_missing' },
+              });
+              return { id: String(identity.userData.id), denied: 'role' };
+            }
             return toUser(claims);
           } catch (error) {
             logger.warn('Discord sign-in could not be verified', { reason: error instanceof Error ? error.name : '' });
@@ -208,18 +225,18 @@ const config = (): NextAuthConfig => {
           const address = getClientAddress({
             headers: { 'x-forwarded-for': request.headers.get('x-forwarded-for') ?? undefined },
           });
-          // The per-email budget ignores the address on purpose: spreading guesses over many addresses must
-          // not multiply an attacker's attempts against one account. Discord sign-in stays available to the owner.
-          const [perEmail, perAccount, perAddress] = await Promise.all([
-            checkRateLimit(`auth:login:email:${email}`, { limit: 10, windowMs: 15 * 60_000 }),
-            checkRateLimit(`auth:login:${address}:${email}`, { limit: 8, windowMs: 15 * 60_000 }),
-            checkRateLimit(`auth:login:${address}`, { limit: 40, windowMs: 15 * 60_000 }),
-          ]);
           const deny = (reason: string) => {
             logger.warn('Password sign-in refused', { reason });
+            // The email is deliberately not recorded; the network address and reason are enough to spot guessing.
+            void recordAudit({
+              event: 'auth.login_failed',
+              outcome: 'failure',
+              ip: address,
+              data: { method: 'password', reason },
+            });
             return null;
           };
-          if (!perEmail.allowed || !perAccount.allowed || !perAddress.allowed) return deny('rate_limited');
+          if (!(await checkPasswordLoginLimits(address, email))) return deny('rate_limited');
 
           const account = await getAccountByEmail(email);
           const linked = account?.email === email ? account : null;
@@ -252,6 +269,7 @@ const config = (): NextAuthConfig => {
       jwt({ token, user }) {
         const dashboard = (user as DashboardUser | undefined)?.dashboard;
         if (!dashboard) return token;
+        void recordAudit({ event: 'auth.login', outcome: 'success', actor: dashboard.discordId });
         // A fresh login never inherits a session id (no session fixation) and gets a full 30 days.
         return {
           sub: dashboard.discordId,
@@ -265,6 +283,7 @@ const config = (): NextAuthConfig => {
           needsPassword: dashboard.needsPassword,
           // Both providers just read the member's guild roles from Discord, so this login is the verification.
           verifiedAt: Date.now(),
+          authenticatedAt: Date.now(),
           expiresAt: Date.now() + sessionTtlSeconds() * 1000,
         };
       },
@@ -284,6 +303,12 @@ const config = (): NextAuthConfig => {
       async signOut(message) {
         const sid = 'token' in message ? message.token?.sid : undefined;
         if (typeof sid === 'string') await deleteSession(sid);
+        void recordAudit({
+          event: 'auth.logout',
+          outcome: 'success',
+          actor:
+            'token' in message && typeof message.token?.discordId === 'string' ? message.token.discordId : undefined,
+        });
       },
     },
   };

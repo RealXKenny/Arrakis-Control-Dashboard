@@ -7,6 +7,9 @@ import { executeAdminOperation, limitBytes, sanitizedEvents } from '../../src/fe
 import { parseAdminRequest } from '../../src/features/admin/server/request';
 import { adminGet, adminPost, adminUpload } from '../helpers/admin-v2';
 
+const audit = vi.hoisted(() => vi.fn());
+vi.mock('../../src/lib/security/audit', () => ({ recordAudit: audit, readAudit: vi.fn() }));
+
 const config = vi.hoisted(() => ({
   NODE_ENV: 'test',
   LOG_LEVEL: 'FATAL',
@@ -31,6 +34,7 @@ const session = () => ({
   user: { id: '456084885220884480' },
   guildId: 'guild',
   roleIds: ['verified'],
+  authenticatedAt: Date.now(),
   expiresAt: Date.now() + 60_000,
 });
 const fetcher = vi.fn();
@@ -252,4 +256,105 @@ it('treats an explicit Console refusal in an HTTP 200 response as a failed opera
   expect(response.status).toBe(502);
   expect((await response.json()).ok).toBe(false);
   expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
+it('requires a recent interactive sign-in for changes but not for reads', async () => {
+  const { default: operations } = await import('../../src/features/admin/catalog.json');
+  const change = operations.find(
+    (entry) =>
+      entry.method === 'POST' && !entry.restriction && entry.mode === 'json' && entry.pathParameters.length === 0,
+  )!;
+  vi.mocked(getSession).mockResolvedValue({ ...session(), authenticatedAt: Date.now() - 48 * 60 * 60_000 });
+
+  const refused = await run({
+    operation: change.id,
+    acknowledgement: `${change.method} ${change.route}`,
+    body: {},
+  });
+  expect(refused.status).toBe(403);
+  expect((await refused.json()).code).toBe('ADMIN_REAUTH_REQUIRED');
+  expect(fetcher).not.toHaveBeenCalled();
+
+  expect((await run({ operation: 'get-server-status' })).status).toBe(200);
+});
+
+it('also requires a recent interactive sign-in to download backups, exports and logs', async () => {
+  const { default: operations } = await import('../../src/features/admin/catalog.json');
+  const downloads = operations.filter((entry) => entry.mode === 'download' && !entry.restriction);
+  expect(downloads.length).toBeGreaterThan(3);
+  vi.mocked(getSession).mockResolvedValue({ ...session(), authenticatedAt: Date.now() - 48 * 60 * 60_000 });
+  for (const entry of downloads) {
+    const refused = await run({
+      operation: entry.id,
+      path: Object.fromEntries(entry.pathParameters.map((name) => [name, 'fixture'])),
+      acknowledgement: entry.method === 'GET' ? '' : `${entry.method} ${entry.route}`,
+    });
+    expect(refused.status, entry.id).toBe(403);
+    expect((await refused.json()).code, entry.id).toBe('ADMIN_REAUTH_REQUIRED');
+  }
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+it('records an audit event for administrator changes, refused re-authentication and denied access', async () => {
+  const { default: operations } = await import('../../src/features/admin/catalog.json');
+  const change = operations.find(
+    (entry) =>
+      entry.method === 'POST' && !entry.restriction && entry.mode === 'json' && entry.pathParameters.length === 0,
+  )!;
+  audit.mockClear();
+  expect(
+    (await run({ operation: change.id, acknowledgement: `${change.method} ${change.route}`, body: {} })).status,
+  ).toBe(200);
+  expect(audit).toHaveBeenCalledWith(
+    expect.objectContaining({
+      event: 'admin.operation',
+      outcome: 'success',
+      actor: '456084885220884480',
+      data: expect.objectContaining({ operation: change.id, method: 'POST', status: 200 }),
+    }),
+  );
+  // Reads are not audited: they would drown the trail.
+  audit.mockClear();
+  await run({ operation: 'get-server-status' });
+  expect(audit).not.toHaveBeenCalled();
+
+  vi.mocked(getSession).mockResolvedValue({ ...session(), authenticatedAt: Date.now() - 48 * 60 * 60_000 });
+  await run({ operation: change.id, acknowledgement: `${change.method} ${change.route}`, body: {} });
+  expect(audit).toHaveBeenCalledWith(expect.objectContaining({ event: 'admin.reauth_required', outcome: 'denied' }));
+
+  vi.mocked(getSession).mockResolvedValue({ ...session(), user: { id: '123' } });
+  await run({ operation: 'get-server-status' });
+  expect(audit).toHaveBeenCalledWith(
+    expect.objectContaining({ event: 'admin.access_denied', outcome: 'denied', actor: '123' }),
+  );
+});
+
+it('asks destructive operations for a sign-in from the last hour even when an ordinary change would pass', async () => {
+  const { default: operations } = await import('../../src/features/admin/catalog.json');
+  const destructive = operations.find(
+    (entry) =>
+      entry.method !== 'GET' &&
+      !entry.restriction &&
+      entry.mode === 'json' &&
+      entry.pathParameters.length === 0 &&
+      entry.confirmationPhrases.length > 0,
+  )!;
+  const ordinary = operations.find(
+    (entry) =>
+      entry.method === 'POST' &&
+      !entry.restriction &&
+      entry.mode === 'json' &&
+      entry.pathParameters.length === 0 &&
+      entry.confirmationPhrases.length === 0,
+  )!;
+  vi.mocked(getSession).mockResolvedValue({ ...session(), authenticatedAt: Date.now() - 3 * 60 * 60_000 });
+  const body = (entry: typeof destructive) => ({
+    operation: entry.id,
+    acknowledgement: `${entry.method} ${entry.route}`,
+    body: entry.confirmationPhrases.length ? { confirmation: entry.confirmationPhrases[0] } : {},
+  });
+  expect((await run(body(ordinary))).status).toBe(200);
+  const refused = await run(body(destructive));
+  expect(refused.status).toBe(403);
+  expect((await refused.json()).code).toBe('ADMIN_REAUTH_REQUIRED');
 });

@@ -22,6 +22,8 @@ export async function register() {
       startup.info('Runtime configuration validated');
 
       const env = validateProductionEnv();
+      const { redisTransportWarnings } = await import('./config/env');
+      for (const warning of redisTransportWarnings(env)) startup.warn(warning);
       if (env.REDIS_URL) {
         const { getRedisPool } = await import('./lib/redis/pool');
         getRedisPool();

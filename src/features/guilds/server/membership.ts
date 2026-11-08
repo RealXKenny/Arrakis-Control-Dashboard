@@ -7,7 +7,8 @@ import { DuneConsoleApiError } from '../../../server/integrations/dunedocker/tra
 import { NextResponse } from '../../../server/pages-api';
 import { getRedisClient } from '../../../lib/redis/client';
 import { requireGuildLeader } from './leader';
-import { queryValue, requireGuildMutationOrigin } from './common';
+import { recordAudit } from '../../../lib/security/audit';
+import { getGuildSession, queryValue, requireGuildMutationOrigin } from './common';
 import { guildMemberId, guildMemberRole } from '../member-identity';
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
@@ -137,6 +138,12 @@ async function mutate(req, res, action: Action) {
     }
     // Dev note: leadership is not a retry loop; every write gets exactly one trip through the desert.
     await getDuneClient().request(method, route, { ...(body === undefined ? {} : { body }), retryRead: false });
+    void recordAudit({
+      event: `guild.${action}`,
+      outcome: 'success',
+      actor: (await getGuildSession(req, res))?.user.id,
+      data: { guildId, ...(playerId ? { playerId } : {}) },
+    });
     let cleanupPending = false;
     if (action === 'disband') {
       try {
