@@ -5,7 +5,7 @@
 
 **A modern command center for Dune: Awakening server administration, guild operations, and community management.**
 
-[Overview](#overview) · [Features](#features) · [Screenshots](#screenshots) · [Quick start](#quick-start) · [Deployment](#production-deployment) · [Development](#development) · [Contributing](#contributing)
+[Overview](#overview) · [**Documentation**](docs/README.md) · [Features](#features) · [Screenshots](#screenshots) · [Quick start](#quick-start) · [Deployment](#production-deployment) · [Development](#development) · [Contributing](#contributing)
 
 [![CI](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/RealXKenny/Arrakis-Control-Dashboard)](https://github.com/RealXKenny/Arrakis-Control-Dashboard/releases/latest)
@@ -24,6 +24,21 @@ The application uses Discord OAuth and linked email/password sign-in, server-ver
 <img src="docs/assets/screenshots/dashboard-overview.webp" alt="Arrakis Control dashboard overview showing field conditions, player status, server population, and guild information for the fictional Arrakis Demo account" />
 
 _The dashboard overview in an isolated demonstration environment. All people, guilds, servers, and measurements shown are fictional fixtures, not production data._
+
+## Documentation
+
+**The full documentation center is in [docs/](docs/README.md).** Start with the guide that matches what you are doing:
+
+| I want to…                                         | Go to                                                                                   |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Set up everything from an empty Linux host         | [End-to-end RedBlink + dashboard setup](docs/getting-started/end-to-end-redblink-setup.md) |
+| Install the dashboard                              | [Installation](docs/installation/README.md) (local, production, Pterodactyl, reverse proxy) |
+| Configure Discord, Redis, the Console, admins      | [Configuration](docs/configuration/README.md)                                           |
+| Connect the RedBlink Dune Docker Console           | [RedBlink integration](docs/integrations/redblink-dune-docker.md)                       |
+| Harden and release a production deployment         | [Security](docs/security/README.md) · [Deployment](docs/deployment/README.md)           |
+| Look up an endpoint, command or setting            | [API](docs/api/README.md) · [Reference](docs/reference/README.md)                       |
+| Fix a problem                                      | [Troubleshooting](docs/troubleshooting/README.md)                                       |
+| Contribute code                                    | [Development](docs/development/README.md) · [CONTRIBUTING.md](CONTRIBUTING.md)          |
 
 ## Features
 
@@ -136,7 +151,7 @@ Never commit `.env` or place secrets in `NEXT_PUBLIC_` variables.
 
 ## Environment configuration
 
-Use [`.env.example`](.env.example) as the complete template. The main settings are:
+Use [`.env.example`](.env.example) as the complete template; every variable, range and production rule is in [environment variables](docs/configuration/environment-variables.md). The main settings are:
 
 | Setting                                                          | Purpose                                                                                        |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -186,7 +201,7 @@ Provide the production environment, use HTTPS at the reverse proxy, and configur
 - Scoped provider credentials, same-origin mutation checks, bounded transfers, and recursive secret redaction protect the API boundary.
 - Redacted audit events cover administrative and security-sensitive operations. MFA is not currently implemented.
 
-See [SECURITY.md](SECURITY.md) for reporting and operational guidance. The step-by-step release procedure is [PRODUCTION_DEPLOYMENT_CHECKLIST.md](PRODUCTION_DEPLOYMENT_CHECKLIST.md).
+See [SECURITY.md](SECURITY.md) for reporting and operational guidance. Hardening, known limitations and accepted risks are in [Security](docs/security/README.md); the step-by-step release procedure is the [deployment checklist](docs/deployment/deployment-checklist.md).
 
 ## Project structure
 
@@ -204,7 +219,7 @@ src/
 
 scripts/           # Runtime, maintenance, and deployment commands
 tests/             # Unit, API, architecture, browser, integration, and load tests
-docs/              # Architecture, legal, and documentation assets
+docs/              # Documentation center, architecture notes, legal files, and screenshots
 ```
 
 ## Development
@@ -225,6 +240,8 @@ docs/              # Architecture, legal, and documentation assets
 For `test:integration`, set only disposable loopback Redis through `TEST_REDIS_URL` or `TEST_REDIS_CLUSTER_NODES`. Those tests flush the selected test database; never point them at a production instance.
 
 ## Troubleshooting
+
+See the full [troubleshooting guides](docs/troubleshooting/README.md). Quick pointers:
 
 - **Startup reports missing settings:** compare the environment with `.env.example`; production requires the Console, Discord, Redis, canonical URL, and administrator settings.
 - **Discord cannot complete sign-in:** use `<APP_URL>/api/auth/callback/discord` exactly and verify the guild/role configuration.

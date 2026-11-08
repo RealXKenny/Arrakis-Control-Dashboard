@@ -17,6 +17,7 @@
     "format:check": "prettier --check src tests scripts",
     "redis:rekey": "node scripts/maintenance/rekey-redis.mjs",
     "marketplace:rekey": "node scripts/maintenance/rekey-marketplace.mjs",
+    "docs:check": "node scripts/maintenance/check-docs.mjs",
     "test:integration": "vitest run tests/integration --no-file-parallelism"
   },
   "dependencies": {

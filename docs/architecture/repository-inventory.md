@@ -9,7 +9,12 @@ This is the post-migration architecture inventory. Generated dependency/build di
 .github/
   workflows/
 docs/
-  architecture/
+  README.md           documentation center home
+  getting-started/ installation/ configuration/ features/ integrations/
+  administration/ security/ api/ development/ deployment/ troubleshooting/ reference/
+  architecture/       placement rules and this inventory
+  ai/                 coding-agent guides
+  legal/              third-party licenses and trademarks
   assets/
     screenshots/
 scripts/
@@ -207,29 +212,34 @@ tests/
 
 ## Root-file audit
 
-| File                 | Purpose                                                   | Why it remains in the root                                                | Tooling status                 |
-| -------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------ |
-| .env                 | Local server secrets and environment values               | Dotenv discovers it in the working directory; ignored and never committed | Local runtime convention       |
-| .env.example         | Documented environment template                           | The committed template belongs beside the local environment file          | Project convention             |
-| .gitattributes       | Git line-ending and file attributes                       | Git reads it from the repository root                                     | Required by Git                |
-| .gitignore           | Generated, secret, and dependency exclusions              | Git reads it from the repository root                                     | Required by Git                |
-| .prettierignore      | Formatter exclusions                                      | Prettier discovers it in the working directory                            | Required by Prettier           |
-| .prettierrc.json     | Shared formatting rules                                   | Prettier discovers it in the working directory                            | Required by Prettier           |
-| AGENTS.md            | AI-agent architecture and engineering instructions        | Agent tools discover it from the repository root                          | Required agent entry point     |
-| CHANGELOG.md         | Release notes consumed by CI and the application          | Release workflow and documentation expect it in the root                  | Required by release tooling    |
-| LICENSE              | Project license                                           | License and source distribution convention                                | Required project documentation |
-| README.md            | Primary setup, deployment, and operations guide           | GitHub and developers discover it in the root                             | Required project documentation |
-| eslint.config.mjs    | ESLint flat configuration                                 | ESLint discovers it in the working directory                              | Required by ESLint             |
-| next-env.d.ts        | Next.js and generated route type references               | Next.js maintains this declaration at the project root                    | Required by Next.js            |
-| next.config.ts       | Next.js runtime, rewrite, and tracing configuration       | Next.js discovers it in the working directory                             | Required by Next.js            |
-| package-lock.json    | Reproducible npm dependency lock                          | npm requires it beside package.json                                       | Required by npm                |
-| package.json         | Package metadata, dependencies, and verification commands | npm requires it in the project root                                       | Required by npm                |
-| playwright.config.ts | Browser suite and fixture-server configuration            | Playwright discovers it in the working directory                          | Required by Playwright         |
-| postcss.config.mjs   | Tailwind/PostCSS integration                              | PostCSS discovers it in the working directory                             | Required by PostCSS            |
-| tailwind.config.ts   | Dune design tokens and Tailwind configuration             | The global stylesheet references it from the root                         | Required by the Tailwind setup |
-| tsconfig.json        | TypeScript compiler and Next.js plugin configuration      | TypeScript and Next.js discover it in the working directory               | Required by TypeScript         |
-| tsconfig.tsbuildinfo | Incremental TypeScript cache                              | Generated locally, ignored, and excluded from source checks               | Generated; not source          |
-| vitest.config.mjs    | Unit/API test discovery and coverage configuration        | Vitest discovers it in the working directory                              | Required by Vitest             |
+| File                                                | Purpose                                                   | Why it remains in the root                                                | Tooling status                 |
+| --------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------ |
+| .env                                                | Local server secrets and environment values               | Dotenv discovers it in the working directory; ignored and never committed | Local runtime convention       |
+| .env.example                                        | Documented environment template                           | The committed template belongs beside the local environment file          | Project convention             |
+| .gitattributes                                      | Git line-ending and file attributes                       | Git reads it from the repository root                                     | Required by Git                |
+| .gitignore                                          | Generated, secret, and dependency exclusions              | Git reads it from the repository root                                     | Required by Git                |
+| .prettierignore                                     | Formatter exclusions                                      | Prettier discovers it in the working directory                            | Required by Prettier           |
+| .prettierrc.json                                    | Shared formatting rules                                   | Prettier discovers it in the working directory                            | Required by Prettier           |
+| AGENTS.md                                           | AI-agent architecture and engineering instructions        | Agent tools discover it from the repository root                          | Required agent entry point     |
+| CHANGELOG.md                                        | Release notes consumed by CI and the application          | Release workflow and documentation expect it in the root                  | Required by release tooling    |
+| CLAUDE.md, CODEX.md, GEMINI.md, KIMI.md, INSTALL.md | Coding-agent entry points and setup notes (see docs/ai)   | Agent tools discover them from the repository root                        | Agent tool conventions         |
+| CODE_OF_CONDUCT.md                                  | Community behaviour policy                                | GitHub discovers community files in the root                              | GitHub community standard      |
+| CONTRIBUTING.md                                     | Contribution guide                                        | GitHub discovers community files in the root                              | GitHub community standard      |
+| LICENSE                                             | Project license                                           | License and source distribution convention                                | Required project documentation |
+| NOTICE.md                                           | Third-party attribution and project notices               | Legal notices accompany the license in the root                           | Required project documentation |
+| README.md                                           | Primary setup, deployment, and operations guide           | GitHub and developers discover it in the root                             | Required project documentation |
+| SECURITY.md                                         | Vulnerability disclosure policy                           | GitHub discovers the security policy in the root                          | GitHub community standard      |
+| eslint.config.mjs                                   | ESLint flat configuration                                 | ESLint discovers it in the working directory                              | Required by ESLint             |
+| next-env.d.ts                                       | Next.js and generated route type references               | Next.js maintains this declaration at the project root                    | Required by Next.js            |
+| next.config.ts                                      | Next.js runtime, rewrite, and tracing configuration       | Next.js discovers it in the working directory                             | Required by Next.js            |
+| package-lock.json                                   | Reproducible npm dependency lock                          | npm requires it beside package.json                                       | Required by npm                |
+| package.json                                        | Package metadata, dependencies, and verification commands | npm requires it in the project root                                       | Required by npm                |
+| playwright.config.ts                                | Browser suite and fixture-server configuration            | Playwright discovers it in the working directory                          | Required by Playwright         |
+| postcss.config.mjs                                  | Tailwind/PostCSS integration                              | PostCSS discovers it in the working directory                             | Required by PostCSS            |
+| tailwind.config.ts                                  | Dune design tokens and Tailwind configuration             | The global stylesheet references it from the root                         | Required by the Tailwind setup |
+| tsconfig.json                                       | TypeScript compiler and Next.js plugin configuration      | TypeScript and Next.js discover it in the working directory               | Required by TypeScript         |
+| tsconfig.tsbuildinfo                                | Incremental TypeScript cache                              | Generated locally, ignored, and excluded from source checks               | Generated; not source          |
+| vitest.config.mjs                                   | Unit/API test discovery and coverage configuration        | Vitest discovers it in the working directory                              | Required by Vitest             |
 
 ## Feature ownership
 

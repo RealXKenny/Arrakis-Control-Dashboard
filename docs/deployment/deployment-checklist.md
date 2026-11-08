@@ -1,8 +1,8 @@
-# Arrakis Control Dashboard v2: production deployment checklist
+# Production deployment checklist
 
 This checklist uses only commands and settings that exist in this repository. Anything that is a general operating
 practice rather than a repository feature is marked **(recommended)**. Nothing here has been run against production:
-the verification evidence is in `SECURITY_FINAL_SIGNOFF.md`.
+what was and was not verified is summarised in [Security overview](../security/security-overview.md#what-was-verified-and-what-was-not).
 
 Never paste real secret values into tickets, chat or logs. Every command below that needs a secret reads it from the
 environment.
@@ -66,7 +66,7 @@ that is not an egg variable cannot reach the application.
   Redis loses data **(recommended: enable persistence)**.
 - Redis Cluster: all multi-key scripts use a shared `{hash tag}` per family (`{guilds}`, `{bm}`, `{audit}`), so the
   guild, marketplace and audit data each live on one shard. Single-key data (sessions, rate limits) spreads across shards.
-- If the Redis you are replacing still has the pre-tag key names, follow the `redis:rekey` section of `README.md`
+- If the Redis you are replacing still has the pre-tag key names, follow the `redis:rekey` steps in [Redis Cluster](../configuration/redis-cluster.md#migration-notes)
   **before** enabling `REDIS_CLUSTER_NODES`.
 
 ### 1.4 Network and TLS

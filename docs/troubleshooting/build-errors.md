@@ -1,0 +1,18 @@
+# Build errors
+
+| Symptom                                                     | Cause                                                                                        | Fix                                                                                   |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `npm ci` fails: lockfile/package mismatch                   | `package.json` and `package-lock.json` out of sync                                            | Restore the lockfile; run `npm install` once and commit both together                 |
+| Unsupported Node.js errors                                  | Node older than 22                                                                            | Install Node.js 22 or newer                                                            |
+| `npm run build` runs out of memory                          | Small container                                                                                | Increase memory; builds do not need deployment secrets                                 |
+| `Invalid server environment configuration: <NAME>` during build | A malformed value is present in the build environment                                     | Remove or fix the variable                                                             |
+| TypeScript errors in `npm run typecheck`                    | Real type errors, or Next.js 16 API differences                                                | Fix them; read `node_modules/next/dist/docs/` for changed Next.js APIs                  |
+| ESLint fails the build gate (`--max-warnings 0`)            | Any warning counts as a failure                                                                | Fix the warning, do not disable the rule                                               |
+| Architecture test fails: forbidden import                   | Browser code imports `src/config/env.ts` or a `server/` module                                 | Move the logic server-side ([architecture](../development/architecture.md))             |
+| Architecture test: root file not allowed                    | A new file at the repository root                                                              | Move it under `docs/` or `scripts/`, or justify it in the allowlist in the test        |
+| `format:check` fails                                        | Unformatted files                                                                              | `npx prettier --write <the files you changed>` (do not reformat unrelated files)        |
+| Installer tests skipped locally                             | `jq` or another tool missing from `PATH`                                                       | Install `jq`, `tar`, `sha256sum`, `find`, `readlink`, `awk` and `bash`                  |
+| `EADDRINUSE` in smoke/browser tests                         | A stale server on ports 3100/3101                                                              | Stop it and re-run                                                                     |
+| Docs check fails                                            | Broken relative link or anchor                                                                 | `npm run docs:check` prints the file, line and target                                  |
+
+Clean build: delete `.next/` and run `npm run build` again. Never commit `.next/`, `coverage/`, `test-results/` or `tsconfig.tsbuildinfo`.

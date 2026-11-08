@@ -130,6 +130,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 
 - Never commit generated `.next/`, `coverage/`, `test-results/`, `playwright-report/`, or `tsconfig.tsbuildinfo` output.
 
+- The permanent documentation center is `docs/README.md` (getting-started, installation, configuration, features, integrations, administration, security, api, development, deployment, troubleshooting, reference). Run `npm run docs:check` after editing Markdown; it validates relative links and anchors. Keep behaviour descriptions in step with the code, and attribute RedBlink material (see `NOTICE.md`).
 - Keep documentation in `docs/` and executable tools in `scripts/` according to the organization guide. Do not recreate removed `public/`, debug-output folders, Sentry files, PostgreSQL configuration, `src/modules/`, or `src/infrastructure/`.
 
 - Preserve unrelated user changes. Do not perform broad cleanup outside the requested scope.
