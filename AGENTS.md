@@ -12,6 +12,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Use this map before searching. Keep it current when structure or core contracts change. Every file must follow `docs/architecture/file-organization.md`; that guide owns placement, naming, import boundaries, and root-clutter rules. `docs/architecture/repository-inventory.md` records the final directory inventory and migration record.
 
+Assistant discovery paths stay native; shared guidance belongs here and in `docs/ai/`. Setup lives in `docs/ai/installation.md`. Run `npm run ai:check` after changing adapters. Keep the inventory concise; use `git ls-files` for the complete tracked list and preserve previous migration records in `docs/architecture/migration-history.md`.
+
 **## Runtime**
 
 - Stack: Node.js 22+, Next.js 16 App Router (V2 "Modern Dune" UI) with a remaining Pages Router `src/pages/api` layer, React 19, TypeScript, Tailwind CSS v4, npm, Redis (ioredis, standalone or Cluster), Vitest, and Playwright.
@@ -34,7 +36,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 
 - `src/app/` contains only routing and framework entry points. `/` and `/changelog` are public; signed-in routes live in `(workspace)/` (`portal`, `character`, `holdings` (+ `preview`), `storage`, `vehicles`, `market`, `bases` (marketplace, upload, detail), `guilds`, `guild`, `map`, `admin`). Every workspace page calls `requireSession()` itself. `src/app/api/v2/**` uses `src/server/http.ts`; `src/pages/api/**` remains the thin legacy API layer behind `runPagesApiHandler`.
 
-- `src/components/` contains only shared UI: `navigation/` owns the single global topbar, its centralized route inventory, dropdowns, and mobile drawer; `brand/`, `layout/`, `feedback/`, and `ui/` own their named shared concerns. Do not restore the removed workspace navigation row or create another route inventory.
+- `src/components/` contains only shared UI: `navigation/` owns the single global topbar, its centralized route inventory, dropdowns, and mobile drawer; `brand/`, `layout/`, and `ui/` own their named shared concerns. Navigation may consume auth identity types and server actions; other shared UI must not import feature internals. Profile failure presentation belongs to `features/portal/components/profile-failure.tsx`. Do not restore the removed workspace navigation row or create another route inventory.
 
 - `src/features/` is the only business-domain home. Current domains are `admin`, `auth`, `bases`, `bot`, `changelog`, `guilds`, `landing`, `map`, `market`, `player`, `portal`, `server-status`, and `vehicles`. Feature components, hooks, server operations, schemas, styles, types, and utilities stay with their domain. See the inventory for each domain's responsibility.
 
@@ -44,7 +46,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 
 - `src/lib/` contains focused shared modules: `redis/` (standalone/Cluster clients, hash-tagged keys, pool, optional data provider), `security/` (rate limiting and API capacity), `cache/`, `http/`, formatting, logging, errors, values, and server assertions. `lib/redis/` and `lib/security/` are server-only.
 
-- `src/config/env.ts` is the canonical environment schema and production gate; `config/version.ts` reads the package version. There is no second environment module.
+- `src/config/env.ts` is the canonical environment schema and production gate. There is no second environment module or unused version re-export.
 
 - `src/types/` contains genuinely shared TypeScript contracts. Feature-local types remain in their feature.
 
@@ -56,7 +58,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 
 - `src/instrumentation.ts` owns runtime validation, Console warmup, startup logging, population recording, and release announcement startup.
 
-- `tests/` contains API, architecture, browser, deployment (sandboxed egg installer), helpers, integration (real Redis, standalone or Cluster; opt-in through `TEST_REDIS_URL` / `TEST_REDIS_CLUSTER_NODES`, run with `npm run test:integration`), load, and domain-organized unit suites. Browser tests import `test`/`expect` from `tests/helpers/browser-test.ts`; shared domain routes are registered by `tests/helpers/portal-browser.ts`. Architecture tests enforce browser/server boundaries, API boundaries, dependency acyclicity, naming, retired directories, and the root allowlist.
+- `tests/` contains API, architecture, browser, deployment (sandboxed egg installer), production (built-runtime smoke), helpers, integration (real Redis, standalone or Cluster; opt-in through `TEST_REDIS_URL` / `TEST_REDIS_CLUSTER_NODES`, run with `npm run test:integration`), load, and domain-organized unit suites. Browser tests import `test`/`expect` from `tests/helpers/browser-test.ts`; shared domain routes are registered by `tests/helpers/portal-browser.ts`. Architecture tests enforce browser/server boundaries (including App Router client entry points, erased type imports, and server-action references), API boundaries, dependency acyclicity, naming, retired directories, and the root allowlist.
 
 **## Feature contracts**
 

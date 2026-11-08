@@ -17,6 +17,7 @@
 | `npm run test:production`    | Production smoke test (after build)                                            |
 | `npm run test:browser`       | Playwright (Chromium)                                                          |
 | `npm run format` / `npm run format:check` | Prettier write / check on `src tests scripts`                       |
+| `npm run ai:check` | Validate native assistant files and instruction frontmatter |
 | `npm run docs:check`         | Validate Markdown links and anchors                                            |
 | `npm run redis:rekey`        | Rename legacy keys to hash-tagged names (`--apply` to write)                    |
 | `npm run marketplace:rekey`  | Marketplace owner-key migration (`--apply --backup <file>`, `--rollback <file>`) |

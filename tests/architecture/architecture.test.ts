@@ -11,7 +11,7 @@ const files = fs
   .map((p) => path.join(root, p));
 const normalize = (file: string) => path.relative(root, file).replaceAll('\\', '/');
 
-function imports(file: string, text = fs.readFileSync(file, 'utf8')): string[] {
+function imports(file: string, text = fs.readFileSync(file, 'utf8'), runtimeOnly = false): string[] {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   const result: string[] = [];
   function visit(node: ts.Node) {
@@ -36,6 +36,30 @@ function imports(file: string, text = fs.readFileSync(file, 'utf8')): string[] {
       node.moduleSpecifier &&
       ts.isStringLiteral(node.moduleSpecifier)
     ) {
+      if (runtimeOnly) {
+        if (ts.isImportDeclaration(node) && node.importClause) {
+          const clause = node.importClause;
+          if (clause.isTypeOnly) return;
+          if (
+            !clause.name &&
+            clause.namedBindings &&
+            ts.isNamedImports(clause.namedBindings) &&
+            clause.namedBindings.elements.length > 0 &&
+            clause.namedBindings.elements.every((element) => element.isTypeOnly)
+          )
+            return;
+        }
+        if (ts.isExportDeclaration(node)) {
+          if (node.isTypeOnly) return;
+          if (
+            node.exportClause &&
+            ts.isNamedExports(node.exportClause) &&
+            node.exportClause.elements.length > 0 &&
+            node.exportClause.elements.every((element) => element.isTypeOnly)
+          )
+            return;
+        }
+      }
       result.push(node.moduleSpecifier.text);
     }
     if (
@@ -48,6 +72,15 @@ function imports(file: string, text = fs.readFileSync(file, 'utf8')): string[] {
   }
   visit(source);
   return result;
+}
+
+function hasDirective(file: string, directive: string, text = fs.readFileSync(file, 'utf8')): boolean {
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+  for (const statement of source.statements) {
+    if (!ts.isExpressionStatement(statement) || !ts.isStringLiteral(statement.expression)) break;
+    if (statement.expression.text === directive) return true;
+  }
+  return false;
 }
 
 describe('module boundaries', () => {
@@ -64,21 +97,51 @@ describe('module boundaries', () => {
     function visit(file: string) {
       if (visited.has(file)) return;
       visited.add(file);
+      // Next turns file-level server actions into client references, not browser code.
+      if (hasDirective(file, 'use server')) return;
       expect(normalize(file)).not.toMatch(
         /(^infrastructure\/|^config\/env\.ts$|\/server\/|^lib\/(assert-server|logger)\.ts$|^lib\/(redis|security)\/)/,
       );
-      for (const spec of imports(file)) {
+      for (const spec of imports(file, undefined, true)) {
         expect(spec).not.toBe('server-only');
         if (!spec.startsWith('.')) continue;
         const base = path.resolve(path.dirname(file), spec);
-        const resolved = [base, base + '.ts', base + '.tsx', path.join(base, 'index.ts')].find((p) =>
-          files.includes(p),
-        );
+        const resolved = [
+          base,
+          base + '.ts',
+          base + '.tsx',
+          path.join(base, 'index.ts'),
+          path.join(base, 'index.tsx'),
+        ].find((p) => files.includes(p));
         if (resolved) visit(resolved);
       }
     }
-    for (const file of files.filter((p) => /^(pages\/(?!api\/)|instrumentation-client)/.test(normalize(p))))
+    for (const file of files.filter(
+      (p) => /^(pages\/(?!api\/)|instrumentation-client)/.test(normalize(p)) || hasDirective(p, 'use client'),
+    ))
       visit(file);
+  });
+
+  it('recognizes App Router boundaries and distinguishes erased imports from runtime imports', () => {
+    const file = path.join(root, 'features/example.tsx');
+    expect(hasDirective(file, 'use client', `/* comment */ 'use client'; export const x = 1;`)).toBe(true);
+    expect(hasDirective(file, 'use server', `'use server'; export async function action() {}`)).toBe(true);
+    expect(hasDirective(file, 'use client', `export function f() { 'use client'; }`)).toBe(false);
+    expect(
+      imports(
+        file,
+        `
+      import type { Session } from './server/session';
+      import { type Result } from './server/load';
+      export type { Result } from './server/load';
+      export { type Result } from './server/load';
+      import { type Shape, render } from './view';
+      import './side-effect';
+      import('./dynamic');
+    `,
+        true,
+      ),
+    ).toEqual(['./view', './side-effect', './dynamic']);
   });
 
   it('keeps every API route behind the common handler', () => {
@@ -103,6 +166,24 @@ describe('module boundaries', () => {
 });
 
 describe('repository organization', () => {
+  it('gives every source module a documented top-level owner', () => {
+    for (const file of files) {
+      expect(normalize(file)).toMatch(
+        /^(app|components|config|features|lib|pages\/api|server|types)\/|^(instrumentation|proxy)\.ts$/,
+      );
+    }
+  });
+
+  it('keeps shared UI independent of feature internals except navigation authentication', () => {
+    for (const file of files.filter((file) => normalize(file).startsWith('components/'))) {
+      for (const spec of imports(file)) {
+        if (!spec.includes('/features/')) continue;
+        expect(normalize(file)).toMatch(/^components\/navigation\//);
+        expect(spec).toMatch(/\/features\/auth\/(identity|actions)$/);
+      }
+    }
+  });
+
   it('retires obsolete homes and keeps feature implementations out of route folders', () => {
     for (const file of files) {
       expect(normalize(file)).not.toMatch(/^(modules|infrastructure)\//);
@@ -175,7 +256,6 @@ describe('repository organization', () => {
       'CODE_OF_CONDUCT.md',
       'CONTRIBUTING.md',
       'GEMINI.md',
-      'INSTALL.md',
       'KIMI.md',
       'LICENSE',
       'NOTICE.md',

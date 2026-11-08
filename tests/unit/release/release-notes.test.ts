@@ -55,7 +55,7 @@ describe('release notes', () => {
     const checks = ci.slice(ci.indexOf('  checks:'), ci.indexOf('  integration:'));
     const integration = ci.slice(ci.indexOf('  integration:'), ci.indexOf('  verify:'));
     // Each check runs on its own runner through a matrix, so none can be silently dropped.
-    expect(checks).toContain('task: [typecheck, lint, format:check, test]');
+    expect(checks).toContain('task: [typecheck, lint, format:check, docs:check, test]');
     expect(checks).toContain('npm run ${{ matrix.task }}');
     expect(checks).toContain('fail-fast: false');
     expect(integration).not.toContain('needs:');

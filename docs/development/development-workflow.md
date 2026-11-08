@@ -17,7 +17,7 @@
 | `npm run test:watch`             | `vitest`                                                                              |
 | `npm run test:coverage`          | `vitest run --coverage`                                                               |
 | `npm run test:integration`       | `vitest run tests/integration --no-file-parallelism` (needs `TEST_REDIS_URL` or `TEST_REDIS_CLUSTER_NODES`) |
-| `npm run test:production`        | `node tests/smoke-production.mjs` (after `npm run build`)                              |
+| `npm run test:production`        | `node tests/production/smoke.mjs` (after `npm run build`)                              |
 | `npm run test:browser`           | `playwright test`                                                                      |
 | `npm run format` / `format:check` | Prettier on `src tests scripts` (write / check)                                       |
 | `npm run docs:check`             | Validate relative links and anchors in Markdown                                        |

@@ -11,14 +11,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:production": "node tests/smoke-production.mjs",
+    "test:production": "node tests/production/smoke.mjs",
     "test:browser": "playwright test",
     "format": "prettier --write src tests scripts",
     "format:check": "prettier --check src tests scripts",
     "redis:rekey": "node scripts/maintenance/rekey-redis.mjs",
     "marketplace:rekey": "node scripts/maintenance/rekey-marketplace.mjs",
     "docs:check": "node scripts/maintenance/check-docs.mjs",
-    "test:integration": "vitest run tests/integration --no-file-parallelism"
+    "test:integration": "vitest run tests/integration --no-file-parallelism",
+    "ai:check": "node scripts/maintenance/validate-ai-config.mjs"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",

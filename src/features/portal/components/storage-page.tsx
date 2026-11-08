@@ -7,7 +7,7 @@ import { itemImage } from '../../player/item-image';
 import { ALL_CONTAINERS, parseStorageQuery, storageHref, viewStorage } from '../../player/storage';
 import { loadPortalProfile } from '../server/load';
 import { requireSession } from '../../auth/server/session';
-import { ProfileFailure } from '../../../components/feedback/gauge-notice';
+import { ProfileFailure } from './profile-failure';
 import { PageHeader } from '../../../components/ui/page-header';
 
 export const metadata: Metadata = { title: 'Storage' };

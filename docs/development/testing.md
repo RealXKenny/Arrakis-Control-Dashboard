@@ -5,7 +5,7 @@
 | Layer                | Command                         | Where                          | Needs                                  |
 | -------------------- | ------------------------------- | ------------------------------ | -------------------------------------- |
 | Unit and API         | `npm test`                      | `tests/unit`, `tests/api`, `tests/architecture`, `tests/deployment` | Node; installer tests also need `bash`, `jq`, `tar`, `sha256sum`, `find`, `readlink`, `awk` (they skip silently without them; CI runners have them) |
-| Production smoke     | `npm run build` then `npm run test:production` | `tests/smoke-production.mjs` | Built app; starts fake Console and fake RESP Redis fixtures |
+| Production smoke     | `npm run build` then `npm run test:production` | `tests/production/smoke.mjs` | Built app; starts fake Console and fake RESP Redis fixtures |
 | Browser              | `npm run test:browser`          | `tests/browser`                | Chromium (`npx playwright install chromium`) |
 | Redis integration    | `npm run test:integration`      | `tests/integration`            | A **disposable** Redis (below)         |
 | Load                 | k6 script                       | `tests/load/dashboard.k6.js`   | k6 (not run in CI)                     |

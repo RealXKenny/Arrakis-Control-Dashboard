@@ -126,7 +126,7 @@ flowchart LR
     Pterodactyl --> App
 ```
 
-Feature code lives in `src/features/`, route entry points in `src/app/`, shared UI in `src/components/`, and request/provider infrastructure in `src/server/`. See [file organization](docs/architecture/file-organization.md) for placement rules and the [repository inventory](docs/architecture/repository-inventory.md) for the complete map.
+Feature code lives in `src/features/`, route entry points in `src/app/`, shared UI in `src/components/`, and request/provider infrastructure in `src/server/`. See [file organization](docs/architecture/file-organization.md) for placement rules and the [repository inventory](docs/architecture/repository-inventory.md) for the directory map and root-file audit. Assistant setup lives in [docs/ai](docs/ai/installation.md).
 
 ## Quick start
 
@@ -227,6 +227,8 @@ docs/              # Documentation center, architecture notes, legal files, and 
 | Command                    | Purpose                                                                        |
 | -------------------------- | ------------------------------------------------------------------------------ |
 | `npm run dev`              | Start the development server                                                   |
+| `npm run ai:check` | Validate coding assistant configuration |
+| `npm run docs:check` | Validate documentation links and anchors |
 | `npm run format:check`     | Check source, test, and script formatting                                      |
 | `npm run typecheck`        | Run TypeScript validation                                                      |
 | `npm run lint`             | Run ESLint with zero warnings allowed                                          |

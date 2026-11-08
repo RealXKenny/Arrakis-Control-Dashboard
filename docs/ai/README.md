@@ -21,7 +21,7 @@ Agent instruction discovery is version-dependent. Verify the loaded instructions
 
 ## Install and verify
 
-Read [INSTALL.md](INSTALL.md). Review root-file allowlist and architecture tests before copying new root files. Run `node scripts/maintenance/validate-ai-config.mjs` after installation, then the standard project checks. Use [the test triage guide](browser-test-triage.md) to investigate existing Playwright failures rather than claiming they are fixed.
+Read [assistant setup](installation.md). Review root-file allowlist and architecture tests before copying new root files. Run `npm run ai:check` after installation, then the standard project checks. Use [the test triage guide](browser-test-triage.md) to investigate existing Playwright failures rather than claiming they are fixed.
 
 ## Maintain
 

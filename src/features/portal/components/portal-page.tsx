@@ -7,7 +7,7 @@ import { timeRemaining } from '../world';
 import { loadPortalProfile, loadWorld } from '../server/load';
 import { requireSession } from '../../auth/server/session';
 import { ArrowRightIcon } from '../../../components/icons';
-import { ProfileFailure } from '../../../components/feedback/gauge-notice';
+import { ProfileFailure } from './profile-failure';
 import { PageHeader } from '../../../components/ui/page-header';
 import { PopulationChart } from './population-chart';
 

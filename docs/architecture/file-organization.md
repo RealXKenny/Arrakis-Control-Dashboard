@@ -30,13 +30,13 @@ Answer the first matching question:
 1. **Is Next.js required to discover it?** Put `page.tsx`, `layout.tsx`, `route.ts`, `loading.tsx`, `error.tsx`, metadata files, and other special files in their supported `app/` location. Required root configuration stays in the root.
 2. **Is it an executable maintenance, deployment, or runtime tool?** Put it in `scripts/`, with a subdirectory only when its purpose is clear.
 3. **Does it belong to one business domain?** Put it in `src/features/<domain>/`, using `components/`, `hooks/`, `server/`, `styles/`, or another subdirectory only when useful.
-4. **Is it reusable application UI?** Put shared navigation and layout components in `src/components/navigation/` or `src/components/layout/`; put design primitives in `src/components/ui/` and feedback components in `src/components/feedback/`.
+4. **Is it reusable application UI?** Put shared navigation and layout components in `src/components/navigation/` or `src/components/layout/`; put design primitives in `src/components/ui/`.
 5. **Is it shared request handling or an external provider client?** Put it in `src/server/` or `src/server/integrations/`.
 6. **Is it a shared pure utility or focused infrastructure helper?** Put it in `src/lib/`.
 7. **Is it environment or application configuration?** Put it in `src/config/`.
 8. **Is it a type shared by unrelated domains?** Put it in `src/types/`; otherwise keep the type with its feature.
 9. **Is it a global style or design token?** Put it in `src/styles/`. Keep feature CSS modules with their feature.
-10. **Is it a test?** Put domain unit tests in `tests/unit/<domain>/`; use the existing API, browser, architecture, helper, and load homes for those suites.
+10. **Is it a test?** Put domain unit tests in `tests/unit/<domain>/`; use the existing API, browser, architecture, production, integration, deployment, helper, and load homes for those suites.
 
 ## Feature ownership
 
@@ -100,3 +100,19 @@ Incorrect:
 Before adding a file, identify its owner and check whether an existing feature or focused shared module already has that responsibility. Do not add root files for convenience. Do not keep compatibility shims after all imports have migrated. Remove empty directories after moves, but never delete a file whose runtime discovery or dynamic references have not been checked.
 
 AI coding agents must read this guide and `AGENTS.md` before creating files, update both when architectural contracts change, run the architecture checks, and preserve unrelated work. Every new file should have an obvious answer to "why does it belong here?"
+
+## Root and documentation policy
+
+The [root audit](repository-inventory.md#root-file-audit) gives a reason for every retained root file. Keep framework/tool-discovered configuration, npm manifests, conventional community/legal entry points, release notes, and native or established explicit assistant entry points there. Application installation belongs in docs/installation; assistant setup belongs in docs/ai/installation.md. Do not add a generic root INSTALL.md.
+
+Documentation categories follow their actual audiences: getting-started, installation, configuration, features, integrations, administration, security, api, development, deployment, troubleshooting, reference, architecture, ai, legal, and documentation assets. Keep operational guidance in administration rather than creating a competing operations directory. Testing guidance lives in docs/development/testing.md; create a separate testing category only when content needs it. docs/README.md is the permanent navigation center. Preserve historical migration/audit findings with explicit historical labels; avoid copying generated file lists into Markdown.
+
+## Enforced dependency direction
+
+Routes compose features and shared infrastructure. Shared UI may not depend on feature internals, with one explicit composition exception: global navigation consumes auth identity types and sign-out actions. Profile failure UI is owned by portal because it interprets PortalResult. Shared server request infrastructure may call auth session orchestration; Redis data-provider aggregation may use portal population calculations. These existing cross-domain composition points are intentional, not general permission for shared modules to depend on arbitrary features.
+
+Architecture tests check source ownership, naming, cycles, route boundaries, shared UI dependencies, and transitive runtime imports from every file-level use-client entry point. Type-only imports are erased; file-level use-server modules are framework action references and terminate browser traversal. Keep these checks aligned with local Next.js guidance.
+
+## Migration and removal checklist
+
+Before removing a candidate, identify its owner, search direct references, check dynamic imports and discovery, inspect tests/tooling/deployment, and confirm any replacement preserves useful content. Update imports, mocks, package scripts, workflows, and documentation together. Prefer git mv when practical; filesystem moves are acceptable when Git metadata writes are unavailable. Never overwrite an existing destination or unrelated modification. Do not create empty categories, compatibility wrappers, or cosmetic nesting. Run focused checks, standard validation, docs:check for Markdown, ai:check for adapters, and build/production smoke for runtime or tooling changes. Report unavailable checks explicitly.

@@ -5,8 +5,8 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { createRedisFixture } from './helpers/redis-resp.mjs';
-import { announceReadiness } from '../scripts/server-launcher.mjs';
+import { createRedisFixture } from '../helpers/redis-resp.mjs';
+import { announceReadiness } from '../../scripts/server-launcher.mjs';
 
 let revoked = false;
 let upstreamReads = 0;

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import type { PortalResult } from '../../features/portal/server/load';
-import { Notice } from '../ui/page-header';
+import type { PortalResult } from '../server/load';
+import { Notice } from '../../../components/ui/page-header';
 
 type Failure = Exclude<PortalResult, { status: 'ok' }>;
 

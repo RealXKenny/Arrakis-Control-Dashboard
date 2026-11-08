@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { loadPortalProfile } from '../../../features/portal/server/load';
 import { requireSession } from '../../../features/auth/server/session';
-import { ProfileFailure } from '../../../components/feedback/gauge-notice';
+import { ProfileFailure } from '../../../features/portal/components/profile-failure';
 import { Notice, PageHeader } from '../../../components/ui/page-header';
 import { SegmentedNav } from '../../../components/ui/segmented-nav';
 import { HoldingCard } from '../../../features/bases/components/holdings/base-card';
