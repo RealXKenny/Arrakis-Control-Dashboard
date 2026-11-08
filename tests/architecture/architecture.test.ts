@@ -174,6 +174,7 @@ describe('repository organization', () => {
       'NOTICE.md',
       'README.md',
       'SECURITY_AUDIT.md',
+      'SECURITY_PRODUCTION_READINESS.md',
       'SECURITY_REAUDIT.md',
       'SECURITY_REMEDIATION.md',
       'eslint.config.mjs',

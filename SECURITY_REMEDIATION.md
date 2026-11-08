@@ -99,3 +99,12 @@ Full details, evidence and test counts are in `SECURITY_REAUDIT.md`.
 Verification: 94 test files / 912 tests passed; typecheck, lint, format check, build and production smoke passed; `npm audit` 0/0. Browser suite: pristine `HEAD` baseline 24 passed / 55 failed; current tree identical before the spec edit (no regressions); 26 passed / 53 failed after fixing two outdated admin assertions. The 53 stale pre-V2 specs are BLOCKED on a rewrite by the UI owner.
 
 New manual actions: optionally set `REDIS_REQUIRE_TLS=true` and a shorter `ADMIN_REAUTH_HOURS`; decide SEC-12, 13, 23; plan the SEC-24 key migration; run the pinned workflows once on GitHub.
+
+## Production-readiness pass
+Full detail, statuses, test results, manual actions and rollback: `SECURITY_PRODUCTION_READINESS.md`.
+
+Implemented: HMAC marketplace owner keys with a backward-compatible dual-read and `npm run marketplace:rekey` (dry run, backup, rollback); per-member and global marketplace byte quotas; Console-sourced guild names; durable redacted audit trail with configurable retention and an admin read route; a 60-minute re-authentication window for destructive admin actions; refusal of unauthenticated public plain-text Redis and opt-in `REDIS_REQUIRE_TLS`; checksummed release archives verified by the egg, with version pinning; bounded and cached guild lookups; a local fake Console and per-test members that restored the browser suite.
+
+Results: format, typecheck, lint pass; 98 files / 938 unit and API tests pass; build and production smoke pass; Playwright 81 passed, 0 failed, 0 skipped; `npm audit` 0; no secrets found. Not verified: the new Lua scripts against a real Redis; GitHub workflows; the installer's `jq` filters.
+
+Manual actions: set `OWNER_KEY_SECRET`; run the Lua scripts against a real Redis; secure Redis (password, TLS); ship stdout logs; owner decisions listed in the readiness report; optionally run the owner-key migration.

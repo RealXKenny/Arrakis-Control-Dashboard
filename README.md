@@ -87,6 +87,17 @@ Transfers are intentionally bounded: uploads are at most 8 MiB combined with a 3
 
 The Announcify widget was removed from the V2 shell. The site security policy no longer allows third-party scripts, API requests or images other than Discord avatars. Release announcements are posted to Discord with `CHANGELOG_WEBHOOK_URL`.
 
+## Security operations
+
+Details and verification live in `SECURITY_AUDIT.md`, `SECURITY_REMEDIATION.md`, `SECURITY_REAUDIT.md` and `SECURITY_PRODUCTION_READINESS.md`.
+
+- **Audit trail.** Administrator operations (writes and downloads), refused re-authentication, denied admin access, sign-ins and sign-outs, failed password sign-ins, session revocations by Discord re-checks, guild rank/membership/settings changes, rejected cross-origin requests and limiter failures are recorded as redacted JSON. Set `AUDIT_LOG_STDOUT=true` (default) and ship the process output to retained storage for long-term retention; the Redis copy keeps `AUDIT_LOG_MAX_ENTRIES` events for `AUDIT_LOG_RETENTION_DAYS` days and is readable by administrators at `GET /api/v2/admin/audit`.
+- **Administrator re-authentication.** Changes need an interactive sign-in within `ADMIN_REAUTH_HOURS` (default 12); destructive actions need one within `ADMIN_HIGH_RISK_REAUTH_MINUTES` (default 60).
+- **Marketplace ownership keys.** New listings use HMAC owner keys (`OWNER_KEY_SECRET`, or derived from `AUTH_SECRET`). Older listings keep working because both key generations are accepted. To retire the guessable legacy keys, run `npm run marketplace:rekey` (dry run), then `npm run marketplace:rekey -- --apply --backup rekey-backup.json`; `--rollback rekey-backup.json` reverses it. Keep the backup file private.
+- **Marketplace limits.** Each member may hold 25 listings and 24 MiB of stored layouts and pictures; the marketplace holds 500 listings and 256 MiB. Lower or raise these in `src/features/bases/server/marketplace.ts` after reviewing capacity.
+- **Guild names.** Recruitment listings always show the Console's name for the guild ID; leaders cannot publish a different name.
+- **Releases.** Each release publishes `arrakis-control-dashboard-<version>.tar.gz` and its `.sha256`. The Pterodactyl egg verifies the checksum before building and can pin a version with `RELEASE_TAG`.
+
 ## Discord bot API
 
 Set optional `BOT_API_TOKEN` to an independently generated 32–256 character secret in the dashboard and your bot's secret store. This credential is distinct from the Discord bot token, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN`. Empty means disabled. Rotate it by replacing the value on both services and restarting the dashboard; it is never sent to browsers. The egg exposes this optional setting too.

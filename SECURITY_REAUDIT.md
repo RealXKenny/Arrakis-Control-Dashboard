@@ -137,3 +137,9 @@ By file (failing after correction): admin 3, announcements 1 (tests a removed An
 
 ## Files changed in this pass
 `src/features/auth/server/config.ts`, `src/app/api/v2/admin/execute/route.ts`, `src/features/vehicles/server/load.ts`, `src/features/player/server/handler.ts`, `src/features/market/server/market-listings.ts`, `src/lib/security/rate-limit.ts`, `src/config/env.ts`, `src/app/login/page.tsx`, new `src/features/auth/notices.ts`, `scripts/deployment/build-pterodactyl-egg.mjs`, `.env.example`, `README.md`; tests: new `jwt-encode`, `notices`, `linked-character`, `seller-ids`, `roster-match`, `provider-redirect`; extended `admin`, `env`, `client-address`, `pterodactyl-egg`, browser `admin.spec`.
+
+## Follow-up (production-readiness pass)
+- **Playwright:** the 53 blocked specs were rewritten for the V2 interface against a local fake Console; the full suite is now 81 passed, 0 failed, 0 skipped. See `SECURITY_PRODUCTION_READINESS.md`.
+- **SEC-12 and SEC-13:** implemented rather than accepted (durable audit trail; Console-sourced guild names).
+- **SEC-23 and SEC-24:** quotas and HMAC owner keys with a rollback-capable migration implemented; the migration has not been run on production data.
+- Status of every finding: `SECURITY_PRODUCTION_READINESS.md`.

@@ -129,3 +129,16 @@ A fresh adversarial pass is recorded in `SECURITY_REAUDIT.md`. It corrected two 
 - SEC-11: independently re-verified (lockfile, signatures, scripts); stays PARTIALLY FIXED because `next-auth` is a beta.
 - SEC-12 and SEC-13: no longer described as accepted; both are BLOCKED pending an explicit owner decision.
 - New: SEC-15 to SEC-25 (see the re-audit report): SEC-15 to SEC-22 FIXED; SEC-23, SEC-24, SEC-25 OPEN.
+
+## Final status update (production-readiness pass)
+Historical text above is unchanged. Final statuses for SEC-01 to SEC-25 are in `SECURITY_PRODUCTION_READINESS.md`. Changes in this pass:
+- SEC-08: PARTIALLY FIXED. Added a 60-minute step-up window for destructive actions and downloads (`ADMIN_HIGH_RISK_REAUTH_MINUTES`) and audit events; MFA and global sign-out remain owner decisions.
+- SEC-10: PARTIALLY FIXED. Production now refuses unauthenticated plain-text Redis on a public-looking host (`REDIS_ALLOW_INSECURE` overrides); `REDIS_REQUIRE_TLS` is opt-in.
+- SEC-11: BLOCKED — owner decision. No newer v5 release exists; `npm audit` clean; compensating controls documented.
+- SEC-12: FIXED. Durable, redacted audit trail (`src/lib/security/audit.ts`), configurable retention, admin read API.
+- SEC-13: FIXED. Listings show the Console's guild name for the guild ID.
+- SEC-22: PARTIALLY FIXED. Checksummed release archive, verified by the egg, version pinning.
+- SEC-23: PARTIALLY FIXED. Per-member and global byte quotas; expiry and per-guild quotas need approval.
+- SEC-24: PARTIALLY FIXED. HMAC owner keys with dual-read, migration script with backup and rollback; production data not migrated.
+- SEC-25: PARTIALLY FIXED. Bounded, cached guild lookup.
+- Verification gap: the new Lua scripts have not been executed against a real Redis.

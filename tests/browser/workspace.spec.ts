@@ -114,7 +114,7 @@ test.describe('browser security posture', () => {
 
 test.describe('portal, character and storage', () => {
   test('the portal summarises the linked character', async ({ page, context }) => {
-    await signInAs(context, await fakeConsole.newMember('Sietch Walker'));
+    await signInAs(context, await fakeConsole.newMember('Sietch Walker', { guild: { id: '2', role: 100 } }));
     await page.goto('/portal');
     await expect(page.getByText('Welcome back, Sietch Walker')).toBeVisible();
     await expect(page.getByText('Crimson Skies').first()).toBeVisible();

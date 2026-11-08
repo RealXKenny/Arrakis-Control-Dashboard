@@ -208,7 +208,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   expect(await page.locator('[data-map-resolution]').evaluate((map) => map.getBoundingClientRect().width)).toBe(
     zoomedWidth,
   );
-  const updated = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/map');
+  const updated = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/v2/map');
   releaseMapRead();
   await updated;
   await page.getByRole('button', { name: 'Refresh', exact: true }).click();
@@ -243,7 +243,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await page.getByRole('button', { name: 'Refresh', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
   await page.screenshot({ path: 'test-results/map-desktop.png', fullPage: true });
-  await expect(page).toHaveURL(/\/portal$/);
+  await expect(page).toHaveURL(/\/map$/);
   await expect(page.getByRole('link', { name: 'Hagga Basin', exact: true })).toHaveAttribute('aria-current', 'page');
   const desertLinks = page.locator('nav a').filter({ hasText: /Hagga Basin|Deep Desert/ });
   await expect(desertLinks).toHaveText(['Hagga Basin', 'Deep Desert']);
@@ -251,7 +251,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(page.getByRole('link', { name: 'Deep Desert', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('checkbox', { name: 'Sector Grid', exact: true })).toBeChecked();
   await expect(page.getByTitle('Show Storage', { exact: true })).toHaveCount(1);
-  await expect(page).toHaveURL(/\/portal$/);
+  await expect(page).toHaveURL(/\/map(\?map=DeepDesert)?$/);
   await page.getByRole('button', { name: '2D map', exact: true }).click();
   // CI's software renderer can spend over 20 seconds uploading the full legacy terrain.
   await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1, {
@@ -503,7 +503,7 @@ for (const mapName of ['Hagga Basin', 'Deep Desert']) {
     });
     // Separate per-map budgets retain full geometry, marker density and wheel sequences.
     // A normal desktop canvas avoids making software rasterization an ultrawide benchmark.
-    await page.goto(`/portal?view=${mapName === 'Deep Desert' ? 'deep-desert' : 'hagga'}`);
+    await page.goto(mapName === 'Deep Desert' ? '/map?map=DeepDesert' : '/map');
     const scene = page.locator('[data-map-view="3d"]');
     await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
     const markerNodes = scene.locator('[data-marker-id]');
