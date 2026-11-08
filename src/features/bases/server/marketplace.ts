@@ -1,11 +1,11 @@
 import '../../../lib/assert-server';
-import { createHash } from 'node:crypto';
 import { AppError } from '../../../lib/errors';
 import { ReadCache } from '../../../lib/cache/read-cache';
 import { withTimeout } from '../../../lib/http/timeout';
 import { logger } from '../../../lib/logger';
 import { getRedisClient } from '../../../lib/redis/client';
 import type { DashboardSession } from '../../auth/server/session-store';
+import { ownerKeyForId, ownerKeysForId } from './owner-key';
 import { sniffThumbnail, type ThumbnailType } from '../image';
 import { BASE_LISTING_LIMIT, recordSchema, summarySchema, type BaseRecord, type BaseSummary } from '../schema';
 import { getMarketplaceRecord, listMarketplaceSummaries } from '../marketplace/server/store';
@@ -25,9 +25,15 @@ export const baseMarketplaceKeys = {
   owner: (id: string) => `${NS}:owner:${id}`,
   image: (id: string) => `${NS}:image:${id}`,
   userCount: (ownerKey: string) => `${NS}:user:${ownerKey}`,
+  userBytes: (ownerKey: string) => `${NS}:bytes:${ownerKey}`,
+  totalBytes: `${NS}:bytes-total`,
+  size: (id: string) => `${NS}:size:${id}`,
 };
 
 export const MAX_LISTINGS_PER_USER = 25;
+/** Stored bytes (layout plus picture) one member may hold, and the marketplace as a whole. Legacy listings are not counted. */
+export const MAX_BYTES_PER_USER = 24 * 1024 * 1024;
+export const MAX_BYTES_TOTAL = 256 * 1024 * 1024;
 const TIMEOUT_MS = 12_000;
 
 function redis() {
@@ -37,30 +43,55 @@ function redis() {
 }
 
 export function ownerKeyFor(session: DashboardSession): string {
-  return createHash('sha256').update(`base-marketplace-owner:${session.user.id}`).digest('hex').slice(0, 16);
+  return ownerKeyForId(session.user.id);
+}
+
+/** Current and legacy keys: ownership checks accept both until `marketplace:rekey` has been applied. */
+export function ownerKeysFor(session: DashboardSession): string[] {
+  return ownerKeysForId(session.user.id);
 }
 
 const PUBLISH_SCRIPT = `
+-- A listing ID that is already stored would be counted twice and its size record overwritten.
+if redis.call('EXISTS', KEYS[2]) == 1 then return -5 end
 if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[7]) then return -2 end
 local count = tonumber(redis.call('GET', KEYS[6]) or '0')
 if count >= tonumber(ARGV[6]) then return -1 end
+local size = tonumber(ARGV[8])
+if tonumber(redis.call('GET', KEYS[7]) or '0') + size > tonumber(ARGV[9]) then return -3 end
+if tonumber(redis.call('GET', KEYS[8]) or '0') + size > tonumber(ARGV[10]) then return -4 end
 redis.call('SET', KEYS[2], ARGV[1])
 redis.call('SET', KEYS[3], ARGV[2])
 redis.call('SET', KEYS[4], ARGV[4])
 if ARGV[5] ~= '' then redis.call('SET', KEYS[5], ARGV[5]) end
 redis.call('ZADD', KEYS[1], ARGV[3], ARGV[2])
 redis.call('INCR', KEYS[6])
+redis.call('INCRBY', KEYS[7], size)
+redis.call('INCRBY', KEYS[8], size)
+redis.call('SET', KEYS[9], size)
 return 1
 `;
 
 const DELETE_SCRIPT = `
 local owner = redis.call('GET', KEYS[4])
-if not owner or owner ~= ARGV[1] then return 0 end
+if not owner or (owner ~= ARGV[1] and owner ~= ARGV[2]) then return 0 end
+-- Read and sanitise every number before the first write: a malformed value must not stop the script halfway,
+-- because Redis does not roll back the commands that already ran. Unreadable numbers count as zero (no refund).
+-- Only listings that were counted at publish time (they carry a size record) give bytes back; legacy ones never took any.
 local summary = redis.call('GET', KEYS[3])
+local size = tonumber(redis.call('GET', KEYS[11]) or '0') or 0
+local bytesKey = (owner == ARGV[1]) and KEYS[8] or KEYS[9]
+local counter = (owner == ARGV[1]) and KEYS[6] or KEYS[7]
+local count = tonumber(redis.call('GET', counter) or '0') or 0
+local heldOwner = tonumber(redis.call('GET', bytesKey) or '0') or 0
+local heldTotal = tonumber(redis.call('GET', KEYS[10]) or '0') or 0
 if summary then redis.call('ZREM', KEYS[1], summary) end
-redis.call('DEL', KEYS[2], KEYS[3], KEYS[4], KEYS[5])
-local count = tonumber(redis.call('GET', KEYS[6]) or '0')
-if count > 1 then redis.call('DECR', KEYS[6]) else redis.call('DEL', KEYS[6]) end
+redis.call('DEL', KEYS[2], KEYS[3], KEYS[4], KEYS[5], KEYS[11])
+if size > 0 then
+  if heldOwner > size then redis.call('SET', bytesKey, heldOwner - size) else redis.call('DEL', bytesKey) end
+  if heldTotal > size then redis.call('SET', KEYS[10], heldTotal - size) else redis.call('DEL', KEYS[10]) end
+end
+if count > 1 then redis.call('DECR', counter) else redis.call('DEL', counter) end
 return 1
 `;
 
@@ -70,7 +101,7 @@ const listCache = new ReadCache<BaseSummary[]>(
   { ttlMs: 10_000, maxEntries: 1 },
 );
 
-export type PublishOutcome = 'ok' | 'user-limit' | 'full';
+export type PublishOutcome = 'ok' | 'user-limit' | 'storage-limit' | 'full';
 
 export async function publishBase(
   record: BaseRecord,
@@ -78,6 +109,8 @@ export async function publishBase(
 ): Promise<PublishOutcome> {
   const { id, ownerKey, publishedAt } = record.summary;
   if (!ownerKey) throw new Error('Published bases must carry an owner key.');
+  const storedRecord = JSON.stringify(record);
+  const storedImage = thumbnail ? JSON.stringify(thumbnail) : '';
   const result = await withTimeout(
     redis().eval(
       PUBLISH_SCRIPT,
@@ -88,26 +121,35 @@ export async function publishBase(
         baseMarketplaceKeys.owner(id),
         baseMarketplaceKeys.image(id),
         baseMarketplaceKeys.userCount(ownerKey),
+        baseMarketplaceKeys.userBytes(ownerKey),
+        baseMarketplaceKeys.totalBytes,
+        baseMarketplaceKeys.size(id),
       ],
       [
-        JSON.stringify(record),
+        storedRecord,
         JSON.stringify(record.summary),
         -Date.parse(publishedAt),
         ownerKey,
-        thumbnail ? JSON.stringify(thumbnail) : '',
+        storedImage,
         MAX_LISTINGS_PER_USER,
         BASE_LISTING_LIMIT,
+        Buffer.byteLength(storedRecord) + Buffer.byteLength(storedImage),
+        MAX_BYTES_PER_USER,
+        MAX_BYTES_TOTAL,
       ],
     ),
     TIMEOUT_MS,
   );
   listCache.clear();
   if (Number(result) === -1) return 'user-limit';
-  if (Number(result) === -2) return 'full';
+  if (Number(result) === -5) throw new AppError('This base is already published.', 409, 'ALREADY_PUBLISHED', true);
+  if (Number(result) === -2 || Number(result) === -4) return 'full';
+  if (Number(result) === -3) return 'storage-limit';
   return 'ok';
 }
 
-export async function deleteBase(id: string, ownerKey: string): Promise<boolean> {
+export async function deleteBase(id: string, ownerKeys: [string, string]): Promise<boolean> {
+  const [ownerKey, legacyKey] = ownerKeys;
   if (!/^[a-f0-9]{24}$/.test(id)) return false;
   const result = await withTimeout(
     redis().eval(
@@ -119,8 +161,13 @@ export async function deleteBase(id: string, ownerKey: string): Promise<boolean>
         baseMarketplaceKeys.owner(id),
         baseMarketplaceKeys.image(id),
         baseMarketplaceKeys.userCount(ownerKey),
+        baseMarketplaceKeys.userCount(legacyKey),
+        baseMarketplaceKeys.userBytes(ownerKey),
+        baseMarketplaceKeys.userBytes(legacyKey),
+        baseMarketplaceKeys.totalBytes,
+        baseMarketplaceKeys.size(id),
       ],
-      [ownerKey],
+      [ownerKey, legacyKey],
     ),
     TIMEOUT_MS,
   );
@@ -186,7 +233,7 @@ export async function getBaseImage(id: string): Promise<{ type: ThumbnailType; b
 }
 
 export type BrowseResult =
-  | { status: 'ok'; data: BaseBrowsePage; viewerKey: string }
+  | { status: 'ok'; data: BaseBrowsePage; viewerKeys: string[] }
   | { status: 'limited'; retryAfter: number }
   | { status: 'unavailable'; message: string };
 
@@ -206,7 +253,7 @@ export async function loadBaseBrowse(query: BaseQuery, session: DashboardSession
   const budget = await spendReadBudget();
   if (!budget.allowed) return { status: 'limited', retryAfter: budget.retryAfter };
   try {
-    return { status: 'ok', data: browseBases(await listBases(), query), viewerKey: ownerKeyFor(session) };
+    return { status: 'ok', data: browseBases(await listBases(), query), viewerKeys: ownerKeysFor(session) };
   } catch (error) {
     return unavailable(error, 'browse bases');
   }
@@ -218,7 +265,7 @@ export async function loadBaseDetail(id: string, session: DashboardSession): Pro
   try {
     const record = await getBase(id);
     if (!record) return { status: 'not-found' };
-    return { status: 'ok', record, isOwner: record.summary.ownerKey === ownerKeyFor(session) };
+    return { status: 'ok', record, isOwner: ownerKeysFor(session).includes(record.summary.ownerKey ?? '') };
   } catch (error) {
     return unavailable(error, 'load a base');
   }

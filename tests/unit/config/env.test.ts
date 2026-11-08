@@ -54,6 +54,7 @@ function productionFixture() {
     DISCORD_CLIENT_SECRET: 'test',
     DISCORD_GUILD_ID: 'guild',
     VERIFIED_MEMBER_ROLE_ID: '222222222222222222',
+    ADMIN_DISCORD_IDS: '123456789012345678',
     APP_URL: 'https://portal.test',
     AUTH_SECRET: 'test-secret-test-secret-test-secret-1234',
     REDIS_URL: 'redis://default:test@redis.test:6379/0',
@@ -85,6 +86,14 @@ it('rejects missing production credentials before accepting requests', async () 
   vi.stubEnv('DISCORD_CLIENT_SECRET', '');
   const { validateProductionEnv } = await import('../../../src/config/env');
   expect(validateProductionEnv).toThrow('Missing server environment configuration: DISCORD_CLIENT_SECRET');
+});
+
+it('refuses to start production without explicit administrators, naming the variable only', async () => {
+  vi.resetModules();
+  productionFixture();
+  vi.stubEnv('ADMIN_DISCORD_IDS', '');
+  const { validateProductionEnv } = await import('../../../src/config/env');
+  expect(validateProductionEnv).toThrow('Missing server environment configuration: ADMIN_DISCORD_IDS');
 });
 
 it.each(['not-a-url', 'redis://host/not-a-database', 'redis://host/0?password=secret', 'redis://host/0#secret'])(
@@ -121,4 +130,58 @@ describe('Discord sign-in configuration', () => {
     productionFixture();
     expect((await import('../../../src/config/env')).validateProductionEnv().DISCORD_CLIENT_ID).toBeTruthy();
   });
+});
+
+it('validates administrator settings', async () => {
+  vi.resetModules();
+  vi.stubEnv('ADMIN_DISCORD_IDS', '123456789012345678, 987654321098765432');
+  vi.stubEnv('ADMIN_REAUTH_HOURS', '4');
+  const { getServerEnv } = await import('../../../src/config/env');
+  expect(getServerEnv().ADMIN_DISCORD_IDS).toContain('987654321098765432');
+  expect(getServerEnv().ADMIN_REAUTH_HOURS).toBe(4);
+
+  vi.resetModules();
+  vi.stubEnv('ADMIN_DISCORD_IDS', 'not-an-id');
+  const invalid = await import('../../../src/config/env');
+  expect(invalid.getServerEnv).toThrow('Invalid server environment configuration: ADMIN_DISCORD_IDS');
+});
+
+it('refuses plain-text Redis in production only when REDIS_REQUIRE_TLS is enabled', async () => {
+  vi.resetModules();
+  productionFixture();
+  vi.stubEnv('REDIS_URL', 'redis://:pw@redis.test:6379');
+  const permissive = await import('../../../src/config/env');
+  expect(permissive.validateProductionEnv().REDIS_REQUIRE_TLS).toBe(false);
+
+  vi.resetModules();
+  vi.stubEnv('REDIS_REQUIRE_TLS', 'true');
+  const strict = await import('../../../src/config/env');
+  expect(strict.validateProductionEnv).toThrow('REDIS_REQUIRE_TLS is enabled');
+
+  vi.resetModules();
+  vi.stubEnv('REDIS_URL', 'rediss://:pw@redis.test:6379');
+  const secure = await import('../../../src/config/env');
+  expect(secure.validateProductionEnv().NODE_ENV).toBe('production');
+});
+
+it('refuses unauthenticated plain-text Redis on a public-looking host unless explicitly allowed', async () => {
+  vi.resetModules();
+  productionFixture();
+  vi.stubEnv('REDIS_URL', 'redis://redis.example.com:6379');
+  const refused = await import('../../../src/config/env');
+  expect(refused.validateProductionEnv).toThrow('plain-text and unauthenticated');
+
+  vi.resetModules();
+  vi.stubEnv('REDIS_ALLOW_INSECURE', 'true');
+  const allowed = await import('../../../src/config/env');
+  expect(allowed.validateProductionEnv().NODE_ENV).toBe('production');
+
+  // A password, TLS, or a private network each make it acceptable without the escape hatch.
+  for (const url of ['redis://:pw@redis.example.com', 'rediss://redis.example.com', 'redis://10.0.0.4:6379']) {
+    vi.resetModules();
+    vi.stubEnv('REDIS_ALLOW_INSECURE', 'false');
+    vi.stubEnv('REDIS_URL', url);
+    const accepted = await import('../../../src/config/env');
+    expect(accepted.validateProductionEnv().NODE_ENV, url).toBe('production');
+  }
 });

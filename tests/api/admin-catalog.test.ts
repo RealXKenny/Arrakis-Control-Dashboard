@@ -24,12 +24,17 @@ vi.mock('../../src/features/auth/server/session', () => {
     user: { id: '456084885220884480', username: 'Administrator' },
     guildId: 'guild',
     roleIds: ['verified'],
+    authenticatedAt: Date.now(),
     expiresAt: Date.now() + 60000,
   });
   return { getSession, currentSession: () => getSession() };
 });
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'fixture' }) }) }));
 vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
+// The catalog sweep runs every operation in one minute; the administrator budget has its own unit test.
+vi.mock('../../src/lib/security/rate-limit', () => ({
+  checkRateLimit: async () => ({ allowed: true, remaining: 1, retryAfter: 1 }),
+}));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => ({ eval: async () => 1 }) }));
 const passed = new Map<string, string>();
 beforeEach(() => {

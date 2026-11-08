@@ -40,6 +40,11 @@ export const solidoKeys = {
   operation: (owner: string, operationId: string) => `arrakis:{solido:${owner}}:operation:${operationId}`,
 };
 
+/** Security audit trail: one bounded sorted set (see lib/security/audit.ts). */
+export const auditKeys = {
+  events: 'arrakis:{audit}:v1:events',
+};
+
 export const BASE_MARKETPLACE_TAG = '{bm}';
 
 /** Legacy (V1) marketplace and preview storage. The V2 store lives under `arrakis:{bm}:v2:`. */

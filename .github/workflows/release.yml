@@ -19,7 +19,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
@@ -112,6 +112,20 @@ jobs:
           node scripts/deployment/build-pterodactyl-egg.mjs "$EGG_FILE"
           node -e "JSON.parse(require('node:fs').readFileSync(process.env.EGG_FILE, 'utf8'))"
 
+      # The egg installs this archive and refuses it unless the published SHA-256 matches.
+      - name: Build checksummed source archive
+        if: steps.release.outputs.create == 'true'
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          name="arrakis-control-dashboard-$RELEASE_VERSION.tar.gz"
+          git archive --format=tar.gz --prefix=arrakis-control-dashboard/ --output="$RUNNER_TEMP/$name" "$RELEASE_SHA"
+          (cd "$RUNNER_TEMP" && sha256sum "$name" > "$name.sha256" && sha256sum --check "$name.sha256")
+          echo "ARCHIVE_FILE=$RUNNER_TEMP/$name" >> "$GITHUB_ENV"
+
       - name: Create GitHub Release
         if: steps.release.outputs.create == 'true'
         shell: bash
@@ -123,7 +137,7 @@ jobs:
           RELEASE_NOTES: ${{ steps.release.outputs.notes_file }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: >-
-          gh release create "$RELEASE_TAG" "$EGG_FILE"
+          gh release create "$RELEASE_TAG" "$EGG_FILE" "$ARCHIVE_FILE" "$ARCHIVE_FILE.sha256"
           --target "$RELEASE_SHA"
           --title "Arrakis Control Dashboard $RELEASE_VERSION"
           --notes-file "$RELEASE_NOTES"

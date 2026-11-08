@@ -3,7 +3,9 @@ import { readBoundedBody } from '../../../../../lib/http/bounded-body';
 import { parseAdminRequest } from '../../../../../features/admin/server/request';
 import { parseAdminJson } from '../../../../../features/admin/server/sanitize';
 import { assertSameOrigin, route } from '../../../../../server/http';
-import { requireApiAdmin } from '../../../../../features/admin/server/api-access';
+import { requireRecentSignIn } from '../../../../../features/admin/server/access';
+import { requireApiAdmin, spendAdminBudget } from '../../../../../features/admin/server/api-access';
+import { isHighRiskOperation } from '../../../../../features/admin/server/risk';
 import { executeAdminOperation } from '../../../../../features/admin/server/execute';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +16,7 @@ export const POST = route(async (request) => {
   // Same-origin first, then authority from the verified server session; the body never grants anything.
   assertSameOrigin(request);
   const session = await requireApiAdmin();
+  await spendAdminBudget(session);
   const bytes = await readBoundedBody(request, MAX_BODY_BYTES);
   if (!bytes) throw new AppError('Request exceeds 128 KiB.', 413, 'REQUEST_TOO_LARGE', true);
   const text = new TextDecoder().decode(bytes);
@@ -33,5 +36,9 @@ export const POST = route(async (request) => {
   const parsed = parseAdminRequest(body);
   if (['multipart', 'upload'].includes(parsed.operation.mode))
     throw new AppError('This operation requires the upload form.', 400, 'UPLOAD_REQUIRED', true);
+  // Every destructive or sensitive operation is high risk (see features/admin/server/risk.ts); unknown ones default to strict.
+  const { operation } = parsed;
+  const highRisk = isHighRiskOperation(operation);
+  if (operation.method !== 'GET' || operation.mode === 'download') requireRecentSignIn(session, { highRisk });
   return executeAdminOperation(parsed, session, { signal: request.signal });
 });

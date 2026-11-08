@@ -1,5 +1,5 @@
 {
-  "name": "arrakis-control-v2",
+  "name": "arrakis-control-dashboard-v2",
   "version": "2.0.0",
   "type": "module",
   "scripts": {
@@ -15,7 +15,9 @@
     "test:browser": "playwright test",
     "format": "prettier --write src tests scripts",
     "format:check": "prettier --check src tests scripts",
-    "redis:rekey": "node scripts/maintenance/rekey-redis.mjs"
+    "redis:rekey": "node scripts/maintenance/rekey-redis.mjs",
+    "marketplace:rekey": "node scripts/maintenance/rekey-marketplace.mjs",
+    "test:integration": "vitest run tests/integration --no-file-parallelism"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",
@@ -34,12 +36,18 @@
     "@types/node": "26.4.1",
     "@types/react": "19.2.18",
     "@types/three": "^0.186.0",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.1.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.4",
+    "js-yaml": "^4.3.2",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.5"
+    }
   }
 }

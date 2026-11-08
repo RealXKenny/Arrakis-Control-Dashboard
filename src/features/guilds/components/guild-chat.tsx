@@ -1,5 +1,6 @@
 'use client';
 
+import { LocalTime } from '../../../components/ui/local-time';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { GuildRequestError, guildRequest } from '../client-api';
 import type { GuildChatMessage } from '../applications';
@@ -230,7 +231,7 @@ export function GuildChat({ url, title, note, roleLabels, readFrom, onUnreadCoun
             <p className="flex flex-wrap items-baseline gap-2">
               <strong className="text-sand-50">{message.senderName}</strong>
               <small className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">
-                {roleLabels[message.role]} · {new Date(message.sentAt).toLocaleString()}
+                {roleLabels[message.role]} · {<LocalTime value={message.sentAt} />}
               </small>
             </p>
             <p className="mt-1 whitespace-pre-wrap break-words text-sand-200">{message.text}</p>

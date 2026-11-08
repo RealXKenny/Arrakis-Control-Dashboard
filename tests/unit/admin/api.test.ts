@@ -19,6 +19,7 @@ const session = () => ({
   user: { id: '456084885220884480' },
   guildId: 'guild',
   roleIds: ['verified'],
+  authenticatedAt: Date.now(),
   expiresAt: Date.now() + 60_000,
 });
 

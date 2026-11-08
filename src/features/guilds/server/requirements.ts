@@ -6,6 +6,8 @@ import { NextResponse } from '../../../server/pages-api';
 import { getGuildSession, queryValue, requireGuildMutationOrigin } from './common';
 import { requireGuildLeader } from './leader';
 import { guildRequirementSchema } from '../requirements';
+import { recordAudit } from '../../../lib/security/audit';
+import { authoritativeGuildName, displayGuildName } from './guild-registry';
 
 const indexKey = guildKeys.requirementsIndex;
 const key = (id: string) => guildKeys.requirements(id);
@@ -48,6 +50,16 @@ export async function POST(req, res) {
       'INVALID_GUILD_REQUIREMENTS',
       true,
     );
+  // The public name always comes from the Console's guild record for this immutable ID, never from the form.
+  const officialName = await authoritativeGuildName(id).catch(() => null);
+  if (!officialName)
+    throw new AppError(
+      'The guild name could not be confirmed with the Console right now. Try again shortly.',
+      503,
+      'GUILD_NAME_UNAVAILABLE',
+      true,
+    );
+  const listing = { ...parsed.data, guildName: officialName };
   const redis = await storage(req, res);
   // Dev note: one transaction keeps the recruitment board from recruiting ghosts.
   await redis.eval(
@@ -61,9 +73,15 @@ export async function POST(req, res) {
     return 1
   `,
     [key(id), indexKey],
-    [JSON.stringify(parsed.data), parsed.data.published ? '1' : '0', -Date.now(), `guild:${id}`],
+    [JSON.stringify(listing), listing.published ? '1' : '0', -Date.now(), `guild:${id}`],
   );
-  return NextResponse.json({ ok: true, data: parsed.data });
+  void recordAudit({
+    event: 'guild.settings_updated',
+    outcome: 'success',
+    actor: (await getGuildSession(req, res))?.user.id,
+    data: { guildId: id, published: listing.published },
+  });
+  return NextResponse.json({ ok: true, data: listing });
 }
 
 const PAGE_SIZE = 20;
@@ -77,7 +95,9 @@ export async function listRecruitingGuilds(redis: NonNullable<ReturnType<typeof 
       const id = typeof entry === 'string' && entry.startsWith('guild:') ? entry.slice(6) : '';
       if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(id)) return null;
       const parsed = guildRequirementSchema.safeParse(await redis.get(key(id)));
-      return parsed.success && parsed.data.published ? { ...parsed.data, guildId: id } : null;
+      if (!parsed.success || !parsed.data.published) return null;
+      // Listings saved before names were verified are shown under the Console's name for the same guild ID.
+      return { ...parsed.data, guildName: await displayGuildName(id, parsed.data.guildName), guildId: id };
     }),
   );
   return { rows: entries.filter((entry) => entry !== null), hasMore: ids.length > PAGE_SIZE };

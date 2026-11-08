@@ -1,5 +1,6 @@
 'use client';
 
+import { formatUtc } from '../../../lib/time';
 import { useEffect, useState } from 'react';
 import { formatCoriolisCountdown } from '../utils/coriolis';
 import styles from '../styles/map.module.css';
@@ -17,7 +18,7 @@ export default function CoriolisCountdown({ cycleAt }: { cycleAt: string | null 
     <span
       role="timer"
       aria-label="Coriolis cycle countdown"
-      title={cycleAt ? `Next Coriolis cycle: ${new Date(cycleAt).toLocaleString()}` : 'Cycle time unavailable'}
+      title={cycleAt ? `Next Coriolis cycle: ${formatUtc(cycleAt)}` : 'Cycle time unavailable'}
       className={styles.coriolisCountdown}
     >
       <span>Coriolis</span>

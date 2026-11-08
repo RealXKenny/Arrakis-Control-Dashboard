@@ -49,3 +49,19 @@ describe('client address behind a reverse proxy', () => {
     expect(getClientAddress({ headers: { 'x-forwarded-for': '1.1.1.1, 203.0.113.9' }, socket })).toBe('203.0.113.9');
   });
 });
+
+describe('IPv6 clients', () => {
+  it('share one rate-limit identity across their whole /64 network', () => {
+    const a = getClientAddress({ headers: { 'x-forwarded-for': '2001:db8:1:2:aaaa:bbbb:cccc:dddd' }, socket });
+    const b = getClientAddress({ headers: { 'x-forwarded-for': '2001:DB8:1:2::1' }, socket });
+    expect(a).toBe('2001:db8:1:2::/64');
+    expect(b).toBe(a);
+    expect(getClientAddress({ headers: { 'x-forwarded-for': '2001:db8:1:3::1' }, socket })).not.toBe(a);
+  });
+
+  it('handles compressed and loopback forms', () => {
+    expect(getClientAddress({ headers: { 'x-forwarded-for': '::1' }, socket })).toBe('0:0:0:0::/64');
+    expect(getClientAddress({ headers: { 'x-forwarded-for': '2001:db8::5' }, socket })).toBe('2001:db8:0:0::/64');
+    expect(getClientAddress({ headers: { 'x-forwarded-for': '::ffff:203.0.113.9' }, socket })).toBe('203.0.113.9');
+  });
+});

@@ -1,0 +1,3 @@
+# Architecture rules for all agents
+
+The live `AGENTS.md` and `docs/architecture/file-organization.md` are authoritative. `src/app` and `src/pages/api` are routing; `src/features` owns business domains; `src/components` owns shared UI; `src/server` owns request infrastructure and integrations; `src/lib` owns reusable focused helpers; `src/config/env.ts` is the environment schema. Redis (standalone or Cluster) is the only persistent store. Do not recreate `src/modules`, `src/infrastructure`, or `public`. Preserve import boundaries, map performance, and architecture tests. Check live source rather than relying on the historical repository inventory.

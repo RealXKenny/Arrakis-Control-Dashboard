@@ -7,7 +7,7 @@ import { getRedisClient } from '../../../lib/redis/client';
 import { NextResponse } from '../../../server/pages-api';
 import { getGuildSession, queryValue, requireGuildMutationOrigin } from './common';
 import { requireGuildLeader } from './leader';
-import { requireDashboardAdmin } from '../../admin/server/access';
+import { requireDashboardAdmin, requireRecentSignIn } from '../../admin/server/access';
 import { guildChatInputSchema, guildChatMessageSchema } from '../applications';
 
 async function context(req, res, admin: boolean) {
@@ -44,6 +44,8 @@ async function send(req, res, admin: boolean) {
   if (!input.success)
     throw new AppError('Enter a message of up to 1,000 characters.', 400, 'INVALID_GUILD_CHAT_MESSAGE', true);
   const ctx = await context(req, res, admin);
+  // Replying as an administrator is an administrator change: it needs a recent interactive sign-in.
+  if (admin) requireRecentSignIn(ctx.session);
   const message = guildChatMessageSchema.parse({
     id: input.data.clientMessageId,
     text: input.data.text,

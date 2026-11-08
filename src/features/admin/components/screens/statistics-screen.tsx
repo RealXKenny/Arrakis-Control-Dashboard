@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { formatTimestamp } from '../../../../lib/time';
 import { findOperation } from '../../client';
 import { Trend } from '../trend';
 import { Facts, QueryState } from '../data-panel';
@@ -135,7 +136,7 @@ export default function StatisticsScreen({
         <h3>Current readings</h3>
         <p className={ui.stateLine} role="status">
           {overview.data
-            ? `Last reading ${new Date(overview.data.observedAt).toLocaleTimeString()} (${freshness(observed ?? now, now)})${stale ? ' — stale' : ''}.`
+            ? `Last reading ${formatTimestamp(overview.data.observedAt, { variant: 'time' })} (${freshness(observed ?? now, now)})${stale ? ' — stale' : ''}.`
             : overview.loading
               ? 'Taking the first reading…'
               : 'No reading yet.'}

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { cookies } from './cookies';
 import { getSession } from '../features/auth/server/session';
 import { ReadCache } from '../lib/cache/read-cache';
+import { checkRateLimit } from '../lib/security/rate-limit';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 type ApiReading = { body: string | null; status: number; headers: Record<string, string> };
@@ -42,6 +43,10 @@ export async function cachedApiReading(
     scope = cacheScope(id);
   }
   url.searchParams.sort();
-  const entry = await cache.get(`${scope}:${url.pathname}${url.search}`, load, req.headers['x-refresh-cache'] === '1');
+  // A refresh bypasses the cache and costs a Console call, so each scope gets a small allowance per minute.
+  const refresh =
+    req.headers['x-refresh-cache'] === '1' &&
+    (await checkRateLimit(`api:refresh:${scope}`, { limit: 6, windowMs: 60_000 })).allowed;
+  const entry = await cache.get(`${scope}:${url.pathname}${url.search}`, load, refresh);
   return { ...entry.data, headers: { ...entry.data.headers, 'X-Data-Captured-At': String(entry.capturedAt) } };
 }

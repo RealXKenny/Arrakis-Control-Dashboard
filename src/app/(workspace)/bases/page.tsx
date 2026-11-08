@@ -96,10 +96,10 @@ export default async function BaseMarketplacePage({
               </Link>
             </div>
           ) : (
-            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {result.data.listings.map((summary) => (
                 <li key={summary.id} className="min-w-0">
-                  <BaseCard summary={summary} mine={summary.ownerKey === result.viewerKey} />
+                  <BaseCard summary={summary} mine={result.viewerKeys.includes(summary.ownerKey ?? '')} />
                 </li>
               ))}
             </ul>

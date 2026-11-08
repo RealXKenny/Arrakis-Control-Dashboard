@@ -17,3 +17,13 @@ it('issues a fresh script nonce per request without allowing arbitrary inline sc
   });
   expect(nonces[0]).not.toBe(nonces[1]);
 });
+
+it('allows no third-party script, connect or image origins beyond the Discord avatar CDN', () => {
+  const response = proxy(new NextRequest('http://127.0.0.1:2008/portal')) as Response;
+  const policy = response.headers.get('Content-Security-Policy') ?? '';
+  expect(policy).not.toMatch(/announcify/i);
+  const directive = (name: string) => policy.split('; ').find((entry) => entry.startsWith(name + ' ')) ?? '';
+  expect(directive('script-src')).not.toMatch(/https:/);
+  expect(directive('connect-src')).not.toMatch(/https:/);
+  expect(directive('img-src').match(/https:\/\/[^ ]+/g)).toEqual(['https://cdn.discordapp.com']);
+});

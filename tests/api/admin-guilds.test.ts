@@ -55,6 +55,7 @@ const admin = () => ({
   user: { id: '456084885220884480', username: 'Admin' },
   guildId: 'guild',
   roleIds: ['verified'],
+  authenticatedAt: Date.now(),
   expiresAt: Date.now() + 60000,
 });
 const req = (body?: unknown, query = {}) => ({
@@ -128,6 +129,14 @@ describe('administrator guild oversight', () => {
   });
 });
 describe('guild leader administrator support chat', () => {
+  it('requires a recent interactive sign-in before an administrator replies, without touching storage', async () => {
+    session.mockResolvedValue({ ...admin(), authenticatedAt: Date.now() - 48 * 60 * 60_000 });
+    await expect(ADMIN_POST(req({ text: 'Hi', clientMessageId: generation }), {})).rejects.toMatchObject({
+      statusCode: 403,
+      code: 'ADMIN_REAUTH_REQUIRED',
+    });
+    expect(redis.eval).not.toHaveBeenCalled();
+  });
   it('uses server-owned sender identity, bounded deduplicated storage and separate guild keys', async () => {
     const response = await ADMIN_POST(
       req({ text: ' Welcome ', clientMessageId: generation, senderId: 'forged', role: 'applicant' }),

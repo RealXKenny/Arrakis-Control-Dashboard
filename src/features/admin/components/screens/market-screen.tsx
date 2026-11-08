@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { formatTimestamp } from '../../../../lib/time';
 import Link from 'next/link';
 import { adminCall, downloadAdmin, findOperation } from '../../client';
 import { Facts, QueryState, Table } from '../data-panel';
@@ -179,7 +180,7 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
     setFailure('');
     try {
       const outcome = await adminCall(operation, { body: {} });
-      setProbe({ at: new Date().toLocaleTimeString(), data: outcome.data });
+      setProbe({ at: formatTimestamp(Date.now(), { variant: 'time' }), data: outcome.data });
     } catch (error) {
       setFailure((error as Error).message);
     } finally {

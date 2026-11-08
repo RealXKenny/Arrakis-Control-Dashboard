@@ -6,6 +6,7 @@ import { NextResponse } from '../../../server/pages-api';
 import { cookies } from '../../../server/cookies';
 import { getBaseId, normalizeBaseStorage, normalizeBaseWater } from './helpers';
 import { logger } from '../../../lib/logger';
+import { ReadCache } from '../../../lib/cache/read-cache';
 import { saveSession, type DashboardSession } from '../../auth/server/session-store';
 import { getSession } from '../../auth/server/session';
 import { discordAvatar } from './avatar';
@@ -73,7 +74,47 @@ async function loadBaseTelemetry(base, duneClient) {
   };
 }
 
-async function loadPlayerGuild(playerId, playerName, duneClient) {
+/**
+ * Does this guild-roster row describe the signed-in player? A row that reports any player ID is matched by ID only,
+ * across every ID field the Console uses. Names are not unique, so they are used solely for rows that report no
+ * ID at all; otherwise a same-named member of another guild would be shown as this player's guild and rank.
+ */
+export function rosterRowIsPlayer(entry: unknown, ownIds: Set<string>, playerName: unknown): boolean {
+  const row = record(entry);
+  const ids = [row.player_id, row.playerId, row.pawnId, row.pawn_id, row.controllerId, row.controller_id].filter(
+    (id) => id !== undefined && id !== null && String(id) !== '',
+  );
+  if (ids.length) return ids.some((id) => ownIds.has(String(id)));
+  const name = String(row.character_name ?? row.characterName ?? row.name ?? '')
+    .trim()
+    .toLowerCase();
+  return (
+    Boolean(name) &&
+    name ===
+      String(playerName ?? '')
+        .trim()
+        .toLowerCase()
+  );
+}
+
+/** Guild lookups walk the Console's guild list, so each member's answer is kept briefly and shared by every request. */
+const playerGuilds = new ReadCache<Record<string, unknown> | null>(
+  (value) => JSON.stringify(value ?? null).length,
+  () => true,
+  { ttlMs: 60_000, maxEntries: 200, maxPending: 20 },
+);
+/** Member rosters fetched at once. Bounds the Console fan-out of a single lookup. */
+const GUILD_LOOKUP_CONCURRENCY = 5;
+
+function loadPlayerGuild(playerIds: unknown[], playerName, duneClient) {
+  const ownIds = new Set(playerIds.filter((id) => id !== undefined && id !== null && id !== '').map(String));
+  if (!ownIds.size) return Promise.resolve(null);
+  return playerGuilds
+    .get(`guild:${[...ownIds].sort().join(',')}`, () => findPlayerGuild(ownIds, playerName, duneClient))
+    .then((entry) => entry.data);
+}
+
+async function findPlayerGuild(ownIds: Set<string>, playerName, duneClient) {
   try {
     const guildResponse = await duneClient.request('GET', '/api/guilds?page=0&pageSize=100');
 
@@ -85,10 +126,9 @@ async function loadPlayerGuild(playerId, playerName, duneClient) {
           ? guildResponse.data
           : [];
 
-    for (const guild of guilds) {
+    const inspect = async (guild) => {
       const guildId = guild?.id ?? guild?.guildId ?? guild?.guild_id;
-
-      if (!guildId) continue;
+      if (!guildId) return null;
 
       const memberResponse = await duneClient.request('GET', `/api/guilds/${encodeURIComponent(guildId)}/members`);
 
@@ -100,36 +140,22 @@ async function loadPlayerGuild(playerId, playerName, duneClient) {
             ? memberResponse.data
             : [];
 
-      const member = members.find((entry) => {
-        const memberId =
-          entry?.player_id ??
-          entry?.playerId ??
-          entry?.pawnId ??
-          entry?.pawn_id ??
-          entry?.controllerId ??
-          entry?.controller_id;
-        const memberName = String(entry?.character_name ?? entry?.characterName ?? entry?.name ?? '')
-          .trim()
-          .toLowerCase();
-        return (
-          String(memberId ?? '') === String(playerId) ||
-          (memberName &&
-            memberName ===
-              String(playerName ?? '')
-                .trim()
-                .toLowerCase())
-        );
-      });
+      const member = members.find((entry) => rosterRowIsPlayer(entry, ownIds, playerName));
+      if (!member) return null;
+      return {
+        id: guildId,
+        name: guild?.name ?? guild?.guildName ?? guild?.guild_name ?? 'Unknown Guild',
+        tag: guild?.tag ?? guild?.abbreviation ?? null,
+        faction: guild?.faction_name ?? guild?.guild_faction_name ?? guild?.faction ?? guild?.guild_faction ?? null,
+        rank: member?.rank ?? member?.role ?? member?.memberRole ?? member?.role_id ?? member?.roleId ?? null,
+      };
+    };
 
-      if (member) {
-        return {
-          id: guildId,
-          name: guild?.name ?? guild?.guildName ?? guild?.guild_name ?? 'Unknown Guild',
-          tag: guild?.tag ?? guild?.abbreviation ?? null,
-          faction: guild?.faction_name ?? guild?.guild_faction_name ?? guild?.faction ?? guild?.guild_faction ?? null,
-          rank: member?.rank ?? member?.role ?? member?.memberRole ?? member?.role_id ?? member?.roleId ?? null,
-        };
-      }
+    // A few rosters at a time, stopping at the first batch that finds the member.
+    for (let index = 0; index < guilds.length; index += GUILD_LOOKUP_CONCURRENCY) {
+      const batch = await Promise.all(guilds.slice(index, index + GUILD_LOOKUP_CONCURRENCY).map(inspect));
+      const found = batch.find(Boolean);
+      if (found) return found;
     }
   } catch (error) {
     logger.error('Failed to load player guild', { error });
@@ -171,11 +197,15 @@ export async function loadPlayerProfile(session: DashboardSession, sessionId: st
   }
 
   try {
-    await saveSession(sessionId, {
-      ...session,
-      linkedPlayerId: String(playerId),
-      linkedPlayerName: data.characterName,
-    });
+    await saveSession(
+      sessionId,
+      {
+        ...session,
+        linkedPlayerId: String(playerId),
+        linkedPlayerName: data.characterName,
+      },
+      { onlyIfExists: true },
+    );
   } catch (error) {
     logger.warn('Unable to cache linked player identity for dashboard features', { error });
   }
@@ -254,7 +284,7 @@ export async function loadPlayerProfile(session: DashboardSession, sessionId: st
     }),
   );
 
-  const guild = await loadPlayerGuild(playerId, data.characterName, duneClient);
+  const guild = await loadPlayerGuild([data.pawnId, data.controllerId], data.characterName, duneClient);
 
   const responseData = {
     ...data,

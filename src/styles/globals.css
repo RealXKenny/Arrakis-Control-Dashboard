@@ -86,12 +86,27 @@
     box-shadow: 6px 6px 0 0 rgb(0 0 0 / 0.6);
   }
 
+  /* Signed-in page canvas: fills wide screens up to 1600px, never a narrow centred column. */
+  .workspace-container {
+    width: 100%;
+    max-width: 100rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 3vw, 3rem);
+    padding-block: clamp(1.5rem, 3vw, 3rem);
+  }
+
+  /* Statistics line up in columns instead of jittering as digits change. */
+  .figure {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
   .eyebrow {
     font-family: var(--font-mono), ui-monospace, monospace;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.32em;
+    letter-spacing: 0.24em;
     color: var(--color-spice-400);
   }
 

@@ -10,6 +10,8 @@ This is the post-migration architecture inventory. Generated dependency/build di
   workflows/
 docs/
   architecture/
+  assets/
+    screenshots/
 scripts/
   deployment/
   maintenance/
@@ -179,7 +181,9 @@ tests/
   api/
   architecture/
   browser/
+  deployment/       sandboxed run of the egg's real installer script
   helpers/
+  integration/      Lua scripts, sessions, rate limits and the re-key CLI against a real Redis (opt-in: TEST_REDIS_URL / TEST_REDIS_CLUSTER_NODES)
   load/
   unit/
     admin/
@@ -556,6 +560,16 @@ LICENSE
 README.md
 docs/architecture/file-organization.md
 docs/architecture/repository-inventory.md
+docs/assets/screenshots/admin-workspace.webp
+docs/assets/screenshots/dashboard-overview.webp
+docs/assets/screenshots/dashboard-settings.webp
+docs/assets/screenshots/guild-applications.webp
+docs/assets/screenshots/guild-management.webp
+docs/assets/screenshots/guild-recruitment.webp
+docs/assets/screenshots/mobile-dashboard.webp
+docs/assets/screenshots/player-profiles.webp
+docs/assets/screenshots/server-management.webp
+docs/assets/screenshots/server-monitoring.webp
 eslint.config.mjs
 next-env.d.ts
 next.config.ts

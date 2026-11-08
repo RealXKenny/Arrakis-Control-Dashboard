@@ -26,6 +26,7 @@ declare module 'next-auth/jwt' {
     linkedPlayerName?: string;
     needsPassword?: boolean;
     verifiedAt?: number;
+    authenticatedAt?: number;
     expiresAt?: number;
     ign?: string;
   }

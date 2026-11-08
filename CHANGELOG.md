@@ -21,6 +21,9 @@
 - Optional automatic announcement of each newly deployed release, sent once even when several servers start together.
 - New public Changelog page that the announcement buttons link to.
 - You can now sign in with your email and a password as well as with Discord. Choose a password after your first Discord sign-in. Sessions stay open for 30 days.
+- One top navigation bar now carries every destination, grouped into Portal, Character, Assets, Vehicles, Bases, Market, Guilds, Map and More, with a roomy mega menu for each group. The page you are on is underlined in amber, the menu you have open is highlighted as a box, and each menu is anchored to its button and stays inside the screen. Below 1280 pixels the bar becomes a slide-out drawer.
+- Times are now shown in your own timezone and language, for example `Nov 7, 2026, 11:19 PM EST`, with daylight saving handled for you. Hover a time to see the full local and UTC readings. This covers the Overview "Last reading", base publish dates, guild chat and application times and the administration screens. Countdowns such as the Coriolis cycle and the Landsraad term still count down as durations.
+- The Changelog page and the release announcements understand the grouped Patch Notes format (New Features, Improvements, Fixes and so on).
 
 ### Improvements
 
@@ -32,11 +35,18 @@
 - Redis now uses ioredis and can run on a Redis Cluster by setting `REDIS_CLUSTER_NODES`. All multi-key storage operations use hash-tagged keys so they work on a cluster.
 - Link previews for the dashboard now come from the page metadata, using your public `APP_URL`.
 - Release notes use the new Patch Notes format, and the release workflow publishes the section that matches the package version.
+- Signed-in pages now use up to 1,600 pixels of width instead of a narrow centred column, and the Overview is a responsive grid: spice conditions and your character, the four summary cards, then server population and the Landsraad. Summary numbers line up in columns and small labels were enlarged for readability.
+- The spice conditions card now shows the Coriolis countdown and the last reading as two clear figures, and the Server rhythm card says in words when nobody was online instead of drawing a flat line.
+- Bases and Vehicles show up to four cards per row on very wide screens, and the administration tab bar lines up with the page.
+- The footer is now just the Arrakis Control mark and "Fan-made. Not affiliated with Funcom." with no links.
+- The code is now organised by feature (`src/features/…`) with shared pieces in `src/components`, `src/server` and `src/lib`, and automated tests enforce the layout, the browser/server boundary and the root-file list. The guides for this are in `docs/architecture/`.
+- Many more automated tests now cover the market, vehicles, sign-in, client addresses, Redis Cluster behaviour and session re-checks.
 
 ### Fixes
 
 - Fixed Redis Cluster node lists written with IPv6 addresses being read with the wrong host and port.
 - A Discord outage or rate limit while re-checking a password login is no longer treated as a revoked Discord connection.
+- The administration tab bar no longer sits in a narrower column than the page below it.
 
 ### Security
 
@@ -54,6 +64,8 @@
 
 ### Removed
 
+- Docker Compose files, the container entrypoint scripts and the custom application image. Releases are built on the standard Pterodactyl Node.js runtime instead.
+- The second navigation row that used to sit under the top bar.
 - Seasonal calendar themes and the Announcify announcement widget.
 - The Discord link-preview card module, replaced by standard page metadata.
 - The single-page portal with its `?view=` switcher, replaced by separate pages with their own addresses.
@@ -65,3 +77,4 @@
 - With the dashboard stopped, run `npm run redis:rekey` for a dry run and `npm run redis:rekey -- --apply` to rename existing Redis keys, then start version 2. Move data to a cluster only afterwards.
 - Everyone is asked to sign in again once after the upgrade.
 - Optionally set `CHANGELOG_WEBHOOK_URL` and `CHANGELOG_AUTO_ANNOUNCE=true` to enable Discord announcements.
+- Every stable release now attaches a ready-made Pterodactyl egg (`egg-arrakis-control-dashboard.json`) to its GitHub Release. The egg downloads the latest release and builds it in `/home/container`; the host supplies `SERVER_PORT`.

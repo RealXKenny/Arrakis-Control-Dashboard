@@ -96,6 +96,14 @@ export const POST = route(async (request) => {
         true,
       );
     }
+    if (outcome === 'storage-limit') {
+      throw new AppError(
+        'You have used your share of marketplace storage. Remove a base first.',
+        409,
+        'STORAGE_LIMIT',
+        true,
+      );
+    }
     if (outcome === 'full') {
       throw new AppError('The marketplace is full right now. Try again later.', 503, 'MARKETPLACE_FULL', true);
     }

@@ -1,5 +1,6 @@
 'use client';
 
+import { LocalTime } from '../../../components/ui/local-time';
 import { useEffect, useState } from 'react';
 import { guildRequest } from '../client-api';
 import type { GuildApplication } from '../applications';
@@ -128,8 +129,7 @@ export function ApplicationInbox({ guildId }: { guildId: string }) {
                     Discord: {entry.discordName} ({entry.discordId})
                   </p>
                   <p className="mt-1 font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">
-                    <span className="text-spice-300">{entry.status}</span> ·{' '}
-                    {new Date(entry.submittedAt).toLocaleString()}
+                    <span className="text-spice-300">{entry.status}</span> · {<LocalTime value={entry.submittedAt} />}
                   </p>
                 </header>
                 <LegacyAnswers entry={entry} />

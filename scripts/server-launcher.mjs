@@ -140,7 +140,8 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
   const readinessUrl = resolveReadinessUrl([...serverArgs, ...forwardedArgs]);
   const nextBin = require.resolve('next/dist/bin/next');
   const child = spawn(process.execPath, [nextBin, command, ...serverArgs, ...forwardedArgs], {
-    env: process.env,
+    // Anonymous Next.js telemetry is always off, whatever the environment says.
+    env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' },
     stdio: 'inherit',
   });
 

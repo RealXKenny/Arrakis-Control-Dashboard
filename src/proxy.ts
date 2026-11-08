@@ -17,15 +17,13 @@ function secureResponse(request: NextRequest) {
     "object-src 'none'",
     "font-src 'self' https://fonts.gstatic.com",
     'frame-src https://discord.com',
-    "img-src 'self' data: blob: https://cdn.discordapp.com https://www.announcify.app https://announcify.app",
-    "connect-src 'self' blob: https://www.announcify.app",
+    "img-src 'self' data: blob: https://cdn.discordapp.com",
+    "connect-src 'self' blob:",
     "manifest-src 'self'",
     "media-src 'none'",
     "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    `script-src 'self' 'nonce-${nonce}' https://www.announcify.app/widget.js${
-      process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''
-    }`,
+    `script-src 'self' 'nonce-${nonce}'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
     ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
   ].join('; ');
   const requestHeaders = new Headers(request.headers);

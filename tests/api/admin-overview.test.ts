@@ -51,6 +51,7 @@ beforeEach(() => {
     user: { id: '456084885220884480' },
     guildId: 'guild',
     roleIds: ['verified'],
+    authenticatedAt: Date.now(),
     expiresAt: Date.now() + 60000,
   });
   fetcher.mockImplementation(
