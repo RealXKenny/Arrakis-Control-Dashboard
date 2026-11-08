@@ -1,6 +1,7 @@
 MIT License
 
 Copyright (c) 2026 Arrakis Control Dashboard Contributors
+Copyright (c) 2026 RedBlink
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,30 +20,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
------------------------------------------------------------------------------
-
-Third-Party Attribution
-
-Arrakis Control Dashboard incorporates or adapts software from the following
-open-source project:
-
-Project: dune-awakening-selfhost-docker
-Repository: https://github.com/Red-Blink/dune-awakening-selfhost-docker
-
-All applicable third-party copyright notices, license terms, and attribution
-requirements remain in effect.
-
-The original authors retain copyright ownership of their respective
-contributions. Modifications and original components developed specifically
-for Arrakis Control Dashboard remain copyrighted by their respective authors.
-
-## Disclaimer
-
-Arrakis Control Dashboard is an independent, fan-made community project.
-
-It is not affiliated with, endorsed by, sponsored by, or officially
-associated with Funcom or the developers and publishers of Dune: Awakening.
-
-All third-party trademarks, product names, and related intellectual
-property remain the property of their respective owners.

@@ -63,6 +63,8 @@ return 1
 `;
 
 const recent = new Map<string, number>();
+/** Orders events recorded within the same millisecond: a sorted set breaks score ties by member text, which is random. */
+let sequence = 0;
 
 /** Record a security event. Fire-and-forget safe: returns a promise that never rejects. */
 export async function recordAudit(input: AuditEvent): Promise<void> {
@@ -87,7 +89,13 @@ export async function recordAudit(input: AuditEvent): Promise<void> {
     await redis.eval(
       TRIM_SCRIPT,
       [auditKeys.events],
-      [now, line, now - retentionSeconds * 1000, env.AUDIT_LOG_MAX_ENTRIES ?? 10_000, retentionSeconds],
+      [
+        now + (sequence++ % 1000) / 1000,
+        line,
+        now - retentionSeconds * 1000,
+        env.AUDIT_LOG_MAX_ENTRIES ?? 10_000,
+        retentionSeconds,
+      ],
     );
   } catch {
     // Throttle the complaint: a Redis outage would otherwise add a warning to every audited request.

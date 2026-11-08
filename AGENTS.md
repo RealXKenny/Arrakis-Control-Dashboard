@@ -37,7 +37,7 @@ Use this map before searching. Keep it current when structure or core contracts 
 - `src/assets/` contains favicon/application images and compressed terrain/model bundles. It is large; do not enumerate it during ordinary work. Keep asset paths allowlisted and preserve the 2D map fallback.
 - `scripts/server-launcher.mjs` prepares the writable Next.js image cache and starts dev/production. `scripts/maintenance/` owns Redis rekeying and offline model generation; `scripts/deployment/` owns release-egg generation.
 - `src/instrumentation.ts` owns runtime validation, Console warmup, startup logging, population recording, and release announcement startup.
-- `tests/` contains API, architecture, browser, helpers, load, and domain-organized unit suites. Browser tests import `test`/`expect` from `tests/helpers/browser-test.ts`; shared domain routes are registered by `tests/helpers/portal-browser.ts`. Architecture tests enforce browser/server boundaries, API boundaries, dependency acyclicity, naming, retired directories, and the root allowlist.
+- `tests/` contains API, architecture, browser, deployment (sandboxed egg installer), helpers, integration (real Redis, standalone or Cluster; opt-in through `TEST_REDIS_URL` / `TEST_REDIS_CLUSTER_NODES`, run with `npm run test:integration`), load, and domain-organized unit suites. Browser tests import `test`/`expect` from `tests/helpers/browser-test.ts`; shared domain routes are registered by `tests/helpers/portal-browser.ts`. Architecture tests enforce browser/server boundaries, API boundaries, dependency acyclicity, naming, retired directories, and the root allowlist.
 
 ## Feature contracts
 

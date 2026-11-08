@@ -1,0 +1,108 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import yaml from 'js-yaml';
+import { describe, expect, it } from 'vitest';
+
+type Step = { uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, unknown> };
+type Job = {
+  permissions?: Record<string, string>;
+  needs?: string | string[];
+  steps?: Step[];
+  ['timeout-minutes']?: number;
+};
+type Workflow = {
+  on: Record<string, unknown> | string[];
+  permissions?: Record<string, string>;
+  jobs: Record<string, Job>;
+};
+
+const directory = path.resolve('.github/workflows');
+const workflows = fs
+  .readdirSync(directory)
+  .filter((file) => file.endsWith('.yml'))
+  .map((file) => ({ file, text: fs.readFileSync(path.join(directory, file), 'utf8') }))
+  .map(({ file, text }) => ({ file, text, workflow: yaml.load(text) as Workflow }));
+
+describe('GitHub Actions workflows', () => {
+  it('parse as valid YAML with at least one job each', () => {
+    expect(workflows.length).toBeGreaterThanOrEqual(2);
+    for (const { file, workflow } of workflows) expect(Object.keys(workflow.jobs).length, file).toBeGreaterThan(0);
+  });
+
+  it('pin every third-party action to a full commit SHA', () => {
+    for (const { file, workflow } of workflows)
+      for (const job of Object.values(workflow.jobs))
+        for (const step of job.steps ?? [])
+          if (step.uses) expect(step.uses, file).toMatch(/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}( |$)/);
+  });
+
+  it('default to read-only token permissions and grant write only to the release job', () => {
+    for (const { file, workflow } of workflows) {
+      expect(workflow.permissions, `${file} top-level permissions`).toEqual({ contents: 'read' });
+      for (const [name, job] of Object.entries(workflow.jobs)) {
+        const granted = Object.entries(job.permissions ?? {}).filter(([, level]) => level !== 'read');
+        if (granted.length) {
+          expect(file).toBe('release.yml');
+          expect(name).toBe('release');
+          expect(granted).toEqual([['contents', 'write']]);
+        }
+      }
+    }
+  });
+
+  it('never use privileged triggers that run untrusted pull-request code with secrets', () => {
+    for (const { file, text } of workflows) {
+      expect(text, file).not.toMatch(/pull_request_target/);
+      expect(text, file).not.toMatch(/secrets\./);
+    }
+  });
+
+  it('keep untrusted event data out of shell scripts (it is passed through env instead)', () => {
+    const risky = /\$\{\{\s*github\.(event\.(pull_request|head_commit|issue|comment|review)|head_ref)[^}]*\}\}/;
+    for (const { file, workflow } of workflows)
+      for (const job of Object.values(workflow.jobs))
+        for (const step of job.steps ?? []) expect(step.run ?? '', file).not.toMatch(risky);
+  });
+
+  it('only releases from a successful CI run of a push to main in this repository', () => {
+    const release = workflows.find(({ file }) => file === 'release.yml')!;
+    const condition = String((release.workflow.jobs.release as unknown as { if: string }).if);
+    for (const part of [
+      "workflow_run.conclusion == 'success'",
+      "workflow_run.event == 'push'",
+      "workflow_run.head_branch == 'main'",
+      'head_repository.full_name == github.repository',
+    ])
+      expect(condition).toContain(part);
+  });
+
+  it('publishes a checksum alongside the archive that the installer verifies', () => {
+    const release = workflows.find(({ file }) => file === 'release.yml')!.text;
+    expect(release).toMatch(/sha256sum "\$name" > "\$name\.sha256"/);
+    expect(release).toContain('git archive --format=tar.gz --prefix=arrakis-control-dashboard/');
+    expect(release).toMatch(/gh release create "\$RELEASE_TAG" "\$EGG_FILE" "\$ARCHIVE_FILE" "\$ARCHIVE_FILE\.sha256"/);
+  });
+
+  it('runs the Redis integration suites on Redis 7.4 and bounds their runtime', () => {
+    const ci = workflows.find(({ file }) => file === 'ci.yml')!;
+    expect(ci.text).toContain('redis:7.4-alpine');
+    for (const name of ['redis-integration', 'redis-cluster-integration']) {
+      const job = ci.workflow.jobs[name];
+      expect(job, name).toBeDefined();
+      expect(job['timeout-minutes'], name).toBeLessThanOrEqual(30);
+      expect(
+        job.steps?.some((step) => step.run === 'npm run test:integration'),
+        name,
+      ).toBe(true);
+    }
+    expect(JSON.stringify(ci.workflow.jobs['redis-cluster-integration'])).toContain('TEST_REDIS_CLUSTER_NODES');
+    expect(JSON.stringify(ci.workflow.jobs['redis-cluster-integration'])).toContain('--cluster-replicas 1');
+  });
+
+  it('keeps Dependabot watching both workflows and npm dependencies', () => {
+    const config = yaml.load(fs.readFileSync(path.resolve('.github/dependabot.yml'), 'utf8')) as {
+      updates: Array<{ 'package-ecosystem': string }>;
+    };
+    expect(config.updates.map((update) => update['package-ecosystem']).sort()).toEqual(['github-actions', 'npm']);
+  });
+});

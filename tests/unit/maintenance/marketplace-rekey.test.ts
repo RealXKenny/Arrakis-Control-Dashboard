@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   applyRekey,
+  backupRekey,
   keys,
   ownerKeyPair,
   planRekey,
@@ -49,6 +50,13 @@ function fakeRedis() {
       return ['0', [...strings.keys()].filter((key) => key.startsWith(prefix))];
     },
   };
+}
+
+async function migrate(redis: ReturnType<typeof fakeRedis>) {
+  const plan = await planRekey(redis, env);
+  const backup = await backupRekey(redis, plan);
+  await applyRekey(redis, plan);
+  return { backup };
 }
 
 function seed(redis: ReturnType<typeof fakeRedis>) {
@@ -101,6 +109,8 @@ describe('marketplace owner-key migration', () => {
     expect(plan.unmatched).toEqual(['d'.repeat(24)]);
     expect(redis.strings).toEqual(before);
 
+    const backup = await backupRekey(redis, plan);
+    expect(backup).toHaveLength(3);
     const result = await applyRekey(redis, plan);
     expect(result).toMatchObject({ moved: 3, skipped: 0 });
     const aliceKeys = ownerKeyPair(alice, env);
@@ -134,7 +144,7 @@ describe('marketplace owner-key migration', () => {
     seed(redis);
     const snapshot = JSON.stringify([...redis.strings].sort());
     const members = [...redis.zsets.get(keys.index)!.keys()].sort();
-    const { backup } = await applyRekey(redis, await planRekey(redis, env));
+    const { backup } = await migrate(redis);
     expect(JSON.stringify([...redis.strings].sort())).not.toBe(snapshot);
 
     expect(await rollbackRekey(redis, backup)).toEqual({ restored: 3 });
@@ -148,7 +158,7 @@ describe('marketplace owner-key migration', () => {
     const pair = ownerKeyPair(alice, env);
     redis.strings.set(keys.size('a'.repeat(24)), '1000');
     redis.strings.set(keys.userBytes(pair.legacy), '1000');
-    const { backup } = await applyRekey(redis, await planRekey(redis, env));
+    const { backup } = await migrate(redis);
     expect(redis.strings.get(keys.userBytes(pair.legacy))).toBeUndefined();
     expect(redis.strings.get(keys.userBytes(pair.current))).toBe('1000');
     await rollbackRekey(redis, backup);

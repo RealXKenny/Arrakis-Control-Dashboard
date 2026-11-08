@@ -4,42 +4,43 @@ Branch `security-audit`. This pass finished the outstanding remediation, restore
 
 ## Conclusion: CONDITIONALLY READY — MANUAL ACTIONS REQUIRED
 
-No Critical or High issue is known. Every automated check passes, including the full browser suite (81 of 81). The application should go to a production review once the **manual actions** below are done and the **verification gap** (Lua scripts) is closed. This is not a statement that the application is completely secure: no live or dynamic attack testing has been done.
+No Critical or High issue is known. Every automated check passes, including the full browser suite (81 of 81). The application should go to a production review once the **manual actions** below are done and the remaining unverified items listed under "Remaining unverified" are closed. This is not a statement that the application is completely secure: no live or dynamic attack testing has been done.
 
 ## All 25 findings and final status
 
-| ID | Sev. | Final status | Summary |
-| --- | --- | --- | --- |
-| SEC-01 | Medium | FIXED | Shared "unknown address" bucket removed from password sign-in |
-| SEC-02 | Low | FIXED | Read budget falls back to a per-session bucket |
-| SEC-03 | Low | FIXED | Sign-out can no longer be undone by background or Auth.js writes (see SEC-15) |
-| SEC-04 | Low | FIXED | Admin operations rate-limited, fail closed, audited |
-| SEC-05 | Low | FIXED | No third-party CSP origins |
-| SEC-06 | Low | FIXED | Console redirects refused (real-socket test) |
-| SEC-07 | Low | FIXED | Cache-refresh header limited |
-| SEC-08 | Medium | PARTIALLY FIXED | Admin IDs configurable; step-up sign-in 12 h for changes and 60 min for destructive actions/downloads; audit trail. **Open:** no MFA, no "sign out everywhere" (owner decision) |
-| SEC-09 | Low | FIXED | Actions pinned to SHAs; Dependabot (workflows not yet run on GitHub) |
-| SEC-10 | Info | PARTIALLY FIXED | Code: unauthenticated public plain-text Redis refuses to start; opt-in `REDIS_REQUIRE_TLS`; startup warnings. **Open:** deployment must use a Redis password and TLS where the network is not private |
-| SEC-11 | Info | BLOCKED — owner decision | `next-auth@5.0.0-beta.32` is the newest v5 release (npm `beta` tag); no stable v5 exists and v4 lacks the App Router API. Compensating controls below. `npm audit` is 0 |
-| SEC-12 | Info | FIXED | Durable audit trail (stdout JSON + bounded Redis, admin read API). Operator must ship stdout to retained storage for long-term retention |
-| SEC-13 | Low | FIXED | Listings show the Console's name for the immutable guild ID; saving a different name is impossible |
-| SEC-14 | Low | FIXED | Auth.js endpoints rate-limited |
-| SEC-15 | Medium | FIXED | Auth.js session write-back no longer recreates signed-out sessions |
-| SEC-16 | Medium | FIXED | Admin downloads need step-up (60 min) |
-| SEC-17 | Medium | FIXED | Vehicles use the live character link |
-| SEC-18 | Low | FIXED | Guild shown by ID match, not by name |
-| SEC-19 | Low | FIXED | Seller player IDs stripped from market ladders |
-| SEC-20 | Low | FIXED | IPv6 rate limits keyed by /64 |
-| SEC-21 | Low | FIXED | `?error=` inherited-key crash |
-| SEC-22 | Medium | PARTIALLY FIXED | Release publishes a source archive plus SHA-256; the egg verifies it before extracting or building, supports `RELEASE_TAG` pinning, `npm ci --ignore-scripts`, correct launcher path. **Open:** the checksum lives in the same release as the archive, so it detects corruption and partial tampering but not a compromised publisher; signing/provenance is an owner decision. Older releases without a checksum install with a loud warning |
-| SEC-23 | Low | PARTIALLY FIXED | Per-member (24 MiB) and global (256 MiB) byte quotas added atomically next to the existing 25-per-member and 500-total counts. **Open:** expiry/cleanup and per-guild quotas need owner approval |
-| SEC-24 | Low | PARTIALLY FIXED | New listings use HMAC owner keys (`OWNER_KEY_SECRET`); old keys are still accepted so nothing is orphaned. `npm run marketplace:rekey` migrates old listings (dry run default, backup file required, rollback supported, tested on representative data). **Open:** the migration has not been run on production data; until it is, pre-existing listings keep their guessable key |
-| SEC-25 | Info | PARTIALLY FIXED | Player guild lookup now runs 5 rosters at a time with a 60 s shared cache. **Open (by design):** `/api/server/status` stays public (counts only, cached, rate limited) |
-| New | Info | OPEN — verification gap | The Lua scripts for byte quotas and deletion (`features/bases/server/marketplace.ts`) could not be executed here (no Redis server or Lua interpreter in this environment). They were reviewed and are mirrored by a JavaScript migration tested against a fake store, but they have not run |
+| ID               | Sev.       | Final status             | Summary                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------- | ---------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SEC-01           | Medium     | FIXED                    | Shared "unknown address" bucket removed from password sign-in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| SEC-02           | Low        | FIXED                    | Read budget falls back to a per-session bucket                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| SEC-03           | Low        | FIXED                    | Sign-out can no longer be undone by background or Auth.js writes (see SEC-15)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| SEC-04           | Low        | FIXED                    | Admin operations rate-limited, fail closed, audited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| SEC-05           | Low        | FIXED                    | No third-party CSP origins                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| SEC-06           | Low        | FIXED                    | Console redirects refused (real-socket test)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| SEC-07           | Low        | FIXED                    | Cache-refresh header limited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| SEC-08           | Medium     | PARTIALLY FIXED          | Admin IDs configurable; step-up sign-in 12 h for changes and 60 min for destructive actions/downloads; audit trail. **Open:** no MFA, no "sign out everywhere" (owner decision)                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| SEC-09           | Low        | FIXED                    | Actions pinned to SHAs; Dependabot (workflows not yet run on GitHub)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| SEC-10           | Info       | PARTIALLY FIXED          | Code: unauthenticated public plain-text Redis refuses to start; opt-in `REDIS_REQUIRE_TLS`; startup warnings. **Open:** deployment must use a Redis password and TLS where the network is not private                                                                                                                                                                                                                                                                                                                                                                                                         |
+| SEC-11           | Info       | BLOCKED — owner decision | `next-auth@5.0.0-beta.32` is the newest v5 release (npm `beta` tag); no stable v5 exists and v4 lacks the App Router API. Compensating controls below. `npm audit` is 0                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| SEC-12           | Info       | FIXED                    | Durable audit trail (stdout JSON + bounded Redis, admin read API). Operator must ship stdout to retained storage for long-term retention                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| SEC-13           | Low        | FIXED                    | Listings show the Console's name for the immutable guild ID; saving a different name is impossible                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| SEC-14           | Low        | FIXED                    | Auth.js endpoints rate-limited                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| SEC-15           | Medium     | FIXED                    | Auth.js session write-back no longer recreates signed-out sessions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| SEC-16           | Medium     | FIXED                    | Admin downloads need step-up (60 min)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| SEC-17           | Medium     | FIXED                    | Vehicles use the live character link                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| SEC-18           | Low        | FIXED                    | Guild shown by ID match, not by name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| SEC-19           | Low        | FIXED                    | Seller player IDs stripped from market ladders                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| SEC-20           | Low        | FIXED                    | IPv6 rate limits keyed by /64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| SEC-21           | Low        | FIXED                    | `?error=` inherited-key crash                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| SEC-22           | Medium     | PARTIALLY FIXED          | Release publishes a source archive plus SHA-256; the egg verifies it before extracting or building, supports `RELEASE_TAG` pinning, `npm ci --ignore-scripts`, a correct launcher path, and now **fails closed**: a release without a complete archive + checksum pair is refused unless `ALLOW_UNVERIFIED_RELEASE=true`. Verified by 30 sandboxed installer runs with the real `bash`, `jq`, `tar` and `sha256sum`. **Open:** the checksum lives in the same release as the archive, so it detects corruption and partial tampering but not a compromised publisher; signing/provenance is an owner decision |
+| SEC-23           | Low        | PARTIALLY FIXED          | Per-member (24 MiB) and global (256 MiB) byte quotas added atomically next to the existing 25-per-member and 500-total counts. **Open:** expiry/cleanup and per-guild quotas need owner approval                                                                                                                                                                                                                                                                                                                                                                                                              |
+| SEC-24           | Low        | PARTIALLY FIXED          | New listings use HMAC owner keys (`OWNER_KEY_SECRET`); old keys are still accepted so nothing is orphaned. `npm run marketplace:rekey` migrates old listings (dry run default, backup file required, rollback supported, tested on representative data). **Open:** the migration has not been run on production data; until it is, pre-existing listings keep their guessable key                                                                                                                                                                                                                             |
+| SEC-25           | Info       | PARTIALLY FIXED          | Player guild lookup now runs 5 rosters at a time with a 60 s shared cache. **Open (by design):** `/api/server/status` stays public (counts only, cached, rate limited)                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| SEC-26 to SEC-30 | Low–Medium | FIXED                    | Found by the real-Redis and installer tests (see "Integration verification pass"): duplicate publish inflated counters; a malformed size left a half-deleted listing; the owner-key migration was not resumable; the installer accepted a `RELEASE_TAG` with a valid first line and a hostile second line; the installer fell back to an unverified download without being asked                                                                                                                                                                                                                              |
 
 New findings discovered in this pass: none beyond the verification gap above. Earlier-pass findings SEC-15 to SEC-22 are included in the table.
 
 ## What changed in this pass
+
 - **SEC-24:** `features/bases/server/owner-key.ts` (HMAC, dual-read), `marketplace.ts`, `scripts/maintenance/rekey-marketplace*.mjs`, `npm run marketplace:rekey`.
 - **SEC-23:** byte quotas (`MAX_BYTES_PER_USER`, `MAX_BYTES_TOTAL`) with per-listing size records so deletes give bytes back exactly once.
 - **SEC-13:** `features/guilds/server/guild-registry.ts`; `requirements.ts` saves and lists the Console name.
@@ -51,23 +52,26 @@ New findings discovered in this pass: none beyond the verification gap above. Ea
 - **Browser suite:** fake Console + per-test members; see below.
 
 ## Test results (final run, current tree)
-| Check | Result |
-| --- | --- |
-| `npm run format:check` | passed |
-| `npm run typecheck` | exit 0 |
-| `npm run lint` | exit 0, `--max-warnings 0` |
-| `npm test` (unit, API, security regression) | 98 files, **938 passed, 0 failed, 0 skipped** |
-| `npm run build` | succeeded |
-| `npm run test:production` | passed |
-| `npm run test:browser` (Playwright, Chromium, 1 worker) | **81 passed, 0 failed, 0 skipped, 0 blocked** |
-| `npm audit` / `--omit=dev` | 0 / 0 vulnerabilities |
-| `npm audit signatures` | 115 verified attestations |
-| Lockfile | 542 packages, all `registry.npmjs.org`, all with integrity hashes; `npm ls` reports no problems; one override (`minimatch@^11.0.5` for `typescript-estree`) |
-| Secret scan (tracked and untracked files) | no matches |
-| Deployment configuration | egg generated and shell-syntax checked (`bash -n`); egg and workflow asserted by tests; the `jq` filters in the installer and the GitHub workflows could not be executed here (`jq` absent; no Actions run) |
+
+| Check                                                   | Result                                                                                                                                                                                                      |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run format:check`                                  | passed                                                                                                                                                                                                      |
+| `npm run typecheck`                                     | exit 0                                                                                                                                                                                                      |
+| `npm run lint`                                          | exit 0, `--max-warnings 0`                                                                                                                                                                                  |
+| `npm test` (unit, API, security regression)             | 98 files, **938 passed, 0 failed, 0 skipped**                                                                                                                                                               |
+| `npm run build`                                         | succeeded                                                                                                                                                                                                   |
+| `npm run test:production`                               | passed                                                                                                                                                                                                      |
+| `npm run test:browser` (Playwright, Chromium, 1 worker) | **81 passed, 0 failed, 0 skipped, 0 blocked**                                                                                                                                                               |
+| `npm audit` / `--omit=dev`                              | 0 / 0 vulnerabilities                                                                                                                                                                                       |
+| `npm audit signatures`                                  | 115 verified attestations                                                                                                                                                                                   |
+| Lockfile                                                | 542 packages, all `registry.npmjs.org`, all with integrity hashes; `npm ls` reports no problems; one override (`minimatch@^11.0.5` for `typescript-estree`)                                                 |
+| Secret scan (tracked and untracked files)               | no matches                                                                                                                                                                                                  |
+| Deployment configuration                                | egg generated and shell-syntax checked (`bash -n`); egg and workflow asserted by tests; the `jq` filters in the installer and the GitHub workflows could not be executed here (`jq` absent; no Actions run) |
 
 ### Playwright restoration
+
 The 53 failing pre-V2 specs are resolved: 81 tests pass (baseline at the start of the previous pass: 24 passed, 55 failed).
+
 - **Cause:** the specs mocked browser-side `/api/*` calls, but V2 pages render on the server from the Console, so the mocks never applied; selectors and URLs also targeted removed pages (`/portal?view=…`).
 - **Fix:** `tests/helpers/fake-console.mjs` is a local stand-in for the Console and Discord adapter, started by `browser-server.mjs`; `fake-console-client.ts` creates an isolated member (own Discord ID, character, session) per test, so caches and parallel tests cannot interfere. The browser Redis fixture now serves a recruitment listing and a pool of 5000 test sessions. The suite runs on one worker because the Console fixture is shared.
 - **Per original file:** landing, market, vehicles, portal and player specs were replaced by `workspace.spec.ts` (sign-in gates, CSP, cross-origin refusal, portal/character/storage, vehicles, market, public status, credential handling, cross-member isolation). `guilds.spec.ts` and `bases.spec.ts` were rewritten for the V2 pages and API behaviour. `map.spec.ts` (8 tests) and `admin.spec.ts` were kept and updated to the V2 endpoints, URLs, sign-in and markup; two of its assertions that depended on server environment moved to a render test (`tests/unit/admin/adapter-notice.test.ts`).
@@ -75,8 +79,9 @@ The 53 failing pre-V2 specs are resolved: 81 tests pass (baseline at the start o
 - **Limits:** guild and marketplace write flows are asserted at the browser/API boundary because the browser fixture's Redis is not a real Redis; those flows are exercised with mocks in the API tests.
 
 ## Manual actions required before go-live
+
 1. **Set `OWNER_KEY_SECRET`** (32+ random characters) before users publish anything new. If it is left empty the key derives from `AUTH_SECRET`, and rotating `AUTH_SECRET` later would orphan newly published listings.
-2. **Run the Lua scripts against a real Redis** (for example a Redis service container in CI) before relying on the new quotas and deletion; this is the one unexecuted piece of new logic.
+2. **Run `npm run test:integration` against your own Redis version** (CI does this with a Redis 7.4 service container; local verification used Redis 5.0.14). Redis **Cluster** behaviour is verified only statically (all keys share one hash slot).
 3. **Redis:** use a password, and TLS (`rediss://`, then `REDIS_REQUIRE_TLS=true`) unless Redis is on a private network.
 4. **Ship stdout to retained logging** and decide the retention period; keep `AUDIT_LOG_STDOUT=true`.
 5. **Decide:** MFA/"sign out everywhere" for administrators; shorter `ADMIN_REAUTH_HOURS`; marketplace expiry and per-guild quotas; release signing/provenance; acceptance of the pre-release `next-auth`.
@@ -86,9 +91,11 @@ The 53 failing pre-V2 specs are resolved: 81 tests pass (baseline at the start o
 9. Keep `TRUSTED_PROXY_COUNT` accurate and `APP_URL` on HTTPS.
 
 ## Compensating controls for the pre-release authentication library (SEC-11)
+
 Auth.js only runs the OAuth handshake and CSRF token. Sessions are opaque 256-bit IDs stored in Redis under SHA-256 keys (not Auth.js JWTs); roles are re-verified with Discord every 30 minutes; the custom `jwt.encode/decode` is covered by tests; the version is pinned exactly; `npm audit` is clean. The residual risk is a library bug in an unreleased version, which only a stable v5 or a different library removes.
 
 ## Rollback
+
 - **Code:** revert the branch; nothing in this pass changes stored data formats incompatibly.
 - **Owner keys:** `npm run marketplace:rekey -- --rollback <backup>` restores records, index entries, counters and byte quotas. Without running the migration there is nothing to roll back; legacy keys remain accepted.
 - **Quotas:** additive Redis keys (`arrakis:{bm}:v2:bytes:*`, `bytes-total`, `size:*`); deleting them resets quotas; the publish script ignores their absence.
@@ -97,4 +104,102 @@ Auth.js only runs the OAuth handshake and CSRF token. Sessions are opaque 256-bi
 - **Egg:** set `RELEASE_TAG` to a previous version to reinstall it.
 
 ## Remaining risk
-Moderate and mostly operational: the unexecuted Lua scripts; Redis transport and credentials; no administrator MFA; listings published before the migration still expose a guessable key; release integrity does not defend against a compromised publisher; dynamic and load testing were not performed; React components and the 3D renderer were reviewed only for security-relevant paths.
+
+Moderate and mostly operational: Redis transport and credentials; no administrator MFA; listings published before the migration still expose a guessable key; release integrity does not defend against a compromised publisher; Redis Cluster and Redis 7 were not exercised locally; dynamic and load testing were not performed; React components and the 3D renderer were reviewed only for security-relevant paths.
+
+## Integration verification pass (real services)
+
+Executed on this machine with disposable local services; nothing production was contacted.
+
+| Service                                | Source                                                                                                                                                                                                                                                      | Verification                                                                                  |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Redis 5.0.14.1 (Windows build)         | `tporadowski/redis` release `Redis-x64-5.0.14.1.zip`, 12,617,669 bytes (matches the GitHub asset size), SHA-256 `018EA18A35876383CBB5F4CD0258ADFC87747CF9D619BCE1CF73A2E36F720CCF`; the binary is **not code-signed** and the release publishes no checksum | Loopback only (`127.0.0.1:6390`), no persistence, 256 MB cap, database 15, stopped afterwards |
+| jq 1.8.2                               | official `jqlang/jq` release, SHA-256 equals the digest GitHub publishes (`a6fc67fe…c627`)                                                                                                                                                                  | Used only for the installer tests                                                             |
+| bash / GNU tar 1.35 / sha256sum / find | Git for Windows                                                                                                                                                                                                                                             | Installer tests                                                                               |
+
+### Marketplace Lua scripts on a real Redis (`npm run test:integration`, 22 tests)
+
+Passing: scripts compile and run; counters, byte totals and size records agree after publish and delete; per-member listing cap; per-member byte quota with real 1.5 MB records; global byte limit; marketplace-wide listing cap; refused operations write nothing; other members keep their quota; 40 simultaneous publishes by one member admit exactly 25 and leave counters equal to the stored data; simultaneous publishes at the byte-quota edge never exceed it; simultaneous double deletes release each listing exactly once; interleaved publishes and deletes keep counters equal to what is stored; legacy-owner deletion; expired size records and owner records; malformed counters fail closed; unreachable Redis rejects in under 5 s with nothing written; key lists of both scripts share one cluster hash slot.
+
+Bugs found and fixed (the tests failed before the fix): a duplicate publish of an existing listing ID doubled its counters (now refused with 409); a malformed size record made the delete script abort after it had already removed the index entry (now every number is read and sanitised before the first write). Negative or inflated counters could not be produced in any tested condition.
+
+### Owner-key migration on a real Redis (8 tests, run through the actual CLI)
+
+Passing: dry run writes nothing; `--apply` without `--backup` is refused; migration moves owners, index members (scores preserved), records and counters (legacy and HMAC listings of one member merge); ownership checks hold for both key generations; the member with no account is untouched; repeating the run changes nothing; rollback restores the exact previous state (every key and the index); interrupted at 11 different points the run resumes to a state identical to an uninterrupted run, and rollback restores the start; secret rotation orphans migrated listings until re-keyed with `OWNER_KEY_PREVIOUS_SECRET`.
+
+Bugs found and fixed: an interrupted run could leave a stale index member, delete a migrated one on resume, or leave counters under the old key. The migration now changes a listing's owner last, reconciles counters from stored data, writes the backup before the first change and accepts the previous secret.
+
+### Release installer in a sandbox (30 tests, no network)
+
+The egg's real installation script runs with `curl` replaced by a fixture server, `npm`/`apt-get`/`chown` recorded, and the install directory redirected to a temp folder. Passing: download, checksum verification, extraction and build order (`npm ci --ignore-scripts`, build, prune); wrong checksum; archive altered after its checksum was published; five malformed checksum files; missing checksum fails closed (also when unverified installs are allowed but an archive exists); old release installs only with the exact word `true`; version pinning asks for that tag only; eight malformed tags make no request; five kinds of malformed release metadata; look-alike asset names ignored; failed downloads; hostile archives (parent paths, absolute paths) write nothing outside; a symlink pointing outside the install directory is refused.
+
+Bugs found and fixed: `RELEASE_TAG` validation used a line-based `grep`, so `v2.1.0` followed by a newline and anything else passed (now a whole-string match); the unverified-download fallback was automatic (now an explicit opt-in).
+
+### Final regression run
+
+| Check                                          | Result                                                                                                            |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `npm run format:check`                         | passed                                                                                                            |
+| `npm run typecheck`                            | exit 0                                                                                                            |
+| `npm run lint`                                 | exit 0                                                                                                            |
+| `npm test` with `jq` available                 | 99 files, **968 passed, 0 failed, 0 skipped**                                                                     |
+| `npm test` on a machine without `jq`           | 98 files passed, 1 skipped (the 30 installer tests skip silently when the tools are absent; CI runners have them) |
+| `npm run test:integration` (real Redis 5.0.14) | 2 files, **30 passed, 0 failed**                                                                                  |
+| `npm run build`                                | succeeded                                                                                                         |
+| `npm run test:production`                      | passed                                                                                                            |
+| `npm run test:browser`                         | **81 passed, 0 failed, 0 skipped**                                                                                |
+| `npm audit` / `--omit=dev`                     | 0 / 0 vulnerabilities                                                                                             |
+
+### Remaining unverified
+
+- **Redis 7.x and Redis Cluster.** Local runs used Redis 5.0.14; CI now has a Redis 7.4 service job (`redis-integration`) that has not yet run on GitHub. Cluster mode cannot run on the Windows build; only the shared hash slot is checked.
+- **GitHub workflows** (including the archive/checksum step and the new Redis job) have not run.
+- **The installer on a real Pterodactyl node** (apt, root, Node 22 image, real GitHub downloads); only the script logic was run.
+- **Guild, application and chat Lua scripts** were not part of this pass; they remain covered by mocks.
+- Dynamic attack testing and load testing.
+
+## Required environment variables (security-relevant)
+
+| Variable                                                                                                          | Required                          | Purpose                                                                       |
+| ----------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------- |
+| `AUTH_SECRET`                                                                                                     | yes (32+ chars)                   | Auth.js state, sealed refresh tokens                                          |
+| `OWNER_KEY_SECRET`                                                                                                | strongly recommended (32+ chars)  | HMAC secret for marketplace owner keys; derived from `AUTH_SECRET` when empty |
+| `APP_URL`, `REDIS_URL`, `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`, `DISCORD_*`, `VERIFIED_MEMBER_ROLE_ID` | yes in production                 | Existing requirements                                                         |
+| `TRUSTED_PROXY_COUNT`                                                                                             | set accurately                    | Per-address limits                                                            |
+| `REDIS_REQUIRE_TLS`                                                                                               | recommended once Redis offers TLS | Refuse non-TLS Redis                                                          |
+| `REDIS_ALLOW_INSECURE`                                                                                            | default false                     | Override for unauthenticated public plain-text Redis                          |
+| `ADMIN_DISCORD_IDS`, `ADMIN_REAUTH_HOURS`, `ADMIN_HIGH_RISK_REAUTH_MINUTES`                                       | optional                          | Administrator access and step-up windows                                      |
+| `AUDIT_LOG_STDOUT`, `AUDIT_LOG_REDIS`, `AUDIT_LOG_RETENTION_DAYS`, `AUDIT_LOG_MAX_ENTRIES`                        | optional                          | Audit trail                                                                   |
+| `RELEASE_TAG`, `ALLOW_UNVERIFIED_RELEASE`                                                                         | egg only                          | Version pin; opt-in for old releases without a checksum                       |
+| `OWNER_KEY_PREVIOUS_SECRET`                                                                                       | migration only                    | Previous owner-key secret when re-keying after rotation                       |
+
+## Owner-key migration procedure
+
+1. Set `OWNER_KEY_SECRET` and deploy. New listings use HMAC keys; old ones keep working.
+2. Dry run (writes nothing): `npm run marketplace:rekey`.
+3. Apply in a quiet period: `npm run marketplace:rekey -- --apply --backup rekey-backup.json`. The backup is written before any change; keep it private.
+4. Check the printed counts, then spot-check deleting one of your own listings.
+5. The run is safe to repeat and to resume after a crash.
+6. **Rollback:** `npm run marketplace:rekey -- --rollback rekey-backup.json` (works even after an interrupted apply).
+7. **Secret rotation:** changing `OWNER_KEY_SECRET` makes migrated listings unowned. Before rotating, plan to run the script with the new secret in `OWNER_KEY_SECRET` and the old one in `OWNER_KEY_PREVIOUS_SECRET`, with a backup.
+
+## Decisions that need your approval
+
+- Accept or replace the pre-release `next-auth` (SEC-11).
+- Administrator MFA / "sign out everywhere"; shorter `ADMIN_REAUTH_HOURS` (SEC-08).
+- Marketplace expiry, per-guild quotas, and the byte limits themselves (SEC-23).
+- Release signing or provenance attestation (SEC-22); whether old releases without checksums may ever be installed.
+- Whether to require TLS for Redis everywhere (`REDIS_REQUIRE_TLS=true`).
+- Pinning the CI Redis image by digest (currently the `redis:7.4-alpine` tag).
+
+## Readiness statement
+
+The deployment-critical logic that was previously unverified (Lua scripts, migration, installer) has now run against a real Redis and the real installer tooling, and the problems that surfaced are fixed. The conclusion remains **CONDITIONALLY READY — MANUAL ACTIONS REQUIRED** rather than ready: Redis 7/Cluster, the GitHub workflows and a real Pterodactyl install are still unverified, and the operational and approval items above are open.
+
+## Update: final staging verification (2026-11-08)
+
+A further pass ran the Lua scripts, sessions, rate limits and audit trail against real Redis 7.4.11 (standalone and a
+six-node Cluster including a live failover), ran the real egg installer end to end and started the installed build, and
+fixed five issues (SEC-26 to SEC-30). The classification remains **CONDITIONALLY READY — MANUAL ACTIONS REQUIRED**.
+See `SECURITY_FINAL_SIGNOFF.md` for the evidence, remaining unverified items and owner decisions, and
+`PRODUCTION_DEPLOYMENT_CHECKLIST.md` for the deployment, verification and rollback procedure.

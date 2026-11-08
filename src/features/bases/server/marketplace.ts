@@ -52,6 +52,8 @@ export function ownerKeysFor(session: DashboardSession): string[] {
 }
 
 const PUBLISH_SCRIPT = `
+-- A listing ID that is already stored would be counted twice and its size record overwritten.
+if redis.call('EXISTS', KEYS[2]) == 1 then return -5 end
 if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[7]) then return -2 end
 local count = tonumber(redis.call('GET', KEYS[6]) or '0')
 if count >= tonumber(ARGV[6]) then return -1 end
@@ -73,20 +75,22 @@ return 1
 const DELETE_SCRIPT = `
 local owner = redis.call('GET', KEYS[4])
 if not owner or (owner ~= ARGV[1] and owner ~= ARGV[2]) then return 0 end
-local summary = redis.call('GET', KEYS[3])
-if summary then redis.call('ZREM', KEYS[1], summary) end
+-- Read and sanitise every number before the first write: a malformed value must not stop the script halfway,
+-- because Redis does not roll back the commands that already ran. Unreadable numbers count as zero (no refund).
 -- Only listings that were counted at publish time (they carry a size record) give bytes back; legacy ones never took any.
-local size = tonumber(redis.call('GET', KEYS[11]) or '0')
+local summary = redis.call('GET', KEYS[3])
+local size = tonumber(redis.call('GET', KEYS[11]) or '0') or 0
+local bytesKey = (owner == ARGV[1]) and KEYS[8] or KEYS[9]
+local counter = (owner == ARGV[1]) and KEYS[6] or KEYS[7]
+local count = tonumber(redis.call('GET', counter) or '0') or 0
+local heldOwner = tonumber(redis.call('GET', bytesKey) or '0') or 0
+local heldTotal = tonumber(redis.call('GET', KEYS[10]) or '0') or 0
+if summary then redis.call('ZREM', KEYS[1], summary) end
 redis.call('DEL', KEYS[2], KEYS[3], KEYS[4], KEYS[5], KEYS[11])
 if size > 0 then
-  local bytesKey = (owner == ARGV[1]) and KEYS[8] or KEYS[9]
-  for _, key in ipairs({bytesKey, KEYS[10]}) do
-    local held = tonumber(redis.call('GET', key) or '0')
-    if held > size then redis.call('DECRBY', key, size) else redis.call('DEL', key) end
-  end
+  if heldOwner > size then redis.call('SET', bytesKey, heldOwner - size) else redis.call('DEL', bytesKey) end
+  if heldTotal > size then redis.call('SET', KEYS[10], heldTotal - size) else redis.call('DEL', KEYS[10]) end
 end
-local counter = (owner == ARGV[1]) and KEYS[6] or KEYS[7]
-local count = tonumber(redis.call('GET', counter) or '0')
 if count > 1 then redis.call('DECR', counter) else redis.call('DEL', counter) end
 return 1
 `;
@@ -138,6 +142,7 @@ export async function publishBase(
   );
   listCache.clear();
   if (Number(result) === -1) return 'user-limit';
+  if (Number(result) === -5) throw new AppError('This base is already published.', 409, 'ALREADY_PUBLISHED', true);
   if (Number(result) === -2 || Number(result) === -4) return 'full';
   if (Number(result) === -3) return 'storage-limit';
   return 'ok';

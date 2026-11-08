@@ -179,7 +179,9 @@ tests/
   api/
   architecture/
   browser/
+  deployment/       sandboxed run of the egg's real installer script
   helpers/
+  integration/      Lua scripts, sessions, rate limits and the re-key CLI against a real Redis (opt-in: TEST_REDIS_URL / TEST_REDIS_CLUSTER_NODES)
   load/
   unit/
     admin/

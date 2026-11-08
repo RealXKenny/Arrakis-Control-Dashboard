@@ -63,7 +63,12 @@ describe('release notes', () => {
       expect(integration).toContain(`npm run ${command}`);
     expect(integration).toContain('npx playwright install --with-deps --only-shell chromium');
     expect(integration).toContain('path: .next/cache');
-    expect(ci).toMatch(/verify:\s+if: always\(\)\s+needs: \[checks, integration\]/);
-    expect(ci).toContain('run: test "$CHECKS_RESULT" = success && test "$INTEGRATION_RESULT" = success');
+    expect(ci).toMatch(/verify:\s+if: always\(\)\s+needs: \[checks, integration, redis-integration\]/);
+    expect(ci).toContain(
+      'run: test "$CHECKS_RESULT" = success && test "$INTEGRATION_RESULT" = success && test "$REDIS_RESULT" = success',
+    );
+    // The marketplace scripts run against a real Redis service, never a mock.
+    expect(ci).toContain('npm run test:integration');
+    expect(ci).toMatch(/redis-integration:[\s\S]*services:\s+redis:/);
   });
 });

@@ -64,13 +64,76 @@ jobs:
           path: test-results/
           retention-days: 7
 
+  # The marketplace Lua scripts and the owner-key migration run against a real, disposable Redis.
+  redis-integration:
+    name: redis integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration
+        env:
+          TEST_REDIS_URL: redis://127.0.0.1:6379/15
+
+  # The same integration suite against a real 3-master / 3-replica Redis Cluster (including a live failover test).
+  # Not part of `verify` until it has been seen green on GitHub once; then add it to `needs` below.
+  redis-cluster-integration:
+    name: redis cluster integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Start a Redis Cluster
+        shell: bash
+        run: |
+          set -euo pipefail
+          for port in 7001 7002 7003 7004 7005 7006; do
+            docker run -d --name "redis-$port" --network host redis:7.4-alpine \
+              redis-server --port "$port" --cluster-enabled yes --cluster-config-file "nodes-$port.conf" \
+              --cluster-node-timeout 3000 --appendonly no --save ""
+          done
+          sleep 3
+          docker run --rm --network host redis:7.4-alpine redis-cli --cluster create \
+            127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 127.0.0.1:7006 \
+            --cluster-replicas 1 --cluster-yes
+          for attempt in $(seq 1 30); do
+            docker run --rm --network host redis:7.4-alpine redis-cli -p 7001 cluster info | grep -q cluster_state:ok && exit 0
+            sleep 1
+          done
+          echo "The Redis Cluster did not become healthy." >&2
+          exit 1
+      - run: npm run test:integration
+        env:
+          TEST_REDIS_CLUSTER_NODES: 127.0.0.1:7001,127.0.0.1:7002,127.0.0.1:7003
+
   verify:
     if: always()
-    needs: [checks, integration]
+    needs: [checks, integration, redis-integration]
     runs-on: ubuntu-latest
     steps:
       - name: Require every CI job to pass
         env:
           CHECKS_RESULT: ${{ needs.checks.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
-        run: test "$CHECKS_RESULT" = success && test "$INTEGRATION_RESULT" = success
+          REDIS_RESULT: ${{ needs.redis-integration.result }}
+        run: test "$CHECKS_RESULT" = success && test "$INTEGRATION_RESULT" = success && test "$REDIS_RESULT" = success

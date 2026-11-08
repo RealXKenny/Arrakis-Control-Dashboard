@@ -2,12 +2,12 @@ import { writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 // Backslashes and dollar signs below are written for bash. In this JavaScript template a backslash must be doubled
-// and "${" must be escaped, so every shell expansion is spelled without braces except RELEASE_TAG's default.
+// and "${" must be escaped, so every shell expansion is spelled without braces except the two defaulted variables.
 const installationScript = `#!/bin/bash
 set -euo pipefail
 
 apt-get update
-apt-get install --yes --no-install-recommends ca-certificates curl jq tar coreutils
+apt-get install --yes --no-install-recommends ca-certificates curl jq tar coreutils findutils
 rm -rf /var/lib/apt/lists/*
 
 work_dir=$(mktemp -d)
@@ -18,9 +18,11 @@ api='https://api.github.com/repos/RealXKenny/Arrakis-Control-Dashboard/releases'
 
 # RELEASE_TAG pins an exact version (for example v2.1.0). Empty or "latest" installs the newest release.
 tag="\${RELEASE_TAG:-latest}"
+# Matched as one whole string: a multi-line value cannot slip a valid first line past a line-based grep.
+tag_pattern='^v[0-9]+\\.[0-9]+\\.[0-9]+$'
 if [ "$tag" = "latest" ] || [ -z "$tag" ]; then
   release_url="$api/latest"
-elif printf '%s' "$tag" | grep -Eq '^v[0-9]+\\.[0-9]+\\.[0-9]+$'; then
+elif [[ "$tag" =~ $tag_pattern ]]; then
   release_url="$api/tags/$tag"
 else
   echo "RELEASE_TAG must be latest or a version such as v2.1.0." >&2
@@ -40,16 +42,39 @@ if [ -n "$asset_url" ] && [ -n "$sum_url" ]; then
   printf '%s' "$expected" | grep -Eq '^[0-9a-f]{64}$'
   echo "$expected  $archive_file" | sha256sum --check --status
   echo "Source archive checksum verified."
-else
-  # Releases created before checksums were published: keep installing, but say plainly that nothing was verified.
-  echo "WARNING: this release has no published checksum; installing the unverified GitHub source tarball." >&2
+elif [ -z "$asset_url" ] && [ -z "$sum_url" ] && [ "\${ALLOW_UNVERIFIED_RELEASE:-false}" = "true" ]; then
+  # Releases created before checksums were published install only when the operator explicitly accepts that.
+  echo "WARNING: ALLOW_UNVERIFIED_RELEASE is true; installing the unverified GitHub source tarball." >&2
   download_url=$(jq --exit-status --raw-output '.tarball_url // empty' "$release_file")
   test -n "$download_url"
   curl --fail --silent --show-error --location --retry 3 "$download_url" --output "$archive_file"
+else
+  # Fail closed: a release without a complete archive and checksum pair is not installed.
+  echo "This release has no complete published checksum, so it cannot be verified. Install a newer release, or set ALLOW_UNVERIFIED_RELEASE=true to accept an unverified older one." >&2
+  exit 1
+fi
+
+# Inspect the archive before anything is written: plain files and directories only (the project tracks no links),
+# and no absolute or parent-directory paths. Here-strings avoid pipelines, so pipefail cannot hide a match.
+member_types=$(tar -tvzf "$archive_file" | cut -c1)
+member_names=$(tar -tzf "$archive_file")
+if grep -Eq '^[^-d]' <<< "$member_types"; then
+  echo "The release archive contains links or special files, which a release never needs; refusing to extract it." >&2
+  exit 1
+fi
+if grep -Eq '(^/|(^|/)\\.\\.(/|$))' <<< "$member_names"; then
+  echo "The release archive contains absolute or parent-directory paths; refusing to extract it." >&2
+  exit 1
 fi
 
 mkdir -p /mnt/server
-tar -xzf "$archive_file" --strip-components=1 -C /mnt/server
+tar -xzf "$archive_file" --strip-components=1 --no-same-owner --no-same-permissions -C /mnt/server
+# Refuse an archive whose symbolic links lead outside the install directory.
+bad_link=$(find /mnt/server -type l -exec sh -c 'for link; do target=$(readlink -f "$link"); case "$target" in /mnt/server|/mnt/server/*) ;; *) echo "$link" ;; esac; done' sh {} + | head -n 1)
+if [ -n "$bad_link" ]; then
+  echo "The release archive contains a symbolic link that points outside the install directory." >&2
+  exit 1
+fi
 cd /mnt/server
 # Dependency install scripts never run as root during installation; the build needs none.
 npm ci --ignore-scripts --no-audit --no-fund
@@ -105,6 +130,13 @@ export function createPterodactylEgg() {
         'RELEASE_TAG',
         'latest',
         { rules: 'required|string|max:16' },
+      ),
+      variable(
+        'Allow Unverified Release',
+        'Leave false. Set true only to install an older release that has no published checksum.',
+        'ALLOW_UNVERIFIED_RELEASE',
+        'false',
+        { rules: 'required|string|in:true,false' },
       ),
       variable(
         'Owner Key Secret',
@@ -205,6 +237,13 @@ export function createPterodactylEgg() {
         { rules: 'required|string|in:true,false' },
       ),
       variable(
+        'Allow Insecure Redis',
+        'Leave false. Only true accepts plain-text, passwordless Redis on a public-looking host.',
+        'REDIS_ALLOW_INSECURE',
+        'false',
+        { rules: 'required|string|in:true,false' },
+      ),
+      variable(
         'Redis Cluster Nodes',
         'Optional comma-separated host:port bootstrap list for Redis Cluster.',
         'REDIS_CLUSTER_NODES',
@@ -214,11 +253,42 @@ export function createPterodactylEgg() {
         },
       ),
       variable(
+        'Administrator Discord IDs',
+        'Comma-separated Discord user IDs allowed to use the administrator workspace. Empty keeps the built-in project owner as the only administrator.',
+        'ADMIN_DISCORD_IDS',
+        '',
+        { rules: 'nullable|regex:/^\\d{1,25}(\\s*,\\s*\\d{1,25})*$/' },
+      ),
+      variable(
+        'Administrator High-Risk Reauthentication Minutes',
+        'Destructive administrator actions need an interactive sign-in this recent (5-1440).',
+        'ADMIN_HIGH_RISK_REAUTH_MINUTES',
+        '60',
+        { rules: 'required|integer|min:5|max:1440' },
+      ),
+      variable(
         'Administrator Reauthentication Hours',
         'Administrator changes need an interactive sign-in this recent (1-168).',
         'ADMIN_REAUTH_HOURS',
         '12',
         { rules: 'required|integer|min:1|max:168' },
+      ),
+      variable(
+        'Audit Log To Console',
+        'Write security audit events as AUDIT JSON lines on stdout for log shipping.',
+        'AUDIT_LOG_STDOUT',
+        'true',
+        { rules: 'required|string|in:true,false' },
+      ),
+      variable('Audit Log To Redis', 'Keep the bounded in-app audit trail in Redis.', 'AUDIT_LOG_REDIS', 'true', {
+        rules: 'required|string|in:true,false',
+      }),
+      variable(
+        'Audit Log Maximum Entries',
+        'Most audit events kept in Redis (100-1000000); the oldest are dropped first.',
+        'AUDIT_LOG_MAX_ENTRIES',
+        '10000',
+        { rules: 'required|integer|min:100|max:1000000' },
       ),
       variable(
         'Audit Log Retention Days',

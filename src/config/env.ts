@@ -54,9 +54,9 @@ const serverEnvSchema = z.object({
     .string()
     .regex(/^\d{1,25}(\s*,\s*\d{1,25})*$/, 'Must be a comma-separated list of Discord user IDs')
     .optional(),
-  /** Administrator changes need an interactive sign-in within this many hours; reads are unaffected. */
   /** Destructive administrator operations (deletes, confirmed actions, archive downloads) need a sign-in this recent. */
   ADMIN_HIGH_RISK_REAUTH_MINUTES: z.coerce.number().int().min(5).max(1440).default(60),
+  /** Administrator changes need an interactive sign-in within this many hours; reads are unaffected. */
   ADMIN_REAUTH_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   /** Server-only HMAC secret for marketplace owner keys. Optional: derived from AUTH_SECRET when absent. */
   OWNER_KEY_SECRET: z.string().min(32).max(256).optional(),
@@ -84,12 +84,12 @@ const serverEnvSchema = z.object({
   DISCORD_GUILD_ID: z.string().min(1).optional(),
   VERIFIED_MEMBER_ROLE_ID: z.string().min(1).optional(),
   REDIS_URL: redisUrlSchema.optional(),
-  /** When "true", production refuses to start unless Redis is reached over TLS (rediss://). Opt-in so existing deployments keep booting. */
   /** Escape hatch for the one combination production refuses: plain-text Redis on a public-looking host with no password. */
   REDIS_ALLOW_INSECURE: z
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  /** When "true", production refuses to start unless Redis is reached over TLS (rediss://). Opt-in so existing deployments keep booting. */
   REDIS_REQUIRE_TLS: z
     .enum(['true', 'false'])
     .default('false')

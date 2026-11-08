@@ -5,3 +5,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  # Dependency updates arrive as reviewable pull requests; nothing is merged automatically.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
