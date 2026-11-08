@@ -2,164 +2,164 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { NavIdentity } from '../../features/auth/identity';
+import { Avatar } from './avatar';
 import { signOutAction } from './auth-actions';
-import { CloseIcon, MenuIcon } from './icons';
-import { Logo } from './logo';
-import { NAV_ITEMS, SIGN_IN_HREF } from './nav-config';
+import { BellIcon, ChevronDownIcon, MenuIcon, SignOutIcon } from './icons';
+import { BrandLockup } from './logo';
+import { MobileNavigation } from './mobile-navigation';
+import {
+  isNavigationActive,
+  NAVIGATION_ITEMS,
+  navigationFor,
+  NOTIFICATION_ITEMS,
+  SIGN_IN_HREF,
+  type NavigationItem,
+} from './nav-config';
+import { NavigationDirectLink, NavigationDropdown } from './navigation-menu';
 
-function isActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function Avatar({ identity }: { identity: NavIdentity }) {
-  if (identity.avatarUrl) {
-    return (
-      // Discord CDN avatars are small and already sized (CSP allows cdn.discordapp.com); next/image adds nothing here.
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={identity.avatarUrl}
-        alt=""
-        width={32}
-        height={32}
-        className="size-8 border border-sand-200/20 object-cover"
-      />
-    );
-  }
-  return (
-    <span
-      aria-hidden="true"
-      className="flex size-8 items-center justify-center border border-sand-200/20 bg-obsidian-800 text-xs font-bold text-spice-300"
-    >
-      {identity.ign.slice(0, 1).toUpperCase()}
-    </span>
-  );
-}
-
-function SignOutButton({ className = '' }: { className?: string }) {
-  return (
-    <form action={signOutAction}>
-      <button type="submit" className={`btn btn-ghost ${className}`}>
-        Sign out
-      </button>
-    </form>
-  );
-}
-
-/** `identity` is resolved on the server from the verified session; null means signed out. */
-export function TopNavigation({ identity }: { identity: NavIdentity | null }) {
+/** `identity` and `isAdmin` are resolved on the server from the verified session. */
+export function TopNavigation({ identity, isAdmin = false }: { identity: NavIdentity | null; isAdmin?: boolean }) {
   const pathname = usePathname();
-  // Store the path the menu was opened on: navigating elsewhere closes it with no effect needed.
-  const [openFor, setOpenFor] = useState<string | null>(null);
-  const open = openFor === pathname;
+  const items = navigationFor({ isAdmin });
+  const [openMenu, setOpenMenu] = useState<{ id: string; pathname: string } | null>(null);
+  const [mobileFor, setMobileFor] = useState<string | null>(null);
+  const closeMenu = useCallback(() => setOpenMenu(null), [setOpenMenu]);
+  const closeMobile = useCallback(() => setMobileFor(null), [setMobileFor]);
+  const menuOpen = (id: string) => openMenu?.id === id && openMenu.pathname === pathname;
+  const toggleMenu = (id: string) => setOpenMenu(menuOpen(id) ? null : { id, pathname });
+  const mobileOpen = mobileFor === pathname;
+  const mobileTriggerRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpenFor(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  const overflow = NAVIGATION_ITEMS.filter((item) => item.tabletOverflow);
+  const more = items.find((item) => item.id === 'more');
+  const moreActive = more ? isNavigationActive(pathname, more) : false;
+  const overflowActive = overflow.some((item) => isNavigationActive(pathname, item));
+  const character = items.find((item) => item.id === 'character');
+  const administration = more?.children?.find((item) => item.id === 'administration');
+  const accountItems = [
+    character ? { ...character, id: 'account-character', label: 'Character profile', tabletOverflow: false } : null,
+    administration ? { ...administration, id: 'account-administration' } : null,
+  ].filter((item): item is NavigationItem => item !== null);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-sand-200/10 bg-obsidian-950/75 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-shell items-center justify-between gap-6 px-4 sm:px-6">
-        <Link href="/" aria-label="Arrakis Control home" className="shrink-0">
-          <Logo />
+    <header className="command-header sticky top-0 z-50 border-b border-[#6f4d1f]/70 bg-[#090A0C]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
+      <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-5 min-[1840px]:px-8 min-[2000px]:gap-6">
+        <Link href="/" aria-label="Arrakis Control home" className="shrink-0 border-r border-[#6f4d1f]/50 pr-5 sm:pr-6">
+          <BrandLockup size="large" />
         </Link>
 
-        <nav aria-label="Primary" className="hidden md:block">
-          <ul className="flex items-stretch">
-            {NAV_ITEMS.map((item) => {
-              const active = isActive(pathname, item.href);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    className={`relative flex h-16 items-center px-4 text-xs font-bold uppercase tracking-[0.2em] transition-colors ${
-                      active ? 'text-spice-400' : 'text-sand-300 hover:text-sand-50'
-                    }`}
-                  >
-                    {item.label}
-                    <span
-                      aria-hidden="true"
-                      className={`absolute inset-x-4 bottom-0 h-0.5 ${active ? 'bg-spice-500' : 'bg-transparent'}`}
-                    />
-                  </Link>
-                </li>
-              );
-            })}
+        <nav aria-label="Primary" className="hidden xl:block">
+          <ul className="flex items-center gap-1 min-[2000px]:gap-2">
+            {items.map((item) => (
+              <li key={item.id}>
+                {item.href ? (
+                  <NavigationDirectLink item={item} pathname={pathname} />
+                ) : item.id === 'more' ? (
+                  <NavigationDropdown
+                    item={item}
+                    pathname={pathname}
+                    open={menuOpen(item.id)}
+                    onToggle={() => toggleMenu(item.id)}
+                    onClose={closeMenu}
+                    extraItems={overflow}
+                    suppressActiveOnDesktop={overflowActive && !moreActive}
+                  />
+                ) : (
+                  <NavigationDropdown
+                    item={item}
+                    pathname={pathname}
+                    open={menuOpen(item.id)}
+                    onToggle={() => toggleMenu(item.id)}
+                    onClose={closeMenu}
+                  />
+                )}
+              </li>
+            ))}
           </ul>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 xl:gap-3">
           {identity ? (
-            <div className="hidden items-center gap-3 sm:flex">
-              <Avatar identity={identity} />
-              <span className="max-w-40 truncate text-xs font-bold uppercase tracking-[0.15em] text-sand-100">
-                {identity.ign}
-              </span>
-              <SignOutButton className="min-h-10 px-4" />
-            </div>
+            <>
+              <NavigationDropdown
+                item={{
+                  id: 'notifications',
+                  label: 'Notifications',
+                  order: 0,
+                  align: 'right',
+                  children: NOTIFICATION_ITEMS,
+                }}
+                pathname={pathname}
+                open={menuOpen('notifications')}
+                onToggle={() => toggleMenu('notifications')}
+                onClose={closeMenu}
+                trigger={<BellIcon className="size-5" />}
+                triggerLabel="Notifications"
+                variant="utility"
+              />
+              <div className="hidden xl:block">
+                <NavigationDropdown
+                  item={{ id: 'account', label: identity.ign, order: 0, align: 'right', children: accountItems }}
+                  pathname={pathname}
+                  open={menuOpen('account')}
+                  onToggle={() => toggleMenu('account')}
+                  onClose={closeMenu}
+                  trigger={
+                    <>
+                      <Avatar identity={identity} size="large" />
+                      <span className="hidden max-w-32 truncate tracking-normal text-sand-100 min-[1840px]:inline">
+                        {identity.ign}
+                      </span>
+                      <ChevronDownIcon className="size-4 text-sand-500" />
+                    </>
+                  }
+                  triggerLabel={`Account menu for ${identity.ign}`}
+                  variant="account"
+                  footer={
+                    <form action={signOutAction}>
+                      <button
+                        type="submit"
+                        role="menuitem"
+                        className="flex w-full items-center gap-3 border-l-2 border-transparent px-3 py-3 text-left text-sm font-bold text-sand-200 hover:border-spice-400 hover:bg-spice-500/6 hover:text-spice-300"
+                      >
+                        <SignOutIcon className="size-[18px]" />
+                        Sign out
+                      </button>
+                    </form>
+                  }
+                />
+              </div>
+            </>
           ) : (
-            <Link href={SIGN_IN_HREF} prefetch={false} className="btn btn-primary hidden sm:inline-flex">
+            <Link href={SIGN_IN_HREF} prefetch={false} className="btn btn-primary hidden min-h-12 px-6 sm:inline-flex">
               Sign in
             </Link>
           )}
           <button
+            ref={mobileTriggerRef}
             type="button"
-            className="inline-flex size-10 items-center justify-center border border-sand-200/20 text-sand-100 hover:border-spice-400 hover:text-spice-300 md:hidden"
-            aria-expanded={open}
+            className="inline-flex size-11 items-center justify-center border border-[#6f4d1f]/50 text-sand-100 hover:border-spice-400 hover:text-spice-300 xl:hidden"
+            aria-expanded={mobileOpen}
             aria-controls="mobile-nav"
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            onClick={() => setOpenFor(open ? null : pathname)}
+            aria-label="Open menu"
+            onClick={() => setMobileFor(mobileOpen ? null : pathname)}
           >
-            {open ? <CloseIcon className="size-5" /> : <MenuIcon className="size-5" />}
+            <MenuIcon className="size-6" />
           </button>
         </div>
       </div>
 
-      {open && (
-        <nav id="mobile-nav" aria-label="Mobile" className="border-t border-sand-200/10 bg-obsidian-950 md:hidden">
-          <ul className="mx-auto max-w-shell px-4 py-2 sm:px-6">
-            {NAV_ITEMS.map((item) => {
-              const active = isActive(pathname, item.href);
-              return (
-                <li key={item.href} className="border-b border-sand-200/5 last:border-0">
-                  <Link
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    className={`flex min-h-12 items-center text-xs font-bold uppercase tracking-[0.2em] ${
-                      active ? 'text-spice-400' : 'text-sand-200'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-            <li className="py-3">
-              {identity ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar identity={identity} />
-                    <span className="truncate text-xs font-bold uppercase tracking-[0.15em] text-sand-100">
-                      {identity.ign}
-                    </span>
-                  </div>
-                  <SignOutButton className="w-full" />
-                </div>
-              ) : (
-                <Link href={SIGN_IN_HREF} prefetch={false} className="btn btn-primary w-full">
-                  Sign in
-                </Link>
-              )}
-            </li>
-          </ul>
-        </nav>
+      {mobileOpen && (
+        <MobileNavigation
+          items={items}
+          pathname={pathname}
+          identity={identity}
+          isAdmin={isAdmin}
+          onClose={closeMobile}
+          triggerRef={mobileTriggerRef}
+        />
       )}
     </header>
   );

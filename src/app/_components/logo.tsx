@@ -11,13 +11,45 @@ export function LogoMark(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function Logo({ className = '' }: { className?: string }) {
+/** The logo with its version pill. Header and footer share it so the brand reads the same everywhere. */
+export function BrandLockup({
+  size = 'default',
+  badgeClassName = 'hidden min-[1840px]:inline',
+}: {
+  size?: 'default' | 'large';
+  /** Visibility of the pill. The header hides it on narrow screens, the footer always shows it. */
+  badgeClassName?: string;
+}) {
   return (
-    <span className={`inline-flex items-center gap-3 ${className}`}>
-      <LogoMark className="size-8" />
+    <span className="flex items-center gap-3">
+      <Logo size={size} />
+      <span
+        className={`border border-spice-500/45 bg-spice-500/5 px-2 py-1 font-mono text-[0.625rem] uppercase tracking-widest text-spice-300 ${badgeClassName}`}
+      >
+        v2
+      </span>
+    </span>
+  );
+}
+
+export function Logo({ className = '', size = 'default' }: { className?: string; size?: 'default' | 'large' }) {
+  const large = size === 'large';
+  return (
+    <span className={`inline-flex items-center ${large ? 'gap-4' : 'gap-3'} ${className}`}>
+      <LogoMark
+        className={large ? 'size-9 min-[1840px]:size-11 drop-shadow-[0_0_12px_rgb(240_160_32/0.2)]' : 'size-8'}
+      />
       <span className="flex flex-col leading-none">
-        <span className="text-sm font-extrabold uppercase tracking-monolith text-sand-50">Arrakis</span>
-        <span className="mt-1 font-mono text-[0.625rem] uppercase tracking-stark text-spice-400">Control</span>
+        <span
+          className={`${large ? 'text-lg tracking-[0.2em] min-[1840px]:text-xl min-[1840px]:tracking-[0.22em]' : 'text-sm tracking-monolith'} font-extrabold uppercase text-sand-50`}
+        >
+          Arrakis
+        </span>
+        <span
+          className={`mt-1.5 font-mono uppercase ${large ? 'text-[0.6875rem] tracking-[0.4em]' : 'text-[0.625rem] tracking-stark'} text-spice-400`}
+        >
+          Control
+        </span>
       </span>
     </span>
   );

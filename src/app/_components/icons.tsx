@@ -82,6 +82,64 @@ export const CloseIcon = (p: IconProps) => (
   </Base>
 );
 
+export const ChevronDownIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M7 9l5 5 5-5" />
+  </Base>
+);
+
+export const PortalIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z" />
+  </Base>
+);
+
+export const CharacterIcon = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21v-2a8 8 0 0116 0v2" />
+  </Base>
+);
+
+export const AssetsIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 3L3 8l9 5 9-5zM3 12l9 5 9-5M3 16l9 5 9-5" />
+  </Base>
+);
+
+export const StorageIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 7l8-4 8 4v10l-8 4-8-4zM4 7l8 4 8-4M12 11v10" />
+  </Base>
+);
+
+export const PreviewIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z" />
+    <circle cx="12" cy="12" r="2.5" />
+  </Base>
+);
+
+export const MoreIcon = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="5" cy="12" r="1" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="19" cy="12" r="1" />
+  </Base>
+);
+
+export const BellIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M6 16V9a6 6 0 0112 0v7l2 3H4zM10 21h4" />
+  </Base>
+);
+
+export const SignOutIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10" />
+  </Base>
+);
+
 /** Filled brand glyph (not the stroke style used by the rest of the set). */
 export const DiscordIcon = (p: IconProps) => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...p}>

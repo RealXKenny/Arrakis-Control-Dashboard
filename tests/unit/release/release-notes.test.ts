@@ -14,8 +14,8 @@ describe('release notes', () => {
       fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'),
     ) as PackageLockMetadata;
     const notes = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
-    const heading = `## [${packageMetadata.version}]`;
-    const start = notes.split(/\r?\n/).findIndex((line) => line.startsWith(heading));
+    const heading = `## Patch Notes v${packageMetadata.version}`;
+    const start = notes.split(/\r?\n/).findIndex((line) => line.trimEnd() === heading);
 
     expect(packageMetadata.version).toMatch(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
     expect(packageLockMetadata.version).toBe(packageMetadata.version);
@@ -23,7 +23,7 @@ describe('release notes', () => {
     expect(start).toBeGreaterThan(-1);
 
     const remainingLines = notes.split(/\r?\n/).slice(start + 1);
-    const nextRelease = remainingLines.findIndex((line) => /^## \[/.test(line));
+    const nextRelease = remainingLines.findIndex((line) => /^## /.test(line));
     const section = (nextRelease === -1 ? remainingLines : remainingLines.slice(0, nextRelease)).join('\n').trim();
 
     expect(section).not.toBe('');

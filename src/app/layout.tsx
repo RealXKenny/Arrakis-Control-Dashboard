@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { navIdentity } from '../features/auth/identity';
 import { getServerEnv } from '../lib/env';
 import { currentSession } from '../server/session';
+import { isDashboardAdmin } from '../modules/admin/server/access';
 import { SiteFooter } from './_components/site-footer';
 import { TopNavigation } from './_components/top-navigation';
 import './globals.css';
@@ -63,7 +64,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
           Skip to content
         </a>
-        <TopNavigation identity={session ? navIdentity(session) : null} />
+        <TopNavigation identity={session ? navIdentity(session) : null} isAdmin={isDashboardAdmin(session)} />
         <main id="main" className="flex-1">
           {children}
         </main>

@@ -24,6 +24,32 @@ describe('changelog parser', () => {
     ]);
   });
 
+  it('reads the Patch Notes format, with items grouped under its section names', () => {
+    expect(
+      parseChangelog(`## Patch Notes v2.0.0
+### New Features
+- One.
+### Fixes
+- Two.
+- Three.
+
+## Patch Notes v1.4.7
+### Improvements
+- Older.
+`),
+    ).toEqual([
+      {
+        version: '2.0.0',
+        date: '',
+        sections: [
+          { title: 'New Features', items: ['One.'] },
+          { title: 'Fixes', items: ['Two.', 'Three.'] },
+        ],
+      },
+      { version: '1.4.7', date: '', sections: [{ title: 'Improvements', items: ['Older.'] }] },
+    ]);
+  });
+
   it('ignores preamble and unrelated prose', () => {
     expect(parseChangelog('# Changelog\n\nNothing released yet.')).toEqual([]);
   });

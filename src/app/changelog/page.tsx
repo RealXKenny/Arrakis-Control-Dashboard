@@ -47,7 +47,9 @@ export default async function ChangelogPage({
                   v{release.version}
                 </a>
               </h2>
-              <time className="font-mono text-xs uppercase tracking-widest text-sand-500">{release.date}</time>
+              {release.date && (
+                <time className="font-mono text-xs uppercase tracking-widest text-sand-500">{release.date}</time>
+              )}
             </header>
             {release.sections
               .filter((section) => section.items.length)

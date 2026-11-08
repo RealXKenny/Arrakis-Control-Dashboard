@@ -189,7 +189,7 @@ The launcher creates and checks `.next/cache/images` before starting Next.js. Ke
 
 ## Releases
 
-To publish a release, update the `version` in `package.json` and add a matching `## [X.Y.Z] - YYYY-MM-DD` section to [CHANGELOG.md](CHANGELOG.md) in the same change. After the `main` branch CI succeeds, the release workflow creates the version tag and GitHub Release using that section. Stable semantic versions must increase; unchanged versions do not create releases.
+To publish a release, update the `version` in `package.json` and add a matching `## Patch Notes vX.Y.Z` section to [CHANGELOG.md](CHANGELOG.md) in the same change. After the `main` branch CI succeeds, the release workflow creates the version tag and GitHub Release using that section. Stable semantic versions must increase; unchanged versions do not create releases.
 
 ## Architecture
 

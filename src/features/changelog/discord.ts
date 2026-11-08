@@ -183,7 +183,7 @@ export function buildWebhookPayload(
           name: clip(section.title, EMBED_LIMITS.fieldName),
           value: clip(section.items.map((item) => `• ${clip(item, 240)}`).join('\n'), EMBED_LIMITS.fieldValue),
         })),
-      footer: { text: clip(`Released ${release.date}`, EMBED_LIMITS.footer) },
+      footer: { text: clip(release.date ? `Released ${release.date}` : 'Release notes', EMBED_LIMITS.footer) },
       timestamp: now.toISOString(),
     };
   } else {
