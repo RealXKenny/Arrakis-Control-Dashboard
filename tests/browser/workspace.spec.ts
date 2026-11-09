@@ -204,6 +204,7 @@ test.describe('portal, character and storage', () => {
     for (const route of ['/portal', '/character', '/storage', '/vehicles', '/market', '/guild']) {
       await page.goto(route);
       await expect(page.locator('main')).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
       expect(await overflow(page), route).toBe(true);
     }
   });

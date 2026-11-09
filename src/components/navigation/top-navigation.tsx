@@ -46,7 +46,7 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
 
   return (
     <header className="command-header sticky top-0 z-50 border-b border-[#6f4d1f]/70 bg-[#090A0C]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
-      <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-5 min-[1840px]:px-8 min-[2000px]:gap-6">
+      <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-5 min-[1840px]:px-6 min-[2000px]:gap-6 min-[2000px]:px-8">
         <Link
           href="/"
           aria-label="Arrakis Control home"

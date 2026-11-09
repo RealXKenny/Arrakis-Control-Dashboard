@@ -224,7 +224,7 @@ test.describe('tables', () => {
     await page.getByRole('button', { name: 'Begin expedition' }).click();
     await expect(page.getByRole('button', { name: 'Tile 1, 1: hidden' })).toBeVisible();
     expect(await page.content()).not.toMatch(/Tile \d, \d: (sandworm hazard|spice cache)/);
-    expect(await frameBalance(page)).toBe(4_900);
+    await expect.poll(() => frameBalance(page)).toBe(4_900);
     await page.reload();
     await expect(page.getByRole('button', { name: 'Tile 1, 1: hidden' })).toBeVisible(); // resumed
     await page.getByRole('button', { name: 'Tile 1, 1: hidden' }).click();
