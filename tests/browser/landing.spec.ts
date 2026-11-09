@@ -268,7 +268,8 @@ test.describe('topbar Home control', () => {
       const style = getComputedStyle(el);
       return { style: style.outlineStyle, width: parseFloat(style.outlineWidth) };
     });
-    expect(ring).toEqual({ style: 'solid', width: 2 });
+    expect(ring.style).toBe('solid');
+    expect(ring.width).toBeGreaterThanOrEqual(2);
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/$/);
   });

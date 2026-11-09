@@ -205,7 +205,7 @@ test.describe('portal, character and storage', () => {
       await page.goto(route);
       await expect(page.locator('main')).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
-      expect(await overflow(page), route).toBe(true);
+      await expect.poll(() => overflow(page), { message: `${route} should not overflow horizontally` }).toBe(true);
     }
   });
 
