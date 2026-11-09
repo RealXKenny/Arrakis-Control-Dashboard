@@ -93,7 +93,7 @@ export function CoinFlipTable({ game, paused, maxWager, onSettled }: TableProps)
         <div
           key={round?.id ?? 'idle'}
           className={`${styles.coin} ${finished ? styles.coinSpin : ''}`}
-          style={{ ['--turn' as string]: landed === 'scarab' ? '0deg' : '180deg' }}
+          style={{ ['--turn' as string]: '0deg' }}
         >
           <Emblem side={landed} />
         </div>

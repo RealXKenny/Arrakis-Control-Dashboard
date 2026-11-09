@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import {
   communityEventSchema,
   eventInputSchema,
@@ -53,6 +54,7 @@ export function EventsManager() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  useFeedbackSound(error, notice);
   const [discordConfigured, setDiscordConfigured] = useState(false);
   const creationId = useRef<string | null>(null);
   const request = useRef<AbortController | null>(null);

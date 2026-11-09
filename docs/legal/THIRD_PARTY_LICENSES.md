@@ -69,3 +69,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
+
+## Solaris dealer narration assets
+
+The locally hosted casino voice pack is generated with the Apache-licensed Kokoro-82M v1.0 model and stock `af_heart` English voice. See [casino voice pack attribution](casino-voice-pack.md) for the pinned model source, full license location, upstream acknowledgments and regeneration instructions. Only pre-generated audio ships with the application; generation tools are not runtime dependencies.

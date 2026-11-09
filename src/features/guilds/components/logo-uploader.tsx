@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { useState } from 'react';
 import { guildInitials } from '../details';
 import { logoProblem } from '../logo';
@@ -21,6 +22,7 @@ export function GuildEmblem({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  useFeedbackSound(error, status);
 
   async function upload(file: File) {
     const problem = logoProblem(file);

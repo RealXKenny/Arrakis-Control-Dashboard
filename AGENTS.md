@@ -44,6 +44,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - Security audit events go through `src/lib/security/audit.ts` (redacted, bounded, never throws); marketplace owner keys live in `features/bases/server/owner-key.ts` (HMAC, legacy keys still accepted until `npm run marketplace:rekey`).
 
+- `src/lib/audio/` owns the opt-in browser audio manager, synthesized sound registry, voice queue, local recording registration, and feedback hook. Shared sound settings live in `components/ui/audio-controls.tsx`; casino narration consumes only confirmed public round views. The default Kokoro voice pack is pre-generated under `src/assets/audio/casino/solaris-v1/`, served by the exact asset manifest allowlist, and composed by `features/casino/audio/voice-pack.ts`; deployment never runs TTS inference. Audio never controls gameplay, and no external audio service is required.
+
 - `src/lib/` contains focused shared modules: `redis/` (standalone/Cluster clients, hash-tagged keys, pool, optional data provider), `security/` (rate limiting and API capacity), `cache/`, `http/`, formatting, logging, errors, values, and server assertions. `lib/redis/` and `lib/security/` are server-only.
 
 - `src/config/env.ts` is the canonical environment schema and production gate. There is no second environment module or unused version re-export.

@@ -1,5 +1,6 @@
 'use client';
 
+import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { useState, type FormEvent } from 'react';
 import { cleanQuestions } from '../questions';
 import { guildRequest } from '../client-api';
@@ -13,6 +14,7 @@ export function SettingsForm({ guildId, initial }: { guildId: string; initial: G
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  useFeedbackSound(error, status);
 
   async function save(event: FormEvent) {
     event.preventDefault();

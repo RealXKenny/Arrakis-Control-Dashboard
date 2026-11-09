@@ -1,3 +1,4 @@
+import { audio } from '../../../lib/audio/manager';
 import { useState } from 'react';
 import { adminCall, findOperation, type AdminInput } from '../client';
 import ConfirmDialog from '../components/confirm-dialog';
@@ -22,6 +23,7 @@ export function useConfirmedAction(operations: AdminOperation[], onDone: (messag
       ...spec,
       run: async () => {
         const outcome = await adminCall(operation, input);
+        audio.play(outcome.warning || outcome.upstreamStatus === 202 ? 'warning' : 'win');
         onDone(
           `${spec.done}${outcome.warning ? ` ${outcome.warning}` : ''}${outcome.upstreamStatus === 202 ? ' The Console queued it; it has not completed yet.' : ''}`,
         );

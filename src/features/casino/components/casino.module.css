@@ -6,38 +6,8 @@
 .table {
   position: relative;
   border: 1px solid color-mix(in srgb, var(--color-spice-500) 45%, transparent);
-  background:
-    linear-gradient(135deg, rgb(241 233 216 / 0.035) 25%, transparent 25%) 0 0 / 28px 28px,
-    linear-gradient(225deg, rgb(241 233 216 / 0.035) 25%, transparent 25%) 0 0 / 28px 28px,
-    var(--color-obsidian-900);
+  background: radial-gradient(ellipse at top, #252b26, #111716 80%);
   box-shadow: 6px 6px 0 0 var(--color-spice-800);
-}
-
-.card {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 3.5rem;
-  height: 5rem;
-  padding: 0.35rem 0.4rem;
-  border: 1px solid var(--color-sand-300);
-  background: var(--color-sand-100);
-  color: var(--color-obsidian-950);
-  font-weight: 700;
-  line-height: 1;
-  box-shadow: 3px 3px 0 0 rgb(0 0 0 / 0.5);
-  animation: deal 260ms ease-out both;
-}
-
-.cardRed {
-  color: #9b2c1b;
-}
-
-.cardBack {
-  background:
-    repeating-linear-gradient(45deg, var(--color-spice-700) 0 4px, var(--color-obsidian-900) 4px 8px),
-    var(--color-obsidian-900);
-  border-color: var(--color-spice-400);
 }
 
 .coin {
@@ -55,34 +25,6 @@
 
 .coinSpin {
   animation: flip 1000ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-.wheel {
-  display: grid;
-  place-items: center;
-  width: 11rem;
-  height: 11rem;
-  border: 6px double var(--color-spice-500);
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, #7a1d12 0 9.7deg, #14100b 9.7deg 19.4deg);
-  background-size: 100% 100%;
-  box-shadow: 5px 5px 0 0 var(--color-spice-800);
-  transform: rotate(var(--turn, 0deg));
-}
-
-.wheelSpin {
-  animation: spin 1400ms cubic-bezier(0.15, 0.6, 0.2, 1) both;
-}
-
-.wheelHub {
-  display: grid;
-  place-items: center;
-  width: 5rem;
-  height: 5rem;
-  border: 2px solid var(--color-spice-400);
-  border-radius: 50%;
-  background: var(--color-obsidian-950);
-  transform: rotate(calc(var(--turn, 0deg) * -1));
 }
 
 .storm {
@@ -156,13 +98,353 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card,
-  .coinSpin,
-  .wheelSpin {
+  .coinSpin {
     animation: none;
   }
   .thopter,
   .tile {
     transition: none;
+  }
+}
+
+.playingCard {
+  display: inline-block;
+  width: clamp(3.4rem, 8vw, 5.7rem);
+  aspect-ratio: 5 / 7;
+  flex-shrink: 0;
+  border-radius: 5px;
+  box-shadow:
+    1px 2px 0 #b9a788,
+    3px 5px 8px #0007;
+  vertical-align: middle;
+}
+.playingCard svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.playingCard[data-selected='true'] {
+  outline: 2px solid var(--color-spice-400);
+  outline-offset: 3px;
+}
+.playingCard[data-disabled='true'] {
+  opacity: 0.55;
+}
+.dealing {
+  animation: deal 320ms ease-out both;
+}
+.blackjackFelt {
+  min-width: 0;
+  padding: clamp(1rem, 4vw, 3rem);
+  border: 8px double #997343;
+  border-radius: 44% 44% 22% 22% / 10% 10% 14% 14%;
+  background:
+    repeating-linear-gradient(21deg, #a9b29a04 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse at 50% 0, #2b4039, #111e1c 85%);
+  box-shadow:
+    inset 0 0 0 4px #101614,
+    inset 0 0 55px #0008,
+    0 7px 0 #3b2a1a;
+}
+.tableInscription {
+  display: grid;
+  gap: 0.5rem;
+  text-align: center;
+  color: #d0b276;
+  margin-bottom: 2rem;
+}
+.tableInscription span {
+  font:
+    0.6rem var(--font-mono),
+    monospace;
+  letter-spacing: 0.18em;
+}
+.tableInscription strong {
+  font-family: Georgia, serif;
+  font-size: clamp(1rem, 3vw, 1.8rem);
+  letter-spacing: 0.12em;
+}
+.emptyTable {
+  display: grid;
+  justify-items: center;
+  gap: 1.5rem;
+  min-height: 18rem;
+  font-size: 0.8rem;
+  color: #c4bdac;
+}
+.bettingCircle {
+  border: 1px solid #b8985e;
+  border-radius: 50%;
+  padding: 1rem;
+}
+.dealerArea,
+.playerArea {
+  text-align: center;
+  min-width: 0;
+}
+.playerArea {
+  padding: 1rem 0.5rem;
+  border: 1px solid #b8985e44;
+  border-radius: 1rem;
+}
+.activeHand {
+  border-color: #c2a15e;
+  background: #ba93570a;
+}
+.cardHand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+.chip {
+  width: 3.2rem;
+  height: 3.2rem;
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid #d7c8a1;
+  background: repeating-conic-gradient(#e4d8bc 0deg 9deg, var(--chip-color) 9deg 45deg);
+  box-shadow:
+    0 3px 0 #302c25,
+    0 5px 0 #a09272,
+    0 7px 8px #0007;
+  transition: transform 150ms ease;
+  cursor: pointer;
+}
+.chip:hover:not(:disabled) {
+  transform: translateY(-3px);
+}
+.chip[aria-pressed='true'] {
+  outline: 2px solid #dfbe71;
+  outline-offset: 4px;
+  transform: translateY(-3px);
+}
+.chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.chipFace {
+  border-radius: 50%;
+  border: 1px solid #dbc794;
+  background: var(--chip-color);
+  width: 75%;
+  height: 75%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--chip-ink);
+  font:
+    0.7rem Georgia,
+    serif;
+  line-height: 1.1;
+}
+.rouletteWheel {
+  width: min(100%, 19rem);
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+}
+.rouletteWheel svg {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 4px #0008);
+}
+.ballSpin {
+  transform-origin: 150px 150px;
+  animation: ball-orbit 1400ms cubic-bezier(0.12, 0.5, 0.15, 1) both;
+}
+@keyframes ball-orbit {
+  from {
+    transform: rotate(-1080deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+@media (max-width: 420px) {
+  .blackjackFelt {
+    padding: 1rem 0.5rem;
+    border-width: 5px;
+  }
+  .tableInscription span {
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+  .cardHand {
+    gap: 0.3rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dealing,
+  .ballSpin {
+    animation: none;
+  }
+  .chip {
+    transition: none;
+  }
+}
+.rollInstrument {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+  padding: 2rem 1rem;
+  border: 1px solid #927442;
+  background: radial-gradient(ellipse, #38433b, #121a19 70%);
+  box-shadow:
+    inset 0 0 0 5px #181e1d,
+    inset 0 0 0 6px #b9954d44;
+}
+.rollInstrument > span {
+  font:
+    0.6rem var(--font-mono),
+    monospace;
+  letter-spacing: 0.15em;
+  color: #c8ae7b;
+}
+.rollInstrument strong {
+  display: block;
+  padding: 1.5rem 0.5rem;
+  font:
+    clamp(2.3rem, 7vw, 4rem) var(--font-mono),
+    monospace;
+  color: #e9d3a0;
+  font-variant-numeric: tabular-nums;
+}
+.rollReveal {
+  animation: deal 350ms ease-out both;
+}
+.flightScene {
+  position: relative;
+  height: 17rem;
+  overflow: hidden;
+  border: 1px solid #927442;
+  background: linear-gradient(#141c22, #4d4b3d 65%, #6e5134);
+}
+.tile {
+  background:
+    repeating-linear-gradient(12deg, #ae88510a 0 1px, transparent 1px 5px), linear-gradient(145deg, #51422e, #28291f);
+  box-shadow:
+    inset 0 0 0 3px #0e151533,
+    0 3px 0 #171a15;
+}
+.tileSafe,
+.tileHazard {
+  animation: deal 250ms ease-out both;
+}
+.tileSafe {
+  background: radial-gradient(ellipse, #5f532e, #252d25);
+}
+.coin {
+  width: 10rem;
+  height: 10rem;
+  border: 8px double #a68140;
+  background:
+    repeating-conic-gradient(#ffffff08 0deg 2deg, transparent 2deg 6deg),
+    radial-gradient(circle at 30% 20%, #eed8a2, #b38a46 50%, #6d4c24);
+  box-shadow:
+    inset 0 0 0 5px #d0b273,
+    inset 0 0 0 7px #6d4c24,
+    0 5px 0 #876533,
+    0 8px 0 #50391e,
+    0 14px 16px #0008;
+}
+.coin svg {
+  width: 65%;
+  height: 65%;
+  filter: drop-shadow(1px 2px 0 #f4dfa777);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rollReveal,
+  .tileSafe,
+  .tileHazard {
+    animation: none;
+  }
+}
+.rouletteNumbers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+.rouletteZero {
+  grid-column: 1 / -1;
+}
+@media (min-width: 768px) {
+  .rouletteNumbers {
+    grid-template-columns: 2.5rem repeat(12, minmax(0, 1fr));
+    grid-template-rows: repeat(3, 3.5rem);
+    grid-auto-flow: column;
+  }
+  .rouletteZero {
+    grid-column: 1;
+    grid-row: 1 / 4;
+  }
+}
+
+.cardFlip {
+  animation: card-reveal 320ms ease-out both;
+}
+@keyframes card-reveal {
+  from {
+    transform: perspective(600px) rotateY(90deg);
+  }
+  to {
+    transform: perspective(600px) rotateY(0deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cardFlip {
+    animation: none;
+  }
+}
+.rotorSpin {
+  transform-origin: 150px 150px;
+  animation: rotor-turn 1400ms cubic-bezier(0.15, 0.6, 0.2, 1) both;
+}
+@keyframes rotor-turn {
+  from {
+    transform: rotate(720deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+.placedChip {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  display: grid;
+  place-items: center;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  padding: 2px;
+  border: 3px dashed #e9dfbd;
+  border-radius: 50%;
+  background: #886334;
+  color: #fff0cb;
+  font-size: 0.6rem;
+  box-shadow: 0 2px 0 #47321a;
+}
+.rouletteNumbers button[data-winning='true'] {
+  outline: 2px solid #ead39a;
+  outline-offset: -4px;
+}
+.chipStack {
+  position: relative;
+  width: 3.2rem;
+  height: 3.8rem;
+}
+.chipStack > span {
+  position: absolute;
+  left: 0;
+  animation: deal 150ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rotorSpin,
+  .chipStack > span {
+    animation: none;
   }
 }

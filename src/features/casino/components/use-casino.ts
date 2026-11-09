@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RoundView, WalletSnapshot } from '../contracts';
+import { audio, type Sound } from '../../../lib/audio/manager';
+import { narrateRound } from './narration';
 import { CasinoError, casinoApi, newRequestKey } from './api';
 
 const message = (error: unknown) =>
@@ -42,13 +44,65 @@ export function useRound(game: string, onSettled?: () => void) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resumed, setResumed] = useState(false);
+  const narrationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (narrationTimer.current) clearTimeout(narrationTimer.current);
+      audio.cancel();
+    };
+  }, []);
+  const previousRef = useRef<RoundView | null>(null);
   const pendingKey = useRef<string | null>(null);
   const settledRef = useRef(onSettled);
   useEffect(() => {
     settledRef.current = onSettled;
   });
 
-  const accept = useCallback((next: RoundView) => {
+  const accept = useCallback((next: RoundView, narrate = false, action?: unknown) => {
+    if (!mounted.current) return;
+    if (narrate && !document.hidden) {
+      const event = narrateRound(next, previousRef.current, action);
+      if (event) {
+        if (narrationTimer.current) clearTimeout(narrationTimer.current);
+        const effect = (
+          {
+            'spice-wheel': 'wheel',
+            'great-houses': 'coin',
+            'fate-of-arrakis': 'dice',
+            'spice-harvest': 'sand',
+            'ornithopter-run': 'flight',
+          } as Record<string, Sound>
+        )[next.game];
+        if (effect && (!previousRef.current || next.game === 'spice-harvest')) audio.play(effect, 'casino');
+        if (next.game === 'emperors-hand') audio.play('deal', 'casino');
+        const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 0
+          : ((
+              {
+                'spice-wheel': 1400,
+                'great-houses': 1000,
+                'fate-of-arrakis': 350,
+                'emperors-hand': 320,
+                'spice-harvest': 250,
+              } as Record<string, number>
+            )[next.game] ?? 0);
+        narrationTimer.current = setTimeout(() => {
+          if (
+            mounted.current &&
+            !document.hidden &&
+            previousRef.current?.id === next.id &&
+            previousRef.current.version === next.version
+          )
+            audio.announce(
+              next.status === 'open' && next.game === 'emperors-hand' ? { ...event, sound: undefined } : event,
+            );
+        }, duration);
+      }
+    }
+    previousRef.current = next;
     setRound(next);
     if (next.status === 'settled' || next.status === 'voided') settledRef.current?.();
   }, []);
@@ -58,7 +112,10 @@ export function useRound(game: string, onSettled?: () => void) {
     void (async () => {
       try {
         const open = (await casinoApi.openRounds()).find((row) => row.game === game);
-        if (open && !cancelled) accept(await casinoApi.view(open.id));
+        if (open && !cancelled) {
+          const next = await casinoApi.view(open.id);
+          if (!cancelled) accept(next);
+        }
       } catch {
         // resuming is best-effort; starting a new round still works
       } finally {
@@ -79,7 +136,7 @@ export function useRound(game: string, onSettled?: () => void) {
       try {
         const next = await casinoApi.startRound(game, wager, params, pendingKey.current);
         pendingKey.current = null;
-        accept(next);
+        accept(next, true);
         settledRef.current?.(); // the wager is held now, so the balance on screen must drop now
         return next;
       } catch (caught) {
@@ -100,7 +157,7 @@ export function useRound(game: string, onSettled?: () => void) {
       setError(null);
       try {
         const next = await casinoApi.act(round.id, action);
-        accept(next);
+        accept(next, true, action);
         return next;
       } catch (caught) {
         setError(message(caught));
@@ -121,13 +178,16 @@ export function useRound(game: string, onSettled?: () => void) {
   const refreshRound = useCallback(async () => {
     if (!round) return;
     try {
-      accept(await casinoApi.view(round.id));
+      accept(await casinoApi.view(round.id), true);
     } catch (caught) {
       setError(message(caught));
     }
   }, [round, accept]);
 
   const reset = useCallback(() => {
+    audio.cancel();
+    if (narrationTimer.current) clearTimeout(narrationTimer.current);
+    previousRef.current = null;
     setRound(null);
     setError(null);
   }, []);

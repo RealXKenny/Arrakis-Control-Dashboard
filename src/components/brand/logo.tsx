@@ -39,8 +39,8 @@ export function Logo({ className = '', size = 'default' }: { className?: string;
       <LogoMark
         className={large ? 'size-9 min-[1840px]:size-11 drop-shadow-[0_0_12px_rgb(240_160_32/0.2)]' : 'size-8'}
       />
-      {/* Under 360px the header keeps only the mark so Home, notifications and the menu keep full-size touch targets. */}
-      <span className={`flex flex-col leading-none ${large ? 'max-[359px]:hidden' : ''}`}>
+      {/* Under 480px the header keeps only the mark so Home, sound, notifications and the menu keep full-size touch targets. */}
+      <span className={`flex flex-col leading-none ${large ? 'max-[479px]:hidden' : ''}`}>
         <span
           className={`${large ? 'text-base tracking-[0.14em] min-[400px]:text-lg min-[400px]:tracking-[0.2em] min-[1840px]:text-xl min-[1840px]:tracking-[0.22em]' : 'text-sm tracking-monolith'} font-extrabold uppercase text-sand-50`}
         >

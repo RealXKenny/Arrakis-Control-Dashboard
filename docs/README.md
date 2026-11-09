@@ -46,7 +46,7 @@ These pre-date this documentation set and stay where they are:
 
 - [Architecture: file organization](architecture/file-organization.md) and [repository inventory](architecture/repository-inventory.md): placement rules and the full directory map.
 - [AI agent guides](ai/README.md): instructions for coding agents working in this repository.
-- [Third-party licenses](legal/THIRD_PARTY_LICENSES.md) and [trademarks](legal/TRADEMARKS.md).
+- [Casino voice pack attribution](legal/casino-voice-pack.md), [third-party licenses](legal/THIRD_PARTY_LICENSES.md) and [trademarks](legal/TRADEMARKS.md).
 - Root files: [README](../README.md), [CHANGELOG](../CHANGELOG.md), [SECURITY](../SECURITY.md) (how to report a vulnerability), [CONTRIBUTING](../CONTRIBUTING.md), [CODE_OF_CONDUCT](../CODE_OF_CONDUCT.md), [LICENSE](../LICENSE), [NOTICE](../NOTICE.md).
 
 ## Conventions

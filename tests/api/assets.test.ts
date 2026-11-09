@@ -1,8 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import assetHandler from '../../src/pages/api/assets/[...path]';
 import { responseMock } from '../helpers/response';
+import voiceManifest from '../../src/assets/audio/casino/solaris-v1/manifest.json';
 
 describe('source asset handler', () => {
+  it('serves only manifested local dealer clips with the existing security headers', async () => {
+    const file = voiceManifest.clips['place your bets.'].file;
+    for (const method of ['GET', 'HEAD']) {
+      const res = responseMock();
+      await assetHandler({ method, query: { path: ['audio', 'casino', 'solaris-v1', file] } }, res);
+      expect(res.statusCode).toBe(200);
+      expect(res.getHeader('Content-Type')).toBe('audio/mpeg');
+      expect(res.getHeader('X-Content-Type-Options')).toBe('nosniff');
+      expect(res.getHeader('Cross-Origin-Resource-Policy')).toBe('same-origin');
+      expect(Number(res.getHeader('Content-Length'))).toBe(voiceManifest.clips['place your bets.'].bytes);
+    }
+    for (const file of ['manifest.json', 'LICENSE.txt', '000000000000000000000000.mp3', '../.env', 'voice.wav']) {
+      const res = responseMock();
+      await assetHandler({ method: 'GET', query: { path: ['audio', 'casino', 'solaris-v1', file] } }, res);
+      expect(res.statusCode).toBe(404);
+    }
+  });
   it('serves public share PNGs without exposing their sources or arbitrary files', async () => {
     for (const name of ['preview-v1.png', 'mark-v1.png']) {
       const res = responseMock();

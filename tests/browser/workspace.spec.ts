@@ -205,7 +205,27 @@ test.describe('portal, character and storage', () => {
       await page.goto(route);
       await expect(page.locator('main')).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
-      await expect.poll(() => overflow(page), { message: `${route} should not overflow horizontally` }).toBe(true);
+      await expect
+        .poll(
+          () =>
+            page.evaluate(() => ({
+              width: innerWidth,
+              scroll: document.documentElement.scrollWidth,
+              withinBounds: document.documentElement.scrollWidth <= innerWidth,
+              elements: [...document.querySelectorAll('body *')]
+                .filter((element) => element.getBoundingClientRect().right > innerWidth + 1)
+                .slice(0, 6)
+                .map((element) => ({
+                  tag: element.tagName,
+                  class: element.className,
+                  right: element.getBoundingClientRect().right,
+                  scrollWidth: element.scrollWidth,
+                  clientWidth: element.clientWidth,
+                })),
+            })),
+          { message: `${route} should not overflow horizontally` },
+        )
+        .toMatchObject({ withinBounds: true });
     }
   });
 

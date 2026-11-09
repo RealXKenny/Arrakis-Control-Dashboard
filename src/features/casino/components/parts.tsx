@@ -59,32 +59,7 @@ export function WagerField({
   );
 }
 
-const SUITS = [
-  { glyph: '♠', name: 'spades', red: false },
-  { glyph: '♥', name: 'hearts', red: true },
-  { glyph: '♦', name: 'diamonds', red: true },
-  { glyph: '♣', name: 'clubs', red: false },
-];
-const RANK_NAMES = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
-const RANK_LABELS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-
-/** A playing card from a shoe card id (rank = id % 13, suit = floor(id / 13) % 4), or a face-down card. */
-export function PlayingCard({ id }: { id: number | null }) {
-  if (id === null)
-    return <span className={`${styles.card} ${styles.cardBack}`} role="img" aria-label="Face-down card" />;
-  const suit = SUITS[Math.floor(id / 13) % 4]!;
-  const rank = id % 13;
-  return (
-    <span
-      className={`${styles.card} ${suit.red ? styles.cardRed : ''}`}
-      role="img"
-      aria-label={`${RANK_NAMES[rank]} of ${suit.name}`}
-    >
-      <span>{RANK_LABELS[rank]}</span>
-      <span className="self-end text-xl">{suit.glyph}</span>
-    </span>
-  );
-}
+export { PlayingCard } from './playing-card';
 
 export function ErrorBanner({ message }: { message: string | null }) {
   return (
@@ -208,7 +183,9 @@ export function GameFrame({
           You paused play until {paused.toLocaleString()}. You can still look around, but new rounds are unavailable.
         </p>
       )}
-      <div className={`${styles.table} p-5 sm:p-8`}>{children}</div>
+      <div data-casino-table className={`${styles.table} p-3 sm:p-8`}>
+        {children}
+      </div>
       <details className="panel p-4 text-sm text-sand-300">
         <summary className="cursor-pointer font-semibold text-sand-100">Rules and odds</summary>
         <p className="mt-3 text-sand-100">{game.odds}</p>

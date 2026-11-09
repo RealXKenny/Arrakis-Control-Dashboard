@@ -50,15 +50,17 @@ export function CrashTable({ game, paused, maxWager, onSettled }: TableProps) {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_20rem]">
       <div className="flex flex-col gap-4">
-        <div
-          className="relative h-56 overflow-hidden border border-sand-200/20 bg-gradient-to-b from-obsidian-950 via-obsidian-900 to-[#3a2410]"
-          aria-hidden="true"
-        >
+        <div className={styles.flightScene} aria-hidden="true">
           <div className={styles.storm} style={{ width: `${18 + (view ? progress * 10 : 0)}%` }} />
-          <div className="absolute inset-x-0 bottom-0 h-8 bg-[#4a2f16]" />
+          <svg viewBox="0 0 600 220" preserveAspectRatio="none" className="absolute inset-0 size-full">
+            <circle cx="480" cy="55" r="24" fill="#b89a6b" opacity=".4" />
+            <path d="M0 185Q170 95 340 175T600 150V220H0Z" fill="#5a4530" />
+            <path d="M0 210Q150 145 300 195T600 180V220H0Z" fill="#92704a" />
+            <path d="M45 175Q200 165 465 40" fill="none" stroke="#b6d2d1" strokeDasharray="4 5" opacity=".4" />
+          </svg>
           <div
             className={styles.thopter}
-            style={{ transform: `translate(${20 + progress * 60}vw, -${2 + progress * 8}rem)`, maxWidth: '100%' }}
+            style={{ transform: `translate(${20 + progress * 190}px, -${2 + progress * 8}rem)`, maxWidth: '100%' }}
           >
             <svg
               viewBox="0 0 64 32"

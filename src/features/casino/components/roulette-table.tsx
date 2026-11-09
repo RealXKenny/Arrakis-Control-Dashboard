@@ -4,6 +4,9 @@ import { useMemo, useState } from 'react';
 import { formatCredits } from '../contracts';
 import { ErrorBanner, Outcome, netText, type TableProps } from './parts';
 import styles from './casino.module.css';
+import { RouletteWheel } from './roulette-wheel';
+import { CasinoChip } from './casino-chip';
+import { audio } from '../../../lib/audio/manager';
 import { useRound } from './use-casino';
 
 const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
@@ -25,8 +28,8 @@ const straight = (number: number): Bet => ({
   label: `Number ${number}`,
   spec: { type: 'straight', number },
 });
-const CHIPS = [10, 50, 100, 500, 1000];
-const NUMBER_ROWS = Array.from({ length: 12 }, (_, row) => [3 * row + 1, 3 * row + 2, 3 * row + 3]);
+const CHIPS = [10, 50, 100, 500, 1000, 5000];
+const NUMBER_ROWS = Array.from({ length: 12 }, (_, row) => [3 * row + 3, 3 * row + 2, 3 * row + 1]);
 
 type Result = {
   number?: number;
@@ -45,7 +48,8 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
   const locked = busy || (round !== null && !finished);
 
   const place = (bet: Bet) => {
-    if (locked) return;
+    if (locked || total + chip > maxWager) return;
+    audio.play('chip', 'casino');
     setPlaced((current) => {
       const next = new Map(current);
       const existing = next.get(bet.key);
@@ -80,14 +84,13 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
         key={bet.key}
         type="button"
         disabled={locked}
+        data-winning={round?.status === 'settled' && bet.spec.type === 'straight' && bet.spec.number === landed}
         onClick={() => place(bet)}
         aria-label={`${aria ?? bet.label}${amount ? `, ${formatCredits(amount)} placed` : ''}`}
         className={`relative min-h-10 border border-sand-200/20 px-1 text-sm font-bold text-sand-50 disabled:opacity-60 ${className}`}
       >
         {text}
-        {amount ? (
-          <span className="absolute -right-1 -top-1 bg-spice-400 px-1 text-[0.625rem] text-obsidian-950">{amount}</span>
-        ) : null}
+        {amount ? <span className={styles.placedChip}>{amount}</span> : null}
       </button>
     );
   };
@@ -97,16 +100,14 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
       <div className="flex flex-col gap-5">
         <div role="group" aria-label="Chip value" className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">Chip</span>
-          {CHIPS.map((value) => (
-            <button
+          {CHIPS.filter((value) => value <= maxWager).map((value) => (
+            <CasinoChip
               key={value}
-              type="button"
-              aria-pressed={chip === value}
+              value={value}
+              selected={chip === value}
+              disabled={locked || value > maxWager}
               onClick={() => setChip(value)}
-              className={`btn !min-h-9 !px-3 !text-[0.6875rem] ${chip === value ? 'btn-primary' : 'btn-ghost'}`}
-            >
-              {formatCredits(value)}
-            </button>
+            />
           ))}
         </div>
 
@@ -115,8 +116,8 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
           aria-label="Betting table. Activate a cell to place the selected chip."
           className="flex flex-col gap-2 overflow-x-auto"
         >
-          <div className="grid grid-cols-3 gap-1">
-            {cell(straight(0), '0', 'bg-emerald-900/70 col-span-3', 'Number 0, green')}
+          <div className={styles.rouletteNumbers}>
+            {cell(straight(0), '0', `bg-emerald-900/70 ${styles.rouletteZero}`, 'Number 0, green')}
             {NUMBER_ROWS.flat().map((n) =>
               cell(
                 straight(n),
@@ -136,20 +137,7 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
       </div>
 
       <div className="flex flex-col items-center gap-5 lg:w-72">
-        <div
-          key={round?.id ?? 'idle'}
-          className={`${styles.wheel} ${finished ? styles.wheelSpin : ''}`}
-          style={{ ['--turn' as string]: `${((landed ?? 0) * 360) / 37}deg` }}
-        >
-          <div className={styles.wheelHub}>
-            <span
-              className="text-2xl font-bold text-sand-50"
-              aria-label={landed === undefined ? 'No spin yet' : `Landed on ${landed}, ${colorOf(landed)}`}
-            >
-              {landed ?? '·'}
-            </span>
-          </div>
-        </div>
+        <RouletteWheel landed={landed} roundId={round?.id} />
         {outcome && landed !== undefined && (
           <Outcome tone={outcome.tone}>
             {landed} {colorOf(landed)}. {outcome.text}

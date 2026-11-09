@@ -1,0 +1,26 @@
+Solaris Dealer v1 — synthetic narration asset notices
+
+Original game narration scripts: Arrakis Control Dashboard contributors.
+Audio generated locally with Kokoro-82M v1.0, voice af_heart, at speed 0.95.
+Model: https://huggingface.co/hexgrad/Kokoro-82M
+ONNX conversion: https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX
+Pinned ONNX revision: 1939ad2a8e416c0acfeecc08a694d14ef25f2231
+Model and Kokoro code license: Apache License 2.0 (see LICENSE.txt).
+The generated MP3 voice pack is distributed under Apache License 2.0.
+No model weights, inference library, or generation executable are shipped in the application runtime.
+
+These are synthesized stock-model voices. No official Dune recordings, characters,
+celebrity imitations, or user-supplied voice clones were used.
+Audio was trimmed, loudness-normalized and encoded as mono 24 kHz / 48 kbit/s MP3.
+
+Model training-data acknowledgments retained from the upstream model card:
+- Koniwa tnc corpus: https://github.com/koniwa/koniwa, CC BY 3.0,
+  https://creativecommons.org/licenses/by/3.0/
+- SIWIS French Speech Synthesis Database: https://datashare.ed.ac.uk/handle/10283/2353,
+  CC BY 4.0. Authors: Pierre-Edouard Honnet, Alexandros Lazaridis, Philip N. Garner,
+  Junichi Yamagishi. The selected voice is English; these acknowledgments describe
+  the upstream multilingual model, not an assertion about this specific voice.
+
+Generation tooling (not application dependencies): Kokoro.js 1.2.1,
+Transformers.js 3.8.1, phonemizer/espeak-ng, ONNX Runtime and FFmpeg.
+See scripts/maintenance/build-casino-voice-pack.mjs for the authoring process.

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { formatCredits } from '../contracts';
 import { ErrorBanner, Outcome, WagerField, netText, type TableProps } from './parts';
 import styles from './casino.module.css';
+import { HarvestTileArt } from './harvest-tile-art';
 import { useRound } from './use-casino';
 
 type View = {
@@ -66,9 +67,9 @@ export function MinesTable({ game, paused, maxWager, onSettled }: TableProps) {
           </>
         )}
 
-        {view && (
+        {(view || !round) && (
           <div className="grid max-w-md grid-cols-5 gap-2" role="group" aria-label="Spice field">
-            {Array.from({ length: view.tiles }, (_, tile) => {
+            {Array.from({ length: view?.tiles ?? 25 }, (_, tile) => {
               const safe = revealed.has(tile);
               const hazard = hazardSet.has(tile);
               return (
@@ -80,7 +81,7 @@ export function MinesTable({ game, paused, maxWager, onSettled }: TableProps) {
                   onClick={() => void act({ type: 'reveal', tile })}
                   className={`${styles.tile} ${safe ? styles.tileSafe : ''} ${hazard ? styles.tileHazard : ''}`}
                 >
-                  {safe ? '✦' : hazard ? '✹' : ''}
+                  <HarvestTileArt kind={safe ? 'cache' : hazard ? 'hazard' : 'hidden'} />
                 </button>
               );
             })}

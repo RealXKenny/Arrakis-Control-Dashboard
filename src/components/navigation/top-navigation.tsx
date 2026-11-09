@@ -4,6 +4,7 @@ import { NavigationLink as Link } from './navigation-link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 import type { NavIdentity } from '../../features/auth/identity';
+import { AudioControls } from '../ui/audio-controls';
 import { Avatar } from './avatar';
 import { signOutAction } from '../../features/auth/actions';
 import { BellIcon, ChevronDownIcon, HomeIcon, MenuIcon, SignOutIcon } from '../icons';
@@ -46,7 +47,7 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
 
   return (
     <header className="command-header sticky top-0 z-50 border-b border-[#6f4d1f]/70 bg-[#090A0C]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
-      <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-3 min-[1840px]:px-6 min-[2000px]:gap-6 min-[2000px]:px-8">
+      <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-1 min-[1840px]:px-6 min-[2000px]:gap-6 min-[2000px]:px-8">
         <Link
           href="/"
           aria-label="Arrakis Control home"
@@ -88,6 +89,7 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
         )}
 
         <div className="flex shrink-0 items-center gap-2 xl:gap-3">
+          <AudioControls />
           {identity ? (
             <>
               {/* Below the desktop bar the primary navigation is hidden, so Home stays one tap away. */}
@@ -127,7 +129,7 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
                   trigger={
                     <>
                       <Avatar identity={identity} size="large" />
-                      <span className="hidden max-w-32 truncate tracking-normal text-sand-100 min-[1840px]:inline">
+                      <span className="hidden max-w-32 truncate tracking-normal text-sand-100 min-[2000px]:inline">
                         {identity.ign}
                       </span>
                       <ChevronDownIcon className="size-4 text-sand-500" />

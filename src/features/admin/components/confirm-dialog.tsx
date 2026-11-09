@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { audio } from '../../../lib/audio/manager';
 import { ui } from './ui';
 
 /** Modal confirmation: states the target and consequences, optionally requires a typed phrase. */
@@ -33,9 +34,13 @@ export default function ConfirmDialog({
     const dialog = ref.current;
     // Return focus to whatever opened the dialog so keyboard users keep their place.
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    if (dialog && !dialog.open) dialog.showModal();
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+      audio.play('menu');
+    }
     return () => {
       dialog?.close();
+      audio.play('menu');
       if (opener?.isConnected) opener.focus();
     };
   }, []);
@@ -45,6 +50,7 @@ export default function ConfirmDialog({
     try {
       await onConfirm();
     } catch (error) {
+      audio.play('warning');
       // An uncertain outcome is never retried automatically.
       setFailure(`${(error as Error).message} Check the current state before trying again.`);
     } finally {

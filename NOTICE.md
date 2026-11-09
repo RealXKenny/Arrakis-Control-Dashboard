@@ -23,3 +23,7 @@ All third-party names, trademarks, logos, and artwork belong to their respective
 ## License scope
 
 Original project contributions are offered under the [MIT License](LICENSE), except where a file or component carries a different applicable license. Third-party materials remain subject to their own terms. This notice does not alter the MIT License or grant rights to third-party intellectual property.
+
+## Locally hosted casino narration
+
+The Solaris dealer voice pack contains locally generated Kokoro-82M v1.0 synthetic narration using the stock `af_heart` voice. The pack is distributed under Apache License 2.0 with source-model attribution, generation provenance and upstream dataset acknowledgments. See [casino voice pack attribution](docs/legal/casino-voice-pack.md). No TTS model or inference executable is included in the application runtime.
