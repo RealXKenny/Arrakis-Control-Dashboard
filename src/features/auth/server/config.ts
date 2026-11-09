@@ -31,6 +31,7 @@ type Claims = {
   discordId: string;
   username?: string;
   globalName?: string;
+  guildNickname?: string | null;
   avatar: string | null;
   guildId: string;
   roleIds: string[];
@@ -74,6 +75,7 @@ async function claimsFromDiscord(
     discordId,
     username: clean(userData.username, 100),
     globalName: clean(userData.global_name, 100),
+    guildNickname: memberData.nick ?? null,
     avatar: typeof userData.avatar === 'string' && /^(a_)?[a-f0-9]{32}$/.test(userData.avatar) ? userData.avatar : null,
     guildId,
     roleIds: memberData.roles.slice(0, 250),
@@ -100,6 +102,7 @@ function toRecord(token: JWT): DashboardSession {
       id: String(token.discordId),
       username: token.username,
       global_name: token.globalName,
+      guild_nickname: token.guildNickname,
       avatar: token.avatar ?? null,
     },
     guildId: String(token.guildId),
@@ -109,6 +112,7 @@ function toRecord(token: JWT): DashboardSession {
     email: token.email ?? undefined,
     needsPassword: token.needsPassword,
     verifiedAt: token.verifiedAt,
+    profileRefreshAttemptedAt: token.profileRefreshAttemptedAt,
     authenticatedAt: token.authenticatedAt,
     expiresAt: token.expiresAt ?? Date.now() + sessionTtlSeconds() * 1000,
   };
@@ -122,6 +126,7 @@ function toToken(sid: string, record: DashboardSession): JWT {
     discordId: record.user.id,
     username: record.user.username,
     globalName: record.user.global_name,
+    guildNickname: record.user.guild_nickname,
     avatar: record.user.avatar ?? null,
     guildId: record.guildId,
     roleIds: record.roleIds,
@@ -131,6 +136,7 @@ function toToken(sid: string, record: DashboardSession): JWT {
     email: record.email,
     needsPassword: record.needsPassword ?? false,
     verifiedAt: record.verifiedAt,
+    profileRefreshAttemptedAt: record.profileRefreshAttemptedAt,
     authenticatedAt: record.authenticatedAt,
     expiresAt: record.expiresAt,
     ign: identity.ign,
@@ -276,6 +282,7 @@ const config = (): NextAuthConfig => {
           discordId: dashboard.discordId,
           username: dashboard.username,
           globalName: dashboard.globalName,
+          guildNickname: dashboard.guildNickname,
           avatar: dashboard.avatar,
           guildId: dashboard.guildId,
           roleIds: dashboard.roleIds,

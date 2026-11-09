@@ -79,7 +79,7 @@ jobs:
       - run: npm run docs:check
       - name: Check formatting of changed documentation
         env:
-          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
         run: npm run docs:format:check
 
   integration:

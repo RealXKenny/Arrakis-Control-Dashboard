@@ -28,7 +28,7 @@ function identity(roles: string[], overrides: Record<string, unknown> = {}) {
   return { userData: { id: DISCORD_ID }, memberData: { roles }, refreshToken: 'rotated-token', ...overrides };
 }
 
-async function setup(session: { verifiedAt?: number } = {}) {
+async function setup(session: { verifiedAt?: number; authenticatedAt?: number } = {}) {
   const store = await import('../../../src/features/auth/server/session-store');
   const sessionService = await import('../../../src/features/auth/server/session');
   const users = await import('../../../src/features/auth/server/users');
@@ -40,7 +40,7 @@ async function setup(session: { verifiedAt?: number } = {}) {
     createdAt: 1,
   });
   await store.saveSession(SID, {
-    user: { id: DISCORD_ID, username: 'paul' },
+    user: { id: DISCORD_ID, username: 'paul', guild_nickname: null },
     guildId: 'guild',
     roleIds: ['555', '777'],
     expiresAt: Date.now() + 24 * HOUR,
@@ -55,6 +55,95 @@ beforeEach(() => {
 });
 
 describe('session re-verification', () => {
+  it('automatically backfills an older but freshly verified session without signing in again', async () => {
+    const { store } = await setup({ verifiedAt: Date.now(), authenticatedAt: 123 });
+    const current = (await store.readSession(SID))!;
+    delete current.user.guild_nickname;
+    await store.saveSession(SID, current);
+    refresh.mockResolvedValue(identity(['555'], { memberData: { roles: ['555'], nick: 'Kenny' } }));
+    const upgraded = await store.getSession(SID);
+    expect(upgraded?.user.guild_nickname).toBe('Kenny');
+    expect(upgraded?.authenticatedAt).toBe(123);
+    await store.getSession(SID);
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it('remembers that no guild nickname exists instead of refreshing on every request', async () => {
+    const { store } = await setup({ verifiedAt: Date.now() });
+    const current = (await store.readSession(SID))!;
+    delete current.user.guild_nickname;
+    await store.saveSession(SID, current);
+    refresh.mockResolvedValue(identity(['555']));
+    expect((await store.getSession(SID))?.user.guild_nickname).toBeNull();
+    await store.getSession(SID);
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it('backs off failed nickname backfills without extending the authorization freshness clock', async () => {
+    const verifiedAt = Date.now() - 60_000;
+    const { store } = await setup({ verifiedAt });
+    const current = (await store.readSession(SID))!;
+    delete current.user.guild_nickname;
+    await store.saveSession(SID, current);
+    refresh.mockRejectedValue(rejection('DISCORD_UNAVAILABLE'));
+    expect((await store.getSession(SID))?.verifiedAt).toBe(verifiedAt);
+    await store.getSession(SID);
+    expect(refresh).toHaveBeenCalledOnce();
+    const deferred = (await store.readSession(SID))!;
+    await store.saveSession(SID, { ...deferred, profileRefreshAttemptedAt: Date.now() - 6 * 60_000 });
+    refresh.mockResolvedValue(identity(['555'], { memberData: { roles: ['555'], nick: 'Recovered Nick' } }));
+    expect((await store.getSession(SID))?.user.guild_nickname).toBe('Recovered Nick');
+  });
+
+  it('does not log out a fresh legacy session solely because optional nickname backfill lacks a refresh token', async () => {
+    const { store, users } = await setup({ verifiedAt: Date.now() });
+    const current = (await store.readSession(SID))!;
+    delete current.user.guild_nickname;
+    await store.saveSession(SID, current);
+    await users.saveAccount({ discordId: DISCORD_ID, createdAt: 1 });
+    expect((await store.getSession(SID))?.user.id).toBe(DISCORD_ID);
+    expect(refresh).not.toHaveBeenCalled();
+    const updated = (await store.readSession(SID))!;
+    await store.saveSession(SID, { ...updated, verifiedAt: Date.now() - HOUR });
+    expect(await store.getSession(SID)).toBeNull();
+  });
+
+  it('still ends a legacy session if the automatic nickname refresh proves its role was removed', async () => {
+    const { store } = await setup({ verifiedAt: Date.now() });
+    const current = (await store.readSession(SID))!;
+    delete current.user.guild_nickname;
+    await store.saveSession(SID, current);
+    refresh.mockResolvedValue(identity(['777']));
+    expect(await store.getSession(SID)).toBeNull();
+  });
+  it('refreshes cosmetic Discord names and photo only after the ID and role are verified', async () => {
+    const { store } = await setup({ verifiedAt: Date.now() - HOUR });
+    refresh.mockResolvedValue(
+      identity(['555'], {
+        userData: { id: DISCORD_ID, username: 'new-user', global_name: 'Kenny', avatar: 'a'.repeat(32) },
+        memberData: { roles: ['555'], nick: 'Server Nick' },
+      }),
+    );
+    expect((await store.getSession(SID))?.user).toEqual({
+      id: DISCORD_ID,
+      username: 'new-user',
+      global_name: 'Kenny',
+      avatar: 'a'.repeat(32),
+      guild_nickname: 'Server Nick',
+    });
+    refresh.mockResolvedValue(
+      identity(['555'], {
+        userData: { id: DISCORD_ID, global_name: null, avatar: null },
+        memberData: { roles: ['555'] },
+      }),
+    );
+    const updated = (await store.readSession(SID))!;
+    await store.saveSession(SID, { ...updated, verifiedAt: Date.now() - HOUR });
+    const cleared = await store.getSession(SID);
+    expect(cleared?.user.global_name).toBeUndefined();
+    expect(cleared?.user.guild_nickname).toBeNull();
+    expect(cleared?.user.avatar).toBeNull();
+  });
   it('does not call Discord for a recently verified session', async () => {
     const { store } = await setup({ verifiedAt: Date.now() - 5 * 60_000 });
     expect((await store.getSession(SID))?.user.id).toBe(DISCORD_ID);

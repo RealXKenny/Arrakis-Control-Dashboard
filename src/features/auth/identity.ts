@@ -8,7 +8,7 @@ type IdentitySource = {
 
 export function discordAvatarUrl(userId: string, avatar: string | null | undefined): string | null {
   if (!avatar || !/^\d{1,25}$/.test(userId) || !/^(a_)?[a-f0-9]{32}$/.test(avatar)) return null;
-  return `https://cdn.discordapp.com/avatars/${userId}/${avatar}.png?size=64`;
+  return `/api/v2/auth/avatar/${userId}/${avatar}`;
 }
 
 /** IGN is the linked in-game character name; until a character is linked we fall back to the Discord name. */

@@ -100,7 +100,7 @@ export const SECRET_VARIABLES = Object.freeze([
   'DISCORD_CLIENT_SECRET',
   'BOT_API_TOKEN',
   'OWNER_KEY_SECRET',
-  'CHANGELOG_WEBHOOK_URL',
+  'DISCORD_BOT_TOKEN',
 ]);
 
 function variable(name, description, envVariable, defaultValue = '', overrides = {}) {
@@ -325,13 +325,27 @@ function buildEgg() {
         { rules: 'required|integer|min:1|max:3650' },
       ),
       variable(
-        'Changelog Webhook URL',
-        'Optional Discord webhook for release and progress announcements.',
-        'CHANGELOG_WEBHOOK_URL',
+        'Discord Bot Token',
+        'Optional shared main bot token for Components V2 announcements. Never expose it to panel users.',
+        'DISCORD_BOT_TOKEN',
         '',
         {
-          rules: 'nullable|url',
+          rules: 'nullable|string|max:256',
         },
+      ),
+      variable(
+        'Changelog Channel ID',
+        'Discord text channel for release and progress announcements.',
+        'CHANGELOG_CHANNEL_ID',
+        '',
+        { rules: 'nullable|string|regex:/^[0-9]{15,25}$/' },
+      ),
+      variable(
+        'Community Events Channel ID',
+        'Discord text channel for automatically published community events.',
+        'COMMUNITY_EVENTS_CHANNEL_ID',
+        '',
+        { rules: 'nullable|string|regex:/^[0-9]{15,25}$/' },
       ),
       variable(
         'Changelog Auto Announce',

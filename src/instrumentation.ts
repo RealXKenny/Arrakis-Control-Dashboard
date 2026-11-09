@@ -10,8 +10,10 @@ export async function register() {
 
     const { createLogger } = await import('./lib/logger');
     const startup = createLogger('STARTUP');
-    startup.header('ARRAKIS CONTROL', 'Dune: Awakening Dashboard');
+    const { version } = await import('../package.json');
+    startup.header(`ARRAKIS CONTROL v${version}`, 'Dune: Awakening Dashboard');
     startup.info('Starting dashboard', {
+      version,
       environment: process.env.NODE_ENV || 'development',
       runtime: process.version,
     });
@@ -29,14 +31,25 @@ export async function register() {
       });
       throw error;
     }
+    if (env.CHAT_ENABLED) {
+      const { getChatPublisher } = await import('./features/chat/server/publisher');
+      getChatPublisher();
+    }
     startup.info('Runtime configuration validated');
+    if (env.DISCORD_BOT_TOKEN && env.COMMUNITY_EVENTS_CHANNEL_ID) {
+      const { startCommunityEventAnnouncements } = await import('./features/events/server/announce');
+      startCommunityEventAnnouncements();
+    }
 
     try {
       for (const warning of redisTransportWarnings(env)) startup.warn(warning);
       if (env.REDIS_URL) {
         const { getRedisPool } = await import('./lib/redis/pool');
         getRedisPool();
-        startup.info('Redis pool configured for dashboard data');
+        startup.info('Redis pool configured for dashboard data', {
+          mode: env.REDIS_CLUSTER_NODES ? 'cluster' : 'standalone',
+          connections: 4,
+        });
       }
 
       const { warmupDuneClient } = await import('./server/integrations/dune');

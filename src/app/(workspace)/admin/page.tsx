@@ -12,6 +12,7 @@ import ConsoleOnly from '../../../features/admin/components/console-only';
 import ApiReference from '../../../features/admin/components/api-reference';
 import AdminWorkspace from '../../../features/admin/components/admin-workspace';
 import { OverviewView } from '../../../features/admin/components/overview-view';
+import { EventsManager } from '../../../features/admin/components/events-manager';
 
 export const metadata: Metadata = { title: 'Administration' };
 export const dynamic = 'force-dynamic';
@@ -36,6 +37,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       error = 'Unable to load administration statistics. Check the Console connection and try again.';
     }
     body = <OverviewView data={data} error={error} operations={operations} setupOnly={current.kind === 'setup'} />;
+  } else if (current.kind === 'events') {
+    body = <EventsManager />;
   } else if (current.kind === 'reference') {
     body = <ApiReference operations={operations} />;
   } else {

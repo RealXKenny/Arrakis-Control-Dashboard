@@ -187,6 +187,52 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
       const scenario = byPawn().get(decodeURIComponent(match[1]));
       if (!scenario) return json(response, 404, { ok: false });
       if (scenario.failures[match[2]]) return json(response, scenario.failures[match[2]], { ok: false });
+      if (match[2] === 'add-currency' && request.method === 'POST') {
+        // Mirrors the documented Console behaviour: Solaris only, a nonzero whole amount, the exact confirmation phrase,
+        // and an overdraft is refused. Nothing here is a guarantee about the real Console.
+        const change = JSON.parse(bodyText || '{}');
+        const coin = (scenario.details['solaris-coin'] ??= {});
+        const next = Number(coin.total ?? 0) + Number(change.amount);
+        if (
+          change.currencyId !== 0 ||
+          change.confirmation !== 'ADD CURRENCY' ||
+          !Number.isInteger(change.amount) ||
+          change.amount === 0
+        )
+          return json(response, 400, { ok: false });
+        if (next < 0) return json(response, 422, { ok: false });
+        coin.total = next;
+        // The shape the real Console answers with. The change is written to the database; `onlineStatus` is the
+        // player's state at that moment, which is why the dashboard insists on an offline player.
+        return json(response, 200, {
+          supported: true,
+          backupCreated: false,
+          result: {
+            ok: true,
+            player: {
+              actorId: 6,
+              accountId: 1,
+              controllerId: Number(scenario.linked.controllerId),
+              playerStateId: 2,
+              onlineStatus: scenario.linked.online ? 'Online' : 'Offline',
+            },
+            currencyId: 0,
+            amount: change.amount,
+            balance: { currency_id: 'Solaris', balance: String(next) },
+            message: 'Solari Credit was updated in the database and will be loaded when the player next joins.',
+          },
+        });
+      }
+      if (match[2] === 'currency' && scenario.details['solaris-coin']?.total !== undefined) {
+        // Same shape as the real Console: Solaris is currency 0, balances are strings.
+        return json(response, 200, {
+          capabilities: { currency: true },
+          rows: [
+            { currency_id: 0, balance: String(scenario.details['solaris-coin'].total), label: 'Solari Credit' },
+            { currency_id: 1, balance: '10000', label: 'House Credit' },
+          ],
+        });
+      }
       return json(response, 200, scenario.details[match[2]] ?? {});
     }
     match = /^\/api\/bases\/([^/]+)\/export$/.exec(path);

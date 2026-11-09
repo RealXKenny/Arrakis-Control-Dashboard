@@ -1,10 +1,53 @@
 import { test, expect } from '../helpers/browser-test';
 
+test('signed-out public pages show only branding and sign in in the topbar at every screen size', async ({ page }) => {
+  for (const width of [1920, 820, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const path of ['/', '/changelog']) {
+      await page.goto(path);
+      const header = page.getByRole('banner');
+      await expect(header.getByRole('link', { name: 'Arrakis Control home' })).toBeVisible();
+      await expect(header.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+      await expect(header.getByRole('navigation')).toHaveCount(0);
+      await expect(header.getByRole('button')).toHaveCount(0);
+      await expect(header.getByRole('link')).toHaveCount(2);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+  }
+});
+
+test('signed-in members see dashboard actions instead of sign-in prompts on public pages', async ({
+  page,
+  baseURL,
+}) => {
+  await page.context().addCookies([
+    {
+      name: '__Host-dashboard_session',
+      value: 'browser-member-session',
+      domain: new URL(baseURL!).hostname,
+      path: '/',
+      secure: true,
+      sameSite: 'Lax',
+    },
+  ]);
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: /sign in/i })).toHaveCount(0);
+  await expect(page.getByText('Sign in with Discord', { exact: false })).toHaveCount(0);
+  const dashboard = page.getByRole('link', { name: 'Open dashboard' });
+  await expect(dashboard).toHaveCount(2);
+  await dashboard.first().click();
+  await expect(page).toHaveURL(/\/portal$/);
+  await page.goto('/changelog');
+  await expect(page.getByRole('link', { name: /sign in/i })).toHaveCount(0);
+  await page.goto('/login');
+  await expect(page).toHaveURL(/\/portal$/);
+});
+
 test('desktop uses one active topbar with accessible dropdowns, notifications, and account controls', async ({
   page,
 }) => {
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
-  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.setViewportSize({ width: 1920, height: 900 });
   await page.goto('/holdings');
 
   const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
@@ -35,7 +78,7 @@ test('desktop uses one active topbar with accessible dropdowns, notifications, a
   const menuBounds = await basesMenu.boundingBox();
   expect(menuBounds).not.toBeNull();
   expect(menuBounds!.x).toBeGreaterThanOrEqual(0);
-  expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(1600);
+  expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(1920);
   await primary.getByRole('button', { name: 'Guilds', exact: true }).click();
   await expect(page.getByRole('menu', { name: 'Bases', exact: true })).toHaveCount(0);
   await expect(page.getByRole('menu', { name: 'Guilds', exact: true })).toBeVisible();

@@ -5,6 +5,7 @@ import type { AdminOperation } from './types';
 export type AdminTabKind =
   | 'overview'
   | 'guilds'
+  | 'events'
   | 'setup'
   | 'reference'
   | 'console'
@@ -30,6 +31,7 @@ const BUILT_IN_KINDS: AdminTabKind[] = [
   'overview',
   'statistics',
   'guilds',
+  'events',
   'setup',
   'reference',
   'console',
@@ -92,6 +94,13 @@ export const ADMIN_SECTIONS: AdminSection[] = [
         kind: 'guilds',
         groups: [],
         summary: 'Guild directory, applications and private leader support chats.',
+      },
+      {
+        id: 'events',
+        label: 'Community events',
+        kind: 'events',
+        groups: [],
+        summary: 'Create event announcements, prizes, schedules and entry details.',
       },
       {
         id: 'guild-tools',

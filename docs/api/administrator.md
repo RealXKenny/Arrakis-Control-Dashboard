@@ -3,19 +3,19 @@
 All routes below require a verified administrator ([administrator access](../configuration/administrator-access.md)): 401 signed out,
 403 `FORBIDDEN` otherwise (audit `admin.access_denied`). Mutations are same-origin only.
 
-| Method | Route                              | Purpose                                        |
-| ------ | ---------------------------------- | ---------------------------------------------- |
-| GET    | `/api/v2/admin/overview`           | Credential status, service health, statistics   |
-| GET    | `/api/v2/admin/catalog`            | The allowlisted operation catalog                |
-| POST   | `/api/v2/admin/execute`            | Run one catalog operation (JSON, forms, downloads, event streams) |
-| POST   | `/api/v2/admin/upload`             | Run one upload/multipart catalog operation       |
-| GET    | `/api/v2/admin/audit`              | Audit events, newest first                       |
-| DELETE | `/api/v2/admin/sessions`           | End all of the caller's sessions                 |
-| POST   | `/api/v2/changelog/announce`       | Post/edit a Discord release announcement         |
-| GET    | `/api/admin/guild-support-status`  | Unread support counts across guilds              |
-| GET    | `/api/admin/guilds/{guildId}/applications` | A guild's applications and listing       |
-| GET    | `/api/admin/guilds/{guildId}/applications/{applicationId}/messages` | One application's chat |
-| GET/POST | `/api/admin/guilds/{guildId}/messages`, `/messages/send`, `/messages/read` | Guild support thread |
+| Method   | Route                                                                      | Purpose                                                           |
+| -------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| GET      | `/api/v2/admin/overview`                                                   | Credential status, service health, statistics                     |
+| GET      | `/api/v2/admin/catalog`                                                    | The allowlisted operation catalog                                 |
+| POST     | `/api/v2/admin/execute`                                                    | Run one catalog operation (JSON, forms, downloads, event streams) |
+| POST     | `/api/v2/admin/upload`                                                     | Run one upload/multipart catalog operation                        |
+| GET      | `/api/v2/admin/audit`                                                      | Audit events, newest first                                        |
+| DELETE   | `/api/v2/admin/sessions`                                                   | End all of the caller's sessions                                  |
+| POST     | `/api/v2/changelog/announce`                                               | Post/edit a Discord release announcement                          |
+| GET      | `/api/admin/guild-support-status`                                          | Unread support counts across guilds                               |
+| GET      | `/api/admin/guilds/{guildId}/applications`                                 | A guild's applications and listing                                |
+| GET      | `/api/admin/guilds/{guildId}/applications/{applicationId}/messages`        | One application's chat                                            |
+| GET/POST | `/api/admin/guilds/{guildId}/messages`, `/messages/send`, `/messages/read` | Guild support thread                                              |
 
 ## `POST /api/v2/admin/execute`
 
@@ -31,12 +31,12 @@ Request (JSON, ≤ 128 KiB; or `application/x-www-form-urlencoded` with a `reque
 }
 ```
 
-| Field | Rule |
-| --- | --- |
-| `operation` | An `id` from the catalog (≤ 180 characters); unknown → 400 `INVALID_OPERATION` |
-| `path` | Values for the operation's path parameters only; extras → 400 |
-| `query` | Strings (≤ 2000), finite numbers or booleans |
-| `body` | Object; ≤ 200 fields per level, ≤ 1000 array entries, depth ≤ 10; `__proto__`/`prototype`/`constructor` rejected; integers beyond 2^53 must be strings |
+| Field             | Rule                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `operation`       | An `id` from the catalog (≤ 180 characters); unknown → 400 `INVALID_OPERATION`                                                                                   |
+| `path`            | Values for the operation's path parameters only; extras → 400                                                                                                    |
+| `query`           | Strings (≤ 2000), finite numbers or booleans                                                                                                                     |
+| `body`            | Object; ≤ 200 fields per level, ≤ 1000 array entries, depth ≤ 10; `__proto__`/`prototype`/`constructor` rejected; integers beyond 2^53 must be strings           |
 | `acknowledgement` | For non-GET operations exactly `"<METHOD> <route>"`, else 400 `CONFIRMATION_REQUIRED`; add the Console confirmation phrase in `body` where the catalog lists one |
 
 Order of checks: same-origin → administrator → admin budget (300/min) → body limit → parse → restriction (403 `CONSOLE_OPERATION_RESTRICTED`)
@@ -71,7 +71,7 @@ Any target in the request is ignored: only the caller's own sessions are ever re
 ## `POST /api/v2/changelog/announce`
 
 Body ≤ 64 KiB, validated by `announcementInputSchema` (422 `INVALID_ANNOUNCEMENT` names the field). 20 per hour per administrator,
-general step-up window. Response `{ "ok": true, "edited": false }`. Needs `CHANGELOG_WEBHOOK_URL` ([webhooks](../integrations/webhooks.md)).
+general step-up window. Response `{ "ok": true, "edited": false, "parts": 3 }` reports the tracked message count. Large releases are split into numbered V2 messages with complete notes. Needs `DISCORD_BOT_TOKEN` and `CHANGELOG_CHANNEL_ID` ([Discord announcements](../integrations/webhooks.md)).
 
 ## Guild oversight
 

@@ -16,6 +16,9 @@ import '../assert-server';
 
 export const GUILD_TAG = '{guilds}';
 
+/** A single bounded hash contains community events and their one-time seed marker. */
+export const communityEventKeys = { records: 'arrakis:{community-events}:records' };
+
 export const guildKeys = {
   applications: (guildId: string) => `arrakis:${GUILD_TAG}:applications:${guildId}`,
   applicationsIndex: (guildId: string) => `arrakis:${GUILD_TAG}:applications-index:${guildId}`,
@@ -34,6 +37,14 @@ export const guildKeys = {
     `arrakis:${GUILD_TAG}:application-review:${guildId}:${applicationId}`,
 };
 
+export const chatKeys = {
+  messages: (serverId: string) => `arrakis:{chat:${serverId}}:messages`,
+  event: (serverId: string, eventHash: string) => `arrakis:{chat:${serverId}}:event:${eventHash}`,
+  /** Current delivery state of one dashboard-sent message; Stream entries are immutable. */
+  delivery: (serverId: string, messageId: string) => `arrakis:{chat:${serverId}}:delivery:${messageId}`,
+  live: (serverId: string) => `arrakis:chat:live:${serverId}`,
+};
+
 export const solidoKeys = {
   /** Per-member daily import ledger. */
   history: (owner: string, day: string) => `arrakis:{solido:${owner}}:history:${day}`,
@@ -45,6 +56,12 @@ export const auditKeys = {
   events: 'arrakis:{audit}:v1:events',
 };
 
+/** Bounded Discord image cache; the payloads and eviction index share a Cluster slot. */
+export const discordAvatarKeys = {
+  images: 'arrakis:{avatars}:v1:images',
+  access: 'arrakis:{avatars}:v1:access',
+};
+
 export const BASE_MARKETPLACE_TAG = '{bm}';
 
 /** Legacy (V1) marketplace and preview storage. The V2 store lives under `arrakis:{bm}:v2:`. */
@@ -53,4 +70,40 @@ export const baseKeys = {
   listing: (id: string) => `arrakis:${BASE_MARKETPLACE_TAG}:v1:listing:${id}`,
   summaryState: (id: string) => `arrakis:${BASE_MARKETPLACE_TAG}:v1:summary-state:${id}`,
   listings: `arrakis:${BASE_MARKETPLACE_TAG}:v1:listings`,
+};
+
+/**
+ * Solaris Exchange wallet: one hash tag per owner and server so each ledger script is single-slot.
+ * `owner` and `server` must already be validated by `casinoAccountKeys`' callers (see wallet store).
+ */
+export const casinoKeys = {
+  account: (owner: string, server: string, currency: string) =>
+    `arrakis:{casino:${owner}:${server}}:${currency}:account`,
+  entries: (owner: string, server: string, currency: string) =>
+    `arrakis:{casino:${owner}:${server}}:${currency}:entries`,
+  idempotency: (owner: string, server: string, currency: string) =>
+    `arrakis:{casino:${owner}:${server}}:${currency}:keys`,
+  holds: (owner: string, server: string, currency: string) => `arrakis:{casino:${owner}:${server}}:${currency}:holds`,
+};
+
+export const casinoTransferKeys = {
+  intent: (owner: string, server: string, id: string) => `arrakis:{casino:${owner}:${server}}:transfer:${id}`,
+  /** Newest-first ids of one account's transfers, for the wallet history. */
+  index: (owner: string, server: string) => `arrakis:{casino:${owner}:${server}}:transfers`,
+  /** Global set of non-terminal intents (`owner|server|id`, scored by last update) for recovery and admin review. */
+  open: 'arrakis:{casino-admin}:transfers-open',
+};
+
+export const casinoRoundKeys = {
+  round: (owner: string, server: string, id: string) => `arrakis:{casino:${owner}:${server}}:round:${id}`,
+  /** Newest-first round ids of one account, for game history. */
+  index: (owner: string, server: string) => `arrakis:{casino:${owner}:${server}}:rounds`,
+  /** Global set of non-terminal rounds (`owner|server|id`) for the recovery sweep. */
+  open: 'arrakis:{casino-admin}:rounds-open',
+  seeds: (owner: string, server: string) => `arrakis:{casino:${owner}:${server}}:seeds`,
+  seedsOpen: (owner: string, server: string) => `arrakis:{casino:${owner}:${server}}:seeds-open`,
+  seedsAlloc: (owner: string, server: string) => `arrakis:{casino:${owner}:${server}}:seeds-alloc`,
+  seedsRevealed: (owner: string, server: string) => `arrakis:{casino:${owner}:${server}}:seeds-revealed`,
+  /** Voluntary account restrictions (pause until a time). */
+  limits: (owner: string, server: string) => `arrakis:{casino:${owner}:${server}}:limits`,
 };

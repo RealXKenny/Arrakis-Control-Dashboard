@@ -1,4 +1,53 @@
 /*
+ * The palette from tailwind.config.ts as CSS variables. Tailwind v4 only turns a JS-config colour into a CSS variable
+ * when a utility needs it, but plain CSS (globals.css, the map and casino modules) reads these by name: without them
+ * `var(--color-spice-400)` is invalid, so the focus ring, `.btn-primary` and `.eyebrow` silently lose their styling.
+ * tests/unit/styles/tokens.test.ts fails if this block drifts from the config.
+ */
+:root {
+  --color-obsidian-50: #f4f4f5;
+  --color-obsidian-100: #e4e4e7;
+  --color-obsidian-200: #c9c9cf;
+  --color-obsidian-300: #a1a1aa;
+  --color-obsidian-400: #71717a;
+  --color-obsidian-500: #52525b;
+  --color-obsidian-600: #3f3f46;
+  --color-obsidian-700: #2a2a30;
+  --color-obsidian-800: #1c1c21;
+  --color-obsidian-900: #121215;
+  --color-obsidian-950: #09090b;
+  --color-sand-50: #faf6ee;
+  --color-sand-100: #f1e9d8;
+  --color-sand-200: #e3d6b9;
+  --color-sand-300: #d1bf96;
+  --color-sand-400: #bba374;
+  --color-sand-500: #a08a5c;
+  --color-sand-600: #7f6c47;
+  --color-sand-700: #5f5136;
+  --color-sand-800: #41382a;
+  --color-sand-900: #2a241b;
+  --color-sand-950: #17140f;
+  --color-spice-50: #fff8eb;
+  --color-spice-100: #ffecc6;
+  --color-spice-200: #ffd88a;
+  --color-spice-300: #ffbf4d;
+  --color-spice-400: #f9a11f;
+  --color-spice-500: #ee8209;
+  --color-spice-600: #d26104;
+  --color-spice-700: #ae4508;
+  --color-spice-800: #8d370d;
+  --color-spice-900: #742f0e;
+  --color-spice-950: #431603;
+  --color-ibad-300: #8fb4e8;
+  --color-ibad-400: #5f93d9;
+  --color-ibad-500: #3f74bf;
+  --color-ibad-600: #2f5a98;
+  --color-status-ok: #7fa66a;
+  --color-status-warn: #f9a11f;
+  --color-status-danger: #c8503c;
+}
+
+/*
  * Design tokens consumed by the CSS modules of the map and the 3D base preview. They keep the
  * older `--theme-*` names but resolve to the Modern Dune palette. New code should use Tailwind.
  */

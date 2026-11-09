@@ -104,6 +104,7 @@ export function createDashboardRedis(url: string | undefined, options: { cluster
   }
 
   return {
+    command,
     async get<T = unknown>(key: string): Promise<T | null> {
       const value = await command(['GET', key]);
       return value === null ? null : decode<T>(String(value));

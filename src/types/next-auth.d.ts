@@ -19,6 +19,8 @@ declare module 'next-auth/jwt' {
     discordId?: string;
     username?: string;
     globalName?: string;
+    guildNickname?: string | null;
+    profileRefreshAttemptedAt?: number;
     avatar?: string | null;
     guildId?: string;
     roleIds?: string[];

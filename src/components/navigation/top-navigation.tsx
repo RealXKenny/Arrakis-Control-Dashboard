@@ -1,12 +1,12 @@
 'use client';
 
-import Link from 'next/link';
+import { NavigationLink as Link } from './navigation-link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useRef, useState } from 'react';
 import type { NavIdentity } from '../../features/auth/identity';
 import { Avatar } from './avatar';
 import { signOutAction } from '../../features/auth/actions';
-import { BellIcon, ChevronDownIcon, MenuIcon, SignOutIcon } from '../icons';
+import { BellIcon, ChevronDownIcon, HomeIcon, MenuIcon, SignOutIcon } from '../icons';
 import { BrandLockup } from '../brand/logo';
 import { MobileNavigation } from './mobile-navigation';
 import {
@@ -31,6 +31,7 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
   const toggleMenu = (id: string) => setOpenMenu(menuOpen(id) ? null : { id, pathname });
   const mobileOpen = mobileFor === pathname;
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
+  const homeActive = pathname === '/';
 
   const overflow = NAVIGATION_ITEMS.filter((item) => item.tabletOverflow);
   const more = items.find((item) => item.id === 'more');
@@ -46,43 +47,60 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
   return (
     <header className="command-header sticky top-0 z-50 border-b border-[#6f4d1f]/70 bg-[#090A0C]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
       <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-5 min-[1840px]:px-8 min-[2000px]:gap-6">
-        <Link href="/" aria-label="Arrakis Control home" className="shrink-0 border-r border-[#6f4d1f]/50 pr-5 sm:pr-6">
+        <Link
+          href="/"
+          aria-label="Arrakis Control home"
+          className="shrink-0 border-r border-[#6f4d1f]/50 pr-3 min-[400px]:pr-5 sm:pr-6"
+        >
           <BrandLockup size="large" />
         </Link>
 
-        <nav aria-label="Primary" className="hidden xl:block">
-          <ul className="flex items-center gap-1 min-[2000px]:gap-2">
-            {items.map((item) => (
-              <li key={item.id}>
-                {item.href ? (
-                  <NavigationDirectLink item={item} pathname={pathname} />
-                ) : item.id === 'more' ? (
-                  <NavigationDropdown
-                    item={item}
-                    pathname={pathname}
-                    open={menuOpen(item.id)}
-                    onToggle={() => toggleMenu(item.id)}
-                    onClose={closeMenu}
-                    extraItems={overflow}
-                    suppressActiveOnDesktop={overflowActive && !moreActive}
-                  />
-                ) : (
-                  <NavigationDropdown
-                    item={item}
-                    pathname={pathname}
-                    open={menuOpen(item.id)}
-                    onToggle={() => toggleMenu(item.id)}
-                    onClose={closeMenu}
-                  />
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {identity && (
+          <nav aria-label="Primary" className="hidden xl:block">
+            <ul className="flex items-center gap-1 min-[2000px]:gap-2">
+              {items.map((item) => (
+                <li key={item.id}>
+                  {item.href ? (
+                    <NavigationDirectLink item={item} pathname={pathname} />
+                  ) : item.id === 'more' ? (
+                    <NavigationDropdown
+                      item={item}
+                      pathname={pathname}
+                      open={menuOpen(item.id)}
+                      onToggle={() => toggleMenu(item.id)}
+                      onClose={closeMenu}
+                      extraItems={overflow}
+                      suppressActiveOnDesktop={overflowActive && !moreActive}
+                    />
+                  ) : (
+                    <NavigationDropdown
+                      item={item}
+                      pathname={pathname}
+                      open={menuOpen(item.id)}
+                      onToggle={() => toggleMenu(item.id)}
+                      onClose={closeMenu}
+                    />
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         <div className="flex shrink-0 items-center gap-2 xl:gap-3">
           {identity ? (
             <>
+              {/* Below the desktop bar the primary navigation is hidden, so Home stays one tap away. */}
+              <Link
+                href="/"
+                aria-label="Home"
+                aria-current={homeActive ? 'page' : undefined}
+                data-current={homeActive ? 'true' : undefined}
+                className="inline-flex h-11 min-w-11 items-center justify-center gap-2 border border-[#6f4d1f]/50 px-3 text-xs font-bold uppercase tracking-[0.2em] text-sand-100 transition-colors hover:border-spice-400 hover:text-spice-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spice-300 data-[current=true]:border-spice-400 data-[current=true]:text-spice-300 xl:hidden"
+              >
+                <HomeIcon className="size-5" />
+                <span className="hidden md:inline">Home</span>
+              </Link>
               <NavigationDropdown
                 item={{
                   id: 'notifications',
@@ -133,27 +151,29 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
               </div>
             </>
           ) : (
-            <Link href={SIGN_IN_HREF} prefetch={false} className="btn btn-primary hidden min-h-12 px-6 sm:inline-flex">
+            <Link href={SIGN_IN_HREF} prefetch={false} className="btn btn-primary min-h-11 px-4 sm:px-6">
               Sign in
             </Link>
           )}
-          <button
-            ref={mobileTriggerRef}
-            type="button"
-            className="inline-flex size-11 items-center justify-center border border-[#6f4d1f]/50 text-sand-100 hover:border-spice-400 hover:text-spice-300 xl:hidden"
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-nav"
-            aria-label="Open menu"
-            onClick={() => setMobileFor(mobileOpen ? null : pathname)}
-          >
-            <MenuIcon className="size-6" />
-          </button>
+          {identity && (
+            <button
+              ref={mobileTriggerRef}
+              type="button"
+              className="inline-flex size-11 items-center justify-center border border-[#6f4d1f]/50 text-sand-100 hover:border-spice-400 hover:text-spice-300 xl:hidden"
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav"
+              aria-label="Open menu"
+              onClick={() => setMobileFor(mobileOpen ? null : pathname)}
+            >
+              <MenuIcon className="size-6" />
+            </button>
+          )}
         </div>
       </div>
 
-      {mobileOpen && (
+      {identity && mobileOpen && (
         <MobileNavigation
-          items={items}
+          items={items.filter((item) => item.id !== 'home')}
           pathname={pathname}
           identity={identity}
           isAdmin={isAdmin}

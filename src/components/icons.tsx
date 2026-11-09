@@ -32,6 +32,17 @@ export const MapIcon = (p: IconProps) => (
   </Base>
 );
 
+export const CasinoIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 4h16v16H4z" />
+    <circle cx="8.5" cy="8.5" r="1" />
+    <circle cx="15.5" cy="8.5" r="1" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="8.5" cy="15.5" r="1" />
+    <circle cx="15.5" cy="15.5" r="1" />
+  </Base>
+);
+
 export const MarketIcon = (p: IconProps) => (
   <Base {...p}>
     <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
@@ -125,6 +136,12 @@ export const MoreIcon = (p: IconProps) => (
     <circle cx="5" cy="12" r="1" />
     <circle cx="12" cy="12" r="1" />
     <circle cx="19" cy="12" r="1" />
+  </Base>
+);
+
+export const HomeIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 11l9-7 9 7M5 10v10h5v-6h4v6h5V10" />
   </Base>
 );
 

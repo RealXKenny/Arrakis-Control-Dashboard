@@ -24,6 +24,13 @@ export default defineConfig({
       ADMIN_CONSOLE_API_KEY: 'browser-test-admin-placeholder',
       APP_URL: 'http://127.0.0.1:3100',
       REDIS_URL: 'redis://127.0.0.1:9',
+      CHAT_ENABLED: 'true',
+      // The casino is off by default; the browser fixture turns it on so the real flows can be exercised.
+      CASINO_SOLARIS_ENABLED: 'true',
+      RABBITMQ_URL: 'amqps://5E121CE000000001:browser-test-placeholder@rabbit.test/',
+      CHAT_BRIDGE_FUNCOM_ID: 'ArrakisControl#0001',
+      CHAT_SERVERS:
+        '[{"id":"hagga-basin","label":"Hagga Basin","map":"HaggaBasin.0"},{"id":"deep-desert","label":"Deep Desert","map":"DeepDesert_1.0"}]',
       LOG_LEVEL: 'FATAL',
     },
     command: 'node tests/helpers/browser-server.mjs',

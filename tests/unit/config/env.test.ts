@@ -22,7 +22,7 @@ it('accepts the portal environment template', async () => {
   const { getServerEnv } = await import('../../../src/config/env');
   const env = getServerEnv();
   expect(env.LOG_LEVEL).toBe('INFO');
-  expect(env.SERVER_HOSTNAME).toBe('127.0.0.1');
+  expect(env.SERVER_HOSTNAME).toBe('0.0.0.0');
   expect(env.SERVER_PORT).toBe(2008);
   expect(env.API_MAX_CONCURRENCY).toBe(100);
   expect(env.API_GLOBAL_READ_LIMIT).toBe(2400);

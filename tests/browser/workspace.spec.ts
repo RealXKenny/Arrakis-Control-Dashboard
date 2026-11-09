@@ -1,4 +1,5 @@
 import type { BrowserContext, Page } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 import { expect, test } from '../helpers/browser-test';
 import { fakeConsole, type TestMember } from '../helpers/fake-console-client';
 
@@ -22,7 +23,7 @@ test.describe('landing and sign-in gates', () => {
   test('the public landing page invites sign-in, hides administration and fits every width', async ({ page }) => {
     const response = await page.goto('/');
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Deep Desert');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Arrakis\s+Control/i);
     await expect(page.getByRole('link', { name: 'Sign in with Discord' }).first()).toBeVisible();
     await expect(page.locator('a[href="/admin"]')).toHaveCount(0);
     for (const [width, height] of [
@@ -38,7 +39,7 @@ test.describe('landing and sign-in gates', () => {
   test('the legacy home URL redirects to the root and keeps the query string', async ({ page }) => {
     await page.goto('/home?source=bookmark');
     await expect(page).toHaveURL(/\/\?source=bookmark$/);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Deep Desert');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Arrakis\s+Control/i);
   });
 
   test('every signed-in page sends anonymous visitors to sign in', async ({ page }) => {
@@ -205,6 +206,38 @@ test.describe('portal, character and storage', () => {
       await expect(page.locator('main')).toBeVisible();
       expect(await overflow(page), route).toBe(true);
     }
+  });
+
+  test('the market loading grid scrolls inside the phone workspace', async ({ page, context }) => {
+    await signInAs(context, await fakeConsole.newMember('Loading Market User'));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/market');
+    await expect(page.getByRole('heading', { name: 'Market', exact: true })).toBeVisible();
+    // Render the actual fallback under production CSS without racing the server's fast fixture.
+    // A separate Node process avoids Playwright's component-test JSX transform.
+    const markup = execFileSync(
+      process.execPath,
+      [
+        '--import',
+        'tsx',
+        '--input-type=module',
+        '-e',
+        "import {createElement} from 'react'; import {renderToStaticMarkup} from 'react-dom/server'; import Loading from './src/app/(workspace)/market/loading.tsx'; process.stdout.write(renderToStaticMarkup(createElement(Loading)));",
+      ],
+      { encoding: 'utf8' },
+    );
+    await page.locator('.workspace-container').evaluate((container, markup) => {
+      container.innerHTML = markup;
+    }, markup);
+    const loading = page.getByLabel('Loading market');
+    await expect(loading).toBeVisible();
+    expect(await overflow(page)).toBe(true);
+    const scroll = loading.locator('ul').locator('..');
+    expect(await scroll.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+    await scroll.evaluate((element) => {
+      element.scrollLeft = 100;
+    });
+    expect(await scroll.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
   });
 });
 

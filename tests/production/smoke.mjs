@@ -66,13 +66,13 @@ const storage = createRedisFixture((entry) => {
   const operation = entry[0].toUpperCase();
   if (operation === 'EVAL') return [1, 60000];
   if (operation === 'DEL') {
-    revoked = true;
+    if (entry.slice(1).some((key) => key.startsWith('arrakis:session:'))) revoked = true;
     return 1;
   }
   if (operation === 'GET')
     if (entry[1] === `arrakis:session:${createHash('sha256').update('fixture-admin-session').digest('hex')}`)
       return JSON.stringify({
-        user: { id: '456084885220884480' },
+        user: { id: '456084885220884480', guild_nickname: null },
         guildId: 'fixture-guild',
         roleIds: ['fixture-role'],
         authenticatedAt: Date.now(),
@@ -83,7 +83,7 @@ const storage = createRedisFixture((entry) => {
     return revoked
       ? null
       : JSON.stringify({
-          user: { id: 'user' },
+          user: { id: 'user', guild_nickname: null },
           guildId: 'fixture-guild',
           roleIds: [],
           authenticatedAt: Date.now(),
@@ -111,7 +111,11 @@ const child = spawn(
     stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
+      DISCORD_BOT_TOKEN: '',
+      CHANGELOG_CHANNEL_ID: '',
+      COMMUNITY_EVENTS_CHANNEL_ID: '',
       NODE_ENV: mode === 'dev' ? 'development' : 'production',
+      CHAT_ENABLED: 'false',
       CONSOLE_URL: `http://127.0.0.1:${redisPort}`,
       CONSOLE_API_KEY: 'fixture-console-key',
       ADMIN_CONSOLE_API_KEY: 'fixture-admin-console-key',
@@ -165,7 +169,8 @@ try {
   await announceReadiness(`${base}/portal`, new AbortController().signal, {
     write: (message) => readinessMessages.push(message),
   });
-  assert.deepEqual(readinessMessages, ['Ready in — Arrakis Control Dashboard is listening (HTTP check passed).']);
+  assert.equal(readinessMessages.length, 1);
+  assert.match(readinessMessages[0], /^Dashboard ready in \d+\.\ds \(HTTP check passed\)\.$/);
   for (const [asset, contentType] of [
     ['/favicon.ico', 'image/x-icon'],
     ['/api/assets/terrain/hagga.json.gz', 'application/gzip'],
@@ -267,14 +272,20 @@ try {
     'binary responses stream through the common API boundary',
   );
   assert.equal(home.status, 200, 'homepage with a session cookie');
-  assert.match(await home.text(), /Command the/i, 'V2 landing page renders');
+  const signedInLanding = await home.text();
+  assert.match(signedInLanding, /id="landing-title"/, 'landing page renders');
+  assert.match(signedInLanding, /Open dashboard/, 'signed-in landing actions open the dashboard');
+  assert.doesNotMatch(signedInLanding, /Sign in with Discord/, 'signed-in visitors are not asked to sign in again');
   const rootLanding = await fetch(`${base}/`);
   assert.equal(rootLanding.status, 200, 'root directly serves the public landing page');
   assert.equal(new URL(rootLanding.url).pathname, '/');
   const rootLandingHtml = await rootLanding.text();
-  assert.match(rootLandingHtml, /Everything the Landsraad would hide/);
+  assert.match(rootLandingHtml, /One dashboard for players, communities and operators/);
   assert.match(rootLandingHtml, /Sign in with Discord/);
-  assert.match(rootLandingHtml, /<meta property="og:title" content="Arrakis Control"/);
+  assert.match(
+    rootLandingHtml,
+    /<meta property="og:title" content="Arrakis Control \| Dune: Awakening server dashboard"/,
+  );
   assert.doesNotMatch(rootLandingHtml, /Harvesting sectors/, 'the removed operations dashboard is not served');
   const routes = [
     'v1/bot/world',

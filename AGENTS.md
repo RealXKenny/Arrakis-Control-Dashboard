@@ -18,7 +18,7 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - Stack: Node.js 22+, Next.js 16 App Router (V2 "Modern Dune" UI) with a remaining Pages Router `src/pages/api` layer, React 19, TypeScript, Tailwind CSS v4, npm, Redis (ioredis, standalone or Cluster), Vitest, and Playwright.
 
-- Dev: `npm run dev`; defaults to `http://127.0.0.1:2008`, with `SERVER_HOSTNAME` and `SERVER_PORT` configurable in `.env`. Production: `npm run build`, then `npm start` with the same binding variables.
+- Dev: `npm run dev`; defaults to `http://127.0.0.1:2008`, with `SERVER_HOSTNAME` and `SERVER_PORT` configurable in `.env`. Production: `npm run build`, then `npm start` with the same binding variables. When `CHAT_ENABLED=true`, the launcher automatically supervises one Chat Bridge child; `npm run chat:bridge` is a standalone diagnostic command and must not run alongside that child.
 
 - Standard checks: `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`.
 
@@ -28,19 +28,19 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - Releases: bump the stable SemVer in `package.json` and add the matching `## Patch Notes vX.Y.Z` section to `CHANGELOG.md` (sections: New Features, Improvements, Fixes, Security, Privacy, Removed, Upgrade Notes, Community Contributions; omit empty ones). Successful `main` CI creates the tag and GitHub Release; the release job refuses any commit not already on `main`. CI shards browser tests across four runners; production smoke runs on the first shard.
 
-- Only a new stable version creates a GitHub Release. The release job runs `scripts/deployment/build-pterodactyl-egg.mjs` and attaches `egg-arrakis-control-dashboard.json`. The egg downloads and builds the latest GitHub release in `/home/container` using Pterodactyl's standard Node.js 22 runtime. Wings supplies `SERVER_PORT`. There is no custom application image or GHCR publication.
+- Only a new stable version creates a GitHub Release. The release job runs `scripts/deployment/build-pterodactyl-egg.mjs` and attaches `egg-arrakis-control-dashboard.json`. The egg downloads and builds the latest GitHub release in `/home/container` using Pterodactyl's standard Node.js 22 runtime. Wings supplies `SERVER_PORT`. Supported dashboard deployments are direct Node.js and Pterodactyl; releases do not publish application container images.
 
 **## Map**
 
-- `src/proxy.ts` issues a per-request `'nonce-…'` CSP. Keep pages dynamically rendered because `APP_URL` is a runtime variable. The V2 shell dropped the old Announcify widget and seasonal themes; `proxy.ts` allows no third-party script, connect, or image origins beyond Discord's CDN.
+- `src/proxy.ts` issues a per-request `'nonce-…'` CSP. Keep pages dynamically rendered because `APP_URL` is a runtime variable. The V2 shell dropped the old Announcify widget and seasonal themes; `proxy.ts` allows no third-party script, connect, or image origins. Discord avatars are served through authenticated same-origin URLs from a bounded Redis image cache (`features/auth/server/avatar.ts`). Only `/status` additionally allows the HetrixTools report frame; its resizer is bundled locally and the link stays under More.
 
-- `src/app/` contains only routing and framework entry points. `/` and `/changelog` are public; signed-in routes live in `(workspace)/` (`portal`, `character`, `holdings` (+ `preview`), `storage`, `vehicles`, `market`, `bases` (marketplace, upload, detail), `guilds`, `guild`, `map`, `admin`). Every workspace page calls `requireSession()` itself. `src/app/api/v2/**` uses `src/server/http.ts`; `src/pages/api/**` remains the thin legacy API layer behind `runPagesApiHandler`.
+- `src/app/` contains only routing and framework entry points. `/` and `/changelog` are public; signed-in routes live in `(workspace)/` (`portal`, `character`, `holdings` (+ `preview`), `storage`, `vehicles`, `market`, `bases` (marketplace, upload, detail), `guilds`, `guild`, `map`, `chat`, `status`, `events`, `casino` (+ `games/[game]`, `wallet`, `history`, `fairness`, `rules`), `admin`). Every workspace page calls `requireSession()` itself. `src/app/api/v2/**` uses `src/server/http.ts`; `src/pages/api/**` remains the thin legacy API layer behind `runPagesApiHandler`.
 
-- `src/components/` contains only shared UI: `navigation/` owns the single global topbar, its centralized route inventory, dropdowns, and mobile drawer; `brand/`, `layout/`, and `ui/` own their named shared concerns. Navigation may consume auth identity types and server actions; other shared UI must not import feature internals. Profile failure presentation belongs to `features/portal/components/profile-failure.tsx`. Do not restore the removed workspace navigation row or create another route inventory.
+- `src/components/` contains only shared UI: `navigation/` owns the single global topbar, its centralized route inventory, dropdowns, and mobile drawer; `brand/`, `layout/`, and `ui/` own their named shared concerns. Navigation may consume auth identity types and server actions; other shared UI must not import feature internals. Profile failure presentation belongs to `features/portal/components/profile-failure.tsx`. Do not restore the removed workspace navigation row or create another route inventory. Home (`/`, exact) is the first inventory entry for signed-in members, with a compact icon below 1280px that the mobile drawer does not repeat.
 
-- `src/features/` is the only business-domain home. Current domains are `admin`, `auth`, `bases`, `bot`, `changelog`, `guilds`, `landing`, `map`, `market`, `player`, `portal`, `server-status`, and `vehicles`. Feature components, hooks, server operations, schemas, styles, types, and utilities stay with their domain. See the inventory for each domain's responsibility.
+- `src/features/` is the only business-domain home. Current domains are `admin`, `auth`, `bases`, `bot`, `casino`, `changelog`, `chat`, `events`, `guilds`, `landing`, `map`, `market`, `player`, `portal`, `server-status`, and `vehicles`. Feature components, hooks, server operations, schemas, styles, types, and utilities stay with their domain. See the inventory for each domain's responsibility.
 
-- `src/server/` contains shared request infrastructure only: `http.ts`, `pages-api.ts`, `api-read-cache.ts`, `cookies.ts`, `read-budget.ts`, and `integrations/` for Dune Console, adapter transport, Discord, and Discord webhooks.
+- `src/server/` contains shared request infrastructure only: `http.ts`, `pages-api.ts`, `api-read-cache.ts`, `cookies.ts`, `read-budget.ts`, and `integrations/` for Dune Console, adapter transport, Discord OAuth, and shared bot announcements.
 
 - Security audit events go through `src/lib/security/audit.ts` (redacted, bounded, never throws); marketplace owner keys live in `features/bases/server/owner-key.ts` (HMAC, legacy keys still accepted until `npm run marketplace:rekey`).
 
@@ -50,17 +50,25 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - `src/types/` contains genuinely shared TypeScript contracts. Feature-local types remain in their feature.
 
-- `src/styles/` contains global CSS and design tokens. `tailwind.config.ts` uses the Obsidian/Sand/Spice palette, sharp corners, and hard unblurred shadows. Feature CSS modules stay in their feature. Never animate an ancestor of the map or full-screen base preview layers, and keep all animation off under `prefers-reduced-motion`.
+- `src/styles/` contains global CSS and design tokens. `tokens.css` mirrors the Tailwind palette as `--color-*` variables because plain CSS reads them and Tailwind v4 does not emit JS-config colours as variables; `tests/unit/styles/tokens.test.ts` guards the match. `tailwind.config.ts` uses the Obsidian/Sand/Spice palette, sharp corners, and hard unblurred shadows. Feature CSS modules stay in their feature. Never animate an ancestor of the map or full-screen base preview layers, and keep all animation off under `prefers-reduced-motion`.
 
 - `src/assets/` contains favicon/application images and compressed terrain/model bundles. It is large; do not enumerate it during ordinary work. Keep asset paths allowlisted and preserve the 2D map fallback.
 
-- `scripts/server-launcher.mjs` prepares the writable Next.js image cache and starts dev/production. `scripts/maintenance/` owns Redis rekeying and offline model generation; `scripts/deployment/` owns release-egg generation.
+- `scripts/server-launcher.mjs` prepares the writable Next.js image cache and starts dev/production; `scripts/chat-bridge-supervisor.mjs` owns the automatic bridge child's restart and shutdown lifecycle. `scripts/maintenance/` owns Redis rekeying and offline model generation; `scripts/deployment/` owns release-egg generation.
 
 - `src/instrumentation.ts` owns runtime validation, Console warmup, startup logging, population recording, and release announcement startup.
 
 - `tests/` contains API, architecture, browser, deployment (sandboxed egg installer), production (built-runtime smoke), helpers, integration (real Redis, standalone or Cluster; opt-in through `TEST_REDIS_URL` / `TEST_REDIS_CLUSTER_NODES`, run with `npm run test:integration`), load, and domain-organized unit suites. Browser tests import `test`/`expect` from `tests/helpers/browser-test.ts`; shared domain routes are registered by `tests/helpers/portal-browser.ts`. Architecture tests enforce browser/server boundaries (including App Router client entry points, erased type imports, and server-action references), API boundaries, dependency acyclicity, naming, retired directories, and the root allowlist.
 
 **## Feature contracts**
+
+- `features/chat/` owns the bot-compatible `chat.map` protocol, Chat Bridge worker, bounded Redis Stream history, Pub/Sub distribution, authenticated SSE gateway, and Live Chat UI. Each launcher-supervised worker consumes its own exclusive broker-generated `amq.gen-*` queue, matching existing bot permissions; never declare named queues or custom dead-letter exchanges. Redis owns persistent history, and events sent while no worker is connected are not buffered. Next.js eagerly starts a persistent publisher but never starts a consumer. The cached server-only TLS loader validates inline PEM before path fallbacks; verification cannot be disabled. Preserve exact map keys, stable external-ID deduplication, persona echo suppression, honest broker-only `published` status, and no automatic retry of uncertain sends.
+
+- Outgoing chat may retry confirmed publish failures at most three total attempts with one stable ID; uncertain sends never retry automatically. Unpublished dashboard payloads never enter public history or SSE. The sender sees terminal failures only in local dismissible notices; keep bounded server idempotency records and private reconciliation to avoid republishing or losing late confirmed states.
+
+- Discord relay presentation requires exact `CHAT_DISCORD_BOT_FUNCOM_ID` identity plus the reference bot's `[Discord]` prefix/format. Keep original text in `content`, extracted display body in `relayContent`, and source `discord`; genuine player prefix imitations stay `game`. Parsed relay names and `[Owner]` tags never authorize dashboard actions. Older game-source history is classified on read without rewriting Redis.
+
+- `features/casino/` owns The Solaris Exchange: every wager is REAL in-game Solaris held in a Redis casino wallet (no demo currency), and the server refuses every wager and transfer unless `CASINO_SOLARIS_ENABLED=true` (default `false`). Wager and payout ceilings are `CASINO_MAX_WAGER` and `CASINO_MAX_PAYOUT`. The ledger (`ledger/`, `server/wallet-store.ts`) is exact BigInt, append-only and idempotent; balance only grows by a Console-confirmed deposit or a settled payout. Deposits and withdrawals use `GET /api/players/{id}/currency` (Solaris is `currency_id` 0, balances are strings) and `POST .../add-currency`; the Console writes to the database and loads the change when the player next joins, so the character must be OFFLINE (fresh check) and the Console reply must name Solaris, the exact amount, `Offline` and the exact expected balance or the transfer is parked in `needs_reconciliation`, never retried, and settled by an administrator at `/casino/admin`. Games are pure modules registered in `games/registry.ts`; the round engine (`engine/`) reserves, settles, voids and recovers rounds, and hidden state (Mines board, Blackjack shoe, Crash point) is never part of an open-round view. Seeds are committed before play and rotation is refused while a round is open. Routes under `src/app/api/v2/casino/` derive the owner from the session only; see `docs/features/solaris-exchange.md`.
 
 - `features/bases/` owns blueprint validation, owned-base export, base preview, storage/holdings UI, and `marketplace/`. Marketplace uses sanitized community records, newest-first bounded rank reads, owner-captured 640 × 360 PNGs, and owner-verified preview updates. Publication requires a picture; older listings retain layouts but require one before import. Imports normalize optional fields and preserve claim-console, size, ownership, and duplicate-delivery checks. `Change picture` updates the existing listing without changing rank.
 
@@ -83,6 +91,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 - `features/auth/` owns Discord OAuth, credentials, Redis-backed accounts/sessions, and Discord re-verification. `server/session-store.ts` is raw persistence; `server/session.ts` is the freshness orchestration used by every session reader. Keep them acyclic.
 
 - Link previews use `generateMetadata` in `src/app/layout.tsx`; the retired Discord component-card module stays removed.
+
+- `features/events/` owns bounded Redis community event announcements, one-time competition seeding, visibility and revision checks, and automatic Discord Components V2 synchronization. Admin event management is in `features/admin/components/events-manager.tsx`; drafts never enter member reads, and event prizes never call inventory or currency APIs. Events and changelogs share `DISCORD_BOT_TOKEN` through the server-only Discord bot integration; uncertain creations never auto-resend.
 
 **## Contracts**
 

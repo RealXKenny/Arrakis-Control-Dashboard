@@ -34,6 +34,12 @@ const token = (extra: Record<string, unknown> = {}) => ({
 beforeEach(() => vi.resetModules());
 
 describe('Auth.js session cookie write-back', () => {
+  it('preserves the verified server nickname through session writes', async () => {
+    await import('../../../src/features/auth/server/config');
+    const store = await import('../../../src/features/auth/server/session-store');
+    const sid = await captured.factory!().jwt.encode({ token: token({ guildNickname: 'Server Nick' }) });
+    expect((await store.readSession(sid))?.user.guild_nickname).toBe('Server Nick');
+  });
   it('creates a new server session for a fresh sign-in', async () => {
     await import('../../../src/features/auth/server/config');
     const store = await import('../../../src/features/auth/server/session-store');

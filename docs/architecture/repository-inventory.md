@@ -55,6 +55,7 @@ src/
         [id]/
         upload/
       character/
+      events/
       guild/
       guilds/
       holdings/
@@ -63,6 +64,7 @@ src/
       market/
       portal/
       storage/
+      status/
       vehicles/
     api/
       auth/
@@ -72,10 +74,14 @@ src/
           audit/
           catalog/
           execute/
+          events/
           overview/
           sessions/
           upload/
         auth/
+          avatar/
+            [userId]/
+              [avatar]/
           password/
         bases/
           marketplace/
@@ -123,7 +129,19 @@ src/
       utils/
     bot/
       server/
+    casino/
+      components/
+      engine/
+      fairness/
+      games/
+      ledger/
+      server/
+      transfers/
     changelog/
+      server/
+    chat/
+      components/
+      hooks/
       server/
     guilds/
       components/
@@ -265,22 +283,27 @@ tests/
 
 ## Feature ownership
 
-| Feature                       | Responsibility                                                                                             |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `src/features/admin/`         | Authorized administration catalog, screens, hooks, provider execution, uploads, and guild oversight        |
-| `src/features/auth/`          | Discord/credentials sign-in, accounts, password sealing, session persistence, freshness, and authorization |
-| `src/features/bases/`         | Blueprint import/export, holdings, previews, storage UI, schemas, and base marketplace                     |
-| `src/features/bot/`           | Token-authorized read-only world service API                                                               |
-| `src/features/changelog/`     | Release reading, Discord presentation, and announcement services                                           |
-| `src/features/guilds/`        | Directory, recruitment, applications, roster, membership, support, receipts, and question forms            |
-| `src/features/landing/`       | Public landing-page presentation                                                                           |
-| `src/features/map/`           | 2D/3D terrain, markers, models, realtime data, and map interaction                                         |
-| `src/features/market/`        | Market normalization, presentation, listings, configuration, and player listings                           |
-| `src/features/player/`        | Linked-player identity, character/profile data, inventory, storage, and item imagery                       |
-| `src/features/portal/`        | Signed-in overview, world briefing, population, telemetry, and portal view models                          |
-| `src/features/server-status/` | Read-only server status handler                                                                            |
-| `src/features/vehicles/`      | Vehicle normalization, presentation, access UI, and server loading                                         |
+| Feature                       | Responsibility                                                                                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/features/admin/`         | Authorized administration catalog, screens, hooks, provider execution, uploads, and guild oversight                                                                                         |
+| `src/features/auth/`          | Discord/credentials sign-in, accounts, password sealing, session persistence, freshness, authorization, and bounded Redis-backed Discord avatar images                                      |
+| `src/features/bases/`         | Blueprint import/export, holdings, previews, storage UI, schemas, and base marketplace                                                                                                      |
+| `src/features/bot/`           | Token-authorized read-only world service API                                                                                                                                                |
+| `src/features/casino/`        | The Solaris Exchange: Redis Solaris wallet ledger, offline-only Console transfers with reconciliation, provably fair randomness, round engine, six game modules, casino API service, and UI |
+| `src/features/changelog/`     | Searchable release journal, complete multipart Discord V2 messages, tracked series updates and cleanup                                                                                      |
+| `src/features/chat/`          | Bot-compatible game chat, shared inline/path TLS validation, Chat Bridge worker, Redis history/live distribution, SSE gateway, and chat UI                                                  |
+| `src/features/events/`        | Community events, one-time seed, bounded Redis persistence, draft/revision checks and automatic Discord V2 announcements                                                                    |
+| `src/features/guilds/`        | Directory, recruitment, applications, roster, membership, support, receipts, and question forms                                                                                             |
+| `src/features/landing/`       | Public landing page: `content.ts` (all copy and links), page composition, layout illustrations                                                                                              |
+| `src/features/map/`           | 2D/3D terrain, markers, models, realtime data, and map interaction                                                                                                                          |
+| `src/features/market/`        | Market normalization, presentation, listings, configuration, and player listings                                                                                                            |
+| `src/features/player/`        | Linked-player identity, character/profile data, inventory, storage, and item imagery                                                                                                        |
+| `src/features/portal/`        | Signed-in overview, world briefing, population, telemetry, and portal view models                                                                                                           |
+| `src/features/server-status/` | Read-only server status handler and authenticated HetrixTools hosting report                                                                                                                |
+| `src/features/vehicles/`      | Vehicle normalization, presentation, access UI, and server loading                                                                                                                          |
 
 ## Reproducing the inventory
+
+`scripts/chat-bridge-supervisor.mjs` owns automatic child startup, bounded restarts, and shutdown for the existing launcher. Shared RabbitMQ TLS validation stays in `src/features/chat/server/tls.ts`; disposable TLS test material is generated by `tests/helpers/tls-certificates.ts`, and `tests/production/chat-startup.mjs` verifies the launcher against local fixtures.
 
 Run `git ls-files` to include tracked source and native dot-directory configuration. Exclude generated directories and summarize `src/assets/` by category. Inspect `git status --short` separately for pending additions, moves, or deletions. Do not describe untracked files as tracked.

@@ -64,6 +64,10 @@ const SCOPE_COLORS: Record<string, string> = Object.freeze({
   DASHBOARD: COLORS.brightOrange,
   HTTP: COLORS.brightGreen,
   STARTUP: COLORS.brightYellow,
+  REDIS: COLORS.brightMagenta,
+  CHAT: COLORS.brightCyan,
+  'CHAT BRIDGE': COLORS.brightCyan,
+  AUDIT: COLORS.brightBlue,
   default: COLORS.white,
 });
 
@@ -75,12 +79,18 @@ export type LogContext = {
   [key: string]: unknown;
 };
 
-const secretKeyPattern = /(password|token|secret|cookie|authorization|session|api[-_]?key|access[-_]?token)/i;
+const secretKeyPattern =
+  /(password|token|secret|cookie|authorization|session|api[-_]?key|access[-_]?token|private[-_]?key|certificate|^ca$|^cert$|^key$|tls[-_]?(ca|cert|key))/i;
 
-function redact(value: unknown, key = ''): unknown {
+function redact(value: unknown, key = '', seen = new WeakSet<object>(), depth = 0): unknown {
   // Dev note: secrets enter the witness protection program here.
   if (secretKeyPattern.test(key)) {
     return '[REDACTED]';
+  }
+  if (depth > 5) return '[Truncated]';
+  if (value && typeof value === 'object') {
+    if (seen.has(value)) return '[Circular]';
+    seen.add(value);
   }
   if (value instanceof Error) {
     const operationalError = ['DuneConsoleApiError', 'DiscordAdapterApiError'].includes(value.name);
@@ -92,11 +102,13 @@ function redact(value: unknown, key = ''): unknown {
     };
   }
   if (Array.isArray(value)) {
-    return value.map((item) => redact(item));
+    return value.slice(0, 20).map((item) => redact(item, '', seen, depth + 1));
   }
   if (value && typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value).map(([entryKey, entryValue]) => [entryKey, redact(entryValue, entryKey)]),
+      Object.entries(value)
+        .slice(0, 40)
+        .map(([entryKey, entryValue]) => [entryKey, redact(entryValue, entryKey, seen, depth + 1)]),
     );
   }
   return value;
@@ -111,28 +123,63 @@ function formatTimestamp(date: Date): string {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: true,
+    hourCycle: 'h23',
   }).formatToParts(date);
 
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
 
-  return `${values.month}/${values.day}/${values.year} ${values.hour}:${values.minute}:${values.second} ${values.dayPeriod}`;
+  return `${values.year}-${values.month}-${values.day} ${values.hour}:${values.minute}:${values.second}`;
 }
 
-function formatDetails(details: unknown): string {
-  if (details === undefined) {
-    return '';
-  }
+function cleanText(value: unknown): string {
+  return String(value)
+    .replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')
+    .slice(0, 500);
+}
 
-  if (typeof details === 'string') {
-    return details;
-  }
+function paint(value: string, color: string): string {
+  return process.env.NO_COLOR !== undefined ? value : `${color}${value}${COLORS.reset}`;
+}
 
-  try {
-    return JSON.stringify(details);
-  } catch {
-    return String(details);
+/** Small, readable detail rows instead of dumping transport-shaped JSON into the console. */
+function formatDetails(details: unknown): string[] {
+  const fields: string[] = [];
+  function visit(value: unknown, path = ''): void {
+    if (value === undefined || fields.length >= 40) return;
+    if (Array.isArray(value) && value.some((item) => item && typeof item === 'object')) {
+      value.forEach((item, index) => visit(item, `${path} / ${index + 1}`));
+      return;
+    }
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      for (const [key, child] of Object.entries(value)) visit(child, path ? `${path} / ${key}` : key);
+      return;
+    }
+    const label = cleanText(
+      path
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/[_-]+/g, ' ')
+        .toLowerCase(),
+    );
+    const text = Array.isArray(value) ? value.map((item) => cleanText(item)).join(', ') : cleanText(value ?? '—');
+    const color = value === '[REDACTED]' ? COLORS.dim : typeof value === 'number' ? COLORS.brightCyan : COLORS.white;
+    fields.push(`${label ? `${paint(label, COLORS.dim)} ${paint('=', COLORS.dim)} ` : ''}${paint(text, color)}`);
   }
+  visit(details);
+  const rows: string[] = [];
+  let row: string[] = [];
+  let width = 0;
+  for (const field of fields) {
+    const length = field.replace(/\u001b\[[0-9;]*m/g, '').length;
+    if (row.length && (width + length > 100 || row.length >= 4)) {
+      rows.push(row.join(paint('  ·  ', COLORS.dim)));
+      row = [];
+      width = 0;
+    }
+    row.push(field);
+    width += length + 5;
+  }
+  if (row.length) rows.push(row.join(paint('  ·  ', COLORS.dim)));
+  return rows;
 }
 
 export interface Logger {
@@ -144,25 +191,38 @@ export interface Logger {
   fatal(message: string, error?: unknown): void;
 }
 
+/** Shared rendering for application and audit sinks; filtering and output routing belong to the caller. */
+export function formatConsoleEntry(
+  scope: string,
+  level: LogLevel,
+  message: string,
+  details?: unknown,
+  at = new Date(),
+): string {
+  const scopeColor = SCOPE_COLORS[scope] ?? SCOPE_COLORS.default;
+  const output =
+    `${paint(formatTimestamp(at), COLORS.dim)}  ` +
+    `${paint(`${LEVEL_ICONS[level]} ${level.padEnd(5)}`, LEVEL_COLORS[level])} ` +
+    `${paint(scope.padEnd(12), scopeColor)} ${paint('│', COLORS.dim)} ` +
+    cleanText(message);
+  const safeDetails = redact(details);
+  const rows = formatDetails(safeDetails);
+  const inline = rows.length === 1 && rows[0].replace(/\u001b\[[0-9;]*m/g, '').length <= 100;
+  return inline
+    ? `${output} ${paint('·', COLORS.dim)} ${rows[0]}`
+    : rows.length
+      ? `${output}\n${rows.map((line) => `    ${paint('↳', COLORS.dim)} ${line}`).join('\n')}`
+      : output;
+}
+
 export function createLogger(scope: string, minimumLevel: string = getServerEnv().LOG_LEVEL): Logger {
   const normalizedLevel = minimumLevel.toUpperCase() as LogLevel;
   const threshold = LEVELS[normalizedLevel] ?? LEVELS.INFO;
-  const scopeColor = SCOPE_COLORS[scope] ?? SCOPE_COLORS.default;
 
   function write(level: LogLevel, message: string, details?: unknown): void {
     // Dev note: quiet logs are not shy; they simply missed the threshold.
-    if (LEVELS[level] < threshold) {
-      return;
-    }
-
-    const output =
-      `${COLORS.dim}[${formatTimestamp(new Date())}]${COLORS.reset} ` +
-      `${LEVEL_COLORS[level]}${LEVEL_ICONS[level]} [${level}]${COLORS.reset} ` +
-      `${scopeColor}[${scope}]${COLORS.reset} ` +
-      message;
-    const safeDetails = redact(details);
-    const line = formatDetails(safeDetails);
-    const formattedOutput = line ? `${output} ${COLORS.dim}·${COLORS.reset} ${line}` : output;
+    if (LEVELS[level] < threshold) return;
+    const formattedOutput = formatConsoleEntry(scope, level, message, details);
 
     if (level === 'ERROR' || level === 'FATAL') {
       // Dev note: errors use stderr because regular output asked for boundaries.
@@ -191,17 +251,27 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
       }
 
       // Dev note: even Pterodactyl gets a clean runway before this banner lands.
-      process.stdout.write(CLEAR_TERMINAL);
+      if (process.stdout.isTTY && process.env.NO_COLOR === undefined) process.stdout.write(CLEAR_TERMINAL);
       const width = 64;
       const border = '─'.repeat(width);
-      console.log(`\n${COLORS.brightOrange}╭${border}╮${COLORS.reset}`);
+      console.log(`\n${paint(`╭${border}╮`, COLORS.brightOrange)}`);
       console.log(
-        `${COLORS.brightOrange}│${COLORS.reset} ${COLORS.brightYellow}${title.padEnd(width - 1)}${COLORS.reset}${COLORS.brightOrange}│${COLORS.reset}`,
+        `${paint('│', COLORS.brightOrange)} ${paint(
+          cleanText(title)
+            .slice(0, width - 1)
+            .padEnd(width - 1),
+          COLORS.brightYellow,
+        )}${paint('│', COLORS.brightOrange)}`,
       );
       console.log(
-        `${COLORS.brightOrange}│${COLORS.reset} ${COLORS.dim}${subtitle.padEnd(width - 1)}${COLORS.reset}${COLORS.brightOrange}│${COLORS.reset}`,
+        `${paint('│', COLORS.brightOrange)} ${paint(
+          cleanText(subtitle)
+            .slice(0, width - 1)
+            .padEnd(width - 1),
+          COLORS.dim,
+        )}${paint('│', COLORS.brightOrange)}`,
       );
-      console.log(`${COLORS.brightOrange}╰${border}╯${COLORS.reset}\n`);
+      console.log(`${paint(`╰${border}╯`, COLORS.brightOrange)}\n`);
     },
     debug: (message: string, details?: unknown) => write('DEBUG', message, details),
     info: (message: string, details?: unknown) => write('INFO', message, details),

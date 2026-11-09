@@ -26,14 +26,14 @@ npm run marketplace:rekey                                           # should rep
 npm run marketplace:rekey -- --rollback /secure/rekey.json          # undo, even an interrupted apply
 ```
 
-| Property            | Behaviour (covered by real-Redis tests on standalone Redis 7 and a Cluster)                                  |
-| ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Environment         | `REDIS_URL` (or `REDIS_CLUSTER_NODES`), `OWNER_KEY_SECRET` (or `AUTH_SECRET`), optional `OWNER_KEY_PREVIOUS_SECRET`; loads `.env` from the working directory |
-| Online              | Safe while the dashboard runs; it accepts both key generations                                                 |
-| Resumable           | The listing's owner record changes last; counters are recomputed from stored data; safe to repeat or resume    |
-| Ownership           | Preserved; listings whose owner has no known account are left unchanged and reported                           |
-| Backup              | Contains listing documents: treat as sensitive; store outside the repository                                    |
-| Dry run             | Never writes                                                                                                    |
+| Property    | Behaviour (covered by real-Redis tests on standalone Redis 7 and a Cluster)                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Environment | `REDIS_URL` (or `REDIS_CLUSTER_NODES`), `OWNER_KEY_SECRET` (or `AUTH_SECRET`), optional `OWNER_KEY_PREVIOUS_SECRET`; loads `.env` from the working directory |
+| Online      | Safe while the dashboard runs; it accepts both key generations                                                                                               |
+| Resumable   | The listing's owner record changes last; counters are recomputed from stored data; safe to repeat or resume                                                  |
+| Ownership   | Preserved; listings whose owner has no known account are left unchanged and reported                                                                         |
+| Backup      | Contains listing documents: treat as sensitive; store outside the repository                                                                                 |
+| Dry run     | Never writes                                                                                                                                                 |
 
 ### Rotating `OWNER_KEY_SECRET`
 
@@ -45,5 +45,5 @@ and run the apply command again. Remove `OWNER_KEY_PREVIOUS_SECRET` afterwards.
 1. Take a Redis backup ([backups](../administration/backups.md)).
 2. Confirm the final `OWNER_KEY_SECRET` is set.
 3. Dry run and review counts. 4. Apply with `--backup` to a private location. 5. Dry run again: `0 to migrate`.
-6. Verify in the dashboard that a member can see, update and delete their own listing and that quota counters are right.
-7. Keep the backup until the change is accepted. Never run migrations against production data without a snapshot.
+4. Verify in the dashboard that a member can see, update and delete their own listing and that quota counters are right.
+5. Keep the backup until the change is accepted. Never run migrations against production data without a snapshot.

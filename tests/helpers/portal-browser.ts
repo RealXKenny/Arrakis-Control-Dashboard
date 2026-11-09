@@ -5,7 +5,7 @@ import { summarizePopulation } from '../../src/features/portal/population';
 export const version = packageJson.version;
 
 export const player = {
-  avatarUrl: 'https://cdn.discordapp.com/avatars/12345/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png?size=128',
+  avatarUrl: '/api/v2/auth/avatar/12345/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
   linked: true,
   pawnId: 'tester',
   characterName: 'Desert Navigator',
@@ -87,7 +87,7 @@ test.beforeEach(async ({ page }) => {
       },
     }),
   );
-  await page.route('https://cdn.discordapp.com/avatars/**', (route) =>
+  await page.route('**/api/v2/auth/avatar/**', (route) =>
     route.fulfill({ path: 'src/assets/maps/atreides.webp', contentType: 'image/webp' }),
   );
   await page.route('**/api/portal/world?*', (route) =>

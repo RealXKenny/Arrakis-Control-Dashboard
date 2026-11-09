@@ -3,9 +3,7 @@ import { discordAvatar } from '../../../src/features/player/server/avatar';
 import { filterOwnedListings } from '../../../src/features/market/server/my-listings';
 
 it('constructs Discord avatar URLs only from valid session fields', () => {
-  expect(discordAvatar({ id: '12345', avatar: 'a'.repeat(32) })).toBe(
-    `https://cdn.discordapp.com/avatars/12345/${'a'.repeat(32)}.png?size=128`,
-  );
+  expect(discordAvatar({ id: '12345', avatar: 'a'.repeat(32) })).toBe(`/api/v2/auth/avatar/12345/${'a'.repeat(32)}`);
   expect(discordAvatar({ id: '../bad', avatar: 'a'.repeat(32) })).toBeNull();
   expect(discordAvatar({ id: '12345', avatar: null })).toBeNull();
 });

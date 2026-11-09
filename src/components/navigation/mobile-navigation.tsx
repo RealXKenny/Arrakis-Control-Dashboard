@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { NavigationLink as Link } from './navigation-link';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import type { NavIdentity } from '../../features/auth/identity';
 import { Avatar } from './avatar';

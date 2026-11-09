@@ -1,0 +1,168 @@
+/*
+ * Solaris Exchange presentation. Palette and shape follow the dashboard (obsidian, sand, spice; sharp
+ * corners; hard shadows). Every animation is disabled under prefers-reduced-motion.
+ */
+
+.table {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--color-spice-500) 45%, transparent);
+  background:
+    linear-gradient(135deg, rgb(241 233 216 / 0.035) 25%, transparent 25%) 0 0 / 28px 28px,
+    linear-gradient(225deg, rgb(241 233 216 / 0.035) 25%, transparent 25%) 0 0 / 28px 28px,
+    var(--color-obsidian-900);
+  box-shadow: 6px 6px 0 0 var(--color-spice-800);
+}
+
+.card {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 3.5rem;
+  height: 5rem;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--color-sand-300);
+  background: var(--color-sand-100);
+  color: var(--color-obsidian-950);
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 3px 3px 0 0 rgb(0 0 0 / 0.5);
+  animation: deal 260ms ease-out both;
+}
+
+.cardRed {
+  color: #9b2c1b;
+}
+
+.cardBack {
+  background:
+    repeating-linear-gradient(45deg, var(--color-spice-700) 0 4px, var(--color-obsidian-900) 4px 8px),
+    var(--color-obsidian-900);
+  border-color: var(--color-spice-400);
+}
+
+.coin {
+  display: grid;
+  place-items: center;
+  width: 8rem;
+  height: 8rem;
+  border: 3px solid var(--color-spice-400);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--color-spice-300), var(--color-spice-600));
+  color: var(--color-obsidian-950);
+  box-shadow: 5px 5px 0 0 var(--color-spice-800);
+  transform: rotateY(var(--turn, 0deg));
+}
+
+.coinSpin {
+  animation: flip 1000ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.wheel {
+  display: grid;
+  place-items: center;
+  width: 11rem;
+  height: 11rem;
+  border: 6px double var(--color-spice-500);
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #7a1d12 0 9.7deg, #14100b 9.7deg 19.4deg);
+  background-size: 100% 100%;
+  box-shadow: 5px 5px 0 0 var(--color-spice-800);
+  transform: rotate(var(--turn, 0deg));
+}
+
+.wheelSpin {
+  animation: spin 1400ms cubic-bezier(0.15, 0.6, 0.2, 1) both;
+}
+
+.wheelHub {
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  border: 2px solid var(--color-spice-400);
+  border-radius: 50%;
+  background: var(--color-obsidian-950);
+  transform: rotate(calc(var(--turn, 0deg) * -1));
+}
+
+.storm {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 18%;
+  background: linear-gradient(90deg, rgb(155 106 54 / 0.65), transparent);
+  pointer-events: none;
+}
+
+.thopter {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  transition: transform 180ms linear;
+}
+
+.tile {
+  aspect-ratio: 1;
+  min-height: 3rem;
+  border: 1px solid rgb(241 233 216 / 0.2);
+  background: var(--color-obsidian-800);
+  color: var(--color-sand-100);
+  font-weight: 700;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.tile:hover:not(:disabled) {
+  border-color: var(--color-spice-400);
+}
+
+.tileSafe {
+  background: color-mix(in srgb, var(--color-spice-500) 28%, var(--color-obsidian-900));
+  border-color: var(--color-spice-400);
+}
+
+.tileHazard {
+  background: #5c1810;
+  border-color: #c2452e;
+}
+
+@keyframes deal {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes flip {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(calc(var(--turn, 0deg) + 1440deg));
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(calc(var(--turn, 0deg) + 1080deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .coinSpin,
+  .wheelSpin {
+    animation: none;
+  }
+  .thopter,
+  .tile {
+    transition: none;
+  }
+}

@@ -23,7 +23,7 @@ export default async function AdminChangelogPage() {
       <PageHeader eyebrow="Administration" title="Discord announcements">
         <dl className="flex flex-wrap gap-x-8 gap-y-2 font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">
           <div className="flex gap-2">
-            <dt className="text-sand-600">Webhook</dt>
+            <dt className="text-sand-600">Discord bot</dt>
             <dd className={status.configured ? 'text-status-ok' : 'text-status-warn'}>
               {status.configured ? 'Configured' : 'Not set'}
             </dd>

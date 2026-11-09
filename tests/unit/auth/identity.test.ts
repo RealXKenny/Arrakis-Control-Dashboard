@@ -36,8 +36,8 @@ describe('nav identity', () => {
     expect(navIdentity({ user }).ign).toBe('Global');
     expect(navIdentity({ user: { id: '123' } }).ign).toBe('Unknown');
   });
-  it('builds only well-formed Discord CDN avatar URLs', () => {
-    expect(discordAvatarUrl('123', hash)).toBe(`https://cdn.discordapp.com/avatars/123/${hash}.png?size=64`);
+  it('builds only well-formed same-origin avatar URLs', () => {
+    expect(discordAvatarUrl('123', hash)).toBe(`/api/v2/auth/avatar/123/${hash}`);
     expect(discordAvatarUrl('123', '../x')).toBeNull();
     expect(discordAvatarUrl('abc', hash)).toBeNull();
     expect(discordAvatarUrl('123', null)).toBeNull();

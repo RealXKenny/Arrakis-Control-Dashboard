@@ -17,6 +17,6 @@ export function normalizeLinkedPlayer(value: unknown) {
   if (!parsed.success) throw new AppError('Unable to read linked character', 502, 'UPSTREAM_ERROR', true);
   return parsed.data;
 }
-export async function getLinkedPlayer(actor: unknown) {
-  return normalizeLinkedPlayer(await getDiscordPlayer(actor));
+export async function getLinkedPlayer(actor: unknown, options?: { timeout?: number }) {
+  return normalizeLinkedPlayer(await (options ? getDiscordPlayer(actor, options) : getDiscordPlayer(actor)));
 }

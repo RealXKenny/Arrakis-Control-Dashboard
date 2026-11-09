@@ -3,6 +3,7 @@ import {
   isNavigationActive,
   NAVIGATION_ITEMS,
   navigationFor,
+  needsDocumentNavigation,
   resolveNavigationItems,
   type NavigationItem,
 } from '../../../src/components/navigation/nav-config';
@@ -18,9 +19,56 @@ function navigationLinks(items: readonly NavigationItem[]): readonly NavigationI
 }
 
 describe('unified navigation configuration', () => {
+  it('reloads documents only when entering or leaving a route with a distinct document policy', () => {
+    expect(needsDocumentNavigation('/portal', '/status')).toBe(true);
+    expect(needsDocumentNavigation('/status', '/portal')).toBe(true);
+    expect(needsDocumentNavigation('/status', '/')).toBe(true);
+    expect(needsDocumentNavigation('/portal', '/character')).toBe(false);
+  });
+  it('puts Home first, for everyone, pointing at the landing page route', () => {
+    for (const isAdmin of [false, true]) {
+      const [first] = navigationFor({ isAdmin });
+      expect(first).toMatchObject({ id: 'home', label: 'Home', href: '/', exact: true, icon: 'home' });
+    }
+    expect(navigationFor()[0]!.requiredPermissions).toBeUndefined();
+  });
+  it('lights Home up on the landing page only, never on dashboard routes', () => {
+    const home = navigationFor()[0]!;
+    expect(isNavigationActive('/', home)).toBe(true);
+    for (const route of [
+      '/portal',
+      '/casino',
+      '/casino/games/great-houses',
+      '/chat',
+      '/guilds',
+      '/map',
+      '/bases/upload',
+      '/changelog',
+    ])
+      expect(isNavigationActive(route, home), route).toBe(false);
+  });
+  it('reaches Home by client navigation, except from a route with its own document policy', () => {
+    for (const route of ['/portal', '/map', '/casino', '/chat', '/guilds'])
+      expect(needsDocumentNavigation(route, '/'), route).toBe(false);
+    expect(needsDocumentNavigation('/status', '/')).toBe(true);
+  });
+  it('keeps Service status inside More rather than promoting it to a top-level destination', () => {
+    const items = navigationFor();
+    expect(items.some((item) => item.href === '/status')).toBe(false);
+    expect(items.find((item) => item.id === 'more')?.children?.find((item) => item.href === '/status')).toMatchObject({
+      label: 'Service status',
+    });
+    expect(
+      isNavigationActive(
+        '/status',
+        items.find((item) => item.id === 'more')!,
+      ),
+    ).toBe(true);
+  });
   it('keeps every real destination in one ordered, deduplicated inventory', () => {
     const links = navigationLinks(navigationFor({ isAdmin: true }));
     expect(links.map((item) => item.href)).toEqual([
+      '/',
       '/portal',
       '/character',
       '/holdings',
@@ -33,11 +81,26 @@ describe('unified navigation configuration', () => {
       '/guilds',
       '/guild',
       '/map',
+      '/chat',
+      '/casino',
+      '/casino/games/emperors-hand',
+      '/casino/games/spice-wheel',
+      '/casino/games/fate-of-arrakis',
+      '/casino/games/spice-harvest',
+      '/casino/games/ornithopter-run',
+      '/casino/games/great-houses',
+      '/casino/wallet',
+      '/casino/history',
+      '/casino/fairness',
+      '/casino/admin',
+      '/casino/rules',
       '/changelog',
+      '/status',
+      '/events',
       '/admin',
     ]);
     expect(new Set(links.map((item) => item.href)).size).toBe(links.length);
-    expect(NAVIGATION_ITEMS.map((item) => item.order)).toEqual([10, 20, 30, 40, 50, 60, 70, 80, 90]);
+    expect(NAVIGATION_ITEMS.map((item) => item.order)).toEqual([5, 10, 20, 30, 40, 50, 60, 70, 80, 85, 87, 90]);
   });
 
   it('hides administration unless the server supplies admin visibility', () => {

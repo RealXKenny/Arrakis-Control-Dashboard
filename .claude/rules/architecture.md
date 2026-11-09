@@ -1,4 +1,5 @@
 # Architecture and ownership
+
 - Read `AGENTS.md` and `docs/architecture/file-organization.md` before moving or creating files.
 - `src/app/`: routing and framework entry points only. `src/pages/api/`: supported thin legacy handlers.
 - `src/features/`: business domains: admin, auth, bases, bot, changelog, guilds, landing, map, market, player, portal, server-status, vehicles.

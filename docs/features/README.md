@@ -1,18 +1,22 @@
 # Features
 
-| Feature                                           | Who uses it                | Page                                       |
-| ------------------------------------------------- | -------------------------- | ------------------------------------------ |
-| [Dashboard (portal, market, status)](dashboard.md) | Every member               | `/portal`, `/market`, landing `/`          |
-| [Character, holdings and storage](player-management.md) | Every member         | `/character`, `/holdings`, `/storage`      |
-| [Vehicles](vehicles.md)                           | Every member               | `/vehicles`                                 |
-| [Maps](maps.md)                                   | Every member               | `/map`                                      |
-| [Guilds](guilds.md)                               | Members; leaders manage    | `/guilds`, `/guild`                         |
-| [Guild recruitment and applications](guild-recruitment.md) | Applicants, leaders | `/guilds`, `/guild`                         |
-| [Base marketplace](marketplace.md)                | Every member               | `/bases`, `/bases/upload`, `/bases/[id]`    |
-| [Notifications](notifications.md)                 | Every member               | Top navigation                              |
-| [Administrator panel](administrator-panel.md)     | Administrators only        | `/admin`                                    |
-| [Audit logs](audit-logs.md)                       | Administrators             | `/api/v2/admin/audit`, stdout               |
-| [Sessions](sessions.md)                           | Members; administrators    | Sign-in, sign-out, revocation               |
+| Feature                                                    | Who uses it                    | Page                                     |
+| ---------------------------------------------------------- | ------------------------------ | ---------------------------------------- |
+| [Dashboard (portal, market, status)](dashboard.md)         | Every member                   | `/portal`, `/market`, landing `/`        |
+| [Character, holdings and storage](player-management.md)    | Every member                   | `/character`, `/holdings`, `/storage`    |
+| [Vehicles](vehicles.md)                                    | Every member                   | `/vehicles`                              |
+| [Maps](maps.md)                                            | Every member                   | `/map`                                   |
+| [Service status](dashboard.md#service-status)              | Every member                   | `/status` (always under More)            |
+| [Community events](community-events.md)                    | Members; administrators manage | `/events`, `/admin?tab=events`           |
+| [Live game chat](live-chat.md)                             | Every member                   | `/chat`                                  |
+| [The Solaris Exchange](solaris-exchange.md)                | Every member                   | `/casino`, `/casino/games/[game]`        |
+| [Guilds](guilds.md)                                        | Members; leaders manage        | `/guilds`, `/guild`                      |
+| [Guild recruitment and applications](guild-recruitment.md) | Applicants, leaders            | `/guilds`, `/guild`                      |
+| [Base marketplace](marketplace.md)                         | Every member                   | `/bases`, `/bases/upload`, `/bases/[id]` |
+| [Notifications](notifications.md)                          | Every member                   | Top navigation                           |
+| [Administrator panel](administrator-panel.md)              | Administrators only            | `/admin`                                 |
+| [Audit logs](audit-logs.md)                                | Administrators                 | `/api/v2/admin/audit`, stdout            |
+| [Sessions](sessions.md)                                    | Members; administrators        | Sign-in, sign-out, revocation            |
 
 Public pages: `/` (landing) and `/changelog`. Every page in the signed-in workspace calls `requireSession()` itself; anonymous
 visitors are redirected to `/login`. Which data you see depends on your linked in-game character, resolved through the Console.

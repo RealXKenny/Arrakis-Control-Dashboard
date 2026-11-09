@@ -29,16 +29,16 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 
 **The full documentation center is in [docs/](docs/README.md).** Start with the guide that matches what you are doing:
 
-| I want to…                                         | Go to                                                                                   |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Set up everything from an empty Linux host         | [End-to-end RedBlink + dashboard setup](docs/getting-started/end-to-end-redblink-setup.md) |
-| Install the dashboard                              | [Installation](docs/installation/README.md) (local, production, Pterodactyl, reverse proxy) |
-| Configure Discord, Redis, the Console, admins      | [Configuration](docs/configuration/README.md)                                           |
-| Connect the RedBlink Dune Docker Console           | [RedBlink integration](docs/integrations/redblink-dune-docker.md)                       |
-| Harden and release a production deployment         | [Security](docs/security/README.md) · [Deployment](docs/deployment/README.md)           |
-| Look up an endpoint, command or setting            | [API](docs/api/README.md) · [Reference](docs/reference/README.md)                       |
-| Fix a problem                                      | [Troubleshooting](docs/troubleshooting/README.md)                                       |
-| Contribute code                                    | [Development](docs/development/README.md) · [CONTRIBUTING.md](CONTRIBUTING.md)          |
+| I want to…                                    | Go to                                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Set up everything from an empty Linux host    | [End-to-end RedBlink + dashboard setup](docs/getting-started/end-to-end-redblink-setup.md)  |
+| Install the dashboard                         | [Installation](docs/installation/README.md) (local, production, Pterodactyl, reverse proxy) |
+| Configure Discord, Redis, the Console, admins | [Configuration](docs/configuration/README.md)                                               |
+| Connect the RedBlink Dune Docker Console      | [RedBlink integration](docs/integrations/redblink-dune-docker.md)                           |
+| Harden and release a production deployment    | [Security](docs/security/README.md) · [Deployment](docs/deployment/README.md)               |
+| Look up an endpoint, command or setting       | [API](docs/api/README.md) · [Reference](docs/reference/README.md)                           |
+| Fix a problem                                 | [Troubleshooting](docs/troubleshooting/README.md)                                           |
+| Contribute code                               | [Development](docs/development/README.md) · [CONTRIBUTING.md](CONTRIBUTING.md)              |
 
 ## Features
 
@@ -48,6 +48,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - **Scoped administration:** dedicated screens for players, guilds, bases, vehicles, maps, market, backups, logs, updates, addons, and server controls.
 - **Operational safeguards:** scoped credentials, same-origin mutations, confirmation dialogs, bounded transfers, and redacted audit events.
 - **Maps and telemetry:** interactive Hagga Basin and Deep Desert maps, optional realtime layers, population history, and world briefings.
+- **Live game chat:** bidirectional Map chat through the existing game RabbitMQ protocol, with a dedicated worker, bounded Redis history, and real-time dashboard updates. See [Live game chat](docs/features/live-chat.md).
 
 ### Players and community
 
@@ -62,7 +63,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - Email/password login linked to a Discord-verified email address.
 - Redis standalone or Cluster support for sessions, rate limits, and feature records.
 - A versioned, token-authorized, read-only bot API for sanitized world summaries.
-- Release announcements through an optional Discord webhook.
+- Release, progress, and community event announcements through the main Discord bot using Components V2 containers.
 
 The administration catalog distinguishes available operations, restricted Console-only operations, and planned or unsupported entries. Experimental adapter tools depend on the installed provider and configured scopes; the README does not claim that every catalog operation is supported by every Console installation.
 
@@ -153,21 +154,26 @@ Never commit `.env` or place secrets in `NEXT_PUBLIC_` variables.
 
 Use [`.env.example`](.env.example) as the complete template; every variable, range and production rule is in [environment variables](docs/configuration/environment-variables.md). The main settings are:
 
-| Setting                                                          | Purpose                                                                                        |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`                | Dune Console and adapter access                                                                |
-| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID` | Discord OAuth and guild authorization                                                          |
-| `VERIFIED_MEMBER_ROLE_ID`                                        | Required member role                                                                           |
-| `APP_URL`                                                        | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                 |
-| `AUTH_SECRET`                                                    | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters |
-| `ADMIN_DISCORD_IDS`                                              | Comma-separated administrator Discord IDs; required in production                              |
-| `REDIS_URL`                                                      | Redis connection, credentials, database, and optional TLS                                      |
-| `REDIS_CLUSTER_NODES`                                            | Optional Cluster bootstrap nodes; `REDIS_URL` still supplies credentials and TLS               |
-| `ADMIN_CONSOLE_API_KEY`                                          | Optional separate credential for scoped administrator operations                               |
-| `TRUSTED_PROXY_COUNT`                                            | Exact reverse-proxy count used to select the trusted forwarded address                         |
-| `OWNER_KEY_SECRET`                                               | Optional dedicated secret for marketplace ownership keys                                       |
-| `BOT_API_TOKEN`                                                  | Optional independent credential for the read-only bot API                                      |
-| `CHANGELOG_WEBHOOK_URL`, `CHANGELOG_AUTO_ANNOUNCE`               | Optional Discord release announcements                                                         |
+| Setting                                                                                       | Purpose                                                                                                                    |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`                                             | Dune Console and adapter access                                                                                            |
+| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`                              | Discord OAuth and guild authorization                                                                                      |
+| `VERIFIED_MEMBER_ROLE_ID`                                                                     | Required member role                                                                                                       |
+| `APP_URL`                                                                                     | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                             |
+| `AUTH_SECRET`                                                                                 | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters                             |
+| `ADMIN_DISCORD_IDS`                                                                           | Comma-separated administrator Discord IDs; required in production                                                          |
+| `REDIS_URL`                                                                                   | Redis connection, credentials, database, and optional TLS                                                                  |
+| `REDIS_CLUSTER_NODES`                                                                         | Optional Cluster bootstrap nodes; `REDIS_URL` still supplies credentials and TLS                                           |
+| `ADMIN_CONSOLE_API_KEY`                                                                       | Optional separate credential for scoped administrator operations                                                           |
+| `TRUSTED_PROXY_COUNT`                                                                         | Exact reverse-proxy count used to select the trusted forwarded address                                                     |
+| `OWNER_KEY_SECRET`                                                                            | Optional dedicated secret for marketplace ownership keys                                                                   |
+| `BOT_API_TOKEN`                                                                               | Optional independent credential for the read-only bot API                                                                  |
+| `DISCORD_BOT_TOKEN`, `CHANGELOG_CHANNEL_ID`, `COMMUNITY_EVENTS_CHANNEL_ID`, `CHANGELOG_AUTO_ANNOUNCE` | Optional Components V2 announcements using the shared main bot; see [Discord announcements](docs/integrations/webhooks.md) |
+| `CHAT_ENABLED`, `RABBITMQ_URL`, `CHAT_SERVERS`                                                | Optional live game chat; see the chat guide for the complete worker and history settings                                   |
+| `CHAT_DISCORD_BOT_FUNCOM_ID`                                                                  | Optional exact Discord relay bot identity; requires the `[Discord]` prefix before showing a Discord badge and relayed name |
+| `RABBITMQ_TLS_ENABLED`, `RABBITMQ_TLS_CA`, `RABBITMQ_TLS_CERT`, `RABBITMQ_TLS_KEY`            | Optional inline PEM trust/client identity; TLS follows the URL scheme by default                                           |
+| `RABBITMQ_TLS_CA_PATH`, `RABBITMQ_TLS_CERT_PATH`, `RABBITMQ_TLS_KEY_PATH`, `RABBITMQ_CA_FILE` | Path fallbacks; inline PEM takes precedence, legacy CA path remains supported                                              |
+| `RABBITMQ_TLS_REJECT_UNAUTHORIZED`, `RABBITMQ_TLS_SERVERNAME`                                 | Verification stays enabled; optional DNS identity must match the broker certificate                                        |
 
 Redis TLS and public-network settings are validated by the current environment schema. Review `REDIS_REQUIRE_TLS` and `REDIS_ALLOW_INSECURE` before deploying outside a trusted network.
 
@@ -180,7 +186,7 @@ Redis TLS and public-network settings are validated by the current environment s
 3. Assign the application port and complete the required Startup settings.
 4. Keep the server volume writable and make Console, Discord, GitHub, and Redis reachable from the container.
 
-The installer selects the newest release or the exact `RELEASE_TAG`, verifies the release archive against its published SHA-256 checksum, checks archive safety, builds the application, and prunes development dependencies. Reinstall to update. There is no custom application image or GHCR package to pull.
+The installer selects the newest release or the exact `RELEASE_TAG`, verifies the release archive against its published SHA-256 checksum, checks archive safety, builds the application, and prunes development dependencies. Reinstall to update. Live Chat uses the normal Node.js/Pterodactyl startup; see [automatic startup](docs/features/live-chat.md#nodejs-and-pterodactyl-deployment).
 
 ### Direct Node.js deployment
 
@@ -227,8 +233,8 @@ docs/              # Documentation center, architecture notes, legal files, and 
 | Command                    | Purpose                                                                        |
 | -------------------------- | ------------------------------------------------------------------------------ |
 | `npm run dev`              | Start the development server                                                   |
-| `npm run ai:check` | Validate coding assistant configuration |
-| `npm run docs:check` | Validate documentation links and anchors |
+| `npm run ai:check`         | Validate coding assistant configuration                                        |
+| `npm run docs:check`       | Validate documentation links and anchors                                       |
 | `npm run format:check`     | Check source, test, and script formatting                                      |
 | `npm run typecheck`        | Run TypeScript validation                                                      |
 | `npm run lint`             | Run ESLint with zero warnings allowed                                          |
@@ -238,6 +244,7 @@ docs/              # Documentation center, architecture notes, legal files, and 
 | `npm run test:integration` | Run opt-in integration tests against explicitly configured test infrastructure |
 | `npm run build`            | Create the production build                                                    |
 | `npm start`                | Start the built application                                                    |
+| `npm run chat:bridge`      | Standalone diagnostic worker; do not run alongside automatic startup           |
 
 For `test:integration`, set only disposable loopback Redis through `TEST_REDIS_URL` or `TEST_REDIS_CLUSTER_NODES`. Those tests flush the selected test database; never point them at a production instance.
 

@@ -23,7 +23,7 @@ flowchart TD
 ```
 
 `src/proxy.ts` (Next.js 16's replacement for middleware) issues a per-request `'nonce-…'` CSP, so pages stay dynamically rendered
-(`APP_URL` is a runtime variable). The CSP allows no third-party script, connect or image origin except Discord's CDN for avatars.
+(`APP_URL` is a runtime variable). The CSP allows no third-party script, connect or image origin. Discord avatars use authenticated same-origin URLs backed by a bounded Redis image cache.
 
 ## Authentication
 

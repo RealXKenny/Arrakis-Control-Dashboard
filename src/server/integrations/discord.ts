@@ -94,7 +94,9 @@ export async function readDiscordIdentity(accessToken: string, guildId: string) 
   const roles = Array.isArray(memberResponseData.roles)
     ? memberResponseData.roles.filter((role): role is string => typeof role === 'string' && /^\d{1,25}$/.test(role))
     : [];
-  const memberData = { roles };
+  const memberData: { roles: string[]; nick?: string } = { roles };
+  if (typeof memberResponseData.nick === 'string' && memberResponseData.nick.trim())
+    memberData.nick = memberResponseData.nick.trim().slice(0, 100);
 
   return { userData, memberData };
 }

@@ -16,20 +16,29 @@ describe('redisTransportWarnings', () => {
     }
   });
 
-  it('warns about plain-text Redis on a public-looking host, a missing password and cluster TLS', async () => {
+  it('keeps the missing-password warning without repeating transport advisories', async () => {
     const { redisTransportWarnings } = await import('../../../src/config/env');
     const warnings = redisTransportWarnings({
       NODE_ENV: 'production',
       REDIS_URL: 'redis://redis.example.com:6379',
       REDIS_CLUSTER_NODES: 'a:1,b:2',
     });
-    expect(warnings).toHaveLength(3);
+    expect(warnings).toEqual([
+      'REDIS_URL carries no password; make sure Redis is not reachable from untrusted networks.',
+    ]);
     expect(warnings.join(' ')).not.toMatch(/pw|:\/\/.*@/);
     expect(
       redisTransportWarnings({
         NODE_ENV: 'production',
         REDIS_URL: 'rediss://:pw@redis.example.com',
         REDIS_CLUSTER_NODES: undefined,
+      }),
+    ).toEqual([]);
+    expect(
+      redisTransportWarnings({
+        NODE_ENV: 'production',
+        REDIS_URL: 'redis://:pw@redis.example.com:6379',
+        REDIS_CLUSTER_NODES: 'a:1,b:2',
       }),
     ).toEqual([]);
   });

@@ -81,9 +81,7 @@ describe('server launcher', () => {
     await vi.advanceTimersByTimeAsync(2000);
     await pending;
     expect(probe).toHaveBeenCalledTimes(3);
-    expect(write).toHaveBeenCalledExactlyOnceWith(
-      'Ready in — Arrakis Control Dashboard is listening (HTTP check passed).',
-    );
+    expect(write).toHaveBeenCalledExactlyOnceWith('Dashboard ready in 2.0s (HTTP check passed).');
     expect(vi.getTimerCount()).toBe(0);
   });
 

@@ -50,7 +50,11 @@ async function end(sessionId: string, reason: string): Promise<null> {
   return null;
 }
 
-async function verify(sessionId: string, session: DashboardSession): Promise<DashboardSession | null> {
+async function verify(
+  sessionId: string,
+  session: DashboardSession,
+  profileOnly: boolean,
+): Promise<DashboardSession | null> {
   // A session that was never stamped (issued before re-checks existed) has no grace at all.
   const withinGrace = session.verifiedAt !== undefined && Date.now() - session.verifiedAt < SESSION_MAX_STALE_MS;
   const discordId = session.user.id;
@@ -59,10 +63,15 @@ async function verify(sessionId: string, session: DashboardSession): Promise<Das
   // Discord rotates refresh tokens, so two simultaneous refreshes would invalidate each other.
   if (!(await acquireLock(lockKey))) return withinGrace ? session : null;
   try {
+    if (profileOnly && withinGrace) {
+      session = { ...session, profileRefreshAttemptedAt: Date.now() };
+      if (!(await saveSession(sessionId, session, { onlyIfExists: true }))) return null;
+    }
     const account = await getAccount(discordId);
     const sealed = account?.refreshToken;
     const refreshToken = sealed ? openSecret(sealed) : null;
-    if (!account || !refreshToken) return await end(sessionId, 'no_refresh_token');
+    if (!account || !refreshToken)
+      return profileOnly && withinGrace ? session : await end(sessionId, 'no_refresh_token');
 
     const env = getServerEnv();
     if (!env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET || !env.DISCORD_GUILD_ID) {
@@ -97,6 +106,30 @@ async function verify(sessionId: string, session: DashboardSession): Promise<Das
 
     const next: DashboardSession = {
       ...session,
+      user: {
+        ...session.user,
+        // Display metadata only: membership and authorization still use the verified ID and roles.
+        ...(typeof identity.userData.username === 'string'
+          ? { username: identity.userData.username.slice(0, 100) }
+          : {}),
+        ...('global_name' in identity.userData
+          ? {
+              global_name:
+                typeof identity.userData.global_name === 'string'
+                  ? identity.userData.global_name.slice(0, 100)
+                  : undefined,
+            }
+          : {}),
+        ...('avatar' in identity.userData
+          ? {
+              avatar:
+                typeof identity.userData.avatar === 'string' && /^(a_)?[a-f0-9]{32}$/.test(identity.userData.avatar)
+                  ? identity.userData.avatar
+                  : null,
+            }
+          : {}),
+        guild_nickname: identity.memberData.nick ?? null,
+      },
       roleIds: identity.memberData.roles.slice(0, 250),
       verifiedAt: Date.now(),
     };
@@ -109,10 +142,14 @@ async function verify(sessionId: string, session: DashboardSession): Promise<Das
 }
 
 /** One re-check per session at a time in this process; other instances are excluded by the lock. */
-export function reverifySession(sessionId: string, session: DashboardSession): Promise<DashboardSession | null> {
+export function reverifySession(
+  sessionId: string,
+  session: DashboardSession,
+  options: { profileOnly?: boolean } = {},
+): Promise<DashboardSession | null> {
   const running = inflight.get(sessionId);
   if (running) return running;
-  const work = verify(sessionId, session)
+  const work = verify(sessionId, session, options.profileOnly ?? false)
     .catch((error) => {
       // Storage faults are transient too: do not log everyone out because Redis blinked.
       logger.warn('Session re-check failed', { error: error instanceof Error ? error.name : 'unknown' });

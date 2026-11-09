@@ -1,24 +1,13 @@
 import { z } from 'zod';
+import { discordContainer, discordPageButton, type DiscordContainerPayload } from '../../lib/discord-components';
 
 /**
  * Discord announcement builder (pure, browser-safe). The admin composer previews with this and the
- * server sends with this, so what you see is exactly what Discord receives.
+ * server sends the same Components V2 tree.
  *
- * Buttons are Discord *link* buttons: plain webhooks may only send link buttons, which is exactly
- * what "interactive URL embeds" need. Callback buttons require an application-owned webhook.
+ * Buttons are Discord link buttons, so no interaction endpoint or extra bot process is required.
  */
-export const EMBED_LIMITS = {
-  title: 256,
-  description: 4096,
-  fieldName: 256,
-  fieldValue: 1024,
-  fields: 25,
-  footer: 2048,
-  /** Discord caps the sum of all embed text at 6000; stay under it with headroom. */
-  total: 5800,
-  buttonLabel: 80,
-  buttonsPerRow: 5,
-} as const;
+export const ANNOUNCEMENT_LIMITS = { buttonLabel: 80, buttonsPerRow: 5, parts: 50, body: 3400 } as const;
 
 export const SPICE_COLOR = 0xee8209;
 export const SAND_COLOR = 0xd1bf96;
@@ -34,7 +23,7 @@ const httpsUrl = z
   }, 'Use a public https:// link');
 
 export const buttonSchema = z.object({
-  label: z.string().trim().min(1).max(EMBED_LIMITS.buttonLabel),
+  label: z.string().trim().min(1).max(ANNOUNCEMENT_LIMITS.buttonLabel),
   url: httpsUrl,
 });
 
@@ -66,31 +55,6 @@ export interface ReleaseNotes {
   version: string;
   date: string;
   sections: Array<{ title: string; items: string[] }>;
-}
-
-export interface WebhookEmbed {
-  title: string;
-  url?: string;
-  description?: string;
-  color: number;
-  fields?: Array<{ name: string; value: string; inline?: boolean }>;
-  footer: { text: string };
-  timestamp: string;
-}
-
-export interface WebhookButton {
-  type: 2;
-  style: 5;
-  label: string;
-  url: string;
-}
-
-export interface WebhookPayload {
-  username: string;
-  embeds: WebhookEmbed[];
-  components: Array<{ type: 1; components: WebhookButton[] }>;
-  /** Always empty: an announcement must never be able to ping @everyone, roles or users. */
-  allowed_mentions: { parse: [] };
 }
 
 export function clip(text: string, max: number): string {
@@ -127,91 +91,95 @@ export function progressBar(items: ProgressItem[], width = 10): { bar: string; p
 
 const ICONS: Record<ProgressItem['state'], string> = { done: '✅', active: '🔧', todo: '⬜' };
 
-function embedLength(embed: WebhookEmbed): number {
-  return (
-    embed.title.length +
-    (embed.description?.length ?? 0) +
-    embed.footer.text.length +
-    (embed.fields ?? []).reduce((sum, field) => sum + field.name.length + field.value.length, 0)
-  );
-}
-
-/** Drop trailing fields (with a visible marker) until the embed fits Discord's total-size rule. */
-function fitEmbed(embed: WebhookEmbed): WebhookEmbed {
-  const fields = [...(embed.fields ?? [])];
-  let dropped = 0;
-  const withMarker = () =>
-    dropped > 0
-      ? [
-          ...fields,
-          { name: 'And more', value: `${dropped} more section${dropped === 1 ? '' : 's'} in the full changelog.` },
-        ]
-      : fields;
-  while (fields.length > 1 && embedLength({ ...embed, fields: withMarker() }) > EMBED_LIMITS.total) {
-    fields.pop();
-    dropped++;
+/** Split only oversized individual notes; ordinary bullets stay together, without clipping any text. */
+function splitNote(text: string): string[] {
+  const chunks: string[] = [];
+  while (text.length > 2800) {
+    let end = Math.max(text.lastIndexOf('\n', 2800), text.lastIndexOf(' ', 2800));
+    if (end < 1400) end = 2800;
+    if (/[\uD800-\uDBFF]/.test(text[end - 1])) end--;
+    chunks.push(text.slice(0, end));
+    text = text.slice(end);
   }
-  return { ...embed, fields: withMarker() };
+  if (text) chunks.push(text);
+  return chunks;
 }
 
-export function changelogUrl(appUrl: string | undefined, version: string): string | undefined {
-  if (!appUrl) return undefined;
-  return new URL(`/changelog#v${encodeURIComponent(version)}`, appUrl).toString();
-}
-
-export function buildWebhookPayload(
+/** The 4,000-character limit applies to the entire Discord message, so large releases need several messages. */
+export function buildAnnouncementPayloads(
   input: Announcement,
   context: { appUrl?: string; release?: ReleaseNotes; now?: Date },
-): WebhookPayload {
-  const { appUrl, release } = context;
-  const now = context.now ?? new Date();
-  const link = changelogUrl(appUrl, input.version);
-
-  let embed: WebhookEmbed;
+): DiscordContainerPayload[] {
+  const { release, appUrl } = context;
+  if (input.kind === 'release' && !release) throw new Error(`Release ${input.version} was not found in CHANGELOG.md.`);
+  const title = `# Arrakis Control v${input.version}${input.kind === 'progress' ? ' in progress' : ''}`;
+  const progress = progressBar(input.progress);
+  const footer =
+    input.kind === 'release'
+      ? release?.date
+        ? `Released ${release.date}`
+        : 'Release notes'
+      : progress.percent === 100
+        ? 'Ready to ship'
+        : 'Development update';
+  if (title.length + footer.length > 400) throw new Error('The announcement title or date is too long.');
+  const units: Array<{ section: string | null; text: string }> = [];
+  for (const text of [input.headline, input.note].filter(Boolean)) units.push({ section: null, text });
   if (input.kind === 'release') {
-    if (!release) throw new Error(`Release ${input.version} was not found in CHANGELOG.md.`);
-    const intro = [input.headline, input.note].filter(Boolean).join('\n\n');
-    embed = {
-      title: clip(`Arrakis Control v${release.version}`, EMBED_LIMITS.title),
-      ...(link ? { url: link } : {}),
-      ...(intro ? { description: clip(intro, EMBED_LIMITS.description) } : {}),
-      color: SPICE_COLOR,
-      fields: release.sections
-        .filter((section) => section.items.length > 0)
-        .slice(0, EMBED_LIMITS.fields)
-        .map((section) => ({
-          name: clip(section.title, EMBED_LIMITS.fieldName),
-          value: clip(section.items.map((item) => `• ${clip(item, 240)}`).join('\n'), EMBED_LIMITS.fieldValue),
-        })),
-      footer: { text: clip(release.date ? `Released ${release.date}` : 'Release notes', EMBED_LIMITS.footer) },
-      timestamp: now.toISOString(),
-    };
+    for (const section of release!.sections) {
+      if (section.title.length > 400) throw new Error('A changelog section title is too long.');
+      for (const item of section.items)
+        for (const text of splitNote(`- ${item}`)) units.push({ section: section.title, text });
+    }
   } else {
-    const { bar, percent, done } = progressBar(input.progress);
-    const summary = input.progress.length
-      ? `${bar}  **${percent}%**  (${done} of ${input.progress.length} complete)`
-      : '';
-    const checklist = input.progress.map((item) => `${ICONS[item.state]} ${item.label}`).join('\n');
-    const description = [input.headline, summary, checklist, input.note].filter(Boolean).join('\n\n');
-    embed = {
-      title: clip(`Arrakis Control v${input.version} in progress`, EMBED_LIMITS.title),
-      ...(link ? { url: link } : {}),
-      ...(description ? { description: clip(description, EMBED_LIMITS.description) } : {}),
-      color: percent === 100 ? SPICE_COLOR : SAND_COLOR,
-      footer: { text: percent === 100 ? 'Ready to ship' : 'Development update' },
-      timestamp: now.toISOString(),
-    };
+    if (input.progress.length)
+      units.push({
+        section: 'Progress',
+        text: `${progress.bar}  **${progress.percent}%**  (${progress.done} of ${input.progress.length} complete)`,
+      });
+    for (const item of input.progress) units.push({ section: 'Progress', text: `${ICONS[item.state]} ${item.label}` });
   }
 
-  const buttons: WebhookButton[] = [];
-  if (link) buttons.push({ type: 2, style: 5, label: 'View changelog', url: link });
-  if (appUrl) buttons.push({ type: 2, style: 5, label: 'Open dashboard', url: new URL('/', appUrl).toString() });
-  for (const button of input.buttons) buttons.push({ type: 2, style: 5, label: button.label, url: button.url });
-
-  return {
-    username: 'Arrakis Control',
-    embeds: [fitEmbed(embed)],
-    components: buttons.length ? [{ type: 1, components: buttons.slice(0, EMBED_LIMITS.buttonsPerRow) }] : [],
-    allowed_mentions: { parse: [] },
-  };
+  const pages: string[][] = [];
+  let blocks: string[] = [];
+  let currentSection: string | null | undefined;
+  let length = 0;
+  const seen = new Set<string>();
+  function flush() {
+    if (blocks.length) pages.push(blocks);
+    blocks = [];
+    currentSection = undefined;
+    length = 0;
+    if (pages.length >= ANNOUNCEMENT_LIMITS.parts)
+      throw new Error('This announcement exceeds 50 messages. Split it into smaller releases before sending.');
+  }
+  for (const unit of units) {
+    const heading = () => (unit.section ? `## ${unit.section}${seen.has(unit.section) ? ' (continued)' : ''}\n` : '');
+    let same = unit.section !== null && currentSection === unit.section;
+    let prefix = same ? '\n' : heading();
+    if (length + prefix.length + unit.text.length > ANNOUNCEMENT_LIMITS.body || (!same && blocks.length >= 12)) {
+      flush();
+      same = false;
+      prefix = heading();
+    }
+    if (same) blocks[blocks.length - 1] += prefix + unit.text;
+    else blocks.push(prefix + unit.text);
+    length += prefix.length + unit.text.length;
+    currentSection = unit.section;
+    if (unit.section) seen.add(unit.section);
+  }
+  if (blocks.length) pages.push(blocks);
+  if (!pages.length) pages.push([]);
+  const buttons = [
+    ...discordPageButton('View changelog', appUrl, `/changelog#v${encodeURIComponent(input.version)}`),
+    ...discordPageButton('Open dashboard', appUrl, '/'),
+    ...input.buttons.map((button) => ({ type: 2 as const, style: 5 as const, label: button.label, url: button.url })),
+  ];
+  return pages.map((body, index) =>
+    discordContainer(
+      [title, ...body, `-# ${footer}${pages.length > 1 ? ` · Part ${index + 1} of ${pages.length}` : ''}`],
+      buttons,
+      input.kind === 'release' || progress.percent === 100 ? SPICE_COLOR : SAND_COLOR,
+    ),
+  );
 }

@@ -26,7 +26,7 @@ const mono = JetBrains_Mono({
 export const dynamic = 'force-dynamic';
 
 const DESCRIPTION =
-  'Command your Dune: Awakening holdings: live map, CHOAM market, vehicle access, and a community base marketplace.';
+  'A community dashboard for Dune: Awakening servers: maps, your character and holdings, guilds, a base marketplace and more.';
 
 export function generateMetadata(): Metadata {
   const appUrl = getServerEnv().APP_URL;
@@ -40,8 +40,9 @@ export function generateMetadata(): Metadata {
       siteName: 'Arrakis Control Dashboard',
       title: 'Arrakis Control',
       description: DESCRIPTION,
+      images: [{ url: '/api/assets/share/preview-v1.png', width: 1200, height: 630, alt: 'Arrakis Control' }],
     },
-    twitter: { card: 'summary_large_image' },
+    twitter: { card: 'summary_large_image', images: ['/api/assets/share/preview-v1.png'] },
   };
 }
 

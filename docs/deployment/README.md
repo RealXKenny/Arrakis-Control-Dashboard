@@ -1,15 +1,15 @@
 # Deployment
 
-| Guide                                                   | Covers                                                                    |
-| ------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [Deployment checklist](deployment-checklist.md)         | Predeployment, deployment, postdeployment, rollback — the step-by-step list |
-| [Staging](staging.md)                                   | The verification you must do on real infrastructure before launch           |
-| [GitHub Actions](github-actions.md)                     | What CI and the release workflow do, how to verify them                     |
-| [Production release](production-release.md)             | How a release is cut and what it contains                                   |
-| [Migration](migration.md)                               | `redis:rekey` and `marketplace:rekey` procedures, secret rotation           |
-| [Rollback](rollback.md)                                 | Code, release, data and secret rollback                                     |
+| Guide                                           | Covers                                                                      |
+| ----------------------------------------------- | --------------------------------------------------------------------------- |
+| [Deployment checklist](deployment-checklist.md) | Predeployment, deployment, postdeployment, rollback — the step-by-step list |
+| [Staging](staging.md)                           | The verification you must do on real infrastructure before launch           |
+| [GitHub Actions](github-actions.md)             | What CI and the release workflow do, how to verify them                     |
+| [Production release](production-release.md)     | How a release is cut and what it contains                                   |
+| [Migration](migration.md)                       | `redis:rekey` and `marketplace:rekey` procedures, secret rotation           |
+| [Rollback](rollback.md)                         | Code, release, data and secret rollback                                     |
 
-Release integrity and checksum verification are explained in [Release verification](../security/release-verification.md).
+Release integrity and checksum verification are explained in [Release verification](../security/release-verification.md). The standard `npm start` command automatically supervises Live Chat when enabled; see [Live game chat](../features/live-chat.md#nodejs-and-pterodactyl-deployment).
 
 ## Order of work for a first production launch
 

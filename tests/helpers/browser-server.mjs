@@ -2,6 +2,8 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { once } from 'node:events';
 import { createHash } from 'node:crypto';
+import { casinoReply } from './casino-redis.mjs';
+import { eventsReply } from './events-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
 
@@ -21,10 +23,20 @@ const listing = {
     { id: '7b1f5a56-8c9d-4a4e-9b0d-1f3a2c4d5e6f', label: 'Why do you want to join?', required: true },
   ],
 };
-const storage = createRedisFixture(([operation, key]) => {
+const storage = createRedisFixture(([operation, key, ...args]) => {
+  const events = eventsReply(operation, key, args);
+  if (events !== undefined) return events.value;
+  const casino = casinoReply(operation, key, args);
+  if (casino !== undefined) return casino.value;
   if (operation.toUpperCase() === 'ZRANGE' && key === 'arrakis:{guilds}:requirements-index') return ['guild:2'];
   if (operation.toUpperCase() === 'GET' && key === 'arrakis:{guilds}:requirements:2') return JSON.stringify(listing);
-  if (operation.toUpperCase() === 'EVAL') return [1, 60000];
+  if (operation.toUpperCase() === 'EVAL') {
+    if (args.includes('arrakis:{avatars}:v1:images'))
+      return key.includes("redis.call('HGET'")
+        ? 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII='
+        : 1;
+    return [1, 60000];
+  }
   if (operation.toUpperCase() === 'GET') {
     const admin = key === sessionKey('browser-admin-session');
     const member = key === sessionKey('browser-member-session');
@@ -34,6 +46,8 @@ const storage = createRedisFixture(([operation, key]) => {
           user: {
             id: admin ? '456084885220884480' : slot ? poolDiscordId(slot) : '123456789000000000',
             username: admin ? 'Test administrator' : slot ? `Pool member ${slot}` : 'Test member',
+            ...(member ? { avatar: '0123456789abcdef0123456789abcdef' } : {}),
+            ...(member ? { guild_nickname: 'Server Alias' } : {}),
           },
           guildId: 'browser-test-guild',
           roleIds: ['browser-test-role'],
@@ -59,9 +73,22 @@ const child = spawn(
     stdio: 'inherit',
     env: {
       ...process.env,
+      DISCORD_BOT_TOKEN: '',
+      CHANGELOG_CHANNEL_ID: '',
+      COMMUNITY_EVENTS_CHANNEL_ID: '',
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
       CONSOLE_URL: fakeConsole.url,
       REDIS_CLUSTER_NODES: '',
+      RABBITMQ_CA_FILE: '',
+      RABBITMQ_TLS_CA: '',
+      RABBITMQ_TLS_CERT: '',
+      RABBITMQ_TLS_KEY: '',
+      RABBITMQ_TLS_CA_PATH: '',
+      RABBITMQ_TLS_CERT_PATH: '',
+      RABBITMQ_TLS_KEY_PATH: '',
+      RABBITMQ_TLS_ENABLED: 'true',
+      RABBITMQ_TLS_REJECT_UNAUTHORIZED: 'true',
+      RABBITMQ_TLS_SERVERNAME: '',
     },
   },
 );

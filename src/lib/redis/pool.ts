@@ -169,7 +169,7 @@ function createPooledClient(env: ReturnType<typeof getServerEnv>): Client {
       retryDelayOnClusterDown: 500,
       slotsRefreshTimeout: 5_000,
     };
-    log.info('configuring Redis cluster client', { nodes: nodes.length });
+    log.debug('Configuring Redis cluster client', { nodes: nodes.length });
     return new Cluster(nodes, options);
   }
   if (!env.REDIS_URL) throw new RedisUnavailableError('REDIS_URL is not configured');

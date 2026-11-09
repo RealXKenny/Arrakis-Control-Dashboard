@@ -26,20 +26,20 @@ of the offending variable, never its value).
 
 Strongly recommended settings (all optional in the schema, so they are easy to forget):
 
-| Variable                                            | Default                    | Why set it                                                                                                                                                               |
-| --------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `OWNER_KEY_SECRET`                                  | derived from `AUTH_SECRET` | Dedicated HMAC secret for marketplace ownership. Set it before publishing listings you intend to keep. Changing it later orphans listings (see 2.7).                     |
-| `REDIS_REQUIRE_TLS`                                 | `false`                    | `true` makes startup refuse a plain `redis://` URL.                                                                                                                      |
-| `ADMIN_DISCORD_IDS`                                 | **required**               | Comma-separated Discord IDs allowed into `/admin`. Production refuses to serve without it; no built-in administrator exists. |
-| `ADMIN_REAUTH_HOURS`                                | `12`                       | Step-up window for administrator changes (1 to 168).                                                                                                                     |
-| `ADMIN_HIGH_RISK_REAUTH_MINUTES`                    | `60`                       | Step-up window for deletes, downloads and operations that carry a confirmation phrase (5 to 1440).                                                                       |
-| `TRUSTED_PROXY_COUNT`                               | `1`                        | Number of reverse proxies in front of the app (0 to 5). Every per-address limit trusts only that forwarded entry. Use `0` with no proxy.                                 |
-| `AUDIT_LOG_STDOUT`, `AUDIT_LOG_REDIS`               | `true`, `true`             | Audit trail to stdout (`AUDIT {json}` lines) and to a bounded Redis sorted set.                                                                                          |
-| `AUDIT_LOG_RETENTION_DAYS`, `AUDIT_LOG_MAX_ENTRIES` | `90`, `10000`              | Retention of the Redis copy (1 to 3650 days; 100 to 1,000,000 entries).                                                                                                  |
-| `REDIS_CLUSTER_NODES`                               | unset                      | Comma-separated `host:port` list. Switches the app and `marketplace:rekey` to Redis Cluster. `REDIS_URL` still supplies credentials.                                     |
-| `REDIS_ALLOW_INSECURE`                              | `false`                    | Leave it `false`. `true` accepts a passwordless plain-text Redis on a public-looking host.                                                                               |
-| `BOT_API_TOKEN`                                     | unset                      | 32 to 256 characters; enables the read-only bot API. Distinct from every other secret.                                                                                   |
-| `ADMIN_CONSOLE_API_KEY`                             | unset                      | Separate, narrowly scoped Console key for the administrator workspace.                                                                                                   |
+| Variable                                            | Default                    | Why set it                                                                                                                                           |
+| --------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OWNER_KEY_SECRET`                                  | derived from `AUTH_SECRET` | Dedicated HMAC secret for marketplace ownership. Set it before publishing listings you intend to keep. Changing it later orphans listings (see 2.7). |
+| `REDIS_REQUIRE_TLS`                                 | `false`                    | `true` makes startup refuse a plain `redis://` URL.                                                                                                  |
+| `ADMIN_DISCORD_IDS`                                 | **required**               | Comma-separated Discord IDs allowed into `/admin`. Production refuses to serve without it; no built-in administrator exists.                         |
+| `ADMIN_REAUTH_HOURS`                                | `12`                       | Step-up window for administrator changes (1 to 168).                                                                                                 |
+| `ADMIN_HIGH_RISK_REAUTH_MINUTES`                    | `60`                       | Step-up window for deletes, downloads and operations that carry a confirmation phrase (5 to 1440).                                                   |
+| `TRUSTED_PROXY_COUNT`                               | `1`                        | Number of reverse proxies in front of the app (0 to 5). Every per-address limit trusts only that forwarded entry. Use `0` with no proxy.             |
+| `AUDIT_LOG_STDOUT`, `AUDIT_LOG_REDIS`               | `true`, `true`             | Readable AUDIT entries on stdout and structured records in a bounded Redis sorted set.                                                               |
+| `AUDIT_LOG_RETENTION_DAYS`, `AUDIT_LOG_MAX_ENTRIES` | `90`, `10000`              | Retention of the Redis copy (1 to 3650 days; 100 to 1,000,000 entries).                                                                              |
+| `REDIS_CLUSTER_NODES`                               | unset                      | Comma-separated `host:port` list. Switches the app and `marketplace:rekey` to Redis Cluster. `REDIS_URL` still supplies credentials.                 |
+| `REDIS_ALLOW_INSECURE`                              | `false`                    | Leave it `false`. `true` accepts a passwordless plain-text Redis on a public-looking host.                                                           |
+| `BOT_API_TOKEN`                                     | unset                      | 32 to 256 characters; enables the read-only bot API. Distinct from every other secret.                                                               |
+| `ADMIN_CONSOLE_API_KEY`                             | unset                      | Separate, narrowly scoped Console key for the administrator workspace.                                                                               |
 
 Pterodactyl-only (egg) variables: `RELEASE_TAG` (default `latest`; pin to an exact `vX.Y.Z`) and
 `ALLOW_UNVERIFIED_RELEASE` (default `false`; leave it `false`). The egg passes only variables it defines, so a setting
@@ -136,7 +136,7 @@ Releases created before checksums were published (no archive assets) do not inst
 ### 2.3 Environment configuration
 
 Fill every required Startup variable in the panel (section 1.1), including the strongly recommended ones. Keep secrets
-hidden from subusers. The egg hides all credentials (`AUTH_SECRET`, `REDIS_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY`, `ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, `BOT_API_TOKEN`, `OWNER_KEY_SECRET`, `CHANGELOG_WEBHOOK_URL`), so a **panel administrator** must enter them under Admin > Servers > Startup. Hidden is not encrypted: anyone with file, process or console access to the running server can still read them. `NEXT_TELEMETRY_DISABLED=1` is set by the egg, installer and launcher.
+hidden from subusers. The egg hides all credentials (`AUTH_SECRET`, `REDIS_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY`, `ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, `BOT_API_TOKEN`, `OWNER_KEY_SECRET`, `DISCORD_BOT_TOKEN`), so a **panel administrator** must enter them under Admin > Servers > Startup. Hidden is not encrypted: anyone with file, process or console access to the running server can still read them. `NEXT_TELEMETRY_DISABLED=1` is set by the egg, installer and launcher.
 
 ### 2.4 Startup
 
@@ -204,7 +204,7 @@ that, already-migrated listings become unmanageable by their owners until it is 
 
 ### 3.5 Audit logging verification
 
-- stdout contains `AUDIT {"id":...}` lines for the sign-in, the failed sign-in and the administrator write above.
+- stdout contains readable AUDIT entries for the sign-in, the failed sign-in and the administrator write above, including event names, outcomes and audit IDs.
 - The Redis copy is readable by an administrator at `/api/v2/admin/audit`.
 - No password, token, e-mail address or request body appears in either copy.
 

@@ -1,14 +1,16 @@
 'use client';
 
-import Link from 'next/link';
+import { NavigationLink as Link } from './navigation-link';
 import { type KeyboardEvent, type ReactNode, type SVGProps, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   AssetsIcon,
   BaseIcon,
   BroadcastIcon,
+  CasinoIcon,
   CharacterIcon,
   ChevronDownIcon,
   GuildIcon,
+  HomeIcon,
   MapIcon,
   MarketIcon,
   MoreIcon,
@@ -23,16 +25,20 @@ import { isNavigationActive, type NavigationIcon, type NavigationItem } from './
 const ICONS: Record<NavigationIcon, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
   assets: AssetsIcon,
   bases: BaseIcon,
+  casino: CasinoIcon,
   character: CharacterIcon,
+  chat: BroadcastIcon,
   changelog: BroadcastIcon,
   guilds: GuildIcon,
   holdings: BaseIcon,
+  home: HomeIcon,
   map: MapIcon,
   market: MarketIcon,
   more: MoreIcon,
   portal: PortalIcon,
   preview: PreviewIcon,
   storage: StorageIcon,
+  status: BroadcastIcon,
   upload: UploadIcon,
   vehicles: VehicleIcon,
 };
@@ -52,7 +58,7 @@ export function NavigationDirectLink({ item, pathname }: { item: NavigationItem;
       aria-current={active ? 'page' : undefined}
       data-current={active ? 'true' : undefined}
       className={`command-nav-control relative flex items-center uppercase transition-all duration-200 ${
-        item.tabletOverflow ? 'hidden min-[1560px]:flex' : ''
+        item.tabletOverflow ? 'hidden min-[1920px]:flex' : ''
       }`}
     >
       <NavigationGlyph icon={item.icon} className="size-[18px]" />
@@ -78,7 +84,7 @@ export function NavigationMenuItems({
       {items.map((item) => {
         const active = isNavigationActive(pathname, item);
         return (
-          <li key={item.id} className={overflow && item.tabletOverflow ? 'min-[1560px]:hidden' : undefined}>
+          <li key={item.id} className={overflow && item.tabletOverflow ? 'min-[1920px]:hidden' : undefined}>
             {item.href ? (
               <Link
                 href={item.href}
@@ -246,7 +252,7 @@ export function NavigationDropdown({
   const showOverflowCurrent = variant === 'category' && active && suppressActiveOnDesktop;
 
   return (
-    <div ref={root} className={`relative ${item.tabletOverflow ? 'hidden min-[1560px]:block' : ''}`}>
+    <div ref={root} className={`relative ${item.tabletOverflow ? 'hidden min-[1920px]:block' : ''}`}>
       <button
         ref={button}
         type="button"

@@ -131,11 +131,11 @@ async function warmupDuneClient() {
 
 export { DuneConsoleClient, DuneConsoleApiError, getDuneClient, warmupDuneClient };
 
-export async function getDiscordPlayer(actor: unknown): Promise<unknown> {
+export async function getDiscordPlayer(actor: unknown, options: { timeout?: number } = {}): Promise<unknown> {
   const env = requireServerEnv('CONSOLE_URL', 'ADAPTER_TOKEN');
   return new DuneConsoleClient(env.CONSOLE_URL, env.ADAPTER_TOKEN).discordAdapterRequest(
     '/api/integrations/discord/players/me',
     { actor },
-    { timeout: 15000 },
+    { timeout: options.timeout ?? 15000 },
   );
 }

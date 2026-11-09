@@ -8,6 +8,7 @@
 | `npm run dev`                             | Development server (`node scripts/server-launcher.mjs dev`)                      |
 | `npm run build`                           | Production build (`next build`)                                                  |
 | `npm start`                               | Production server (`node scripts/server-launcher.mjs start`)                     |
+| `npm run chat:bridge`                     | Standalone diagnostic consumer; never run beside the automatic worker            |
 | `npm run lint`                            | ESLint, zero warnings allowed                                                    |
 | `npm run typecheck`                       | `tsc --noEmit`                                                                   |
 | `npm test`                                | Vitest unit/API/architecture/deployment tests                                    |

@@ -8,7 +8,7 @@ import { getRedisClient } from '../redis/client';
  * Durable security audit trail.
  *
  * Each event is written twice, both optional and configurable:
- *  - as one JSON line on stdout (prefixed `AUDIT `) for log shipping and retention outside the app;
+ *  - as a readable, colored AUDIT entry on stdout for operators and external retention;
  *  - into a bounded Redis sorted set (trimmed by age and by count on every write) for in-app investigation.
  *
  * Events carry identifiers and outcomes only. Anything that looks like a credential is dropped by key name, values
@@ -81,7 +81,32 @@ export async function recordAudit(input: AuditEvent): Promise<void> {
       ...(sanitizeAuditData(input.data) ? { data: sanitizeAuditData(input.data) } : {}),
     };
     const line = JSON.stringify(event);
-    if (env.AUDIT_LOG_STDOUT === true) process.stdout.write(`AUDIT ${line}\n`);
+    if (env.AUDIT_LOG_STDOUT === true) {
+      // Audit visibility follows its own switch, even when application LOG_LEVEL is FATAL.
+      const { formatConsoleEntry } = await import('../logger');
+      const message =
+        {
+          'auth.login': 'Member signed in',
+          'auth.logout': 'Member signed out',
+          'auth.login_failed': 'Sign-in refused',
+        }[event.event] ?? event.event;
+      process.stdout.write(
+        `${formatConsoleEntry(
+          'AUDIT',
+          event.outcome === 'success' ? 'INFO' : 'WARN',
+          message,
+          {
+            event: event.event,
+            outcome: event.outcome,
+            ...(event.actor ? { actor: event.actor } : {}),
+            ...(event.ip ? { ip: event.ip } : {}),
+            auditId: event.id,
+            ...(event.data ? { data: event.data } : {}),
+          },
+          new Date(event.at),
+        )}\n`,
+      );
+    }
     if (env.AUDIT_LOG_REDIS !== true) return;
     const redis = getRedisClient();
     if (!redis) return;

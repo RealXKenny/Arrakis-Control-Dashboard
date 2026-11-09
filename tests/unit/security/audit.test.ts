@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
   env: {} as Record<string, unknown>,
@@ -20,6 +20,7 @@ beforeEach(() => {
   };
   state.redis = { eval: vi.fn().mockResolvedValue(1) };
 });
+afterEach(() => vi.unstubAllEnvs());
 
 describe('audit data sanitising', () => {
   it('drops credential-like keys, nested data and control characters, and bounds values', async () => {
@@ -46,7 +47,8 @@ describe('audit data sanitising', () => {
 });
 
 describe('recordAudit', () => {
-  it('writes one JSON line to stdout and a bounded entry to Redis', async () => {
+  it('writes readable audit details to stdout and preserves the full bounded JSON record in Redis', async () => {
+    vi.stubEnv('NO_COLOR', '1');
     const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const { recordAudit } = await import('../../../src/lib/security/audit');
     await recordAudit({
@@ -56,19 +58,52 @@ describe('recordAudit', () => {
       ip: '203.0.113.9',
       data: { operation: 'delete-guilds-guildid', token: 'must-not-appear' },
     });
-    const line = String(write.mock.calls.find(([text]) => String(text).startsWith('AUDIT '))?.[0]);
+    const line = String(write.mock.calls.find(([text]) => String(text).includes('AUDIT'))?.[0]);
     expect(line).not.toContain('must-not-appear');
-    const event = JSON.parse(line.slice('AUDIT '.length));
-    expect(event).toMatchObject({ event: 'admin.operation', outcome: 'success', actor: '123456789012345678' });
-    expect(event.data).toEqual({ operation: 'delete-guilds-guildid' });
+    expect(line).toContain('INFO  AUDIT');
+    expect(line).toContain('event = admin.operation');
+    expect(line).toContain('outcome = success');
+    expect(line).toContain('actor = 123456789012345678');
+    expect(line).not.toMatch(/[{}\u001b]/);
 
     const [script, keys, args] = state.redis!.eval.mock.calls[0];
+    const event = JSON.parse(args[1]);
+    expect(event).toMatchObject({ event: 'admin.operation', outcome: 'success', actor: '123456789012345678' });
+    expect(event.data).toEqual({ operation: 'delete-guilds-guildid' });
+    expect(line).toContain(`audit id = ${event.id}`);
     expect(script).toContain('ZREMRANGEBYSCORE');
     expect(script).toContain('ZREMRANGEBYRANK');
     expect(keys).toEqual(['arrakis:{audit}:v1:events']);
     // Retention window (30 days) and entry cap (500) come from configuration.
     expect(args[2]).toBeLessThan(Date.now() - 29 * 86_400_000);
     expect(args.slice(3)).toEqual([500, 30 * 86_400]);
+  });
+
+  it('gives sign-ins and sign-outs clear names even with application logging set to FATAL', async () => {
+    vi.stubEnv('NO_COLOR', '1');
+    const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { recordAudit } = await import('../../../src/lib/security/audit');
+    await recordAudit({ event: 'auth.login', outcome: 'success', actor: '123' });
+    await recordAudit({ event: 'auth.logout', outcome: 'success', actor: '123' });
+    expect(write.mock.calls.map(([text]) => String(text)).join('\n')).toContain('Member signed in');
+    expect(write.mock.calls.map(([text]) => String(text)).join('\n')).toContain('Member signed out');
+    expect(state.redis!.eval).toHaveBeenCalledTimes(2);
+  });
+
+  it('colors denied events amber and keeps them on stdout with safe terminal text', async () => {
+    vi.stubEnv('NO_COLOR', undefined);
+    const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { recordAudit } = await import('../../../src/lib/security/audit');
+    await recordAudit({
+      event: 'auth.login_failed',
+      outcome: 'denied',
+      data: { reason: 'missing role\nforged\u001b[2J' },
+    });
+    const line = String(write.mock.calls[0][0]);
+    expect(line).toContain('\u001b[33m▲ WARN');
+    expect(line).toContain('Sign-in refused');
+    expect(line).toContain('outcome');
+    expect(line).not.toMatch(/\nforged|\u001b\[2J/);
   });
 
   it('honours the stdout and Redis switches', async () => {
@@ -78,6 +113,15 @@ describe('recordAudit', () => {
     const { recordAudit } = await import('../../../src/lib/security/audit');
     await recordAudit({ event: 'x', outcome: 'success' });
     expect(write).not.toHaveBeenCalled();
+    expect(state.redis!.eval).not.toHaveBeenCalled();
+  });
+
+  it('keeps the console event when Redis storage is disabled', async () => {
+    state.env.AUDIT_LOG_REDIS = false;
+    const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { recordAudit } = await import('../../../src/lib/security/audit');
+    await recordAudit({ event: 'auth.logout', outcome: 'success' });
+    expect(String(write.mock.calls[0][0])).toContain('Member signed out');
     expect(state.redis!.eval).not.toHaveBeenCalled();
   });
 

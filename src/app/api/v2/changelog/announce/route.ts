@@ -42,7 +42,7 @@ export const POST = route(async (request) => {
     event: 'admin.announcement',
     outcome: 'success',
     actor: session.user.id,
-    data: { edited: result.edited },
+    data: { edited: result.edited, parts: result.parts },
   });
-  return json({ ok: true, edited: result.edited });
+  return json({ ok: true, ...result });
 });

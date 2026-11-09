@@ -11,9 +11,13 @@ const MAX_COOKIE_VALUE_LENGTH = 4096;
 export async function getSession(sessionId: string): Promise<DashboardSession | null> {
   const session = await readSession(sessionId);
   if (!session) return null;
-  if (session.verifiedAt !== undefined && Date.now() - session.verifiedAt < SESSION_REVERIFY_MS) return session;
+  const fresh = session.verifiedAt !== undefined && Date.now() - session.verifiedAt < SESSION_REVERIFY_MS;
+  // null means Discord confirmed there is no nickname; undefined means an older session needs backfilling.
+  const needsProfile =
+    session.user.guild_nickname === undefined && Date.now() - (session.profileRefreshAttemptedAt ?? 0) >= 5 * 60_000;
+  if (fresh && !needsProfile) return session;
   const { reverifySession } = await import('./reverify');
-  return reverifySession(sessionId, session);
+  return reverifySession(sessionId, session, { profileOnly: fresh });
 }
 
 /** Production cookies are host-prefixed (`__Host-`), matching server/cookies. */

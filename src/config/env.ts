@@ -1,6 +1,5 @@
 import '../lib/assert-server';
 import { z } from 'zod';
-import { isDiscordWebhookUrl } from '../lib/discord-webhook-url';
 
 /**
  * Canonical server environment contract for the dashboard.
@@ -60,7 +59,7 @@ const serverEnvSchema = z.object({
   ADMIN_REAUTH_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   /** Server-only HMAC secret for marketplace owner keys. Optional: derived from AUTH_SECRET when absent. */
   OWNER_KEY_SECRET: z.string().min(32).max(256).optional(),
-  /** Security audit trail: JSON lines on stdout (for log shipping) and a bounded Redis sorted set. */
+  /** Security audit trail: readable entries on stdout and structured records in a bounded Redis sorted set. */
   AUDIT_LOG_STDOUT: z
     .enum(['true', 'false'])
     .default('true')
@@ -76,6 +75,67 @@ const serverEnvSchema = z.object({
   CONSOLE_API_KEY: z.string().min(1).optional(),
   ADMIN_CONSOLE_API_KEY: z.string().min(1).optional(),
   ADAPTER_TOKEN: z.string().min(1).optional(),
+  /**
+   * Solaris Exchange: real Solaris deposits, withdrawals and play. Off unless explicitly set to `true`; the server
+   * refuses every wager and transfer while it is off. See docs/features/solaris-exchange.md before enabling.
+   */
+  CASINO_SOLARIS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+  /** Largest single wager (whole Solaris) and largest payout of one round. Conservative defaults; raise deliberately. */
+  CASINO_MAX_WAGER: z.coerce.number().int().min(1).max(1_000_000_000_000).default(10_000),
+  CASINO_MAX_PAYOUT: z.coerce.number().int().min(1).max(1_000_000_000_000).default(1_000_000),
+  /** Optional live game chat. The bridge and web publisher share the bot-compatible game broker protocol. */
+  CHAT_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+  RABBITMQ_URL: z
+    .string()
+    .url()
+    .refine((value) => ['amqp:', 'amqps:'].includes(new URL(value).protocol))
+    .optional(),
+  CHAT_BRIDGE_FUNCOM_ID: z.string().min(1).max(200).optional(),
+  CHAT_DISCORD_BOT_FUNCOM_ID: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .refine((value) => !/[\u0000-\u001f\u007f]/u.test(value))
+    .optional(),
+  CHAT_BRIDGE_DISPLAY_NAME: z.string().min(1).max(80).optional(),
+  CHAT_SERVERS: z.string().min(2).max(32_768).optional(),
+  RABBITMQ_CA_FILE: z.string().min(1).max(4096).optional(),
+  RABBITMQ_TLS_ENABLED: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === 'true')),
+  RABBITMQ_TLS_CA: z.string().min(1).max(262_144).optional(),
+  RABBITMQ_TLS_CERT: z.string().min(1).max(262_144).optional(),
+  RABBITMQ_TLS_KEY: z.string().min(1).max(65_536).optional(),
+  RABBITMQ_TLS_CA_PATH: z.string().min(1).max(4096).optional(),
+  RABBITMQ_TLS_CERT_PATH: z.string().min(1).max(4096).optional(),
+  RABBITMQ_TLS_KEY_PATH: z.string().min(1).max(4096).optional(),
+  RABBITMQ_TLS_REJECT_UNAUTHORIZED: z
+    .literal('true')
+    .default('true')
+    .transform(() => true as const),
+  RABBITMQ_TLS_SERVERNAME: z.string().min(1).max(253).optional(),
+  /** Legacy setting accepted for compatibility; receive queues are always broker-generated. */
+  CHAT_BRIDGE_QUEUE: z
+    .string()
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/)
+    .default('arrakis.dashboard.chat.v1'),
+  CHAT_BRIDGE_PREFETCH: z.coerce.number().int().min(1).max(100).default(20),
+  CHAT_BRIDGE_HEALTH_HOST: z.string().min(1).max(253).default('127.0.0.1'),
+  CHAT_BRIDGE_HEALTH_PORT: z.coerce.number().int().min(1).max(65_535).default(2010),
+  CHAT_HISTORY_MAX_MESSAGES: z.coerce.number().int().min(50).max(100_000).default(10_000),
+  CHAT_HISTORY_RETENTION_DAYS: z.coerce.number().int().min(1).max(90).default(7),
+  CHAT_MESSAGE_MAX_CHARS: z.coerce.number().int().min(100).max(1_800).default(1_000),
+  CHAT_SEND_RATE_LIMIT: z.coerce.number().int().min(1).max(1_000).default(10),
+  CHAT_SERVER_SEND_RATE_LIMIT: z.coerce.number().int().min(1).max(10_000).default(60),
+  CHAT_SEND_RATE_WINDOW_SECONDS: z.coerce.number().int().min(1).max(300).default(10),
   DISCORD_CLIENT_ID: z.string().min(1).optional(),
   DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
   APP_URL: z.string().url().optional(),
@@ -94,8 +154,21 @@ const serverEnvSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
-  /** Discord webhook that receives changelog and progress announcements. A secret: never log or expose it. */
-  CHANGELOG_WEBHOOK_URL: z.string().refine(isDiscordWebhookUrl, 'Must be a Discord webhook URL').optional(),
+  /** Shared server-only bot identity for Discord announcements; never exposed to the browser. */
+  DISCORD_BOT_TOKEN: z
+    .string()
+    .min(20)
+    .max(256)
+    .regex(/^[A-Za-z0-9._-]+$/)
+    .optional(),
+  CHANGELOG_CHANNEL_ID: z
+    .string()
+    .regex(/^\d{15,25}$/)
+    .optional(),
+  COMMUNITY_EVENTS_CHANNEL_ID: z
+    .string()
+    .regex(/^\d{15,25}$/)
+    .optional(),
   /** When "true", a newly deployed release in CHANGELOG.md is announced once, automatically. */
   CHANGELOG_AUTO_ANNOUNCE: z
     .enum(['true', 'false'])
@@ -166,6 +239,7 @@ export function validateProductionEnv(): ServerEnv {
   if (env.NODE_ENV !== 'production') return env;
   // ADMIN_DISCORD_IDS has no production default: no administrator is implied by the code.
   requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'ADMIN_DISCORD_IDS');
+  if (env.CHAT_ENABLED) requireServerEnv('RABBITMQ_URL', 'CHAT_BRIDGE_FUNCOM_ID', 'CHAT_SERVERS');
   const redisUrl = new URL(env.REDIS_URL!);
   // Sessions and sealed refresh tokens live in Redis: never serve traffic against an open, unauthenticated, unencrypted one.
   if (
@@ -210,12 +284,6 @@ export function redisTransportWarnings(
   if (env.NODE_ENV !== 'production' || !env.REDIS_URL) return [];
   const url = new URL(env.REDIS_URL);
   const warnings: string[] = [];
-  if (url.protocol === 'redis:' && !PRIVATE_HOST.test(url.hostname))
-    warnings.push('REDIS_URL uses unencrypted redis:// to a public-looking host; use rediss:// or a private network.');
-  if (env.REDIS_CLUSTER_NODES && url.protocol !== 'rediss:')
-    warnings.push(
-      'REDIS_CLUSTER_NODES takes its TLS setting from REDIS_URL; use rediss:// if the cluster requires TLS.',
-    );
   if (!url.password)
     warnings.push('REDIS_URL carries no password; make sure Redis is not reachable from untrusted networks.');
   return warnings;

@@ -5,19 +5,17 @@ import { withTimeout } from '../../../lib/http/timeout';
 import { logger } from '../../../lib/logger';
 import { getRedisClient } from '../../../lib/redis/client';
 import { readChangelog } from './read';
-import { buildWebhookPayload, type Announcement } from '../discord';
-import { executeWebhook } from '../../../server/integrations/discord-webhook';
+import { buildAnnouncementPayloads, type Announcement } from '../discord';
+import { syncChangelogSeries } from './discord-series';
 
 /** One hash tag for every key, so the Lua scripts stay valid on a Redis Cluster. */
 const NS = 'arrakis:{cl}:v2';
 const keys = {
   lastAnnounced: `${NS}:last-announced`,
   history: `${NS}:history`,
-  progress: (slug: string) => `${NS}:progress:${slug}`,
 };
 const TIMEOUT_MS = 8_000;
 const HISTORY_SIZE = 20;
-const PROGRESS_TTL_SECONDS = 90 * 24 * 60 * 60;
 
 const slug = (version: string) => version.toLowerCase().replace(/[^a-z0-9.+-]/g, '-');
 
@@ -41,12 +39,6 @@ export interface AnnouncementStatus {
   history: Array<{ at: string; kind: string; version: string; edited: boolean; by: string }>;
 }
 
-function webhookUrl(): string {
-  const url = getServerEnv().CHANGELOG_WEBHOOK_URL;
-  if (!url) throw new AppError('The changelog webhook is not configured.', 503, 'WEBHOOK_NOT_CONFIGURED', true);
-  return url;
-}
-
 async function recordHistory(entry: { kind: string; version: string; edited: boolean; by: string }) {
   const redis = getRedisClient();
   if (!redis) return;
@@ -61,7 +53,7 @@ export async function getAnnouncementStatus(): Promise<AnnouncementStatus> {
   const env = getServerEnv();
   const redis = getRedisClient();
   const status: AnnouncementStatus = {
-    configured: Boolean(env.CHANGELOG_WEBHOOK_URL),
+    configured: Boolean(env.DISCORD_BOT_TOKEN && env.CHANGELOG_CHANNEL_ID),
     autoAnnounce: env.CHANGELOG_AUTO_ANNOUNCE,
     storage: Boolean(redis),
     lastAnnounced: null,
@@ -102,43 +94,32 @@ export async function getAnnouncementStatus(): Promise<AnnouncementStatus> {
  * Progress posts are tracked per version: the first one is created, later ones edit it in place,
  * so the channel shows one live status message instead of a stack of near-duplicates.
  */
-export async function announce(input: Announcement, actor: string): Promise<{ edited: boolean }> {
-  const url = webhookUrl();
+export async function announce(input: Announcement, actor: string): Promise<{ edited: boolean; parts: number }> {
+  const env = getServerEnv();
+  if (!env.DISCORD_BOT_TOKEN || !env.CHANGELOG_CHANNEL_ID)
+    throw new AppError(
+      'Set DISCORD_BOT_TOKEN and CHANGELOG_CHANNEL_ID to enable announcements.',
+      503,
+      'DISCORD_BOT_NOT_CONFIGURED',
+      true,
+    );
   const release =
     input.kind === 'release' ? (await readChangelog()).find((entry) => entry.version === input.version) : undefined;
   if (input.kind === 'release' && !release) {
     throw new AppError(`Release ${input.version} is not in CHANGELOG.md.`, 404, 'RELEASE_NOT_FOUND', true);
   }
-  const payload = buildWebhookPayload(input, { appUrl: getServerEnv().APP_URL, release });
+  const payloads = buildAnnouncementPayloads(input, { appUrl: env.APP_URL, release });
 
-  const redis = getRedisClient();
-  const trackKey = input.kind === 'progress' ? keys.progress(slug(input.version)) : null;
-  let edited = false;
-  let messageId: string | null = null;
-
-  if (redis && trackKey) {
-    const existing = await withTimeout(redis.get<unknown>(trackKey), TIMEOUT_MS).catch(() => null);
-    const previous = existing === null ? null : String(existing);
-    if (previous && /^\d{15,25}$/.test(previous)) {
-      const result = await executeWebhook(url, payload, previous);
-      if (result.status === 'ok') {
-        edited = true;
-        messageId = result.messageId;
-      }
-    }
-  }
-  if (!messageId) {
-    const result = await executeWebhook(url, payload);
-    if (result.status === 'ok') messageId = result.messageId;
-  }
-  if (redis && trackKey && messageId) {
-    await withTimeout(redis.set(trackKey, messageId, { ex: PROGRESS_TTL_SECONDS }), TIMEOUT_MS).catch((error) =>
-      logger.warn('Unable to remember progress message', { error }),
-    );
-  }
+  // Bot-owned IDs stay separate from legacy webhook-owned messages.
+  const result = await syncChangelogSeries(
+    `${NS}:bot:${input.kind}:${slug(input.version)}`,
+    env.CHANGELOG_CHANNEL_ID,
+    payloads,
+  );
+  const { edited } = result;
 
   await recordHistory({ kind: input.kind, version: input.version, edited, by: actor });
-  return { edited };
+  return result;
 }
 
 export type AutoAnnounceOutcome = 'disabled' | 'baseline' | 'current' | 'lost-claim' | 'announced' | 'failed';
@@ -153,7 +134,7 @@ export type AutoAnnounceOutcome = 'disabled' | 'baseline' | 'current' | 'lost-cl
 export async function announceLatestRelease(): Promise<AutoAnnounceOutcome> {
   const env = getServerEnv();
   const redis = getRedisClient();
-  if (!env.CHANGELOG_AUTO_ANNOUNCE || !env.CHANGELOG_WEBHOOK_URL || !redis) return 'disabled';
+  if (!env.CHANGELOG_AUTO_ANNOUNCE || !env.DISCORD_BOT_TOKEN || !env.CHANGELOG_CHANNEL_ID || !redis) return 'disabled';
 
   const latest = (await readChangelog())[0];
   if (!latest) return 'disabled';

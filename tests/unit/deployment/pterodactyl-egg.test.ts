@@ -121,7 +121,7 @@ describe('release integrity', () => {
         'ADMIN_CONSOLE_API_KEY',
         'AUTH_SECRET',
         'BOT_API_TOKEN',
-        'CHANGELOG_WEBHOOK_URL',
+        'DISCORD_BOT_TOKEN',
         'CONSOLE_API_KEY',
         'DISCORD_CLIENT_SECRET',
         'OWNER_KEY_SECRET',

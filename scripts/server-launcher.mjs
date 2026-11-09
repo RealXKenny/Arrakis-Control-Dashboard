@@ -13,8 +13,20 @@ const require = createRequire(import.meta.url);
 
 // Kept in this standalone launcher so production startup needs no TypeScript log imports.
 function formatLogLine(scope, level, message) {
-  const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
-  return `\u001b[2m[${timestamp}]\u001b[0m \u001b[32m● [${level}]\u001b[0m \u001b[93m[${scope}]\u001b[0m ${message}`;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  const timestamp = `${values.year}-${values.month}-${values.day} ${values.hour}:${values.minute}:${values.second}`;
+  const paint = (text, color) => (process.env.NO_COLOR !== undefined ? text : `\u001b[${color}m${text}\u001b[0m`);
+  return `${paint(timestamp, '2')}  ${paint(`● ${level.padEnd(5)}`, '32')} ${paint(scope.padEnd(12), '93')} ${paint('│', '2')} ${message}`;
 }
 
 function pause(milliseconds, signal) {
@@ -57,7 +69,7 @@ export async function announceReadiness(
     }
     if (signal.aborted) return;
     if (ready) {
-      write('Ready in — Arrakis Control Dashboard is listening (HTTP check passed).');
+      write(`Dashboard ready in ${((Date.now() - started) / 1000).toFixed(1)}s (HTTP check passed).`);
       return;
     }
     await pause(1000, signal);
@@ -139,6 +151,8 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
   if (command === 'start') await prepareImageCache();
   const readinessUrl = resolveReadinessUrl([...serverArgs, ...forwardedArgs]);
   const nextBin = require.resolve('next/dist/bin/next');
+  const { superviseChatBridge } = await import('./chat-bridge-supervisor.mjs');
+  const bridge = process.env.CHAT_ENABLED === 'true' ? superviseChatBridge() : undefined;
   const child = spawn(process.execPath, [nextBin, command, ...serverArgs, ...forwardedArgs], {
     // Anonymous Next.js telemetry is always off, whatever the environment says.
     env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' },
@@ -146,9 +160,13 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
   });
 
   const controller = new AbortController();
+  let shutdownTimer;
   const stop = (signal) => {
     controller.abort();
     child.kill(signal);
+    void bridge?.stop(signal);
+    shutdownTimer ??= setTimeout(() => child.kill('SIGKILL'), 15_000);
+    shutdownTimer.unref();
   };
   const onInterrupt = () => stop('SIGINT');
   const onTerminate = () => stop('SIGTERM');
@@ -165,10 +183,12 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
       });
     });
   } finally {
+    clearTimeout(shutdownTimer);
     controller.abort();
     process.removeListener('SIGINT', onInterrupt);
     process.removeListener('SIGTERM', onTerminate);
     await readiness;
+    await bridge?.stop();
   }
 }
 

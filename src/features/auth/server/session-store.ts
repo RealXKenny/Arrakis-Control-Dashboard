@@ -4,7 +4,9 @@ import { getRedisClient } from '../../../lib/redis/client';
 import { logger } from '../../../lib/logger';
 
 export type DashboardSession = {
-  user: { id: string; username?: string; global_name?: string; avatar?: string | null };
+  user: { id: string; username?: string; global_name?: string; guild_nickname?: string | null; avatar?: string | null };
+  /** Backoff for automatically upgrading older sessions with Discord display metadata. */
+  profileRefreshAttemptedAt?: number;
   guildId: string;
   roleIds: string[];
   linkedPlayerId?: string;
@@ -47,6 +49,7 @@ function validSession(value: unknown): value is DashboardSession {
     session.user.id.length <= 64 &&
     optionalText(session.user.username, 100) &&
     optionalText(session.user.global_name, 100) &&
+    (session.user.guild_nickname === null || optionalText(session.user.guild_nickname, 100)) &&
     (session.user.avatar === null || optionalText(session.user.avatar, 128)) &&
     typeof session.guildId === 'string' &&
     session.guildId.length > 0 &&
@@ -57,6 +60,8 @@ function validSession(value: unknown): value is DashboardSession {
     optionalText(session.linkedPlayerId, 128) &&
     optionalText(session.linkedPlayerName, 200) &&
     optionalText(session.email, 320) &&
+    (session.profileRefreshAttemptedAt === undefined ||
+      (typeof session.profileRefreshAttemptedAt === 'number' && Number.isFinite(session.profileRefreshAttemptedAt))) &&
     (session.needsPassword === undefined || typeof session.needsPassword === 'boolean') &&
     (session.verifiedAt === undefined ||
       (typeof session.verifiedAt === 'number' && Number.isFinite(session.verifiedAt))) &&

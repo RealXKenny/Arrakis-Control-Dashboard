@@ -30,7 +30,7 @@ the upstream source.
 - [Getting started](getting-started/README.md): introduction, requirements, quick start, first run, first administrator login, and the end-to-end RedBlink walkthrough.
 - [Installation](installation/README.md): local development, production on Linux and Windows, Pterodactyl, reverse proxy (Nginx, Cloudflare), updating.
 - [Configuration](configuration/README.md): every environment variable, authentication, Discord OAuth, administrator access, the Console, Redis (standalone and Cluster), logging, rate limiting.
-- [Features](features/README.md): dashboard, player pages, administrator panel, guilds and recruitment, marketplace, vehicles, maps, audit logs, sessions.
+- [Features](features/README.md): dashboard, player pages, administrator panel, guilds and recruitment, marketplace, vehicles, maps, live game chat, audit logs, sessions.
 - [Integrations](integrations/README.md): RedBlink Dune Docker, the Dune Console API, Discord, webhooks.
 - [Administration](administration/README.md): administrator setup, sessions, backups and restore, maintenance, monitoring, disaster recovery.
 - [Security](security/README.md): overview and known limitations, production hardening, secrets, Redis, release verification, incident response.

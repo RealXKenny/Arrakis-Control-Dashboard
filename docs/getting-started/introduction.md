@@ -9,12 +9,12 @@ Console API.
 
 The dashboard is **a client of your server stack, not the stack itself**:
 
-| Project                                                            | Role                                                                                                                         |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| [RedBlink Dune Docker](https://github.com/Red-Blink/dune-awakening-selfhost-docker) | Runs the Dune: Awakening server in Docker and exposes the **Console** web UI and HTTP API (default port `8088`). |
-| Arrakis Control Dashboard (this repository)                        | A separate web application that calls the Console API and the Console's Discord adapter on behalf of signed-in members.     |
-| Redis                                                              | The dashboard's only persistent store: sessions, accounts, rate limits, guild data, marketplace, audit trail.                |
-| Discord                                                            | Sign-in (OAuth2) and the guild role that decides who may use the dashboard.                                                  |
+| Project                                                                             | Role                                                                                                                    |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| [RedBlink Dune Docker](https://github.com/Red-Blink/dune-awakening-selfhost-docker) | Runs the Dune: Awakening server in Docker and exposes the **Console** web UI and HTTP API (default port `8088`).        |
+| Arrakis Control Dashboard (this repository)                                         | A separate web application that calls the Console API and the Console's Discord adapter on behalf of signed-in members. |
+| Redis                                                                               | The dashboard's only persistent store: sessions, accounts, rate limits, guild data, marketplace, audit trail.           |
+| Discord                                                                             | Sign-in (OAuth2) and the guild role that decides who may use the dashboard.                                             |
 
 ```mermaid
 flowchart LR
@@ -34,7 +34,7 @@ flowchart LR
 - The [base marketplace](../features/marketplace.md) (share and import blueprints with preview pictures).
 - The [administrator panel](../features/administrator-panel.md): a 383-operation catalog over the Console API with
   step-up re-authentication, confirmations and an [audit trail](../features/audit-logs.md).
-- A read-only [bot API](../api/server.md#bot-world-summary) and optional [Discord webhook announcements](../integrations/webhooks.md).
+- A read-only [bot API](../api/server.md#bot-world-summary) and optional [Discord bot announcements](../integrations/webhooks.md).
 
 ## What it does not do
 

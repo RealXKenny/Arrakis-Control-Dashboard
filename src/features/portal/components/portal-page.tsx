@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LocalTime } from '../../../components/ui/local-time';
+import { AvatarImage } from '../../../components/ui/avatar-image';
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatNumber } from '../../../lib/format';
@@ -111,11 +112,13 @@ export default async function PortalPage({
         <aside className="panel p-6 xl:col-span-4" aria-label="Your character">
           <div className="flex items-center gap-4">
             <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden bg-obsidian-900 text-xl font-extrabold text-spice-400">
-              {character.avatarUrl ? (
-                <Image src={character.avatarUrl} alt="" width={56} height={56} unoptimized />
-              ) : (
-                character.name.slice(0, 1).toUpperCase()
-              )}
+              <AvatarImage
+                src={character.avatarUrl}
+                width={56}
+                height={56}
+                className="size-full object-cover"
+                fallback={character.name.slice(0, 1).toUpperCase()}
+              />
             </div>
             <div className="min-w-0">
               <h2 className="truncate text-base">{character.name}</h2>

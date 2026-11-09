@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import {
   announcementInputSchema,
-  buildWebhookPayload,
+  buildAnnouncementPayloads,
   parseProgressLines,
   type ReleaseNotes,
 } from '../../../changelog/discord';
@@ -60,7 +60,7 @@ export function Composer({
     }
     try {
       const release = releases.find((entry) => entry.version === parsed.data.version);
-      return { error: null, payload: buildWebhookPayload(parsed.data, { appUrl, release, now: new Date(0) }) };
+      return { error: null, payload: buildAnnouncementPayloads(parsed.data, { appUrl, release, now: new Date(0) }) };
     } catch (reason) {
       return { error: reason instanceof Error ? reason.message : 'Cannot build this announcement.', payload: null };
     }
@@ -75,9 +75,17 @@ export function Composer({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(draft),
       });
-      const body = (await response.json().catch(() => null)) as { edited?: boolean; error?: string } | null;
+      const body = (await response.json().catch(() => null)) as {
+        edited?: boolean;
+        parts?: number;
+        error?: string;
+      } | null;
       if (!response.ok) throw new Error(body?.error ?? 'The announcement failed.');
-      setMessage({ tone: 'ok', text: body?.edited ? 'Updated the existing progress post.' : 'Announcement posted.' });
+      const parts = body?.parts ?? 1;
+      setMessage({
+        tone: 'ok',
+        text: `${body?.edited ? 'Updated' : 'Posted'} ${parts} announcement ${parts === 1 ? 'message' : 'messages'}.`,
+      });
     } catch (reason) {
       setMessage({ tone: 'error', text: reason instanceof Error ? reason.message : 'The announcement failed.' });
     } finally {
@@ -212,7 +220,17 @@ export function Composer({
       <div className="grid content-start gap-5">
         <h2 className="eyebrow">Preview</h2>
         {preview.payload ? (
-          <EmbedPreview payload={preview.payload} />
+          <div className="space-y-4">
+            <p role="status" className="text-sm text-sand-300">
+              {preview.payload.length} Discord {preview.payload.length === 1 ? 'message' : 'messages'} · full changelog,
+              automatically split to fit
+            </p>
+            {preview.payload.map((payload, index) => (
+              <div key={index} aria-label={`Announcement part ${index + 1} of ${preview.payload.length}`}>
+                <EmbedPreview payload={payload} />
+              </div>
+            ))}
+          </div>
         ) : (
           <p role="status" className="border-l-4 border-status-warn bg-status-warn/10 p-4 text-sm text-sand-100">
             {preview.error}
@@ -239,7 +257,11 @@ export function Composer({
               Send to Discord
             </button>
           )}
-          {!canSend && <p className="text-xs text-status-warn">Set CHANGELOG_WEBHOOK_URL to enable sending.</p>}
+          {!canSend && (
+            <p className="text-xs text-status-warn">
+              Set DISCORD_BOT_TOKEN and CHANGELOG_CHANNEL_ID to enable sending.
+            </p>
+          )}
         </div>
 
         {message && (
