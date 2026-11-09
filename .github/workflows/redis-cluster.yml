@@ -39,7 +39,7 @@ jobs:
           docker run --rm --network host redis:7.4-alpine redis-cli --cluster create \
             127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 127.0.0.1:7006 \
             --cluster-replicas 1 --cluster-yes
-          for attempt in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             docker run --rm --network host redis:7.4-alpine redis-cli -p 7001 cluster info | grep -q cluster_state:ok && exit 0
             sleep 1
           done

@@ -110,8 +110,10 @@ jobs:
           fi
 
           echo "create=true" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=$current_version" >> "$GITHUB_OUTPUT"
+          {
+            echo "tag=$tag"
+            echo "version=$current_version"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build Pterodactyl egg
         if: steps.release.outputs.create == 'true'
