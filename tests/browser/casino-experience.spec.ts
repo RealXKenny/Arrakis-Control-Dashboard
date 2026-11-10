@@ -20,7 +20,7 @@ test('casino tables and open sound settings pass automated accessibility checks'
     'great-houses',
   ]) {
     await page.goto(`/casino/games/${game}`);
-    await page.getByLabel('Sound settings').click();
+    await page.getByLabel('Sound settings', { exact: true }).click();
     await page.evaluate(source);
     const problems = await page.evaluate(async () => {
       const result = await (
@@ -48,19 +48,19 @@ test('audio starts disabled, persists opt-in and category settings, and card bac
   });
   await context.setExtraHTTPHeaders({ Cookie: member.cookie });
   await page.goto('/casino/games/emperors-hand');
-  await expect(page.getByLabel('Sound settings')).toContainText('off');
-  await page.getByLabel('Sound settings').click();
+  await expect(page.getByLabel('Sound settings', { exact: true })).toContainText('off');
+  await page.getByLabel('Sound settings', { exact: true }).click();
   await expect(page.getByLabel('Enable sound')).not.toBeChecked();
   await expect(page.getByLabel('Dealer voice', { exact: true })).toHaveValue('local:solaris-v1');
   await expect(page.getByLabel('Hover sounds')).not.toBeChecked();
   await page.getByLabel('Enable sound').check();
   await page.getByLabel('Interface volume').fill('0');
-  await page.getByLabel('Sound settings').click();
+  await page.getByLabel('Sound settings', { exact: true }).click();
   await page.getByText('Card back · Imperial Gold').click();
   await page.getByRole('button', { name: 'Spice Horizon', exact: false }).click();
   await page.reload();
   await expect(page.getByText('Card back · Spice Horizon')).toBeVisible();
-  await page.getByLabel('Sound settings').click();
+  await page.getByLabel('Sound settings', { exact: true }).click();
   await expect(page.getByLabel('Enable sound')).toBeChecked();
   await expect(page.getByLabel('Interface volume')).toHaveValue('0');
   await page.getByLabel('Enable sound').uncheck();
@@ -88,8 +88,20 @@ for (const width of [320, 390]) {
       ).toBeLessThanOrEqual(1);
       await page.screenshot({ path: testInfo.outputPath(`${game}-${width}.png`), fullPage: true });
     }
-    await page.getByLabel('Sound settings').click();
+    await page.getByLabel('Sound settings', { exact: true }).click();
     await expect(page.getByLabel('Enable sound')).toBeVisible();
+    const soundPanel = page.locator('[data-audio-settings] > div');
+    const panelBounds = await soundPanel.boundingBox();
+    expect(panelBounds).not.toBeNull();
+    expect(panelBounds!.x).toBeGreaterThanOrEqual(0);
+    expect(panelBounds!.x + panelBounds!.width).toBeLessThanOrEqual(width);
+    expect(panelBounds!.y + panelBounds!.height).toBeLessThanOrEqual(850);
+    await page.getByRole('button', { name: 'Preview sound', exact: true }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: 'Preview sound', exact: true })).toBeInViewport();
+    await page.screenshot({ path: testInfo.outputPath(`sound-settings-${width}.png`) });
+    await page.keyboard.press('Escape');
+    await expect(page.getByLabel('Sound settings', { exact: true })).toBeFocused();
+    await expect(soundPanel).not.toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
     ).toBeLessThanOrEqual(1);
@@ -143,7 +155,7 @@ test('confirmed Blackjack narration uses audio after consent and stays quiet on 
   await expect(page.getByText('Done. The Solaris is in your casino wallet.')).toBeVisible();
   expect((await getState()).oscillators).toBe(0);
   await page.goto('/casino/games/emperors-hand');
-  await page.getByLabel('Sound settings').click();
+  await page.getByLabel('Sound settings', { exact: true }).click();
   await page.getByLabel('Enable sound').check();
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Deal', exact: true }).click();
@@ -159,7 +171,7 @@ test('confirmed Blackjack narration uses audio after consent and stays quiet on 
   expect(clips.length).toBeGreaterThan(0);
   expect(clips.every((name) => new URL(name).origin === 'http://127.0.0.1:3100')).toBeTruthy();
   await page.reload();
-  await expect(page.getByLabel('Sound settings')).toContainText('on');
+  await expect(page.getByLabel('Sound settings', { exact: true })).toContainText('on');
   await page.waitForTimeout(500); // a resumed hand must not enqueue delayed speech
   expect((await getState()).spoken).toEqual([]);
   expect((await getState()).recordings).toBe(0);
