@@ -82,7 +82,11 @@ export function UploadForm() {
       )}
 
       <div className="flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={busy} className="btn btn-primary disabled:opacity-60">
+        <button
+          type="submit"
+          disabled={busy}
+          className="btn btn-primary mr-1 max-w-full whitespace-normal disabled:opacity-60"
+        >
           {busy ? 'Publishing…' : 'Publish to marketplace'}
         </button>
         <p className="text-xs text-sand-500">Everyone signed in can view and download what you publish.</p>
