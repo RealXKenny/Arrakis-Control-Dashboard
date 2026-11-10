@@ -6,7 +6,8 @@ import { BASE_LAYOUT_MAX_BYTES, BASE_THUMBNAIL_MAX_BYTES } from '../schema';
 
 const FIELD =
   'w-full border border-sand-200/20 bg-obsidian-900 px-3 py-3 text-sm font-normal normal-case tracking-normal text-sand-50 placeholder:text-sand-600';
-const LABEL = 'grid min-w-0 gap-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.2em] text-sand-400';
+const LABEL =
+  'grid min-w-0 max-w-full gap-1.5 wrap-anywhere text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-sand-400 sm:tracking-[0.2em]';
 const FILE =
   'w-full min-w-0 max-w-full border border-dashed border-sand-200/25 bg-obsidian-900 p-3 text-xs font-normal normal-case tracking-normal text-sand-200 file:mr-1 file:border-0 file:bg-spice-500 file:px-2 file:py-2 file:font-bold file:uppercase file:tracking-[0.08em] file:text-obsidian-950 sm:text-sm sm:file:mr-4 sm:file:px-4 sm:file:tracking-[0.2em]';
 
@@ -44,7 +45,7 @@ export function UploadForm() {
   }
 
   return (
-    <form onSubmit={submit} className="panel grid gap-6 p-6 sm:p-8" aria-busy={busy}>
+    <form onSubmit={submit} className="panel grid min-w-0 gap-6 p-6 sm:p-8" aria-busy={busy}>
       <label className={LABEL}>
         Base layout (.json)
         <input type="file" name="file" accept="application/json,.json" required className={FILE} />
