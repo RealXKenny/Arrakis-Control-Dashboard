@@ -10,14 +10,7 @@ import { signOutAction } from '../../features/auth/actions';
 import { BellIcon, ChevronDownIcon, HomeIcon, MenuIcon, SignOutIcon } from '../icons';
 import { BrandLockup } from '../brand/logo';
 import { MobileNavigation } from './mobile-navigation';
-import {
-  isNavigationActive,
-  NAVIGATION_ITEMS,
-  navigationFor,
-  NOTIFICATION_ITEMS,
-  SIGN_IN_HREF,
-  type NavigationItem,
-} from './nav-config';
+import { isNavigationActive, navigationFor, NOTIFICATION_ITEMS, SIGN_IN_HREF, type NavigationItem } from './nav-config';
 import { NavigationDirectLink, NavigationDropdown } from './navigation-menu';
 
 /** `identity` and `isAdmin` are resolved on the server from the verified session. */
@@ -34,7 +27,7 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const homeActive = pathname === '/';
 
-  const overflow = NAVIGATION_ITEMS.filter((item) => item.tabletOverflow);
+  const overflow = items.filter((item) => item.tabletOverflow);
   const more = items.find((item) => item.id === 'more');
   const moreActive = more ? isNavigationActive(pathname, more) : false;
   const overflowActive = overflow.some((item) => isNavigationActive(pathname, item));

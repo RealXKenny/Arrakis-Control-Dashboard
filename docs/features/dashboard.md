@@ -59,6 +59,10 @@ Home is the first entry of the shared navigation inventory (`src/components/navi
 - **Under 360px** the header shows only the logo mark so the three controls keep full-size targets; the link still has the accessible name "Arrakis Control home". Between 360px and 400px the wordmark is tighter.
 - Navigation uses the normal client-side link (a full document load only where a route has its own document policy, today `/status`). It works identically from every dashboard section; `tests/browser/landing.spec.ts` clicks it from the portal, character, holdings, vehicles, market, guilds, map, Live Chat, the casino and the base pages.
 
+### Dropdown menus
+
+Every desktop navigation category (Assets, Bases, Guilds, Casino and More) uses the same wide panel with an amber introduction card and link columns. Casino games sit beside the wallet and account destinations rather than forming one long narrow list. Panels stay within the viewport; More includes lower-priority destinations below 1920px, while the mobile drawer retains its collapsible sections. Notifications and account controls keep their compact utility menus.
+
 ### Colour variables
 
 Plain CSS (`globals.css`, the map and casino stylesheets) reads the palette as `var(--color-spice-400)` and so on. Tailwind v4 does not turn JS-config colours into CSS variables on its own, so `src/styles/tokens.css` defines them, mirroring `tailwind.config.ts`. Without them the declarations are invalid and silently lost: no focus ring, unstyled primary buttons, uncoloured eyebrows. `tests/unit/styles/tokens.test.ts` fails if the tokens drift from the config or if any stylesheet reads a variable that is not defined.

@@ -149,3 +149,35 @@ test('tablet moves lower-priority destinations into More without horizontal over
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+test('every desktop category uses the Bases-style wide menu within the viewport', async ({ page }) => {
+  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
+  await page.setViewportSize({ width: 1920, height: 900 });
+  await page.goto('/portal');
+  const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
+  for (const label of ['Assets', 'Bases', 'Guilds', 'Casino', 'More']) {
+    await primary.getByRole('button', { name: label, exact: true }).click();
+    const menu = page.getByRole('menu', { name: label, exact: true });
+    await expect(menu.getByRole('heading', { name: label, exact: true })).toBeVisible();
+    await expect.poll(async () => Math.round((await menu.boundingBox())?.width ?? 0)).toBe(960);
+    const bounds = await menu.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(16);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(1904);
+    const links = menu.getByRole('menuitem');
+    expect(await links.count()).toBeGreaterThan(0);
+    if (label === 'Casino') {
+      await expect(menu.getByRole('region', { name: 'Games', exact: true })).toBeVisible();
+      await expect(menu.getByRole('menuitem', { name: /The Great Houses/ })).toBeVisible();
+      await expect(menu.getByRole('menuitem', { name: /Wallet/ })).toBeVisible();
+    }
+    await menu.screenshot({ path: test.info().outputPath(`${label.toLowerCase()}-menu.png`) });
+    await page.keyboard.press('Escape');
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await primary.getByRole('button', { name: 'More', exact: true }).click();
+  const menu = page.getByRole('menu', { name: 'More', exact: true });
+  await expect(menu.getByRole('heading', { name: 'More', exact: true })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: /The Great Houses/ })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: /Reconcile transfers/ })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

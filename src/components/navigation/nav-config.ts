@@ -69,6 +69,7 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     id: 'assets',
     label: 'Assets',
     icon: 'assets',
+    description: 'Your holdings, shared bases, and personal assets.',
     order: 30,
     tabletOverflow: true,
     children: [
@@ -160,6 +161,7 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     id: 'guilds',
     label: 'Guilds',
     icon: 'guilds',
+    description: 'Find your community, manage your roster, and stay connected.',
     order: 70,
     tabletOverflow: true,
     children: [
@@ -303,6 +305,7 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     id: 'more',
     label: 'More',
     icon: 'more',
+    description: 'Community events, release notes, service status, and more.',
     order: 90,
     align: 'right',
     children: [

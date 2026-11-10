@@ -180,7 +180,19 @@ export function NavigationDropdown({
   const [rendered, setRendered] = useState(open);
   const items = [...extraItems, ...(item.children ?? [])].sort((a, b) => a.order - b.order);
   const active = isNavigationActive(pathname, { ...item, children: items });
-  const grouped = items.length > 0 && items.every((entry) => entry.children?.length);
+  const category = variant === 'category';
+  const links = items.filter((entry) => entry.href);
+  const groups = items.filter((entry) => entry.children?.length);
+  const columns = groups.length
+    ? [
+        ...(links.length ? [{ id: `${item.id}-links`, items: links, overflowOnly: false }] : []),
+        ...groups.map((group) => ({ id: group.id, items: [group], overflowOnly: Boolean(group.tabletOverflow) })),
+      ]
+    : Array.from({ length: Math.min(links.length, 2) }, (_, index) => ({
+        id: `${item.id}-links-${index}`,
+        items: links.slice(index * Math.ceil(links.length / 2), (index + 1) * Math.ceil(links.length / 2)),
+        overflowOnly: false,
+      }));
   const menuId = `navigation-menu-${item.id}`;
 
   useLayoutEffect(() => {
@@ -302,9 +314,9 @@ export function NavigationDropdown({
           }}
           className={`command-menu absolute top-[calc(100%+0.75rem)] z-[70] max-h-[min(76vh,42rem)] overflow-y-auto border border-[#a96d18]/85 bg-[#111215] ${
             item.align === 'right' || variant !== 'category' ? 'right-0' : 'left-0'
-          } ${grouped ? 'w-[min(60rem,calc(100vw-2rem))]' : 'w-88 max-w-[calc(100vw-1.5rem)]'}`}
+          } ${category ? 'w-[min(60rem,calc(100vw-2rem))]' : 'w-88 max-w-[calc(100vw-1.5rem)]'}`}
         >
-          {grouped ? (
+          {category ? (
             <div className="flex flex-col lg:flex-row">
               {item.description && (
                 <div className="command-summary flex shrink-0 flex-col justify-center border-b border-[#6f4d1f]/50 p-6 lg:w-64 lg:border-r lg:border-b-0">
@@ -319,14 +331,16 @@ export function NavigationDropdown({
                   <div aria-hidden="true" className="mt-6 h-px bg-gradient-to-r from-spice-500/70 to-transparent" />
                 </div>
               )}
-              <div
-                className="grid flex-1"
-                style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 3)}, minmax(0, 1fr))` }}
-              >
-                {items.map((group) => (
-                  <div key={group.id} className="border-l border-[#6f4d1f]/35 py-3 first:border-l-0">
+              <div className="grid min-w-0 flex-1 grid-cols-[repeat(auto-fit,minmax(min(13rem,100%),1fr))]">
+                {columns.map((column) => (
+                  <div
+                    key={column.id}
+                    className={`min-w-0 border-l border-[#6f4d1f]/35 py-3 first:border-l-0 ${
+                      extraItems.length > 0 && column.overflowOnly ? 'min-[1920px]:hidden' : ''
+                    }`}
+                  >
                     <NavigationMenuItems
-                      items={[group]}
+                      items={column.items}
                       pathname={pathname}
                       onNavigate={onClose}
                       overflow={extraItems.length > 0}
