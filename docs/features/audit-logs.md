@@ -15,24 +15,25 @@ Retention and caps: [logging](../configuration/logging.md#audit-trail). Events w
 
 ## Event catalogue
 
-| Event                       | Outcome           | When                                                                                                   |
-| --------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------ |
-| `auth.login`                | success           | Interactive sign-in (actor = Discord ID)                                                               |
-| `auth.login_failed`         | failure / denied  | Bad password (reason, no email), missing role, rate limited                                            |
-| `auth.logout`               | success           | Sign-out                                                                                               |
-| `auth.password_set`         | success           | A member set their email password                                                                      |
-| `auth.session_revoked`      | success           | A Discord re-check ended a session (reason)                                                            |
-| `admin.operation`           | success / failure | An administrator write or download (operation id, upstream status)                                     |
-| `admin.access_denied`       | denied            | A non-administrator called an admin API                                                                |
-| `admin.reauth_required`     | denied            | A change was refused because the sign-in was too old (`highRisk`)                                      |
-| `admin.sessions_revoked`    | success           | An administrator ended all their sessions                                                              |
-| `admin.announcement`        | success           | A release announcement was posted                                                                      |
-| `guild.<action>`            | success           | Guild member add/remove/promote/demote/disband (`guild.add`, …)                                        |
-| `guild.settings_updated`    | success           | A leader changed recruitment settings                                                                  |
-| `guild.noticeboard_updated` | success           | A verified leader saved noticeboard settings, an announcement, or a removal (guild ID and action only) |
-| `guild.operation_updated`   | success           | A verified member changed an operation or their sign-up (guild ID, operation ID and action only)       |
-| `security.origin_rejected`  | denied            | A mutation had a missing or foreign `Origin`                                                           |
-| `security.control_failure`  | failure           | The rate limiter's Redis was unavailable (fail-closed), at most once a minute                          |
+| Event                            | Outcome           | When                                                                                                          |
+| -------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `auth.login`                     | success           | Interactive sign-in (actor = Discord ID)                                                                      |
+| `auth.login_failed`              | failure / denied  | Bad password (reason, no email), missing role, rate limited                                                   |
+| `auth.logout`                    | success           | Sign-out                                                                                                      |
+| `auth.password_set`              | success           | A member set their email password                                                                             |
+| `auth.session_revoked`           | success           | A Discord re-check ended a session (reason)                                                                   |
+| `admin.operation`                | success / failure | An administrator write or download (operation id, upstream status)                                            |
+| `admin.access_denied`            | denied            | A non-administrator called an admin API                                                                       |
+| `admin.reauth_required`          | denied            | A change was refused because the sign-in was too old (`highRisk`)                                             |
+| `admin.sessions_revoked`         | success           | An administrator ended all their sessions                                                                     |
+| `admin.announcement`             | success           | A release announcement was posted                                                                             |
+| `guild.<action>`                 | success           | Guild member add/remove/promote/demote/disband (`guild.add`, …)                                               |
+| `guild.settings_updated`         | success           | A leader changed recruitment settings                                                                         |
+| `guild.noticeboard_updated`      | success           | A verified leader saved noticeboard settings, an announcement, or a removal (guild ID and action only)        |
+| `guild.operation_updated`        | success           | A verified member changed an operation or their sign-up (guild ID, operation ID and action only)              |
+| `guild.resource_request_updated` | success           | A verified member changed a resource request, pledge or delivery claim (guild ID, request ID and action only) |
+| `security.origin_rejected`       | denied            | A mutation had a missing or foreign `Origin`                                                                  |
+| `security.control_failure`       | failure           | The rate limiter's Redis was unavailable (fail-closed), at most once a minute                                 |
 
 Fields: `id`, `at`, `event`, `outcome` (`success`, `failure`, `denied`), optional `actor` (numeric Discord ID), `ip` (IPv4 or IPv6
 `/64`), and flat `data`. Secret-looking keys, nested objects and request bodies never enter the trail; strings are capped at 200

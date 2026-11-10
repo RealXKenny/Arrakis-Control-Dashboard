@@ -1,5 +1,22 @@
 # API: guilds
 
+## Private resource requests (V2)
+
+`GET /api/v2/guilds/{guildId}/resource-requests` returns `{ ok: true, data: { canEdit, requests } }` after fresh membership verification. `canEdit` indicates leader status; requesters also manage their own records. Each request includes UUID `id`/`revision`, `material`, `quantity`, `unit`, `dropoff`, `details`, `priority` (`normal`/`urgent`), `status` (`open`/`fulfilled`/`cancelled`), requester name, timestamps, `isRequester` and `pledges`. Pledges expose opaque UUID IDs, display names, quantity, status (`promised`/`reported`/`confirmed`), timestamps, confirmer name and `isSelf`. Canonical requester, supplier and confirmer IDs remain server-side. Responses are no-store.
+
+Same-origin `POST` bodies are bounded to 16 KiB. All quantities must be positive whole-number decimal strings of up to 18 digits, not JSON numbers. Supported actions:
+
+- `{ action: "save", revision, request: { id, material, quantity, unit, dropoff, details, priority } }` — members create with a UUID and `revision: null`; requester/leader edits use the current UUID revision. Material allows 100 characters, unit 30, drop-off 200 and notes 1,500. Existing pledges lock material/unit and bound quantity reductions.
+- `{ action: "pledge", id, revision, quantity }` — create or revise the caller's outstanding promise; never accept caller-supplied supplier identity. The requester cannot pledge to their own request, and all promises plus confirmed deliveries must fit the requested quantity.
+- `{ action: "withdraw", id, revision }` or `{ action: "report", id, revision }` — supplier-only changes to their own promised pledge. Reporting does not confirm delivery.
+- `{ action: "confirm", id, revision, pledgeId }` or `{ action: "return-claim", id, revision, pledgeId }` — requester/leader reviews a reported delivery. Self-confirmation is refused, even for leaders. Returned claims become promised again.
+- `{ action: "release-pledge", id, revision, pledgeId }` — requester/leader releases an unconfirmed reservation; confirmed receipts cannot be removed individually.
+- `{ action: "cancel", id, revision }` or `{ action: "delete", id, revision }` — requester/leader closes or removes the record. Fulfillment is automatic when confirmed quantities reach the target; closed records do not reopen.
+
+Writes return `{ ok: true, data: { request } }`, with an updated caller-relative view or `null` after deletion. Atomic compare-and-set checks prevent stale edits, duplicate outstanding promises, over-commitment and concurrent quota overruns. A confirmed partial receipt remains while the same supplier adds another promise. Limits are 20 retained guild requests, 5 open requests per character, 20 pledge/receipt entries per request and 64 KiB per record. Retention is 90 days from the last successful change; reads do not refresh it, and dashboard disbanding deletes the guild key.
+
+Important error codes include `RESOURCE_CONFLICT`, `RESOURCE_OVERCOMMITTED`, `RESOURCE_PLEDGE_LOCKED`, `RESOURCE_SELF_PLEDGE`, `RESOURCE_SELF_CONFIRMATION`, `RESOURCE_MEMBER_LIMIT`, `RESOURCE_PLEDGES_FULL`, `RESOURCES_FULL`, `RESOURCE_CLOSED` and `RESOURCE_MANAGER_REQUIRED`. Keep drafts after failed/uncertain writes and refresh explicitly before retrying. Read/write budgets also protect fresh Console verification. No action moves game items or currency; receipt confirmation is a manual assertion by an authorized member.
+
 ## Private operations planner (V2)
 
 `GET /api/v2/guilds/{guildId}/operations` returns `{ ok: true, data: { canEdit, operations } }` after fresh membership verification. Up to 20 operations include UUID IDs/revisions, title, kind (`spice-run`, `deep-desert`, `boss-run`, `other`), details, meeting point, UTC start/end times, role capacities, status, organizer name, timestamps and sign-ups. Sign-ups expose opaque UUID IDs, verified display names, role, time and an `isSelf` flag; Console character IDs remain server-side. Responses are no-store.

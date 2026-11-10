@@ -17,6 +17,7 @@ import { SettingsForm } from '../../../features/guilds/components/settings-form'
 import { SupportPanel } from '../../../features/guilds/components/support-panel';
 import { GuildNoticeboard } from '../../../features/guilds/components/noticeboard';
 import { GuildOperationsPlanner } from '../../../features/guilds/components/operations-planner';
+import { GuildResourceRequests } from '../../../features/guilds/components/resource-requests';
 
 export const metadata: Metadata = { title: 'My guild' };
 
@@ -67,7 +68,13 @@ export default async function MyGuildPage({
   const { guild, members, self, canEdit, leaderCheck, requirement } = result;
   const requestedTab = Array.isArray(requested) ? requested[0] : requested;
   const tab =
-    requestedTab === 'operations' ? 'operations' : canEdit && requestedTab === 'settings' ? 'settings' : 'roster';
+    requestedTab === 'resources'
+      ? 'resources'
+      : requestedTab === 'operations'
+        ? 'operations'
+        : canEdit && requestedTab === 'settings'
+          ? 'settings'
+          : 'roster';
   const groups = groupMembersByRank(members);
   const leader = members.find((member) => member.roleId === 100);
   const emblem = factionEmblem(guild.faction);
@@ -82,6 +89,7 @@ export default async function MyGuildPage({
         items={[
           { id: 'roster', label: 'My Guild', href: '/guild' },
           { id: 'operations', label: 'Operations', href: '/guild?tab=operations' },
+          { id: 'resources', label: 'Resources', href: '/guild?tab=resources' },
           ...(canEdit ? [{ id: 'settings', label: 'Settings', href: '/guild?tab=settings' }] : []),
         ]}
       />
@@ -94,7 +102,9 @@ export default async function MyGuildPage({
         </div>
       )}
 
-      {tab === 'operations' ? (
+      {tab === 'resources' ? (
+        <GuildResourceRequests key={guild.id} guildId={guild.id} />
+      ) : tab === 'operations' ? (
         <GuildOperationsPlanner key={guild.id} guildId={guild.id} />
       ) : tab === 'roster' ? (
         <div className="flex flex-col gap-8">

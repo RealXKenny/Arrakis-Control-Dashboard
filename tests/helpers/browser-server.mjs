@@ -6,6 +6,7 @@ import { casinoReply } from './casino-redis.mjs';
 import { eventsReply } from './events-redis.mjs';
 import { noticeboardReply } from './guild-noticeboard-redis.mjs';
 import { operationsReply } from './guild-operations-redis.mjs';
+import { resourcesReply } from './guild-resources-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
 
@@ -26,6 +27,8 @@ const listing = {
   ],
 };
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  const resources = resourcesReply(operation, key, args);
+  if (resources !== undefined) return resources.value;
   const operations = operationsReply(operation, key, args);
   if (operations !== undefined) return operations.value;
   const noticeboard = noticeboardReply(operation, key, args);

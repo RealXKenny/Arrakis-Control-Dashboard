@@ -20,6 +20,7 @@ export const GUILD_TAG = '{guilds}';
 export const communityEventKeys = { records: 'arrakis:{community-events}:records' };
 
 export const guildKeys = {
+  resourceRequests: (guildId: string) => `arrakis:${GUILD_TAG}:resource-requests:${guildId}`,
   operations: (guildId: string) => `arrakis:${GUILD_TAG}:operations:${guildId}`,
   noticeboard: (guildId: string) => `arrakis:${GUILD_TAG}:noticeboard:${guildId}`,
   applications: (guildId: string) => `arrakis:${GUILD_TAG}:applications:${guildId}`,

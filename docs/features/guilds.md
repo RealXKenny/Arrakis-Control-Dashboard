@@ -22,6 +22,16 @@ Each guild keeps at most 20 operations, with 50 slots per operation across five 
 
 Operations stay private to verified members. Management requires a fresh role-100 check on every request. Guild records use bounded Cluster-compatible Redis storage, are removed on dashboard disbanding, and have retention refreshed by changes and extended to cover scheduled runs plus 90 days. Reads do not extend retention. Planning does not move items, currency or characters, send Discord announcements or reminders, or synchronize an external calendar.
 
+## Resource requests
+
+Open **My guild → Resources** (`/guild?tab=resources`) to ask guildmates for materials and arrange deliveries. Current members can create requests with a whole quantity, unit, drop-off point, notes and priority. The requester or a freshly verified leader can edit, cancel or remove a request. Existing pledges lock its material and unit, and the requested quantity cannot fall below what is already pledged.
+
+Suppliers can volunteer a quantity, update or withdraw an outstanding promise, and report delivery after delivering resources in game. The requester or a leader reviews the claim and confirms actual receipt, returns it to promised for correction, or releases an unconfirmed pledge. Even a leader cannot confirm their own delivery. Reported amounts do not count as received until confirmed. Once confirmed deliveries cover the requested amount, the request becomes fulfilled automatically and appears under Completed and cancelled. Confirmed receipts stay recorded; the same supplier can pledge another partial delivery while resources are still needed.
+
+Quantities remain exact whole-number strings of up to 18 digits. The guild retains at most 20 requests, each character may keep 5 open requests, and a request retains up to 20 pledge/delivery records. One character may hold one outstanding pledge per request, including across linked dashboard accounts. Atomic UUID revision checks prevent over-pledging and stale edits. Failed saves and refreshes preserve request and pledge drafts; refresh manually before deliberately retrying, without automatic write retries. Open requests sort urgent first, then newest first.
+
+Every read and action rechecks linked-character membership. Responses use display names, opaque pledge IDs and caller-relative ownership flags, without Console player IDs. Only the requester or leader can manage someone else's pending pledge; confirmed deliveries cannot be edited individually. Inactive guild resource records expire 90 days after the last successful change, reads do not extend retention, and dashboard disbanding removes them. This tracker records coordination only: it never transfers inventory or currency, verifies physical delivery through Console, or sends automatic announcements.
+
 ## Pages
 
 | Page            | Route     | Who                                                                            |
