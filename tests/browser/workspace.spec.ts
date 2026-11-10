@@ -229,6 +229,35 @@ test.describe('portal, character and storage', () => {
     }
   });
 
+  for (const width of [320, 390]) {
+    test(`storage grid and list remain usable at ${width}px`, async ({ page, context }) => {
+      await signInAs(context, await fakeConsole.newMember('Storage Phone User'));
+      await page.setViewportSize({ width, height: 844 });
+      for (const layout of ['grid', 'list']) {
+        await page.goto(`/storage?layout=${layout}`);
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page.getByText('Spice Melange')).toBeVisible();
+        await expect
+          .poll(() =>
+            page.evaluate(() =>
+              [...document.querySelectorAll('main *')]
+                .filter((element) => element.getBoundingClientRect().right > innerWidth + 1)
+                .map((element) => ({ tag: element.tagName, class: element.className })),
+            ),
+          )
+          .toEqual([]);
+        await expect.poll(() => overflow(page)).toBe(true);
+        const search = page.getByRole('searchbox', { name: 'Search inventory' });
+        await search.fill('Spice');
+        await page.getByRole('button', { name: 'Search', exact: true }).click();
+        await expect(page).toHaveURL(/q=Spice/);
+        await expect(page.getByText('Spice Melange')).toBeVisible();
+        await expect(page.getByText('Stillsuit', { exact: true })).toHaveCount(0);
+        await expect.poll(() => overflow(page)).toBe(true);
+      }
+    });
+  }
+
   test('the market loading grid scrolls inside the phone workspace', async ({ page, context }) => {
     await signInAs(context, await fakeConsole.newMember('Loading Market User'));
     await page.setViewportSize({ width: 390, height: 844 });

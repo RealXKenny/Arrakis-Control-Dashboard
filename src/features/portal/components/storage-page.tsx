@@ -51,8 +51,8 @@ export default async function StoragePage({
   return (
     <>
       <PageHeader eyebrow="Personal inventory" title="Storage" />
-      <div className="grid gap-6 lg:grid-cols-12">
-        <aside className="grid content-start gap-6 lg:col-span-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <aside className="grid min-w-0 grid-cols-1 content-start gap-6 lg:col-span-4">
           <section className="panel p-6" aria-labelledby="assets">
             <h2 id="assets" className="text-base">
               Personal assets
@@ -100,7 +100,7 @@ export default async function StoragePage({
           )}
         </aside>
 
-        <section className="panel p-6 lg:col-span-8" aria-labelledby="items-heading">
+        <section className="panel min-w-0 p-6 lg:col-span-8" aria-labelledby="items-heading">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h2 id="items-heading" className="text-base">
               {view?.active ?? 'Inventory'}
@@ -172,7 +172,7 @@ export default async function StoragePage({
                   ))}
                 </ul>
               ) : (
-                <ul aria-label="Inventory items" className="mt-4 grid gap-px bg-sand-200/10">
+                <ul aria-label="Inventory items" className="mt-4 grid grid-cols-1 gap-px bg-sand-200/10">
                   {view.items.map((item, index) => (
                     <li
                       key={`${item.group}-${item.id}-${index}`}
