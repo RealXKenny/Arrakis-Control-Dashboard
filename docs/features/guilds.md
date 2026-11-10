@@ -40,6 +40,14 @@ Freshly verified leaders can create and edit a name, location/grid reference, co
 
 Every read verifies current linked-character membership; each change rechecks role 100. Records expose verified editor names and timestamps, without account or Console character IDs. The directory retains at most 50 listings, with 32 KiB per record and 16 KiB mutation bodies. Atomic UUID revisions prevent stale overwrites and concurrent quota overruns. Failed saves keep drafts; failed verification hides private details while retaining the draft for a successful refresh. Refresh explicitly before retrying; writes never retry automatically. Inactive directories expire 90 days after their last successful change, reads do not extend retention, and dashboard disbanding removes the directory.
 
+## Recruit onboarding
+
+Open **My guild → Onboarding** (`/guild?tab=onboarding`) for the guild's welcome message, rules, useful locations and checklist. Leaders maintain up to 20 checklist items, assign a different current member as mentor (or clear an assignment), review retained progress and confirm removal of old progress records. Members mark or undo their own checklist items and explicitly acknowledge the current guild rules. These are self-reported coordination records; they never change guild ranks or game access. Mentor assignments do not send automatic messages or grant access to another recruit's progress.
+
+Members see the guide, their own progress and mentor; only freshly verified leaders see the progress overview and assignment controls. Every read and write verifies linked-character membership by roster IDs. Progress uses a guild-specific character reference, so multiple dashboard accounts linked to the same character share a record. Names never authorize access. Departed mentors appear unavailable; leaders can remove former members' progress. Welcome/location edits preserve progress, while edited or removed checklist items lose their completion marks and changed rules require a new acknowledgment. Unchanged items retain their marks.
+
+Onboarding keeps at most 200 progress records and accepts a verified roster of up to 500 members. The guide allows 2,000-character welcome/location text, 4,000-character rules and 200 characters per checklist item. All records share a bounded 256 KiB Redis document with atomic UUID revision checks. Concurrent changes return a conflict instead of losing progress. Failed saves and refreshes preserve guide drafts; failed refresh verification hides private information. Refresh explicitly before retrying, without automatic write retries. Inactive guild onboarding expires together 90 days after the last successful change; reads do not extend retention, and dashboard disbanding removes the document.
+
 ## Pages
 
 | Page            | Route     | Who                                                                            |

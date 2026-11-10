@@ -4,6 +4,8 @@
 
 ### New Features
 
+- Recruit onboarding: private guild welcome guides, rules acknowledgments, useful locations, mentor assignments and per-character checklist progress. Verified leaders review progress; changed rules/items require fresh acknowledgment/completion, with bounded storage, revision protection, retained drafts and disband cleanup.
+
 - Shared guild base directory: members can search private locations and filter by map, purpose and archive status; verified leaders maintain contact details, access instructions and notes. Bounded storage, revision conflicts, retained drafts and disband cleanup protect coordination without changing in-game permissions or publishing blueprints.
 
 - Guild resource requests: members can request materials, pledge exact quantities and report deliveries; requesters or leaders confirm receipt separately. Private views, partial-delivery tracking, quotas, revision conflicts and retained drafts protect coordination without moving items or currency automatically.

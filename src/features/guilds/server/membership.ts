@@ -41,7 +41,7 @@ export async function removeGuildStorage(guildId: string) {
         redis.call('ZREM', KEYS[7], ARGV[3] .. ':' .. message.senderId .. ':' .. message.id)
       end
     end
-    redis.call('DEL', KEYS[1], KEYS[3], KEYS[4], KEYS[5], KEYS[6], KEYS[6] .. ':seen', KEYS[8], KEYS[9], KEYS[10], KEYS[11])
+    redis.call('DEL', KEYS[1], KEYS[3], KEYS[4], KEYS[5], KEYS[6], KEYS[6] .. ':seen', KEYS[8], KEYS[9], KEYS[10], KEYS[11], KEYS[12])
     redis.call('ZREM', KEYS[2], ARGV[1])
     return 1
   `,
@@ -57,6 +57,7 @@ export async function removeGuildStorage(guildId: string) {
       guildKeys.operations(guildId),
       guildKeys.resourceRequests(guildId),
       guildKeys.baseDirectory(guildId),
+      guildKeys.onboarding(guildId),
     ],
     [`guild:${guildId}`, guildKeys.chatPrefix(guildId), guildId],
   );

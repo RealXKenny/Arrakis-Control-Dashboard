@@ -33,6 +33,7 @@ Retention and caps: [logging](../configuration/logging.md#audit-trail). Events w
 | `guild.operation_updated`        | success           | A verified member changed an operation or their sign-up (guild ID, operation ID and action only)                |
 | `guild.resource_request_updated` | success           | A verified member changed a resource request, pledge or delivery claim (guild ID, request ID and action only)   |
 | `guild.base_directory_updated`   | success           | A verified leader saved, archived, restored or removed a directory listing (guild ID, entry ID and action only) |
+| `guild.onboarding_updated`       | success           | A verified member changed the guide, assignment or progress (guild ID and action only)                          |
 | `security.origin_rejected`       | denied            | A mutation had a missing or foreign `Origin`                                                                    |
 | `security.control_failure`       | failure           | The rate limiter's Redis was unavailable (fail-closed), at most once a minute                                   |
 

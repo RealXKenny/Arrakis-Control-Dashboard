@@ -8,6 +8,7 @@ import { noticeboardReply } from './guild-noticeboard-redis.mjs';
 import { operationsReply } from './guild-operations-redis.mjs';
 import { resourcesReply } from './guild-resources-redis.mjs';
 import { baseDirectoryReply } from './guild-base-directory-redis.mjs';
+import { onboardingReply } from './guild-onboarding-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
 
@@ -28,6 +29,8 @@ const listing = {
   ],
 };
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  const onboarding = onboardingReply(operation, key, args);
+  if (onboarding !== undefined) return onboarding.value;
   const directory = baseDirectoryReply(operation, key, args);
   if (directory !== undefined) return directory.value;
   const resources = resourcesReply(operation, key, args);

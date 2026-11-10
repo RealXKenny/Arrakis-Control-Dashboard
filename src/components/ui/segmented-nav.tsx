@@ -12,7 +12,7 @@ export function SegmentedNav({ label, items, active }: { label: string; items: S
   return (
     <nav
       aria-label={label}
-      className={`mb-6 grid max-w-md border border-sand-200/20 ${items.length > 3 ? 'max-sm:grid-cols-2!' : ''}`}
+      className={`mb-6 grid border border-sand-200/20 ${items.length > 4 ? 'max-w-3xl max-lg:grid-cols-3!' : 'max-w-md'} ${items.length > 3 ? 'max-sm:grid-cols-2!' : ''}`}
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
     >
       {items.map((item) => (

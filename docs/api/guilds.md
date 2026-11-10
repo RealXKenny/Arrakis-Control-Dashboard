@@ -1,5 +1,19 @@
 # API: guilds
 
+## Private recruit onboarding (V2)
+
+`GET /api/v2/guilds/{guildId}/onboarding` returns `{ ok: true, data: { revision, rulesRevision, guide, canEdit, self, members, roster } }` after fresh linked-character membership verification. The guide contains `welcome`, `rules`, `locations` and up to 20 `{ id, text }` checklist items. `self` is the caller's progress or `null`. Only leaders receive the retained `members` overview and current `roster` assignment options; other members receive empty arrays. Progress includes a guild-specific opaque `memberKey`, name, nullable `mentorKey`/current `mentorName`, completed step UUIDs, acknowledged `rulesRevision`, `updatedAt` and `currentMember`. Raw Console character IDs and Discord IDs are excluded. References identify roster entries; they are not authorization credentials. Responses are no-store.
+
+Same-origin `POST` accepts at most 32 KiB and one of these strict bodies:
+
+- `{ action: "guide", revision, guide: { welcome, rules, locations, steps: [{ id, text }] } }` — leader-only. Welcome/locations allow 2,000 characters each, rules 4,000 and each item 1–200; IDs are unique UUIDs. Edits preserve only completion marks for unchanged item IDs/text. Changed rules rotate `rulesRevision` and require fresh acknowledgments.
+- `{ action: "complete", revision, stepId, completed }` — set or undo one current step for the session's verified character. Caller-supplied target identity is refused.
+- `{ action: "acknowledge-rules", revision }` — acknowledge the current nonempty rules for the session character.
+- `{ action: "mentor", revision, memberKey, mentorKey }` — leader-only assignment to a current recruit and a different current mentor; `mentorKey: null` clears it. Both references are resolved against the fresh roster.
+- `{ action: "remove-progress", revision, memberKey }` — leader-only removal of a retained progress record, including former members. It removes the assignment and completion history together; current members may start again.
+
+Writes return the updated caller-relative view in the same success envelope. The whole document uses one UUID revision (`null` before the first save) and atomic Redis compare-and-set. Stale writes return `409 ONBOARDING_CONFLICT`; preserve drafts and refresh explicitly without automatic retries. Limits are 200 progress records, 500 current roster entries, 256 KiB stored data and 90 days of inactivity retention refreshed only by changes. Dashboard disbanding removes the document. Other errors include `409 ONBOARDING_MEMBER_CHANGED`, `409 ONBOARDING_FULL`, `503 ONBOARDING_UNAVAILABLE`, `429/503 ONBOARDING_LIMITED`, `400 INVALID_ONBOARDING`, `413 ONBOARDING_BODY_TOO_LARGE` and shared origin, authentication and membership/leadership errors. Read/write limits are 60/30 per minute per user, plus shared Console verification budgets. No endpoint changes game permissions or rank, verifies physical task completion, or sends mentor notifications.
+
 ## Private shared base directory (V2)
 
 `GET /api/v2/guilds/{guildId}/base-directory` returns `{ ok: true, data: { canEdit, entries } }` after fresh linked-character membership verification. Entries contain UUID `id`/`revision`, `name`, `map`, `purpose`, `location`, `contact`, `accessInstructions`, `notes`, `status` (`active`/`archived`), ISO `createdAt`/`updatedAt` and the verified `updatedByName`. No account or Console character IDs are stored in listings or returned. Responses are no-store.

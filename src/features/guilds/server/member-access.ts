@@ -38,6 +38,7 @@ export async function requireGuildMember(session: DashboardSession, guildId: str
           canEdit: guildMemberRole(self) === 100,
           authorName: guildMemberName(self),
           memberId: guildMemberId(self),
+          roster: memberRows(roster),
         };
     }
   } catch {
