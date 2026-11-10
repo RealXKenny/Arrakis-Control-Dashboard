@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { casinoReply } from './casino-redis.mjs';
 import { eventsReply } from './events-redis.mjs';
 import { noticeboardReply } from './guild-noticeboard-redis.mjs';
+import { operationsReply } from './guild-operations-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
 
@@ -25,6 +26,8 @@ const listing = {
   ],
 };
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  const operations = operationsReply(operation, key, args);
+  if (operations !== undefined) return operations.value;
   const noticeboard = noticeboardReply(operation, key, args);
   if (noticeboard !== undefined) return noticeboard.value;
   const events = eventsReply(operation, key, args);

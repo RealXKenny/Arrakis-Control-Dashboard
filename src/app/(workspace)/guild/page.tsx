@@ -16,6 +16,7 @@ import { Roster } from '../../../features/guilds/components/roster';
 import { SettingsForm } from '../../../features/guilds/components/settings-form';
 import { SupportPanel } from '../../../features/guilds/components/support-panel';
 import { GuildNoticeboard } from '../../../features/guilds/components/noticeboard';
+import { GuildOperationsPlanner } from '../../../features/guilds/components/operations-planner';
 
 export const metadata: Metadata = { title: 'My guild' };
 
@@ -64,7 +65,9 @@ export default async function MyGuildPage({
   }
 
   const { guild, members, self, canEdit, leaderCheck, requirement } = result;
-  const tab = canEdit && (Array.isArray(requested) ? requested[0] : requested) === 'settings' ? 'settings' : 'roster';
+  const requestedTab = Array.isArray(requested) ? requested[0] : requested;
+  const tab =
+    requestedTab === 'operations' ? 'operations' : canEdit && requestedTab === 'settings' ? 'settings' : 'roster';
   const groups = groupMembersByRank(members);
   const leader = members.find((member) => member.roleId === 100);
   const emblem = factionEmblem(guild.faction);
@@ -73,16 +76,15 @@ export default async function MyGuildPage({
     <>
       <PageHeader eyebrow="Your community" title="My guild" />
 
-      {canEdit && (
-        <SegmentedNav
-          label="Guild sections"
-          active={tab}
-          items={[
-            { id: 'roster', label: 'My Guild', href: '/guild' },
-            { id: 'settings', label: 'Settings', href: '/guild?tab=settings' },
-          ]}
-        />
-      )}
+      <SegmentedNav
+        label="Guild sections"
+        active={tab}
+        items={[
+          { id: 'roster', label: 'My Guild', href: '/guild' },
+          { id: 'operations', label: 'Operations', href: '/guild?tab=operations' },
+          ...(canEdit ? [{ id: 'settings', label: 'Settings', href: '/guild?tab=settings' }] : []),
+        ]}
+      />
       {!leaderCheck && (
         <div className="mb-6">
           <Notice tone="warn" title="Leader controls hidden">
@@ -92,7 +94,9 @@ export default async function MyGuildPage({
         </div>
       )}
 
-      {tab === 'roster' ? (
+      {tab === 'operations' ? (
+        <GuildOperationsPlanner key={guild.id} guildId={guild.id} />
+      ) : tab === 'roster' ? (
         <div className="flex flex-col gap-8">
           <section aria-label="Guild membership" className="panel flex flex-col gap-6 p-6 sm:flex-row sm:items-start">
             <GuildEmblem guildId={guild.id} guildName={guild.name} editable={canEdit} />

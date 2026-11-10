@@ -12,6 +12,16 @@ Each guild keeps at most 20 announcements, with 5 pinned; titles allow 100 chara
 
 Every read and save rechecks linked-character pawn/controller IDs against the current Console roster. Only role 100 can save. Failed verification hides private data, and stale edits return a conflict instead of overwriting another leader's update. Failed saves keep the draft; use Refresh noticeboard to load the latest revision before deliberately saving again. There is no automatic save retry, polling or Discord announcement delivery for this first stage.
 
+## Operations planner
+
+Open **My guild → Operations** (`/guild?tab=operations`) to plan spice runs, Deep Desert trips, boss runs or other guild activities. Verified leaders can create or edit future runs, set a meeting point and notes, allocate pilot/scout/escort/harvester/support slots, mark runs completed or cancelled, remove sign-ups and confirm removal of old plans. Current members can read the schedule, join a role, switch roles or withdraw before the run starts. Sign-ups show the last verified character name; members who leave the guild cannot act, and leaders can remove their old sign-ups to free slots.
+
+Times are entered in the device's timezone, stored in UTC and displayed in each viewer's local timezone. A run must start in the future within one year and last no more than 24 hours. The schedule has Upcoming and active / Past and closed filters, with manual refresh. The server closes sign-ups and withdrawals at the start time. Changing an operation keeps existing sign-ups; tell members about changed times or meeting points yourself. Occupied roles cannot be removed or reduced below their current sign-up counts.
+
+Each guild keeps at most 20 operations, with 50 slots per operation across five distinct roles. One freshly verified character can hold one role per operation; linking another dashboard account to the same character does not add a second reservation. Atomic revision checks protect the last role slot and prevent stale edits. Conflicts require explicit refresh; failed saves and refreshes keep the current draft, and writes never retry automatically. Views use opaque sign-up IDs and an own-signup flag, without Console player IDs.
+
+Operations stay private to verified members. Management requires a fresh role-100 check on every request. Guild records use bounded Cluster-compatible Redis storage, are removed on dashboard disbanding, and have retention refreshed by changes and extended to cover scheduled runs plus 90 days. Reads do not extend retention. Planning does not move items, currency or characters, send Discord announcements or reminders, or synchronize an external calendar.
+
 ## Pages
 
 | Page            | Route     | Who                                                                            |

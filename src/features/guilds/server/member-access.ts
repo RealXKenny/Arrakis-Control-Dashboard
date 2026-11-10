@@ -4,7 +4,7 @@ import { getLinkedPlayer } from '../../player/server/linked-player';
 import { getDuneClient } from '../../../server/integrations/dune';
 import { AppError } from '../../../lib/errors';
 import { memberRows } from '../members';
-import { guildMemberName, guildMemberRole } from '../member-identity';
+import { guildMemberId, guildMemberName, guildMemberRole } from '../member-identity';
 
 /** Private guild data requires fresh identity and roster IDs, never a cached guild or display-name match. */
 export async function requireGuildMember(session: DashboardSession, guildId: string) {
@@ -34,7 +34,11 @@ export async function requireGuildMember(session: DashboardSession, guildId: str
         ),
       );
       if (self && guildMemberRole(self) !== null)
-        return { canEdit: guildMemberRole(self) === 100, authorName: guildMemberName(self) };
+        return {
+          canEdit: guildMemberRole(self) === 100,
+          authorName: guildMemberName(self),
+          memberId: guildMemberId(self),
+        };
     }
   } catch {
     throw new AppError(
@@ -44,5 +48,5 @@ export async function requireGuildMember(session: DashboardSession, guildId: str
       true,
     );
   }
-  throw new AppError('Only current members can access this guild noticeboard.', 403, 'GUILD_MEMBER_REQUIRED', true);
+  throw new AppError('Only current members can access this guild workspace.', 403, 'GUILD_MEMBER_REQUIRED', true);
 }

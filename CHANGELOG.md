@@ -4,6 +4,8 @@
 
 ### New Features
 
+- Guild operations planner: leaders can schedule runs with meeting points and role capacities, while members can join, switch roles or withdraw before the start. Local-time schedules, private team lists, conflict protection, draft preservation and leader cancellation/completion controls keep guild plans organized.
+
 - Guild noticeboard: current members can read a private daily message, priorities and pinned announcements on My guild. Freshly verified leaders can create, edit and remove posts, with conflict protection and drafts preserved after failed saves.
 
 - New Service status page embeds the HetrixTools hosting availability report with automatic sizing and a direct-report fallback. It requires sign-in and always stays under More on desktop and mobile.

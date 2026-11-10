@@ -1,5 +1,21 @@
 # API: guilds
 
+## Private operations planner (V2)
+
+`GET /api/v2/guilds/{guildId}/operations` returns `{ ok: true, data: { canEdit, operations } }` after fresh membership verification. Up to 20 operations include UUID IDs/revisions, title, kind (`spice-run`, `deep-desert`, `boss-run`, `other`), details, meeting point, UTC start/end times, role capacities, status, organizer name, timestamps and sign-ups. Sign-ups expose opaque UUID IDs, verified display names, role, time and an `isSelf` flag; Console character IDs remain server-side. Responses are no-store.
+
+Same-origin `POST` bodies are limited to 16 KiB and accept:
+
+- `{ action: "save", revision, operation: { id, title, kind, details, meetingPoint, startsAt, endsAt, roles } }` — leader-only create/edit. New IDs use UUIDs and `revision: null`; edits use the current UUID revision. `roles` is a unique array of `{ role, capacity }`, using pilot/scout/escort/harvester/support, with 1–50 total slots. Titles allow 100 characters, meeting points 200 and details 2,000. Starts must be future times within one year, and duration must be positive and at most 24 hours.
+- `{ action: "join", id, revision, role }` or `{ action: "leave", id, revision }` — current members reserve, switch or withdraw their own verified character's role before the start. No caller-supplied identity is accepted.
+- `{ action: "status", id, revision, status: "completed" | "cancelled" }` — leader-only closure; closed runs cannot reopen.
+- `{ action: "remove-signup", id, revision, signupId }` — leader-only removal of a retained sign-up.
+- `{ action: "delete", id, revision }` — leader-only removal of the operation.
+
+Successful writes return `{ ok: true, data: { operation } }`, with the updated caller-relative view or `null` after deletion. UUID revisions and a single-key Redis compare-and-set protect capacity, duplicate sign-ups and stale requests. Never automatically repeat a failed/uncertain write; refresh explicitly and preserve drafts. `409` codes include `OPERATIONS_CONFLICT`, `OPERATION_ROLE_FULL`, `OPERATION_CAPACITY_CONFLICT`, `OPERATION_CLOSED` and `OPERATIONS_FULL`. Authentication, membership/leader verification, origin, body-size and rate-limit failures use the shared V2 error envelope.
+
+Storage is bounded to 20 records of 64 KiB each. Read/write budgets also protect Console verification. Retention refreshes on changes and extends through the run end plus 90 days; reads do not refresh it. Dashboard disbanding deletes the guild's operations key. This metadata-only API never changes in-game inventory, currency or movement.
+
 ## Private noticeboard (V2)
 
 `GET /api/v2/guilds/{guildId}/noticeboard` returns `{ ok: true, data: { board, canEdit } }` only after fresh linked-character membership verification. `board` contains `guildId`, a nullable UUID `revision`, `message`, `priorities` and up to 20 `posts`. Each post has a UUID `id`, `title`, `body`, `pinned`, a verified `authorName` and an ISO `updatedAt`. At most 5 posts may be pinned. No dashboard account IDs are included in posts.

@@ -92,6 +92,7 @@ src/
         guilds/
           [guildId]/
             noticeboard/
+            operations/
         map/
           realtime/
     changelog/
@@ -298,7 +299,7 @@ tests/
 | `src/features/changelog/`     | Searchable release journal, complete multipart Discord V2 messages, tracked series updates and cleanup                                                                                      |
 | `src/features/chat/`          | Bot-compatible game chat, shared inline/path TLS validation, Chat Bridge worker, Redis history/live distribution, SSE gateway, and chat UI                                                  |
 | `src/features/events/`        | Community events, one-time seed, bounded Redis persistence, draft/revision checks and automatic Discord V2 announcements                                                                    |
-| `src/features/guilds/`        | Directory, recruitment, applications, roster, membership, private noticeboard, support, receipts, and question forms                                                                        |
+| `src/features/guilds/`        | Directory, recruitment, applications, roster, membership, private noticeboard, operations planner, support, receipts, and question forms                                                    |
 | `src/features/landing/`       | Public landing page: `content.ts` (all copy and links), page composition, layout illustrations                                                                                              |
 | `src/features/map/`           | 2D/3D terrain, markers, models, realtime data, and map interaction                                                                                                                          |
 | `src/features/market/`        | Market normalization, presentation, listings, configuration, and player listings                                                                                                            |

@@ -30,6 +30,7 @@ Retention and caps: [logging](../configuration/logging.md#audit-trail). Events w
 | `guild.<action>`            | success           | Guild member add/remove/promote/demote/disband (`guild.add`, …)                                        |
 | `guild.settings_updated`    | success           | A leader changed recruitment settings                                                                  |
 | `guild.noticeboard_updated` | success           | A verified leader saved noticeboard settings, an announcement, or a removal (guild ID and action only) |
+| `guild.operation_updated`   | success           | A verified member changed an operation or their sign-up (guild ID, operation ID and action only)       |
 | `security.origin_rejected`  | denied            | A mutation had a missing or foreign `Origin`                                                           |
 | `security.control_failure`  | failure           | The rate limiter's Redis was unavailable (fail-closed), at most once a minute                          |
 
