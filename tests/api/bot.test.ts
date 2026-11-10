@@ -33,7 +33,14 @@ it('is disabled by default and never substitutes a browser session for service a
   config.BOT_API_TOKEN = undefined;
   expect((await call()).res.statusCode).toBe(503);
   config.BOT_API_TOKEN = 'independent-bot-credential-32-characters';
-  for (const header of [undefined, 'Bearer wrong', 'Basic token', `Bearer ${'x'.repeat(300)}`]) {
+  for (const header of [
+    undefined,
+    'Bearer wrong',
+    'Basic token',
+    `Bearer ${'x'.repeat(300)}`,
+    `Bearer ${config.BOT_API_TOKEN.slice(0, -1)}X`,
+    `Bearer ${config.BOT_API_TOKEN}X`,
+  ]) {
     const { res, body } = await call(header);
     expect(res.statusCode).toBe(401);
     expect(res.getHeader('WWW-Authenticate')).toContain('Bearer');

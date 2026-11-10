@@ -73,5 +73,7 @@ describe('documentation', () => {
     expect(slug('3. Postdeployment')).toBe('3-postdeployment');
     expect(slug('[<script>](example) Heading')).toBe('heading');
     expect(slug('<scr<script>ipt> Heading')).not.toMatch(/[<>]/);
+    expect(slug('pre<strong>fix</strong>')).toBe('prefix');
+    expect(slug('<script>')).toBe('');
   });
 });

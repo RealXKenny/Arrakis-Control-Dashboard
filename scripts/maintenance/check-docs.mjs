@@ -46,15 +46,14 @@ function proseLines(text) {
 }
 
 export function slug(heading) {
-  return heading
+  const text = heading
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/<[^>]+>/g, '')
-    .replace(/[<>]/g, '')
+    .split(/<[^>]+>/g)
+    .join('')
     .replace(/[`*_~]/g, (character) => (character === '_' ? '_' : ''))
     .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}_ -]/gu, '')
-    .replace(/ /g, '-');
+    .toLowerCase();
+  return (text.match(/[\p{L}\p{N}_ -]/gu) ?? []).join('').replace(/ /g, '-');
 }
 
 const anchorCache = new Map();
