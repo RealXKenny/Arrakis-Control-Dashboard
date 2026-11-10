@@ -30,7 +30,7 @@ export function MemberManageButton({
   const actions = memberActions(member);
   if (actions.length === 0 || !member.id) {
     return (
-      <span className="font-mono text-[0.625rem] uppercase tracking-widest text-sand-600">
+      <span className="font-mono text-[0.625rem] uppercase tracking-widest text-sand-500">
         {member.roleId === 100 ? 'Leader' : '—'}
       </span>
     );

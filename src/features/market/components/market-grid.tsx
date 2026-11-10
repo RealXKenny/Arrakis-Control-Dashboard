@@ -18,11 +18,11 @@ function Tile({ item }: { item: MarketItem }) {
         {item.name}
       </p>
       <dl className="mt-auto grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[0.6875rem]">
-        <dt className="text-sand-600">Ask</dt>
+        <dt className="text-sand-500">Ask</dt>
         <dd className="text-right font-semibold text-spice-400">{formatDecimal(item.lowestPrice)}</dd>
-        <dt className="text-sand-600">Units</dt>
+        <dt className="text-sand-500">Units</dt>
         <dd className="text-right text-sand-300">{formatDecimal(item.units)}</dd>
-        <dt className="text-sand-600">Orders</dt>
+        <dt className="text-sand-500">Orders</dt>
         <dd className="text-right text-sand-300">{formatDecimal(item.listings)}</dd>
       </dl>
       {item.grade !== null && (

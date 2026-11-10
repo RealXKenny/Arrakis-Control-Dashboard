@@ -23,6 +23,8 @@ which runs the production server against a fake Console on port 3101 (`tests/hel
 Tests import `test`/`expect` from `tests/helpers/browser-test.ts`. A stale server on 3100/3101 causes `EADDRINUSE` or stale code; stop it first.
 Failure traces are kept (`test-results/`, git-ignored). Use the current runner summary for test counts.
 
+`tests/browser/release-readiness.spec.ts` checks 25 major member routes at 1920 × 1080, 1440 × 900, 1366 × 768, 768 × 1024, 390 × 844 and 320 × 640, including overflow and broken-image checks. It runs axe WCAG 2.0/2.1/2.2 AA rules on desktop and mobile, verifies reduced motion on representative animated areas, and captures settled landing, overview, casino, Blackjack, sound and navigation screenshots from sanitized live fixtures. Curated WebP copies are under `docs/assets/screenshots/`; test-generated PNGs stay in ignored `test-results/`.
+
 ## Redis integration tests
 
 Run the Lua scripts, sessions, rate limits, audit trail, guild/support handlers and the marketplace re-key CLI against a **real Redis**

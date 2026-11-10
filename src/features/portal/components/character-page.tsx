@@ -111,7 +111,7 @@ export default async function CharacterPage() {
                   <div key={group.name} className="bg-obsidian-900 p-4">
                     <dt className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">{group.name}</dt>
                     <dd className="mt-2 text-lg font-extrabold text-sand-50">
-                      {group.completed} <span className="text-sand-600">/ {group.total}</span>
+                      {group.completed} <span className="text-sand-500">/ {group.total}</span>
                     </dd>
                   </div>
                 ))}

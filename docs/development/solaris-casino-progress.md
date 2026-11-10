@@ -60,9 +60,9 @@ After Phase 7: `npm test` 135 files passed (1 skipped), 1,363 tests passed (32 s
 
 ## Remaining verification
 
-1. Confirm the complete standalone and disposable Cluster suites on the current reviewed source, retaining test logs and topology in the PR. Cluster coverage includes marketplace failover under live traffic, transfer restart recovery and round settlement replay.
+1. Completed: the complete standalone and disposable Cluster suites passed on the reviewed source, with logs and topology retained in PR #8. Cluster coverage includes marketplace failover under live traffic, transfer restart recovery and round settlement replay.
 2. Verify a small deposit/withdrawal and uncertain-outcome reconciliation against a non-production Console with an offline test character. Automated transfer tests use a fake Console port.
 3. Complete deployed Redis authentication/TLS, backup/restore, proxy and host configuration checks; disposable plaintext CI clusters do not cover those settings.
-4. Complete final desktop/mobile, keyboard, reduced-motion and sound-setting review, plus independent security and operational review before enabling real Solaris.
+4. Completed: final desktop/mobile, keyboard, reduced-motion and sound-setting review, including all six games, six viewport widths and axe WCAG AA automation. Independent security and operational review remains required before enabling real Solaris.
 
 The implementation and current evidence are tracked in draft PR #8. Historical phase snapshots above are retained for context; they do not indicate an uncommitted working tree or unfinished routes, games or reconciliation screens.

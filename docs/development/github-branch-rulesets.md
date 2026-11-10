@@ -1,6 +1,6 @@
 # GitHub branch rulesets
 
-This guide documents the repository's workflow integration and a read-only snapshot of GitHub settings inspected on 2026-11-08. No branch protection or ruleset settings were changed.
+This guide documents the repository's workflow integration and a read-only snapshot of GitHub settings inspected on 2026-11-10. No branch protection or ruleset settings were changed.
 
 ## Branches and current ruleset
 
@@ -12,18 +12,18 @@ The ruleset requests code-owner review, but there is no tracked `CODEOWNERS` fil
 
 ## Recommended required status check
 
-| Workflow                              | Exact check name                                          | Trigger                                                                 | Required | GitHub verification                                                                                                                            |
-| ------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| CI                                    | `CI / Required Checks`                                    | Pull requests, pushes to `main`, `v2`, and `release/*`, and merge queue | Yes      | Configured locally; the updated workflow must complete on GitHub before selecting it.                                                          |
-| Dependency Review                     | `Security / Dependency Review`                            | Pull request opened, reopened, synchronized, or marked ready            | No       | Configured locally; hosted execution is pending. It does not cover merge queues.                                                               |
-| CodeQL (GitHub-managed default setup) | `Analyze (actions)` and `Analyze (javascript-typescript)` | GitHub-managed analysis                                                 | No       | The setup is configured and these jobs were observed succeeding on GitHub; keep them optional unless their PR and queue coverage is confirmed. |
-| Redis Cluster Integration             | `Redis Cluster Integration`                               | Weekly schedule and manual dispatch                                     | No       | Configured locally; hosted execution is pending.                                                                                               |
+| Workflow                              | Exact check name                                          | Trigger                                                                 | Required | GitHub verification                                                                                                                                                                   |
+| ------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CI                                    | `CI / Required Checks`                                    | Pull requests, pushes to `main`, `v2`, and `release/*`, and merge queue | Yes      | [Passed on the reviewed V2 workflow](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/42913774394); use the final release-commit run for the maintainer decision. |
+| Dependency Review                     | `Security / Dependency Review`                            | Pull request opened, reopened, synchronized, or marked ready            | No       | Runs when dependency changes require review; it does not cover merge queues.                                                                                                          |
+| CodeQL (GitHub-managed default setup) | `Analyze (actions)` and `Analyze (javascript-typescript)` | GitHub-managed analysis                                                 | No       | [Both jobs passed](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/42913782903); keep them optional unless their PR and queue coverage is confirmed.             |
+| Redis Cluster Integration             | `Redis Cluster Integration`                               | Pushes to `v2`, weekly schedule and manual dispatch                     | No       | [Six-node Cluster suite passed](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/42913774488); intentionally outside the required aggregate.                      |
 
 For the required check, select **GitHub Actions** as the source. Require only `CI / Required Checks` initially: it already includes formatting, lint, type checking, docs and AI configuration validation, workflow checks, tests, production smoke, browser shards, and standalone Redis integration. Do not select the optional check names above as merge requirements.
 
 ## Merge queue
 
-CI supports merge queues through the `merge_group` / `checks_requested` trigger. If enabling a queue, select the same `CI / Required Checks` status in the queue's required checks. Dependency Review and the weekly Cluster workflow are not queue checks and must remain optional. Merge queues are not enabled automatically by this repository.
+CI supports merge queues through the `merge_group` / `checks_requested` trigger. If enabling a queue, select the same `CI / Required Checks` status in the queue's required checks. Dependency Review and the separate Cluster workflow are not queue checks and must remain optional. Merge queues are not enabled automatically by this repository.
 
 ## Recommended protections
 
@@ -46,10 +46,10 @@ Keep one approval as the current baseline unless the team has a reason to requir
 9. Select **GitHub Actions** as its source.
 10. If using a merge queue, enable it for that branch and require the same CI check. The workflow already listens for merge-group checks.
 11. Review bypass actors, force-push, deletion, signed-commit, linear-history, and allowed merge-method settings; use the minimum bypass permissions.
-12. Save in enforcement mode after the updated workflow has completed successfully on GitHub.
+12. Save in enforcement mode after the final release workflow has completed successfully on GitHub.
 
 To replace obsolete required checks, first confirm `CI / Required Checks` has succeeded for a pull request (and a merge-group entry if using a queue). Then update the ruleset to add the new exact check and remove the obsolete contexts in the same maintenance window. Do not leave a branch temporarily without a required check.
 
 ## Manual GitHub validation still needed
 
-This repository's current ruleset has no required status check. After this change is published, wait for the new CI workflow to run on GitHub, verify the `CI / Required Checks` context on a pull request, and verify it on a merge-group entry before configuring an enabled queue. Do not infer hosted success from local YAML or test results.
+The hosted PR evidence confirms the stable `CI / Required Checks` context. The remote ruleset still has no required status check, and merge queue is disabled. A maintainer must add that exact check through GitHub's ruleset UI and, only if a queue is wanted, verify it on a merge-group entry before enabling the queue. Do not infer hosted success from local YAML or test results, and do not change remote rulesets without separate approval.

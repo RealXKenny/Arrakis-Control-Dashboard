@@ -31,12 +31,13 @@ export function Meter({
         </span>
       </div>
       <div
-        role="meter"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={100}
+        role={known ? 'meter' : undefined}
+        aria-hidden={known ? undefined : true}
+        aria-label={known ? label : undefined}
+        aria-valuemin={known ? 0 : undefined}
+        aria-valuemax={known ? 100 : undefined}
         aria-valuenow={known ? Math.round(clamped) : undefined}
-        aria-valuetext={value}
+        aria-valuetext={known ? value : undefined}
         className="h-1.5 w-full bg-sand-200/10"
       >
         <div className={`h-full ${color}`} style={{ width: `${clamped}%` }} />

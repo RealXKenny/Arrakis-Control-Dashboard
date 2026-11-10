@@ -291,14 +291,14 @@ function ChatConversation({
                 {loadingOlder ? 'Loading history…' : 'Load older messages'}
               </button>
             ) : (
-              <span className="font-mono text-[0.65rem] uppercase tracking-wider text-sand-600">
+              <span className="font-mono text-[0.65rem] uppercase tracking-wider text-sand-500">
                 You’re all caught up
               </span>
             )}
           </div>
 
           {!historyLoaded ? (
-            <div className="space-y-5 p-6" aria-label="Loading chat history">
+            <div className="space-y-5 p-6" role="status" aria-label="Loading chat history">
               {[72, 88, 64].map((width) => (
                 <div key={width} className="animate-pulse">
                   <div className="h-3 w-32 bg-sand-200/10" />

@@ -139,14 +139,14 @@ export default async function MyGuildPage({
               )}
               <dl className="mt-5 flex flex-wrap gap-x-10 gap-y-3">
                 <div>
-                  <dt className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-600">Faction</dt>
+                  <dt className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">Faction</dt>
                   <dd className="mt-1 flex items-center gap-2 text-sm font-semibold text-sand-100">
                     {emblem && <Image src={emblem} alt="" aria-hidden="true" width={24} height={24} />}
                     {guild.faction}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-600">Members</dt>
+                  <dt className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">Members</dt>
                   <dd className="mt-1 text-sm font-semibold text-spice-300">
                     {(guild.memberCount ?? members.length).toLocaleString('en-US')}
                   </dd>

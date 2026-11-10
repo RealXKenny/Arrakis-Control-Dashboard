@@ -70,13 +70,13 @@ export function FairnessPanel({ initial, initialRound }: { initial: Fairness; in
             });
           }}
         >
-          <label className="flex flex-col gap-2">
+          <label className="flex w-full min-w-0 flex-col gap-2 sm:w-auto">
             <span className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">New client seed</span>
             <input
               value={clientSeed}
               onChange={(event) => setClientSeed(event.target.value.replace(/[^A-Za-z0-9_.-]/g, '').slice(0, 64))}
               placeholder="letters, numbers, . _ -"
-              className="w-64 border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 text-sm text-sand-50 focus:border-spice-400"
+              className="w-full max-w-64 border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 text-sm text-sand-50 focus:border-spice-400"
             />
           </label>
           <button
@@ -137,12 +137,12 @@ export function FairnessPanel({ initial, initialRound }: { initial: Fairness; in
             void run(async () => setVerification(await casinoApi.verify(roundId.trim())));
           }}
         >
-          <label className="flex flex-col gap-2">
+          <label className="flex w-full min-w-0 flex-col gap-2 sm:w-auto">
             <span className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">Round ID</span>
             <input
               value={roundId}
               onChange={(event) => setRoundId(event.target.value)}
-              className="w-80 max-w-full border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 font-mono text-sm text-sand-50 focus:border-spice-400"
+              className="w-full max-w-80 border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 font-mono text-sm text-sand-50 focus:border-spice-400"
             />
           </label>
           <button

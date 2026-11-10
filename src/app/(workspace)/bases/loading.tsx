@@ -1,6 +1,6 @@
 export default function BasesLoading() {
   return (
-    <div aria-busy="true" aria-label="Loading bases">
+    <div role="status" aria-busy="true" aria-label="Loading bases">
       <div className="mb-10 h-16 w-72 animate-pulse bg-sand-100/5" />
       <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {Array.from({ length: 6 }, (_, index) => (

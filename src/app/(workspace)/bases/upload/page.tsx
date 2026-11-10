@@ -15,11 +15,11 @@ export default async function UploadBasePage() {
           Back to marketplace
         </Link>
       </PageHeader>
-      <div className="grid gap-8 lg:grid-cols-12">
-        <div className="lg:col-span-7">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-12">
+        <div className="min-w-0 lg:col-span-7">
           <UploadForm />
         </div>
-        <aside className="lg:col-span-5">
+        <aside className="min-w-0 lg:col-span-5">
           <div className="panel p-6 sm:p-8">
             <h2 className="text-base">Before you publish</h2>
             <ul className="mt-5 grid gap-3 text-sm leading-relaxed text-sand-300">

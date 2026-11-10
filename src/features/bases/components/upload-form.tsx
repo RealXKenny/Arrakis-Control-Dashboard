@@ -6,9 +6,9 @@ import { BASE_LAYOUT_MAX_BYTES, BASE_THUMBNAIL_MAX_BYTES } from '../schema';
 
 const FIELD =
   'w-full border border-sand-200/20 bg-obsidian-900 px-3 py-3 text-sm font-normal normal-case tracking-normal text-sand-50 placeholder:text-sand-600';
-const LABEL = 'grid gap-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.2em] text-sand-400';
+const LABEL = 'grid min-w-0 gap-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.2em] text-sand-400';
 const FILE =
-  'w-full border border-dashed border-sand-200/25 bg-obsidian-900 p-3 text-sm font-normal normal-case tracking-normal text-sand-200 file:mr-4 file:border-0 file:bg-spice-500 file:px-4 file:py-2 file:text-xs file:font-bold file:uppercase file:tracking-[0.2em] file:text-obsidian-950';
+  'w-full min-w-0 max-w-full border border-dashed border-sand-200/25 bg-obsidian-900 p-3 text-xs font-normal normal-case tracking-normal text-sand-200 file:mr-2 file:border-0 file:bg-spice-500 file:px-3 file:py-2 file:font-bold file:uppercase file:tracking-[0.12em] file:text-obsidian-950 sm:text-sm sm:file:mr-4 sm:file:px-4 sm:file:tracking-[0.2em]';
 
 export function UploadForm() {
   const router = useRouter();

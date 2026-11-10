@@ -53,6 +53,8 @@
 
 - Redis Cluster verification runs on V2 pushes using three masters and three replicas, retaining test logs and final topology. Expanded real-Redis coverage exercises transfer concurrency, uncertainty/reconciliation, multi-page recovery and interrupted round settlement after reconnecting. Cluster pool connections no longer inherit a standalone database selection, and pool shutdown now closes every connection.
 
+- Final release-audit coverage checks 25 member routes at six desktop/tablet/mobile widths, WCAG 2.0/2.1/2.2 AA automation, keyboard navigation and reduced motion. Improved small-screen base upload and fairness forms, readable secondary text, loading announcements and unavailable gauge semantics. Added sanitized production-build screenshots for the landing page, overview, casino, Blackjack, sound settings and navigation.
+
 - Large Discord changelogs now split into numbered Components V2 messages with complete notes and all categories. The admin composer previews every part; updates reuse the same posts and remove surplus parts instead of truncating content.
 
 - Signed-in visitors now see Open dashboard actions instead of Discord sign-in prompts. Signed-out topbars show only the brand and Sign in, including mobile.

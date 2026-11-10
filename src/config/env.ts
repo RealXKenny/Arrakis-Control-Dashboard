@@ -4,9 +4,8 @@ import { z } from 'zod';
 /**
  * Canonical server environment contract for the dashboard.
  *
- * This module is the single source of truth for environment validation;
- * `src/config/env.ts` re-exports it so legacy Pages Router modules keep
- * working against the shared runtime configuration. It may only be imported from
+ * This module is the single source of truth for environment validation
+ * for both App Router and legacy Pages Router modules. It may only be imported from
  * server-side code — `assert-server` throws at module load otherwise — so
  * secrets (CONSOLE_URL, CONSOLE_API_KEY, ADAPTER_TOKEN, Redis credentials)
  * can never reach a client bundle.

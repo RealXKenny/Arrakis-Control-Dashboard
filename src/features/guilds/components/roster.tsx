@@ -50,7 +50,7 @@ export function Roster({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-sand-600">No members reported</p>
+              <p className="text-sm text-sand-500">No members reported</p>
             )}
           </section>
         ))}

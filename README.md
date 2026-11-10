@@ -100,6 +100,22 @@ The administration catalog distinguishes available operations, restricted Consol
 | <img src="docs/assets/screenshots/player-profiles.webp" alt="Character profile for fictional Arrakis Demo with progression and faction standings" /> | <img src="docs/assets/screenshots/mobile-dashboard.webp" alt="Mobile Arrakis Control dashboard at 390 by 844 pixels" /> |
 | Character progression, journey, equipment, and faction data.                                                                                         | The real responsive workspace at a 390 × 844 viewport.                                                                  |
 
+### V2 release audit
+
+These current captures come from the production build running against sanitized local fixtures. No real account, player, credential or wallet data appears.
+
+| Landing page | Casino lobby |
+| --- | --- |
+| <img src="docs/assets/screenshots/landing-desktop.webp" alt="Arrakis Control V2 landing page with navigation and product overview" /> | <img src="docs/assets/screenshots/casino-lobby-desktop.webp" alt="Solaris Exchange lobby showing all six games and the empty fixture wallet" /> |
+| [Mobile landing](docs/assets/screenshots/landing-mobile.webp) | [Mobile lobby](docs/assets/screenshots/casino-lobby-mobile.webp) |
+
+| Blackjack gameplay | Sound settings and navigation |
+| --- | --- |
+| <img src="docs/assets/screenshots/blackjack-gameplay.webp" alt="The Emperor's Hand with original cards, visible player actions and fixture-only Solaris" /> | <img src="docs/assets/screenshots/sound-settings.webp" alt="Sound settings with master and category volumes, dealer voice and captions" /> |
+| Original SVG deck and keyboard-accessible actions. | [Casino navigation menu](docs/assets/screenshots/navigation-casino-menu.webp) · [Mobile navigation drawer](docs/assets/screenshots/navigation-mobile-drawer.webp) |
+
+[Desktop overview](docs/assets/screenshots/dashboard-release-desktop.webp) · [Mobile overview](docs/assets/screenshots/dashboard-release-mobile.webp)
+
 ## Technology stack
 
 | Technology              | Role                                                                      |

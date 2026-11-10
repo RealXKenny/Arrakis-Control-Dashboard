@@ -36,7 +36,7 @@ export function ListingCard({
           <span aria-hidden="true" className="size-1.5 rounded-full bg-status-ok" />
           Recruiting
         </span>
-        <span className="font-mono text-[0.625rem] uppercase tracking-widest text-sand-600">Community guild</span>
+        <span className="font-mono text-[0.625rem] uppercase tracking-widest text-sand-500">Community guild</span>
       </div>
 
       <div className="flex items-center gap-4">
