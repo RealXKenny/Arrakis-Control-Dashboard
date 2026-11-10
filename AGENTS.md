@@ -78,7 +78,7 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - `features/map/` owns 2D/3D map presentation, terrain, markers, and realtime polling. Marker identity must stay consistent across projections, React keys, model lifecycles, and searches. Allocate only the nearest 40 world models and dispose on range/filter/detail changes. Map HUD controls portal into the workspace toolbar; camera projection and terrain rendering share a frame.
 
-- `features/guilds/` owns recruitment, applications, roster management, support conversations, unread receipts, logos, and question validation. Settings and mutations require freshly verified linked-character leadership (role 100), matching pawn and controller IDs; cached names/IDs never authorize edits. Console writes never retry.
+- `features/guilds/` owns recruitment, applications, roster management, support conversations, unread receipts, logos, question validation, and the private noticeboard. Noticeboard reads require fresh linked-character membership; leader writes use UUID revision checks, at most 20 announcements (5 pinned), 90-day inactivity expiry, and disband cleanup. Settings and mutations require freshly verified linked-character leadership (role 100), matching pawn and controller IDs; cached names/IDs never authorize edits. Console writes never retry.
 
 - Guild applications keep at most 200 per guild, bounded 20-row reads, atomic duplicate prevention, and a 90-day inbox expiry refreshed by submissions. Acceptance adds the freshly verified linked character through Console before saving accepted status. Review leases serialize decisions and generation checks protect reapplications.
 

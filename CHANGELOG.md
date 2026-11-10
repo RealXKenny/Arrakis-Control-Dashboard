@@ -4,6 +4,8 @@
 
 ### New Features
 
+- Guild noticeboard: current members can read a private daily message, priorities and pinned announcements on My guild. Freshly verified leaders can create, edit and remove posts, with conflict protection and drafts preserved after failed saves.
+
 - New Service status page embeds the HetrixTools hosting availability report with automatic sizing and a direct-report fallback. It requires sign-in and always stays under More on desktop and mobile.
 - New Community events page under More brings competitions, prize pools, schedules, entry instructions and rules together. Members can filter upcoming, current and past events; dates display in their own timezone.
 - The first Base Building Competition offers 500,000 Solaris coins and a couple of new in-game items. Dates, specific item prizes and entry or judging details remain to be announced; prize listings do not award currency or items automatically.
