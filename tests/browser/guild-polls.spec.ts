@@ -29,15 +29,22 @@ test('guild members change and withdraw private votes while leaders publish, clo
   await expect(poll).toBeVisible();
   await expect(poll.getByText('0 votes cast', { exact: true })).toBeVisible();
   await expect(poll.getByText('Scheduled close:', { exact: false })).toBeVisible();
-  for (const width of [1280, 768, 320, 390]) {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+  for (const width of [1280, 1024, 768, 320, 390]) {
     await page.setViewportSize({ width, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(
       await page
         .getByRole('navigation', { name: 'Guild sections' })
         .getByRole('link')
-        .evaluateAll((links) => links.every((link) => link.scrollWidth <= link.clientWidth)),
-    ).toBe(true);
+        .evaluateAll((links) =>
+          links
+            .filter((link) => link.scrollWidth > link.clientWidth)
+            .map((link) => ({ text: link.textContent, width: link.clientWidth, contentWidth: link.scrollWidth })),
+        ),
+    ).toEqual([]);
   }
   await context.setExtraHTTPHeaders({ Cookie: member.cookie });
   await page.goto('/guild?tab=polls');

@@ -9,10 +9,11 @@ export interface SegmentedItem {
 
 /** Link-based tab bar (works without JavaScript, state lives in the URL). */
 export function SegmentedNav({ label, items, active }: { label: string; items: SegmentedItem[]; active: string }) {
+  const width = items.length > 6 ? 'max-w-4xl' : items.length > 4 ? 'max-w-3xl' : 'max-w-md';
   return (
     <nav
       aria-label={label}
-      className={`mb-6 grid border border-sand-200/20 ${items.length > 4 ? 'max-w-3xl max-lg:grid-cols-3!' : 'max-w-md'} ${items.length > 3 ? 'max-sm:grid-cols-2!' : ''}`}
+      className={`mb-6 grid border border-sand-200/20 ${width} ${items.length > 4 ? 'max-lg:grid-cols-3!' : ''} ${items.length > 3 ? 'max-sm:grid-cols-2!' : ''}`}
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
     >
       {items.map((item) => (
