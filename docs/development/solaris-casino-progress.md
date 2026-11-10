@@ -4,7 +4,9 @@ Handoff file for the multi-session Solaris Exchange (casino) build. Update at mi
 
 ## Current phase
 
-Phases 1 to 8 are code-complete (Phase 7 UI is verified by build, lint and server-render tests only, not in a browser) with unit tests (games are engine-level only: no HTTP routes or UI yet). Every Redis Lua script (wallet store and transfer store) is unexecuted: run `npm run test:integration` against a disposable Redis before building on them. No transfer has run against a live Console.
+The Solaris Exchange includes six games, member HTTP routes and browser screens, real-Solaris wallet transfers, administrator reconciliation and recovery services. The production-build browser fixture exercises these flows; standalone Redis verification has passed in V2 CI. The complete integration suite now also includes real transfer persistence/orchestration and interrupted round recovery, with a disposable six-node Cluster run on every `v2` push. Consult [draft PR #8](https://github.com/RealXKenny/Arrakis-Control-Dashboard/pull/8) and its linked run logs for the current commit, result and counts. Live Console transfers, real player accounts and deployment-specific Redis authentication/TLS remain unverified; keep `CASINO_SOLARIS_ENABLED=false` until the deployment prerequisites are met.
+
+The phase-by-phase entries below are historical build notes. Their old “not yet” statements describe that phase, not the current implementation.
 
 ## Decisions
 
@@ -27,7 +29,7 @@ Verified from the repo (`src/features/admin/catalog.json`, `src/server/integrati
 - Whether the player must be online, whether the change is immediate, and whether idempotency keys are supported.
 - Whether an adjustment can be queried afterwards. If not, reconciliation can only compare balances before and after, which cannot prove one adjustment among concurrent in-game spending.
 
-## Completed
+## Historical build notes
 
 - `src/features/casino/ledger/amount.ts`, `ledger.ts`: exact amounts, append-only entries, idempotency with fingerprint conflict detection, holds (reserve/release/settle/withdrawal finalize), invariant checker.
 - `tests/unit/casino/ledger.test.ts` (24 tests, incl. 500-step randomized invariants) and `wallet-store.test.ts` (5 tests, mocked Redis): passing.
@@ -52,23 +54,15 @@ Verified from the repo (`src/features/admin/catalog.json`, `src/server/integrati
 - Browser verification: `tests/browser/casino.spec.ts` (19 tests, run twice, all pass) against the production build with the fixture's in-memory emulation of the casino Redis scripts (`tests/helpers/casino-redis.mjs`) and a fake Console that mirrors the real replies. It found and fixed: balance not dropping when a wager starts, a phone-width overflow from long non-wrapping button labels and unshrinkable grids, and missing fixture scripts. Note: builds from two sessions in one working directory corrupt `.next` and cause spurious failures; build once, then run.
 - Still not verified: the real Console, real Redis (standalone or Cluster), any real player.
 
-## Verification so far
+## Historical verification snapshot
 
 After Phase 7: `npm test` 135 files passed (1 skipped), 1,363 tests passed (32 skipped); `npm run format:check`, `npm run lint` and `tsc --noEmit` clean; `npm run build` succeeds with all casino routes; `npm run test:production` passes; `docs:check` and `docs:format:check` pass. Not run: `npm run test:browser` (Playwright), `npm run test:integration` (needs a disposable Redis), any real-browser check of the casino UI.
 
-## Remaining
+## Remaining verification
 
-1. Phase 1: execute the integration suite on real Redis (standalone and Cluster), fix any Lua divergence; add audit events.
-2. Phase 2 leftovers: transfer-store integration tests, admin reconciliation route (re-verify admin server-side), recovery timer, wallet transfer API routes using `getLinkedPlayer`.
-3. Run all integration suites on a disposable real Redis (standalone and Cluster); try a small deposit and withdrawal against a non-production Console.
-4. Phases 4-6: six games, with hidden state kept server-side.
-5. Phase 7: routes under `src/app/(workspace)/casino/`, navigation entry in `src/components/navigation/`, wallet UI, SSE reuse of the chat gateway.
-6. Phases 8-9: security audit, browser tests, `docs/features/` pages, final report.
+1. Confirm the complete standalone and disposable Cluster suites on the current reviewed source, retaining test logs and topology in the PR. Cluster coverage includes marketplace failover under live traffic, transfer restart recovery and round settlement replay.
+2. Verify a small deposit/withdrawal and uncertain-outcome reconciliation against a non-production Console with an offline test character. Automated transfer tests use a fake Console port.
+3. Complete deployed Redis authentication/TLS, backup/restore, proxy and host configuration checks; disposable plaintext CI clusters do not cover those settings.
+4. Complete final desktop/mobile, keyboard, reduced-motion and sound-setting review, plus independent security and operational review before enabling real Solaris.
 
-## Next recommended action
-
-Run the integration suites against a disposable Redis, then exercise the casino in a real browser against a dev server with Redis (play every game, keyboard-only, reduced motion, mobile width). Then Phase 9: final verification, documentation pass and report.
-
-## Working tree note
-
-The tree already holds uncommitted Live Chat work and docs edits from earlier sessions. Casino files are additive; nothing is committed.
+The implementation and current evidence are tracked in draft PR #8. Historical phase snapshots above are retained for context; they do not indicate an uncommitted working tree or unfinished routes, games or reconciliation screens.

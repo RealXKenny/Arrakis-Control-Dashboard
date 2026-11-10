@@ -1,6 +1,8 @@
 name: Redis Cluster Integration
 
 on:
+  push:
+    branches: [v2]
   schedule:
     - cron: '17 5 * * 1'
   workflow_dispatch:
@@ -45,6 +47,34 @@ jobs:
           done
           echo "The Redis Cluster did not become healthy." >&2
           exit 1
-      - run: npm run test:integration
+      - name: Run full Redis Cluster integration suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test-results
+          npm run test:integration 2>&1 | tee test-results/redis-cluster.log
         env:
           TEST_REDIS_CLUSTER_NODES: 127.0.0.1:7001,127.0.0.1:7002,127.0.0.1:7003
+      - name: Record final cluster topology
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p test-results
+          docker exec redis-7001 redis-cli -p 7001 cluster info > test-results/redis-cluster-topology.log
+          docker exec redis-7001 redis-cli -p 7001 cluster nodes >> test-results/redis-cluster-topology.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: redis-cluster-results
+          path: |
+            test-results/redis-cluster.log
+            test-results/redis-cluster-topology.log
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Remove disposable cluster containers
+        if: always()
+        shell: bash
+        run: |
+          for port in 7001 7002 7003 7004 7005 7006; do
+            docker rm -f "redis-$port" || true
+          done

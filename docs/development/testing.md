@@ -21,7 +21,7 @@ directories and the root-file allowlist. Add the smallest test that proves a fix
 `playwright.config.ts`: Chromium, one worker, base URL `http://127.0.0.1:3100`, CI retries 1. It starts `tests/helpers/browser-server.mjs`,
 which runs the production server against a fake Console on port 3101 (`tests/helpers/fake-console.mjs`) and an in-process RESP Redis fixture.
 Tests import `test`/`expect` from `tests/helpers/browser-test.ts`. A stale server on 3100/3101 causes `EADDRINUSE` or stale code; stop it first.
-Failure traces are kept (`test-results/`, git-ignored). 81 tests existed at the last full run.
+Failure traces are kept (`test-results/`, git-ignored). Use the current runner summary for test counts.
 
 ## Redis integration tests
 
@@ -52,7 +52,9 @@ PowerShell: set the variable with `$env:TEST_REDIS_URL = 'redis://127.0.0.1:6391
 (`redis-cluster.test.ts`) checks slot placement and performs a live `CLUSTER FAILOVER` of the marketplace shard (with `FORCE` as a fallback). It
 is skipped on standalone Redis. The re-key CLI is executed from an empty temporary directory so it can never read a developer's `.env`.
 
-In CI the `redis integration` job uses a `redis:7.4-alpine` service; the `redis cluster integration` job starts six containers and runs the same suite.
+In CI, `CI / Redis Integration` uses a disposable `redis:7.4-alpine` service. The separate [Redis Cluster Integration workflow](../../.github/workflows/redis-cluster.yml) runs on `v2` pushes, weekly and on manual dispatch. It starts three masters and three replicas, runs the full integration suite, records final topology after failover, retains logs as the `redis-cluster-results` artifact for seven days and removes its containers. It remains outside the stable required PR gate. Manual dispatch is available once the workflow exists on the default branch.
+
+Coverage includes real Lua for casino wallets, transfer intents and orchestration, seeds and rounds, chat history/delivery states, event revisions, guild collaboration, sessions, rate limits, audit and marketplace scripts. Transfer tests use real Redis with a fake Console port: concurrent starts, duplicate/replayed operations, uncertain withdrawals with explicit reconciliation, client-restart recovery, and a 201-intent recovery sweep spanning multiple pages. Round recovery interrupts final-state persistence after wallet settlement, reconnects, and verifies no duplicate payout. Cluster-only tests additionally verify full slot coverage, script placement, distributed sessions and graceful marketplace-shard failover under live traffic with counter invariants. Unit regressions ensure Cluster pool options never forward `db` (and therefore never issue `SELECT`) and that pool shutdown closes every connection. These checks do not verify a deployed Redis authentication/TLS setup or real Console transfers.
 
 ## Installer sandbox tests
 

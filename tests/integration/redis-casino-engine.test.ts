@@ -148,4 +148,55 @@ describe('engine on real Redis', () => {
     expect(rng.verifyCommitment(rotated.revealed!.serverSeed, view.fairness!.commitment)).toBe(true);
     expect(transfers.transferStore).toBeDefined();
   });
+
+  it('recovers settlement after a client restart without paying the same round twice', async () => {
+    await wallet.applyWalletOperation(O, S, 'solaris', { type: 'deposit_credit', key: 'funding', amount: 1000n });
+    const deps = {
+      games: { coin },
+      wallet: { apply: wallet.applyWalletOperation },
+      rounds: rounds.roundStore,
+      seeds: seeds.seedStore,
+      now: () => Date.now(),
+      maxPayout: 10n ** 15n,
+      audit: () => undefined,
+    };
+    let interrupted = false;
+    const broken = {
+      ...deps,
+      rounds: {
+        ...rounds.roundStore,
+        async cas(
+          round: Parameters<typeof rounds.roundStore.cas>[0],
+          patch: Parameters<typeof rounds.roundStore.cas>[1],
+        ) {
+          if (patch.status === 'settled' && !interrupted) {
+            interrupted = true;
+            throw new Error('simulated final-state interruption');
+          }
+          return rounds.roundStore.cas(round, patch);
+        },
+      },
+    };
+    await expect(
+      engine.startRound(broken, {
+        owner: O,
+        server: S,
+        game: 'coin',
+        wager: '100',
+        idempotencyKey: 'recover-round-001',
+      }),
+    ).rejects.toThrow('simulated final-state interruption');
+    const [pending] = await rounds.roundStore.listOpen();
+    expect((await rounds.roundStore.get(pending))?.status).toBe('settling');
+    const settledBalance = await wallet.readWalletBalance(O, S, 'solaris');
+    const globals = globalThis as { arrakisRedisClient?: { close(): void } };
+    globals.arrakisRedisClient?.close();
+    delete globals.arrakisRedisClient;
+    expect(await engine.recoverRounds(deps)).toEqual({ settled: 1, voided: 0, resumed: 0, failed: 0 });
+    expect(await engine.recoverRounds(deps)).toEqual({ settled: 0, voided: 0, resumed: 0, failed: 0 });
+    expect(await wallet.readWalletBalance(O, S, 'solaris')).toEqual(settledBalance);
+    expect((await rounds.roundStore.get(pending))?.status).toBe('settled');
+    expect(await rounds.roundStore.listOpen()).toEqual([]);
+    expect((await seeds.rotateSeed(O, S)).revealed).toBeTruthy();
+  });
 });

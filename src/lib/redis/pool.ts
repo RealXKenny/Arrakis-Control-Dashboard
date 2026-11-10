@@ -50,7 +50,6 @@ type BreakerState = 'closed' | 'open' | 'half-open';
 
 export class RedisClientPool implements RedisKeyValueLike {
   private readonly clients: Client[] = [];
-  private readonly owned: Client[] = [];
   private cursor = 0;
   private failures = 0;
   private breaker: BreakerState = 'closed';
@@ -138,7 +137,7 @@ export class RedisClientPool implements RedisKeyValueLike {
 
   /** Gracefully close every pooled connection (test hooks and shutdown). */
   async quit(): Promise<void> {
-    await Promise.allSettled(this.owned.map((client) => client.quit()));
+    await Promise.allSettled(this.clients.map((client) => client.quit()));
   }
 }
 
@@ -154,7 +153,7 @@ function createPooledClient(env: ReturnType<typeof getServerEnv>): Client {
       tls: base.tls,
       username: base.username,
       password: base.password,
-      db: base.db,
+      // Redis Cluster has only database 0; forwarding `db` would make ioredis issue SELECT.
     };
     const options: ClusterOptions = {
       redisOptions,

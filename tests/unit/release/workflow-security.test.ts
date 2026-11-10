@@ -3,7 +3,13 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
-type Step = { uses?: string; run?: string; env?: Record<string, string>; with?: Record<string, unknown> };
+type Step = {
+  uses?: string;
+  run?: string;
+  if?: string;
+  env?: Record<string, string>;
+  with?: Record<string, unknown>;
+};
 type Job = {
   permissions?: Record<string, string>;
   needs?: string | string[];
@@ -119,12 +125,20 @@ describe('GitHub Actions workflows', () => {
     expect(standalone['timeout-minutes']).toBeLessThanOrEqual(30);
     expect(standalone.steps?.some((step) => step.run === 'npm run test:integration')).toBe(true);
     expect(clusterJob['timeout-minutes']).toBeLessThanOrEqual(30);
-    expect(clusterJob.steps?.some((step) => step.run === 'npm run test:integration')).toBe(true);
+    const clusterRun = clusterJob.steps?.find((step) => step.run?.includes('npm run test:integration'));
+    expect(clusterRun?.run).toContain('set -euo pipefail');
+    expect(clusterRun?.run).toContain('npm run test:integration 2>&1 | tee test-results/redis-cluster.log');
+    expect(clusterRun?.env).toHaveProperty('TEST_REDIS_CLUSTER_NODES');
     expect(JSON.stringify(clusterJob)).toContain('TEST_REDIS_CLUSTER_NODES');
     expect(JSON.stringify(clusterJob)).toContain('--cluster-replicas 1');
     expect(JSON.stringify(ci.workflow.jobs.required)).not.toContain('redis-cluster');
     expect(cluster.workflow.on).toHaveProperty('schedule');
     expect(cluster.workflow.on).toHaveProperty('workflow_dispatch');
+    expect(cluster.workflow.on).toHaveProperty('push.branches', ['v2']);
+    const evidence = clusterJob.steps?.find((step) => step.uses?.startsWith('actions/upload-artifact@'));
+    expect(evidence?.if).toBe('always()');
+    expect(evidence?.with?.['retention-days']).toBe(7);
+    expect(clusterJob.steps?.find((step) => step.run?.includes('docker rm -f'))?.if).toBe('always()');
   });
 
   it('keeps Dependabot watching both workflows and npm dependencies', () => {
