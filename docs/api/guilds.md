@@ -1,5 +1,21 @@
 # API: guilds
 
+## Private guild polls (V2)
+
+`GET /api/v2/guilds/{guildId}/polls` returns `{ ok: true, data: { canEdit, polls } }` after fresh linked-character membership verification. Each poll has UUID `id`/`revision`, `question`, `details`, UTC `closesAt`, 2–10 `{ id, text }` choices, `status` (`open`/`closed`), server-derived `closed` (including elapsed deadlines), `organizerName`, `createdAt`, caller-relative `ownOptionId`, `totalVotes` and `{ optionId, count }` results. Raw ballots, voter names, Console IDs and account IDs are excluded. Choices remain associated with canonical characters server-side; this API does not promise secret ballots. Responses are no-store.
+
+Same-origin `POST` accepts at most 16 KiB and one of these strict bodies:
+
+- `{ action: "create", poll: { id, question, details, closesAt, options: [{ id, text }] } }` — leader-only. Poll/option IDs are UUIDs, question allows 1–200 characters, details 1,500, and choice text 1–100. Require 2–10 unique IDs and case-insensitively distinct labels. Closing time must be in the future within 90 days. Published question/options/deadline cannot be edited or reopened.
+- `{ action: "vote", id, revision, optionId }` — current member casts or changes the session character's single ballot. Caller-supplied voter identity is rejected.
+- `{ action: "withdraw", id, revision }` — remove the session character's ballot before closing.
+- `{ action: "close", id, revision }` — leader-only early closure.
+- `{ action: "delete", id, revision }` — leader-only deletion of a poll and its ballots.
+
+Writes return `{ ok: true, data: { poll } }`, with the updated caller-relative result or `null` after deletion. Every action rechecks membership; management requires role 100. UUID compare-and-set prevents lost updates and duplicates, while Redis checks its clock at commit time for creation, voting and withdrawal. Counts retain departed members' votes. Limits are 20 guild polls, 500 voters per poll and 128 KiB per record. At capacity, existing voters can still change/withdraw. Retention refreshes on changes and covers scheduled close plus 90 days; reads do not refresh it, and dashboard disbanding deletes the guild key. All keys use the guild Cluster hash tag.
+
+Important failures include `409 POLL_CONFLICT`, `409 POLL_CLOSED`, `409 POLL_FULL`, `409 POLLS_FULL`, `400 INVALID_POLL_TIME`, `400 INVALID_POLL_OPTION`, `400 INVALID_POLL`, `413 POLL_BODY_TOO_LARGE`, `503 POLLS_UNAVAILABLE`, `429/503 POLLS_LIMITED` and shared authentication, origin and membership/leadership failures. Preserve drafts and refresh explicitly before deliberately retrying; never automatically repeat failed/uncertain writes. Reads allow 60/minute and writes 30/minute per user, plus shared Console verification budgets. No action changes game data or sends announcements.
+
 ## Private recruit onboarding (V2)
 
 `GET /api/v2/guilds/{guildId}/onboarding` returns `{ ok: true, data: { revision, rulesRevision, guide, canEdit, self, members, roster } }` after fresh linked-character membership verification. The guide contains `welcome`, `rules`, `locations` and up to 20 `{ id, text }` checklist items. `self` is the caller's progress or `null`. Only leaders receive the retained `members` overview and current `roster` assignment options; other members receive empty arrays. Progress includes a guild-specific opaque `memberKey`, name, nullable `mentorKey`/current `mentorName`, completed step UUIDs, acknowledged `rulesRevision`, `updatedAt` and `currentMember`. Raw Console character IDs and Discord IDs are excluded. References identify roster entries; they are not authorization credentials. Responses are no-store.

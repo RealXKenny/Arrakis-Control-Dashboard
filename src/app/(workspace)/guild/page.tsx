@@ -20,6 +20,7 @@ import { GuildOperationsPlanner } from '../../../features/guilds/components/oper
 import { GuildResourceRequests } from '../../../features/guilds/components/resource-requests';
 import { GuildBaseDirectory } from '../../../features/guilds/components/base-directory';
 import { GuildOnboarding } from '../../../features/guilds/components/onboarding';
+import { GuildPolls } from '../../../features/guilds/components/polls';
 
 export const metadata: Metadata = { title: 'My guild' };
 
@@ -70,17 +71,19 @@ export default async function MyGuildPage({
   const { guild, members, self, canEdit, leaderCheck, requirement } = result;
   const requestedTab = Array.isArray(requested) ? requested[0] : requested;
   const tab =
-    requestedTab === 'onboarding'
-      ? 'onboarding'
-      : requestedTab === 'bases'
-        ? 'bases'
-        : requestedTab === 'resources'
-          ? 'resources'
-          : requestedTab === 'operations'
-            ? 'operations'
-            : canEdit && requestedTab === 'settings'
-              ? 'settings'
-              : 'roster';
+    requestedTab === 'polls'
+      ? 'polls'
+      : requestedTab === 'onboarding'
+        ? 'onboarding'
+        : requestedTab === 'bases'
+          ? 'bases'
+          : requestedTab === 'resources'
+            ? 'resources'
+            : requestedTab === 'operations'
+              ? 'operations'
+              : canEdit && requestedTab === 'settings'
+                ? 'settings'
+                : 'roster';
   const groups = groupMembersByRank(members);
   const leader = members.find((member) => member.roleId === 100);
   const emblem = factionEmblem(guild.faction);
@@ -98,6 +101,7 @@ export default async function MyGuildPage({
           { id: 'resources', label: 'Resources', href: '/guild?tab=resources' },
           { id: 'bases', label: 'Bases', href: '/guild?tab=bases' },
           { id: 'onboarding', label: 'Onboarding', href: '/guild?tab=onboarding' },
+          { id: 'polls', label: 'Polls', href: '/guild?tab=polls' },
           ...(canEdit ? [{ id: 'settings', label: 'Settings', href: '/guild?tab=settings' }] : []),
         ]}
       />
@@ -110,7 +114,9 @@ export default async function MyGuildPage({
         </div>
       )}
 
-      {tab === 'onboarding' ? (
+      {tab === 'polls' ? (
+        <GuildPolls key={guild.id} guildId={guild.id} />
+      ) : tab === 'onboarding' ? (
         <GuildOnboarding key={guild.id} guildId={guild.id} />
       ) : tab === 'bases' ? (
         <GuildBaseDirectory key={guild.id} guildId={guild.id} />

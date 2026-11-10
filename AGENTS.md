@@ -102,6 +102,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 **## Contracts**
 
+- Guild polls live in `features/guilds/`: fresh membership on every read/action, leader-only publication/early closure/removal and one canonical-character ballot per poll. Published questions/options/deadlines are immutable; members may change/withdraw until closing. Preserve 20 polls/500 voters/128 KiB records, UUID compare-and-set, Redis commit-time deadline checks, retention covering scheduled close plus 90 days and disband cleanup. Member views expose aggregate totals and own choice only; server-side ballots are private but are not secret ballots. No automatic write retries, announcements or game mutations.
+
 - Guild recruit onboarding lives in `features/guilds/`: fresh roster membership on every request, leader-only guide/mentor/progress management, member-only self-completion and current-rules acknowledgment. Guild-specific character references identify one shared progress record across linked accounts; only leaders see the overview. Preserve 20 steps/200 progress records/500 roster entries, 256 KiB bounded CAS storage, 90-day inactivity retention and disband cleanup. Edited steps invalidate affected completions and changed rules rotate acknowledgment revisions. Mentors must be different current members; onboarding never grants game permissions or changes rank.
 
 - API entry points delegate to feature handlers through `runPagesApiHandler`; the read-only binary route `src/pages/api/assets/[...path].ts` is the only intentional exception. V2 route handlers use `route()` from `src/server/http.ts`: same-origin mutation checks, `requireApiSession`, bounded bodies (`readBoundedBody`), no-store JSON, and safe errors.

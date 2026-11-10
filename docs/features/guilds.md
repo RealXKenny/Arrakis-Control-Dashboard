@@ -48,6 +48,14 @@ Members see the guide, their own progress and mentor; only freshly verified lead
 
 Onboarding keeps at most 200 progress records and accepts a verified roster of up to 500 members. The guide allows 2,000-character welcome/location text, 4,000-character rules and 200 characters per checklist item. All records share a bounded 256 KiB Redis document with atomic UUID revision checks. Concurrent changes return a conflict instead of losing progress. Failed saves and refreshes preserve guide drafts; failed refresh verification hides private information. Refresh explicitly before retrying, without automatic write retries. Inactive guild onboarding expires together 90 days after the last successful change; reads do not extend retention, and dashboard disbanding removes the document.
 
+## Guild polls
+
+Open **My guild → Polls** (`/guild?tab=polls`) to choose times, projects or objectives. Freshly verified leaders publish a question, optional details, 2–10 distinct choices and a future closing time within 90 days. Times are entered in the device timezone, stored in UTC and displayed locally. Published questions, choices and deadlines stay fixed so existing votes retain their meaning. Leaders can close voting early without reopening, or confirm removal of a poll and its votes.
+
+Current members hold one single-choice ballot per verified character, including across linked dashboard accounts. They may change choices or withdraw before closing. Every request rechecks current membership; departed members cannot act, but their existing votes remain counted. Members see aggregate totals and percentages plus their own choice, without voter names or IDs. Choices are stored privately server-side; this is not a secret-ballot system. Refresh manually to see other members' latest votes. The interface moves elapsed polls into Closed polls, and the server enforces deadlines again in Redis at commit time so delayed requests cannot vote after closing.
+
+Each guild retains at most 20 polls with 500 voters and 128 KiB per poll. Atomic UUID revisions prevent duplicate ballots, stale overwrites and concurrent quota overruns. Conflicts require explicit refresh; failed saves/refreshes preserve creation drafts and never retry automatically. Failed refresh verification hides private information. Retention is refreshed by changes and covers at least the scheduled closing time plus 90 days; reads do not extend it. Dashboard disbanding clears all polls. Polls never automatically schedule operations, spend resources, change ranks/permissions or send announcements.
+
 ## Pages
 
 | Page            | Route     | Who                                                                            |
