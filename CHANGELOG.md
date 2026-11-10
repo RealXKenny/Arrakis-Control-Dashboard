@@ -4,6 +4,8 @@
 
 ### New Features
 
+- Shared guild base directory: members can search private locations and filter by map, purpose and archive status; verified leaders maintain contact details, access instructions and notes. Bounded storage, revision conflicts, retained drafts and disband cleanup protect coordination without changing in-game permissions or publishing blueprints.
+
 - Guild resource requests: members can request materials, pledge exact quantities and report deliveries; requesters or leaders confirm receipt separately. Private views, partial-delivery tracking, quotas, revision conflicts and retained drafts protect coordination without moving items or currency automatically.
 
 - Guild operations planner: leaders can schedule runs with meeting points and role capacities, while members can join, switch roles or withdraw before the start. Local-time schedules, private team lists, conflict protection, draft preservation and leader cancellation/completion controls keep guild plans organized.

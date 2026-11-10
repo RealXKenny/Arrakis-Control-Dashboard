@@ -82,6 +82,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - Guild resource requests require fresh membership for all reads/actions and canonical character IDs for ownership. Requester/leader management, separate supplier reports and receipt confirmation (never self-confirmation), exact string quantities, UUID revisions, 20 guild records/5 open per character/20 pledge receipts, 90-day inactivity retention, and disband cleanup are enforced server-side. Tracking never moves inventory or currency.
 
+- `features/guilds/` also owns the private shared base directory: fresh membership for reads and role-100 leadership for writes, 50 manually entered listings, atomic UUID revisions, 90-day inactivity retention and disband cleanup. Locations, contact details and access instructions are coordination metadata; directory entries never verify ownership, grant game access or publish/import blueprints. Search stays local to the browser.
+
 - Guild applications keep at most 200 per guild, bounded 20-row reads, atomic duplicate prevention, and a 90-day inbox expiry refreshed by submissions. Acceptance adds the freshly verified linked character through Console before saving accepted status. Review leases serialize decisions and generation checks protect reapplications.
 
 - Application questions support short text, paragraph, dropdown, timezone, checkbox, and decimal-number answers. Submission snapshots wording/type; changing questions during submission returns a retryable conflict. Dropdowns allow 30 unique choices; numeric answers remain strings.

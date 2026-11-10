@@ -32,6 +32,14 @@ Quantities remain exact whole-number strings of up to 18 digits. The guild retai
 
 Every read and action rechecks linked-character membership. Responses use display names, opaque pledge IDs and caller-relative ownership flags, without Console player IDs. Only the requester or leader can manage someone else's pending pledge; confirmed deliveries cannot be edited individually. Inactive guild resource records expire 90 days after the last successful change, reads do not extend retention, and dashboard disbanding removes them. This tracker records coordination only: it never transfers inventory or currency, verifies physical delivery through Console, or sends automatic announcements.
 
+## Shared base directory
+
+Open **My guild → Bases** (`/guild?tab=bases`) to find private guild locations. Current members can search by name, location, contact, instructions or notes, and filter by map, purpose and active/archived status. Search stays in the browser and is not placed in URLs. Listings cover Hagga Basin and Deep Desert, with headquarters, storage, crafting, staging, outpost or other purposes.
+
+Freshly verified leaders can create and edit a name, location/grid reference, contact person, access instructions and optional notes. They can archive outdated directions, restore them after checking details, or confirm removal. Editing an archived listing keeps it archived. These are manually maintained directions: a listing does not verify base ownership, grant game permissions, publish a marketplace blueprint or import a base. Confirm current details with the listed contact before travelling.
+
+Every read verifies current linked-character membership; each change rechecks role 100. Records expose verified editor names and timestamps, without account or Console character IDs. The directory retains at most 50 listings, with 32 KiB per record and 16 KiB mutation bodies. Atomic UUID revisions prevent stale overwrites and concurrent quota overruns. Failed saves keep drafts; failed verification hides private details while retaining the draft for a successful refresh. Refresh explicitly before retrying; writes never retry automatically. Inactive directories expire 90 days after their last successful change, reads do not extend retention, and dashboard disbanding removes the directory.
+
 ## Pages
 
 | Page            | Route     | Who                                                                            |

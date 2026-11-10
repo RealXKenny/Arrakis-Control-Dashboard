@@ -1,5 +1,19 @@
 # API: guilds
 
+## Private shared base directory (V2)
+
+`GET /api/v2/guilds/{guildId}/base-directory` returns `{ ok: true, data: { canEdit, entries } }` after fresh linked-character membership verification. Entries contain UUID `id`/`revision`, `name`, `map`, `purpose`, `location`, `contact`, `accessInstructions`, `notes`, `status` (`active`/`archived`), ISO `createdAt`/`updatedAt` and the verified `updatedByName`. No account or Console character IDs are stored in listings or returned. Responses are no-store.
+
+Same-origin `POST` requires freshly verified role-100 leadership and accepts at most 16 KiB:
+
+- `{ action: "save", revision, entry: { id, name, map, purpose, location, contact, accessInstructions, notes } }` — create with a UUID and `revision: null`, or edit using the current revision. Required fields: name (1–100 characters), location (1–250), contact (1–200), instructions (1–1,000); notes may be empty (up to 1,500). Map is `hagga-basin` or `deep-desert`; purpose is `headquarters`, `storage`, `crafting`, `staging`, `outpost` or `other`. Editing preserves archive status.
+- `{ action: "status", id, revision, status: "active" | "archived" }` — archive or restore directions.
+- `{ action: "delete", id, revision }` — remove only the directory listing.
+
+Writes return `{ ok: true, data: { entry } }`, with the updated listing or `null` after deletion. Caller-supplied ownership, editor and permission fields are rejected. Limits are 50 retained listings per guild and 32 KiB per stored entry; atomic revision checks prevent stale writes and concurrent quota overruns. All records share a Cluster-compatible guild key, expire 90 days after the last change, and are cleared on dashboard disbanding. Reads never extend retention. Reads allow 60/minute and writes 20/minute per user, with additional shared Console verification budgets.
+
+Important failures include `409 BASE_DIRECTORY_CONFLICT`, `409 BASE_DIRECTORY_FULL`, `503 BASE_DIRECTORY_UNAVAILABLE`, `429/503 BASE_DIRECTORY_LIMITED`, `400 INVALID_BASE_DIRECTORY`, `413 BASE_DIRECTORY_BODY_TOO_LARGE`, `413 BASE_DIRECTORY_ENTRY_TOO_LARGE` and `403 GUILD_LEADER_REQUIRED`, plus shared authentication, membership and origin errors. Keep drafts after a failure and refresh explicitly before retrying. These manual metadata records never verify ownership or alter in-game permissions, inventory, currency or marketplace blueprints.
+
 ## Private resource requests (V2)
 
 `GET /api/v2/guilds/{guildId}/resource-requests` returns `{ ok: true, data: { canEdit, requests } }` after fresh membership verification. `canEdit` indicates leader status; requesters also manage their own records. Each request includes UUID `id`/`revision`, `material`, `quantity`, `unit`, `dropoff`, `details`, `priority` (`normal`/`urgent`), `status` (`open`/`fulfilled`/`cancelled`), requester name, timestamps, `isRequester` and `pledges`. Pledges expose opaque UUID IDs, display names, quantity, status (`promised`/`reported`/`confirmed`), timestamps, confirmer name and `isSelf`. Canonical requester, supplier and confirmer IDs remain server-side. Responses are no-store.
