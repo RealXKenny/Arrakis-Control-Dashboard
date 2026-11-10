@@ -159,7 +159,7 @@ export function rowContext(operation: AdminOperation, row: Record<string, unknow
   const route = operation.route;
   const kind = /\/members$/.test(route)
     ? 'player'
-    : /\/inventory|\/items$/.test(route) && !route.startsWith('/api/exchange')
+    : /\/(?:inventory|items)$/.test(route) && !route.startsWith('/api/exchange')
       ? 'item'
       : /\/vehicles/.test(route)
         ? 'vehicle'

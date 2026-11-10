@@ -47,8 +47,9 @@ function proseLines(text) {
 
 export function slug(heading) {
   return heading
-    .replace(/<[^>]+>/g, '')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/[<>]/g, '')
     .replace(/[`*_~]/g, (character) => (character === '_' ? '_' : ''))
     .trim()
     .toLowerCase()

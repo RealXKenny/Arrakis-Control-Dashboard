@@ -1,5 +1,5 @@
 import '../../../lib/assert-server';
-import { readFileSync, statSync } from 'node:fs';
+import { closeSync, openSync, readSync } from 'node:fs';
 import { X509Certificate, createPrivateKey } from 'node:crypto';
 import { checkServerIdentity, createSecureContext, type ConnectionOptions } from 'node:tls';
 import type { ServerEnv } from '../../../config/env';
@@ -35,8 +35,20 @@ function material(
   try {
     if (inline !== undefined) return inline.replaceAll('\\n', '\n').replaceAll('\r\n', '\n').trim();
     if (!path) return undefined;
-    if (statSync(path).size > maximum) throw new Error();
-    return readFileSync(path, 'utf8').replaceAll('\r\n', '\n').trim();
+    const descriptor = openSync(path, 'r');
+    try {
+      const buffer = Buffer.alloc(maximum + 1);
+      let length = 0;
+      while (length < buffer.length) {
+        const count = readSync(descriptor, buffer, length, buffer.length - length, null);
+        if (count === 0) break;
+        length += count;
+      }
+      if (length > maximum) throw new Error();
+      return buffer.toString('utf8', 0, length).replaceAll('\r\n', '\n').trim();
+    } finally {
+      closeSync(descriptor);
+    }
   } catch {
     throw new ChatTlsConfigurationError(setting);
   }

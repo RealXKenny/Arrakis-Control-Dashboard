@@ -1,9 +1,11 @@
 import '../../../lib/assert-server';
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { getServerEnv } from '../../../config/env';
 import { NextResponse } from '../../../server/pages-api';
 import { checkRateLimit } from '../../../lib/security/rate-limit';
 import { readWorld } from '../../portal/server/world';
+
+const comparisonKey = randomBytes(32);
 
 /** A service credential grants only this guild-wide read, never browser sessions or player impersonation. */
 export async function GET(req) {
@@ -12,8 +14,8 @@ export async function GET(req) {
   const authorization = req.headers.authorization;
   const match =
     typeof authorization === 'string' && authorization.length <= 263 ? /^Bearer ([^\s]+)$/.exec(authorization) : null;
-  // Hashes have equal length; comparison time does not reveal a matching credential prefix.
-  const digest = (value: string) => createHash('sha256').update(value).digest();
+  // Ephemeral keyed digests have equal length without storing a reusable token hash.
+  const digest = (value: string) => createHmac('sha256', comparisonKey).update(value).digest();
   const valid = timingSafeEqual(digest(match?.[1] ?? ''), digest(expected));
   if (!match || !valid) {
     return NextResponse.json(

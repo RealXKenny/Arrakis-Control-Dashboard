@@ -75,3 +75,10 @@ it('honors explicit pagination boundaries before falling back to row counts', ()
   expect(resultHasNext({ rows: [{}], total: 21 }, 0, 20)).toBe(true);
   expect(resultHasNext({ rows: [{}], total: 21 }, 1, 20)).toBe(false);
 });
+
+it('only treats inventory and items route suffixes as item lists', () => {
+  const entry = operation('get-players-playerid-inventory');
+  expect(rowContext({ ...entry, route: '/api/players/{playerId}/items' }, { id: '7' }, {})).toEqual({ itemId: '7' });
+  expect(rowContext({ ...entry, route: '/api/inventory-settings' }, { id: '7' }, {})).toEqual({});
+  expect(rowContext({ ...entry, route: '/api/exchange/items' }, { id: '7' }, {})).toEqual({});
+});

@@ -71,5 +71,7 @@ describe('documentation', () => {
     expect(slug('`DELETE /api/v2/admin/sessions`')).toBe('delete-apiv2adminsessions');
     expect(slug('What was verified, and what was not')).toBe('what-was-verified-and-what-was-not');
     expect(slug('3. Postdeployment')).toBe('3-postdeployment');
+    expect(slug('[<script>](example) Heading')).toBe('heading');
+    expect(slug('<scr<script>ipt> Heading')).not.toMatch(/[<>]/);
   });
 });

@@ -89,6 +89,20 @@ describe('GitHub Actions workflows', () => {
     expect(publish.permissions).toEqual({ contents: 'write' });
   });
 
+  it('checks out trusted main before selecting a release commit verified to belong to main', () => {
+    const release = workflows.find(({ file }) => file === 'release.yml')!;
+    const steps = release.workflow.jobs.validate.steps!;
+    const checkout = steps.find((step) => step.uses?.startsWith('actions/checkout@'))!;
+    expect(checkout.with?.ref).toBe('main');
+    const guard = steps.find((step) => step.run?.includes('git merge-base --is-ancestor'))!.run!;
+    expect(guard.indexOf('git checkout --detach "$HEAD_SHA"')).toBeGreaterThan(
+      guard.indexOf('git merge-base --is-ancestor "$HEAD_SHA" refs/remotes/origin/main'),
+    );
+    expect(steps.findIndex((step) => step.run?.includes('git merge-base --is-ancestor'))).toBeLessThan(
+      steps.findIndex((step) => step.run?.includes("require('./package.json')")),
+    );
+  });
+
   it('publishes a checksum alongside the archive that the installer verifies', () => {
     const release = workflows.find(({ file }) => file === 'release.yml')!.text;
     expect(release).toMatch(/sha256sum "\$name" > "\$name\.sha256"/);

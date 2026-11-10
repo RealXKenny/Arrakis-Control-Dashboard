@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { once } from 'node:events';
+import { writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { X509Certificate } from 'node:crypto';
 import { connect, createServer, checkServerIdentity } from 'node:tls';
 import { parse } from 'dotenv';
@@ -62,6 +64,14 @@ describe('RabbitMQ inline TLS configuration', () => {
   it('preserves both new and legacy path-only CA configurations', () => {
     for (const patch of [{ RABBITMQ_CA_FILE: fixture.certPath }, { RABBITMQ_TLS_CA_PATH: fixture.certPath }])
       expect(loadChatTls(settings(patch), url).ca).toEqual([fixture.cert.trim()]);
+  });
+  it('bounds file reads before trimming and keeps oversized material out of errors', () => {
+    const oversized = join(dirname(fixture.certPath), 'oversized.pem');
+    writeFileSync(oversized, fixture.cert + ' '.repeat(262_144));
+    expect(() => loadChatTls(settings({ RABBITMQ_TLS_CA_PATH: oversized }), url)).toThrow(
+      'Invalid RabbitMQ TLS configuration: RABBITMQ_TLS_CA.',
+    );
+    expect(loadChatTls(settings({ RABBITMQ_TLS_CA_PATH: fixture.certPath }), url).ca).toEqual([fixture.cert.trim()]);
   });
   it('loads matching inline and path client identities', () => {
     for (const patch of [
