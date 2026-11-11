@@ -10,6 +10,23 @@ const appOrigin = () => String(test.info().project.use.baseURL ?? 'http://127.0.
 const adminCookie = '__Host-dashboard_session=browser-admin-session';
 const memberCookie = '__Host-dashboard_session=browser-member-session';
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
+async function authenticate(page: Page, cookie?: string) {
+  await page.context().clearCookies();
+  if (appOrigin().startsWith('https:')) {
+    await page.context().setExtraHTTPHeaders({});
+    if (cookie)
+      await page.context().addCookies([
+        {
+          name: '__Host-dashboard_session',
+          value: cookie.split('=')[1],
+          url: `${appOrigin()}/`,
+          secure: true,
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+      ]);
+  } else await page.context().setExtraHTTPHeaders(cookie ? { Cookie: cookie } : {});
+}
 
 async function adminAction(page: Page, data: Record<string, unknown>) {
   const response = await page.request.post('/api/v2/admin/seasons', { headers: { Origin: appOrigin() }, data });
@@ -17,7 +34,7 @@ async function adminAction(page: Page, data: Record<string, unknown>) {
   return response.json();
 }
 async function seed(page: Page) {
-  await page.context().setExtraHTTPHeaders({ Cookie: adminCookie });
+  await authenticate(page, adminCookie);
   const initial = (await (await page.request.get('/api/v2/admin/seasons')).json()) as {
     seasons: Season[];
     template: Definition;
@@ -51,16 +68,28 @@ async function seed(page: Page) {
   return season as Season;
 }
 async function memberBrowser(browser: Browser, info: TestInfo) {
-  return browser.newContext({
+  const context = await browser.newContext({
     baseURL: appOrigin(),
     ignoreHTTPSErrors: info.project.use.ignoreHTTPSErrors,
-    extraHTTPHeaders: { Cookie: memberCookie },
+    extraHTTPHeaders: appOrigin().startsWith('https:') ? {} : { Cookie: memberCookie },
     viewport: info.project.use.viewport,
     isMobile: info.project.use.isMobile,
     hasTouch: info.project.use.hasTouch,
     deviceScaleFactor: info.project.use.deviceScaleFactor,
     userAgent: info.project.use.userAgent,
   });
+  if (appOrigin().startsWith('https:'))
+    await context.addCookies([
+      {
+        name: '__Host-dashboard_session',
+        value: 'browser-member-session',
+        url: `${appOrigin()}/`,
+        secure: true,
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+  return context;
 }
 async function accessible(page: Page) {
   await page.evaluate(axeSource);
@@ -247,6 +276,7 @@ test('live progress observes another member, retains totals on failure, and paus
     })
   ).json();
   const submission = submitted.progress.submissions[0];
+  expect(submission.owner).not.toBe('123456789000000000');
   await adminAction(page, {
     action: 'review',
     seasonId: draft.id,
@@ -312,7 +342,7 @@ test('reward navigation, dialogs, filters and long-text layouts meet mobile/Safa
     transition: 'publish',
     confirmation: draft.definition.name,
   });
-  await page.context().setExtraHTTPHeaders({ Cookie: memberCookie });
+  await authenticate(page, memberCookie);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(`/seasons?season=${draft.id}`);
   await expect(page.getByRole('heading', { name: draft.definition.name, exact: true })).toBeVisible();
@@ -348,7 +378,7 @@ test('reward navigation, dialogs, filters and long-text layouts meet mobile/Safa
     .evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().height));
   expect(targets.every((height) => height >= 44)).toBe(true);
   await page.screenshot({ path: info.outputPath(`season-${info.project.name}-accessible.png`), fullPage: true });
-  await page.context().setExtraHTTPHeaders({ Cookie: adminCookie });
+  await authenticate(page, adminCookie);
   const current = (await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json()).season as Season;
   await adminAction(page, {
     action: 'transition',
@@ -370,12 +400,12 @@ test('upload and live endpoints reject unauthenticated access, disguised scripts
     data: svg,
   });
   expect(disguised.status()).toBe(400);
-  await page.context().setExtraHTTPHeaders({ Cookie: memberCookie });
+  await authenticate(page, memberCookie);
   expect((await page.request.post(endpoint, { headers: { Origin: appOrigin() }, data: svg })).status()).toBe(403);
   expect((await page.request.get(`/api/v2/seasons/${draft.id}/community`)).status()).toBe(404);
-  await page.context().setExtraHTTPHeaders({});
+  await authenticate(page);
   expect((await page.request.get(`/api/v2/seasons/${draft.id}/community`)).status()).toBe(401);
-  await page.context().setExtraHTTPHeaders({ Cookie: adminCookie });
+  await authenticate(page, adminCookie);
   const published = await adminAction(page, {
     action: 'transition',
     seasonId: draft.id,
