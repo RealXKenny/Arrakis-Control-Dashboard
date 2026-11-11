@@ -24,6 +24,23 @@ export type PresentationChange = {
 export function artworkUrl(seasonId: string, artworkId: string) {
   return `/api/v2/seasons/${seasonId}/artwork/${artworkId}`;
 }
+export const gameRewardSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('solaris'), amount: z.string().regex(/^[1-9][0-9]{0,5}$/) }).strict(),
+  z
+    .object({
+      type: z.literal('item'),
+      itemId: z.string().regex(/^[A-Za-z0-9_]{1,120}$/),
+      quantity: z.number().int().min(1).max(1000),
+      quality: z.number().int().min(0).max(5),
+    })
+    .strict(),
+]);
+export type GameReward = z.infer<typeof gameRewardSchema>;
+export function gameRewardLabel(reward: GameReward) {
+  return reward.type === 'solaris'
+    ? `${reward.amount} Solaris`
+    : `${reward.itemId} × ${reward.quantity} · grade ${reward.quality}`;
+}
 export const rewardSchema = z.object({
   id: identifier,
   name: text(100),
@@ -33,6 +50,7 @@ export const rewardSchema = z.object({
   motif: z.enum(['dune', 'star', 'spire', 'sun', 'wing']),
   color: z.enum(['sand', 'spice', 'blue']),
   artwork: artworkSchema.optional(),
+  gameReward: gameRewardSchema.optional(),
 });
 export const challengeSchema = z.object({
   id: identifier,
@@ -158,10 +176,21 @@ export type Delivery = {
   description: string;
   requestedBy: string;
   requestedAt: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'sending' | 'delivered' | 'needs_reconciliation' | 'cancelled';
   reviewedBy?: string;
   reviewedAt?: string;
   note?: string;
+  revision?: string;
+  rewardId?: string;
+  gameReward?: GameReward;
+  pawnId?: string;
+  controllerId?: string;
+  attemptedAt?: string;
+  executedBy?: string;
+  completedAt?: string;
+  outcome?: string;
+  resolvedBy?: string;
+  resolutionNote?: string;
 };
 export const seasonRecordSchema = z.object({
   id: identifier,

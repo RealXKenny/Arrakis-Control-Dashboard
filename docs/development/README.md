@@ -15,3 +15,5 @@ Also: [CONTRIBUTING.md](../../CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](../../CO
 and the [AI agent guides](../ai/README.md) used by coding assistants.
 
 [Expansion backlog checkpoint](expansion-backlog.md) records the sequential N001–N100 work and precise resume action.
+
+[Kimi season delivery handoff](kimi-season-delivery-handoff.md) records the uncommitted PR #9 delivery work, validation evidence and pending fully configured Season 1 Redis import.

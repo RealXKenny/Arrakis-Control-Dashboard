@@ -27,11 +27,14 @@ import {
   claimReward,
   equipReward,
   correctXp,
-  manageDelivery,
 } from '../../../src/features/seasons/server/engine';
 import { loadMember, readRecord, seasonKeys } from '../../../src/features/seasons/server/store';
 import { savePresentation } from '../../../src/features/seasons/server/artwork';
 import { seasonPresentation } from '../../../src/features/seasons/contracts';
+import { requestDelivery, reviewDelivery } from '../../../src/features/seasons/server/deliveries';
+vi.mock('../../../src/features/player/server/linked-player', () => ({
+  getLinkedPlayer: async () => ({ linked: true, pawnId: '42', controllerId: '43', onlineStatus: 'Offline' }),
+}));
 
 beforeEach(() => {
   mock.reply = createSeasonFixture();
@@ -219,22 +222,32 @@ describe('atomic season operations through the store contract (fixture, not real
     expect(data.totals.value.milestones).toHaveProperty('shared-horizon');
   });
   it('requires separate delivery review without granting or executing game rewards', async () => {
-    const season = await active();
-    const proposals = await manageDelivery(
+    const definition = seasonTemplate();
+    definition.startsAt = new Date(Date.now() - 3600000).toISOString();
+    definition.rewards[0].gameReward = { type: 'solaris', amount: '100' };
+    const draft = await saveSeason(randomUUID(), '', definition, 'admin');
+    const season = await transitionSeason(draft.id, draft.revision, 'publish', 'admin');
+    await claimReward(season.id, 'member', 'wayfarer');
+    const proposal = await requestDelivery(
       season.id,
-      { owner: 'member', description: 'Proposed recognition requiring integration approval.' },
+      'member',
+      'wayfarer',
+      'Proposed recognition requiring integration approval.',
       'admin',
     );
     await expect(
-      manageDelivery(season.id, { deliveryId: proposals[0].id, approve: true, note: 'Approve proposal.' }, 'admin'),
+      reviewDelivery(season.id, proposal.id, proposal.revision!, true, 'Approve proposal.', 'admin'),
     ).rejects.toMatchObject({ statusCode: 403 });
-    const reviewed = await manageDelivery(
+    const reviewed = await reviewDelivery(
       season.id,
-      { deliveryId: proposals[0].id, approve: true, note: 'Review only, execution disabled.' },
+      proposal.id,
+      proposal.revision!,
+      true,
+      'Approve without executing.',
       'second-admin',
     );
-    expect(reviewed[0].status).toBe('approved');
+    expect(reviewed.status).toBe('approved');
     expect((await loadMember(season.id, 'member')).progress.value.xp).toBe(0);
-    expect((await loadMember(season.id, 'member')).progress.value.claims).toEqual([]);
+    expect((await loadMember(season.id, 'member')).progress.value.claims).toHaveLength(1);
   });
 });

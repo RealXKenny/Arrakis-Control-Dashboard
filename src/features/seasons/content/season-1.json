@@ -1,0 +1,286 @@
+{
+  "id": "season-1-sands-of-beginnings",
+  "artwork": {
+    "file": "season-1-hero.webp",
+    "alt": "A golden sun rising over layered desert dunes beneath a deep blue sky"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "slug": "sands-of-beginnings",
+    "name": "Sands of Beginnings",
+    "subtitle": "Ninety-one days. Five paths. One shared horizon.",
+    "description": "A free community season for every traveller of Arrakis. Keep a solo field journal, raise a home from the sand, chart the unknown, sustain your neighbours, or teach what you have learned. Every path offers the same 5,000 Season XP opportunity and independently reaches level 10. Reviewed contributions recognise real effort; the linked-character observation confirms only your current character link. Claim permanent dashboard cosmetics as you progress, with optional modest in-game rewards subject to separate administrator review. No purchase, guild membership, casino play, or game delivery is required to complete the season.",
+    "number": 1,
+    "theme": "dunes",
+    "startsAt": "2027-01-05T05:00:00.000Z",
+    "endsAt": "2027-04-06T04:00:00.000Z",
+    "timezone": "America/New_York",
+    "thresholds": [0, 250, 600, 1000, 1500, 2100, 2800, 3600, 4400, 5000],
+    "rewards": [
+      {
+        "id": "wayfarer",
+        "name": "Wayfarer",
+        "description": "A title for every traveller who takes the first step beneath Arrakis's suns.",
+        "level": 1,
+        "kind": "title",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "first-cistern",
+        "name": "First Cistern",
+        "description": "A sand-coloured badge marking your first sustained contribution, with an optional 250 Solaris grant.",
+        "level": 2,
+        "kind": "badge",
+        "motif": "dune",
+        "color": "sand",
+        "gameReward": { "type": "solaris", "amount": "250" }
+      },
+      {
+        "id": "spice-horizon",
+        "name": "Spice Horizon",
+        "description": "A blue-and-spice banner inspired by the line where desert and sky meet.",
+        "level": 3,
+        "kind": "banner",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "hearth-in-the-sand",
+        "name": "Hearth in the Sand",
+        "description": "A decoration celebrating the shelter, routes, and connections that make a desert habitable.",
+        "level": 4,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "pathfinder",
+        "name": "Pathfinder",
+        "description": "A title for a traveller whose chosen path has become a reliable trail.",
+        "level": 5,
+        "kind": "title",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "cartographers-star",
+        "name": "Cartographer's Star",
+        "description": "A star badge for careful observation, patient craft, and knowledge worth sharing.",
+        "level": 6,
+        "kind": "badge",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "shared-water",
+        "name": "Shared Water",
+        "description": "A decoration honouring practical generosity, with an optional grant of five Cups of Water at grade 0.",
+        "level": 7,
+        "kind": "decoration",
+        "motif": "dune",
+        "color": "blue",
+        "gameReward": { "type": "item", "itemId": "WaterPack_Consumable", "quantity": 5, "quality": 0 }
+      },
+      {
+        "id": "wings-of-guidance",
+        "name": "Wings of Guidance",
+        "description": "A banner for the lift we give one another, whatever form our contributions take.",
+        "level": 8,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "sunlit-spire",
+        "name": "Sunlit Spire",
+        "description": "A high-desert decoration marking a body of work that others can look to and remember.",
+        "level": 9,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "first-light",
+        "name": "First Light",
+        "description": "A permanent achievement for completing Season 1 on any path and helping establish a shared legacy.",
+        "level": 10,
+        "kind": "achievement",
+        "motif": "star",
+        "color": "spice"
+      }
+    ],
+    "challenges": [
+      {
+        "id": "solo-field-journal",
+        "name": "Solo field journal",
+        "description": "Share a personal journal entry about a journey, discovery, setback, or lesson from this week. Submit your own account and optional HTTPS evidence for moderator review; historical claims are not inferred from inventory or location.",
+        "path": "solo",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "solo-independent-journey",
+        "name": "An independent journey",
+        "description": "Tell the story of a substantial self-directed goal you pursued this season. Explain your plan, what changed, and what you learned. No guild membership or group attendance is required; moderators review the submitted narrative and evidence.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "solo-linked-arrival",
+        "name": "Register your traveller",
+        "description": "API-observed once: confirm that your dashboard account currently resolves to a linked pawn and controller. This verifies only the fresh character link, not any historical exploration or achievement.",
+        "path": "solo",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      },
+      {
+        "id": "builder-build-log",
+        "name": "Builder's log",
+        "description": "Document a building, refinement, layout, or repair you worked on this week. Describe your decisions and include optional HTTPS images or plans for moderator review.",
+        "path": "builder",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "builder-signature-project",
+        "name": "A signature project",
+        "description": "Present a substantial seasonal build or community space, including its purpose, constraints, and construction story. Moderators review your submission; blueprint ownership or imports are never changed by this challenge.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "builder-linked-arrival",
+        "name": "Register your builder",
+        "description": "API-observed once: confirm that your dashboard account currently resolves to a linked pawn and controller. This verifies only the fresh character link, not ownership of a base or past construction.",
+        "path": "builder",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      },
+      {
+        "id": "explorer-survey-notes",
+        "name": "Explorer's survey notes",
+        "description": "Record a route, landmark, hazard, or practical navigation lesson from this week. Submit your own notes and optional HTTPS evidence for moderator review; a map position alone earns nothing.",
+        "path": "explorer",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "explorer-season-atlas",
+        "name": "A traveller's atlas",
+        "description": "Assemble a useful seasonal guide to a region or journey, with routes, observations, and advice other travellers can understand. Moderators review the submitted guide and evidence.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "explorer-linked-arrival",
+        "name": "Register your explorer",
+        "description": "API-observed once: confirm that your dashboard account currently resolves to a linked pawn and controller. This verifies only the fresh character link, not that you visited any location.",
+        "path": "explorer",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      },
+      {
+        "id": "supplier-manifest",
+        "name": "Supplier's manifest",
+        "description": "Describe materials, water, equipment, or logistical help you provided this week, including how it supported someone else. Moderators review your account and optional HTTPS receipts; inventory is not moved or treated as historical proof.",
+        "path": "supplier",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "supplier-community-lifeline",
+        "name": "A community lifeline",
+        "description": "Document a substantial supply effort or sustainable support system you maintained this season. Explain who benefited and what you learned. Moderators review the narrative and optional evidence.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "supplier-linked-arrival",
+        "name": "Register your supplier",
+        "description": "API-observed once: confirm that your dashboard account currently resolves to a linked pawn and controller. This verifies only the fresh character link, not a delivery or inventory balance.",
+        "path": "supplier",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      },
+      {
+        "id": "mentor-teaching-notes",
+        "name": "Mentor's teaching notes",
+        "description": "Share a question you answered, a skill you taught, or a beginner you supported this week. Explain your approach and outcome for moderator review, with optional HTTPS evidence and no private conversation contents.",
+        "path": "mentor",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "mentor-lasting-guide",
+        "name": "A lasting guide",
+        "description": "Create a substantial guide, workshop account, or mentoring record that can help future travellers. Moderators review its usefulness and your description of the contribution.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "mentor-linked-arrival",
+        "name": "Register your mentor",
+        "description": "API-observed once: confirm that your dashboard account currently resolves to a linked pawn and controller. This verifies only the fresh character link, not a mentoring relationship or past lesson.",
+        "path": "mentor",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      }
+    ],
+    "milestones": [
+      {
+        "id": "first-tracks",
+        "name": "First tracks",
+        "description": "The community records 25 approved challenge contributions across all paths.",
+        "target": 25
+      },
+      {
+        "id": "shared-horizon",
+        "name": "A shared horizon",
+        "description": "The community records 100 approved challenge contributions across all paths.",
+        "target": 100
+      },
+      {
+        "id": "living-legacy",
+        "name": "A living legacy",
+        "description": "The community records 250 approved challenge contributions across all paths.",
+        "target": 250
+      }
+    ]
+  }
+}

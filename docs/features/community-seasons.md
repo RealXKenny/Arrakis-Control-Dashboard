@@ -18,6 +18,14 @@ Evidence still uses bounded text and up to three HTTPS links; the application ne
 
 Save the draft before changing lifecycle state. Preview renders the member interface without granting ownership or XP. Draft and preview remain private to administrators. Publication freezes the definition, including reward requirements, challenge awards, schedules and reward artwork. Return an unpublished preview to draft or discard unsaved edits to restore its saved version. Duplicating copies content, including the current presentation, into a separate draft with a new slug and season number; update its dates before publishing.
 
+### Versioned Season 1 content and import
+
+`src/features/seasons/content/season-1.json` is the complete **Sands of Beginnings** package: original hero artwork and alternative text, an America/New_York schedule from January 5 through April 6, 2027, ten levels at 5,000 XP, ten permanent cosmetics, fifteen challenges and three cooperative milestones. Solo, builder, explorer, supplier and mentor each provide exactly 5,000 XP through equivalent weekly, seasonal and one-time opportunities. Only the five clearly labelled registration objectives use the API-observed linked-character verifier; all other contributions require review. Optional grants are 250 Solaris and five grade-0 Cups of Water (`WaterPack_Consumable`). That item ID and name are recorded in RedBlink's pinned [admin-item catalog](https://github.com/Red-Blink/dune-awakening-selfhost-docker/blob/480bb5f32c919cc75d7f062e5ab03009ec01a983/runtime/data/admin-items.json); this does not certify a live grant.
+
+Run `npm run seasons:import` for a dry run. It validates the schema, artwork, publication fairness and recurrence bounds, then prints a credential-free Redis target. Review that target carefully; the configured environment may be persistent or production. To apply, repeat with both `--apply` and the exact printed `--target` value. The engine-owned operation normalizes the image and atomically creates the artwork reference and **draft** season through the season CAS commit. It does not publish, reset progression, create deliveries, enable execution or call Console.
+
+The fixed package ID makes an identical rerun a no-op. A changed draft/preview must be edited through the admin dashboard, and an existing published season is never overwritten. `season-2-template.json` supplies an independent, equally validated Season 2 draft package with a later schedule and distinct identity; select it with `npm run seasons:import -- --content src/features/seasons/content/season-2-template.json`. Review and edit either draft before any explicit publication decision.
+
 ### Safe live presentation edits
 
 Scheduled and active seasons expose a separate **Live season presentation** form. Only subtitle, description, theme and hero artwork can change. Name, slug, number, dates, timezone, XP thresholds, challenges, milestone targets and rewards remain immutable. Every save requires a recent administrator sign-in, the current UUID revision, a meaningful reason and the exact saved season name. Redis checks the season deadline at commit time. Concurrent saves or a simultaneous end/archive cannot overwrite one another.
@@ -44,21 +52,21 @@ There are no SQL migrations or PostgreSQL dependencies. This intentionally follo
 
 All season keys use `arrakis:{seasons}:v1:`. The shared hash tag lets publication, progression, moderation, aggregate milestones, reward claims and equipment commit in one Cluster slot. This prioritizes consistency; season traffic is concentrated on one shard. Do not add `SELECT` commands. Redis must use persistent storage/backups and a deployment eviction policy that protects authoritative application data.
 
-| Suffix                                          | Purpose                                                                           |
-| ----------------------------------------------- | --------------------------------------------------------------------------------- |
-| `season:<id>`                                   | Versioned definition, phase, UUID revision and publication timestamps             |
-| `index` / `published`                           | Paginated newest-first draft/admin and published/member indexes                   |
-| `schedules` / `schedule-revision`               | Upcoming windows and publication CAS guard                                        |
-| `unique:slug:<slug>` / `unique:number:<number>` | Permanent published identity reservations                                         |
-| `progress:<season>:<account>`                   | Exact XP, append-only events, submissions, copied claims and equipment references |
-| `equipment:<account>`                           | Equipped cosmetic snapshots, independent of history pagination                    |
-| `totals:<season>`                               | Atomic participant, completion, XP and claim totals                               |
-| `inbox:<season>` / `inbox-index:<season>`       | Private pending evidence records and bounded review-page index                    |
-| `deliveries:<season>`                           | Separately reviewed, non-executing game delivery proposals                        |
-| `audit:<season>`                                | Permanent append-only operation history; latest 100 displayed                     |
-| `artwork:<sha256>`                              | Immutable normalized image, dimensions and bounded base64 bytes                   |
-| `artwork-index:<season>`                        | At most 128 distinct uploaded image references                                    |
-| `presentation:<season>:<revision>`              | Permanent before/after live-edit snapshot with actor, reason and timestamp        |
+| Suffix                                          | Purpose                                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `season:<id>`                                   | Versioned definition, phase, UUID revision and publication timestamps               |
+| `index` / `published`                           | Paginated newest-first draft/admin and published/member indexes                     |
+| `schedules` / `schedule-revision`               | Upcoming windows and publication CAS guard                                          |
+| `unique:slug:<slug>` / `unique:number:<number>` | Permanent published identity reservations                                           |
+| `progress:<season>:<account>`                   | Exact XP, append-only events, submissions, copied claims and equipment references   |
+| `equipment:<account>`                           | Equipped cosmetic snapshots, independent of history pagination                      |
+| `totals:<season>`                               | Atomic participant, completion, XP and claim totals                                 |
+| `inbox:<season>` / `inbox-index:<season>`       | Private pending evidence records and bounded review-page index                      |
+| `deliveries:<season>`                           | Reviewed, versioned game deliveries and permanent execution/reconciliation outcomes |
+| `audit:<season>`                                | Permanent append-only operation history; latest 100 displayed                       |
+| `artwork:<sha256>`                              | Immutable normalized image, dimensions and bounded base64 bytes                     |
+| `artwork-index:<season>`                        | At most 128 distinct uploaded image references                                      |
+| `presentation:<season>:<revision>`              | Permanent before/after live-edit snapshot with actor, reason and timestamp          |
 
 No season history, ownership or audit key expires automatically. Per-member records are capped at 1 MiB, 1,200 submissions and 1,250 XP events. Definitions allow 100 challenges, 100 rewards, 20 milestones and at most 1,000 theoretically possible challenge completions per member. Exceeding a bound fails visibly rather than evicting history. Each recurring challenge allows up to 20 completions per period. Up to 100 future published schedules and 100 delivery proposals per season are supported; historical seasons are retained without a total season cap. Member history reads 25 seasons per page and review reads 50 submissions per page.
 
@@ -74,21 +82,34 @@ Connection changes and milestone unlocks use polite live-region announcements. P
 
 ## APIs
 
-| Route                                                       | Methods | Operations                                                                                                    |
-| ----------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| `/api/v2/seasons`                                           | GET     | Published season pages; `?season=<id>` selects one; `?offset=<n>` pages history                               |
-| `/api/v2/seasons`                                           | POST    | `submit`, `verify`, `claim`, `equip`                                                                          |
-| `/api/v2/admin/seasons`                                     | GET     | Admin definitions/template; `?season=<id>` loads reviews, totals, proposals and recent audit                  |
-| `/api/v2/admin/seasons`                                     | POST    | `save`, `duplicate`, `transition`, `presentation`, `review`, `correct`, `delivery-request`, `delivery-review` |
-| `/api/v2/admin/seasons/artwork?season=<id>&revision=<uuid>` | POST    | Recent-admin, same-origin bounded binary image upload                                                         |
-| `/api/v2/seasons/<id>/artwork/<sha256>`                     | GET     | Authenticated WebP retrieval, with draft/reference privacy checks                                             |
-| `/api/v2/seasons/<id>/community`                            | GET     | Published phase/presentation and versioned community aggregates only                                          |
+| Route                                                       | Methods | Operations                                                                                                                                                                |
+| ----------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/v2/seasons`                                           | GET     | Published season pages; `?season=<id>` selects one; `?offset=<n>` pages history                                                                                           |
+| `/api/v2/seasons`                                           | POST    | `submit`, `verify`, `claim`, `equip`, `delivery-request`                                                                                                                  |
+| `/api/v2/admin/seasons`                                     | GET     | Admin definitions/template; `?season=<id>` loads reviews, totals, proposals and recent audit                                                                              |
+| `/api/v2/admin/seasons`                                     | POST    | `save`, `duplicate`, `transition`, `presentation`, `review`, `correct`, `delivery-request`, `delivery-review`, `delivery-execute`, `delivery-recover`, `delivery-resolve` |
+| `/api/v2/admin/seasons/artwork?season=<id>&revision=<uuid>` | POST    | Recent-admin, same-origin bounded binary image upload                                                                                                                     |
+| `/api/v2/seasons/<id>/artwork/<sha256>`                     | GET     | Authenticated WebP retrieval, with draft/reference privacy checks                                                                                                         |
+| `/api/v2/seasons/<id>/community`                            | GET     | Published phase/presentation and versioned community aggregates only                                                                                                      |
 
 All APIs use the V2 safe-error/no-store boundary. Mutations require same origin, authenticated sessions, bounded bodies and rate protection. Member input cannot select another progression owner. Admin IDs never come from parsed relay names, profile strings or request claims. Pending evidence and ballots are never exposed through community totals. The request envelope is limited to 256 KiB. Evidence is not rendered as HTML and cannot supply fetch targets for server-side requests.
 
 ## In-game delivery boundary
 
-Administrators can propose and separately approve/reject a delivery. Review outcomes and actors are retained. Approval is review only: execution is disabled, there is no game transfer endpoint, and the queue cannot invoke Console writes. A verified integration and explicit authorization are still required before adding execution, uncertain-send reconciliation and retry/recovery states. Do not treat an approved proposal as a delivered reward. No deployment setting silently enables delivery.
+In-game rewards are optional and free. Configure a Solaris amount (whole decimal string, 1–999999) or an item template ID, quantity (1–1000) and explicit grade (0–5) in the draft reward editor. Published definitions and claim snapshots freeze this configuration. They never credit casino wallets or change Season XP. Existing published cosmetics cannot gain a game grant through a live edit.
+
+Execution defaults off. Set `SEASON_GAME_DELIVERY_ENABLED=true` only after testing your Console version with disposable characters. Supply `ADMIN_CONSOLE_API_KEY` with player-read, currency-adjustment and item-grant permissions as appropriate; the member Console key is never used for these writes. `CONSOLE_URL` must use HTTPS or loopback HTTP. The adapter still uses its separate `ADAPTER_TOKEN`. This change does not modify deployment secrets or grant real player resources during development.
+
+1. The recipient claims the configured reward normally.
+2. In the claimed reward preview, the member selects **Request game delivery**; the session supplies the recipient identity. Administrators can also request delivery for an account/reward with an authorization basis. The server verifies the claim and captures a fresh pawn/controller link. Requests deduplicate by season, account and reward, including terminal requests. Up to 100 records per season are retained permanently. Members see only their own reward IDs/statuses, without private review notes or other accounts' delivery data.
+3. A different administrator reviews the exact grant and character. Requesters and recipients cannot approve or execute their own deliveries. All operations use the existing same-origin, rate-limited, recently authenticated administrator boundary.
+4. Log the character out. Type `DELIVER <delivery UUID>` and explicitly execute. The server rechecks original ownership, a fresh matching pawn/controller link and an unambiguous offline state. Solaris reads an exact string balance before sending. Failure of any preflight check sends nothing; refresh and retry once the condition is corrected.
+5. Redis atomically records `sending` before one non-retried Console POST. Concurrent callers and replays cannot send again. Exact receipts produce `delivered`; unknown, partial, malformed, network, HTTP-error or broker/task-only replies produce `needs_reconciliation`. No automatic game-write retry occurs.
+6. A process crash or lost Redis result can leave `sending`. After two minutes use **Recover interrupted send** to park it for reconciliation. Check the Console audit and original character records; current balance alone is insufficient proof. A separate administrator records applied → `delivered` or not applied → terminal `cancelled`, with a reason and typed confirmation. Neither outcome sends anything or rearms the record. This conservative at-most-once policy avoids duplicate grants where the upstream offers no idempotency token or transaction shared with Redis.
+
+Solaris uses `GET /api/players/<pawn>/currency` and `POST /api/players/<pawn>/add-currency` with currency 0, a positive amount and `ADD CURRENCY`. Confirmation requires the exact amount, currency, expected balance and an offline player in the Console reply. Items use `POST /api/players/<pawn>/give-item-id` with an explicit grade to select the synchronous database grant path. Confirmation requires the exact pawn, template, grade, complete inserted-stack quantity, no clamping and no relog-required flag. No augments, entitlement cosmetics, live broker grants or grade-0 physical schematic grants are supported. Unsupported versions or shapes are parked rather than reported as delivered.
+
+Item behavior was verified against the upstream [route/grant implementation](https://github.com/Red-Blink/dune-awakening-selfhost-docker/blob/480bb5f32c919cc75d7f062e5ab03009ec01a983/console/api/src/server.js) and [database receipt implementation](https://github.com/Red-Blink/dune-awakening-selfhost-docker/blob/480bb5f32c919cc75d7f062e5ab03009ec01a983/console/api/src/duneDb.js), by RedBlink under the attribution in [NOTICE](../../NOTICE.md). This verifies the published contract; it is not a claim that your live provider was exercised. Legacy unstructured delivery proposals remain inspectable/reviewable but cannot execute.
 
 ## Deployment, testing and troubleshooting
 
@@ -100,4 +121,4 @@ Playwright's WebKit projects use a separate loopback HTTPS fixture with short-li
 
 If a write reports a conflict, refresh and inspect the saved state before explicitly repeating it. If admin writes request reauthentication, sign in interactively again; background role verification does not extend the high-risk window. If a season will not publish, check each path's attainable XP, dates, unique number/slug, schedule overlap and recurrence limits. Pending evidence prevents archive until reviewed. Storage failures grant no provisional XP or cosmetics.
 
-Level distribution, per-challenge completions, per-reward claims, individual account inspection, uploaded art, safe live presentation edits, live community polling and historical reward-track browsing are available. Physical-device/screen-reader certification and live-provider staging remain unverified. Read the [acceptance report](../development/community-seasons-progress.md) for exact results. In-game delivery execution remains disabled by explicit maintainer instruction; review approval cannot execute or enable it.
+Level distribution, per-challenge completions, per-reward claims, individual account inspection, uploaded art, safe live presentation edits, live community polling and historical reward-track browsing are available. Physical-device/screen-reader certification and live-provider staging remain unverified. Read the [acceptance report](../development/community-seasons-progress.md) for exact results. Reviewed game delivery is optional and defaults off; approval alone never sends a grant.

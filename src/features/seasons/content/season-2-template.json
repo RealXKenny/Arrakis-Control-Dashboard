@@ -1,0 +1,286 @@
+{
+  "id": "season-2-sands-of-renewal",
+  "artwork": {
+    "file": "season-1-hero.webp",
+    "alt": "A golden sun rising over layered desert dunes beneath a deep blue sky"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "slug": "sands-of-renewal",
+    "name": "Sands of Renewal",
+    "subtitle": "Every horizon begins with what we carry forward.",
+    "description": "A reusable second-season template built from Sands of Beginnings. Choose a fresh launch window and adapt the reviewed briefs to the community's next chapter while preserving equal 5,000-XP paths and the level-10 cap. Existing Season 1 progression, claims, deliveries, and archives remain independent. This package imports only a draft; review its schedule, rewards, and item support before publication.",
+    "number": 2,
+    "theme": "spice",
+    "startsAt": "2027-04-13T04:00:00.000Z",
+    "endsAt": "2027-07-13T04:00:00.000Z",
+    "timezone": "America/New_York",
+    "thresholds": [0, 250, 600, 1000, 1500, 2100, 2800, 3600, 4400, 5000],
+    "rewards": [
+      {
+        "id": "wayfarer",
+        "name": "Returning Wayfarer",
+        "description": "A title for a new journey carried by past experience.",
+        "level": 1,
+        "kind": "title",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "first-cistern",
+        "name": "Renewed Cistern",
+        "description": "A badge for renewed contribution, with an optional 250 Solaris grant.",
+        "level": 2,
+        "kind": "badge",
+        "motif": "dune",
+        "color": "sand",
+        "gameReward": { "type": "solaris", "amount": "250" }
+      },
+      {
+        "id": "spice-horizon",
+        "name": "Renewed Horizon",
+        "description": "A banner for the next line where desert and sky meet.",
+        "level": 3,
+        "kind": "banner",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "hearth-in-the-sand",
+        "name": "A Hearth Renewed",
+        "description": "A decoration for spaces rebuilt, improved, and shared.",
+        "level": 4,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "pathfinder",
+        "name": "Trailblazer",
+        "description": "A title for turning experience into a new path.",
+        "level": 5,
+        "kind": "title",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "cartographers-star",
+        "name": "Renewal Star",
+        "description": "A badge for observation and craft carried forward.",
+        "level": 6,
+        "kind": "badge",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "shared-water",
+        "name": "Water Shared Again",
+        "description": "A decoration for practical generosity, with an optional five-Cup-of-Water grant at grade 0.",
+        "level": 7,
+        "kind": "decoration",
+        "motif": "dune",
+        "color": "blue",
+        "gameReward": { "type": "item", "itemId": "WaterPack_Consumable", "quantity": 5, "quality": 0 }
+      },
+      {
+        "id": "wings-of-guidance",
+        "name": "Wings of Renewal",
+        "description": "A banner for guidance offered to the next traveller.",
+        "level": 8,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "sunlit-spire",
+        "name": "Spire of Renewal",
+        "description": "A decoration for a new body of work with lasting value.",
+        "level": 9,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "first-light",
+        "name": "Second Dawn",
+        "description": "A permanent achievement for completing the next chapter on any path.",
+        "level": 10,
+        "kind": "achievement",
+        "motif": "star",
+        "color": "spice"
+      }
+    ],
+    "challenges": [
+      {
+        "id": "solo-field-journal",
+        "name": "Renewed field journal",
+        "description": "Share a personal journal entry about a new journey, discovery, setback, or lesson from this week for moderator review.",
+        "path": "solo",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "solo-independent-journey",
+        "name": "The next independent journey",
+        "description": "Tell the story of a substantial new self-directed goal, your plan, and what you learned. Moderators review the submitted narrative and evidence.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "solo-linked-arrival",
+        "name": "Register your traveller",
+        "description": "API-observed once: confirm a fresh linked pawn and controller. This proves only the current link, not historical achievements.",
+        "path": "solo",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      },
+      {
+        "id": "builder-build-log",
+        "name": "Renewed builder's log",
+        "description": "Document a new build, refinement, layout, or repair from this week, with decisions and optional HTTPS evidence for moderator review.",
+        "path": "builder",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "builder-signature-project",
+        "name": "The next signature project",
+        "description": "Present a substantial new build or community space, including its purpose, constraints, and construction story for moderator review.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "builder-linked-arrival",
+        "name": "Register your builder",
+        "description": "API-observed once: confirm a fresh linked pawn and controller. This proves only the current link, not base ownership or construction.",
+        "path": "builder",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      },
+      {
+        "id": "explorer-survey-notes",
+        "name": "Renewed survey notes",
+        "description": "Record a new route, landmark, hazard, or navigation lesson from this week for moderator review. A map position alone earns nothing.",
+        "path": "explorer",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "explorer-season-atlas",
+        "name": "The next traveller's atlas",
+        "description": "Assemble a useful new regional or journey guide with routes, observations, and advice for moderator review.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "explorer-linked-arrival",
+        "name": "Register your explorer",
+        "description": "API-observed once: confirm a fresh linked pawn and controller. This proves only the current link, not a visit to any location.",
+        "path": "explorer",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      },
+      {
+        "id": "supplier-manifest",
+        "name": "Renewed supplier's manifest",
+        "description": "Describe new materials, water, equipment, or logistical help provided this week for moderator review. Inventory is never moved by this challenge.",
+        "path": "supplier",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "supplier-community-lifeline",
+        "name": "The next community lifeline",
+        "description": "Document a substantial new supply effort or support system, its beneficiaries, and lessons for moderator review.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "supplier-linked-arrival",
+        "name": "Register your supplier",
+        "description": "API-observed once: confirm a fresh linked pawn and controller. This proves only the current link, not a delivery or balance.",
+        "path": "supplier",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      },
+      {
+        "id": "mentor-teaching-notes",
+        "name": "Renewed teaching notes",
+        "description": "Share a new question answered, skill taught, or beginner supported this week for moderator review, without private conversation contents.",
+        "path": "mentor",
+        "cadence": "weekly",
+        "verification": "review",
+        "xp": 250,
+        "limit": 1
+      },
+      {
+        "id": "mentor-lasting-guide",
+        "name": "The next lasting guide",
+        "description": "Create a substantial new guide, workshop account, or mentoring record for future travellers and moderator review.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 1400,
+        "limit": 1
+      },
+      {
+        "id": "mentor-linked-arrival",
+        "name": "Register your mentor",
+        "description": "API-observed once: confirm a fresh linked pawn and controller. This proves only the current link, not mentoring or teaching history.",
+        "path": "mentor",
+        "cadence": "once",
+        "verification": "linked-character",
+        "xp": 100,
+        "limit": 1
+      }
+    ],
+    "milestones": [
+      {
+        "id": "first-tracks",
+        "name": "New tracks",
+        "description": "The community records 25 approved contributions in the new season.",
+        "target": 25
+      },
+      {
+        "id": "shared-horizon",
+        "name": "The next shared horizon",
+        "description": "The community records 100 approved contributions in the new season.",
+        "target": 100
+      },
+      {
+        "id": "living-legacy",
+        "name": "The legacy continues",
+        "description": "The community records 250 approved contributions in the new season.",
+        "target": 250
+      }
+    ]
+  }
+}

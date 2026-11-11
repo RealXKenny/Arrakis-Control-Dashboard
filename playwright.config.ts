@@ -19,6 +19,7 @@ const browserServer = {
     CHAT_ENABLED: 'true',
     // The casino is off by default; the browser fixture turns it on so the real flows can be exercised.
     CASINO_SOLARIS_ENABLED: 'true',
+    SEASON_GAME_DELIVERY_ENABLED: 'true',
     RABBITMQ_URL: 'amqps://5E121CE000000001:browser-test-placeholder@rabbit.test/',
     CHAT_BRIDGE_FUNCOM_ID: 'ArrakisControl#0001',
     CHAT_SERVERS:

@@ -104,15 +104,15 @@ The administration catalog distinguishes available operations, restricted Consol
 
 These current captures come from the production build running against sanitized local fixtures. No real account, player, credential or wallet data appears.
 
-| Landing page | Casino lobby |
-| --- | --- |
+| Landing page                                                                                                                          | Casino lobby                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | <img src="docs/assets/screenshots/landing-desktop.webp" alt="Arrakis Control V2 landing page with navigation and product overview" /> | <img src="docs/assets/screenshots/casino-lobby-desktop.webp" alt="Solaris Exchange lobby showing all six games and the empty fixture wallet" /> |
-| [Mobile landing](docs/assets/screenshots/landing-mobile.webp) | [Mobile lobby](docs/assets/screenshots/casino-lobby-mobile.webp) |
+| [Mobile landing](docs/assets/screenshots/landing-mobile.webp)                                                                         | [Mobile lobby](docs/assets/screenshots/casino-lobby-mobile.webp)                                                                                |
 
-| Blackjack gameplay | Sound settings and navigation |
-| --- | --- |
-| <img src="docs/assets/screenshots/blackjack-gameplay.webp" alt="The Emperor's Hand with original cards, visible player actions and fixture-only Solaris" /> | <img src="docs/assets/screenshots/sound-settings.webp" alt="Sound settings with master and category volumes, dealer voice and captions" /> |
-| Original SVG deck and keyboard-accessible actions. | [Casino navigation menu](docs/assets/screenshots/navigation-casino-menu.webp) · [Mobile navigation drawer](docs/assets/screenshots/navigation-mobile-drawer.webp) |
+| Blackjack gameplay                                                                                                                                          | Sound settings and navigation                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/assets/screenshots/blackjack-gameplay.webp" alt="The Emperor's Hand with original cards, visible player actions and fixture-only Solaris" /> | <img src="docs/assets/screenshots/sound-settings.webp" alt="Sound settings with master and category volumes, dealer voice and captions" />                        |
+| Original SVG deck and keyboard-accessible actions.                                                                                                          | [Casino navigation menu](docs/assets/screenshots/navigation-casino-menu.webp) · [Mobile navigation drawer](docs/assets/screenshots/navigation-mobile-drawer.webp) |
 
 [Desktop overview](docs/assets/screenshots/dashboard-release-desktop.webp) · [Mobile overview](docs/assets/screenshots/dashboard-release-mobile.webp)
 
@@ -170,26 +170,27 @@ Never commit `.env` or place secrets in `NEXT_PUBLIC_` variables.
 
 Use [`.env.example`](.env.example) as the complete template; every variable, range and production rule is in [environment variables](docs/configuration/environment-variables.md). The main settings are:
 
-| Setting                                                                                       | Purpose                                                                                                                    |
-| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`                                             | Dune Console and adapter access                                                                                            |
-| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`                              | Discord OAuth and guild authorization                                                                                      |
-| `VERIFIED_MEMBER_ROLE_ID`                                                                     | Required member role                                                                                                       |
-| `APP_URL`                                                                                     | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                             |
-| `AUTH_SECRET`                                                                                 | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters                             |
-| `ADMIN_DISCORD_IDS`                                                                           | Comma-separated administrator Discord IDs; required in production                                                          |
-| `REDIS_URL`                                                                                   | Redis connection, credentials, database, and optional TLS                                                                  |
-| `REDIS_CLUSTER_NODES`                                                                         | Optional Cluster bootstrap nodes; `REDIS_URL` still supplies credentials and TLS                                           |
-| `ADMIN_CONSOLE_API_KEY`                                                                       | Optional separate credential for scoped administrator operations                                                           |
-| `TRUSTED_PROXY_COUNT`                                                                         | Exact reverse-proxy count used to select the trusted forwarded address                                                     |
-| `OWNER_KEY_SECRET`                                                                            | Optional dedicated secret for marketplace ownership keys                                                                   |
-| `BOT_API_TOKEN`                                                                               | Optional independent credential for the read-only bot API                                                                  |
-| `DISCORD_BOT_TOKEN`, `CHANGELOG_CHANNEL_ID`, `COMMUNITY_EVENTS_CHANNEL_ID`, `CHANGELOG_AUTO_ANNOUNCE` | Optional Components V2 announcements using the shared main bot; see [Discord announcements](docs/integrations/webhooks.md) |
-| `CHAT_ENABLED`, `RABBITMQ_URL`, `CHAT_SERVERS`                                                | Optional live game chat; see the chat guide for the complete worker and history settings                                   |
-| `CHAT_DISCORD_BOT_FUNCOM_ID`                                                                  | Optional exact Discord relay bot identity; requires the `[Discord]` prefix before showing a Discord badge and relayed name |
-| `RABBITMQ_TLS_ENABLED`, `RABBITMQ_TLS_CA`, `RABBITMQ_TLS_CERT`, `RABBITMQ_TLS_KEY`            | Optional inline PEM trust/client identity; TLS follows the URL scheme by default                                           |
-| `RABBITMQ_TLS_CA_PATH`, `RABBITMQ_TLS_CERT_PATH`, `RABBITMQ_TLS_KEY_PATH`, `RABBITMQ_CA_FILE` | Path fallbacks; inline PEM takes precedence, legacy CA path remains supported                                              |
-| `RABBITMQ_TLS_REJECT_UNAUTHORIZED`, `RABBITMQ_TLS_SERVERNAME`                                 | Verification stays enabled; optional DNS identity must match the broker certificate                                        |
+| Setting                                                                                               | Purpose                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`                                                     | Dune Console and adapter access                                                                                                                        |
+| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`                                      | Discord OAuth and guild authorization                                                                                                                  |
+| `VERIFIED_MEMBER_ROLE_ID`                                                                             | Required member role                                                                                                                                   |
+| `APP_URL`                                                                                             | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                                                         |
+| `AUTH_SECRET`                                                                                         | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters                                                         |
+| `ADMIN_DISCORD_IDS`                                                                                   | Comma-separated administrator Discord IDs; required in production                                                                                      |
+| `REDIS_URL`                                                                                           | Redis connection, credentials, database, and optional TLS                                                                                              |
+| `REDIS_CLUSTER_NODES`                                                                                 | Optional Cluster bootstrap nodes; `REDIS_URL` still supplies credentials and TLS                                                                       |
+| `ADMIN_CONSOLE_API_KEY`                                                                               | Optional separate credential for scoped administrator operations                                                                                       |
+| `SEASON_GAME_DELIVERY_ENABLED`                                                                        | Optional reviewed season Solaris/item delivery; defaults to false. See [season delivery](docs/features/community-seasons.md#in-game-delivery-boundary) |
+| `TRUSTED_PROXY_COUNT`                                                                                 | Exact reverse-proxy count used to select the trusted forwarded address                                                                                 |
+| `OWNER_KEY_SECRET`                                                                                    | Optional dedicated secret for marketplace ownership keys                                                                                               |
+| `BOT_API_TOKEN`                                                                                       | Optional independent credential for the read-only bot API                                                                                              |
+| `DISCORD_BOT_TOKEN`, `CHANGELOG_CHANNEL_ID`, `COMMUNITY_EVENTS_CHANNEL_ID`, `CHANGELOG_AUTO_ANNOUNCE` | Optional Components V2 announcements using the shared main bot; see [Discord announcements](docs/integrations/webhooks.md)                             |
+| `CHAT_ENABLED`, `RABBITMQ_URL`, `CHAT_SERVERS`                                                        | Optional live game chat; see the chat guide for the complete worker and history settings                                                               |
+| `CHAT_DISCORD_BOT_FUNCOM_ID`                                                                          | Optional exact Discord relay bot identity; requires the `[Discord]` prefix before showing a Discord badge and relayed name                             |
+| `RABBITMQ_TLS_ENABLED`, `RABBITMQ_TLS_CA`, `RABBITMQ_TLS_CERT`, `RABBITMQ_TLS_KEY`                    | Optional inline PEM trust/client identity; TLS follows the URL scheme by default                                                                       |
+| `RABBITMQ_TLS_CA_PATH`, `RABBITMQ_TLS_CERT_PATH`, `RABBITMQ_TLS_KEY_PATH`, `RABBITMQ_CA_FILE`         | Path fallbacks; inline PEM takes precedence, legacy CA path remains supported                                                                          |
+| `RABBITMQ_TLS_REJECT_UNAUTHORIZED`, `RABBITMQ_TLS_SERVERNAME`                                         | Verification stays enabled; optional DNS identity must match the broker certificate                                                                    |
 
 Redis TLS and public-network settings are validated by the current environment schema. Review `REDIS_REQUIRE_TLS` and `REDIS_ALLOW_INSECURE` before deploying outside a trusted network.
 

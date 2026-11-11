@@ -17,6 +17,8 @@ import {
   emptyTotals,
   seasonPresentation,
   artworkUrl,
+  gameRewardLabel,
+  type Delivery,
 } from '../contracts';
 import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { RewardArt } from './reward-art';
@@ -24,7 +26,12 @@ import { SeasonDialog } from './season-dialog';
 import { useCommunityProgress } from '../hooks/use-community-progress';
 import '../styles/seasons.css';
 
-export type SeasonView = { season: Season; progress: Progress; totals: Totals };
+export type SeasonView = {
+  season: Season;
+  progress: Progress;
+  totals: Totals;
+  deliveries?: Pick<Delivery, 'rewardId' | 'status'>[];
+};
 export async function seasonRequest<T>(url: string, payload?: unknown): Promise<T> {
   const response = await fetch(url, {
     method: payload ? 'POST' : 'GET',
@@ -141,7 +148,9 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 ? 'Cosmetic claimed. It is yours to keep.'
                 : payload.action === 'equip'
                   ? 'Cosmetic equipped.'
-                  : 'Challenge verified. Season XP awarded.',
+                  : payload.action === 'delivery-request'
+                    ? 'Game delivery requested for administrator review.'
+                    : 'Challenge verified. Season XP awarded.',
       );
       setChallenge(null);
       setSelection(null);
@@ -568,6 +577,15 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             </span>
             <h2 id="reward-preview-title">{selection.name}</h2>
             <p>{selection.description}</p>
+            {selection.gameReward && (
+              <p>
+                Includes {gameRewardLabel(selection.gameReward)}. Claiming records eligibility; an administrator must
+                separately review and execute delivery while your linked character is offline.
+              </p>
+            )}
+            {selection.gameReward && view.deliveries?.find((v) => v.rewardId === selection.id) && (
+              <p role="status">Game delivery: {view.deliveries.find((v) => v.rewardId === selection.id)?.status}</p>
+            )}
             <div className="season-profile-preview">
               <span className="season-kicker">Profile preview</span>
               <strong>{selection.kind === 'title' ? selection.name : 'Desert Traveller'}</strong>
@@ -579,6 +597,17 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               <button autoFocus className="season-button" onClick={() => setSelection(null)}>
                 Close preview
               </button>
+              {selection.gameReward &&
+                progress.claims.some((v) => v.reward.id === selection.id) &&
+                !view.deliveries?.some((v) => v.rewardId === selection.id) && (
+                  <button
+                    className="season-button"
+                    disabled={busy || !!preview}
+                    onClick={() => act({ action: 'delivery-request', rewardId: selection.id })}
+                  >
+                    Request game delivery
+                  </button>
+                )}
               {progress.claims.some((v) => v.reward.id === selection.id) ? (
                 <button
                   className="season-button"

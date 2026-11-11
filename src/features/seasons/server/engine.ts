@@ -10,49 +10,10 @@ import {
   type Season,
   type Submission,
   type Progress,
-  type Delivery,
   type Totals,
 } from '../contracts';
 import { commit, loadMember, loadSeason, readRecord, seasonKeys, fail, storage } from './store';
 import { validateArtworkReferences } from './artwork';
-
-/** Review is useful before enabling an integration; approval alone can never execute a game write. */
-export async function manageDelivery(
-  id: string,
-  input: { owner: string; description: string } | { deliveryId: string; approve: boolean; note: string },
-  actor: string,
-) {
-  const season = await loadSeason(id);
-  if (['draft', 'preview'].includes(season.value.phase)) fail('Publish the season before requesting delivery review.');
-  const record = await readRecord<Delivery[]>(seasonKeys.deliveries(id));
-  const deliveries = record.value ?? [];
-  if ('owner' in input) {
-    if (deliveries.length >= 100) fail('At most 100 delivery reviews per season.');
-    deliveries.push({
-      id: randomUUID(),
-      ...input,
-      requestedBy: actor,
-      requestedAt: new Date().toISOString(),
-      status: 'pending',
-    });
-  } else {
-    const delivery = deliveries.find((v) => v.id === input.deliveryId);
-    if (!delivery) fail('Delivery request not found.', 404);
-    if (delivery.status !== 'pending') return deliveries;
-    if (delivery.requestedBy === actor) fail('A different administrator must review this delivery.', 403);
-    delivery.status = input.approve ? 'approved' : 'rejected';
-    delivery.reviewedBy = actor;
-    delivery.reviewedAt = new Date().toISOString();
-    delivery.note = input.note;
-  }
-  await commit({
-    id,
-    actor,
-    action: 'delivery.reviewed',
-    writes: [{ key: seasonKeys.deliveries(id), before: record.raw, after: deliveries }],
-  });
-  return deliveries;
-}
 
 export async function saveSeason(id: string, revision: string, input: Definition, actor: string) {
   const definition = definitionSchema.parse(input);

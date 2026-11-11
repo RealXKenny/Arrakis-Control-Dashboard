@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { test, expect } from '../helpers/browser-test';
 
 test('two-season admin-to-member acceptance workflow with permanent cosmetics and mobile reward track', async ({
@@ -121,4 +122,37 @@ test('season APIs keep admin actions private and reject forged evidence and cros
       })
     ).status(),
   ).toBe(400);
+});
+
+test('packaged Season 1 remains editable and previewable in the admin dashboard', async ({ page }, testInfo) => {
+  const content = JSON.parse(await readFile('src/features/seasons/content/season-1.json', 'utf8')) as {
+    id: string;
+    artwork: { alt: string };
+    definition: Record<string, unknown>;
+  };
+  const id = `${content.id}-${testInfo.project.name}`;
+  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
+  await page.goto('/admin?tab=seasons');
+  const saved = await page.request.post('/api/v2/admin/seasons', {
+    headers: { Origin: 'http://127.0.0.1:3100' },
+    data: { action: 'save', seasonId: id, revision: '', definition: content.definition },
+  });
+  expect(saved.ok(), await saved.text()).toBe(true);
+  await page.reload();
+  await page.getByRole('button', { name: /Season 1 \/ draft/ }).click();
+  await page
+    .getByLabel('Season hero artwork', { exact: true })
+    .setInputFiles('src/features/seasons/content/season-1-hero.webp');
+  await page.getByLabel('Alternative text for Season hero artwork').fill(content.artwork.alt);
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Season operation saved.');
+  await page.getByRole('button', { name: 'Preview season', exact: true }).click();
+  await expect(page.getByRole('img', { name: content.artwork.alt, exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: /Reward track/ }).getByRole('button')).toHaveCount(10);
+  await page.getByRole('button', { name: 'Return to editor', exact: true }).click();
+  await page.getByLabel('subtitle', { exact: true }).fill('A reusable draft, edited through the admin dashboard.');
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Season operation saved.');
+  await page.getByRole('button', { name: 'Preview season', exact: true }).click();
+  await expect(page.getByText('A reusable draft, edited through the admin dashboard.', { exact: true })).toBeVisible();
 });

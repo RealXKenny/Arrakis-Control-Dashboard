@@ -10,6 +10,16 @@ import { requireRecentSignIn } from '../../admin/server/access';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import { definitionSchema, identifier, seasonTemplate, presentationSchema, seasonPresentation } from '../contracts';
 import { savePresentation } from './artwork';
+import { deliveryAvailable } from './delivery-gateway';
+import {
+  deliveryRecords,
+  ownDeliveryStatuses,
+  requestDelivery,
+  reviewDelivery,
+  executeDelivery,
+  recoverDelivery,
+  resolveDelivery,
+} from './deliveries';
 import { adminRecords, fail, listSeasons, loadMember, loadSeason, seasonKeys, readRecord } from './store';
 import {
   saveSeason,
@@ -19,7 +29,6 @@ import {
   claimReward,
   equipReward,
   correctXp,
-  manageDelivery,
 } from './engine';
 
 const evidenceLink = z
@@ -42,6 +51,7 @@ const memberAction = z.discriminatedUnion('action', [
   z.object({ action: z.literal('verify'), seasonId: identifier, challengeId: identifier }),
   z.object({ action: z.literal('claim'), seasonId: identifier, rewardId: identifier }),
   z.object({ action: z.literal('equip'), seasonId: identifier, rewardId: identifier }),
+  z.object({ action: z.literal('delivery-request'), seasonId: identifier, rewardId: identifier }).strict(),
 ]);
 const adminAction = z.discriminatedUnion('action', [
   z.object({
@@ -56,15 +66,45 @@ const adminAction = z.discriminatedUnion('action', [
     action: z.literal('delivery-request'),
     seasonId: identifier,
     owner: identifier,
+    rewardId: identifier,
     description: z.string().trim().min(10).max(1000),
   }),
   z.object({
     action: z.literal('delivery-review'),
     seasonId: identifier,
     deliveryId: z.string().uuid(),
+    revision: z.string().uuid().or(z.literal('')),
     approve: z.boolean(),
     note: z.string().trim().min(3).max(1000),
   }),
+  z
+    .object({
+      action: z.literal('delivery-execute'),
+      seasonId: identifier,
+      deliveryId: z.string().uuid(),
+      revision: z.string().uuid(),
+      confirmation: z.string().max(100),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('delivery-recover'),
+      seasonId: identifier,
+      deliveryId: z.string().uuid(),
+      revision: z.string().uuid(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('delivery-resolve'),
+      seasonId: identifier,
+      deliveryId: z.string().uuid(),
+      revision: z.string().uuid(),
+      applied: z.boolean(),
+      note: z.string().trim().min(10).max(1000),
+      confirmation: z.string().max(100),
+    })
+    .strict(),
   z.object({
     action: z.literal('save'),
     seasonId: identifier,
@@ -122,7 +162,13 @@ export async function getSeasons(request: Request) {
     if (!identifier.safeParse(id).success) fail('Invalid season ID.', 400);
     const data = await loadMember(id, session.user.id);
     if (['draft', 'preview'].includes(data.season.value.phase)) fail('Season not published.', 404);
-    return json({ ok: true, season: data.season.value, progress: data.progress.value, totals: data.totals.value });
+    return json({
+      ok: true,
+      season: data.season.value,
+      progress: data.progress.value,
+      totals: data.totals.value,
+      deliveries: await ownDeliveryStatuses(id, session.user.id),
+    });
   }
   const offset = z.coerce
     .number()
@@ -135,7 +181,14 @@ export async function getSeasons(request: Request) {
   const members = await Promise.all(seasons.map((v) => loadMember(v.id, session.user.id)));
   return json({
     ok: true,
-    seasons: members.map((v) => ({ season: v.season.value, progress: v.progress.value, totals: v.totals.value })),
+    seasons: await Promise.all(
+      members.map(async (v) => ({
+        season: v.season.value,
+        progress: v.progress.value,
+        totals: v.totals.value,
+        deliveries: await ownDeliveryStatuses(v.season.value.id, session.user.id),
+      })),
+    ),
     nextOffset: offset.data + 25,
   });
 }
@@ -153,10 +206,31 @@ export async function mutateSeasons(request: Request) {
   const action = await body(request, memberAction);
   const id = action.seasonId;
   const owner = session.user.id;
+  if (action.action === 'delivery-request') {
+    const delivery = await requestDelivery(
+      id,
+      owner,
+      action.rewardId,
+      'Member request for the frozen season reward.',
+      owner,
+    );
+    return json({ ok: true, delivery: { rewardId: delivery.rewardId, status: delivery.status } });
+  }
   if (action.action === 'claim') return json({ ok: true, ...(await claimReward(id, owner, action.rewardId)) });
   if (action.action === 'equip') return json({ ok: true, progress: await equipReward(id, owner, action.rewardId) });
   if (action.action === 'verify') {
-    const linked = await getLinkedPlayer(owner, { timeout: 4000 });
+    const linked = await getLinkedPlayer(
+      {
+        guildId: session.guildId,
+        channelId: 'dashboard',
+        userId: owner,
+        username: session.user.username,
+        roleIds: session.roleIds,
+        interactionId: `season-verify-${randomUUID()}`,
+        commandName: 'portal',
+      },
+      { timeout: 4000 },
+    );
     if (!linked.linked || !linked.pawnId || !linked.controllerId) fail('A verified linked character is required.', 403);
     return json({
       ok: true,
@@ -194,7 +268,7 @@ export async function getAdminSeasons(request: Request) {
     const season = (await loadSeason(id)).value;
     const records = await adminRecords(id, offset.data);
     const totals = await readRecord(seasonKeys.totals(id));
-    const deliveries = await readRecord(seasonKeys.deliveries(id));
+    const deliveries = await deliveryRecords(id);
     const owner = params.get('owner');
     if (owner && !identifier.safeParse(owner).success) fail('Invalid account ID.', 400);
     const member = owner ? (await loadMember(id, owner)).progress.value : null;
@@ -206,7 +280,8 @@ export async function getAdminSeasons(request: Request) {
       season,
       ...records,
       totals: totals.value,
-      deliveries: deliveries.value ?? [],
+      deliveries: deliveries.value,
+      deliveryEnabled: deliveryAvailable(),
       member,
       snapshot,
     });
@@ -215,7 +290,7 @@ export async function getAdminSeasons(request: Request) {
     ok: true,
     seasons: await listSeasons(offset.data, true),
     template: seasonTemplate(),
-    deliveryEnabled: false,
+    deliveryEnabled: deliveryAvailable(),
   });
 }
 export async function mutateAdminSeasons(request: Request) {
@@ -238,17 +313,25 @@ export async function mutateAdminSeasons(request: Request) {
   if (action.action === 'delivery-request')
     return json({
       ok: true,
-      deliveries: await manageDelivery(id, { owner: action.owner, description: action.description }, actor),
+      delivery: await requestDelivery(id, action.owner, action.rewardId, action.description, actor),
     });
   if (action.action === 'delivery-review')
     return json({
       ok: true,
-      deliveries: await manageDelivery(
-        id,
-        { deliveryId: action.deliveryId, approve: action.approve, note: action.note },
-        actor,
-      ),
+      delivery: await reviewDelivery(id, action.deliveryId, action.revision, action.approve, action.note, actor),
     });
+  if (action.action === 'delivery-execute' || action.action === 'delivery-resolve') {
+    if (action.confirmation !== `DELIVER ${action.deliveryId}`) fail('Type the exact delivery confirmation.', 400);
+    return json({
+      ok: true,
+      delivery:
+        action.action === 'delivery-execute'
+          ? await executeDelivery(id, action.deliveryId, action.revision, actor)
+          : await resolveDelivery(id, action.deliveryId, action.revision, action.applied, action.note, actor),
+    });
+  }
+  if (action.action === 'delivery-recover')
+    return json({ ok: true, delivery: await recoverDelivery(id, action.deliveryId, action.revision, actor) });
   if (action.action === 'save')
     return json({ ok: true, season: await saveSeason(id, action.revision, action.definition, actor) });
   if (action.action === 'duplicate') {

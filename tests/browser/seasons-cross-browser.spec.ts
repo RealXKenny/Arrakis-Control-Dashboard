@@ -123,7 +123,6 @@ test('uploaded hero/reward art and audited live edits preserve immutable rewards
   const context = await memberBrowser(browser, info);
   const member = await context.newPage();
   member.setDefaultTimeout(10000);
-  await member.clock.install();
   await page.goto('/admin?tab=seasons');
   await page
     .getByRole('button', { name: /The Shared Horizon/ })
@@ -199,8 +198,10 @@ test('uploaded hero/reward art and audited live edits preserve immutable rewards
     },
   });
   expect(stale.status()).toBe(409);
-  await member.clock.runFor(15010);
-  await expect(member.getByText('A living community, a permanent legacy', { exact: true })).toBeVisible();
+  await member.bringToFront();
+  await expect(member.getByText('A living community, a permanent legacy', { exact: true })).toBeVisible({
+    timeout: 20000,
+  });
   await expect(member.getByRole('img', { name: 'Copper desert evening', exact: true })).toBeVisible();
   const owned = await (await member.request.get(`/api/v2/seasons?season=${draft.id}`)).json();
   expect(owned.progress.claims[0].reward).toEqual(published.season.definition.rewards[0]);
@@ -430,7 +431,7 @@ test('upload and live endpoints reject unauthenticated access, disguised scripts
     },
   });
   expect(forged.status()).toBe(400);
-  expect((await (await page.request.get('/api/v2/admin/seasons')).json()).deliveryEnabled).toBe(false);
+  expect((await (await page.request.get('/api/v2/admin/seasons')).json()).deliveryEnabled).toBe(true);
   expect(
     (
       await page.request.post('/api/v2/admin/seasons', {
@@ -445,5 +446,127 @@ test('upload and live endpoints reject unauthenticated access, disguised scripts
     revision: published.season.revision,
     transition: 'end',
     confirmation: draft.definition.name,
+  });
+});
+
+test('reviewed Solaris and item rewards execute once through the admin UI without touching season XP', async ({
+  page,
+}, testInfo) => {
+  const draft = await seed(page);
+  const definition = structuredClone(draft.definition);
+  definition.rewards[0].gameReward = { type: 'solaris', amount: '100' };
+  definition.rewards[1].gameReward = { type: 'item', itemId: 'IronOre', quantity: 12, quality: 0 };
+  definition.rewards[1].level = 1;
+  const { season: saved } = await adminAction(page, {
+    action: 'save',
+    seasonId: draft.id,
+    revision: draft.revision,
+    definition,
+  });
+  const { season } = await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: saved.revision,
+    transition: 'publish',
+    confirmation: saved.definition.name,
+  });
+  const fixture = appOrigin().startsWith('https:') ? 'http://127.0.0.1:3103' : 'http://127.0.0.1:3101';
+  const slot = 4445 + ['chromium', 'season-safari', 'season-iphone', 'season-android'].indexOf(testInfo.project.name);
+  const owner = `90000000000${String(slot).padStart(7, '0')}`;
+  await page.request.post(`${fixture}/__fixture/user`, {
+    data: {
+      discordId: owner,
+      name: 'Delivery recipient',
+      patch: { linked: { onlineStatus: 'Offline', online: false }, details: { 'solaris-coin': { total: 1000 } } },
+    },
+  });
+  await authenticate(page, `__Host-dashboard_session=browser-user-${slot}`);
+  for (const reward of definition.rewards.slice(0, 2)) {
+    const response = await page.request.post('/api/v2/seasons', {
+      headers: { Origin: appOrigin() },
+      data: { action: 'claim', seasonId: season.id, rewardId: reward.id },
+    });
+    expect(response.ok(), await response.text()).toBe(true);
+  }
+  await page.goto(`/seasons?season=${season.id}`);
+  await page
+    .getByRole('region', { name: /Reward track/ })
+    .getByRole('button', { name: /Wayfarer/ })
+    .click();
+  await page.getByRole('button', { name: 'Request game delivery', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Game delivery requested for administrator review.');
+  await authenticate(page, adminCookie);
+  await page.goto('/admin?tab=seasons');
+  await page.getByRole('button', { name: new RegExp(`Season ${season.definition.number} / active`) }).click();
+  const panel = page.getByRole('region', { name: 'In-game deliveries', exact: true });
+  for (const reward of definition.rewards.slice(0, 2)) {
+    await panel.getByLabel('Recipient dashboard account ID').fill(owner);
+    await panel.getByLabel('Claimed in-game reward').selectOption(reward.id);
+    await panel.getByLabel('Authorization basis').fill('Approved disposable season acceptance reward.');
+    await panel.getByRole('button', { name: 'Request delivery review', exact: true }).click();
+    await expect(page.getByRole('status')).toHaveText('Season operation saved.');
+  }
+  const queue = (await (await page.request.get(`/api/v2/admin/seasons?season=${season.id}`)).json()).deliveries;
+  const denied = await page.request.post('/api/v2/admin/seasons', {
+    headers: { Origin: appOrigin() },
+    data: {
+      action: 'delivery-review',
+      seasonId: season.id,
+      deliveryId: queue[1].id,
+      revision: queue[1].revision,
+      approve: true,
+      note: 'Self approval must fail.',
+    },
+  });
+  expect(denied.status()).toBe(403);
+  await authenticate(page, '__Host-dashboard_session=browser-reviewer-session');
+  await page.reload();
+  await page.getByRole('button', { name: new RegExp(`Season ${season.definition.number} / active`) }).click();
+  for (const delivery of queue) {
+    const card = panel
+      .getByRole('article')
+      .filter({ hasText: delivery.gameReward.type === 'solaris' ? '100 Solaris' : 'IronOre × 12' });
+    await card.getByLabel('Delivery review notes').fill('Independently checked reward ownership.');
+    await card.getByRole('button', { name: 'Approve delivery', exact: true }).click();
+    await expect(card.getByRole('button', { name: 'Execute approved delivery' })).toBeVisible();
+    await card.getByLabel(`Type DELIVER ${delivery.id}`, { exact: true }).fill(`DELIVER ${delivery.id}`);
+    page.once('dialog', (dialog) => dialog.accept());
+    await card.getByRole('button', { name: 'Execute approved delivery', exact: true }).click();
+    await expect(card.getByText('console_confirmed', { exact: true })).toBeVisible();
+  }
+  const final = await (await page.request.get(`/api/v2/admin/seasons?season=${season.id}&owner=${owner}`)).json();
+  expect(final.deliveries.map((v: { status: string }) => v.status)).toEqual(['delivered', 'delivered']);
+  expect(final.member.xp).toBe(0);
+  const replay = await page.request.post('/api/v2/admin/seasons', {
+    headers: { Origin: appOrigin() },
+    data: {
+      action: 'delivery-execute',
+      seasonId: season.id,
+      deliveryId: final.deliveries[0].id,
+      revision: final.deliveries[0].revision,
+      confirmation: `DELIVER ${final.deliveries[0].id}`,
+    },
+  });
+  expect(replay.status()).toBe(409);
+  const requests = await (await page.request.get(`${fixture}/__fixture/requests`)).json();
+  const pawnId = final.deliveries[0].pawnId;
+  expect(
+    requests.filter(
+      (v: { method: string; path: string }) => v.method === 'POST' && v.path === `/api/players/${pawnId}/add-currency`,
+    ),
+  ).toHaveLength(1);
+  expect(
+    requests.filter(
+      (v: { method: string; path: string }) => v.method === 'POST' && v.path === `/api/players/${pawnId}/give-item-id`,
+    ),
+  ).toHaveLength(1);
+  await accessible(page);
+  await panel.screenshot({ path: testInfo.outputPath('season-game-delivery.png') });
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: season.id,
+    revision: season.revision,
+    transition: 'end',
+    confirmation: season.definition.name,
   });
 });

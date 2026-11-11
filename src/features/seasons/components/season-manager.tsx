@@ -20,6 +20,8 @@ import { seasonRequest, SeasonPass } from './season-pass';
 import { RewardArt } from './reward-art';
 import { ArtworkUpload } from './artwork-upload';
 import { LivePresentationEditor } from './live-presentation-editor';
+import { GameRewardFields } from './game-reward-fields';
+import { DeliveryManager } from './delivery-manager';
 
 export function SeasonManager() {
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -36,6 +38,7 @@ export function SeasonManager() {
   const [thresholds, setThresholds] = useState('');
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [deliveryEnabled, setDeliveryEnabled] = useState(false);
   const [seasonOffset, setSeasonOffset] = useState(0);
   const [reviewOffset, setReviewOffset] = useState(0);
   const [inspected, setInspected] = useState<Progress | null>(null);
@@ -72,11 +75,13 @@ export function SeasonManager() {
       audit: Record<string, unknown>[];
       totals: Totals | null;
       deliveries: Delivery[];
+      deliveryEnabled: boolean;
     }>(`/api/v2/admin/seasons?season=${id}&offset=${offset}`);
     setSubmissions(data.submissions);
     setAudit(data.audit);
     setTotals(data.totals);
     setDeliveries(data.deliveries);
+    setDeliveryEnabled(data.deliveryEnabled);
     setReviewOffset(offset);
   }
   async function select(next: Season) {
@@ -397,6 +402,7 @@ export function SeasonManager() {
                             ))}
                           </select>
                         </label>
+                        <GameRewardFields value={r.gameReward} onChange={(gameReward) => change({ gameReward })} />
                         <div className="season-actions">
                           <button
                             className={button}
@@ -884,81 +890,14 @@ export function SeasonManager() {
                   </button>
                 </form>
               </section>
-              <section>
-                <h2>In-game deliveries</h2>
-                <form
-                  className="season-editor-grid"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    const form = new FormData(event.currentTarget);
-                    void mutate({
-                      action: 'delivery-request',
-                      seasonId: season.id,
-                      owner: form.get('owner'),
-                      description: form.get('description'),
-                    });
-                  }}
-                >
-                  <label>
-                    Recipient dashboard account ID
-                    <input name="owner" required pattern="[a-zA-Z0-9_-]{1,80}" />
-                  </label>
-                  <label>
-                    Proposed delivery and authorization basis
-                    <textarea name="description" required minLength={10} maxLength={1000} />
-                  </label>
-                  <button className={button} disabled={busy}>
-                    Request delivery review
-                  </button>
-                </form>
-                <div className="season-challenges">
-                  {deliveries.map((delivery) => (
-                    <article key={delivery.id} className="season-editor-card">
-                      <strong>
-                        {delivery.owner} · {delivery.status}
-                      </strong>
-                      <p>{delivery.description}</p>
-                      <p>{delivery.note}</p>
-                      {delivery.status === 'pending' && (
-                        <>
-                          <label>
-                            Delivery review notes
-                            <textarea
-                              value={notes[delivery.id] ?? ''}
-                              onChange={(e) => setNotes((v) => ({ ...v, [delivery.id]: e.target.value }))}
-                              maxLength={1000}
-                            />
-                          </label>
-                          <div className="season-actions">
-                            {[true, false].map((approve) => (
-                              <button
-                                key={String(approve)}
-                                className={button}
-                                disabled={busy || (notes[delivery.id]?.trim().length ?? 0) < 3}
-                                onClick={() =>
-                                  mutate({
-                                    action: 'delivery-review',
-                                    seasonId: season.id,
-                                    deliveryId: delivery.id,
-                                    approve,
-                                    note: notes[delivery.id],
-                                  })
-                                }
-                              >
-                                {approve ? 'Approve review only' : 'Reject delivery'}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </article>
-                  ))}
-                </div>
-                <p>
-                  Disabled. No game reward integration has been authorized for seasons. Season rewards never move
-                  currency, inventory or casino funds.
-                </p>
-              </section>
+              <DeliveryManager
+                key={season.id}
+                season={season}
+                deliveries={deliveries}
+                enabled={deliveryEnabled}
+                busy={busy}
+                mutate={mutate}
+              />
               <details>
                 <summary>Permanent season audit (latest 100 operations)</summary>
                 <ol>
