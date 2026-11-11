@@ -40,6 +40,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - `src/features/` is the only business-domain home. Current domains are `admin`, `auth`, `bases`, `bot`, `casino`, `changelog`, `chat`, `events`, `guilds`, `landing`, `map`, `market`, `player`, `portal`, `server-status`, and `vehicles`. Feature components, hooks, server operations, schemas, styles, types, and utilities stay with their domain. See the inventory for each domain's responsibility.
 
+- `features/seasons/` owns free community season definitions, calendar-based challenges, reviewed evidence, independent XP, immutable published cosmetics, claims, equipment, cooperative milestones and archives. Redis is authoritative; all atomic season keys share `{seasons}`. Published definitions never mutate; corrections append events. Member owners come only from the session. In-game delivery proposals require separate administrator review and cannot execute game writes. See `docs/features/community-seasons.md` for bounds and verification status.
+
 - `src/server/` contains shared request infrastructure only: `http.ts`, `pages-api.ts`, `api-read-cache.ts`, `cookies.ts`, `read-budget.ts`, and `integrations/` for Dune Console, adapter transport, Discord OAuth, and shared bot announcements.
 
 - Security audit events go through `src/lib/security/audit.ts` (redacted, bounded, never throws); marketplace owner keys live in `features/bases/server/owner-key.ts` (HMAC, legacy keys still accepted until `npm run marketplace:rekey`).

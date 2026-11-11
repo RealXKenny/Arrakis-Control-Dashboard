@@ -2,6 +2,8 @@
 
 The directory map and root audit describe the current organization. Use `git ls-files` for the authoritative tracked file list; do not paste large asset listings or generated caches here. The [placement guide](file-organization.md) defines ownership. Earlier moves and verification remain in [migration history](migration-history.md). The [cleanup report](cleanup-report.md) records this follow-up.
 
+Community season addition: `src/features/seasons/` owns contracts, server operations, member/admin components and styles. Thin routes live at workspace `seasons/`, `seasons/challenges/`, `seasons/history/` and V2 member/admin `seasons/` APIs. Domain tests live in `tests/unit/seasons/`, `tests/browser/seasons.spec.ts` and `tests/integration/redis-seasons.test.ts`. No existing files were migrated. See [community seasons](../features/community-seasons.md).
+
 ## Clean architecture tree
 
 All tracked configuration/source directories are shown. Asset trees stop at categories; binary files and generated output are omitted.
