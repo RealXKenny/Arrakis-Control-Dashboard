@@ -10,6 +10,7 @@ import {
   type Challenge,
   type Delivery,
   type Progress,
+  type PresentationChange,
   paths,
   cosmeticKinds,
   seasonState,
@@ -17,6 +18,8 @@ import {
 } from '../contracts';
 import { seasonRequest, SeasonPass } from './season-pass';
 import { RewardArt } from './reward-art';
+import { ArtworkUpload } from './artwork-upload';
+import { LivePresentationEditor } from './live-presentation-editor';
 
 export function SeasonManager() {
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -37,6 +40,7 @@ export function SeasonManager() {
   const [reviewOffset, setReviewOffset] = useState(0);
   const [inspected, setInspected] = useState<Progress | null>(null);
   const [correctionId, setCorrectionId] = useState(() => crypto.randomUUID());
+  const [snapshot, setSnapshot] = useState<PresentationChange | null>(null);
   useEffect(() => {
     let live = true;
     seasonRequest<{ seasons: Season[]; template: Definition }>('/api/v2/admin/seasons')
@@ -55,6 +59,7 @@ export function SeasonManager() {
   }, []);
   function open(next: Season) {
     setInspected(null);
+    setSnapshot(null);
     setSeason(next);
     setDefinition(structuredClone(next.definition));
     setThresholds(next.definition.thresholds.join(', '));
@@ -198,6 +203,23 @@ export function SeasonManager() {
       </div>
       {season && definition && (
         <>
+          {['active', 'scheduled'].includes(seasonState(season)) && (
+            <LivePresentationEditor
+              key={season.revision}
+              season={season}
+              busy={busy}
+              onSave={(presentation, reason, confirmation) =>
+                mutate({
+                  action: 'presentation',
+                  seasonId: season.id,
+                  revision: season.revision,
+                  presentation,
+                  reason,
+                  confirmation,
+                })
+              }
+            />
+          )}
           <div className="season-section-heading">
             <div>
               <span className="season-kicker">Season builder / schema v{definition.schemaVersion}</span>
@@ -268,6 +290,14 @@ export function SeasonManager() {
                       />
                     </label>
                   ))}
+                  <ArtworkUpload
+                    key={`${season.id}:${season.revision}:hero`}
+                    seasonId={season.id}
+                    revision={season.revision}
+                    label="Season hero artwork"
+                    value={definition.artwork}
+                    onChange={(artwork) => update('artwork', artwork)}
+                  />
                 </div>
                 <label>
                   Description
@@ -306,7 +336,15 @@ export function SeasonManager() {
                       );
                     return (
                       <article className="season-editor-card" key={r.id}>
-                        <RewardArt reward={r} />
+                        <RewardArt reward={r} seasonId={season.id} />
+                        <ArtworkUpload
+                          key={`${season.id}:${season.revision}:${r.id}`}
+                          seasonId={season.id}
+                          revision={season.revision}
+                          label={`Reward artwork: ${r.name}`}
+                          value={r.artwork}
+                          onChange={(artwork) => change({ artwork })}
+                        />
                         <label>
                           Name
                           <input value={r.name} maxLength={100} onChange={(e) => change({ name: e.target.value })} />
@@ -927,9 +965,47 @@ export function SeasonManager() {
                   {audit.map((event, i) => (
                     <li key={String(event.id ?? i)}>
                       {String(event.at)} · {String(event.action)} · {String(event.actor)}
+                      {event.reason ? ` · ${String(event.reason)}` : ''}
+                      {typeof event.snapshotId === 'string' && (
+                        <button
+                          type="button"
+                          className="season-button"
+                          onClick={() =>
+                            seasonRequest<{ snapshot: PresentationChange }>(
+                              `/api/v2/admin/seasons?season=${season.id}&snapshot=${event.snapshotId}`,
+                            )
+                              .then((data) => setSnapshot(data.snapshot))
+                              .catch((e) => setError(e.message))
+                          }
+                        >
+                          Inspect presentation change
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ol>
+                {snapshot && (
+                  <div className="season-editor-card">
+                    <h3>Presentation change</h3>
+                    <p>
+                      {snapshot.at} · {snapshot.reason}
+                    </p>
+                    <dl>
+                      {(['subtitle', 'description', 'theme'] as const).map((field) => (
+                        <div key={field}>
+                          <dt>{field}</dt>
+                          <dd>Before: {snapshot.before[field]}</dd>
+                          <dd>After: {snapshot.after[field]}</dd>
+                        </div>
+                      ))}
+                      <div>
+                        <dt>Artwork</dt>
+                        <dd>Before: {snapshot.before.artwork?.alt ?? 'Theme artwork'}</dd>
+                        <dd>After: {snapshot.after.artwork?.alt ?? 'Theme artwork'}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                )}
               </details>
             </>
           )}

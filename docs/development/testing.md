@@ -18,9 +18,11 @@ directories and the root-file allowlist. Add the smallest test that proves a fix
 
 ## Browser (Playwright)
 
-`playwright.config.ts`: Chromium, one worker, base URL `http://127.0.0.1:3100`, CI retries 1. It starts `tests/helpers/browser-server.mjs`,
+`playwright.config.ts`: Chromium plus focused season Android/WebKit/iPhone projects, one worker, base URL `http://127.0.0.1:3100`, CI retries 1. Install both engines with `npx playwright install chromium webkit`. It starts `tests/helpers/browser-server.mjs`,
 which runs the production server against a fake Console on port 3101 (`tests/helpers/fake-console.mjs`) and an in-process RESP Redis fixture.
 Tests import `test`/`expect` from `tests/helpers/browser-test.ts`. A stale server on 3100/3101 causes `EADDRINUSE` or stale code; stop it first.
+
+The WebKit projects use `https://127.0.0.1:3443` with a separate Next.js fixture on 3102 and fake Console on 3103. `browser-tls.mjs` creates short-lived certificates with OpenSSL (Git for Windows is supported), preserves production CSP and canonical-origin checks and cleans up certificates on shutdown. Only the loopback HTTPS fixture's self-signed certificate is ignored by its test contexts. No production TLS verification or security header is disabled. Season coverage includes uploads, immutable claims, live presentation CAS/audit, live aggregates with hidden-page pause and backoff, keyboard/focus/reduced motion and WCAG AA checks. It does not certify physical devices or screen-reader products.
 Failure traces are kept (`test-results/`, git-ignored). Use the current runner summary for test counts.
 
 `tests/browser/release-readiness.spec.ts` checks 25 major member routes at 1920 × 1080, 1440 × 900, 1366 × 768, 768 × 1024, 390 × 844 and 320 × 640, including overflow and broken-image checks. It runs axe WCAG 2.0/2.1/2.2 AA rules on desktop and mobile, verifies reduced motion on representative animated areas, and captures settled landing, overview, casino, Blackjack, sound and navigation screenshots from sanitized live fixtures. Curated WebP copies are under `docs/assets/screenshots/`; test-generated PNGs stay in ignored `test-results/`.

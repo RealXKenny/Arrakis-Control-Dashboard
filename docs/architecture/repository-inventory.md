@@ -4,6 +4,8 @@ The directory map and root audit describe the current organization. Use `git ls-
 
 Community season addition: `src/features/seasons/` owns contracts, server operations, member/admin components and styles. Thin routes live at workspace `seasons/`, `seasons/challenges/`, `seasons/history/` and V2 member/admin `seasons/` APIs. Domain tests live in `tests/unit/seasons/`, `tests/browser/seasons.spec.ts` and `tests/integration/redis-seasons.test.ts`. No existing files were migrated. See [community seasons](../features/community-seasons.md).
 
+Season finishing work adds `seasons/hooks/` for visibility-aware community polling, feature-owned artwork/live-presentation operations and thin upload/image/community API routes. `tests/browser/seasons-cross-browser.spec.ts` runs Chromium/Android and WebKit/Safari/iPhone projects; `tests/helpers/browser-tls.mjs` supplies an isolated HTTPS fixture without changing application security policy. Sharp, already used by Next.js, is explicitly pinned for raster normalization.
+
 ## Clean architecture tree
 
 All tracked configuration/source directories are shown. Asset trees stop at categories; binary files and generated output are omitted.

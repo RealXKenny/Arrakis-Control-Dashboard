@@ -53,7 +53,7 @@ Native modal focus containment and reduced motion are checked. Mobile context us
 
 Screenshots from the running built application: [desktop](../assets/screenshots/community-season-desktop.png), [mobile](../assets/screenshots/community-season-mobile.png). They use disposable test accounts and original generated-by-code artwork.
 
-## Validation evidence
+## Initial implementation validation evidence
 
 - Full unit/API/architecture suite: **1,646 passed, 32 skipped**, 168 passing files and one skipped file.
 - Season acceptance/security browser file: **2 passed**, including the complete two-season workflow.
@@ -67,9 +67,22 @@ Initial sandbox runs failed to access OpenSSL, loopback TCP and a junction fixtu
 
 ## Remaining limitations
 
-- Game delivery execution, uncertain-send reconciliation, retries and recovery require a verified integration and explicit authorization. Approval currently grants no game resources. This is the external blocker for full N088 completion.
-- Artwork uses selectable original motifs, colors and seasonal themes; arbitrary uploads are not implemented.
-- Published definitions cannot receive live presentation-only edits or reward rewrites. Audited XP corrections and lifecycle operations remain available; future content is prepared in a duplicate draft.
-- Community progress updates on load/member actions; there is no live push/poll notification channel for changes by other members.
-- Physical device, Safari/iOS, screen-reader and production Discord/Console staging are unverified. Browser tests use isolated RESP/Console fixtures; they do not prove Lua atomicity or provider behavior.
+- Game delivery execution, uncertain-send reconciliation, retries and recovery remain disabled by the maintainer's explicit finishing-work instruction. Approval grants no game resources; no execution endpoint or enable switch exists.
+- Published gameplay/reward definitions remain frozen. The separate live presentation editor cannot rewrite rewards, XP rules, objectives or historical claims.
+- Physical device, installed Safari/iOS, screen-reader-product and production Discord/Console staging are unverified. Automated WebKit/Safari/iPhone emulation is covered below. Browser fixtures do not prove Lua atomicity or real-provider behavior.
 - No merge, release, deployment, source-PR closure or remote ruleset change has occurred.
+
+## PR #9 finishing work
+
+The maintainer explicitly requested image uploads, safe live edits, live community progress and Safari/mobile accessibility coverage while keeping game delivery disabled.
+
+- **Artwork:** admin-only binary upload; 3 MiB input, 4096px/8-million-pixel decode limits, rejected SVG/animation/corruption, metadata stripping and bounded WebP output. Sharp 0.35.5, already present through Next.js, is pinned as a direct dependency. Content-addressed image records are immutable; each season indexes at most 128 unique uploads. Authenticated image routes require an authorized published reference or administrator access. Draft images remain private. Hero/reward uploads expose alternative text, preview and removal controls; claimed artwork references never change.
+- **Live edits:** only subtitle, description, theme and hero image form a versioned presentation overlay. Current UUID revision, recent admin sign-in, typed name, reason, commit-time deadline, permanent before/after snapshot and an audit entry protect every save. Archived/ended edits are rejected. The admin audit can inspect changes; restoring the published presentation creates a new audited operation. Duplicated season templates include the current presentation without changing prior history.
+- **Live community:** a bounded aggregate-only API and visibility-aware 15-second polling with one in-flight request, five-second deadline, hidden-page cancellation, immediate resume and exponential failure backoff. Confirmed totals remain visible during failures. Monotonic season/totals versions reject stale responses. Milestone unlocks use polite announcements; passive polls remain silent.
+- **Accessibility and Safari:** focused projects for Chromium, Android touch emulation, desktop WebKit and iPhone WebKit. The HTTPS fixture has its own canonical application origin and temporary certificate; production CSP and origin validation remain intact. Fixed native-dialog Tab wrapping/focus restoration, explicit prefilled-field labels and the administration breadcrumb's touch target. Reward scrolling has visible previous/next controls and respects reduced motion.
+
+New endpoints are documented in the [feature guide](../features/community-seasons.md#apis). `tests/browser/seasons-cross-browser.spec.ts` tests uploads, unpublished-image privacy, another account's contribution appearing live, image/text changes without reload, frozen claims, stale/forged edits, outage/backoff/hidden states, keyboard/focus restoration, long evidence, minimum button sizes, reduced motion, WCAG AA and the disabled delivery boundary. The original two-season acceptance workflow remains intact and scopes its historical assertions to the intended season when other fixture seasons exist.
+
+Finishing validation: **1,652 unit/API/architecture tests passed, 32 skipped**; the expanded **196-case browser suite passed**, followed by a final focused rerun covering aggregate privacy, touch interaction and audited presentation rollback. Typecheck, lint, formatting, documentation/AI/workflow validation, production build and both production smoke suites passed. The previous documentation-head [CI run](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43087100831) completed with every required check passing before this finishing work began. Follow-up hosted results are available from [PR #9 checks](https://github.com/RealXKenny/Arrakis-Control-Dashboard/pull/9/checks); the real Redis suite now includes a concurrent presentation-snapshot/commit-time-deadline case.
+
+Follow-up screenshots show an uploaded image retained on a claimed reward while the hero presentation changes: [Safari desktop](../assets/screenshots/community-season-uploaded-safari.png), [iPhone/WebKit](../assets/screenshots/community-season-uploaded-iphone.png). The raster fixtures deliberately use solid colors to verify uploads and preserve no personal content.

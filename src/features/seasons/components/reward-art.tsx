@@ -1,6 +1,18 @@
-import type { Reward } from '../contracts';
+import Image from 'next/image';
+import { artworkUrl, type Reward } from '../contracts';
 
-export function RewardArt({ reward }: { reward: Reward }) {
+export function RewardArt({ reward, seasonId }: { reward: Reward; seasonId?: string }) {
+  if (reward.artwork && seasonId)
+    return (
+      <Image
+        src={artworkUrl(seasonId, reward.artwork.id)}
+        alt={reward.artwork.alt}
+        width={180}
+        height={158}
+        className="season-art season-uploaded-art"
+        unoptimized
+      />
+    );
   return (
     <svg
       viewBox="0 0 160 140"

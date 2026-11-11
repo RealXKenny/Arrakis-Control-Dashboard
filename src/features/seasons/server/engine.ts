@@ -14,6 +14,7 @@ import {
   type Totals,
 } from '../contracts';
 import { commit, loadMember, loadSeason, readRecord, seasonKeys, fail, storage } from './store';
+import { validateArtworkReferences } from './artwork';
 
 /** Review is useful before enabling an integration; approval alone can never execute a game write. */
 export async function manageDelivery(
@@ -55,6 +56,7 @@ export async function manageDelivery(
 
 export async function saveSeason(id: string, revision: string, input: Definition, actor: string) {
   const definition = definitionSchema.parse(input);
+  await validateArtworkReferences(definition);
   const existing = await readRecord<Season>(seasonKeys.season(id));
   if (existing.value && existing.value.revision !== revision) fail('Season changed. Reload before saving.');
   if (!existing.value && revision) fail('Season no longer exists.', 404);
@@ -66,6 +68,7 @@ export async function saveSeason(id: string, revision: string, input: Definition
     phase: existing.value?.phase ?? 'draft',
     definition,
     createdAt: existing.value?.createdAt ?? new Date().toISOString(),
+    version: (existing.value?.version ?? 0) + 1,
   };
   await commit({
     id,
@@ -132,6 +135,7 @@ export async function transitionSeason(
     season.endedAt = new Date(now).toISOString();
   } else season.phase = action === 'archive' ? 'archived' : action;
   season.revision = randomUUID();
+  season.version = (season.version ?? 0) + 1;
   writes.unshift({ key: seasonKeys.season(id), before: record.raw, after: season });
   await commit({
     id,
@@ -167,6 +171,7 @@ function updateTotals(
   challengeId?: string,
   rewardId?: string,
 ) {
+  totals.version = (totals.version ?? 0) + 1;
   const before = String(levelProgress(season.definition, previousXp).level);
   const after = String(levelProgress(season.definition, progress.xp).level);
   totals.levels ??= {};

@@ -76,8 +76,9 @@ test('two-season admin-to-member acceptance workflow with permanent cosmetics an
   await page.getByRole('button', { name: 'Archive season', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Archive season', exact: true })).toHaveCount(0);
   await member.goto('/seasons/history');
-  await expect(member.getByText('Level 5 · 700 Season XP · 1 approved challenges')).toBeVisible();
-  await expect(member.getByRole('button', { name: /Equip First Light/ })).toBeVisible();
+  const history = member.getByRole('article').filter({ has: member.getByRole('heading', { name, exact: true }) });
+  await expect(history.getByText('Level 5 · 700 Season XP · 1 approved challenges')).toBeVisible();
+  await expect(history.getByRole('button', { name: /Equip First Light/ })).toBeVisible();
   await page.getByRole('button', { name: 'Use as template', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Save draft', exact: true })).toBeVisible();
   const nextName = `${name} II`;

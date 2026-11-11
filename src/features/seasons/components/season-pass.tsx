@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useRef, useState, useId } from 'react';
 import {
   type Season,
   type Progress,
@@ -14,10 +15,13 @@ import {
   periodFor,
   emptyProgress,
   emptyTotals,
+  seasonPresentation,
+  artworkUrl,
 } from '../contracts';
 import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { RewardArt } from './reward-art';
 import { SeasonDialog } from './season-dialog';
+import { useCommunityProgress } from '../hooks/use-community-progress';
 import '../styles/seasons.css';
 
 export type SeasonView = { season: Season; progress: Progress; totals: Totals };
@@ -58,6 +62,9 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [offset, setOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
+  const track = useRef<HTMLDivElement>(null);
+  const dialogTrigger = useRef<HTMLElement | null>(null);
+  const trackId = useId();
   useFeedbackSound(error, message);
   function memberUrl() {
     const id = mode === 'history' ? null : new URLSearchParams(window.location.search).get('season');
@@ -94,6 +101,22 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
     views.find((v) => seasonState(v.season, now) === 'active') ??
     views.find((v) => seasonState(v.season, now) === 'scheduled') ??
     views[0];
+  const connection = useCommunityProgress(!preview && mode !== 'history' ? view?.season.id : undefined, (update) => {
+    setViews((previous) =>
+      previous.map((entry) =>
+        entry.season.id !== update.season.id
+          ? entry
+          : {
+              ...entry,
+              season:
+                (update.season.version ?? 0) >= (entry.season.version ?? 0)
+                  ? { ...entry.season, ...update.season }
+                  : entry.season,
+              totals: (update.totals.version ?? 0) >= (entry.totals.version ?? 0) ? update.totals : entry.totals,
+            },
+      ),
+    );
+  });
   async function act(payload: Record<string, unknown>) {
     if (!view || preview || busy) return;
     setBusy(true);
@@ -143,6 +166,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
     );
   const { season, progress, totals } = view;
   const definition = season.definition;
+  const presentation = seasonPresentation(season);
   const leveling = levelProgress(definition, progress.xp);
   const remaining = Math.max(0, Date.parse(definition.endsAt) - now);
   const rewards = [...definition.rewards].sort((a, b) => a.level - b.level);
@@ -217,7 +241,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                         .finally(() => setBusy(false));
                     }}
                   >
-                    <RewardArt reward={claim.reward} />
+                    <RewardArt reward={claim.reward} seasonId={entry.season.id} />
                     <span>Equip {claim.reward.name}</span>
                   </button>
                 ))}
@@ -269,19 +293,29 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
         </>
       ) : (
         <>
-          <header className={`season-hero season-theme-${definition.theme}`}>
+          <header className={`season-hero season-theme-${presentation.theme}`}>
             <div className="season-hero-landscape" aria-hidden="true" />
+            {presentation.artwork && (
+              <Image
+                src={artworkUrl(season.id, presentation.artwork.id)}
+                alt={presentation.artwork.alt}
+                fill
+                sizes="100vw"
+                className="season-hero-artwork"
+                unoptimized
+              />
+            )}
             <div className="season-hero-copy">
               <span className="season-kicker">
                 Community season {String(definition.number).padStart(2, '0')} / Free for every traveller
               </span>
               <h1>{definition.name}</h1>
-              <p className="season-subtitle">{definition.subtitle}</p>
-              <p>{definition.description}</p>
+              <p className="season-subtitle">{presentation.subtitle}</p>
+              <p>{presentation.description}</p>
               <div className="season-hero-meta">
                 <span>{preview ? 'Administrator preview' : seasonState(season, now)}</span>
                 <span>
-                  {remaining > 0
+                  {remaining > 0 && !['ended', 'archived'].includes(seasonState(season, now))
                     ? `${Math.floor(remaining / 86400000)}d ${Math.floor(remaining / 3600000) % 24}h remaining`
                     : 'Season ended'}
                 </span>
@@ -310,9 +344,41 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 <span>
                   All rewards are free · {progress.claims.length}/{rewards.length} claimed
                 </span>
+                <div className="season-actions">
+                  <button
+                    type="button"
+                    className="season-button"
+                    aria-controls={trackId}
+                    aria-label="Previous rewards"
+                    onClick={() =>
+                      track.current?.scrollBy({
+                        left: -(track.current.clientWidth * 0.8),
+                        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                      })
+                    }
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    type="button"
+                    className="season-button"
+                    aria-controls={trackId}
+                    aria-label="Next rewards"
+                    onClick={() =>
+                      track.current?.scrollBy({
+                        left: track.current.clientWidth * 0.8,
+                        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                      })
+                    }
+                  >
+                    Next →
+                  </button>
+                </div>
               </div>
               <div
                 className="season-track"
+                id={trackId}
+                ref={track}
                 tabIndex={0}
                 role="region"
                 aria-label="Reward track. Scroll horizontally to explore rewards."
@@ -326,10 +392,13 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     <button
                       key={reward.id}
                       className={`season-reward ${claimed ? 'is-claimed' : unlocked ? 'is-unlocked' : ''}`}
-                      onClick={() => setSelection(reward)}
+                      onClick={(event) => {
+                        dialogTrigger.current = event.currentTarget;
+                        setSelection(reward);
+                      }}
                     >
                       <span className="season-reward-level">Level {String(reward.level).padStart(2, '0')}</span>
-                      <RewardArt reward={reward} />
+                      <RewardArt reward={reward} seasonId={season.id} />
                       <span className="season-kicker">{reward.kind}</span>
                       <strong>{reward.name}</strong>
                       <span className="season-reward-state">
@@ -401,9 +470,12 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                       disabled={
                         busy || !!preview || seasonState(season, now) !== 'active' || statusOf(c, view) !== 'available'
                       }
-                      onClick={() =>
-                        c.verification === 'review' ? setChallenge(c) : act({ action: 'verify', challengeId: c.id })
-                      }
+                      onClick={(event) => {
+                        dialogTrigger.current = event.currentTarget;
+                        return c.verification === 'review'
+                          ? setChallenge(c)
+                          : act({ action: 'verify', challengeId: c.id });
+                      }}
                     >
                       {c.verification === 'review' ? 'Submit evidence' : 'Verify now'}
                     </button>
@@ -429,10 +501,21 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               </div>
               <span>{totals.participants.toLocaleString()} participants</span>
             </div>
+            {!preview && (
+              <p className="season-live-status" aria-live="polite">
+                {connection === 'stale'
+                  ? 'Live progress delayed. Showing the last confirmed totals; reconnecting automatically.'
+                  : connection === 'paused'
+                    ? 'Live progress paused while this page is hidden.'
+                    : connection === 'live'
+                      ? 'Community progress is live · refreshes every 15 seconds.'
+                      : 'Connecting to live community progress…'}
+              </p>
+            )}
             <div className="season-challenges">
               {definition.milestones.map((m) => (
                 <article className="season-challenge" key={m.id}>
-                  <span className="season-kicker">
+                  <span className="season-kicker" aria-live="polite">
                     {totals.completions >= m.target ? '✦ Shared achievement unlocked' : 'Community objective'}
                   </span>
                   <h3>{m.name}</h3>
@@ -456,8 +539,14 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                   .slice(-5)
                   .reverse()
                   .map((c) => (
-                    <button key={c.reward.id} onClick={() => setSelection(c.reward)}>
-                      <RewardArt reward={c.reward} />
+                    <button
+                      key={c.reward.id}
+                      onClick={(event) => {
+                        dialogTrigger.current = event.currentTarget;
+                        setSelection(c.reward);
+                      }}
+                    >
+                      <RewardArt reward={c.reward} seasonId={season.id} />
                       <span>{c.reward.name}</span>
                     </button>
                   ))}
@@ -468,8 +557,12 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
       )}
       {selection && (
         <div className="season-modal-backdrop">
-          <SeasonDialog labelledBy="reward-preview-title" onClose={() => setSelection(null)}>
-            <RewardArt reward={selection} />
+          <SeasonDialog
+            labelledBy="reward-preview-title"
+            returnFocus={dialogTrigger}
+            onClose={() => setSelection(null)}
+          >
+            <RewardArt reward={selection} seasonId={season.id} />
             <span className="season-kicker">
               Level {selection.level} / {selection.kind}
             </span>
@@ -514,7 +607,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
       )}
       {challenge && (
         <div className="season-modal-backdrop">
-          <SeasonDialog labelledBy="evidence-title" onClose={() => setChallenge(null)}>
+          <SeasonDialog labelledBy="evidence-title" returnFocus={dialogTrigger} onClose={() => setChallenge(null)}>
             <h2 id="evidence-title">{challenge.name}</h2>
             <p>
               Describe your contribution. A moderator must approve it before XP is awarded. Evidence links open

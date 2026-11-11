@@ -92,3 +92,30 @@ it('preserves the prior season and cosmetics while a new season starts independe
   expect((await store.loadMember(season.id, 'member')).progress.value.claims).toHaveLength(1);
   expect(await direct.get(store.seasonKeys.equipment('member'))).toContain('wayfarer');
 });
+it('commits live presentation snapshots atomically, preserves frozen definitions and rejects expired edit commits', async () => {
+  const { savePresentation } = await import('../../src/features/seasons/server/artwork');
+  const { seasonPresentation } = await import('../../src/features/seasons/contracts');
+  const season = await active();
+  const presentation = { ...seasonPresentation(season), subtitle: 'An audited live presentation' };
+  const results = await Promise.allSettled(
+    [1, 2].map(() =>
+      savePresentation(season.id, season.revision, presentation, 'Correct the live season introduction.', 'admin'),
+    ),
+  );
+  expect(results.filter((v) => v.status === 'fulfilled')).toHaveLength(1);
+  const current = (await store.loadSeason(season.id)).value;
+  expect(current.definition).toEqual(season.definition);
+  expect(current.presentation.subtitle).toBe(presentation.subtitle);
+  expect(await direct.exists(store.seasonKeys.presentationSnapshot(season.id, current.revision))).toBe(1);
+  const key = store.seasonKeys.progress(season.id, 'never-written');
+  await expect(
+    store.commit({
+      id: season.id,
+      actor: 'admin',
+      action: 'test.expired-edit',
+      beforeDeadline: 1,
+      writes: [{ key, before: '', after: {} }],
+    }),
+  ).rejects.toThrow('no longer');
+  expect(await direct.get(key)).toBeNull();
+});

@@ -7,6 +7,31 @@
 .season-root > * {
   min-width: 0;
 }
+.season-hero-artwork {
+  object-fit: cover;
+  opacity: 0.3;
+  z-index: -1;
+}
+.season-uploaded-art {
+  object-fit: contain;
+}
+.season-artwork-preview {
+  width: 100%;
+  max-width: 320px;
+  height: 180px;
+  object-fit: contain;
+}
+.season-artwork-upload,
+.season-live-form fieldset {
+  display: grid;
+  min-width: 0;
+  gap: 0.8rem;
+}
+.season-help,
+.season-live-status {
+  font-size: 0.8rem;
+  color: #c9bea8;
+}
 .season-root fieldset {
   min-width: 0;
 }

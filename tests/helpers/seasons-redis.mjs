@@ -20,6 +20,7 @@ export function createSeasonFixture() {
       if (input.expected.some((value, i) => (strings.get(keys[i]) ?? '') !== value)) return { value: 'conflict' };
       if (input.requireEmptyInbox && hashes.get(keys[n + 1])?.size) return { value: 'pending' };
       if (input.active && (Date.now() < input.active[0] || Date.now() >= input.active[1])) return { value: 'closed' };
+      if (input.beforeDeadline && Date.now() >= input.beforeDeadline) return { value: 'closed' };
       input.values.forEach((value, i) => {
         if (value !== false) strings.set(keys[i], value);
       });

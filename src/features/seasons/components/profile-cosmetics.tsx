@@ -17,7 +17,7 @@ export async function ProfileCosmetics({ owner }: { owner: string }) {
       <div className="season-cosmetics">
         {equipped.map((claim, i) => (
           <div key={`${claim.reward.id}-${i}`} className="season-editor-card">
-            <RewardArt reward={claim.reward} />
+            <RewardArt reward={claim.reward} seasonId={claim.seasonId} />
             <strong>{claim.reward.name}</strong>
             <span className="season-kicker">{claim.reward.kind}</span>
           </div>

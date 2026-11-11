@@ -14,6 +14,10 @@ import { pollsReply } from './guild-polls-redis.mjs';
 import { createSeasonFixture } from './seasons-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
+import { startBrowserTls } from './browser-tls.mjs';
+
+const useTls = process.argv.includes('--tls');
+const port = useTls ? 3102 : 3100;
 
 // Isolated browser fixture only; never used by the production runtime.
 const sessionKey = (id) => `arrakis:session:${createHash('sha256').update(id).digest('hex')}`;
@@ -87,12 +91,12 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
 storage.server.listen(0, '127.0.0.1');
 await once(storage.server, 'listening');
 // The server renders from this fake Console and adapter; tests shape it through /__fixture/* (fake-console-client.ts).
-const fakeConsole = startFakeConsole();
+const fakeConsole = startFakeConsole(useTls ? 3103 : 3101);
 await fakeConsole.listen();
 const require = createRequire(import.meta.url);
 const child = spawn(
   process.execPath,
-  [require.resolve('next/dist/bin/next'), 'start', '--hostname', '127.0.0.1', '--port', '3100'],
+  [require.resolve('next/dist/bin/next'), 'start', '--hostname', '127.0.0.1', '--port', String(port)],
   {
     windowsHide: true,
     stdio: 'inherit',
@@ -117,15 +121,18 @@ const child = spawn(
     },
   },
 );
+const tls = useTls ? startBrowserTls(port) : null;
 const stop = () => child.kill();
 process.once('SIGTERM', stop);
 process.once('SIGINT', stop);
 child.once('error', async () => {
+  tls?.close();
   process.exitCode = 1;
   await storage.close();
   await fakeConsole.close();
 });
 child.once('exit', async (code) => {
+  tls?.close();
   process.exitCode = code ?? 1;
   await storage.close();
   await fakeConsole.close();

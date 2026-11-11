@@ -42,6 +42,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - `features/seasons/` owns free community season definitions, calendar-based challenges, reviewed evidence, independent XP, immutable published cosmetics, claims, equipment, cooperative milestones and archives. Redis is authoritative; all atomic season keys share `{seasons}`. Published definitions never mutate; corrections append events. Member owners come only from the session. In-game delivery proposals require separate administrator review and cannot execute game writes. See `docs/features/community-seasons.md` for bounds and verification status.
 
+- Season uploads are admin-only raster images decoded and re-encoded to bounded immutable WebP records, served through authenticated same-origin reference checks. Scheduled/active seasons allow only a separate presentation overlay (subtitle, description, theme, hero artwork), with UUID CAS, Redis deadline checks and permanent before/after snapshots; reward definitions and completed seasons remain frozen. Visible community polling uses bounded aggregate responses, monotonic versions, cancellation and backoff. Game delivery execution stays disabled.
+
 - `src/server/` contains shared request infrastructure only: `http.ts`, `pages-api.ts`, `api-read-cache.ts`, `cookies.ts`, `read-budget.ts`, and `integrations/` for Dune Console, adapter transport, Discord OAuth, and shared bot announcements.
 
 - Security audit events go through `src/lib/security/audit.ts` (redacted, bounded, never throws); marketplace owner keys live in `features/bases/server/owner-key.ts` (HMAC, legacy keys still accepted until `npm run marketplace:rekey`).

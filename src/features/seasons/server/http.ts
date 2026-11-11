@@ -8,7 +8,8 @@ import { AppError } from '../../../lib/errors';
 import { requireApiAdmin, spendAdminBudget } from '../../admin/server/api-access';
 import { requireRecentSignIn } from '../../admin/server/access';
 import { getLinkedPlayer } from '../../player/server/linked-player';
-import { definitionSchema, identifier, seasonTemplate } from '../contracts';
+import { definitionSchema, identifier, seasonTemplate, presentationSchema, seasonPresentation } from '../contracts';
+import { savePresentation } from './artwork';
 import { adminRecords, fail, listSeasons, loadMember, loadSeason, seasonKeys, readRecord } from './store';
 import {
   saveSeason,
@@ -43,6 +44,14 @@ const memberAction = z.discriminatedUnion('action', [
   z.object({ action: z.literal('equip'), seasonId: identifier, rewardId: identifier }),
 ]);
 const adminAction = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('presentation'),
+    seasonId: identifier,
+    revision: z.string().uuid(),
+    presentation: presentationSchema,
+    reason: z.string().trim().min(10).max(500),
+    confirmation: z.string().max(100),
+  }),
   z.object({
     action: z.literal('delivery-request'),
     seasonId: identifier,
@@ -189,7 +198,18 @@ export async function getAdminSeasons(request: Request) {
     const owner = params.get('owner');
     if (owner && !identifier.safeParse(owner).success) fail('Invalid account ID.', 400);
     const member = owner ? (await loadMember(id, owner)).progress.value : null;
-    return json({ ok: true, season, ...records, totals: totals.value, deliveries: deliveries.value ?? [], member });
+    const snapshotId = params.get('snapshot');
+    if (snapshotId && !z.string().uuid().safeParse(snapshotId).success) fail('Invalid presentation snapshot.', 400);
+    const snapshot = snapshotId ? (await readRecord(seasonKeys.presentationSnapshot(id, snapshotId))).value : null;
+    return json({
+      ok: true,
+      season,
+      ...records,
+      totals: totals.value,
+      deliveries: deliveries.value ?? [],
+      member,
+      snapshot,
+    });
   }
   return json({
     ok: true,
@@ -206,6 +226,15 @@ export async function mutateAdminSeasons(request: Request) {
   const action = await body(request, adminAction);
   const id = action.seasonId;
   const actor = session.user.id;
+  if (action.action === 'presentation') {
+    const season = (await loadSeason(id)).value;
+    if (action.confirmation !== season.definition.name)
+      fail('Type the saved season name to confirm the live edit.', 400);
+    return json({
+      ok: true,
+      season: await savePresentation(id, action.revision, action.presentation, action.reason, actor),
+    });
+  }
   if (action.action === 'delivery-request')
     return json({
       ok: true,
@@ -226,6 +255,7 @@ export async function mutateAdminSeasons(request: Request) {
     const original = (await loadSeason(id)).value;
     const definition = {
       ...original.definition,
+      ...seasonPresentation(original),
       slug: `${original.definition.slug.slice(0, 40)}-${randomUUID().slice(0, 8)}`,
       number: original.definition.number + 1,
       name: `${original.definition.name.slice(0, 80)} — next season`,

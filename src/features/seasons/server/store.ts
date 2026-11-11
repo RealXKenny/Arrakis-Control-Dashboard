@@ -30,6 +30,10 @@ export const seasonKeys = {
   inbox: (id: string) => `${root}:inbox:${identifier.parse(id)}`,
   inboxIndex: (id: string) => `${root}:inbox-index:${identifier.parse(id)}`,
   audit: (id: string) => `${root}:audit:${identifier.parse(id)}`,
+  artwork: (hash: string) => `${root}:artwork:${hash}`,
+  artworkIndex: (id: string) => `${root}:artwork-index:${identifier.parse(id)}`,
+  presentationSnapshot: (id: string, revision: string) =>
+    `${root}:presentation:${identifier.parse(id)}:${identifier.parse(revision)}`,
 };
 /** All validation happens before the first write. CAS is never automatically retried. */
 export const COMMIT = `-- community-seasons:commit-v1
@@ -47,10 +51,11 @@ for i, expected in ipairs(input.expected) do
   local actual = redis.call('GET', KEYS[i])
   if (actual or '') ~= expected then return 'conflict' end
 end
-if input.active then
+if input.active or input.beforeDeadline then
   local now = redis.call('TIME')
   local ms = tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000)
-  if ms < input.active[1] or ms >= input.active[2] then return 'closed' end
+  if input.active and (ms < input.active[1] or ms >= input.active[2]) then return 'closed' end
+  if input.beforeDeadline and ms >= input.beforeDeadline then return 'closed' end
 end
 for i, value in ipairs(input.values) do
   if value ~= false then redis.call('SET', KEYS[i], value) end
@@ -128,6 +133,7 @@ export async function commit(options: {
   action: string;
   writes: Write[];
   active?: [number, number];
+  beforeDeadline?: number;
   index?: { id: string; score: number };
   inbox?: { id: string; value?: string; remove?: boolean; score?: number };
   schedule?: { id: string; score: number };
@@ -161,6 +167,7 @@ export async function commit(options: {
         expected: options.writes.map((v) => v.before),
         values: options.writes.map((v) => (v.after === undefined ? false : JSON.stringify(v.after))),
         active: options.active,
+        beforeDeadline: options.beforeDeadline,
         index: options.index,
         inbox: options.inbox,
         schedule: options.schedule,

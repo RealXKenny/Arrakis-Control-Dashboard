@@ -30,6 +30,8 @@ import {
   manageDelivery,
 } from '../../../src/features/seasons/server/engine';
 import { loadMember, readRecord, seasonKeys } from '../../../src/features/seasons/server/store';
+import { savePresentation } from '../../../src/features/seasons/server/artwork';
+import { seasonPresentation } from '../../../src/features/seasons/contracts';
 
 beforeEach(() => {
   mock.reply = createSeasonFixture();
@@ -74,6 +76,45 @@ describe('season definitions and deterministic progression', () => {
   });
 });
 describe('atomic season operations through the store contract (fixture, not real Lua)', () => {
+  it('versions live display edits without changing published rules or existing claims and freezes completed seasons', async () => {
+    let season = await active();
+    await claimReward(season.id, 'member', 'wayfarer');
+    const frozen = structuredClone(season.definition);
+    const presentation = { ...seasonPresentation(season), subtitle: 'A new community chapter' };
+    const edited = await savePresentation(
+      season.id,
+      season.revision,
+      presentation,
+      'Correct the member-facing introduction.',
+      'admin',
+    );
+    expect(edited.definition).toEqual(frozen);
+    expect(edited.version).toBeGreaterThan(season.version);
+    expect((await loadMember(season.id, 'member')).progress.value.claims[0].reward).toEqual(frozen.rewards[0]);
+    expect(
+      (
+        await readRecord<{ before: unknown; after: unknown }>(
+          seasonKeys.presentationSnapshot(season.id, edited.revision),
+        )
+      ).value.after,
+    ).toEqual(presentation);
+    await expect(
+      savePresentation(season.id, season.revision, presentation, 'Stale changes must not overwrite.', 'admin'),
+    ).rejects.toThrow('changed');
+    await expect(
+      savePresentation(
+        season.id,
+        edited.revision,
+        { ...presentation, thresholds: [0, 1] } as typeof presentation,
+        'Do not allow reward-rule edits.',
+        'admin',
+      ),
+    ).rejects.toThrow();
+    season = await transitionSeason(season.id, edited.revision, 'end', 'admin');
+    await expect(
+      savePresentation(season.id, season.revision, presentation, 'Cannot change completed history.', 'admin'),
+    ).rejects.toThrow('Only scheduled');
+  });
   it('freezes publication, rejects overlapping schedules and stale draft edits', async () => {
     const season = await active();
     await expect(saveSeason(season.id, season.revision, season.definition, 'admin')).rejects.toThrow('immutable');

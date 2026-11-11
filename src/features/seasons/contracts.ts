@@ -4,6 +4,26 @@ export const paths = ['solo', 'builder', 'explorer', 'supplier', 'mentor'] as co
 export const cosmeticKinds = ['badge', 'banner', 'title', 'decoration', 'achievement'] as const;
 export const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
 const text = (max: number) => z.string().trim().min(1).max(max);
+export const artworkSchema = z.object({ id: z.string().regex(/^[a-f0-9]{64}$/), alt: text(200) }).strict();
+export const presentationSchema = z
+  .object({
+    subtitle: text(160),
+    description: text(3000),
+    theme: z.enum(['dunes', 'eclipse', 'spice']),
+    artwork: artworkSchema.optional(),
+  })
+  .strict();
+export type Presentation = z.infer<typeof presentationSchema>;
+export type PresentationChange = {
+  before: Presentation;
+  after: Presentation;
+  reason: string;
+  actor: string;
+  at: string;
+};
+export function artworkUrl(seasonId: string, artworkId: string) {
+  return `/api/v2/seasons/${seasonId}/artwork/${artworkId}`;
+}
 export const rewardSchema = z.object({
   id: identifier,
   name: text(100),
@@ -12,6 +32,7 @@ export const rewardSchema = z.object({
   kind: z.enum(cosmeticKinds),
   motif: z.enum(['dune', 'star', 'spire', 'sun', 'wing']),
   color: z.enum(['sand', 'spice', 'blue']),
+  artwork: artworkSchema.optional(),
 });
 export const challengeSchema = z.object({
   id: identifier,
@@ -41,6 +62,7 @@ export const definitionSchema = z
     description: text(3000),
     number: z.number().int().min(1).max(100000),
     theme: z.enum(['dunes', 'eclipse', 'spice']),
+    artwork: artworkSchema.optional(),
     startsAt: z.iso.datetime(),
     endsAt: z.iso.datetime(),
     timezone: text(80).refine((value) => {
@@ -82,6 +104,8 @@ export type Season = {
   createdAt: string;
   publishedAt?: string;
   endedAt?: string;
+  version?: number;
+  presentation?: Presentation;
 };
 export type Submission = {
   id: string;
@@ -121,6 +145,12 @@ export type Totals = {
   challenges?: Record<string, number>;
   rewards?: Record<string, number>;
   milestones?: Record<string, string>;
+  version?: number;
+};
+export type CommunityUpdate = {
+  season: Pick<Season, 'id' | 'phase' | 'revision' | 'version' | 'presentation'>;
+  totals: Totals;
+  observedAt: string;
 };
 export type Delivery = {
   id: string;
@@ -141,6 +171,8 @@ export const seasonRecordSchema = z.object({
   createdAt: z.iso.datetime(),
   publishedAt: z.iso.datetime().optional(),
   endedAt: z.iso.datetime().optional(),
+  version: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
+  presentation: presentationSchema.optional(),
 });
 export const progressRecordSchema = z
   .object({
@@ -191,9 +223,36 @@ export const totalsRecordSchema = z.object({
   completions: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
   xp: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
   claims: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  version: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
+  levels: z
+    .record(z.string().regex(/^(?:[1-9]|[1-9][0-9]|100)$/), z.number().int().min(0).max(Number.MAX_SAFE_INTEGER))
+    .optional(),
+  challenges: z
+    .record(identifier, z.number().int().min(0).max(Number.MAX_SAFE_INTEGER))
+    .refine((v) => Object.keys(v).length <= 100)
+    .optional(),
+  rewards: z
+    .record(identifier, z.number().int().min(0).max(Number.MAX_SAFE_INTEGER))
+    .refine((v) => Object.keys(v).length <= 100)
+    .optional(),
+  milestones: z
+    .record(identifier, z.iso.datetime())
+    .refine((v) => Object.keys(v).length <= 20)
+    .optional(),
 });
 export const emptyProgress = (): Progress => ({ xp: 0, ledger: [], submissions: [], claims: [], equipped: {} });
 export const emptyTotals = (): Totals => ({ participants: 0, completions: 0, xp: 0, claims: 0 });
+
+export function seasonPresentation(season: Season): Presentation {
+  return (
+    season.presentation ?? {
+      subtitle: season.definition.subtitle,
+      description: season.definition.description,
+      theme: season.definition.theme,
+      artwork: season.definition.artwork,
+    }
+  );
+}
 
 export function seasonState(season: Season, now = Date.now()) {
   if (season.phase !== 'published') return season.phase;

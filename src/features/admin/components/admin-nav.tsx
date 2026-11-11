@@ -47,7 +47,7 @@ export function AdminNav() {
       <nav aria-label="Breadcrumb" className="pt-4">
         <ol className="flex flex-wrap items-center gap-2 font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">
           <li>
-            <Link href={adminHref('overview')} className="hover:text-spice-300">
+            <Link href={adminHref('overview')} className="inline-flex min-h-11 items-center px-1 hover:text-spice-300">
               Administration
             </Link>
           </li>
