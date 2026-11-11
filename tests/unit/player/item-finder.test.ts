@@ -4,7 +4,7 @@ vi.mock('../../../src/lib/assert-server', () => ({}));
 vi.mock('../../../src/features/player/server/linked-player', () => ({ getLinkedPlayer: state.linked }));
 vi.mock('../../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request: state.request }) }));
 vi.mock('../../../src/server/read-budget', () => ({ spendReadBudget: state.budget }));
-import { findItems } from '../../../src/features/player/server/item-finder';
+import { collectPinnedItems, findItems } from '../../../src/features/player/server/item-finder';
 
 const session = {
   user: { id: 'discord', username: 'Member' },
@@ -15,6 +15,7 @@ const session = {
 const roster = { supported: true, entries: [{ playerId: '202', canonical: true, rank: 2 }] };
 const slot = {
   itemId: '5',
+  templateId: 'Spice',
   name: 'Spice',
   quantity: '9007199254740993',
   qualityLevel: 3,
@@ -90,6 +91,60 @@ describe('universal item finder', () => {
     const result = await findItems(session, 'Spice_Template');
     expect(result.items).toHaveLength(1);
     expect(result.items[0].augments).toEqual(['Augment_Harvest']);
+  });
+  it('collects matching pin templates beyond the finder display cap without widening source authorization', async () => {
+    responses['/api/players/101/inventory'] = {
+      rows: Array.from({ length: 250 }, (_, index) => ({
+        id: index,
+        item_name: 'Spice',
+        template_id: 'Spice_Template',
+        inventory_type: 0,
+        stack_size: '1',
+      })),
+    };
+    const result = await collectPinnedItems(session, ['spice_template'], { controller: '202', player: '101' });
+    expect(result.items).toHaveLength(250);
+    expect(result.limited).toBe(false);
+    expect(result.items.every((item) => item.templateId === 'Spice_Template')).toBe(true);
+  });
+  it('does not double-count repeated or unidentifiable stacks in pinned readings', async () => {
+    responses['/api/players/101/inventory'] = {
+      rows: [
+        { id: '1', template_id: 'Spice_Template', inventory_type: 0, stack_size: '7' },
+        { id: '1', template_id: 'Spice_Template', inventory_type: 0, stack_size: '7' },
+        { template_id: 'Spice_Template', inventory_type: 0, stack_size: '7' },
+      ],
+    };
+    const result = await collectPinnedItems(session, ['Spice_Template'], { controller: '202', player: '101' });
+    expect(result.items).toHaveLength(1);
+    expect(result.limited).toBe(true);
+    expect(result.sources).toContainEqual(expect.objectContaining({ name: 'Stack identity', status: 'excluded' }));
+  });
+  it('does not turn unknown template identities into a complete pinned zero', async () => {
+    responses['/api/players/101/inventory'] = {
+      rows: [{ id: '1', item_name: 'Spice', inventory_type: 0, stack_size: '7' }],
+    };
+    const result = await collectPinnedItems(session, ['Spice_Template'], { controller: '202', player: '101' });
+    expect(result.items).toHaveLength(0);
+    expect(result.limited).toBe(true);
+    expect(result.sources).toContainEqual(expect.objectContaining({ name: 'Item identity', status: 'excluded' }));
+  });
+  it('does not truncate an oversized quantity into a different exact counter value', async () => {
+    responses['/api/players/101/inventory'] = {
+      rows: [{ id: '1', template_id: 'Spice_Template', inventory_type: 0, stack_size: '9'.repeat(201) }],
+    };
+    const result = await collectPinnedItems(session, ['Spice_Template'], { controller: '202', player: '101' });
+    expect(result.items[0].quantity).toBe('Unknown');
+  });
+  it('rejects a changed character link before reading any pinned inventory', async () => {
+    for (const character of [
+      { controller: '999', player: '101' },
+      { controller: '202', player: '999' },
+    ])
+      await expect(collectPinnedItems(session, ['Spice'], character)).rejects.toMatchObject({
+        code: 'CHARACTER_CHANGED',
+      });
+    expect(state.request).not.toHaveBeenCalled();
   });
   it('does not trust names, relationship filters, cached session character or noncanonical roster rows', async () => {
     responses['/api/bases/11/permissions'] = {

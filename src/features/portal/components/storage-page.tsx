@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ItemFinder } from '../../player/components/item-finder';
+import { InventoryTools } from '../../player/components/inventory-tools';
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatNumber } from '../../../lib/format';
@@ -40,7 +40,7 @@ export default async function StoragePage({
     return (
       <>
         <PageHeader eyebrow="Personal inventory" title="Storage" />
-        <ItemFinder />
+        <InventoryTools />
         <ProfileFailure result={result} />
       </>
     );
@@ -53,7 +53,7 @@ export default async function StoragePage({
   return (
     <>
       <PageHeader eyebrow="Personal inventory" title="Storage" />
-      <ItemFinder />
+      <InventoryTools />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="grid min-w-0 grid-cols-1 content-start gap-6 lg:col-span-4">
           <section className="panel p-6" aria-labelledby="assets">

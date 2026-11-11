@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import type { ItemPin } from '../item-pins';
 import type { FinderResult } from '../item-finder';
 
-export function ItemFinder() {
+export function ItemFinder({ onPin }: { onPin?: (pin: ItemPin) => void } = {}) {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<FinderResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -104,6 +105,16 @@ export function ItemFinder() {
                 <p className="mt-1 text-xs text-sand-400">Durability {item.durability}</p>
                 {item.augments.length > 0 && <p className="mt-1 text-xs">Augments: {item.augments.join(', ')}</p>}
                 <p className="mt-3 text-xs text-sand-300">{item.location}</p>
+                {onPin && item.templateId && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost mt-3"
+                    aria-label={`Pin ${item.name}`}
+                    onClick={() => onPin({ templateId: item.templateId, name: item.name })}
+                  >
+                    Pin counter
+                  </button>
+                )}
                 <Link className="mt-3 inline-block text-sm text-spice-400 underline" href={item.href}>
                   Open source workspace
                 </Link>

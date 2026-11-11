@@ -17,6 +17,9 @@ const text = (value: unknown, fallback = 'Unknown'): string =>
     : typeof value === 'number' && Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value))
       ? String(value)
       : fallback;
+// Exact values must become unknown when oversized, never a different truncated quantity or identity.
+const exactText = (value: unknown, fallback = 'Unknown'): string =>
+  typeof value === 'string' && value.trim().length > 200 ? fallback : text(value, fallback);
 const id = (value: unknown): string | null => {
   const candidate = text(value, '');
   return /^[1-9][0-9]{0,15}$/.test(candidate) && Number.isSafeInteger(Number(candidate)) ? candidate : null;
@@ -39,25 +42,7 @@ function rosterRank(value: unknown, controller: string): number | null {
   return entry && [1, 2, 3].includes(Number(entry.rank)) ? Number(entry.rank) : null;
 }
 
-/** Fresh session-linked reads only. Names, list filters and caller IDs never authorize an asset. */
-export async function findItems(
-  session: DashboardSession,
-  query: string,
-  callerSignal?: AbortSignal,
-): Promise<FinderResult> {
-  if (!query.trim() || query.length > 128)
-    throw new AppError('Enter 1–128 search characters.', 400, 'INVALID_QUERY', true);
-  const budget = await spendReadBudget();
-  if (!budget.allowed) throw new AppError('Search capacity reached. Try again shortly.', 429, 'RATE_LIMITED', true);
-  const signal = callerSignal
-    ? AbortSignal.any([callerSignal, AbortSignal.timeout(25_000)])
-    : AbortSignal.timeout(25_000);
-  const result: FinderResult = { items: [], sources: [], limited: false, startedAt: new Date().toISOString() };
-  const client = getDuneClient();
-  const read = async (path: string) => {
-    signal.throwIfAborted();
-    return client.request('GET', path, { timeoutMs: 4000, retryRead: false, signal });
-  };
+export async function resolveItemCharacter(session: DashboardSession) {
   const linked = await getLinkedPlayer(
     {
       guildId: session.guildId,
@@ -74,6 +59,37 @@ export async function findItems(
   const controller = id(linked.controllerId);
   if (!linked.linked || !player || !controller)
     throw new AppError('Link a character with a verified controller first.', 403, 'UNLINKED', true);
+  return { player, controller };
+}
+
+/** Fresh session-linked reads only. Names, list filters and caller IDs never authorize an asset. */
+async function scanItems(
+  session: DashboardSession,
+  query: string,
+  callerSignal?: AbortSignal,
+  selection?: { templates: string[]; controller: string; player: string },
+): Promise<FinderResult> {
+  if (!selection && (!query.trim() || query.length > 128))
+    throw new AppError('Enter 1–128 search characters.', 400, 'INVALID_QUERY', true);
+  const budget = await spendReadBudget();
+  if (!budget.allowed) throw new AppError('Search capacity reached. Try again shortly.', 429, 'RATE_LIMITED', true);
+  const signal = callerSignal
+    ? AbortSignal.any([callerSignal, AbortSignal.timeout(25_000)])
+    : AbortSignal.timeout(25_000);
+  const result: FinderResult = { items: [], sources: [], limited: false, startedAt: new Date().toISOString() };
+  const client = getDuneClient();
+  const read = async (path: string) => {
+    signal.throwIfAborted();
+    return client.request('GET', path, { timeoutMs: 4000, retryRead: false, signal });
+  };
+  const { player, controller } = await resolveItemCharacter(session);
+  if (selection && (controller !== selection.controller || player !== selection.player))
+    throw new AppError('Your character link changed. Refresh pinned items.', 409, 'CHARACTER_CHANGED', true);
+  const resultLimit = selection ? MAX_STACKS : MAX_RESULTS;
+  const selected = new Set(selection?.templates.map((template) => template.toLowerCase()));
+  const countedStacks = new Set<string>();
+  let stackWarning = false;
+  let templateWarning = false;
   let inspected = 0;
   let containers = 0;
   const status = (name: string, state: FinderSource['status'], detail: string) => {
@@ -87,11 +103,24 @@ export async function findItems(
         break;
       }
       const row = record(raw);
-      const template = text(row.templateId ?? row.template_id, '');
+      const template = exactText(row.templateId ?? row.template_id, '');
       const name = text(row.name ?? row.display_name ?? row.item_name, template || 'Unknown');
       const needle = query.trim().toLowerCase();
-      if (!name.toLowerCase().includes(needle) && !template.toLowerCase().includes(needle)) continue;
-      if (result.items.length >= MAX_RESULTS) {
+      if (selection && !template) {
+        result.limited = true;
+        if (!templateWarning) {
+          status('Item identity', 'excluded', 'Items with missing template IDs could not be classified for counters.');
+          templateWarning = true;
+        }
+        continue;
+      }
+      if (
+        selection
+          ? !selected.has(template.toLowerCase())
+          : !name.toLowerCase().includes(needle) && !template.toLowerCase().includes(needle)
+      )
+        continue;
+      if (result.items.length >= resultLimit) {
         result.limited = true;
         continue;
       }
@@ -101,12 +130,29 @@ export async function findItems(
           ]
         : null;
       if (personal && !group) continue;
+      if (selection) {
+        const stackId = exactText(row.itemId ?? row.id, '');
+        if (!stackId || countedStacks.has(stackId)) {
+          result.limited = true;
+          if (!stackWarning) {
+            status(
+              'Stack identity',
+              'excluded',
+              'Repeated or missing stack IDs were omitted from counters. Items may have moved during the scan.',
+            );
+            stackWarning = true;
+          }
+          continue;
+        }
+        countedStacks.add(stackId);
+      }
       const slot = row.positionIndex ?? row.position_index;
       const inventory = text(row.inventoryId ?? row.inventory_id, 'Not reported');
       result.items.push({
         id: `${location}:${text(row.itemId ?? row.id)}:${result.items.length}`,
         name,
-        quantity: text(row.quantity ?? row.stack_size),
+        templateId: template,
+        quantity: exactText(row.quantity ?? row.stack_size),
         grade: text(row.qualityLevel ?? row.quality_level ?? row.quality),
         durability: `${text(row.currentDurability ?? row.current_durability)} / ${text(row.maxDurability ?? row.max_durability)}`,
         augments: Array.isArray(row.augments)
@@ -247,7 +293,23 @@ export async function findItems(
     status(
       'Search limits',
       'limited',
-      'At most 20 bases, 20 vehicles, 80 containers, 5,000 stacks and 200 matches; results are partial.',
+      `At most 20 bases, 20 vehicles, 80 containers, 5,000 stacks and ${resultLimit} matches; results are partial.`,
     );
   return result;
+}
+
+export function findItems(session: DashboardSession, query: string, signal?: AbortSignal) {
+  return scanItems(session, query, signal);
+}
+
+/** Only server-owned saved pins select this larger, still stack-bounded collection. */
+export function collectPinnedItems(
+  session: DashboardSession,
+  templates: string[],
+  character: { controller: string; player: string },
+  signal?: AbortSignal,
+) {
+  if (!templates.length || templates.length > 12)
+    throw new AppError('Choose 1–12 pinned items.', 400, 'INVALID_PINS', true);
+  return scanItems(session, '', signal, { templates, ...character });
 }

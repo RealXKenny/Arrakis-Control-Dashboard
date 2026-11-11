@@ -9,6 +9,7 @@ import { operationsReply } from './guild-operations-redis.mjs';
 import { resourcesReply } from './guild-resources-redis.mjs';
 import { baseDirectoryReply } from './guild-base-directory-redis.mjs';
 import { onboardingReply } from './guild-onboarding-redis.mjs';
+import { itemPinsReply } from './item-pins-redis.mjs';
 import { pollsReply } from './guild-polls-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
@@ -30,6 +31,8 @@ const listing = {
   ],
 };
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  const itemPins = itemPinsReply(operation, key, args);
+  if (itemPins !== undefined) return itemPins.value;
   const polls = pollsReply(operation, key, args);
   if (polls !== undefined) return polls.value;
   const onboarding = onboardingReply(operation, key, args);

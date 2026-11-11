@@ -49,3 +49,13 @@ may report slowly; see [Console connection](../troubleshooting/console-connectio
 ## Related
 
 [Marketplace](marketplace.md) (share an owned base) · [Vehicles](vehicles.md) · [API: players](../api/players.md)
+
+## Pinned item counters (N002)
+
+In **Storage**, find an item and select **Pin counter**. Up to 12 distinct template IDs can be pinned; counts include all reported grades of that template. **Refresh counts** checks the current character, independently authorized base containers and vehicle cargo through the same source/permission checks as N001. A single bounded scan covers all pins, rather than issuing one complete search per pin. No game guild is required.
+
+Selections are private to the verified dashboard account and current linked pawn/controller pair, stored only in bounded Redis records (8 KiB maximum). Fresh adapter links choose the record; cached session character IDs and caller-supplied owner IDs never select it. Character changes do not inherit another character's pins. Saves use UUID revisions and atomic compare-and-set; stale tabs must refresh, and uncertain saves are never retried automatically. Empty records keep a revision to prevent stale restoration. Records expire after 90 days without reading or editing them. Unpinning all items removes the selections without retaining inventory observations.
+
+Counts are not persisted. Reloading the page shows **Not checked** until a fresh reading is requested. Exact decimal quantities are summed with BigInt. Repeated stack IDs are counted once; missing stack identity is excluded and makes coverage incomplete, avoiding double counts when items move during a scan. Missing/failed sources, unknown quantities and search bounds produce **At least …** or **Unknown (0 observed)**, never a complete zero. Source coverage and original timestamps remain visible if a refresh fails or is cancelled. These are observations during a bounded, non-atomic scan; they do not reserve stock, prove deliveries or change inventory/currency.
+
+Counter refreshes share N001's six-searches-per-member-per-minute budget and 25-second/three-worker/source bounds. Up to 5,000 matching stacks can contribute internally, while the public finder remains capped at 200 displayed matches. Only the 12 totals and source coverage reach the counter browser API. Pin settings allow 30 requests per member per minute and bounded same-origin JSON writes. The Console key requires the same read scopes as N001; no extra provider endpoint or write scope is used.

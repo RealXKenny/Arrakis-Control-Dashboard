@@ -41,3 +41,13 @@ The success body is the blueprint document produced by the Console, normalized b
 ## Universal item finder
 
 `GET /api/v2/items/find?q=<1–128 characters>` requires a verified dashboard session and current linked pawn/controller. It returns `{ items, sources, limited, startedAt }` with sanitized stack details, exact reported locations and workspace links; each source has a safe status/detail and `checkedAt`. Caller-supplied character, base or vehicle IDs grant no access. Responses are no-store. Anonymous requests return 401, missing verified links 403, invalid searches 400 and exhausted member/shared budgets 429. The route allows six searches per member per minute; [feature documentation](../features/player-management.md#universal-item-finder-n001) records scope, independent permission checks, limits, cancellation and partial-result behavior.
+
+## Pinned item counters
+
+| Method | Route                         | Behavior                                                                                                                   |
+| ------ | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/v2/items/pins`          | Current session/current linked controller's private `{ revision, pins }` selections; no counts are inferred                |
+| POST   | `/api/v2/items/pins`          | Same-origin JSON `{ revision, pins: [{ templateId, name }] }`; at most 12 unique templates / 8 KiB; 409 on stale revisions |
+| GET    | `/api/v2/items/pins/readings` | Fresh `{ counters, coverage, revision }` observations from the N001 permission pipeline; no raw inventory rows             |
+
+All routes require verified sessions and fresh linked-character resolution, are no-store and ignore caller identity query parameters. Missing links return 403, invalid settings 400, oversized bodies 413, non-JSON writes 415, limits 429 and unavailable/corrupt Redis 503. Settings requests allow 30/member/minute; readings also share the six-per-minute finder budget. Each counter has an exact decimal-string `quantity` and `complete` flag. Incomplete quantities are observed lower bounds, not total stock. A link change between preference loading and inventory collection returns 409 `CHARACTER_CHANGED` before inventory reads. See [pinned counters](../features/player-management.md#pinned-item-counters-n002) for retention, revisions, source limits and uncertainty behavior.

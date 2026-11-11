@@ -1,6 +1,7 @@
 export interface FoundItem {
   id: string;
   name: string;
+  templateId: string;
   quantity: string;
   grade: string;
   durability: string;
