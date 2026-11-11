@@ -54,6 +54,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - `src/styles/` contains global CSS and design tokens. `tokens.css` mirrors the Tailwind palette as `--color-*` variables because plain CSS reads them and Tailwind v4 does not emit JS-config colours as variables; `tests/unit/styles/tokens.test.ts` guards the match. `tailwind.config.ts` uses the Obsidian/Sand/Spice palette, sharp corners, and hard unblurred shadows. Feature CSS modules stay in their feature. Never animate an ancestor of the map or full-screen base preview layers, and keep all animation off under `prefers-reduced-motion`.
 
+- `src/assets/fonts/` contains the pinned Archivo (weight/width) and JetBrains Mono variable fonts and their OFL licenses. The root layout uses `next/font/local`, preserving `--font-sans` / `--font-mono`; builds and browsers never fetch Google Fonts. Provenance is in `docs/legal/font-provenance.md`.
+
 - `src/assets/` contains favicon/application images and compressed terrain/model bundles. It is large; do not enumerate it during ordinary work. Keep asset paths allowlisted and preserve the 2D map fallback.
 
 - `scripts/server-launcher.mjs` prepares the writable Next.js image cache and starts dev/production; `scripts/chat-bridge-supervisor.mjs` owns the automatic bridge child's restart and shutdown lifecycle. `scripts/maintenance/` owns Redis rekeying and offline model generation; `scripts/deployment/` owns release-egg generation.
@@ -99,6 +101,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 - Link previews use `generateMetadata` in `src/app/layout.tsx`; the retired Discord component-card module stays removed.
 
 - `features/events/` owns bounded Redis community event announcements, one-time competition seeding, visibility and revision checks, and automatic Discord Components V2 synchronization. Admin event management is in `features/admin/components/events-manager.tsx`; drafts never enter member reads, and event prizes never call inventory or currency APIs. Events and changelogs share `DISCORD_BOT_TOKEN` through the server-only Discord bot integration; uncertain creations never auto-resend.
+
+- `features/player/server/item-finder.ts` owns the Storage universal finder. Resolve a fresh adapter link per search; use player-scoped discovery, independent canonical controller roster checks and per-container child access. Never return base-wide rollups or world/admin inventories. Keep three workers, provider/overall deadlines, cancellation, six searches/member/minute, bounded asset/container/stack/result counts and honest source coverage. No game guild or game writes are needed.
 
 **## Contracts**
 

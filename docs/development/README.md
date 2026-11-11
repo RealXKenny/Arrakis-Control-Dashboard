@@ -13,3 +13,5 @@
 Also: [CONTRIBUTING.md](../../CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md) at the repository root,
 [file organization](../architecture/file-organization.md), the [repository inventory](../architecture/repository-inventory.md),
 and the [AI agent guides](../ai/README.md) used by coding assistants.
+
+[Expansion backlog checkpoint](expansion-backlog.md) records the sequential N001–N100 work and precise resume action.

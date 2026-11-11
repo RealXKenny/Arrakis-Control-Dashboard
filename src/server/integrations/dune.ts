@@ -12,6 +12,7 @@ type ConsoleRequestOptions = {
   query?: Record<string, unknown>;
   body?: unknown;
   timeoutMs?: number;
+  signal?: AbortSignal;
   retryRead?: boolean;
 };
 function record(value: unknown): Record<string, unknown> {
@@ -50,6 +51,7 @@ class DuneConsoleClient {
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       timeoutMs: options.timeoutMs,
+      signal: options.signal,
       retryRead: options.retryRead ?? (method === 'GET' || method === 'HEAD'),
     });
     if (!result.response.ok || record(result.data).ok === false)

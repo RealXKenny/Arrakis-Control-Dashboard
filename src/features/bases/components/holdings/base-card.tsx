@@ -4,7 +4,10 @@ import { Meter } from '../../../../components/ui/meter';
 
 export function HoldingCard({ base }: { base: PortalBase }) {
   return (
-    <article className={`panel flex flex-col gap-5 p-5 ${base.owned ? 'border-spice-500/30' : ''}`}>
+    <article
+      id={`base-${base.id}`}
+      className={`panel flex flex-col gap-5 p-5 ${base.owned ? 'border-spice-500/30' : ''}`}
+    >
       <header className="flex items-start justify-between gap-3 border-b border-sand-200/10 pb-4">
         <div className="min-w-0">
           <h3 className="truncate text-sm tracking-wide" title={base.name}>

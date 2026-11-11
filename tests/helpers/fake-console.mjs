@@ -176,6 +176,10 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
       if (path.startsWith(prefix)) return json(response, status, { ok: false });
     }
 
+    if (request.method === 'GET' && shared.finderSources && path in shared.finderSources) {
+      return json(response, 200, shared.finderSources[path]);
+    }
+
     if (path === '/api/health') return json(response, 200, { ok: true });
     if (path === '/api/integrations/discord/players/me') {
       const actor = JSON.parse(bodyText || '{}').actor ?? {};

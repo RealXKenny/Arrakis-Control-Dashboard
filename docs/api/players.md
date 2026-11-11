@@ -2,15 +2,15 @@
 
 All routes need a session; the subject is always the **linked character of the signed-in member**, never a request parameter.
 
-| Method | Route                              | Purpose                                                                      | Rate class            |
-| ------ | ---------------------------------- | ---------------------------------------------------------------------------- | --------------------- |
-| GET    | `/api/player`                      | Character, inventory, water, bases, guild summary for the linked character    | legacy read (120/min) |
-| GET    | `/api/portal/world?map=`           | World briefing for `HaggaBasin` or `DeepDesert` (400 `INVALID_MAP` otherwise)   | legacy read           |
-| GET    | `/api/bases/{baseId}/export`       | Export one **owned** base as a blueprint                                       | sensitive (30/min)    |
-| POST   | `/api/bases/import`                | Import a blueprint into your character after a preview                          | sensitive             |
-| GET    | `/api/bases/{baseId}/preview`      | Saved preview view settings for an owned base: `{ ok, view, hasPicture }`        | legacy read           |
-| POST   | `/api/bases/{baseId}/preview`      | Save preview settings and a 640 × 360 PNG capture (owner-verified)              | sensitive             |
-| POST   | `/api/bases/{baseId}/marketplace`  | Publish an owned base to the marketplace (legacy publisher)                     | sensitive             |
+| Method | Route                             | Purpose                                                                       | Rate class            |
+| ------ | --------------------------------- | ----------------------------------------------------------------------------- | --------------------- |
+| GET    | `/api/player`                     | Character, inventory, water, bases, guild summary for the linked character    | legacy read (120/min) |
+| GET    | `/api/portal/world?map=`          | World briefing for `HaggaBasin` or `DeepDesert` (400 `INVALID_MAP` otherwise) | legacy read           |
+| GET    | `/api/bases/{baseId}/export`      | Export one **owned** base as a blueprint                                      | sensitive (30/min)    |
+| POST   | `/api/bases/import`               | Import a blueprint into your character after a preview                        | sensitive             |
+| GET    | `/api/bases/{baseId}/preview`     | Saved preview view settings for an owned base: `{ ok, view, hasPicture }`     | legacy read           |
+| POST   | `/api/bases/{baseId}/preview`     | Save preview settings and a 640 × 360 PNG capture (owner-verified)            | sensitive             |
+| POST   | `/api/bases/{baseId}/marketplace` | Publish an owned base to the marketplace (legacy publisher)                   | sensitive             |
 
 ## Behaviour and errors
 
@@ -37,3 +37,7 @@ The success body is the blueprint document produced by the Console, normalized b
 ## Related
 
 [Character and holdings](../features/player-management.md) · [Marketplace API](marketplace.md) · [Errors](errors.md)
+
+## Universal item finder
+
+`GET /api/v2/items/find?q=<1–128 characters>` requires a verified dashboard session and current linked pawn/controller. It returns `{ items, sources, limited, startedAt }` with sanitized stack details, exact reported locations and workspace links; each source has a safe status/detail and `checkedAt`. Caller-supplied character, base or vehicle IDs grant no access. Responses are no-store. Anonymous requests return 401, missing verified links 403, invalid searches 400 and exhausted member/shared budgets 429. The route allows six searches per member per minute; [feature documentation](../features/player-management.md#universal-item-finder-n001) records scope, independent permission checks, limits, cancellation and partial-result behavior.

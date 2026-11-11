@@ -61,7 +61,7 @@ The 112 palette-derived swatch tiles are CC BY-NC-SA 4.0, not MIT. Their noncomm
 
 ## Archivo and JetBrains Mono fonts
 
-Archivo is loaded through `next/font/google`; JetBrains Mono is loaded there and is also pinned through `@fontsource/jetbrains-mono`. The fonts remain under SIL Open Font License 1.1:
+Archivo and JetBrains Mono are bundled in `src/assets/fonts/` and loaded through `next/font/local`; builds and browsers need no Google Fonts connection. Their weight ranges and Archivo width axis are preserved. JetBrains Mono is also pinned through `@fontsource/jetbrains-mono`. See [font provenance](font-provenance.md) for the pinned upstream revision, exact files, checksums and bundled licenses. The fonts remain under SIL Open Font License 1.1:
 
 - Archivo: Copyright 2020 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo), [license source](https://github.com/google/fonts/blob/main/ofl/archivo/OFL.txt).
 - JetBrains Mono: Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono), [license source](https://github.com/google/fonts/blob/main/ofl/jetbrainsmono/OFL.txt).

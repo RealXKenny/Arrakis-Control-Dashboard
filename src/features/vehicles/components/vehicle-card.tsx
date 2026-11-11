@@ -22,7 +22,10 @@ function fuelText(fuel: NonNullable<Vehicle['fuel']>): string {
 export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
   const owned = vehicle.access === 'owned';
   return (
-    <article className={`panel flex flex-col gap-5 p-5 ${owned ? 'border-spice-500/30' : ''}`}>
+    <article
+      id={`vehicle-${vehicle.id}`}
+      className={`panel flex flex-col gap-5 p-5 ${owned ? 'border-spice-500/30' : ''}`}
+    >
       <header className="flex items-start justify-between gap-3 border-b border-sand-200/10 pb-4">
         <div className="min-w-0">
           <h3 className="truncate text-sm tracking-wide" title={vehicle.name}>

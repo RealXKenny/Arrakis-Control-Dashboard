@@ -323,3 +323,7 @@ Run `git ls-files` to include tracked source and native dot-directory configurat
 `src/lib/audio/` owns the shared browser playback manager, synthesized effects, optional bundled voice recordings, preferences validation, and notification feedback hook. `src/components/ui/audio-controls.tsx` owns the single topbar settings panel and delegated interaction listeners. Casino cards, chips, table illustrations, and deterministic public-view narration remain in `src/features/casino/components/`. No ledger, game mathematics, transfer rules, or activation safeguards change.
 
 The default local dealer recordings and manifest live in `src/assets/audio/casino/solaris-v1/`. `src/features/casino/audio/voice-pack.ts` turns confirmed narration into allowlisted clip sequences; shared playback stays in `src/lib/audio/`. `scripts/maintenance/build-casino-voice-pack.mjs` is an offline authoring tool, not a build or runtime dependency. Asset delivery preserves same-origin fetching and the existing restrictive CSP.
+
+## Self-hosted interface fonts
+
+`src/assets/fonts/` owns the real Archivo and JetBrains Mono variable TTFs and their SIL OFL licenses. `src/app/layout.tsx` loads them with `next/font/local`, retaining both CSS variables, variable weights, Archivo width and swap display. [Font provenance](../legal/font-provenance.md) records the pinned upstream revision and checksums. No build-time font network access is required.

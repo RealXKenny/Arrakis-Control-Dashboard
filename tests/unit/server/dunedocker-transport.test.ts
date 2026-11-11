@@ -79,3 +79,18 @@ it('accepts Console capitalized online status without losing it', () => {
     'Offline',
   );
 });
+
+it('propagates cancellation through the Console client without retrying a cancelled read', async () => {
+  const controller = new AbortController();
+  const fetcher = vi.fn().mockImplementation(async (_url, options) => {
+    controller.abort();
+    expect(options.signal.aborted).toBe(true);
+    throw new Error('aborted');
+  });
+  vi.stubGlobal('fetch', fetcher);
+  const client = new DuneConsoleClient('https://console.test', null, 'test-api-key');
+  await expect(client.request('GET', '/api/items', { signal: controller.signal })).rejects.toMatchObject({
+    message: 'Console API request failed',
+  });
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});

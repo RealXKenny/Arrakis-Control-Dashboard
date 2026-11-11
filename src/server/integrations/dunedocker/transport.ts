@@ -56,6 +56,7 @@ export async function sendProviderRequest(options: {
   headers: Record<string, string>;
   body?: BodyInit;
   timeoutMs?: number;
+  signal?: AbortSignal;
   retryRead?: boolean;
 }): Promise<TransportResult> {
   const { provider, url, method, headers, body, timeoutMs = 30000, retryRead = false } = options;
@@ -73,7 +74,9 @@ export async function sendProviderRequest(options: {
         cache: 'no-store',
         // A Console never legitimately redirects an API call; refuse to carry the bearer credential anywhere else.
         redirect: 'error',
-        signal: AbortSignal.timeout(timeoutMs),
+        signal: options.signal
+          ? AbortSignal.any([options.signal, AbortSignal.timeout(timeoutMs)])
+          : AbortSignal.timeout(timeoutMs),
       });
     } catch {
       log.warn('Provider network failure', {
@@ -84,6 +87,7 @@ export async function sendProviderRequest(options: {
         attempt,
         durationMs: Date.now() - started,
       });
+      if (options.signal?.aborted) throw failure(provider);
       if (attempt < attempts) {
         await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
         continue;

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Archivo, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
 import { navIdentity } from '../features/auth/identity';
 import { getServerEnv } from '../config/env';
@@ -10,14 +10,18 @@ import { TopNavigation } from '../components/navigation/top-navigation';
 import '../styles/globals.css';
 
 // Archivo's width axis gives the monolithic, wide-set headline voice; Mono carries data and labels.
-const sans = Archivo({
-  subsets: ['latin'],
+const sans = localFont({
+  src: '../assets/fonts/archivo-variable.ttf',
+  weight: '100 900',
+  style: 'normal',
   variable: '--font-sans',
   display: 'swap',
-  axes: ['wdth'],
+  declarations: [{ prop: 'font-stretch', value: '62% 125%' }],
 });
-const mono = JetBrains_Mono({
-  subsets: ['latin'],
+const mono = localFont({
+  src: '../assets/fonts/jetbrains-mono-variable.ttf',
+  weight: '100 800',
+  style: 'normal',
   variable: '--font-mono',
   display: 'swap',
 });
