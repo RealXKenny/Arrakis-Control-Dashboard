@@ -6,6 +6,7 @@ export type AdminTabKind =
   | 'overview'
   | 'guilds'
   | 'events'
+  | 'seasons'
   | 'setup'
   | 'reference'
   | 'console'
@@ -32,6 +33,7 @@ const BUILT_IN_KINDS: AdminTabKind[] = [
   'statistics',
   'guilds',
   'events',
+  'seasons',
   'setup',
   'reference',
   'console',
@@ -101,6 +103,13 @@ export const ADMIN_SECTIONS: AdminSection[] = [
         kind: 'events',
         groups: [],
         summary: 'Create event announcements, prizes, schedules and entry details.',
+      },
+      {
+        id: 'seasons',
+        label: 'Season management',
+        kind: 'seasons',
+        groups: [],
+        summary: 'Build free community seasons, review evidence and preserve recognition.',
       },
       {
         id: 'guild-tools',

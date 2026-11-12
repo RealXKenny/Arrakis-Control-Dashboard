@@ -84,6 +84,8 @@ Boolean variables accept only the strings `true` and `false`.
 
 ## Tool-only variables
 
+Season game delivery uses `SEASON_GAME_DELIVERY_ENABLED` (`false` by default). Setting it to `true` enables explicit administrator execution of separately approved Solaris and item rewards through `ADMIN_CONSOLE_API_KEY`; it never enables automatic grants or casino transfers. See [season operations](../features/community-seasons.md#in-game-delivery-boundary).
+
 | Variable                                     | Used by                                                                                                                                                                                                           |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `OWNER_KEY_PREVIOUS_SECRET`                  | `npm run marketplace:rekey` only, after rotating `OWNER_KEY_SECRET` ([migration](../deployment/migration.md))                                                                                                     |

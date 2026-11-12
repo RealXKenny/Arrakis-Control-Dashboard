@@ -1,0 +1,1962 @@
+{
+  "id": "season-2-sands-of-renewal",
+  "artwork": {
+    "file": "season-1-hero.webp",
+    "alt": "A golden sun rising over layered desert dunes beneath a deep blue sky"
+  },
+  "definition": {
+    "schemaVersion": 1,
+    "slug": "sands-of-renewal",
+    "name": "Sands of Renewal",
+    "subtitle": "One hundred levels. A new in-game journey.",
+    "description": "A free, 100-level journey through Arrakis. Gather, craft, fight, build, explore, supply and guide other travellers through 100 in-game quests. Every path offers 50,000 Season XP and can reach level 100; solo travellers need no guild or group events. Unlock a permanent dashboard cosmetic at every level. Submit your gameplay evidence for moderator review, with optional in-game rewards delivered through separate administrator approval.",
+    "number": 2,
+    "theme": "dunes",
+    "startsAt": "2027-04-13T04:00:00.000Z",
+    "endsAt": "2027-07-13T04:00:00.000Z",
+    "timezone": "America/New_York",
+    "thresholds": [
+      0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000,
+      9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 16500, 17000,
+      17500, 18000, 18500, 19000, 19500, 20000, 20500, 21000, 21500, 22000, 22500, 23000, 23500, 24000, 24500, 25000,
+      25500, 26000, 26500, 27000, 27500, 28000, 28500, 29000, 29500, 30000, 30500, 31000, 31500, 32000, 32500, 33000,
+      33500, 34000, 34500, 35000, 35500, 36000, 36500, 37000, 37500, 38000, 38500, 39000, 39500, 40000, 40500, 41000,
+      41500, 42000, 42500, 43000, 43500, 44000, 44500, 45000, 45500, 46000, 46500, 47000, 47500, 48000, 48500, 49000,
+      49500
+    ],
+    "rewards": [
+      {
+        "id": "wayfarer",
+        "name": "Wayfarer",
+        "description": "A title for every traveller who takes the first step beneath Arrakis's suns.",
+        "level": 1,
+        "kind": "title",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-002",
+        "name": "First Footsteps Standard",
+        "description": "Level 2 recognition from the First Footsteps chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 2,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "sand"
+      },
+      {
+        "id": "tier-003",
+        "name": "First Footsteps Traveller",
+        "description": "Level 3 recognition from the First Footsteps chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 3,
+        "kind": "title",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-004",
+        "name": "First Footsteps Showcase",
+        "description": "Level 4 recognition from the First Footsteps chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 4,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-005",
+        "name": "First Footsteps Mark",
+        "description": "Level 5 recognition from the First Footsteps chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 5,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "sand"
+      },
+      {
+        "id": "tier-006",
+        "name": "First Footsteps Seal",
+        "description": "Level 6 recognition from the First Footsteps chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 6,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "sand"
+      },
+      {
+        "id": "tier-007",
+        "name": "First Footsteps Horizon",
+        "description": "Level 7 recognition from the First Footsteps chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 7,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-008",
+        "name": "First Footsteps Vanguard",
+        "description": "Level 8 recognition from the First Footsteps chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 8,
+        "kind": "title",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-009",
+        "name": "First Footsteps Emblem",
+        "description": "Level 9 recognition from the First Footsteps chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 9,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "sand"
+      },
+      {
+        "id": "first-cistern",
+        "name": "First Cistern",
+        "description": "A sand-coloured badge marking your first sustained contribution, with an optional 250 Solaris grant.",
+        "level": 10,
+        "kind": "badge",
+        "motif": "dune",
+        "color": "sand",
+        "gameReward": {
+          "type": "solaris",
+          "amount": "250"
+        }
+      },
+      {
+        "id": "tier-011",
+        "name": "Dune Sentinel Insignia",
+        "description": "Level 11 recognition from the Dune Sentinel chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 11,
+        "kind": "badge",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "tier-012",
+        "name": "Dune Sentinel Standard",
+        "description": "Level 12 recognition from the Dune Sentinel chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 12,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "blue"
+      },
+      {
+        "id": "tier-013",
+        "name": "Dune Sentinel Traveller",
+        "description": "Level 13 recognition from the Dune Sentinel chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 13,
+        "kind": "title",
+        "motif": "wing",
+        "color": "blue"
+      },
+      {
+        "id": "tier-014",
+        "name": "Dune Sentinel Showcase",
+        "description": "Level 14 recognition from the Dune Sentinel chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 14,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "blue"
+      },
+      {
+        "id": "tier-015",
+        "name": "Dune Sentinel Mark",
+        "description": "Level 15 recognition from the Dune Sentinel chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 15,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "tier-016",
+        "name": "Dune Sentinel Seal",
+        "description": "Level 16 recognition from the Dune Sentinel chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 16,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "tier-017",
+        "name": "Dune Sentinel Horizon",
+        "description": "Level 17 recognition from the Dune Sentinel chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 17,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "blue"
+      },
+      {
+        "id": "tier-018",
+        "name": "Dune Sentinel Vanguard",
+        "description": "Level 18 recognition from the Dune Sentinel chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 18,
+        "kind": "title",
+        "motif": "spire",
+        "color": "blue"
+      },
+      {
+        "id": "tier-019",
+        "name": "Dune Sentinel Emblem",
+        "description": "Level 19 recognition from the Dune Sentinel chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 19,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "spice-horizon",
+        "name": "Spice Horizon",
+        "description": "A blue-and-spice banner inspired by the line where desert and sky meet.",
+        "level": 20,
+        "kind": "banner",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "tier-021",
+        "name": "Desert Forge Insignia",
+        "description": "Level 21 recognition from the Desert Forge chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 21,
+        "kind": "badge",
+        "motif": "star",
+        "color": "spice"
+      },
+      {
+        "id": "tier-022",
+        "name": "Desert Forge Standard",
+        "description": "Level 22 recognition from the Desert Forge chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 22,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "spice"
+      },
+      {
+        "id": "tier-023",
+        "name": "Desert Forge Traveller",
+        "description": "Level 23 recognition from the Desert Forge chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 23,
+        "kind": "title",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "tier-024",
+        "name": "Desert Forge Showcase",
+        "description": "Level 24 recognition from the Desert Forge chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 24,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "spice"
+      },
+      {
+        "id": "tier-025",
+        "name": "Desert Forge Mark",
+        "description": "Level 25 recognition from the Desert Forge chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 25,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "spice"
+      },
+      {
+        "id": "tier-026",
+        "name": "Desert Forge Seal",
+        "description": "Level 26 recognition from the Desert Forge chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 26,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "spice"
+      },
+      {
+        "id": "tier-027",
+        "name": "Desert Forge Horizon",
+        "description": "Level 27 recognition from the Desert Forge chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 27,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "tier-028",
+        "name": "Desert Forge Vanguard",
+        "description": "Level 28 recognition from the Desert Forge chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 28,
+        "kind": "title",
+        "motif": "spire",
+        "color": "spice"
+      },
+      {
+        "id": "tier-029",
+        "name": "Desert Forge Emblem",
+        "description": "Level 29 recognition from the Desert Forge chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 29,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "spice"
+      },
+      {
+        "id": "hearth-in-the-sand",
+        "name": "Hearth in the Sand",
+        "description": "A decoration celebrating the shelter, routes, and connections that make a desert habitable.",
+        "level": 30,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-031",
+        "name": "Spicebound Insignia",
+        "description": "Level 31 recognition from the Spicebound chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 31,
+        "kind": "badge",
+        "motif": "star",
+        "color": "sand"
+      },
+      {
+        "id": "tier-032",
+        "name": "Spicebound Standard",
+        "description": "Level 32 recognition from the Spicebound chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 32,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "sand"
+      },
+      {
+        "id": "tier-033",
+        "name": "Spicebound Traveller",
+        "description": "Level 33 recognition from the Spicebound chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 33,
+        "kind": "title",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-034",
+        "name": "Spicebound Showcase",
+        "description": "Level 34 recognition from the Spicebound chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 34,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-035",
+        "name": "Spicebound Mark",
+        "description": "Level 35 recognition from the Spicebound chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 35,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "sand"
+      },
+      {
+        "id": "tier-036",
+        "name": "Spicebound Seal",
+        "description": "Level 36 recognition from the Spicebound chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 36,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "sand"
+      },
+      {
+        "id": "tier-037",
+        "name": "Spicebound Horizon",
+        "description": "Level 37 recognition from the Spicebound chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 37,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-038",
+        "name": "Spicebound Vanguard",
+        "description": "Level 38 recognition from the Spicebound chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 38,
+        "kind": "title",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-039",
+        "name": "Spicebound Emblem",
+        "description": "Level 39 recognition from the Spicebound chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 39,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "sand"
+      },
+      {
+        "id": "pathfinder",
+        "name": "Pathfinder",
+        "description": "A title for a traveller whose chosen path has become a reliable trail.",
+        "level": 40,
+        "kind": "title",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "tier-041",
+        "name": "Stormwatch Insignia",
+        "description": "Level 41 recognition from the Stormwatch chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 41,
+        "kind": "badge",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "tier-042",
+        "name": "Stormwatch Standard",
+        "description": "Level 42 recognition from the Stormwatch chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 42,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "blue"
+      },
+      {
+        "id": "tier-043",
+        "name": "Stormwatch Traveller",
+        "description": "Level 43 recognition from the Stormwatch chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 43,
+        "kind": "title",
+        "motif": "wing",
+        "color": "blue"
+      },
+      {
+        "id": "tier-044",
+        "name": "Stormwatch Showcase",
+        "description": "Level 44 recognition from the Stormwatch chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 44,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "blue"
+      },
+      {
+        "id": "tier-045",
+        "name": "Stormwatch Mark",
+        "description": "Level 45 recognition from the Stormwatch chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 45,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "tier-046",
+        "name": "Stormwatch Seal",
+        "description": "Level 46 recognition from the Stormwatch chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 46,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "tier-047",
+        "name": "Stormwatch Horizon",
+        "description": "Level 47 recognition from the Stormwatch chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 47,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "blue"
+      },
+      {
+        "id": "tier-048",
+        "name": "Stormwatch Vanguard",
+        "description": "Level 48 recognition from the Stormwatch chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 48,
+        "kind": "title",
+        "motif": "spire",
+        "color": "blue"
+      },
+      {
+        "id": "tier-049",
+        "name": "Stormwatch Emblem",
+        "description": "Level 49 recognition from the Stormwatch chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 49,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "cartographers-star",
+        "name": "Cartographer's Star",
+        "description": "A star badge for careful observation, patient craft, and knowledge worth sharing.",
+        "level": 50,
+        "kind": "badge",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "tier-051",
+        "name": "Waterkeeper Insignia",
+        "description": "Level 51 recognition from the Waterkeeper chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 51,
+        "kind": "badge",
+        "motif": "star",
+        "color": "spice"
+      },
+      {
+        "id": "tier-052",
+        "name": "Waterkeeper Standard",
+        "description": "Level 52 recognition from the Waterkeeper chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 52,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "spice"
+      },
+      {
+        "id": "tier-053",
+        "name": "Waterkeeper Traveller",
+        "description": "Level 53 recognition from the Waterkeeper chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 53,
+        "kind": "title",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "tier-054",
+        "name": "Waterkeeper Showcase",
+        "description": "Level 54 recognition from the Waterkeeper chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 54,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "spice"
+      },
+      {
+        "id": "tier-055",
+        "name": "Waterkeeper Mark",
+        "description": "Level 55 recognition from the Waterkeeper chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 55,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "spice"
+      },
+      {
+        "id": "tier-056",
+        "name": "Waterkeeper Seal",
+        "description": "Level 56 recognition from the Waterkeeper chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 56,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "spice"
+      },
+      {
+        "id": "tier-057",
+        "name": "Waterkeeper Horizon",
+        "description": "Level 57 recognition from the Waterkeeper chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 57,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "tier-058",
+        "name": "Waterkeeper Vanguard",
+        "description": "Level 58 recognition from the Waterkeeper chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 58,
+        "kind": "title",
+        "motif": "spire",
+        "color": "spice"
+      },
+      {
+        "id": "tier-059",
+        "name": "Waterkeeper Emblem",
+        "description": "Level 59 recognition from the Waterkeeper chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 59,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "spice"
+      },
+      {
+        "id": "shared-water",
+        "name": "Shared Water",
+        "description": "A decoration honouring practical generosity, with an optional grant of five Cups of Water at grade 0.",
+        "level": 60,
+        "kind": "decoration",
+        "motif": "dune",
+        "color": "blue",
+        "gameReward": {
+          "type": "item",
+          "itemId": "WaterPack_Consumable",
+          "quantity": 5,
+          "quality": 0
+        }
+      },
+      {
+        "id": "tier-061",
+        "name": "Skyward Insignia",
+        "description": "Level 61 recognition from the Skyward chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 61,
+        "kind": "badge",
+        "motif": "star",
+        "color": "sand"
+      },
+      {
+        "id": "tier-062",
+        "name": "Skyward Standard",
+        "description": "Level 62 recognition from the Skyward chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 62,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "sand"
+      },
+      {
+        "id": "tier-063",
+        "name": "Skyward Traveller",
+        "description": "Level 63 recognition from the Skyward chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 63,
+        "kind": "title",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-064",
+        "name": "Skyward Showcase",
+        "description": "Level 64 recognition from the Skyward chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 64,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-065",
+        "name": "Skyward Mark",
+        "description": "Level 65 recognition from the Skyward chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 65,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "sand"
+      },
+      {
+        "id": "tier-066",
+        "name": "Skyward Seal",
+        "description": "Level 66 recognition from the Skyward chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 66,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "sand"
+      },
+      {
+        "id": "tier-067",
+        "name": "Skyward Horizon",
+        "description": "Level 67 recognition from the Skyward chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 67,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-068",
+        "name": "Skyward Vanguard",
+        "description": "Level 68 recognition from the Skyward chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 68,
+        "kind": "title",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-069",
+        "name": "Skyward Emblem",
+        "description": "Level 69 recognition from the Skyward chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 69,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "sand"
+      },
+      {
+        "id": "wings-of-guidance",
+        "name": "Wings of Guidance",
+        "description": "A banner for the lift we give one another, whatever form our contributions take.",
+        "level": 70,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "tier-071",
+        "name": "Sietch Guardian Insignia",
+        "description": "Level 71 recognition from the Sietch Guardian chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 71,
+        "kind": "badge",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "tier-072",
+        "name": "Sietch Guardian Standard",
+        "description": "Level 72 recognition from the Sietch Guardian chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 72,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "blue"
+      },
+      {
+        "id": "tier-073",
+        "name": "Sietch Guardian Traveller",
+        "description": "Level 73 recognition from the Sietch Guardian chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 73,
+        "kind": "title",
+        "motif": "wing",
+        "color": "blue"
+      },
+      {
+        "id": "tier-074",
+        "name": "Sietch Guardian Showcase",
+        "description": "Level 74 recognition from the Sietch Guardian chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 74,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "blue"
+      },
+      {
+        "id": "tier-075",
+        "name": "Sietch Guardian Mark",
+        "description": "Level 75 recognition from the Sietch Guardian chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 75,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "tier-076",
+        "name": "Sietch Guardian Seal",
+        "description": "Level 76 recognition from the Sietch Guardian chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 76,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "blue"
+      },
+      {
+        "id": "tier-077",
+        "name": "Sietch Guardian Horizon",
+        "description": "Level 77 recognition from the Sietch Guardian chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 77,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "blue"
+      },
+      {
+        "id": "tier-078",
+        "name": "Sietch Guardian Vanguard",
+        "description": "Level 78 recognition from the Sietch Guardian chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 78,
+        "kind": "title",
+        "motif": "spire",
+        "color": "blue"
+      },
+      {
+        "id": "tier-079",
+        "name": "Sietch Guardian Emblem",
+        "description": "Level 79 recognition from the Sietch Guardian chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 79,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "blue"
+      },
+      {
+        "id": "tier-080",
+        "name": "Sietch Guardian Legacy",
+        "description": "Level 80 recognition from the Sietch Guardian chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 80,
+        "kind": "achievement",
+        "motif": "dune",
+        "color": "blue"
+      },
+      {
+        "id": "tier-081",
+        "name": "Deep Horizon Insignia",
+        "description": "Level 81 recognition from the Deep Horizon chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 81,
+        "kind": "badge",
+        "motif": "star",
+        "color": "spice"
+      },
+      {
+        "id": "tier-082",
+        "name": "Deep Horizon Standard",
+        "description": "Level 82 recognition from the Deep Horizon chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 82,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "spice"
+      },
+      {
+        "id": "tier-083",
+        "name": "Deep Horizon Traveller",
+        "description": "Level 83 recognition from the Deep Horizon chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 83,
+        "kind": "title",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "tier-084",
+        "name": "Deep Horizon Showcase",
+        "description": "Level 84 recognition from the Deep Horizon chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 84,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "spice"
+      },
+      {
+        "id": "tier-085",
+        "name": "Deep Horizon Mark",
+        "description": "Level 85 recognition from the Deep Horizon chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 85,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "spice"
+      },
+      {
+        "id": "tier-086",
+        "name": "Deep Horizon Seal",
+        "description": "Level 86 recognition from the Deep Horizon chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 86,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "spice"
+      },
+      {
+        "id": "tier-087",
+        "name": "Deep Horizon Horizon",
+        "description": "Level 87 recognition from the Deep Horizon chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 87,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "spice"
+      },
+      {
+        "id": "tier-088",
+        "name": "Deep Horizon Vanguard",
+        "description": "Level 88 recognition from the Deep Horizon chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 88,
+        "kind": "title",
+        "motif": "spire",
+        "color": "spice"
+      },
+      {
+        "id": "tier-089",
+        "name": "Deep Horizon Emblem",
+        "description": "Level 89 recognition from the Deep Horizon chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 89,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "spice"
+      },
+      {
+        "id": "sunlit-spire",
+        "name": "Sunlit Spire",
+        "description": "A high-desert decoration marking a body of work that others can look to and remember.",
+        "level": 90,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-091",
+        "name": "Legacy of Arrakis Insignia",
+        "description": "Level 91 recognition from the Legacy of Arrakis chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 91,
+        "kind": "badge",
+        "motif": "star",
+        "color": "sand"
+      },
+      {
+        "id": "tier-092",
+        "name": "Legacy of Arrakis Standard",
+        "description": "Level 92 recognition from the Legacy of Arrakis chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 92,
+        "kind": "banner",
+        "motif": "dune",
+        "color": "sand"
+      },
+      {
+        "id": "tier-093",
+        "name": "Legacy of Arrakis Traveller",
+        "description": "Level 93 recognition from the Legacy of Arrakis chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 93,
+        "kind": "title",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-094",
+        "name": "Legacy of Arrakis Showcase",
+        "description": "Level 94 recognition from the Legacy of Arrakis chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 94,
+        "kind": "decoration",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-095",
+        "name": "Legacy of Arrakis Mark",
+        "description": "Level 95 recognition from the Legacy of Arrakis chapter. A permanent achievement for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 95,
+        "kind": "achievement",
+        "motif": "sun",
+        "color": "sand"
+      },
+      {
+        "id": "tier-096",
+        "name": "Legacy of Arrakis Seal",
+        "description": "Level 96 recognition from the Legacy of Arrakis chapter. A permanent badge for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 96,
+        "kind": "badge",
+        "motif": "sun",
+        "color": "sand"
+      },
+      {
+        "id": "tier-097",
+        "name": "Legacy of Arrakis Horizon",
+        "description": "Level 97 recognition from the Legacy of Arrakis chapter. A permanent banner for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 97,
+        "kind": "banner",
+        "motif": "wing",
+        "color": "sand"
+      },
+      {
+        "id": "tier-098",
+        "name": "Legacy of Arrakis Vanguard",
+        "description": "Level 98 recognition from the Legacy of Arrakis chapter. A permanent title for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 98,
+        "kind": "title",
+        "motif": "spire",
+        "color": "sand"
+      },
+      {
+        "id": "tier-099",
+        "name": "Legacy of Arrakis Emblem",
+        "description": "Level 99 recognition from the Legacy of Arrakis chapter. A permanent decoration for your Arrakis Control profile, earned entirely through free community progression.",
+        "level": 99,
+        "kind": "decoration",
+        "motif": "star",
+        "color": "sand"
+      },
+      {
+        "id": "first-light",
+        "name": "First Light",
+        "description": "A permanent achievement for completing Season 1 on any path and helping establish a shared legacy.",
+        "level": 100,
+        "kind": "achievement",
+        "motif": "star",
+        "color": "spice"
+      }
+    ],
+    "challenges": [
+      {
+        "id": "solo-quest-01",
+        "name": "Desert provisions",
+        "description": "Gather 100 raw resources yourself during the season. Describe the resource and collection route.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-02",
+        "name": "Water reserve",
+        "description": "Obtain five water consumables through normal gameplay and keep them ready for a solo expedition.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-03",
+        "name": "A home of your own",
+        "description": "Establish or improve a personal shelter with a protected place to store your expedition supplies.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-04",
+        "name": "Toolmaker",
+        "description": "Craft three gathering tools through normal gameplay. Identify what you crafted and how you used it.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-05",
+        "name": "Ready for the heat",
+        "description": "Equip a complete survival loadout and finish an outing without another player supplying your equipment.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-06",
+        "name": "First harvest",
+        "description": "Gather 200 additional raw resources in a single self-directed outing.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-07",
+        "name": "Workbench rhythm",
+        "description": "Complete ten crafting jobs yourself at your own or an accessible crafting station.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-08",
+        "name": "Hostile territory",
+        "description": "Defeat ten hostile NPCs during solo play. Describe the encounters and your equipment.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-09",
+        "name": "Camp clear",
+        "description": "Clear a hostile NPC camp or defended site alone, then return to safety.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-10",
+        "name": "Pack and return",
+        "description": "Visit a hostile or hazardous area alone, collect useful loot and bring it back to your storage.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-11",
+        "name": "Repair and reuse",
+        "description": "Repair five pieces of your equipment through normal gameplay.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-12",
+        "name": "Provisioning run",
+        "description": "Complete a solo resource run and return with at least three different resource types.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-13",
+        "name": "Refiner",
+        "description": "Complete ten resource-processing jobs through normal gameplay.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-14",
+        "name": "Second shelter",
+        "description": "Build a small personal outpost or make a substantial expansion to your existing shelter.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-15",
+        "name": "Independent route",
+        "description": "Travel between three distinct landmarks in one self-directed expedition.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-16",
+        "name": "Prepared journey",
+        "description": "Complete a solo expedition with food, water, tools and a spare equipment item prepared beforehand.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-17",
+        "name": "Desert salvage",
+        "description": "Recover useful loot from three different exploration or combat sites yourself.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-18",
+        "name": "Trial by combat",
+        "description": "Defeat 25 additional hostile NPCs during self-directed play.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-19",
+        "name": "Stocked for tomorrow",
+        "description": "Build up a personal reserve of 500 gathered or processed resource units through normal play.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "solo-quest-20",
+        "name": "The long way home",
+        "description": "Complete a substantial solo expedition combining exploration, resource gathering and a safe return to your shelter.",
+        "path": "solo",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-01",
+        "name": "Lay the foundation",
+        "description": "Place at least ten building pieces in your own build through normal gameplay.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-02",
+        "name": "Under one roof",
+        "description": "Create an enclosed room with a usable entrance and roof.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-03",
+        "name": "A working workshop",
+        "description": "Install and use a crafting station in your build.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-04",
+        "name": "Organised stores",
+        "description": "Create a dedicated storage area and organise at least three categories of supplies in game.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-05",
+        "name": "Room to grow",
+        "description": "Add a second functional room or work area to your build.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-06",
+        "name": "Well supplied",
+        "description": "Gather and deliver 200 construction-resource units to your own building project.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-07",
+        "name": "Power the plan",
+        "description": "Install or improve the power infrastructure used by your build.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-08",
+        "name": "A useful entrance",
+        "description": "Build or redesign a clear, usable route into your workshop or shelter.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-09",
+        "name": "Shelter repairs",
+        "description": "Repair or replace ten damaged or temporary construction pieces.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-10",
+        "name": "A second level",
+        "description": "Build an accessible raised platform, upper floor or multi-level structure.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-11",
+        "name": "Crafting district",
+        "description": "Arrange at least three usable workstations into a dedicated workshop area.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-12",
+        "name": "Room for supplies",
+        "description": "Expand your storage area with five additional usable containers.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-13",
+        "name": "Materials in motion",
+        "description": "Process 100 resource units for a construction project through normal gameplay.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-14",
+        "name": "A place to rest",
+        "description": "Complete a furnished personal room or living area in your base.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-15",
+        "name": "Outpost builder",
+        "description": "Construct a small functional outpost separate from your main work area.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-16",
+        "name": "Refine the layout",
+        "description": "Rebuild or relocate ten existing pieces to improve movement or functionality.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-17",
+        "name": "Construction milestone",
+        "description": "Place 50 additional building pieces as part of a planned extension.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-18",
+        "name": "Distinctive silhouette",
+        "description": "Finish a recognisable exterior feature such as a tower, courtyard, bridge or sheltered terrace.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-19",
+        "name": "Fully operational",
+        "description": "Complete a build with working crafting, storage and survival-supply areas.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "builder-quest-20",
+        "name": "Signature sanctuary",
+        "description": "Finish a substantial personal building project and walk through its completed functional spaces in game.",
+        "path": "builder",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-01",
+        "name": "Beyond the doorstep",
+        "description": "Travel to a landmark outside the area of your main shelter and return safely.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-02",
+        "name": "Three horizons",
+        "description": "Visit three distinct landmarks during the season.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-03",
+        "name": "Resource reconnaissance",
+        "description": "Find three different resource-gathering areas through exploration.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-04",
+        "name": "Sheltered route",
+        "description": "Complete a journey using natural cover or planned stops to manage exposure.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-05",
+        "name": "Salvage stop",
+        "description": "Explore a loot-bearing site and return with something useful.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-06",
+        "name": "High ground",
+        "description": "Reach an accessible elevated viewpoint and survey the surrounding terrain.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-07",
+        "name": "Route finder",
+        "description": "Travel between two settlements, outposts or major landmarks without relying on another player to lead you.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-08",
+        "name": "Into the ruins",
+        "description": "Explore a ruined or abandoned structure that is accessible in your game world.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-09",
+        "name": "Five destinations",
+        "description": "Visit five additional distinct landmarks during the season.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-10",
+        "name": "Supply trail",
+        "description": "Discover a route connecting a water-supply stop, a resource area and a safe return point.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-11",
+        "name": "Hazard awareness",
+        "description": "Explore a hazardous area using appropriate supplies and return without losing your expedition haul.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-12",
+        "name": "A different approach",
+        "description": "Reach a previously visited destination by a different route.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-13",
+        "name": "Distant gathering",
+        "description": "Gather 100 resources from an area you had not used for gathering earlier in the season.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-14",
+        "name": "Three site survey",
+        "description": "Explore three different loot-bearing sites in one or more outings.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-15",
+        "name": "Desert circuit",
+        "description": "Visit four distinct landmarks in one expedition.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-16",
+        "name": "Remote shelter",
+        "description": "Reach and use a safe resting or resupply location away from your main base.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-17",
+        "name": "Return with knowledge",
+        "description": "Revisit an exploration area with improved equipment and reach a place you could not safely access on your first visit.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-18",
+        "name": "Ten new horizons",
+        "description": "Visit ten additional distinct landmarks through normal exploration.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-19",
+        "name": "Long-range logistics",
+        "description": "Finish a distant expedition after planning enough water, equipment and return supplies yourself.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "explorer-quest-20",
+        "name": "Complete the circuit",
+        "description": "Finish a major expedition combining at least five landmarks, useful salvage and a safe return.",
+        "path": "explorer",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-01",
+        "name": "First consignment",
+        "description": "Hand over 50 gathered resource units to another player for a useful gameplay purpose.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-02",
+        "name": "Water carrier",
+        "description": "Provide five water consumables to another player who needs expedition supplies.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-03",
+        "name": "A useful tool",
+        "description": "Craft and supply three tools or equipment items to another player.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-04",
+        "name": "Construction support",
+        "description": "Deliver 100 construction-resource units to another player's building project.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-05",
+        "name": "Food and provisions",
+        "description": "Supply another player with a practical expedition-provision bundle. Describe what you provided.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-06",
+        "name": "Raw material run",
+        "description": "Gather and supply 150 raw resource units for an agreed project.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-07",
+        "name": "Workshop stock",
+        "description": "Provide resources for five crafting jobs completed by another player.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-08",
+        "name": "Repair support",
+        "description": "Supply repair materials or replacement equipment that another player uses.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-09",
+        "name": "A reliable route",
+        "description": "Complete a supply journey between a gathering area and an agreed delivery point.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-10",
+        "name": "Refined consignment",
+        "description": "Provide 100 processed resource units for another player's project.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-11",
+        "name": "Outpost resupply",
+        "description": "Deliver a useful resupply bundle to a remote player outpost.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-12",
+        "name": "Tools for two",
+        "description": "Equip two different players with a tool or useful crafted equipment item each.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-13",
+        "name": "Water reserve support",
+        "description": "Provide ten additional water consumables for other players' expeditions.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-14",
+        "name": "Build it together",
+        "description": "Supply 250 construction-resource units to an agreed building project.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-15",
+        "name": "Three consignments",
+        "description": "Complete three distinct, useful supply handovers during the season.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-16",
+        "name": "Workshop partner",
+        "description": "Complete ten crafting jobs intended for another player's practical use.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-17",
+        "name": "Keep the expedition moving",
+        "description": "Supply a player expedition with at least three different types of useful resources or provisions.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-18",
+        "name": "Remote delivery",
+        "description": "Complete a substantial long-distance supply handover and return safely.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-19",
+        "name": "Community reserve",
+        "description": "Contribute 500 additional gathered or processed resource units to useful player projects.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "supplier-quest-20",
+        "name": "A lasting lifeline",
+        "description": "Complete a major supply effort supporting a build, expedition or player group without requiring guild membership.",
+        "path": "supplier",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-01",
+        "name": "First steps together",
+        "description": "Accompany a newer player on a short in-game gathering outing.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-02",
+        "name": "Water lesson",
+        "description": "Show another player how you obtain and manage expedition water during actual gameplay.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-03",
+        "name": "Tool practice",
+        "description": "Help another player gather the resources for a useful tool and craft it in game.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-04",
+        "name": "Shelter lesson",
+        "description": "Help another player place their first ten pieces of a new shelter or extension.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-05",
+        "name": "Safe return",
+        "description": "Lead another player on a resource outing and bring both of you back to safety.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-06",
+        "name": "Workshop introduction",
+        "description": "Help another player use a crafting station to complete a useful item.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-07",
+        "name": "Storage habits",
+        "description": "Help another player arrange a usable supply-storage area in their base.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-08",
+        "name": "Combat practice",
+        "description": "Complete a hostile NPC encounter alongside another player while helping them practise survival or combat.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-09",
+        "name": "Navigation partner",
+        "description": "Guide another player between two landmarks they are learning to navigate.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-10",
+        "name": "Preparation together",
+        "description": "Help another player prepare water, tools and spare equipment for an actual expedition.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-11",
+        "name": "Processing practice",
+        "description": "Help another player complete five resource-processing jobs in game.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-12",
+        "name": "Build support",
+        "description": "Spend a gameplay session helping another player improve a functional room or workshop.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-13",
+        "name": "Salvage partners",
+        "description": "Explore a loot-bearing site with a newer player and return safely together.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-14",
+        "name": "Repair lesson",
+        "description": "Help another player repair or replace damaged equipment through normal gameplay.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-15",
+        "name": "A second traveller",
+        "description": "Help a different player complete a practical gathering, crafting or exploration objective.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-16",
+        "name": "Hostile site support",
+        "description": "Accompany another player while they clear a hostile camp or defended site.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-17",
+        "name": "Route rehearsal",
+        "description": "Practise a useful travel route with another player until they can lead the return journey.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-18",
+        "name": "Independent craft",
+        "description": "Help another player gather and craft an item they can use on a later independent outing.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-19",
+        "name": "Expedition coach",
+        "description": "Support a longer player-led expedition while letting the learner make the preparation and route decisions.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      },
+      {
+        "id": "mentor-quest-20",
+        "name": "Pass on the trail",
+        "description": "Finish a substantial in-game mentoring effort that leaves another player better equipped to gather, build, explore or survive independently.",
+        "path": "mentor",
+        "cadence": "seasonal",
+        "verification": "review",
+        "xp": 2500,
+        "limit": 1
+      }
+    ],
+    "milestones": [
+      {
+        "id": "first-tracks",
+        "name": "First Tracks",
+        "description": "Together, complete 100 approved in-game quests across every path. Participation matters, not leaderboard placement.",
+        "target": 100
+      },
+      {
+        "id": "shared-horizon",
+        "name": "A Shared Horizon",
+        "description": "Complete 500 approved in-game quests as a community and recognise the travellers who kept moving together.",
+        "target": 500
+      },
+      {
+        "id": "legacy-in-the-sand",
+        "name": "Legacy in the Sand",
+        "description": "Reach 1,000 approved in-game quests together. All paths contribute equally to this shared seasonal achievement.",
+        "target": 1000
+      }
+    ]
+  }
+}

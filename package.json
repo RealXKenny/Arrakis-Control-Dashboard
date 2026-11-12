@@ -18,6 +18,7 @@
     "format:check": "prettier --check src tests scripts",
     "redis:rekey": "node scripts/maintenance/rekey-redis.mjs",
     "marketplace:rekey": "node scripts/maintenance/rekey-marketplace.mjs",
+    "seasons:import": "tsx scripts/maintenance/import-season.ts",
     "docs:check": "node scripts/maintenance/check-docs.mjs",
     "docs:format:check": "node scripts/maintenance/check-changed-markdown.mjs",
     "test:integration": "vitest run tests/integration --no-file-parallelism",
@@ -34,6 +35,7 @@
     "next-auth": "5.0.0-beta.32",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "sharp": "0.35.5",
     "three": "^0.186.1",
     "tsx": "^4.23.15",
     "zod": "^4.6.7"

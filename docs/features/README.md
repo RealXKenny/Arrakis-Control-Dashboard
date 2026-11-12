@@ -8,6 +8,7 @@
 | [Maps](maps.md)                                            | Every member                   | `/map`                                   |
 | [Service status](dashboard.md#service-status)              | Every member                   | `/status` (always under More)            |
 | [Community events](community-events.md)                    | Members; administrators manage | `/events`, `/admin?tab=events`           |
+| [Community seasons](community-seasons.md)                  | Members; administrators manage | `/seasons`, `/admin?tab=seasons`         |
 | [Live game chat](live-chat.md)                             | Every member                   | `/chat`                                  |
 | [The Solaris Exchange](solaris-exchange.md)                | Every member                   | `/casino`, `/casino/games/[game]`        |
 | [Guilds](guilds.md)                                        | Members; leaders manage        | `/guilds`, `/guild`                      |

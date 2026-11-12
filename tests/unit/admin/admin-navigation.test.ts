@@ -33,7 +33,17 @@ it('treats every manager tab as dedicated so Advanced tools always works', async
   );
   for (const [kind, dedicated] of kinds)
     expect(dedicated, kind).toBe(
-      !['overview', 'statistics', 'guilds', 'events', 'setup', 'reference', 'console', 'operations'].includes(kind),
+      ![
+        'overview',
+        'statistics',
+        'guilds',
+        'events',
+        'seasons',
+        'setup',
+        'reference',
+        'console',
+        'operations',
+      ].includes(kind),
     );
   expect(kinds.filter(([, dedicated]) => dedicated).length).toBe(16);
 });

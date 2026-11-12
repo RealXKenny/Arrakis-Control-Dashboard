@@ -1,0 +1,641 @@
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { randomUUID } from 'node:crypto';
+import sharp from 'sharp';
+import type { Page, Browser, TestInfo } from '@playwright/test';
+import { test, expect } from '../helpers/browser-test';
+import type { Season, Definition, CommunityUpdate } from '../../src/features/seasons/contracts';
+
+const appOrigin = () => String(test.info().project.use.baseURL ?? 'http://127.0.0.1:3100');
+const adminCookie = '__Host-dashboard_session=browser-admin-session';
+const memberCookie = '__Host-dashboard_session=browser-member-session';
+const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
+async function authenticate(page: Page, cookie?: string) {
+  await page.context().clearCookies();
+  if (appOrigin().startsWith('https:')) {
+    await page.context().setExtraHTTPHeaders({});
+    if (cookie)
+      await page.context().addCookies([
+        {
+          name: '__Host-dashboard_session',
+          value: cookie.split('=')[1],
+          url: `${appOrigin()}/`,
+          secure: true,
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+      ]);
+  } else await page.context().setExtraHTTPHeaders(cookie ? { Cookie: cookie } : {});
+}
+
+async function adminAction(page: Page, data: Record<string, unknown>) {
+  const response = await page.request.post('/api/v2/admin/seasons', { headers: { Origin: appOrigin() }, data });
+  expect(response.ok(), await response.text()).toBe(true);
+  return response.json();
+}
+async function seed(page: Page) {
+  await authenticate(page, adminCookie);
+  const initial = (await (await page.request.get('/api/v2/admin/seasons')).json()) as {
+    seasons: Season[];
+    template: Definition;
+  };
+  // Fixture accounts and isolated RESP storage only; each project closes the prior fixture season before publishing.
+  for (const season of initial.seasons.filter((s) => s.phase === 'published'))
+    await adminAction(page, {
+      action: 'transition',
+      seasonId: season.id,
+      revision: season.revision,
+      transition: 'end',
+      confirmation: season.definition.name,
+    });
+  const definition: Definition = {
+    ...initial.template,
+    slug: `browser-${randomUUID()}`,
+    name: 'The Shared Horizon',
+    number: Math.max(0, ...initial.seasons.map((s) => s.definition.number)) + 1,
+    startsAt: new Date(Date.now() - 3600000).toISOString(),
+    endsAt: new Date(Date.now() + 86400000).toISOString(),
+    milestones: [
+      {
+        id: 'together',
+        name: 'Together across the sands',
+        description: 'Complete one approved community objective.',
+        target: 1,
+      },
+    ],
+  };
+  const { season } = await adminAction(page, { action: 'save', seasonId: randomUUID(), revision: '', definition });
+  return season as Season;
+}
+async function memberBrowser(browser: Browser, info: TestInfo) {
+  const context = await browser.newContext({
+    baseURL: appOrigin(),
+    ignoreHTTPSErrors: info.project.use.ignoreHTTPSErrors,
+    extraHTTPHeaders: appOrigin().startsWith('https:') ? {} : { Cookie: memberCookie },
+    viewport: info.project.use.viewport,
+    isMobile: info.project.use.isMobile,
+    hasTouch: info.project.use.hasTouch,
+    deviceScaleFactor: info.project.use.deviceScaleFactor,
+    userAgent: info.project.use.userAgent,
+  });
+  if (appOrigin().startsWith('https:'))
+    await context.addCookies([
+      {
+        name: '__Host-dashboard_session',
+        value: 'browser-member-session',
+        url: `${appOrigin()}/`,
+        secure: true,
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+    ]);
+  return context;
+}
+async function accessible(page: Page) {
+  await page.evaluate(axeSource);
+  const violations = await page.evaluate(async () => {
+    const axe = (
+      window as unknown as {
+        axe: {
+          run: (
+            document: Document,
+            options: object,
+          ) => Promise<{ violations: { id: string; nodes: { target: string[] }[] }[] }>;
+        };
+      }
+    ).axe;
+    const result = await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] });
+    return result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
+  });
+  expect(violations).toEqual([]);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
+  ).toBeLessThanOrEqual(1);
+}
+
+test('uploaded hero/reward art and audited live edits preserve immutable rewards across browsers', async ({
+  page,
+  browser,
+}, info) => {
+  test.setTimeout(60000);
+  page.setDefaultTimeout(10000);
+  const draft = await seed(page);
+  const context = await memberBrowser(browser, info);
+  const member = await context.newPage();
+  member.setDefaultTimeout(10000);
+  await page.goto('/admin?tab=seasons');
+  await page
+    .getByRole('button', { name: /The Shared Horizon/ })
+    .first()
+    .click();
+  const image = await sharp({ create: { width: 640, height: 360, channels: 3, background: '#3b7891' } })
+    .png()
+    .toBuffer();
+  await page
+    .getByLabel('Season hero artwork', { exact: true })
+    .setInputFiles({ name: 'season.png', mimeType: 'image/png', buffer: image });
+  await expect(page.getByLabel('Alternative text for Season hero artwork')).toBeVisible();
+  await page.getByLabel('Alternative text for Season hero artwork').fill('Spice-blue desert horizon');
+  // Reuse the same decoded image in another slot; content addressing avoids extra binary copies.
+  await page
+    .getByLabel('Reward artwork: Wayfarer', { exact: true })
+    .setInputFiles({ name: 'reward.png', mimeType: 'image/png', buffer: image });
+  await expect(page.getByLabel('Alternative text for Reward artwork: Wayfarer')).toBeVisible();
+  const beforeSave = await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json();
+  const uploadPreview = page.getByRole('img', { name: 'Spice-blue desert horizon', exact: true });
+  const imageUrl = await uploadPreview.getAttribute('src');
+  expect((await member.request.get(imageUrl)).status()).toBe(404);
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.locator('.season-notice[role="status"]')).toHaveText('Season operation saved.');
+  page.once('dialog', (dialog) => dialog.accept(draft.definition.name));
+  await page.getByRole('button', { name: 'Publish saved season', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Live season presentation', exact: true })).toBeVisible();
+  await member.goto(`/seasons?season=${draft.id}`);
+  await expect(member.getByRole('img', { name: 'Spice-blue desert horizon', exact: true })).toBeVisible();
+  const response = await member.request.get(imageUrl);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toBe('image/webp');
+  expect(response.headers()['x-content-type-options']).toBe('nosniff');
+  await member.getByRole('button', { name: /Level 01.*Wayfarer/ }).click();
+  await member.getByRole('button', { name: 'Confirm free claim', exact: true }).click();
+  await expect(member.locator('.season-notice[role="status"]')).toContainText('Cosmetic claimed');
+  const published = await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json();
+  const liveEditor = page
+    .locator('section')
+    .filter({ has: page.getByRole('heading', { name: 'Live season presentation', exact: true }) });
+  const liveImage = await sharp({ create: { width: 640, height: 360, channels: 3, background: '#775a32' } })
+    .png()
+    .toBuffer();
+  await page
+    .getByLabel('Live season hero artwork', { exact: true })
+    .setInputFiles({ name: 'evening.png', mimeType: 'image/png', buffer: liveImage });
+  await expect(
+    liveEditor.getByText('Artwork uploaded. Save the season or live presentation to use it.', { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel('Alternative text for Live season hero artwork').fill('Copper desert evening');
+  await page.getByLabel('Live subtitle', { exact: true }).fill('A living community, a permanent legacy');
+  await page
+    .getByLabel('Live description', { exact: true })
+    .fill('Updated information for every traveller, without changing the published objectives.');
+  await page.getByLabel('Live theme', { exact: true }).selectOption('eclipse');
+  await page.getByLabel('Reason for live edit').fill('Clarify the current community season introduction.');
+  await page.getByLabel('Type the saved season name to confirm').fill(draft.definition.name);
+  await page.getByRole('button', { name: 'Save live presentation', exact: true }).click();
+  await expect(page.locator('.season-notice[role="status"]')).toHaveText('Season operation saved.');
+  const after = await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json();
+  expect(after.season.definition).toEqual(published.season.definition);
+  expect(after.audit.at(-1).action).toBe('season.presentation_updated');
+  expect(after.season.version).toBeGreaterThan(beforeSave.season.version);
+  const stale = await page.request.post('/api/v2/admin/seasons', {
+    headers: { Origin: appOrigin() },
+    data: {
+      action: 'presentation',
+      seasonId: draft.id,
+      revision: published.season.revision,
+      presentation: after.season.presentation,
+      reason: 'A stale tab must never overwrite a new edit.',
+      confirmation: draft.definition.name,
+    },
+  });
+  expect(stale.status()).toBe(409);
+  await member.bringToFront();
+  await expect(member.getByText('A living community, a permanent legacy', { exact: true })).toBeVisible({
+    timeout: 20000,
+  });
+  await expect(member.getByRole('img', { name: 'Copper desert evening', exact: true })).toBeVisible();
+  const owned = await (await member.request.get(`/api/v2/seasons?season=${draft.id}`)).json();
+  expect(owned.progress.claims[0].reward).toEqual(published.season.definition.rewards[0]);
+  await accessible(member);
+  await accessible(page);
+  await member.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await member.screenshot({ path: info.outputPath('uploaded-artwork.png'), fullPage: true });
+  await page.getByText('Permanent season audit (latest 100 operations)', { exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect presentation change', exact: true }).last().click();
+  await expect(page.getByRole('heading', { name: 'Presentation change', exact: true })).toBeVisible();
+  await expect(page.getByText(`Before: ${draft.definition.subtitle}`, { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Restore published presentation in form', exact: true }).click();
+  await page.getByLabel('Reason for live edit').fill('Restore the published presentation through an audited rollback.');
+  await page.getByLabel('Type the saved season name to confirm').fill(draft.definition.name);
+  await page.getByRole('button', { name: 'Save live presentation', exact: true }).click();
+  await expect(page.locator('.season-notice[role="status"]')).toHaveText('Season operation saved.');
+  await member.reload();
+  await expect(member.getByText(draft.definition.subtitle, { exact: true })).toBeVisible();
+  const restored = await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json();
+  expect(restored.season.definition).toEqual(published.season.definition);
+  const ended = await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: restored.season.revision,
+    transition: 'end',
+    confirmation: draft.definition.name,
+  });
+  const locked = await page.request.post('/api/v2/admin/seasons', {
+    headers: { Origin: appOrigin() },
+    data: {
+      action: 'presentation',
+      seasonId: draft.id,
+      revision: ended.season.revision,
+      presentation: after.season.presentation,
+      reason: 'A completed season must remain historically accurate.',
+      confirmation: draft.definition.name,
+    },
+  });
+  expect(locked.status()).toBe(409);
+  await context.close();
+});
+
+test('live progress observes another member, retains totals on failure, and pauses hidden polling', async ({
+  page,
+  browser,
+}, info) => {
+  test.setTimeout(60000);
+  const draft = await seed(page);
+  const published = await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: draft.revision,
+    transition: 'publish',
+    confirmation: draft.definition.name,
+  });
+  const context = await memberBrowser(browser, info);
+  const member = await context.newPage();
+  await member.clock.install();
+  await member.goto(`/seasons?season=${draft.id}`);
+  await expect(member.getByRole('heading', { name: draft.definition.name, exact: true })).toBeVisible();
+  await member.clock.pauseAt(new Date(Date.now() + 1000));
+  const submitted = await (
+    await member.request.post('/api/v2/seasons', {
+      headers: { Origin: appOrigin(), Cookie: '__Host-dashboard_session=browser-user-4444' },
+      data: {
+        action: 'submit',
+        seasonId: draft.id,
+        challengeId: 'solo-contribution',
+        text: 'An independently verified contribution for our shared milestone.',
+        links: [],
+        requestId: randomUUID(),
+      },
+    })
+  ).json();
+  const submission = submitted.progress.submissions[0];
+  expect(submission.owner).not.toBe('123456789000000000');
+  await adminAction(page, {
+    action: 'review',
+    seasonId: draft.id,
+    owner: submission.owner,
+    submissionId: submission.id,
+    approve: true,
+    note: 'Reviewed by a separate administrator.',
+  });
+  // Fast-forward only this browser's timers; the API continues using real server dates.
+  await member.clock.runFor(15010);
+  await expect(member.getByText('✦ Shared achievement unlocked', { exact: true })).toBeVisible();
+  const confirmed = (await (
+    await member.request.get(`/api/v2/seasons/${draft.id}/community`)
+  ).json()) as CommunityUpdate;
+  expect(JSON.stringify(confirmed)).not.toContain(submission.owner);
+  expect(confirmed).not.toHaveProperty('progress');
+  let reads = 0;
+  await member.route(`**/api/v2/seasons/${draft.id}/community`, async (route) => {
+    reads++;
+    await route.fulfill({ status: 503, json: { error: 'Fixture outage' } });
+  });
+  await member.clock.runFor(15010);
+  await expect(member.getByText(/Live progress delayed/)).toBeVisible();
+  await expect(member.getByText('1 / 1 approved challenges', { exact: true })).toBeVisible();
+  const failedReads = reads;
+  await member.clock.runFor(20000);
+  expect(reads).toBe(failedReads);
+  await member.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await member.clock.runFor(120000);
+  expect(reads).toBe(failedReads);
+  await member.unroute(`**/api/v2/seasons/${draft.id}/community`);
+  await member.route(`**/api/v2/seasons/${draft.id}/community`, (route) =>
+    route.fulfill({ json: { ...confirmed, totals: { ...confirmed.totals, version: 0, completions: 0 } } }),
+  );
+  await member.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(member.getByText(/Community progress is live/)).toBeVisible();
+  await expect(member.getByText('1 / 1 approved challenges', { exact: true })).toBeVisible();
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: published.season.revision,
+    transition: 'end',
+    confirmation: draft.definition.name,
+  });
+  await context.close();
+});
+
+test('reward navigation, dialogs, filters and long-text layouts meet mobile/Safari accessibility checks', async ({
+  page,
+}, info) => {
+  test.setTimeout(60000);
+  const draft = await seed(page);
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: draft.revision,
+    transition: 'publish',
+    confirmation: draft.definition.name,
+  });
+  await authenticate(page, memberCookie);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(`/seasons?season=${draft.id}`);
+  await expect(page.getByRole('heading', { name: draft.definition.name, exact: true })).toBeVisible();
+  await accessible(page);
+  const track = page.getByRole('region', { name: /Reward track/ });
+  const first = track.getByRole('button', { name: /Wayfarer/ });
+  if (info.project.use.hasTouch) await first.tap();
+  else await first.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await accessible(page);
+  for (let i = 0; i < 6; i++) {
+    await page.keyboard.press('Tab');
+    expect(await page.getByRole('dialog').evaluate((dialog) => dialog.contains(document.activeElement))).toBe(true);
+  }
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(first).toBeFocused();
+  const before = await track.evaluate((element) => element.scrollLeft);
+  await page.getByRole('button', { name: 'Next rewards', exact: true }).click();
+  if (await track.evaluate((element) => element.scrollWidth > element.clientWidth))
+    expect(await track.evaluate((element) => element.scrollLeft)).toBeGreaterThan(before);
+  await page.getByLabel('Path', { exact: true }).selectOption('solo');
+  await page.getByRole('button', { name: 'Submit evidence', exact: true }).click();
+  await accessible(page);
+  await page
+    .getByLabel('Description', { exact: true })
+    .fill('Long evidence with clear descriptions and keyboard-accessible controls. '.repeat(10));
+  await accessible(page);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Submit evidence', exact: true })).toBeFocused();
+  const targets = await page
+    .locator('.season-button:visible')
+    .evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().height));
+  expect(targets.every((height) => height >= 44)).toBe(true);
+  await page.screenshot({ path: info.outputPath(`season-${info.project.name}-accessible.png`), fullPage: true });
+  await authenticate(page, adminCookie);
+  const current = (await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json()).season as Season;
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: current.revision,
+    transition: 'end',
+    confirmation: current.definition.name,
+  });
+});
+
+test('upload and live endpoints reject unauthenticated access, disguised scripts, stale writes and forged rule edits', async ({
+  page,
+}) => {
+  const draft = await seed(page);
+  const endpoint = `/api/v2/admin/seasons/artwork?season=${draft.id}&revision=${draft.revision}`;
+  const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  const disguised = await page.request.post(endpoint, {
+    headers: { Origin: appOrigin(), 'Content-Type': 'image/png' },
+    data: svg,
+  });
+  expect(disguised.status()).toBe(400);
+  await authenticate(page, memberCookie);
+  expect((await page.request.post(endpoint, { headers: { Origin: appOrigin() }, data: svg })).status()).toBe(403);
+  expect((await page.request.get(`/api/v2/seasons/${draft.id}/community`)).status()).toBe(404);
+  await authenticate(page);
+  expect((await page.request.get(`/api/v2/seasons/${draft.id}/community`)).status()).toBe(401);
+  await authenticate(page, adminCookie);
+  const published = await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: draft.revision,
+    transition: 'publish',
+    confirmation: draft.definition.name,
+  });
+  const forged = await page.request.post('/api/v2/admin/seasons', {
+    headers: { Origin: appOrigin() },
+    data: {
+      action: 'presentation',
+      seasonId: draft.id,
+      revision: published.season.revision,
+      presentation: {
+        subtitle: draft.definition.subtitle,
+        description: draft.definition.description,
+        theme: 'dunes',
+        rewards: [],
+      },
+      reason: 'Forbidden changes must not alter the published track.',
+      confirmation: draft.definition.name,
+    },
+  });
+  expect(forged.status()).toBe(400);
+  expect((await (await page.request.get('/api/v2/admin/seasons')).json()).deliveryEnabled).toBe(true);
+  expect(
+    (
+      await page.request.post('/api/v2/admin/seasons', {
+        headers: { Origin: appOrigin() },
+        data: { action: 'delivery-execute', seasonId: draft.id },
+      })
+    ).status(),
+  ).toBe(400);
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: published.season.revision,
+    transition: 'end',
+    confirmation: draft.definition.name,
+  });
+});
+
+test('reviewed Solaris and item rewards execute once through the admin UI without touching season XP', async ({
+  page,
+}, testInfo) => {
+  const draft = await seed(page);
+  const definition = structuredClone(draft.definition);
+  definition.rewards[0].gameReward = { type: 'solaris', amount: '100' };
+  definition.rewards[1].gameReward = { type: 'item', itemId: 'IronOre', quantity: 12, quality: 0 };
+  definition.rewards[1].level = 1;
+  const { season: saved } = await adminAction(page, {
+    action: 'save',
+    seasonId: draft.id,
+    revision: draft.revision,
+    definition,
+  });
+  const { season } = await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: saved.revision,
+    transition: 'publish',
+    confirmation: saved.definition.name,
+  });
+  const fixture = appOrigin().startsWith('https:') ? 'http://127.0.0.1:3103' : 'http://127.0.0.1:3101';
+  const slot = 4445 + ['chromium', 'season-safari', 'season-iphone', 'season-android'].indexOf(testInfo.project.name);
+  const owner = `90000000000${String(slot).padStart(7, '0')}`;
+  await page.request.post(`${fixture}/__fixture/user`, {
+    data: {
+      discordId: owner,
+      name: 'Delivery recipient',
+      patch: { linked: { onlineStatus: 'Offline', online: false }, details: { 'solaris-coin': { total: 1000 } } },
+    },
+  });
+  await authenticate(page, `__Host-dashboard_session=browser-user-${slot}`);
+  for (const reward of definition.rewards.slice(0, 2)) {
+    const response = await page.request.post('/api/v2/seasons', {
+      headers: { Origin: appOrigin() },
+      data: { action: 'claim', seasonId: season.id, rewardId: reward.id },
+    });
+    expect(response.ok(), await response.text()).toBe(true);
+  }
+  await page.goto(`/seasons?season=${season.id}`);
+  await page
+    .getByRole('region', { name: /Reward track/ })
+    .getByRole('button', { name: /Wayfarer/ })
+    .click();
+  await page.getByRole('button', { name: 'Request game delivery', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Game delivery requested for administrator review.');
+  await authenticate(page, adminCookie);
+  await page.goto('/admin?tab=seasons');
+  await page.getByRole('button', { name: new RegExp(`Season ${season.definition.number} / active`) }).click();
+  const panel = page.getByRole('region', { name: 'In-game deliveries', exact: true });
+  for (const reward of definition.rewards.slice(0, 2)) {
+    await panel.getByLabel('Recipient dashboard account ID').fill(owner);
+    await panel.getByLabel('Claimed in-game reward').selectOption(reward.id);
+    await panel.getByLabel('Authorization basis').fill('Approved disposable season acceptance reward.');
+    await panel.getByRole('button', { name: 'Request delivery review', exact: true }).click();
+    await expect(page.getByRole('status')).toHaveText('Season operation saved.');
+  }
+  const queue = (await (await page.request.get(`/api/v2/admin/seasons?season=${season.id}`)).json()).deliveries;
+  const denied = await page.request.post('/api/v2/admin/seasons', {
+    headers: { Origin: appOrigin() },
+    data: {
+      action: 'delivery-review',
+      seasonId: season.id,
+      deliveryId: queue[1].id,
+      revision: queue[1].revision,
+      approve: true,
+      note: 'Self approval must fail.',
+    },
+  });
+  expect(denied.status()).toBe(403);
+  await authenticate(page, '__Host-dashboard_session=browser-reviewer-session');
+  await page.reload();
+  await page.getByRole('button', { name: new RegExp(`Season ${season.definition.number} / active`) }).click();
+  for (const delivery of queue) {
+    const card = panel
+      .getByRole('article')
+      .filter({ hasText: delivery.gameReward.type === 'solaris' ? '100 Solaris' : 'IronOre × 12' });
+    await card.getByLabel('Delivery review notes').fill('Independently checked reward ownership.');
+    await card.getByRole('button', { name: 'Approve delivery', exact: true }).click();
+    await expect(card.getByRole('button', { name: 'Execute approved delivery' })).toBeVisible();
+    await card.getByLabel(`Type DELIVER ${delivery.id}`, { exact: true }).fill(`DELIVER ${delivery.id}`);
+    page.once('dialog', (dialog) => dialog.accept());
+    await card.getByRole('button', { name: 'Execute approved delivery', exact: true }).click();
+    await expect(card.getByText('console_confirmed', { exact: true })).toBeVisible();
+  }
+  const final = await (await page.request.get(`/api/v2/admin/seasons?season=${season.id}&owner=${owner}`)).json();
+  expect(final.deliveries.map((v: { status: string }) => v.status)).toEqual(['delivered', 'delivered']);
+  expect(final.member.xp).toBe(0);
+  const replay = await page.request.post('/api/v2/admin/seasons', {
+    headers: { Origin: appOrigin() },
+    data: {
+      action: 'delivery-execute',
+      seasonId: season.id,
+      deliveryId: final.deliveries[0].id,
+      revision: final.deliveries[0].revision,
+      confirmation: `DELIVER ${final.deliveries[0].id}`,
+    },
+  });
+  expect(replay.status()).toBe(409);
+  const requests = await (await page.request.get(`${fixture}/__fixture/requests`)).json();
+  const pawnId = final.deliveries[0].pawnId;
+  expect(
+    requests.filter(
+      (v: { method: string; path: string }) => v.method === 'POST' && v.path === `/api/players/${pawnId}/add-currency`,
+    ),
+  ).toHaveLength(1);
+  expect(
+    requests.filter(
+      (v: { method: string; path: string }) => v.method === 'POST' && v.path === `/api/players/${pawnId}/give-item-id`,
+    ),
+  ).toHaveLength(1);
+  await accessible(page);
+  await panel.screenshot({ path: testInfo.outputPath('season-game-delivery.png') });
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: season.id,
+    revision: season.revision,
+    transition: 'end',
+    confirmation: season.definition.name,
+  });
+});
+
+test('the 100-level pass supports chapter navigation and in-game quest filtering on desktop and mobile', async ({
+  page,
+  browser,
+}, info) => {
+  test.setTimeout(60000);
+  const draft = await seed(page);
+  const content = JSON.parse(readFileSync('src/features/seasons/content/season-1.json', 'utf8')) as {
+    definition: Definition;
+  };
+  const definition = {
+    ...content.definition,
+    slug: draft.definition.slug,
+    number: draft.definition.number,
+    startsAt: draft.definition.startsAt,
+    endsAt: draft.definition.endsAt,
+  };
+  const { season: saved } = await adminAction(page, {
+    action: 'save',
+    seasonId: draft.id,
+    revision: draft.revision,
+    definition,
+  });
+  const { season } = await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: saved.revision,
+    transition: 'publish',
+    confirmation: definition.name,
+  });
+  const context = await memberBrowser(browser, info);
+  const member = await context.newPage();
+  await member.emulateMedia({ reducedMotion: 'reduce' });
+  await member.goto(`/seasons?season=${season.id}`);
+  const track = member.getByRole('region', { name: /Reward track/ });
+  await expect(track.getByRole('button')).toHaveCount(100);
+  await expect(member.getByRole('navigation', { name: 'Reward level chapters' }).getByRole('button')).toHaveCount(10);
+  await member.getByRole('button', { name: 'Levels 91–100', exact: true }).click();
+  await expect(track.getByRole('button', { name: /Level 91 / })).toBeInViewport();
+  const last = track.getByRole('button', { name: /Level 100/ });
+  await last.scrollIntoViewIfNeeded();
+  await last.click();
+  await expect(member.getByRole('dialog')).toBeVisible();
+  await expect(member.getByRole('button', { name: 'Confirm free claim', exact: true })).toBeDisabled();
+  await member.getByRole('button', { name: 'Close preview', exact: true }).click();
+  await accessible(member);
+  await member.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await member.screenshot({ path: info.outputPath('season-100-levels.png'), fullPage: true });
+  await member.goto(`/seasons/challenges?season=${season.id}`);
+  await member.getByLabel('Path', { exact: true }).selectOption('solo');
+  await expect(
+    member.getByRole('region', { name: 'Challenge dispatch', exact: true }).locator('.season-challenge'),
+  ).toHaveCount(20);
+  await expect(member.getByRole('button', { name: 'Submit evidence', exact: true })).toHaveCount(20);
+  await expect(member.getByRole('button', { name: 'Verify now', exact: true })).toHaveCount(0);
+  await member.getByRole('button', { name: 'Submit evidence', exact: true }).first().click();
+  await expect(member.getByRole('dialog')).toBeVisible();
+  await expect(member.getByRole('dialog')).toContainText('Gather 100 raw resources');
+  await member.keyboard.press('Escape');
+  await accessible(member);
+  await context.close();
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: season.id,
+    revision: season.revision,
+    transition: 'end',
+    confirmation: definition.name,
+  });
+});
