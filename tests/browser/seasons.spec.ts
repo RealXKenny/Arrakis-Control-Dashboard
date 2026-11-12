@@ -148,7 +148,22 @@ test('packaged Season 1 remains editable and previewable in the admin dashboard'
   await expect(page.getByRole('status')).toHaveText('Season operation saved.');
   await page.getByRole('button', { name: 'Preview season', exact: true }).click();
   await expect(page.getByRole('img', { name: content.artwork.alt, exact: true })).toBeVisible();
-  await expect(page.getByRole('region', { name: /Reward track/ }).getByRole('button')).toHaveCount(10);
+  await expect(page.getByRole('region', { name: /Reward track/ }).getByRole('button')).toHaveCount(100);
+  await page.getByRole('button', { name: 'Levels 91–100', exact: true }).click();
+  await expect(
+    page.getByRole('region', { name: /Reward track/ }).getByRole('button', { name: /Level 91 / }),
+  ).toBeInViewport();
+  const finalReward = page.getByRole('region', { name: /Reward track/ }).getByRole('button', { name: /Level 100/ });
+  await finalReward.scrollIntoViewIfNeeded();
+  await expect(finalReward).toBeInViewport();
+  await finalReward.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Close preview', exact: true }).click();
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await page
+    .locator('.season-root')
+    .last()
+    .screenshot({ path: testInfo.outputPath('season-100-levels-preview.png') });
   await page.getByRole('button', { name: 'Return to editor', exact: true }).click();
   await page.getByLabel('subtitle', { exact: true }).fill('A reusable draft, edited through the admin dashboard.');
   await page.getByRole('button', { name: 'Save draft', exact: true }).click();

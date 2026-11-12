@@ -1,5 +1,7 @@
 # Kimi handoff: season delivery and Season 1 import
 
+Historical checkpoint: the delivery/import work described as uncommitted below was subsequently committed in `f37681d` and verified in `20242e8`. Season 1 has since been refreshed as a 100-level Redis draft with 100 rewards and 100 gameplay quests. Follow the [current progress report](community-seasons-progress.md) for current validation and remaining work; do not treat the old pending checklist below as the present repository state.
+
 Checkpoint: November 11, 2026, America/New_York. This records the working tree at handoff; inspect the current diff and CI before continuing. Instructions below are for the next agent, not claims that pending work has completed.
 
 ## Mission and boundaries

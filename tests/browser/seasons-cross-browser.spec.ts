@@ -570,3 +570,72 @@ test('reviewed Solaris and item rewards execute once through the admin UI withou
     confirmation: season.definition.name,
   });
 });
+
+test('the 100-level pass supports chapter navigation and in-game quest filtering on desktop and mobile', async ({
+  page,
+  browser,
+}, info) => {
+  test.setTimeout(60000);
+  const draft = await seed(page);
+  const content = JSON.parse(readFileSync('src/features/seasons/content/season-1.json', 'utf8')) as {
+    definition: Definition;
+  };
+  const definition = {
+    ...content.definition,
+    slug: draft.definition.slug,
+    number: draft.definition.number,
+    startsAt: draft.definition.startsAt,
+    endsAt: draft.definition.endsAt,
+  };
+  const { season: saved } = await adminAction(page, {
+    action: 'save',
+    seasonId: draft.id,
+    revision: draft.revision,
+    definition,
+  });
+  const { season } = await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: saved.revision,
+    transition: 'publish',
+    confirmation: definition.name,
+  });
+  const context = await memberBrowser(browser, info);
+  const member = await context.newPage();
+  await member.emulateMedia({ reducedMotion: 'reduce' });
+  await member.goto(`/seasons?season=${season.id}`);
+  const track = member.getByRole('region', { name: /Reward track/ });
+  await expect(track.getByRole('button')).toHaveCount(100);
+  await expect(member.getByRole('navigation', { name: 'Reward level chapters' }).getByRole('button')).toHaveCount(10);
+  await member.getByRole('button', { name: 'Levels 91–100', exact: true }).click();
+  await expect(track.getByRole('button', { name: /Level 91 / })).toBeInViewport();
+  const last = track.getByRole('button', { name: /Level 100/ });
+  await last.scrollIntoViewIfNeeded();
+  await last.click();
+  await expect(member.getByRole('dialog')).toBeVisible();
+  await expect(member.getByRole('button', { name: 'Confirm free claim', exact: true })).toBeDisabled();
+  await member.getByRole('button', { name: 'Close preview', exact: true }).click();
+  await accessible(member);
+  await member.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await member.screenshot({ path: info.outputPath('season-100-levels.png'), fullPage: true });
+  await member.goto(`/seasons/challenges?season=${season.id}`);
+  await member.getByLabel('Path', { exact: true }).selectOption('solo');
+  await expect(
+    member.getByRole('region', { name: 'Challenge dispatch', exact: true }).locator('.season-challenge'),
+  ).toHaveCount(20);
+  await expect(member.getByRole('button', { name: 'Submit evidence', exact: true })).toHaveCount(20);
+  await expect(member.getByRole('button', { name: 'Verify now', exact: true })).toHaveCount(0);
+  await member.getByRole('button', { name: 'Submit evidence', exact: true }).first().click();
+  await expect(member.getByRole('dialog')).toBeVisible();
+  await expect(member.getByRole('dialog')).toContainText('Gather 100 raw resources');
+  await member.keyboard.press('Escape');
+  await accessible(member);
+  await context.close();
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: season.id,
+    revision: season.revision,
+    transition: 'end',
+    confirmation: definition.name,
+  });
+});

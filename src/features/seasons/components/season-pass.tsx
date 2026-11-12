@@ -384,6 +384,30 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                   </button>
                 </div>
               </div>
+              {rewards.length > 20 && (
+                <nav className="season-actions season-track-chapters" aria-label="Reward level chapters">
+                  {Array.from({ length: Math.ceil(rewards.length / 10) }, (_, chapter) => (
+                    <button
+                      key={chapter}
+                      type="button"
+                      className="season-button"
+                      aria-controls={trackId}
+                      onClick={() => {
+                        const card = track.current?.children[chapter * 10];
+                        if (card)
+                          card.scrollIntoView({
+                            block: 'nearest',
+                            inline: 'start',
+                            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                          });
+                      }}
+                    >
+                      Levels {rewards[chapter * 10].level}–
+                      {rewards[Math.min(chapter * 10 + 9, rewards.length - 1)].level}
+                    </button>
+                  ))}
+                </nav>
+              )}
               <div
                 className="season-track"
                 id={trackId}
@@ -430,6 +454,10 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               <Link href="/seasons/challenges">Browse challenges →</Link>
             </div>
             <p>Every path can reach the level cap. Solo challenges require no guild or group attendance.</p>
+            <p>
+              Complete objectives in game, then submit a description and optional HTTPS screenshots or clips. Moderators
+              review gameplay evidence before awarding XP.
+            </p>
             <div className="season-filters">
               <label>
                 Path
@@ -459,8 +487,14 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 </select>
               </label>
             </div>
+            {mode !== 'challenges' && filtered.length > 6 && (
+              <p>
+                Showing six of {filtered.length} matching quests.{' '}
+                <Link href="/seasons/challenges">Browse every in-game quest →</Link>
+              </p>
+            )}
             <div className="season-challenges">
-              {filtered.map((c) => (
+              {(mode === 'challenges' ? filtered : filtered.slice(0, 6)).map((c) => (
                 <article className="season-challenge" key={c.id}>
                   <div className="season-section-heading">
                     <span className="season-kicker">
@@ -638,6 +672,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
         <div className="season-modal-backdrop">
           <SeasonDialog labelledBy="evidence-title" returnFocus={dialogTrigger} onClose={() => setChallenge(null)}>
             <h2 id="evidence-title">{challenge.name}</h2>
+            <p>{challenge.description}</p>
             <p>
               Describe your contribution. A moderator must approve it before XP is awarded. Evidence links open
               separately; files are never fetched automatically.
