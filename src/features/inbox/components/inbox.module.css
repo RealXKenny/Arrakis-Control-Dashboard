@@ -32,6 +32,36 @@
   background: var(--color-obsidian-900);
   border: 1px solid var(--color-sand-500);
 }
+.root input[type='number'],
+.root input[type='time'],
+.root input[type='text'] {
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.6rem;
+  background: var(--color-obsidian-900);
+  border: 1px solid var(--color-sand-500);
+  color: var(--color-sand-100);
+}
+.root fieldset {
+  min-width: 0;
+  margin-top: 1rem;
+}
+.filters > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.root button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.check {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 0.75rem;
+}
 .filters .check {
   display: flex;
   align-items: center;

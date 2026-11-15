@@ -1,5 +1,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
+import { defaultNotifications } from '../../src/features/inbox/preferences';
 const state = vi.hoisted(() => ({
+  preferences: vi.fn(),
   session: vi.fn(),
   limit: vi.fn(),
   profile: vi.fn(),
@@ -7,6 +9,7 @@ const state = vi.hoisted(() => ({
   supply: vi.fn(),
   operations: vi.fn(),
 }));
+vi.mock('../../src/features/inbox/server/preferences-store', () => ({ readNotifications: state.preferences }));
 vi.mock('../../src/features/auth/server/session', () => ({ currentSession: state.session }));
 vi.mock('../../src/lib/security/rate-limit', () => ({ checkRateLimit: state.limit }));
 vi.mock('../../src/lib/security/audit', () => ({ recordAudit: vi.fn() }));
@@ -20,6 +23,7 @@ const req = () => new Request('http://localhost/api/v2/inbox?guildId=foreign&own
 const session = { user: { id: 'self' } };
 beforeEach(() => {
   vi.clearAllMocks();
+  state.preferences.mockResolvedValue(defaultNotifications());
   state.session.mockResolvedValue(session);
   state.limit.mockResolvedValue({ allowed: true });
   state.profile.mockResolvedValue({
@@ -29,6 +33,13 @@ beforeEach(() => {
   state.member.mockResolvedValue({ memberId: 'canonical-self', canEdit: false });
   state.supply.mockResolvedValue([]);
   state.operations.mockResolvedValue([]);
+});
+it('does not bypass stored controls or load private sources during a notification storage outage', async () => {
+  state.preferences.mockRejectedValueOnce(new Error('private Redis failure'));
+  const response = await GET(req());
+  expect(response.status).toBe(500);
+  expect(state.profile).not.toHaveBeenCalled();
+  expect(JSON.stringify(await response.json())).not.toContain('private Redis failure');
 });
 it('requires a session and fails closed on unavailable request protection', async () => {
   state.session.mockResolvedValueOnce(null);

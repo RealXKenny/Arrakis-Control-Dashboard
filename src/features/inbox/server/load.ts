@@ -84,7 +84,11 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
   // Opaque response IDs never expose raw asset, member, controller or pawn identifiers.
   const seen = new Set<string>();
   alerts = alerts
-    .map((alert) => ({ ...alert, id: createHash('sha256').update(`${session.user.id}\0${alert.id}`).digest('hex') }))
+    .map((alert) => ({
+      ...alert,
+      fingerprint: createHash('sha256').update(JSON.stringify(alert)).digest('hex'),
+      id: createHash('sha256').update(`${session.user.id}\0${alert.id}`).digest('hex'),
+    }))
     .filter((alert) => {
       if (seen.has(alert.id)) return false;
       seen.add(alert.id);

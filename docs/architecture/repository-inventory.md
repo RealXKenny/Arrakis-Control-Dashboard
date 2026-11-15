@@ -1,5 +1,7 @@
 # Repository inventory
 
+N093 extends `src/features/inbox/` with notification schemas/policy, a settings editor and bounded private Redis controls. `/api/v2/inbox/preferences` delegates to its feature handlers. Unit/API/browser and real Redis integration suites cover the contract; `tests/helpers/notification-preferences-redis.mjs` is the disposable browser CAS model.
+
 N092 adds `src/features/inbox/` for bounded read-through alert composition, API authorization and the member inbox. Thin entries are `/inbox` and `/api/v2/inbox`; focused unit/API/browser coverage follows the existing test organization. It adds no persistence or dependencies.
 
 The directory map and root audit describe the current organization. Use `git ls-files` for the authoritative tracked file list; do not paste large asset listings or generated caches here. The [placement guide](file-organization.md) defines ownership. Earlier moves and verification remain in [migration history](migration-history.md). The [cleanup report](cleanup-report.md) records this follow-up.

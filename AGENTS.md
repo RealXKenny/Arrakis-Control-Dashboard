@@ -44,6 +44,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - `features/inbox/` owns N092's read-through actionable inbox and `/api/v2/inbox`. Session-owned profile observations feed bounded asset alerts; private supply/operation records require fresh canonical guild membership. Source failures and unsupported market/stockpile engines remain explicit. No historical snapshots, game writes or automatic retries. Hidden documents and refreshes clear private readings. See `docs/features/actionable-inbox.md`.
 
+- N093 notification preferences also live in `features/inbox/`: strict versioned per-account category/cooldown/timezone configuration, content-specific dismissals, server-timed snoozes and reviewed timestamps. Single-key UUID CAS, 64 KiB/120-control bounds and 90-day inactivity retention protect standalone/Cluster state. Muting never authorizes source access; quiet hours include urgent alerts and use server check time, with manual refresh after expiry. Settings failures fail closed and writes never retry automatically. See `docs/features/notification-preferences.md`.
+
 - `src/server/` contains shared request infrastructure only: `http.ts`, `pages-api.ts`, `api-read-cache.ts`, `cookies.ts`, `read-budget.ts`, and `integrations/` for Dune Console, adapter transport, Discord OAuth, and shared bot announcements.
 
 - Security audit events go through `src/lib/security/audit.ts` (redacted, bounded, never throws); marketplace owner keys live in `features/bases/server/owner-key.ts` (HMAC, legacy keys still accepted until `npm run marketplace:rekey`).

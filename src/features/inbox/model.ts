@@ -14,6 +14,10 @@ export const categoryNames: Record<InboxCategory, string> = {
 export const inboxAlertSchema = z
   .object({
     id: z.string().min(1).max(300),
+    fingerprint: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
     category: z.enum(inboxCategories),
     priority: z.enum(['attention', 'urgent']),
     title: z.string().min(1).max(240),

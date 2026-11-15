@@ -3,6 +3,13 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { categoryNames, inboxCategories, inboxViewSchema, type InboxCategory, type InboxView } from '../model';
 import styles from './inbox.module.css';
+import {
+  mutedReason,
+  notificationEnvelopeSchema,
+  type NotificationRecord,
+  type NotificationInput,
+} from '../preferences';
+import { NotificationSettings } from './notification-settings';
 
 export function Inbox() {
   const [data, setData] = useState<InboxView | null>(null);
@@ -10,14 +17,69 @@ export function Inbox() {
   const [urgent, setUrgent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [preferences, setPreferences] = useState<NotificationRecord | null>(null);
+  const [checkedAt, setCheckedAt] = useState(0);
+  const [showMuted, setShowMuted] = useState(false);
+  const [controlsBusy, setControlsBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [snoozeMinutes, setSnoozeMinutes] = useState<15 | 60 | 480 | 1440>(60);
+  const mutation = useRef<AbortController | null>(null);
+  async function control(input: NotificationInput): Promise<boolean> {
+    if (mutation.current || request.current) return false;
+    const controller = new AbortController();
+    mutation.current = controller;
+    setControlsBusy(true);
+    setError('');
+    setMessage('');
+    const timeout = setTimeout(() => controller.abort('timeout'), 10000);
+    try {
+      const response = await fetch('/api/v2/inbox/preferences', {
+        method: 'POST',
+        cache: 'no-store',
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const raw: unknown = await response.json();
+      if (!response.ok)
+        throw new Error(
+          response.status === 409
+            ? 'Notification settings changed in another tab. Reload saved settings before trying again. Your draft is kept.'
+            : 'Notification change could not be confirmed. Reload saved settings before trying again.',
+        );
+      const parsed = notificationEnvelopeSchema.safeParse(raw);
+      if (!parsed.success)
+        throw new Error('Notification change could not be confirmed. Reload saved settings before trying again.');
+      if (controller.signal.aborted) return false;
+      setPreferences(parsed.data.record);
+      setCheckedAt(Date.parse(parsed.data.checkedAt));
+      setMessage('Notification controls saved.');
+      return true;
+    } catch (failure) {
+      if (!controller.signal.aborted || controller.signal.reason === 'timeout')
+        setError(
+          controller.signal.reason === 'timeout'
+            ? 'Notification change timed out. Reload saved settings before trying again.'
+            : failure instanceof Error
+              ? failure.message
+              : 'Notification controls are unavailable.',
+        );
+      return false;
+    } finally {
+      clearTimeout(timeout);
+      if (mutation.current === controller) mutation.current = null;
+      if (!controller.signal.aborted || controller.signal.reason === 'timeout') setControlsBusy(false);
+    }
+  }
   const request = useRef<AbortController | null>(null);
   async function refresh() {
-    if (request.current) return;
+    if (request.current || mutation.current) return;
     const controller = new AbortController();
     request.current = controller;
     setBusy(true);
     setError('');
     // Clear private details immediately: a failed refresh must not preserve stale guild access.
+    setMessage('');
     setData(null);
     const deadline = setTimeout(() => controller.abort('timeout'), 45000);
     try {
@@ -30,8 +92,14 @@ export function Inbox() {
         );
       const body: unknown = await response.json();
       const parsed = inboxViewSchema.safeParse((body as { data?: unknown })?.data);
-      if (!parsed.success) throw new Error('Inbox returned an unreadable response. Try again shortly.');
-      if (!controller.signal.aborted) setData(parsed.data);
+      const settings = notificationEnvelopeSchema.safeParse((body as { notifications?: unknown })?.notifications);
+      if (!parsed.success || !settings.success)
+        throw new Error('Inbox returned an unreadable response. Try again shortly.');
+      if (!controller.signal.aborted) {
+        setData(parsed.data);
+        setPreferences(settings.data.record);
+        setCheckedAt(Date.parse(settings.data.checkedAt));
+      }
     } catch (failure) {
       if (!controller.signal.aborted || controller.signal.reason === 'timeout')
         setError(
@@ -52,6 +120,9 @@ export function Inbox() {
     const hide = () => {
       if (document.hidden) {
         request.current?.abort();
+        mutation.current?.abort();
+        mutation.current = null;
+        setControlsBusy(false);
         request.current = null;
         setData(null);
         setBusy(false);
@@ -60,13 +131,18 @@ export function Inbox() {
     document.addEventListener('visibilitychange', hide);
     return () => {
       request.current?.abort();
+      mutation.current?.abort();
+      mutation.current = null;
       request.current = null;
       document.removeEventListener('visibilitychange', hide);
     };
   }, []);
   const alerts =
     data?.alerts.filter(
-      (alert) => (category === 'all' || alert.category === category) && (!urgent || alert.priority === 'urgent'),
+      (alert) =>
+        (category === 'all' || alert.category === category) &&
+        (!urgent || alert.priority === 'urgent') &&
+        (showMuted || (preferences && !mutedReason(alert, preferences, checkedAt))),
     ) ?? [];
   return (
     <section className={styles.root} aria-label="Actionable inbox">
@@ -75,7 +151,7 @@ export function Inbox() {
           Review reported needs, then act in the source workspace. Checking this inbox never moves resources or changes
           a sign-up.
         </p>
-        <button className="btn btn-secondary min-h-11" disabled={busy} onClick={() => void refresh()}>
+        <button className="btn btn-secondary min-h-11" disabled={busy || controlsBusy} onClick={() => void refresh()}>
           {busy ? 'Checking sources…' : 'Refresh inbox'}
         </button>
       </div>
@@ -95,10 +171,31 @@ export function Inbox() {
           <input type="checkbox" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} />
           Urgent only
         </label>
+        <label className={styles.check}>
+          <input type="checkbox" checked={showMuted} onChange={(e) => setShowMuted(e.target.checked)} />
+          Show muted alerts
+        </label>
+        <label>
+          Snooze duration
+          <select
+            value={snoozeMinutes}
+            onChange={(e) => setSnoozeMinutes(Number(e.target.value) as typeof snoozeMinutes)}
+          >
+            <option value={15}>15 minutes</option>
+            <option value={60}>1 hour</option>
+            <option value={480}>8 hours</option>
+            <option value={1440}>24 hours</option>
+          </select>
+        </label>
       </div>
       {error && (
         <p role="alert" className={styles.notice}>
           {error}
+        </p>
+      )}
+      {message && (
+        <p className={styles.notice} aria-live="polite">
+          {message}
         </p>
       )}
       <p role="status" className={styles.notice}>
@@ -108,7 +205,7 @@ export function Inbox() {
             ? `${alerts.length} actionable alerts shown. Sources checked ${new Date(data.checkedAt).toLocaleString()}. Readings may be cached for up to 15 seconds; this is not an atomic game snapshot.`
             : 'No current inbox reading.'}
       </p>
-      {data && (
+      {data && preferences && (
         <>
           {!alerts.length && (
             <p className={styles.notice}>
@@ -124,12 +221,65 @@ export function Inbox() {
                 </p>
                 <h2>{alert.title}</h2>
                 <p>{alert.detail}</p>
+                {mutedReason(alert, preferences, checkedAt) && <p>{mutedReason(alert, preferences, checkedAt)}</p>}
                 <Link href={alert.href} className={styles.link}>
                   {alert.action} →
                 </Link>
+                <div className={styles.filters}>
+                  <button
+                    className="btn btn-secondary min-h-11"
+                    disabled={controlsBusy}
+                    onClick={() => void control({ action: 'review', revision: preferences.revision, id: alert.id })}
+                  >
+                    Reviewed
+                  </button>
+                  <button
+                    className="btn btn-secondary min-h-11"
+                    disabled={controlsBusy}
+                    onClick={() =>
+                      void control({
+                        action: 'snooze',
+                        revision: preferences.revision,
+                        id: alert.id,
+                        minutes: snoozeMinutes,
+                      })
+                    }
+                  >
+                    Snooze
+                  </button>
+                  <button
+                    className="btn btn-secondary min-h-11"
+                    disabled={controlsBusy || !alert.fingerprint}
+                    onClick={() =>
+                      void control({
+                        action: 'dismiss',
+                        revision: preferences.revision,
+                        id: alert.id,
+                        fingerprint: alert.fingerprint!,
+                      })
+                    }
+                  >
+                    Dismiss
+                  </button>
+                  {preferences.states.some((s) => s.id === alert.id) && (
+                    <button
+                      className="btn btn-secondary min-h-11"
+                      disabled={controlsBusy}
+                      onClick={() => void control({ action: 'restore', revision: preferences.revision, id: alert.id })}
+                    >
+                      Restore alert
+                    </button>
+                  )}
+                </div>
               </article>
             ))}
           </div>
+          <NotificationSettings
+            record={preferences}
+            busy={controlsBusy || busy}
+            onSave={(config) => control({ action: 'configure', revision: preferences.revision, config })}
+            onReload={() => void refresh()}
+          />
           <div className={styles.sources} aria-label="Source coverage">
             {data.sources.map((source) => (
               <div key={source.category} className={styles.source}>

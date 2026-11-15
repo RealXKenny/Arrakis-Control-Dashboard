@@ -11,7 +11,7 @@ Open **Notifications → Actionable inbox** or `/inbox`. One view combines repor
 | Operations | Freshly verified guild members see scheduled runs starting within 24 hours and runs currently in progress. Starts within one hour are urgent. Completed, cancelled and expired runs are excluded.               |
 | Market     | Personal price-watch alerts depend on the unimplemented N042 engine. The inbox reports this source as unsupported and links to current market browsing; it never infers sales or price crossings from listings. |
 
-N021 generator monitoring and N025 personal stockpile thresholds are also unimplemented prerequisites. The inbox does not create them or fabricate their alerts. Current asset rules are fixed and displayed with each alert; notification configuration, quiet hours, dismiss and snooze belong to N093.
+N021 generator monitoring and N025 personal stockpile thresholds are also unimplemented prerequisites. The inbox does not create them or fabricate their alerts. Current asset rules are fixed and displayed with each alert. [N093 notification preferences](notification-preferences.md) add category controls, quiet hours, cooldowns, dismiss and snooze.
 
 At most 20 bases and 20 vehicles are inspected, plus the existing bounded 20 guild requests and 20 operations. There are at most 120 deduplicated alerts. Unknown readings or exceeded asset limits produce partial coverage. An empty filtered list is never presented as an all-clear when sources are partial, unavailable, unlinked or unsupported.
 
@@ -37,4 +37,4 @@ Visually reviewed screenshots from the running application with disposable fixtu
 
 ## Shared personalization branch
 
-N091–N100 are kept together on `feature/personalization`. N091 widget layouts are implemented; N092 adds this inbox. N093–N100 remain follow-up work: notification controls, personal tasks, voluntary-sharing privacy controls, mobile quick actions, command palette, monitoring freshness, personal data controls and saved activity views. Keeping their work on one branch does not mark unimplemented backlog entries complete. Do not merge or deploy without authorization.
+N091–N100 are kept together on `feature/personalization`. N091 widget layouts, N092's available inbox sources and N093 notification controls are implemented. N094–N100 remain follow-up work: personal tasks, voluntary-sharing privacy controls, mobile quick actions, command palette, monitoring freshness, personal data controls and saved activity views. Keeping their work on one branch does not mark unimplemented backlog entries complete. Do not merge or deploy without authorization.

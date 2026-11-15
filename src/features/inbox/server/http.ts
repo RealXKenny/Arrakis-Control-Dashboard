@@ -3,6 +3,7 @@ import { json, requireApiSession } from '../../../server/http';
 import { checkRateLimit } from '../../../lib/security/rate-limit';
 import { AppError } from '../../../lib/errors';
 import { loadInbox } from './load';
+import { readNotifications } from './preferences-store';
 
 export async function getInbox() {
   const session = await requireApiSession();
@@ -14,5 +15,6 @@ export async function getInbox() {
       'INBOX_LIMITED',
       true,
     );
-  return json({ data: await loadInbox(session) });
+  const record = await readNotifications(session.user.id);
+  return json({ data: await loadInbox(session), notifications: { record, checkedAt: new Date().toISOString() } });
 }

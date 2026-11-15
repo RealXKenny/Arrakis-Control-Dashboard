@@ -12,6 +12,7 @@ import { onboardingReply } from './guild-onboarding-redis.mjs';
 import { itemPinsReply } from './item-pins-redis.mjs';
 import { pollsReply } from './guild-polls-redis.mjs';
 import { createPortalLayoutFixture } from './portal-layout-redis.mjs';
+import { createNotificationPreferencesFixture } from './notification-preferences-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
 
@@ -32,7 +33,10 @@ const listing = {
   ],
 };
 const portalLayoutReply = createPortalLayoutFixture();
+const notificationReply = createNotificationPreferencesFixture();
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  const notification = notificationReply(operation, key, args);
+  if (notification !== undefined) return notification.value;
   const portalLayout = portalLayoutReply(operation, key, args);
   if (portalLayout !== undefined) return portalLayout.value;
   const itemPins = itemPinsReply(operation, key, args);
