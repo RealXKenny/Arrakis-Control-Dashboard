@@ -2,6 +2,8 @@
 
 The directory map and root audit describe the current organization. Use `git ls-files` for the authoritative tracked file list; do not paste large asset listings or generated caches here. The [placement guide](file-organization.md) defines ownership. Earlier moves and verification remain in [migration history](migration-history.md). The [cleanup report](cleanup-report.md) records this follow-up.
 
+N091 adds feature-owned portal layout contracts, a client widget editor around server-rendered panel slots, a CSS module and private single-key Redis persistence under `src/features/portal/`. The thin route is `src/app/api/v2/portal/layout/route.ts`. Focused coverage lives in portal unit/API/browser tests and `tests/integration/redis-portal-layout.test.ts`; the browser fixture model is `tests/helpers/portal-layout-redis.mjs`. The existing portal panels were extracted into `portal-panels.tsx` without moving data fetching into browser code.
+
 ## Clean architecture tree
 
 All tracked configuration/source directories are shown. Asset trees stop at categories; binary files and generated output are omitted.
