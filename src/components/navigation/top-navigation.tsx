@@ -48,7 +48,7 @@ export function TopNavigation({
 
   return (
     <header className="command-header sticky top-0 z-50 border-b border-[#6f4d1f]/70 bg-[#090A0C]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
-      <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-1 min-[1840px]:px-6 min-[2000px]:gap-6 min-[2000px]:px-8">
+      <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-1 min-[1840px]:px-6 min-[2400px]:gap-6 min-[2400px]:px-8">
         <Link
           href="/"
           aria-label="Arrakis Control home"
@@ -59,7 +59,7 @@ export function TopNavigation({
 
         {identity && (
           <nav aria-label="Primary" className="hidden xl:block">
-            <ul className="flex items-center gap-1 min-[2000px]:gap-2">
+            <ul className="flex items-center gap-1 min-[1920px]:gap-0 min-[2400px]:gap-2">
               {items.map((item) => (
                 <li key={item.id}>
                   {item.href ? (
@@ -141,7 +141,7 @@ export function TopNavigation({
                   trigger={
                     <>
                       <Avatar identity={identity} size="large" />
-                      <span className="hidden max-w-32 truncate tracking-normal text-sand-100 min-[2000px]:inline">
+                      <span className="hidden max-w-32 truncate tracking-normal text-sand-100 min-[2400px]:inline">
                         {identity.ign}
                       </span>
                       <ChevronDownIcon className="size-4 text-sand-500" />

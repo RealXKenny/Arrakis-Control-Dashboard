@@ -230,3 +230,19 @@ test('service-status commands preserve full document CSP navigation boundaries',
   await expect(page).toHaveURL(/\/tasks$/);
   await expect(dialog).toHaveCount(0);
 });
+
+test('the command trigger fits alongside expanded desktop destinations at breakpoint edges', async ({ page }) => {
+  await setup(page);
+  for (const width of [1840, 1919, 1920, 1999, 2000, 2100, 2159, 2160, 2399, 2400, 2560]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `topbar at ${width}px`).toBe(
+      true,
+    );
+    const trigger = page.getByRole('button', { name: 'Open command palette', exact: true });
+    const bounds = await trigger.boundingBox();
+    expect(bounds && bounds.x + bounds.width <= width).toBe(true);
+  }
+});

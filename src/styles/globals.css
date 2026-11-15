@@ -172,7 +172,7 @@
 
 /*
  * Top-level navigation controls. Sizes step up with the viewport instead of being fixed:
- * compact up to 2000px (so every item still fits beside the account controls), roomier above it.
+ * compact up to 2400px (so every item still fits beside the account controls), roomier above it.
  *
  * Two states are deliberately different:
  *  - data-current: the page you are on. Quiet and persistent: amber text and a thin underline, no box.
@@ -192,7 +192,7 @@
   white-space: nowrap;
 }
 
-@media (min-width: 1280px) and (max-width: 2159px) {
+@media (min-width: 1280px) and (max-width: 2399px) {
   .command-nav-control {
     gap: 0.375rem;
     padding: 0 0.5rem;
@@ -200,7 +200,7 @@
 }
 
 /* Only very wide screens get larger controls; the complete menu and account block must still fit. */
-@media (min-width: 2160px) {
+@media (min-width: 2400px) {
   .command-nav-control {
     min-height: 3.25rem;
     gap: 0.5625rem;
