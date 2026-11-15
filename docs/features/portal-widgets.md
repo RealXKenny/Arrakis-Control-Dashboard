@@ -44,3 +44,16 @@ Client requests have a ten-second deadline and abort on unmount. A timed-out sav
 Run the standard formatting, type, lint and test checks, `npm run build`, `npm run test:production` and `npx playwright test tests/browser/portal-widgets.spec.ts`. The focused tests cover independent accounts, presets, empty/reset layouts, map/reload persistence, unlinked characters, conflicting tabs, failed saves, touch/keyboard access and WCAG automation. Real storage/retention/concurrency tests run through `npm run test:integration` with disposable standalone Redis or Redis Cluster. Integration setup flushes its configured test instance; never point it at production.
 
 The browser fixture uses Chromium with touch emulation and widths 320, 393, 412, 768 and 1440px. It does not certify physical phones, native Safari or assistive-technology products. Browser preference fixtures model CAS responses; only the real Redis suite verifies Lua semantics.
+
+### N091 validation evidence (15 November 2026)
+
+- Formatting, TypeScript, lint, documentation links/formatting and assistant-adapter checks passed.
+- The local unit/API/architecture run passed 1,641 tests; 32 existing platform-specific cases were skipped on Windows.
+- The production build and both production smoke suites passed.
+- The full Chromium browser run passed all 183 cases, including five dedicated portal-widget cases. These verify saved layouts, account isolation, empty/recommended presets, concurrent-tab conflicts, failed and timed-out saves, responsive layouts, keyboard/touch controls and automated WCAG AA checks.
+- [Standalone Redis CI](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43742299185) passed 170 integration tests (four Cluster-only cases skipped), including all four new portal storage cases.
+- [Six-node Redis Cluster validation](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43742301701) passed, including the same four portal storage cases against real Redis Lua operations.
+
+The screenshots below were captured from the running application with disposable, sanitized browser fixtures and visually inspected. They show the compact personal preset at desktop and touch-mobile widths; fixture telemetry is not production player data.
+
+[Desktop screenshot](../assets/screenshots/portal-widgets-solo-desktop.png) · [Mobile screenshot](../assets/screenshots/portal-widgets-solo-mobile.png)
