@@ -52,3 +52,14 @@ No dependency, environment variable, PostgreSQL or explicit data migration is ad
 Run standard checks, production build/smoke and browser tests. Focused suites are `tests/unit/tasks/model.test.ts`, `tests/api/personal-tasks.test.ts`, `tests/browser/personal-tasks.spec.ts` and `tests/integration/redis-personal-tasks.test.ts`. Integration targets must be disposable because the harness flushes them. Real Redis checks cover privacy/retention, simultaneous creates/updates, timestamps, planning integrity/deletion, entry/UTF-8 limits and corrupt/wrong-type storage. Browser fixtures model CAS only; integration verifies actual Lua semantics.
 
 Browser coverage includes solo/unlinked planning, project/goal links, completion/reopening, context drafts, asset navigation, explicit item search, account isolation, stale-tab recovery, failed-save draft retention, keyboard/touch controls, widths 320/393/412/768/1440 and automated WCAG AA. Native Safari, physical devices and screen-reader products remain unverified. N095–N100 remain follow-up work on `feature/personalization`; no merge/deployment is authorized by this feature.
+
+### Validation evidence (15 November 2026)
+
+- Local unit/API/architecture: 1,663 passed; 32 existing Windows platform cases skipped. Formatting, typecheck, lint, documentation/AI checks, build and both production smoke suites passed.
+- Complete Chromium browser rerun: all 193 tests passed. All four focused task workflows also passed after stabilizing screenshot capture with font/paint readiness.
+- [Corrected implementation CI](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43750646840) includes standalone Redis coverage: 181 passed, four Cluster-only skips. All six personal-task storage cases passed, including blank/corrupt records and a Unicode edit exceeding the byte quota without data loss.
+- [Six-node Redis Cluster](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43750641726) passed all 185 tests, including the same six personal-task cases and existing topology/failover checks.
+
+The initial browser run exposed a base-text selector ambiguity from the new context link and an accessibility audit sampling a casino chip mid-fade. The assertion now targets the base heading, and the audit waits for fonts and finite animations to settle. No contrast assertions, route coverage or reduced-motion tests were removed. Planning-link focus now scrolls after saved entries load; blank existing Redis values fail closed rather than appearing to be missing lists.
+
+Visually reviewed screenshots from the running application with disposable fixture data: [desktop task editor](../assets/screenshots/personal-tasks-desktop.png) and [mobile task editor](../assets/screenshots/personal-tasks-mobile.png). Final documentation/screenshot-commit CI is recorded in PR #11's checks/comments. No production player records were modified.

@@ -181,10 +181,19 @@ test('task editing stays accessible and usable at narrow touch widths, with fail
     (document.activeElement as HTMLElement | null)?.blur();
     window.scrollTo({ top: 0, behavior: 'instant' });
   });
-  await page.screenshot({ path: info.outputPath('tasks-desktop.png'), fullPage: true });
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  });
+  await expect(page.getByRole('heading', { name: 'Personal tasks', exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath('tasks-desktop.png'), fullPage: true, animations: 'disabled' });
   await page.setViewportSize({ width: 393, height: 852 });
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
-  await page.screenshot({ path: info.outputPath('tasks-mobile.png'), fullPage: true });
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  });
+  await page.screenshot({ path: info.outputPath('tasks-mobile.png'), fullPage: true, animations: 'disabled' });
   let writes = 0;
   await page.route('**/api/v2/tasks', async (route) => {
     writes++;
