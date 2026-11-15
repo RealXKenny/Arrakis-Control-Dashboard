@@ -1,5 +1,7 @@
 # Features
 
+The [actionable inbox](actionable-inbox.md) combines authorized asset, supply and operation alerts at `/inbox`, with explicit coverage for unsupported monitoring sources.
+
 | Feature                                                    | Who uses it                          | Page                                     |
 | ---------------------------------------------------------- | ------------------------------------ | ---------------------------------------- |
 | [Dashboard (portal, market, status)](dashboard.md)         | Every member                         | `/portal`, `/market`, landing `/`        |

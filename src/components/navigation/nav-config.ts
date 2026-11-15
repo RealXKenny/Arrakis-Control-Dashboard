@@ -349,6 +349,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
 
 export const NOTIFICATION_ITEMS: readonly NavigationItem[] = [
   {
+    id: 'notification-inbox',
+    label: 'Actionable inbox',
+    href: '/inbox',
+    icon: 'portal',
+    description: 'Asset needs, supply follow-ups and operation briefings.',
+    order: 0,
+  },
+  {
     id: 'notification-applications',
     label: 'Guild applications',
     href: '/guilds',
