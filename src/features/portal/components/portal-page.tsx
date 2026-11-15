@@ -8,6 +8,7 @@ import { recommendedPortalLayout } from '../layout';
 import { ProfileFailure } from './profile-failure';
 import { PortalWidgets } from './portal-widgets';
 import { portalPanels } from './portal-panels';
+import { PortalQuickActions } from './quick-actions';
 
 export const metadata: Metadata = { title: 'Overview' };
 export default async function PortalPage({
@@ -55,6 +56,7 @@ export default async function PortalPage({
         </div>
       </PageHeader>
       {result.status !== 'ok' && <ProfileFailure result={result} />}
+      <PortalQuickActions guildState={profile ? (profile.character.guild ? 'member' : 'solo') : 'unknown'} />
       <PortalWidgets
         key={session.user.id}
         panels={portalPanels(profile, world, mapName)}

@@ -1,5 +1,7 @@
 # Repository inventory
 
+N096 adds server-rendered `quick-actions.tsx` and a responsive CSS module inside `src/features/portal/components/`. It reuses the existing Storage, Holdings and My Guild destinations through the centralized navigation resolver. Browser coverage is `tests/browser/quick-actions.spec.ts`; nested/permission-filtered lookup coverage stays with navigation unit tests. No routes or persistence are added.
+
 N095 adds `src/features/privacy/` for private drafts, reviewed publication snapshots, member-only sharing, same-slot Redis link rotation and revocation. Thin routes are `/privacy`, `/sharing/[shareId]`, `/api/v2/privacy` and `/api/v2/privacy/shared/[shareId]`. Focused unit/API/browser and real Redis integration suites cover the contract; `tests/helpers/privacy-redis.mjs` is the disposable browser fixture.
 
 N094 adds `src/features/tasks/` for private planning schemas, a member task editor, bounded Redis records and API handlers. Thin entries are `/tasks` and `/api/v2/tasks`. Context links reuse existing item/base/vehicle components; Storage accepts a bounded finder-prefill parameter without automatic scans. Dedicated task unit/API/browser and real Redis integration suites follow existing test organization.

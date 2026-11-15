@@ -3,6 +3,7 @@ import {
   isNavigationActive,
   NAVIGATION_ITEMS,
   navigationFor,
+  navigationItemFor,
   needsDocumentNavigation,
   resolveNavigationItems,
   type NavigationItem,
@@ -19,6 +20,14 @@ function navigationLinks(items: readonly NavigationItem[]): readonly NavigationI
 }
 
 describe('unified navigation configuration', () => {
+  it('resolves feature shortcuts through nested destinations and existing permissions', () => {
+    expect(navigationItemFor('storage')?.href).toBe('/storage');
+    expect(navigationItemFor('holdings')?.href).toBe('/holdings');
+    expect(navigationItemFor('my-guild')?.href).toBe('/guild');
+    expect(navigationItemFor('administration')).toBeUndefined();
+    expect(navigationItemFor('administration', { isAdmin: true })?.href).toBe('/admin');
+    expect(navigationItemFor('unknown-shortcut')).toBeUndefined();
+  });
   it('reloads documents only when entering or leaving a route with a distinct document policy', () => {
     expect(needsDocumentNavigation('/portal', '/status')).toBe(true);
     expect(needsDocumentNavigation('/status', '/portal')).toBe(true);

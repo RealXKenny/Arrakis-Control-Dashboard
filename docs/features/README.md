@@ -1,5 +1,7 @@
 # Features
 
+[Mobile quick actions](mobile-quick-actions.md) prepare supply searches, open owned/shared bases and take members directly to operation briefings from `/portal`.
+
 [Privacy center](privacy-center.md) controls reviewed, expiring member-link publication of profile, location, crafting and supply cards at `/privacy`.
 
 [Personal tasks](personal-tasks.md) link private checklist entries to items, bases, vehicles, personal projects and goals at `/tasks`.

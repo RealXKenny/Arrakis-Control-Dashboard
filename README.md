@@ -52,6 +52,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 
 ### Players and community
 
+- **Mobile quick actions:** touch-friendly portal shortcuts for supply searches, owned/shared bases and operation briefings. See [Mobile quick actions](docs/features/mobile-quick-actions.md).
 - **Player profiles:** character status, progression, factions, inventory, vehicles, bases, and journey information.
 - **Privacy center:** private drafts and reviewed, expiring member-link sharing for profile, location, crafting and supply notes, with per-card unpublishing and revoke-all. See [Privacy center](docs/features/privacy-center.md).
 - **Guild management:** roster ranks, member addition/removal, leadership controls, settings, and leader support conversations.

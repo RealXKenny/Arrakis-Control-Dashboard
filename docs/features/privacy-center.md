@@ -61,7 +61,7 @@ No dependencies, environment variables, SQL migrations or game API writes are ad
 
 Focused suites are `tests/unit/privacy/model.test.ts`, `tests/api/privacy.test.ts`, `tests/browser/privacy.spec.ts` and `tests/integration/redis-privacy.test.ts`. Integration targets must be disposable: the existing harness flushes them. The browser fixture models persistence; standalone Redis and six-node Cluster runs verify actual Lua semantics, concurrent writes, exact expiry, index rotation/recovery, account isolation and corruption handling.
 
-Browser coverage exercises all four categories, draft/publication separation, authenticated member projection, unpublishing, link replacement, revoke-all, stale saves, failed-save recovery, keyboard/touch controls and widths 320/393/412/768/1440 with automated WCAG AA checks. Native Safari, physical devices and screen-reader products remain unverified. N096–N100 remain follow-up work on `feature/personalization`. No merge or deployment is authorized by this feature.
+Browser coverage exercises all four categories, draft/publication separation, authenticated member projection, unpublishing, link replacement, revoke-all, stale saves, failed-save recovery, keyboard/touch controls and widths 320/393/412/768/1440 with automated WCAG AA checks. Native Safari, physical devices and screen-reader products remain unverified. [N096 mobile quick actions](mobile-quick-actions.md) are implemented separately; N097–N100 remain follow-up work on `feature/personalization`. No merge or deployment is authorized by this feature.
 
 ### Validation evidence (15 November 2026)
 

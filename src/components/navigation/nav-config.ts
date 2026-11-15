@@ -416,6 +416,18 @@ export function navigationFor(visibility: NavigationVisibility = {}): readonly N
   return resolveNavigationItems(NAVIGATION_ITEMS, visibility);
 }
 
+/** Feature shortcuts resolve the same permission-filtered inventory as the topbar. */
+export function navigationItemFor(id: string, visibility: NavigationVisibility = {}): NavigationItem | undefined {
+  const find = (items: readonly NavigationItem[]): NavigationItem | undefined => {
+    for (const item of items) {
+      if (item.id === id) return item;
+      const child = item.children && find(item.children);
+      if (child) return child;
+    }
+  };
+  return find(navigationFor(visibility));
+}
+
 export function isNavigationActive(pathname: string, item: NavigationItem): boolean {
   if (item.href && (pathname === item.href || (!item.exact && pathname.startsWith(`${item.href}/`)))) return true;
   return Boolean(item.children?.some((child) => isNavigationActive(pathname, child)));
