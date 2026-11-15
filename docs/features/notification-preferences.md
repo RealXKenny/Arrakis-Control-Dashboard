@@ -44,3 +44,13 @@ No dependency, environment setting or explicit migration is required: records in
 Run standard checks, production build/smoke and the browser suite. Focused tests live in `tests/unit/inbox/preferences.test.ts`, `tests/api/notification-preferences.test.ts`, `tests/browser/notification-preferences.spec.ts` and `tests/integration/redis-notification-preferences.test.ts`. Real disposable standalone/Cluster integration covers account isolation, retention, concurrent first writes/config/action races, server timestamps, restore revisions, 120-control bounds and corrupt/wrong-type/oversized storage. Never configure integration targets against production; the test harness flushes its target.
 
 Browser coverage includes persistent dismiss/snooze/review/restore, category and timezone quiet-hour controls, urgent muting, cross-account privacy, stale-tab conflicts, failed saves, touch-enabled workflows, five viewport widths from 320 to 1440px and WCAG AA automation with the editor open. Native Safari, physical devices and screen-reader products remain unverified.
+
+### Validation evidence (15 November 2026)
+
+- Local unit/API/architecture: 1,657 passed; 32 existing Windows platform cases skipped.
+- Full Chromium browser suite: all 189 cases passed, including all three notification-preference workflows. A 320px editor overflow found during focused testing was fixed and the assertion retained.
+- Formatting, typecheck, lint, documentation links/formatting, AI configuration checks, production build and both production smoke suites passed.
+- [Implementation CI](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43746900012) passed all required checks, four browser shards, production smoke and 175 real standalone Redis integration tests (four Cluster-only skips). All five new notification storage cases passed.
+- [Six-node Redis Cluster](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43746895645) passed all 179 tests, including the same five storage cases and existing failover coverage.
+
+Screenshots from the running application with sanitized disposable fixtures were visually reviewed: [desktop editor](../assets/screenshots/notification-preferences-desktop.png) and [mobile editor](../assets/screenshots/notification-preferences-mobile.png). Final documentation-commit CI is recorded in PR #11's checks/comments. No production player records were changed.
