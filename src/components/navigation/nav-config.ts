@@ -326,6 +326,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
         order: 12,
       },
       {
+        id: 'privacy-center',
+        label: 'Privacy center',
+        href: '/privacy',
+        icon: 'portal',
+        description: 'Control voluntary member sharing and revoke your links.',
+        order: 14,
+      },
+      {
         id: 'service-status',
         label: 'Service status',
         href: '/status',

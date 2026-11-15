@@ -1,5 +1,7 @@
 # Features
 
+[Privacy center](privacy-center.md) controls reviewed, expiring member-link publication of profile, location, crafting and supply cards at `/privacy`.
+
 [Personal tasks](personal-tasks.md) link private checklist entries to items, bases, vehicles, personal projects and goals at `/tasks`.
 
 [Notification preferences](notification-preferences.md) add inbox category controls, timezone quiet hours, cooldowns, dismiss and snooze.

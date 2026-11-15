@@ -14,6 +14,7 @@ import { pollsReply } from './guild-polls-redis.mjs';
 import { createPortalLayoutFixture } from './portal-layout-redis.mjs';
 import { createNotificationPreferencesFixture } from './notification-preferences-redis.mjs';
 import { createPersonalTasksFixture } from './personal-tasks-redis.mjs';
+import { createPrivacyFixture } from './privacy-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
 
@@ -36,7 +37,11 @@ const listing = {
 const portalLayoutReply = createPortalLayoutFixture();
 const notificationReply = createNotificationPreferencesFixture();
 const personalTasksReply = createPersonalTasksFixture();
+const privacyReply = createPrivacyFixture();
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  // Redis EVAL includes the key count; this feature uses three same-slot keys for atomic link rotation.
+  const privacy = privacyReply(operation, key, args.slice(1));
+  if (privacy !== undefined) return privacy.value;
   const tasks = personalTasksReply(operation, key, args);
   if (tasks !== undefined) return tasks.value;
   const notification = notificationReply(operation, key, args);

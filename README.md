@@ -53,6 +53,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 ### Players and community
 
 - **Player profiles:** character status, progression, factions, inventory, vehicles, bases, and journey information.
+- **Privacy center:** private drafts and reviewed, expiring member-link sharing for profile, location, crafting and supply notes, with per-card unpublishing and revoke-all. See [Privacy center](docs/features/privacy-center.md).
 - **Guild management:** roster ranks, member addition/removal, leadership controls, settings, and leader support conversations.
 - **Recruitment and applications:** customizable application questions, applicant status, leader review, private chat, and unread receipts.
 - **Base marketplace:** owner-verified blueprint sharing, captured front pictures, interactive previews, and checked imports.

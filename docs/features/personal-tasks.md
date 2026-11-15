@@ -51,7 +51,7 @@ No dependency, environment variable, PostgreSQL or explicit data migration is ad
 
 Run standard checks, production build/smoke and browser tests. Focused suites are `tests/unit/tasks/model.test.ts`, `tests/api/personal-tasks.test.ts`, `tests/browser/personal-tasks.spec.ts` and `tests/integration/redis-personal-tasks.test.ts`. Integration targets must be disposable because the harness flushes them. Real Redis checks cover privacy/retention, simultaneous creates/updates, timestamps, planning integrity/deletion, entry/UTF-8 limits and corrupt/wrong-type storage. Browser fixtures model CAS only; integration verifies actual Lua semantics.
 
-Browser coverage includes solo/unlinked planning, project/goal links, completion/reopening, context drafts, asset navigation, explicit item search, account isolation, stale-tab recovery, failed-save draft retention, keyboard/touch controls, widths 320/393/412/768/1440 and automated WCAG AA. Native Safari, physical devices and screen-reader products remain unverified. N095–N100 remain follow-up work on `feature/personalization`; no merge/deployment is authorized by this feature.
+Browser coverage includes solo/unlinked planning, project/goal links, completion/reopening, context drafts, asset navigation, explicit item search, account isolation, stale-tab recovery, failed-save draft retention, keyboard/touch controls, widths 320/393/412/768/1440 and automated WCAG AA. Native Safari, physical devices and screen-reader products remain unverified. [N095 privacy controls](privacy-center.md) are implemented separately; N096–N100 remain follow-up work on `feature/personalization`. No merge/deployment is authorized by this feature.
 
 ### Validation evidence (15 November 2026)
 

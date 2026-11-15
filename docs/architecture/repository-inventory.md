@@ -1,5 +1,7 @@
 # Repository inventory
 
+N095 adds `src/features/privacy/` for private drafts, reviewed publication snapshots, member-only sharing, same-slot Redis link rotation and revocation. Thin routes are `/privacy`, `/sharing/[shareId]`, `/api/v2/privacy` and `/api/v2/privacy/shared/[shareId]`. Focused unit/API/browser and real Redis integration suites cover the contract; `tests/helpers/privacy-redis.mjs` is the disposable browser fixture.
+
 N094 adds `src/features/tasks/` for private planning schemas, a member task editor, bounded Redis records and API handlers. Thin entries are `/tasks` and `/api/v2/tasks`. Context links reuse existing item/base/vehicle components; Storage accepts a bounded finder-prefill parameter without automatic scans. Dedicated task unit/API/browser and real Redis integration suites follow existing test organization.
 
 N093 extends `src/features/inbox/` with notification schemas/policy, a settings editor and bounded private Redis controls. `/api/v2/inbox/preferences` delegates to its feature handlers. Unit/API/browser and real Redis integration suites cover the contract; `tests/helpers/notification-preferences-redis.mjs` is the disposable browser CAS model.
