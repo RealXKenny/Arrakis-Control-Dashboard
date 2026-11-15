@@ -106,7 +106,16 @@ export async function mutatePersonalTasks(owner: string, raw: TaskInput): Promis
       'INVALID_TASK_LINK',
       true,
     );
-  const serialized = JSON.stringify(next.data);
+  return writeTaskRecord(owner, input.revision, next.data);
+}
+/** Erase content while retaining a fresh revision fence against previously opened editors. */
+export async function erasePersonalTasks(owner: string, expected: string | null): Promise<TaskRecord> {
+  const current = await readPersonalTasks(owner);
+  if (current.revision !== expected) throw conflict();
+  return writeTaskRecord(owner, expected, { ...emptyTasks(), revision: randomUUID() });
+}
+async function writeTaskRecord(owner: string, expected: string | null, next: TaskRecord): Promise<TaskRecord> {
+  const serialized = JSON.stringify(next);
   if (Buffer.byteLength(serialized) > MAX_BYTES)
     throw new AppError(
       'Your task notes exceed the storage limit. Shorten or remove older notes.',
@@ -116,15 +125,11 @@ export async function mutatePersonalTasks(owner: string, raw: TaskInput): Promis
     );
   let reply: unknown;
   try {
-    reply = await redis().eval(
-      SAVE,
-      [personalTasksKey(owner)],
-      [input.revision ?? '', serialized, RETENTION, MAX_BYTES],
-    );
+    reply = await redis().eval(SAVE, [personalTasksKey(owner)], [expected ?? '', serialized, RETENTION, MAX_BYTES]);
   } catch {
     throw unavailable();
   }
   if (reply === 'conflict') throw conflict();
   if (reply !== 'ok') throw unavailable();
-  return next.data;
+  return next;
 }

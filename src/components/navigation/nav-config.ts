@@ -326,6 +326,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
         order: 12,
       },
       {
+        id: 'personal-data',
+        label: 'Personal data',
+        href: '/personal-data',
+        icon: 'storage',
+        description: 'Export or erase your dashboard notes, plans and sharing snapshots.',
+        order: 13,
+      },
+      {
         id: 'privacy-center',
         label: 'Privacy center',
         href: '/privacy',

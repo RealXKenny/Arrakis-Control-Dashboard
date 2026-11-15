@@ -1,0 +1,86 @@
+.root {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.root p {
+  color: var(--color-sand-300);
+  overflow-wrap: anywhere;
+}
+.note {
+  font-size: 0.8125rem;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.card,
+.review {
+  min-width: 0;
+  border: 1px solid var(--color-sand-500);
+  background: var(--color-obsidian-900);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  overflow-wrap: anywhere;
+}
+.root h2 {
+  color: var(--color-sand-100);
+  font-size: 1.125rem;
+}
+.root button {
+  min-height: 48px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.root label {
+  color: var(--color-sand-200);
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.root .check {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+.check input {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  accent-color: var(--color-spice-500);
+}
+.review {
+  border-left: 3px solid var(--color-spice-400);
+}
+.review input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-sand-500);
+  background: var(--color-obsidian-950);
+  color: var(--color-sand-100);
+  padding: 0.75rem;
+}
+.root :is(button, input):focus-visible {
+  outline: 2px solid var(--color-spice-300);
+  outline-offset: 3px;
+}
+.error {
+  border-left: 3px solid var(--color-spice-400);
+  padding: 1rem;
+}
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

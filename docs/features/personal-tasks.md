@@ -1,5 +1,7 @@
 # Personal tasks (N094)
 
+[Personal data controls (N099)](personal-data.md) provide a versioned export and separately confirmed erasure of the entire private task/project/goal list, including notes and completed entries. Erasure retains an empty revision fence to reject stale editors; normal per-entry editing remains here.
+
 Open **More → Personal tasks** (`/tasks`). Create private tasks, personal project entries and personal goals with a title, notes, normal/high priority and an optional due date. No game guild or character link is required. Entries belong to the dashboard account, not its current linked pawn.
 
 ## Daily workflow

@@ -105,6 +105,7 @@ describe('unified navigation configuration', () => {
       '/casino/rules',
       '/changelog',
       '/tasks',
+      '/personal-data',
       '/privacy',
       '/status',
       '/events',

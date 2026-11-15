@@ -1,5 +1,7 @@
 # Repository inventory
 
+N099 adds `src/features/personal-data/` for owned content summaries, bounded JSON export and separately confirmed erasure. Thin routes are `/personal-data` and `/api/v2/personal-data` (plus `/export` and `/delete`). Task/privacy stores retain persistence ownership and expose atomic empty-record revision fences; sharing deletion revokes the old link in the existing same-slot script. Focused unit/API/browser and real Redis integration suites cover exports, isolation, stale editors, races, revocation and corruption. No database migration or dependency is added.
+
 N098 adds `src/features/monitoring/` for view-local freshness state, scoped source history and a shared accessible indicator. Inbox, item tools and command lookup compose it. The profile loader exposes cache capture time and inbox sources carry nullable read/context metadata. Focused unit/API/browser coverage verifies clock/cache/scope/outage behavior. No endpoints or persistence are added.
 
 N097 adds `src/features/commands/` for the permission-filtered keyboard palette, global navigation composition and bounded fresh asset lookup. The thin API route is `/api/v2/commands/assets`; root layout composes the controller while shared navigation receives only callbacks. Unit/API/browser suites cover authorization, projection, cancellation, keyboard/mobile focus and CSP transitions. No persistence is added.

@@ -131,6 +131,20 @@ export async function mutatePrivacy(owner: string, raw: PrivacyInput): Promise<P
     if (input.action === 'revoke-all')
       next.publications = { profile: null, location: null, crafting: null, supply: null };
   }
+  return writePrivacy(owner, previous, next);
+}
+/** Content deletion also replaces routing, so old member links cannot expose retained snapshots. */
+export async function erasePrivacy(owner: string, expected: string | null): Promise<PrivacyRecord> {
+  const previous = await readPrivacy(owner);
+  if (previous.revision !== expected)
+    throw new AppError('Sharing data changed. Reload before deleting.', 409, 'PRIVACY_CONFLICT', true);
+  return writePrivacy(owner, previous, {
+    ...emptyPrivacy(),
+    revision: randomUUID(),
+    shareId: randomBytes(32).toString('hex'),
+  });
+}
+async function writePrivacy(owner: string, previous: PrivacyRecord, next: PrivacyRecord): Promise<PrivacyRecord> {
   const record = privacyRecordSchema.parse(next);
   const serialized = JSON.stringify(record);
   if (Buffer.byteLength(serialized) > MAX_BYTES)
@@ -140,12 +154,13 @@ export async function mutatePrivacy(owner: string, raw: PrivacyInput): Promise<P
     reply = await redis().eval(
       SAVE,
       [privacyOwnerKey(owner), privacyLinkKey(previous.shareId ?? record.shareId!), privacyLinkKey(record.shareId!)],
-      [input.revision ?? '', serialized, RETENTION, MAX_BYTES, previous.shareId ?? '', digest(owner)],
+      [previous.revision ?? '', serialized, RETENTION, MAX_BYTES, previous.shareId ?? '', digest(owner)],
     );
   } catch {
     throw unavailable();
   }
-  if (reply === 'conflict') throw conflict();
+  if (reply === 'conflict')
+    throw new AppError('Sharing data changed. Reload before trying again.', 409, 'PRIVACY_CONFLICT', true);
   if (reply !== 'ok') throw unavailable();
   return record;
 }

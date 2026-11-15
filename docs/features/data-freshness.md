@@ -55,4 +55,4 @@ Focused coverage is `tests/unit/monitoring/freshness.test.ts`, `tests/unit/porta
 
 Browser tests use disposable accounts and simulated dates. Responsive checks cover 320/393/412/768/1440 widths, touch, reduced motion and automated WCAG AA. Visually reviewed running-app evidence: [desktop](../assets/screenshots/freshness-desktop.png) and [mobile](../assets/screenshots/freshness-mobile.png). Native Safari, physical devices and screen-reader products remain unverified. Exact full-suite and final-head CI results are recorded in PR #11's comments.
 
-N099–N100 remain follow-up work on `feature/personalization`. No merge or deployment is authorized by this feature.
+[N099 personal data controls](personal-data.md) are implemented. N100 remains follow-up work on `feature/personalization`. No merge or deployment is authorized by this feature.

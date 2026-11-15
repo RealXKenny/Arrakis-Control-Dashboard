@@ -1,5 +1,7 @@
 # Privacy center (N095)
 
+[Personal data controls (N099)](personal-data.md) export all private drafts and retained publication snapshots, or erase that content while atomically invalidating the old member link. Existing per-card unpublishing and revoke-all controls below preserve drafts; content erasure is a separate explicit action.
+
 Open **More → Privacy center** (`/privacy`). Every account starts with four private cards: profile, location, crafting and supply. Solo members do not need a game guild or linked character. Nothing is published until the owner reviews a card and explicitly confirms publication.
 
 ## What is shared
