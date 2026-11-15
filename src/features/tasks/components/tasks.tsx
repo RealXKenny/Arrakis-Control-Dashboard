@@ -39,6 +39,15 @@ export function Tasks({ seed, focus }: { seed: TaskTarget | null; focus: string 
   const [query, setQuery] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
   const active = useRef<AbortController | null>(null);
+  const focusedOnce = useRef(false);
+  useEffect(() => {
+    if (!focus || !record || focusedOnce.current) return;
+    const target = document.getElementById(`task-${focus}`);
+    if (target) {
+      focusedOnce.current = true;
+      target.scrollIntoView({ block: 'start' });
+    }
+  }, [focus, record]);
   async function request(input?: TaskInput, discard = false) {
     if (active.current) return;
     const controller = new AbortController();

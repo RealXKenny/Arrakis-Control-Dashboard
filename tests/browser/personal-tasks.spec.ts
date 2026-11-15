@@ -50,6 +50,7 @@ test('solo members create planning entries, link tasks, complete/reopen and pres
   await child.getByRole('link', { name: /Open Desert workshop/ }).click();
   await expect(page).toHaveURL(/\/tasks\?focus=/);
   await expect(list.getByRole('article', { name: 'Desert workshop' })).toHaveAttribute('data-focused', 'true');
+  await expect(list.getByRole('article', { name: 'Desert workshop' })).toBeInViewport();
   await expect(child).toContainText('Keep this private.');
   await child.getByRole('button', { name: 'Edit entry' }).click();
   await list.getByLabel('Link to', { exact: true }).selectOption('goal');
@@ -176,8 +177,13 @@ test('task editing stays accessible and usable at narrow touch widths, with fail
     return (await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'] })).violations;
   });
   expect(violations).toEqual([]);
+  await page.evaluate(() => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  });
   await page.screenshot({ path: info.outputPath('tasks-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 393, height: 852 });
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await page.screenshot({ path: info.outputPath('tasks-mobile.png'), fullPage: true });
   let writes = 0;
   await page.route('**/api/v2/tasks', async (route) => {

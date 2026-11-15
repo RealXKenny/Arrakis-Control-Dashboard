@@ -25,7 +25,7 @@ test.describe('holdings and export', () => {
   test('owned bases list their export and sharing actions', async ({ page, context }) => {
     await signInAs(context, await fakeConsole.newMember('Builder', { guild: null }));
     await page.goto('/holdings');
-    await expect(page.getByText('Stronghold One')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Stronghold One', exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Download blueprint' })).toHaveAttribute(
       'href',
       '/api/bases/b1/export',

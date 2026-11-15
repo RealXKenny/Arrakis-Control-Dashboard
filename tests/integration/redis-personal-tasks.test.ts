@@ -116,6 +116,7 @@ it('enforces 100 entries and byte bounds without evicting existing personal note
 it('fails closed on corrupt, oversized and wrong-type storage without resetting notes', async () => {
   const key = store.personalTasksKey('one');
   for (const raw of [
+    '',
     '{bad',
     'x'.repeat(262145),
     JSON.stringify({ schemaVersion: 99, revision: randomUUID(), tasks: [] }),

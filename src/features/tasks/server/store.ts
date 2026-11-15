@@ -8,6 +8,7 @@ const RETENTION = 90 * 86400;
 const READ = `-- personal-tasks-read-v1
 if redis.call('STRLEN', KEYS[1]) > tonumber(ARGV[1]) then return false end
 local value = redis.call('GET', KEYS[1])
+if value == '' then return false end
 if value then redis.call('EXPIRE', KEYS[1], ARGV[2]) end
 return value or ''`;
 const SAVE = `-- personal-tasks-save-v1
