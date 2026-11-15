@@ -14,7 +14,15 @@ import { isNavigationActive, navigationFor, NOTIFICATION_ITEMS, SIGN_IN_HREF, ty
 import { NavigationDirectLink, NavigationDropdown } from './navigation-menu';
 
 /** `identity` and `isAdmin` are resolved on the server from the verified session. */
-export function TopNavigation({ identity, isAdmin = false }: { identity: NavIdentity | null; isAdmin?: boolean }) {
+export function TopNavigation({
+  identity,
+  isAdmin = false,
+  onOpenCommands,
+}: {
+  identity: NavIdentity | null;
+  isAdmin?: boolean;
+  onOpenCommands?: (opener?: HTMLElement) => void;
+}) {
   const pathname = usePathname();
   const items = navigationFor({ isAdmin });
   const [openMenu, setOpenMenu] = useState<{ id: string; pathname: string } | null>(null);
@@ -85,6 +93,17 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
           <AudioControls />
           {identity ? (
             <>
+              {onOpenCommands && (
+                <button
+                  type="button"
+                  aria-label="Open command palette"
+                  title="Commands (Ctrl or Command + K)"
+                  onClick={(event) => onOpenCommands(event.currentTarget)}
+                  className="hidden size-11 items-center justify-center border border-[#6f4d1f]/50 font-mono text-sm text-sand-100 hover:text-spice-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-spice-300 xl:inline-flex"
+                >
+                  ⌘K
+                </button>
+              )}
               {/* Below the desktop bar the primary navigation is hidden, so Home stays one tap away. */}
               <Link
                 href="/"
@@ -174,6 +193,15 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
           isAdmin={isAdmin}
           onClose={closeMobile}
           triggerRef={mobileTriggerRef}
+          onOpenCommands={
+            onOpenCommands
+              ? () => {
+                  closeMobile();
+                  const target = mobileTriggerRef.current;
+                  requestAnimationFrame(() => onOpenCommands(target ?? undefined));
+                }
+              : undefined
+          }
         />
       )}
     </header>

@@ -52,6 +52,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 
 ### Players and community
 
+- **Command palette:** Ctrl/Command+K for authorized navigation and explicit base/vehicle lookup, plus a mobile-menu entry. See [Command palette](docs/features/command-palette.md).
 - **Mobile quick actions:** touch-friendly portal shortcuts for supply searches, owned/shared bases and operation briefings. See [Mobile quick actions](docs/features/mobile-quick-actions.md).
 - **Player profiles:** character status, progression, factions, inventory, vehicles, bases, and journey information.
 - **Privacy center:** private drafts and reviewed, expiring member-link sharing for profile, location, crafting and supply notes, with per-card unpublishing and revoke-all. See [Privacy center](docs/features/privacy-center.md).

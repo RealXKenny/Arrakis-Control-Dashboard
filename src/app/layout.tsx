@@ -6,7 +6,7 @@ import { getServerEnv } from '../config/env';
 import { currentSession } from '../features/auth/server/session';
 import { isDashboardAdmin } from '../features/admin/server/access';
 import { SiteFooter } from '../components/layout/site-footer';
-import { TopNavigation } from '../components/navigation/top-navigation';
+import { CommandNavigation } from '../features/commands/components/command-navigation';
 import '../styles/globals.css';
 
 // Archivo's width axis gives the monolithic, wide-set headline voice; Mono carries data and labels.
@@ -69,7 +69,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
           Skip to content
         </a>
-        <TopNavigation identity={session ? navIdentity(session) : null} isAdmin={isDashboardAdmin(session)} />
+        <CommandNavigation
+          key={session?.user.id ?? 'anonymous'}
+          identity={session ? navIdentity(session) : null}
+          isAdmin={isDashboardAdmin(session)}
+        />
         <main id="main" className="flex-1">
           {children}
         </main>

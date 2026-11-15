@@ -26,4 +26,4 @@ Run the standard formatting, typecheck, lint and unit/API/architecture checks, p
 
 Visually reviewed running-app screenshots with disposable member data: [desktop quick actions](../assets/screenshots/quick-actions-desktop.png) and [mobile quick actions](../assets/screenshots/quick-actions-mobile.png). Full executed results and final-head CI are recorded in draft PR #11's conversation comments.
 
-Deploy through the normal application update only after authorization; there is no data migration. N097–N100 remain follow-up work on `feature/personalization`. This implementation does not authorize merging or deploying the branch.
+Deploy through the normal application update only after authorization; there is no data migration. [N097 command palette](command-palette.md) is implemented separately; N098–N100 remain follow-up work on `feature/personalization`. This implementation does not authorize merging or deploying the branch.

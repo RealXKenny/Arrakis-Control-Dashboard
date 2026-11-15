@@ -1,5 +1,7 @@
 # Features
 
+[Keyboard command palette](command-palette.md) searches authorized navigation and explicitly looks up accessible bases/vehicles, with keyboard and mobile entry.
+
 [Mobile quick actions](mobile-quick-actions.md) prepare supply searches, open owned/shared bases and take members directly to operation briefings from `/portal`.
 
 [Privacy center](privacy-center.md) controls reviewed, expiring member-link publication of profile, location, crafting and supply cards at `/privacy`.

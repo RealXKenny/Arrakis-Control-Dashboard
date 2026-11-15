@@ -92,6 +92,7 @@ export function MobileNavigation({
   isAdmin,
   onClose,
   triggerRef,
+  onOpenCommands,
 }: {
   items: readonly NavigationItem[];
   pathname: string;
@@ -99,6 +100,7 @@ export function MobileNavigation({
   isAdmin: boolean;
   onClose: () => void;
   triggerRef: RefObject<HTMLButtonElement | null>;
+  onOpenCommands?: () => void;
 }) {
   const drawer = useRef<HTMLDivElement>(null);
   const close = useRef<HTMLButtonElement>(null);
@@ -173,6 +175,17 @@ export function MobileNavigation({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto pb-6">
+          {onOpenCommands && (
+            <div className="p-3">
+              <button
+                type="button"
+                onClick={onOpenCommands}
+                className="min-h-12 w-full border border-sand-200/30 px-3 py-2 text-left text-sm font-bold text-spice-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-spice-300"
+              >
+                Search navigation and assets
+              </button>
+            </div>
+          )}
           <nav aria-label="Mobile" className="p-3">
             <div className="space-y-1">
               {items.map((item) => (
