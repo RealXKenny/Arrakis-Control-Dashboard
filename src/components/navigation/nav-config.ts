@@ -318,6 +318,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
         order: 10,
       },
       {
+        id: 'personal-tasks',
+        label: 'Personal tasks',
+        href: '/tasks',
+        icon: 'portal',
+        description: 'Your private task list, projects and goals.',
+        order: 12,
+      },
+      {
         id: 'service-status',
         label: 'Service status',
         href: '/status',

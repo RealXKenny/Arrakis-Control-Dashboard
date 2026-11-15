@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { taskDraftHref } from '../../../tasks/model';
 import type { PortalBase } from '../../../portal/view-model';
 import { Meter } from '../../../../components/ui/meter';
 
@@ -58,6 +59,24 @@ export function HoldingCard({ base }: { base: PortalBase }) {
             Share to marketplace
           </Link>
         </div>
+      )}
+      {taskDraftHref({
+        type: 'base',
+        ref: base.id,
+        label: base.name.slice(0, 160),
+        view: base.owned ? 'owned' : 'shared',
+      }) && (
+        <Link
+          className="inline-flex min-h-11 items-center text-sm text-spice-300 underline"
+          href={taskDraftHref({
+            type: 'base',
+            ref: base.id,
+            label: base.name.slice(0, 160),
+            view: base.owned ? 'owned' : 'shared',
+          })!}
+        >
+          Plan a task for {base.name}
+        </Link>
       )}
     </article>
   );

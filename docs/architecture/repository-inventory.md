@@ -1,5 +1,7 @@
 # Repository inventory
 
+N094 adds `src/features/tasks/` for private planning schemas, a member task editor, bounded Redis records and API handlers. Thin entries are `/tasks` and `/api/v2/tasks`. Context links reuse existing item/base/vehicle components; Storage accepts a bounded finder-prefill parameter without automatic scans. Dedicated task unit/API/browser and real Redis integration suites follow existing test organization.
+
 N093 extends `src/features/inbox/` with notification schemas/policy, a settings editor and bounded private Redis controls. `/api/v2/inbox/preferences` delegates to its feature handlers. Unit/API/browser and real Redis integration suites cover the contract; `tests/helpers/notification-preferences-redis.mjs` is the disposable browser CAS model.
 
 N092 adds `src/features/inbox/` for bounded read-through alert composition, API authorization and the member inbox. Thin entries are `/inbox` and `/api/v2/inbox`; focused unit/API/browser coverage follows the existing test organization. It adds no persistence or dependencies.

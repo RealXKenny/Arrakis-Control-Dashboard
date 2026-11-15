@@ -1,4 +1,6 @@
 import Image from 'next/image';
+import Link from 'next/link';
+import { taskDraftHref } from '../../tasks/model';
 import { formatCount } from '../../../lib/format';
 import type { Vehicle, VehicleStorage } from '../normalize';
 import { Meter } from '../../../components/ui/meter';
@@ -74,6 +76,19 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
           <Meter label="Fuel" percent={vehicle.fuel.percent} value={fuelText(vehicle.fuel)} />
         ) : null}
       </div>
+      {taskDraftHref({ type: 'vehicle', ref: vehicle.id, label: vehicle.name.slice(0, 160), view: vehicle.access }) && (
+        <Link
+          className="inline-flex min-h-11 items-center text-sm text-spice-300 underline"
+          href={taskDraftHref({
+            type: 'vehicle',
+            ref: vehicle.id,
+            label: vehicle.name.slice(0, 160),
+            view: vehicle.access,
+          })!}
+        >
+          Plan a task for {vehicle.name}
+        </Link>
+      )}
     </article>
   );
 }

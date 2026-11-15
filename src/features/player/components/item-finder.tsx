@@ -4,9 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ItemPin } from '../item-pins';
 import type { FinderResult } from '../item-finder';
+import { taskDraftHref } from '../../tasks/model';
 
-export function ItemFinder({ onPin }: { onPin?: (pin: ItemPin) => void } = {}) {
-  const [query, setQuery] = useState('');
+export function ItemFinder({
+  onPin,
+  initialQuery = '',
+}: { onPin?: (pin: ItemPin) => void; initialQuery?: string } = {}) {
+  const [query, setQuery] = useState(initialQuery);
   const [result, setResult] = useState<FinderResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -118,6 +122,18 @@ export function ItemFinder({ onPin }: { onPin?: (pin: ItemPin) => void } = {}) {
                 <Link className="mt-3 inline-block text-sm text-spice-400 underline" href={item.href}>
                   Open source workspace
                 </Link>
+                {taskDraftHref({ type: 'item', ref: item.templateId || item.name, label: item.name.slice(0, 160) }) && (
+                  <Link
+                    className="mt-3 block min-h-11 text-sm text-spice-300 underline"
+                    href={taskDraftHref({
+                      type: 'item',
+                      ref: item.templateId || item.name,
+                      label: item.name.slice(0, 160),
+                    })!}
+                  >
+                    Plan a task for {item.name}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

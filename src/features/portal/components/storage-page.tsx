@@ -34,13 +34,15 @@ export default async function StoragePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await requireSession();
-  const query = parseStorageQuery(await searchParams);
+  const params = await searchParams;
+  const query = parseStorageQuery(params);
+  const initialFind = typeof params.find === 'string' && params.find.trim().length <= 128 ? params.find.trim() : '';
   const result = await loadPortalProfile(session);
   if (result.status !== 'ok') {
     return (
       <>
         <PageHeader eyebrow="Personal inventory" title="Storage" />
-        <InventoryTools />
+        <InventoryTools key={initialFind} initialFind={initialFind} />
         <ProfileFailure result={result} />
       </>
     );
@@ -53,7 +55,7 @@ export default async function StoragePage({
   return (
     <>
       <PageHeader eyebrow="Personal inventory" title="Storage" />
-      <InventoryTools />
+      <InventoryTools key={initialFind} initialFind={initialFind} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="grid min-w-0 grid-cols-1 content-start gap-6 lg:col-span-4">
           <section className="panel p-6" aria-labelledby="assets">

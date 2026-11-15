@@ -21,7 +21,7 @@ function pinRecord(value: unknown): ItemPinsRecord {
   return parsed.data;
 }
 
-export function InventoryTools() {
+export function InventoryTools({ initialFind = '' }: { initialFind?: string }) {
   const [record, setRecord] = useState<ItemPinsRecord | null>(null);
   const [reading, setReading] = useState<ItemPinReading | null>(null);
   const [message, setMessage] = useState('Loading pinned items…');
@@ -243,7 +243,7 @@ export function InventoryTools() {
           </details>
         )}
       </section>
-      <ItemFinder onPin={pin} />
+      <ItemFinder onPin={pin} initialQuery={initialFind} />
     </>
   );
 }
