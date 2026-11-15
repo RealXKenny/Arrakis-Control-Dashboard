@@ -239,3 +239,41 @@ test('command lookup reports freshness without automatic scans and monitoring in
     await page.screenshot({ path: info.outputPath(name), fullPage: true, animations: 'disabled' });
   }
 });
+
+test("client-side Storage navigation cannot carry another account's counter readings or success history", async ({
+  page,
+}) => {
+  const owner = await fakeConsole.newMember('Freshness owner A', { guild: null });
+  const other = await fakeConsole.newMember('Freshness owner B', { guild: null });
+  await page.context().setExtraHTTPHeaders({ Cookie: owner.cookie });
+  const saved = await page.request.post('/api/v2/items/pins', {
+    headers: { Origin: 'http://127.0.0.1:3100' },
+    data: { revision: null, pins: [{ templateId: 'Spice', name: 'Private pinned spice' }] },
+  });
+  expect(saved.status()).toBe(200);
+  const record = await saved.json();
+  const stamp = new Date().toISOString();
+  await page.route('**/api/v2/items/pins/readings', (route) =>
+    route.fulfill({
+      json: {
+        revision: record.revision,
+        counters: [{ templateId: 'Spice', name: 'Private pinned spice', quantity: '123456789', complete: true }],
+        coverage: {
+          startedAt: stamp,
+          limited: false,
+          sources: [{ name: 'Backpack', status: 'ok', checkedAt: stamp, detail: 'Checked' }],
+        },
+      },
+    }),
+  );
+  await page.goto('/storage');
+  await page.getByRole('button', { name: 'Refresh counts', exact: true }).click();
+  const counters = page.getByRole('list', { name: 'Pinned item counters' });
+  await expect(counters).toContainText('123456789');
+  await page.context().setExtraHTTPHeaders({ Cookie: other.cookie });
+  await page.getByRole('group', { name: 'Storage layout' }).getByRole('link', { name: 'list', exact: true }).click();
+  await expect(page).toHaveURL(/layout=list/);
+  await expect(counters).not.toContainText('Private pinned spice');
+  await expect(counters).not.toContainText('123456789');
+  await expect(page.getByRole('group', { name: 'Pinned counter freshness' })).toContainText('No successful read');
+});

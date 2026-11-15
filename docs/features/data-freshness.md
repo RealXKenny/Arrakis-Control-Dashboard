@@ -41,6 +41,8 @@ The item finder and pinned counters derive successful observation time from the 
 
 Pinned counts now clear immediately when refresh starts, fails, is cancelled, settings change or the page hides. Failed refreshes cannot leave old quantities looking current. During a transport/storage outage, only the last successful timestamp can remain. Session/character-link conflicts clear success history. Pin settings and ownership still use the existing independent account/pawn/controller contract.
 
+Storage also keys inventory tools to the server session account, observed character (or unavailable/link status) and finder query. A client-side layout/filter transition under a changed account/character remounts the tools and clears previous selections, counts and success metadata. The added regression reproduces the old retained-counter behavior under a changed disposable session before verifying the fix; server API authorization is unchanged.
+
 Finder query changes cancel the active request and clear old results and history. The command palette does the same on query/mode changes and closes on document hiding; it labels existing `checkedAt` and partial coverage without extra requests. Both continue to require explicit authorized searches. Source timestamps describe read completion/observations, not asset ownership or permission leases; destination workspaces recheck access.
 
 ## Architecture, deployment and testing
