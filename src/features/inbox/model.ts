@@ -43,6 +43,14 @@ export const inboxViewSchema = z
 export type InboxView = z.infer<typeof inboxViewSchema>;
 const anchorId = (value: string) =>
   encodeURIComponent(value).replace(/[!'()*]/g, (char) => `%${char.charCodeAt(0).toString(16)}`);
+function reportedCollection(value: unknown, depth = 0): boolean {
+  if (Array.isArray(value)) return true;
+  if (!value || typeof value !== 'object' || depth >= 3) return false;
+  const row = value as Record<string, unknown>;
+  return ['rows', 'data', 'bases', 'vehicles', 'results', 'items'].some((key) =>
+    reportedCollection(row[key], depth + 1),
+  );
+}
 
 /** Only reported percentages produce alerts. Generator defaults are deliberately not evidence. */
 export function assetAlerts(profile: PortalProfile): { alerts: InboxAlert[]; partial: boolean } {
@@ -50,8 +58,8 @@ export function assetAlerts(profile: PortalProfile): { alerts: InboxAlert[]; par
   let partial =
     profile.bases.length > 20 ||
     profile.vehicles.length > 20 ||
-    profile.details.bases == null ||
-    profile.details.vehicles == null;
+    !reportedCollection(profile.details.bases) ||
+    !reportedCollection(profile.details.vehicles);
   const known = (value: number | null | undefined): value is number =>
     typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
   for (const base of profile.bases.slice(0, 20)) {

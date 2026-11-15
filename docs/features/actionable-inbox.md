@@ -31,6 +31,10 @@ Run standard formatting, typecheck, lint and unit/API/architecture checks, a pro
 
 Browser fixtures use disposable data. Chromium viewport checks cover 320, 393, 412, 768 and 1440px; they do not certify native Safari, physical devices or screen-reader products. No production player data is changed.
 
+On 15 November 2026, the local unit/API/architecture suite passed 1,649 tests with 32 existing Windows platform skips. The full browser suite passed all 186 cases; after the final card-order/copy and missing-source refinement, all eight inbox/portal cases passed again. The final production build, both smoke suites, typecheck, lint, formatting and documentation checks passed. [Implementation CI](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43744501656) passed all required checks, and the [six-node Redis Cluster workflow](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/43744608328) passed on the combined branch. The PR checks record final-head verification.
+
+Visually reviewed screenshots from the running application with disposable fixtures: [desktop](../assets/screenshots/actionable-inbox-desktop.png) and [mobile](../assets/screenshots/actionable-inbox-mobile.png). Action cards precede longer coverage notes so the first action remains visible on mobile.
+
 ## Shared personalization branch
 
 N091–N100 are kept together on `feature/personalization`. N091 widget layouts are implemented; N092 adds this inbox. N093–N100 remain follow-up work: notification controls, personal tasks, voluntary-sharing privacy controls, mobile quick actions, command palette, monitoring freshness, personal data controls and saved activity views. Keeping their work on one branch does not mark unimplemented backlog entries complete. Do not merge or deploy without authorization.

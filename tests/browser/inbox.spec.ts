@@ -94,6 +94,29 @@ test('verified guild operations appear with working briefings but never leak to 
     },
   });
   expect(save.status()).toBe(200);
+  const supply = await page.request.post('/api/v2/guilds/2/resource-requests', {
+    headers: { Origin: 'http://127.0.0.1:3100' },
+    data: {
+      action: 'save',
+      revision: null,
+      request: {
+        id: randomUUID(),
+        material: 'Inbox carbon ore',
+        quantity: '100',
+        unit: 'ore',
+        dropoff: 'Guild base',
+        details: 'Coordinate supplies',
+        priority: 'urgent',
+      },
+    },
+  });
+  expect(supply.status()).toBe(200);
+  await page.goto('/inbox');
+  const supplyAlert = page.getByRole('article', { name: 'Inbox carbon ore: urgent supply request' });
+  await expect(supplyAlert).toBeVisible();
+  await supplyAlert.getByRole('link', { name: /Open supply requests/ }).click();
+  await expect(page).toHaveURL(/tab=resources/);
+  await expect(page.getByRole('article', { name: 'Inbox carbon ore', exact: true })).toBeVisible();
   await page.goto('/inbox');
   const article = page.getByRole('article', { name: 'Private inbox sortie' });
   await expect(article).toBeVisible();

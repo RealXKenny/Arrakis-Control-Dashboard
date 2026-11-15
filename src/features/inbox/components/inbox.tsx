@@ -110,24 +110,9 @@ export function Inbox() {
       </p>
       {data && (
         <>
-          <div className={styles.sources} aria-label="Source coverage">
-            {data.sources.map((source) => (
-              <div key={source.category} className={styles.source}>
-                <h2>
-                  {categoryNames[source.category]} · {source.status.replaceAll('-', ' ')}
-                </h2>
-                <p>{source.detail}</p>
-                {source.category === 'market' && (
-                  <Link href="/market" className={styles.link}>
-                    Browse current market
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
           {!alerts.length && (
             <p className={styles.notice}>
-              No actionable alerts match this view. Check source coverage above; missing and unsupported readings are
+              No actionable alerts match this view. Check source coverage below; missing and unsupported readings are
               not an all-clear.
             </p>
           )}
@@ -143,6 +128,21 @@ export function Inbox() {
                   {alert.action} →
                 </Link>
               </article>
+            ))}
+          </div>
+          <div className={styles.sources} aria-label="Source coverage">
+            {data.sources.map((source) => (
+              <div key={source.category} className={styles.source}>
+                <h2>
+                  {categoryNames[source.category]} · {source.status.replaceAll('-', ' ')}
+                </h2>
+                <p>{source.detail}</p>
+                {source.category === 'market' && (
+                  <Link href="/market" className={styles.link}>
+                    Browse current market
+                  </Link>
+                )}
+              </div>
             ))}
           </div>
         </>

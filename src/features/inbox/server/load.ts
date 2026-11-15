@@ -17,7 +17,7 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
       category: 'market',
       status: 'unsupported',
       detail:
-        'Personal market-price alerts (N042) are not implemented. No price crossing or sale is inferred from current listings.',
+        'Personal market-price alerts are not available yet. Browse current listings to check prices; listings do not confirm a sale.',
     },
     { category: 'operations', status: 'unavailable', detail: 'Guild membership could not be checked.' },
   ];
@@ -31,7 +31,7 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
       status: assets.partial ? 'partial' : 'checked',
       detail: assets.partial
         ? 'Reported water, storage, condition and fuel only. Some readings are missing or exceed the 20-base/20-vehicle limit.'
-        : 'Reported water, storage, vehicle condition and fuel checked. Generator maintenance monitoring (N021) is not implemented.',
+        : 'Reported water, storage, vehicle condition and fuel checked. Generator maintenance monitoring is not available yet.',
     };
     const guild = reportedGuild(result.profile.legacyCharacter);
     if (!result.profile.character.guild) {
@@ -39,7 +39,10 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
         sources[index] = {
           ...sources[index],
           status: 'not-applicable',
-          detail: 'No game guild is reported. Personal stockpile alerts (N025) are not implemented.',
+          detail:
+            index === 1
+              ? 'No game guild is reported. Personal stockpile monitoring is not available yet.'
+              : 'No game guild is reported. Operation briefings require current guild membership.',
         };
     } else if (guild) {
       try {
@@ -53,7 +56,7 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
             category: 'supply',
             status: 'checked',
             detail:
-              'Open guild requests: urgent needs, your promises and deliveries you can review. Personal stockpile alerts (N025) are not implemented.',
+              'Open guild requests: urgent needs, your promises and deliveries you can review. Personal stockpile monitoring is not available yet.',
           };
         } else sources[1].detail = 'Supply storage is unavailable. No supply requests were exposed.';
         if (operations.status === 'fulfilled') {

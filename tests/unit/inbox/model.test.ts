@@ -15,6 +15,8 @@ it('never treats missing telemetry or generator defaults as low readings', () =>
   expect(assetAlerts(p)).toEqual({ alerts: [], partial: false });
   p.details.vehicles = null;
   expect(assetAlerts(p)).toEqual({ alerts: [], partial: true });
+  p.details.vehicles = {};
+  expect(assetAlerts(p)).toEqual({ alerts: [], partial: true });
 });
 it('uses inclusive documented thresholds, bounds and safe links without inventing container fuel', () => {
   const p = profile();
