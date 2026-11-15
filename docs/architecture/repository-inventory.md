@@ -1,5 +1,7 @@
 # Repository inventory
 
+N098 adds `src/features/monitoring/` for view-local freshness state, scoped source history and a shared accessible indicator. Inbox, item tools and command lookup compose it. The profile loader exposes cache capture time and inbox sources carry nullable read/context metadata. Focused unit/API/browser coverage verifies clock/cache/scope/outage behavior. No endpoints or persistence are added.
+
 N097 adds `src/features/commands/` for the permission-filtered keyboard palette, global navigation composition and bounded fresh asset lookup. The thin API route is `/api/v2/commands/assets`; root layout composes the controller while shared navigation receives only callbacks. Unit/API/browser suites cover authorization, projection, cancellation, keyboard/mobile focus and CSP transitions. No persistence is added.
 
 N096 adds server-rendered `quick-actions.tsx` and a responsive CSS module inside `src/features/portal/components/`. It reuses the existing Storage, Holdings and My Guild destinations through the centralized navigation resolver. Browser coverage is `tests/browser/quick-actions.spec.ts`; nested/permission-filtered lookup coverage stays with navigation unit tests. No routes or persistence are added.

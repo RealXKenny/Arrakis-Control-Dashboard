@@ -28,7 +28,11 @@ beforeEach(() => {
   state.limit.mockResolvedValue({ allowed: true });
   state.profile.mockResolvedValue({
     status: 'ok',
-    profile: buildPortalProfile({ details: { guild: { id: 'verified-guild', name: 'Guild' } } }),
+    capturedAt: '2026-11-15T20:00:00.000Z',
+    profile: buildPortalProfile({
+      pawnId: 'linked-character',
+      details: { guild: { id: 'verified-guild', name: 'Guild' } },
+    }),
   });
   state.member.mockResolvedValue({ memberId: 'canonical-self', canEdit: false });
   state.supply.mockResolvedValue([]);
@@ -89,4 +93,21 @@ it('isolates source failures and removes member IDs from actionable operation su
   expect(data.alerts[0]).toMatchObject({ id: expect.stringMatching(/^[a-f0-9]{64}$/), href: '/guild?tab=operations' });
   expect(JSON.stringify(data)).not.toContain('canonical-self');
   expect(JSON.stringify(data)).not.toContain('Redis secret');
+});
+
+it('preserves the actual cached profile capture time and records guild reads only after successful verified access', async () => {
+  const { data: first } = await (await GET(req())).json();
+  const { data: second } = await (await GET(req())).json();
+  expect(first.sources[0].readAt).toBe('2026-11-15T20:00:00.000Z');
+  expect(second.sources[0].readAt).toBe(first.sources[0].readAt);
+  expect(first.sources[1].readAt).toMatch(/^\d{4}-/);
+  expect(first.sources[1].context).toMatch(/^[a-f0-9]{64}$/);
+  expect(first.sources[2]).toMatchObject({ status: 'unsupported', readAt: null, context: null });
+  state.supply.mockRejectedValueOnce(new Error('Private storage failure'));
+  const { data: outage } = await (await GET(req())).json();
+  expect(outage.sources[1]).toMatchObject({ status: 'unavailable', readAt: null, context: first.sources[1].context });
+  state.member.mockRejectedValueOnce(new Error('Access denied'));
+  const { data: denied } = await (await GET(req())).json();
+  expect(denied.sources[1]).toMatchObject({ readAt: null, context: null });
+  expect(denied.sources[3]).toMatchObject({ readAt: null, context: null });
 });

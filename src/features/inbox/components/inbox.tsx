@@ -10,9 +10,20 @@ import {
   type NotificationInput,
 } from '../preferences';
 import { NotificationSettings } from './notification-settings';
+import { DataFreshness } from '../../monitoring/components/data-freshness';
+import {
+  beginCheck,
+  emptyHealth,
+  failedRead,
+  sourceHealth,
+  successfulRead,
+  type ScopedHealth,
+} from '../../monitoring/freshness';
 
 export function Inbox() {
   const [data, setData] = useState<InboxView | null>(null);
+  const [health, setHealth] = useState(emptyHealth);
+  const [sourceHistory, setSourceHistory] = useState<Record<string, ScopedHealth>>({});
   const [category, setCategory] = useState<InboxCategory | 'all'>('all');
   const [urgent, setUrgent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -76,20 +87,33 @@ export function Inbox() {
     if (request.current || mutation.current) return;
     const controller = new AbortController();
     request.current = controller;
+    const attemptedAt = new Date().toISOString();
+    setHealth((previous) => beginCheck(previous));
+    setSourceHistory((previous) =>
+      Object.fromEntries(
+        Object.entries(previous).map(([key, value]) => [
+          key,
+          { ...value, phase: value.phase === 'unsupported' ? 'unsupported' : 'checking', lastAttemptAt: attemptedAt },
+        ]),
+      ),
+    );
     setBusy(true);
     setError('');
     // Clear private details immediately: a failed refresh must not preserve stale guild access.
     setMessage('');
     setData(null);
     const deadline = setTimeout(() => controller.abort('timeout'), 45000);
+    let accessDenied = false;
     try {
       const response = await fetch('/api/v2/inbox', { cache: 'no-store', signal: controller.signal });
-      if (!response.ok)
+      if (!response.ok) {
+        accessDenied = [401, 403, 409].includes(response.status);
         throw new Error(
           response.status === 401
             ? 'Your session ended. Sign in again.'
             : 'Inbox could not be checked. Try again shortly.',
         );
+      }
       const body: unknown = await response.json();
       const parsed = inboxViewSchema.safeParse((body as { data?: unknown })?.data);
       const settings = notificationEnvelopeSchema.safeParse((body as { notifications?: unknown })?.notifications);
@@ -97,10 +121,38 @@ export function Inbox() {
         throw new Error('Inbox returned an unreadable response. Try again shortly.');
       if (!controller.signal.aborted) {
         setData(parsed.data);
+        setHealth((previous) =>
+          successfulRead(
+            previous,
+            parsed.data.checkedAt,
+            parsed.data.sources.some((source) => source.status === 'partial' || source.status === 'unavailable'),
+          ),
+        );
+        setSourceHistory((previous) =>
+          Object.fromEntries(
+            parsed.data.sources.map((source) => [
+              source.category,
+              sourceHealth(previous[source.category], source, attemptedAt),
+            ]),
+          ),
+        );
         setPreferences(settings.data.record);
         setCheckedAt(Date.parse(settings.data.checkedAt));
       }
     } catch (failure) {
+      if (!controller.signal.aborted || controller.signal.reason === 'timeout') {
+        setHealth((previous) => failedRead(previous, accessDenied));
+        setSourceHistory((previous) =>
+          accessDenied
+            ? {}
+            : Object.fromEntries(
+                Object.entries(previous).map(([key, value]) => [
+                  key,
+                  { ...value, phase: value.phase === 'unsupported' ? 'unsupported' : 'outage' },
+                ]),
+              ),
+        );
+      }
       if (!controller.signal.aborted || controller.signal.reason === 'timeout')
         setError(
           controller.signal.reason === 'timeout'
@@ -125,6 +177,8 @@ export function Inbox() {
         setControlsBusy(false);
         request.current = null;
         setData(null);
+        setHealth((previous) => ({ ...previous, phase: 'paused' }));
+        setSourceHistory({});
         setBusy(false);
       }
     };
@@ -205,6 +259,7 @@ export function Inbox() {
             ? `${alerts.length} actionable alerts shown. Sources checked ${new Date(data.checkedAt).toLocaleString()}. Readings may be cached for up to 15 seconds; this is not an atomic game snapshot.`
             : 'No current inbox reading.'}
       </p>
+      <DataFreshness label="Inbox response freshness" health={health} successLabel="Last successful inbox response" />
       {data && preferences && (
         <>
           {!alerts.length && (
@@ -280,23 +335,30 @@ export function Inbox() {
             onSave={(config) => control({ action: 'configure', revision: preferences.revision, config })}
             onReload={() => void refresh()}
           />
-          <div className={styles.sources} aria-label="Source coverage">
-            {data.sources.map((source) => (
-              <div key={source.category} className={styles.source}>
-                <h2>
-                  {categoryNames[source.category]} · {source.status.replaceAll('-', ' ')}
-                </h2>
-                <p>{source.detail}</p>
-                {source.category === 'market' && (
-                  <Link href="/market" className={styles.link}>
-                    Browse current market
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
         </>
       )}
+      <div className={styles.sources} aria-label="Source coverage">
+        {inboxCategories.map((id) => {
+          const source = data?.sources.find((value) => value.category === id);
+          return (
+            <div key={id} className={styles.source}>
+              <h2>
+                {categoryNames[id]} · {(source?.status ?? sourceHistory[id]?.phase ?? 'idle').replaceAll('-', ' ')}
+              </h2>
+              {source && <p>{source.detail}</p>}
+              <DataFreshness
+                label={`${categoryNames[id]} source freshness`}
+                health={sourceHistory[id] ?? emptyHealth()}
+              />
+              {id === 'market' && (
+                <Link href="/market" className={styles.link}>
+                  Browse current market
+                </Link>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }

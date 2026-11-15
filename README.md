@@ -52,6 +52,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 
 ### Players and community
 
+- **Data freshness:** explicit last-success timestamps, stale/partial/outage indicators and clear-on-failure private readings. See [Data freshness](docs/features/data-freshness.md).
 - **Command palette:** Ctrl/Command+K for authorized navigation and explicit base/vehicle lookup, plus a mobile-menu entry. See [Command palette](docs/features/command-palette.md).
 - **Mobile quick actions:** touch-friendly portal shortcuts for supply searches, owned/shared bases and operation briefings. See [Mobile quick actions](docs/features/mobile-quick-actions.md).
 - **Player profiles:** character status, progression, factions, inventory, vehicles, bases, and journey information.

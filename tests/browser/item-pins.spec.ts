@@ -135,5 +135,7 @@ test('counter partial zeros, failed saves and cancellation stay honest without a
   await page.getByRole('button', { name: 'Refresh counts', exact: true }).click();
   await page.getByRole('button', { name: 'Cancel count refresh', exact: true }).click();
   await expect(page.getByText('Count refresh cancelled.')).toBeVisible();
-  await expect(page.getByRole('list', { name: 'Pinned item counters' })).toContainText('Unknown (0 observed)');
+  await expect(page.getByRole('list', { name: 'Pinned item counters' })).toContainText('Not checked');
+  await expect(page.getByRole('list', { name: 'Pinned item counters' })).not.toContainText('Unknown (0 observed)');
+  await expect(page.getByRole('group', { name: 'Pinned counter freshness' })).toContainText('Paused');
 });

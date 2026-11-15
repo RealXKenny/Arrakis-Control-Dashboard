@@ -38,6 +38,12 @@ export const inboxViewSchema = z
             category: z.enum(inboxCategories),
             status: z.enum(['checked', 'partial', 'unavailable', 'unlinked', 'not-applicable', 'unsupported']),
             detail: z.string().max(600),
+            readAt: z.iso.datetime().nullable().default(null),
+            context: z
+              .string()
+              .regex(/^[a-f0-9]{64}$/)
+              .nullable()
+              .default(null),
           })
           .strict(),
       )

@@ -11,7 +11,7 @@ import { spendReadBudget } from '../../../server/read-budget';
 import { currentSessionId } from '../../auth/server/session';
 
 export type PortalResult =
-  | { status: 'ok'; profile: PortalProfile }
+  | { status: 'ok'; profile: PortalProfile; capturedAt?: string }
   | { status: 'unlinked'; message: string | null }
   | { status: 'limited'; retryAfter: number }
   | { status: 'unavailable'; message: string };
@@ -38,7 +38,7 @@ export async function loadPortalProfile(session: DashboardSession): Promise<Port
     if (raw.linked !== true) {
       return { status: 'unlinked', message: typeof raw.error === 'string' ? raw.error : null };
     }
-    return { status: 'ok', profile: buildPortalProfile(raw) };
+    return { status: 'ok', profile: buildPortalProfile(raw), capturedAt: new Date(entry.capturedAt).toISOString() };
   } catch (error) {
     if (error instanceof AppError && error.expose) return { status: 'unavailable', message: error.message };
     logger.error('Unable to load portal profile', error);

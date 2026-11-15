@@ -5,6 +5,8 @@ import { navigationFor, navigationItemFor } from '../../../components/navigation
 import { NavigationLink } from '../../../components/navigation/navigation-link';
 import { assetLookupSchema, navigationCommands, type AssetLookup } from '../model';
 import styles from './command-palette.module.css';
+import { DataFreshness } from '../../monitoring/components/data-freshness';
+import { beginCheck, emptyHealth, failedRead, successfulRead } from '../../monitoring/freshness';
 
 export function CommandPalette({
   isAdmin,
@@ -23,6 +25,7 @@ export function CommandPalette({
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<'navigation' | 'assets'>('navigation');
   const [reading, setReading] = useState<AssetLookup | null>(null);
+  const [health, setHealth] = useState(emptyHealth);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [active, setActive] = useState(0);
@@ -53,6 +56,7 @@ export function CommandPalette({
     request.current?.abort();
     request.current = null;
     setReading(null);
+    setHealth(emptyHealth());
     setBusy(false);
     setError('');
     setActive(0);
@@ -84,11 +88,13 @@ export function CommandPalette({
     const controller = new AbortController();
     request.current = controller;
     setBusy(true);
+    setHealth((previous) => beginCheck(previous));
     setReading(null);
     setError('');
     setActive(0);
     const timer = setTimeout(() => controller.abort('timeout'), 16000);
     let failureMessage = 'Asset lookup could not be confirmed. Try again explicitly.';
+    let accessDenied = false;
     try {
       const response = await fetch(`/api/v2/commands/assets?q=${encodeURIComponent(query.trim())}`, {
         cache: 'no-store',
@@ -96,6 +102,7 @@ export function CommandPalette({
       });
       const raw: unknown = await response.json();
       if (!response.ok) {
+        accessDenied = [401, 403, 409].includes(response.status);
         failureMessage =
           response.status === 401
             ? 'Your session ended. Sign in again.'
@@ -108,12 +115,17 @@ export function CommandPalette({
       }
       const parsed = assetLookupSchema.safeParse(raw);
       if (!parsed.success) throw new Error('Invalid lookup response');
-      if (!controller.signal.aborted && request.current === controller) setReading(parsed.data);
+      if (!controller.signal.aborted && request.current === controller) {
+        setReading(parsed.data);
+        setHealth((previous) => successfulRead(previous, parsed.data.checkedAt, parsed.data.partial));
+      }
     } catch {
-      if (request.current === controller)
+      if (request.current === controller) {
+        setHealth((previous) => failedRead(previous, accessDenied));
         setError(
           controller.signal.aborted ? 'Asset lookup cancelled or timed out. No results retained.' : failureMessage,
         );
+      }
     } finally {
       clearTimeout(timer);
       if (request.current === controller) {
@@ -244,6 +256,7 @@ export function CommandPalette({
         )}
       </form>
       {error && <p role="alert">{error}</p>}
+      {mode === 'assets' && <DataFreshness label="Command asset freshness" health={health} />}
       <p role="status">
         {busy
           ? 'Checking current asset access…'

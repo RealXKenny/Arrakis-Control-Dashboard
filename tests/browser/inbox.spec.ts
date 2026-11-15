@@ -150,7 +150,9 @@ test('failed refresh removes previous details, preserves filters and permits an 
   );
   await inbox.getByRole('button', { name: 'Refresh inbox' }).click();
   await expect(inbox.getByRole('alert')).toContainText('could not be checked');
-  await expect(inbox.getByRole('heading', { name: /Assets ·/ })).toHaveCount(0);
+  await expect(inbox.getByRole('article')).toHaveCount(0);
+  await expect(inbox.getByRole('group', { name: 'Assets source freshness', exact: true })).toContainText('Outage');
+  await expect(inbox).not.toContainText('private upstream failure');
   await expect(inbox.getByLabel('Alert category')).toHaveValue('supply');
   await expect(inbox.getByRole('button', { name: 'Refresh inbox' })).toBeEnabled();
   await page.unroute('**/api/v2/inbox');

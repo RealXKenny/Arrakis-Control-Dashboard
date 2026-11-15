@@ -5,6 +5,8 @@ import Link from 'next/link';
 import type { ItemPin } from '../item-pins';
 import type { FinderResult } from '../item-finder';
 import { taskDraftHref } from '../../tasks/model';
+import { DataFreshness } from '../../monitoring/components/data-freshness';
+import { beginCheck, emptyHealth, failedRead, sourceReadTime, successfulRead } from '../../monitoring/freshness';
 
 export function ItemFinder({
   onPin,
@@ -12,10 +14,25 @@ export function ItemFinder({
 }: { onPin?: (pin: ItemPin) => void; initialQuery?: string } = {}) {
   const [query, setQuery] = useState(initialQuery);
   const [result, setResult] = useState<FinderResult | null>(null);
+  const [health, setHealth] = useState(emptyHealth);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const active = useRef<AbortController | null>(null);
-  useEffect(() => () => active.current?.abort(), []);
+  useEffect(() => {
+    const hide = () => {
+      if (document.hidden) {
+        active.current?.abort();
+        setResult(null);
+        setLoading(false);
+        setHealth((previous) => ({ ...previous, phase: 'paused' }));
+      }
+    };
+    document.addEventListener('visibilitychange', hide);
+    return () => {
+      active.current?.abort();
+      document.removeEventListener('visibilitychange', hide);
+    };
+  }, []);
 
   async function search() {
     active.current?.abort();
@@ -24,16 +41,31 @@ export function ItemFinder({
     setLoading(true);
     setError('');
     setResult(null);
+    setHealth((previous) => beginCheck(previous));
+    let accessDenied = false;
     try {
       const response = await fetch(`/api/v2/items/find?q=${encodeURIComponent(query.trim())}`, {
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]),
         cache: 'no-store',
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Search failed. Try again.');
-      if (!controller.signal.aborted) setResult(data as FinderResult);
+      if (!response.ok) {
+        accessDenied = [401, 403, 409].includes(response.status);
+        throw new Error(data.error || 'Search failed. Try again.');
+      }
+      if (!controller.signal.aborted) {
+        if (!Array.isArray(data.items) || !Array.isArray(data.sources))
+          throw new Error('Search response could not be confirmed.');
+        const observedAt = sourceReadTime(data.sources);
+        const partial = data.limited || data.sources.some((source: { status: string }) => source.status !== 'ok');
+        setHealth((previous) => successfulRead(previous, observedAt, partial));
+        setResult(data as FinderResult);
+      }
     } catch (failure) {
-      if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : 'Search failed.');
+      if (!controller.signal.aborted) {
+        setHealth((previous) => failedRead(previous, accessDenied));
+        setError(failure instanceof Error ? failure.message : 'Search failed.');
+      }
     } finally {
       if (active.current === controller) setLoading(false);
     }
@@ -59,7 +91,13 @@ export function ItemFinder({
           type="search"
           aria-label="Find across your assets"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            active.current?.abort();
+            setResult(null);
+            setLoading(false);
+            setHealth(emptyHealth());
+            setQuery(event.target.value);
+          }}
           required
           maxLength={128}
           placeholder="Item name or template"
@@ -76,6 +114,7 @@ export function ItemFinder({
               active.current?.abort();
               setLoading(false);
               setError('Search cancelled. No results retained.');
+              setHealth((previous) => ({ ...previous, phase: 'paused' }));
             }}
           >
             Cancel search
@@ -90,6 +129,7 @@ export function ItemFinder({
               ? `${result.items.length} matching stacks${result.limited || result.sources.some((source) => source.status !== 'ok') ? ' · partial results' : ''}`
               : '')}
       </div>
+      <DataFreshness label="Item search freshness" health={health} />
       {result && (
         <>
           <p className="mt-2 text-xs text-sand-400">
