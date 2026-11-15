@@ -1,0 +1,186 @@
+.root {
+  min-width: 0;
+}
+.customizer {
+  border: 1px solid #b99e6b40;
+  background: #121618;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+.toolbar,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+.toolbar {
+  justify-content: space-between;
+  gap: 1rem;
+}
+.button {
+  min-height: 44px;
+  border: 1px solid #baa57966;
+  background: #242727;
+  color: #eee1c8;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.button:hover:not(:disabled) {
+  background: #34372f;
+}
+.button:focus-visible,
+.setting input:focus-visible,
+.density select:focus-visible {
+  outline: 2px solid #f0b955;
+  outline-offset: 4px;
+}
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.primary {
+  background: #efab30;
+  color: #14191b;
+}
+.editor {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+.density {
+  display: grid;
+  gap: 0.4rem;
+  width: min(100%, 20rem);
+  color: #eee1c8;
+}
+.density select {
+  min-height: 44px;
+  padding: 0.6rem;
+  border: 1px solid #baa57966;
+  background: #111719;
+  color: #eee1c8;
+}
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.setting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border: 1px solid #baa57933;
+  padding: 0.7rem;
+  min-width: 0;
+}
+.setting label {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 44px;
+  flex: 1 1 15rem;
+  cursor: pointer;
+}
+.setting input {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: #efab30;
+  flex-shrink: 0;
+}
+.setting strong,
+.setting small {
+  display: block;
+}
+.setting strong {
+  color: #eee1c8;
+}
+.setting small {
+  color: #c6bfae;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.notice {
+  margin-top: 0.8rem;
+  color: #eed9ad;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.empty {
+  border: 1px dashed #baa57966;
+  padding: 2rem;
+  color: #d6c7ad;
+}
+.grid {
+  display: grid;
+  gap: 1.25rem;
+}
+.widget {
+  min-width: 0;
+}
+.widget > * {
+  height: 100%;
+}
+.compact [data-portal-panel] {
+  padding: 1rem;
+}
+.compact [data-portal-guild-detail] {
+  display: none;
+}
+.compact .grid {
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .conditions,
+  .population,
+  .landsraad {
+    grid-column: span 2;
+  }
+}
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .conditions {
+    grid-column: span 8;
+  }
+  .character {
+    grid-column: span 4;
+  }
+  .solaris,
+  .exchange,
+  .holdings,
+  .fleet {
+    grid-column: span 3;
+  }
+  .population {
+    grid-column: span 7;
+  }
+  .landsraad {
+    grid-column: span 5;
+  }
+  .compact .conditions {
+    grid-column: span 8;
+  }
+  .compact .character {
+    grid-column: span 4;
+  }
+  .compact .solaris,
+  .compact .exchange,
+  .compact .holdings,
+  .compact .fleet {
+    grid-column: span 4;
+  }
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -15,6 +15,8 @@ The signed-in landing area and the community-wide views of the world.
 
 ## Requirements and permissions
 
+The portal supports [customizable widgets](portal-widgets.md): private order/visibility settings, comfortable or compact density, and personal/full presets. With no saved layout, a character without a reported guild receives the compact personal briefing. Guild members retain the full overview by default. All eight existing panels remain available in either preset editor.
+
 Public pages keep the topbar minimal when signed out: branding and Sign in, including mobile. Signed-in visitors retain the workspace navigation, which now starts with Home, and see Open dashboard actions on the landing page instead of Discord sign-in prompts. The login page redirects an existing valid session to the dashboard.
 
 Sign-in plus the member role. Data comes from the Console with `CONSOLE_API_KEY` (Read on players, exchange, maps, landsraad;

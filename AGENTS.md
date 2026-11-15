@@ -40,6 +40,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - `src/features/` is the only business-domain home. Current domains are `admin`, `auth`, `bases`, `bot`, `casino`, `changelog`, `chat`, `events`, `guilds`, `landing`, `map`, `market`, `player`, `portal`, `server-status`, and `vehicles`. Feature components, hooks, server operations, schemas, styles, types, and utilities stay with their domain. See the inventory for each domain's responsibility.
 
+- `features/portal/` owns the N091 widget allowlist, compact personal/full presets, server-rendered panel slots and private per-account layout settings. `/api/v2/portal/layout` derives ownership only from the session; strict bounded configuration and single-key Redis UUID CAS prevent arbitrary widgets and stale-tab overwrites. Layouts retain for 90 days of inactivity. No guild/character link is needed for preferences, and hiding a widget never grants data access or changes game state. Profile/Redis outages remain visible without silently replacing saved settings. See `docs/features/portal-widgets.md`.
+
 - `src/server/` contains shared request infrastructure only: `http.ts`, `pages-api.ts`, `api-read-cache.ts`, `cookies.ts`, `read-budget.ts`, and `integrations/` for Dune Console, adapter transport, Discord OAuth, and shared bot announcements.
 
 - Security audit events go through `src/lib/security/audit.ts` (redacted, bounded, never throws); marketplace owner keys live in `features/bases/server/owner-key.ts` (HMAC, legacy keys still accepted until `npm run marketplace:rekey`).

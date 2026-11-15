@@ -11,6 +11,7 @@ import { baseDirectoryReply } from './guild-base-directory-redis.mjs';
 import { onboardingReply } from './guild-onboarding-redis.mjs';
 import { itemPinsReply } from './item-pins-redis.mjs';
 import { pollsReply } from './guild-polls-redis.mjs';
+import { createPortalLayoutFixture } from './portal-layout-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
 
@@ -30,7 +31,10 @@ const listing = {
     { id: '7b1f5a56-8c9d-4a4e-9b0d-1f3a2c4d5e6f', label: 'Why do you want to join?', required: true },
   ],
 };
+const portalLayoutReply = createPortalLayoutFixture();
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  const portalLayout = portalLayoutReply(operation, key, args);
+  if (portalLayout !== undefined) return portalLayout.value;
   const itemPins = itemPinsReply(operation, key, args);
   if (itemPins !== undefined) return itemPins.value;
   const polls = pollsReply(operation, key, args);
