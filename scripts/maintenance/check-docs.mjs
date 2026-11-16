@@ -21,7 +21,15 @@ const RETIRED = [
   'PRODUCTION_DEPLOYMENT_CHECKLIST.md',
 ];
 const MIN_PAGE_CHARACTERS = 300;
-const SKIP_DIRECTORIES = new Set(['node_modules', '.git', '.next', 'test-results', 'coverage', 'playwright-report']);
+const SKIP_DIRECTORIES = new Set([
+  'node_modules',
+  '.git',
+  '.next',
+  '.worktrees',
+  'test-results',
+  'coverage',
+  'playwright-report',
+]);
 
 function markdownFiles(directory, found = []) {
   for (const entry of readdirSync(directory)) {
