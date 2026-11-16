@@ -7,7 +7,7 @@ import { z } from 'zod';
  * This module is the single source of truth for environment validation
  * for both App Router and legacy Pages Router modules. It may only be imported from
  * server-side code — `assert-server` throws at module load otherwise — so
- * secrets (CONSOLE_URL, CONSOLE_API_KEY, ADAPTER_TOKEN, Redis credentials)
+ * secrets (DUNE_API_URL, DUNE_API_KEY, Redis credentials)
  * can never reach a client bundle.
  *
  * Posture: parsing is strict about *shape* (malformed values fail loudly
@@ -70,10 +70,14 @@ const serverEnvSchema = z.object({
   AUDIT_LOG_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
   AUDIT_LOG_MAX_ENTRIES: z.coerce.number().int().min(100).max(1_000_000).default(10_000),
   BOT_API_TOKEN: z.string().min(32).max(256).optional(),
-  CONSOLE_URL: z.string().url().optional(),
-  CONSOLE_API_KEY: z.string().min(1).optional(),
-  ADMIN_CONSOLE_API_KEY: z.string().min(1).optional(),
-  ADAPTER_TOKEN: z.string().min(1).optional(),
+  /** Dune Console base URL. Privileged operations and season delivery additionally require HTTPS or loopback HTTP. */
+  DUNE_API_URL: z.string().url().optional(),
+  /**
+   * The single server-only Console credential for reads, administration and season delivery. The Console's Discord
+   * adapter accepts only its own configured bearer token, so set that token to this same value on the Console side.
+   * Dashboard authorization never depends on this key's power; see docs/configuration/dune-console.md.
+   */
+  DUNE_API_KEY: z.string().min(1).optional(),
   /**
    * Solaris Exchange: real Solaris deposits, withdrawals and play. Off unless explicitly set to `true`; the server
    * refuses every wager and transfer while it is off. See docs/features/solaris-exchange.md before enabling.
@@ -223,9 +227,8 @@ export function getDiscordRedirectUri(): string | undefined {
 
 /** Secrets and origins that must exist before production traffic is served. */
 const PRODUCTION_REQUIREMENTS: ReadonlyArray<keyof ServerEnv> = [
-  'CONSOLE_URL',
-  'CONSOLE_API_KEY',
-  'ADAPTER_TOKEN',
+  'DUNE_API_URL',
+  'DUNE_API_KEY',
   'DISCORD_GUILD_ID',
   'VERIFIED_MEMBER_ROLE_ID',
   'APP_URL',
@@ -236,6 +239,13 @@ const PRODUCTION_REQUIREMENTS: ReadonlyArray<keyof ServerEnv> = [
 export function validateProductionEnv(): ServerEnv {
   const env = getServerEnv();
   if (env.NODE_ENV !== 'production') return env;
+  const renamed = ['CONSOLE_URL', 'CONSOLE_API_KEY', 'ADMIN_CONSOLE_API_KEY', 'ADAPTER_TOKEN'].filter(
+    (name) => process.env[name],
+  );
+  if (renamed.length && (!env.DUNE_API_URL || !env.DUNE_API_KEY))
+    throw new Error(
+      `Retired Console settings found (${renamed.join(', ')}). Replace them with DUNE_API_URL and one DUNE_API_KEY.`,
+    );
   // ADMIN_DISCORD_IDS has no production default: no administrator is implied by the code.
   requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'ADMIN_DISCORD_IDS');
   if (env.CHAT_ENABLED) requireServerEnv('RABBITMQ_URL', 'CHAT_BRIDGE_FUNCOM_ID', 'CHAT_SERVERS');
@@ -252,7 +262,7 @@ export function validateProductionEnv(): ServerEnv {
     );
   if (env.REDIS_REQUIRE_TLS && redisUrl.protocol !== 'rediss:')
     throw new Error('REDIS_REQUIRE_TLS is enabled: REDIS_URL must use rediss://');
-  const names = ['CONSOLE_URL', 'APP_URL'] as const;
+  const names = ['DUNE_API_URL', 'APP_URL'] as const;
   for (const name of names) {
     const value = env[name];
     if (!value) continue;
@@ -262,7 +272,7 @@ export function validateProductionEnv(): ServerEnv {
     if (name === 'APP_URL' && (url.search || !['', '/'].includes(url.pathname)))
       throw new Error(`Invalid production URL configuration: ${name}`);
     if (
-      name !== 'CONSOLE_URL' &&
+      name !== 'DUNE_API_URL' &&
       url.protocol !== 'https:' &&
       !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
     )

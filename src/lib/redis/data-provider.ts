@@ -32,7 +32,7 @@ import type {
  *   same payload shapes, used when Redis is not configured or while the
  *   circuit breaker is open.
  *
- * Credential boundary: CONSOLE_URL / CONSOLE_API_KEY / ADAPTER_TOKEN are only
+ * Credential boundary: DUNE_API_URL / DUNE_API_KEY are only
  * referenced inside this server module (via the Dune client) and inside
  * `src/lib/redis-client.ts`; nothing here may be imported by a 'use client'
  * file — `assert-server` enforces that at module load.
@@ -403,7 +403,7 @@ export class RedisDashboardDataProvider implements DashboardDataProvider {
   }
 
   private historyKey(): string {
-    const origin = getServerEnv().CONSOLE_URL ?? 'unconfigured';
+    const origin = getServerEnv().DUNE_API_URL ?? 'unconfigured';
     let digest = 0;
     for (let index = 0; index < origin.length; index++) {
       digest = Math.imul(digest ^ origin.charCodeAt(index), 16777619) >>> 0;

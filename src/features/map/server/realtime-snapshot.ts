@@ -27,14 +27,14 @@ export async function loadRealtime(session: DashboardSession, mapParam: string |
     return { status: 403, body: { error: 'Your session does not belong to this dashboard guild.' } };
   const map = mapParam ?? 'HaggaBasin';
   if (!(REALTIME_MAPS as readonly string[]).includes(map)) return { status: 400, body: { error: 'Invalid map' } };
-  const consoleUrl = env.CONSOLE_URL ? new URL(env.CONSOLE_URL) : null;
+  const consoleUrl = env.DUNE_API_URL ? new URL(env.DUNE_API_URL) : null;
   if (
     !consoleUrl ||
     (consoleUrl.protocol !== 'https:' &&
       !(consoleUrl.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(consoleUrl.hostname)))
   )
     return { status: 503, body: { error: 'Realtime Data requires a Console HTTPS URL or HTTP on loopback.' } };
-  const entry = await snapshots.get(`${env.CONSOLE_URL}:${map}`, () => loadSnapshot(map));
+  const entry = await snapshots.get(`${env.DUNE_API_URL}:${map}`, () => loadSnapshot(map));
   return entry.data;
 }
 

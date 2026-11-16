@@ -3,7 +3,7 @@
 | Integration                                     | Direction            | Credentials                                                                |
 | ----------------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
 | [RedBlink Dune Docker](redblink-dune-docker.md) | Dashboard → Console  | API keys, adapter token                                                    |
-| [Dune Console API](dune-console-api.md)         | Dashboard → Console  | `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY`, `ADAPTER_TOKEN`                |
+| [Dune Console API](dune-console-api.md)         | Dashboard → Console  | `DUNE_API_KEY`                                                             |
 | [Discord](discord.md)                           | Dashboard ↔ Discord  | OAuth client ID/secret                                                     |
 | [Discord announcements](webhooks.md)            | Dashboard → Discord  | `DISCORD_BOT_TOKEN`, `CHANGELOG_CHANNEL_ID`, `COMMUNITY_EVENTS_CHANNEL_ID` |
 | Redis                                           | Dashboard → Redis    | See [Redis](../configuration/redis.md)                                     |

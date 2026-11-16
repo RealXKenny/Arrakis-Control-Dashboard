@@ -8,7 +8,7 @@ import { logger } from '../../../lib/logger';
 import { DAY_MS, summarizePopulation } from '../population';
 
 function historyKey() {
-  const origin = getServerEnv().CONSOLE_URL ?? 'unconfigured';
+  const origin = getServerEnv().DUNE_API_URL ?? 'unconfigured';
   return `arrakis:population:${createHash('sha256').update(origin).digest('hex').slice(0, 16)}`;
 }
 

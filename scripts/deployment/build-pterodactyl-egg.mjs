@@ -94,9 +94,7 @@ chown -R 1000:1000 /mnt/server
 export const SECRET_VARIABLES = Object.freeze([
   'AUTH_SECRET',
   'REDIS_URL',
-  'CONSOLE_API_KEY',
-  'ADMIN_CONSOLE_API_KEY',
-  'ADAPTER_TOKEN',
+  'DUNE_API_KEY',
   'DISCORD_CLIENT_SECRET',
   'BOT_API_TOKEN',
   'OWNER_KEY_SECRET',
@@ -166,17 +164,6 @@ function buildEgg() {
         { user_viewable: false, user_editable: true, rules: 'nullable|string|min:32|max:256' },
       ),
       variable(
-        'Admin Console API Key',
-        'Optional privileged Console key; hidden from ordinary panel users.',
-        'ADMIN_CONSOLE_API_KEY',
-        '',
-        {
-          user_viewable: false,
-          user_editable: false,
-          rules: 'nullable|string',
-        },
-      ),
-      variable(
         'API Worker Concurrency',
         'Active API requests per worker before overload returns 503.',
         'API_MAX_CONCURRENCY',
@@ -221,11 +208,14 @@ function buildEgg() {
         'SERVER_HOSTNAME',
         '0.0.0.0',
       ),
-      variable('Dune Console URL', 'Dune Console URL reachable from this container.', 'CONSOLE_URL', '', {
+      variable('Dune API URL', 'Dune Console URL reachable from this container.', 'DUNE_API_URL', '', {
         rules: 'required|url',
       }),
-      variable('Dune Console API Key', 'Scoped Dune Console API key.', 'CONSOLE_API_KEY'),
-      variable('Adapter Token', 'Adapter integration token.', 'ADAPTER_TOKEN'),
+      variable(
+        'Dune API Key',
+        'Console API key for reads, administration and season delivery. Set the Console Discord adapter token to the same value.',
+        'DUNE_API_KEY',
+      ),
       variable('Discord Client ID', 'Discord OAuth application client ID.', 'DISCORD_CLIENT_ID'),
       variable('Discord Client Secret', 'Discord OAuth application client secret.', 'DISCORD_CLIENT_SECRET'),
       variable('Discord Guild ID', 'Discord server whose members may access the dashboard.', 'DISCORD_GUILD_ID'),

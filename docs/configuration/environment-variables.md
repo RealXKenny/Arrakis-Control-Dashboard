@@ -6,19 +6,18 @@ Source of truth: `src/config/env.ts` (schema), `.env.example` (template). Values
 
 Startup stops serving (HTTP 500 on every request, reason logged by variable name) if any of these is missing or malformed.
 
-| Variable                  | Format / rule                                                  | Purpose                                                                   |
-| ------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `APP_URL`                 | URL, no credentials/hash/query/path; `https` unless loopback   | Canonical origin; OAuth callback is `<APP_URL>/api/auth/callback/discord` |
-| `AUTH_SECRET`             | 32 to 256 characters                                           | Signs Auth.js state, seals stored Discord refresh tokens                  |
-| `DISCORD_CLIENT_ID`       | non-empty                                                      | Discord application                                                       |
-| `DISCORD_CLIENT_SECRET`   | non-empty                                                      | Discord application secret                                                |
-| `DISCORD_GUILD_ID`        | non-empty                                                      | Server whose members may sign in                                          |
-| `VERIFIED_MEMBER_ROLE_ID` | non-empty                                                      | Role required for access                                                  |
-| `ADMIN_DISCORD_IDS`       | comma-separated numeric Discord user IDs (1 to 25 digits each) | Who may use `/admin`; no built-in administrator in production             |
-| `CONSOLE_URL`             | URL (`http` or `https`, no credentials)                        | Dune Console                                                              |
-| `CONSOLE_API_KEY`         | non-empty                                                      | Bearer key for member features                                            |
-| `ADAPTER_TOKEN`           | non-empty                                                      | Bearer token for the Console's Discord adapter                            |
-| `REDIS_URL`               | `redis://` or `rediss://`, optional `/db`, no query/hash       | Redis (also supplies credentials in Cluster mode)                         |
+| Variable                  | Format / rule                                                  | Purpose                                                                                              |
+| ------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `APP_URL`                 | URL, no credentials/hash/query/path; `https` unless loopback   | Canonical origin; OAuth callback is `<APP_URL>/api/auth/callback/discord`                            |
+| `AUTH_SECRET`             | 32 to 256 characters                                           | Signs Auth.js state, seals stored Discord refresh tokens                                             |
+| `DISCORD_CLIENT_ID`       | non-empty                                                      | Discord application                                                                                  |
+| `DISCORD_CLIENT_SECRET`   | non-empty                                                      | Discord application secret                                                                           |
+| `DISCORD_GUILD_ID`        | non-empty                                                      | Server whose members may sign in                                                                     |
+| `VERIFIED_MEMBER_ROLE_ID` | non-empty                                                      | Role required for access                                                                             |
+| `ADMIN_DISCORD_IDS`       | comma-separated numeric Discord user IDs (1 to 25 digits each) | Who may use `/admin`; no built-in administrator in production                                        |
+| `DUNE_API_URL`            | URL (`http` or `https`, no credentials)                        | Dune Console                                                                                         |
+| `DUNE_API_KEY`            | non-empty                                                      | The single Console credential: reads, administration, season delivery and the Discord adapter bearer |
+| `REDIS_URL`               | `redis://` or `rediss://`, optional `/db`, no query/hash       | Redis (also supplies credentials in Cluster mode)                                                    |
 
 ## Optional
 
@@ -32,7 +31,6 @@ Startup stops serving (HTTP 500 on every request, reason logged by variable name
 | `TRUSTED_PROXY_COUNT`            | `1`                        | 0 to 5 proxies in front of the app ([reverse proxy](../installation/reverse-proxy.md))                |
 | `ADMIN_REAUTH_HOURS`             | `12`                       | 1 to 168; step-up window for ordinary administrator changes                                           |
 | `ADMIN_HIGH_RISK_REAUTH_MINUTES` | `60`                       | 5 to 1440; step-up window for high-risk operations                                                    |
-| `ADMIN_CONSOLE_API_KEY`          | unset                      | Separate privileged Console key; administration is disabled while empty                               |
 | `OWNER_KEY_SECRET`               | derived from `AUTH_SECRET` | 32 to 256 characters; HMAC secret for marketplace owner keys. Set before publishing listings you keep |
 | `BOT_API_TOKEN`                  | unset                      | 32 to 256 characters; enables the read-only [bot API](../api/server.md#bot-world-summary)             |
 | `REDIS_CLUSTER_NODES`            | unset                      | Comma-separated `host:port` (or `[ipv6]:port`) bootstrap nodes; selects Cluster mode                  |
@@ -84,7 +82,7 @@ Boolean variables accept only the strings `true` and `false`.
 
 ## Tool-only variables
 
-Season game delivery has no feature toggle: explicit administrator execution of separately approved Solaris and item rewards is available whenever `ADMIN_CONSOLE_API_KEY` is set and `CONSOLE_URL` is HTTPS or loopback HTTP. It never grants automatically and never touches casino transfers. Automatic seasons start by default; an administrator pause saved in Redis is preserved across restarts. See [season operations](../features/community-seasons.md#in-game-delivery-boundary).
+Season game delivery has no feature toggle: explicit administrator execution of separately approved Solaris and item rewards is available whenever `DUNE_API_KEY` is set and `DUNE_API_URL` is HTTPS or loopback HTTP. It never grants automatically and never touches casino transfers. Automatic seasons start by default; an administrator pause saved in Redis is preserved across restarts. See [season operations](../features/community-seasons.md#in-game-delivery-boundary).
 
 | Variable                                     | Used by                                                                                                                                                                                                           |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -98,7 +96,7 @@ Season game delivery has no feature toggle: explicit administrator execution of 
 
 - `REDIS_URL` plain `redis://` with no password to a public-looking host is refused unless `REDIS_ALLOW_INSECURE=true`.
 - `REDIS_REQUIRE_TLS=true` requires `rediss://`.
-- `APP_URL` and `CONSOLE_URL` must not contain credentials or a fragment; `APP_URL` must have no query or path and must be
+- `APP_URL` and `DUNE_API_URL` must not contain credentials or a fragment; `APP_URL` must have no query or path and must be
   `https` unless the host is `localhost`, `127.0.0.1` or `[::1]`.
 - Warnings (not errors) are logged for plain-text Redis on a public-looking host, no Redis password, and `REDIS_CLUSTER_NODES`
   without a `rediss://` URL.

@@ -7,7 +7,7 @@ realtime layer.
 
 ## Requirements
 
-Sign-in and `CONSOLE_API_KEY` Read on maps and players. Realtime positions need the optional realtime agent on the Console side
+Sign-in and `DUNE_API_KEY` Read on maps and players. Realtime positions need the optional realtime agent on the Console side
 (the Console serves `/api/realtime/objects`; see [RedBlink integration](../integrations/redblink-dune-docker.md)). Without it the
 map still works and the realtime layer reports itself unavailable.
 

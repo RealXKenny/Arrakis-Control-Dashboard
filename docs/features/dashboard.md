@@ -19,7 +19,7 @@ The portal supports [customizable widgets](portal-widgets.md): private order/vis
 
 Public pages keep the topbar minimal when signed out: branding and Sign in, including mobile. Signed-in visitors retain the workspace navigation, which now starts with Home, and see Open dashboard actions on the landing page instead of Discord sign-in prompts. The login page redirects an existing valid session to the dashboard.
 
-Sign-in plus the member role. Data comes from the Console with `CONSOLE_API_KEY` (Read on players, exchange, maps, landsraad;
+Sign-in plus the member role. Data comes from the Console with `DUNE_API_KEY` (Read on players, exchange, maps, landsraad;
 see [Dune Console](../configuration/dune-console.md#suggested-key-scopes)). **My listings only ever shows orders that belong to
 the linked character**, and seller player IDs from the Console never reach the browser.
 

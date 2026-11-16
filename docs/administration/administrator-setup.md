@@ -7,21 +7,20 @@ Administrators can change your game server through the Console (restart, restore
 1. Collect each person's Discord user ID ([how](../getting-started/first-admin-login.md)).
 2. Set `ADMIN_DISCORD_IDS=id1,id2` (required in production) and restart.
 3. Each administrator must be in `DISCORD_GUILD_ID` and hold `VERIFIED_MEMBER_ROLE_ID`.
-4. Configure the Console credentials: a **separate** `ADMIN_CONSOLE_API_KEY` with only the scopes your administrators need,
-   and `ADAPTER_TOKEN` for adapter tools ([Dune Console](../configuration/dune-console.md)).
+4. Configure the Console credentials: `DUNE_API_KEY` with the scopes your members and administrators need, and the same
+   value as the Console's Discord adapter token for adapter tools ([Dune Console](../configuration/dune-console.md)).
 5. Decide the step-up windows (`ADMIN_REAUTH_HOURS` 12, `ADMIN_HIGH_RISK_REAUTH_MINUTES` 60). Shorter is safer.
 
 ## Permissions model
 
 There is one administrator tier. There are no per-administrator scopes inside the dashboard; the scope limit is the Console key.
-Use two Console keys when you want different blast radii (for example a read-only member key and a narrower admin key) and keep
-destructive Console permissions off the admin key if your admins do not need them.
+Because one key serves all dashboard features, keep destructive Console permissions off it if your admins do not need them.
 
 ## Reviews
 
 - Quarterly: compare `ADMIN_DISCORD_IDS` with who actually administers; remove leavers immediately (restart required).
 - Review `admin.operation` audit events for unexpected operations ([audit logs](../features/audit-logs.md)).
-- Rotate `ADMIN_CONSOLE_API_KEY` when an administrator leaves, because a removed ID loses dashboard access but any key they copied would still work against the Console.
+- Rotate `DUNE_API_KEY` when an administrator leaves, because a removed ID loses dashboard access but any key they copied would still work against the Console.
 
 ## Offboarding an administrator
 
@@ -32,4 +31,4 @@ destructive Console permissions off the admin key if your admins do not need the
 
 ## Not available
 
-MFA, per-administrator scopes, and an administrator-initiated revocation of *another* member's sessions.
+MFA, per-administrator scopes, and an administrator-initiated revocation of _another_ member's sessions.

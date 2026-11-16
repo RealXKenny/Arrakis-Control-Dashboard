@@ -39,8 +39,8 @@ export class ChatPlayerNames {
 
   private async refresh(): Promise<void> {
     const env = getServerEnv();
-    if (!env.CONSOLE_URL || !env.CONSOLE_API_KEY) throw new Error('Console player directory is unavailable.');
-    const client = new DuneConsoleClient(env.CONSOLE_URL, env.ADAPTER_TOKEN, env.CONSOLE_API_KEY);
+    if (!env.DUNE_API_URL || !env.DUNE_API_KEY) throw new Error('Console player directory is unavailable.');
+    const client = new DuneConsoleClient(env.DUNE_API_URL, env.DUNE_API_KEY);
     const players = new Map<string, { names: Set<string>; online: boolean }>();
     for (let page = 0; page < MAX_PAGES; page++) {
       const result: unknown = await client.request('GET', '/api/players', {

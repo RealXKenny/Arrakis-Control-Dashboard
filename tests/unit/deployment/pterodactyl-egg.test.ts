@@ -6,7 +6,7 @@ const egg = createPterodactylEgg();
 
 describe('Pterodactyl dashboard egg', () => {
   it('keeps the privileged administrator key hidden and non-editable for ordinary panel users', () => {
-    const key = egg.variables.find((variable) => variable.env_variable === 'ADMIN_CONSOLE_API_KEY');
+    const key = egg.variables.find((variable) => variable.env_variable === 'DUNE_API_KEY');
     expect(key).toMatchObject({ default_value: '', user_viewable: false, user_editable: false });
   });
 
@@ -35,9 +35,8 @@ describe('Pterodactyl dashboard egg', () => {
     expect(variables.get('SERVER_HOSTNAME')?.default_value).toBe('0.0.0.0');
     expect(variables.get('TRUSTED_PROXY_COUNT')?.default_value).toBe('1');
     for (const key of [
-      'CONSOLE_URL',
-      'CONSOLE_API_KEY',
-      'ADAPTER_TOKEN',
+      'DUNE_API_URL',
+      'DUNE_API_KEY',
       'DISCORD_GUILD_ID',
       'VERIFIED_MEMBER_ROLE_ID',
       'APP_URL',
@@ -117,12 +116,10 @@ describe('release integrity', () => {
   it('hides every credential variable from panel users and subusers without dropping any of them', () => {
     expect([...SECRET_VARIABLES].sort()).toEqual(
       [
-        'ADAPTER_TOKEN',
-        'ADMIN_CONSOLE_API_KEY',
         'AUTH_SECRET',
         'BOT_API_TOKEN',
         'DISCORD_BOT_TOKEN',
-        'CONSOLE_API_KEY',
+        'DUNE_API_KEY',
         'DISCORD_CLIENT_SECRET',
         'OWNER_KEY_SECRET',
         'REDIS_URL',
@@ -136,7 +133,7 @@ describe('release integrity', () => {
       expect(byName.get(name), name).toMatchObject({ user_viewable: false, user_editable: false });
     }
     // Required settings stay required, so installation and startup validation still demand them.
-    for (const name of ['AUTH_SECRET', 'REDIS_URL', 'CONSOLE_API_KEY', 'ADAPTER_TOKEN', 'DISCORD_CLIENT_SECRET'])
+    for (const name of ['AUTH_SECRET', 'REDIS_URL', 'DUNE_API_KEY', 'DISCORD_CLIENT_SECRET'])
       expect(byName.get(name)?.rules, name).toContain('required');
     // Ordinary operational settings stay editable.
     for (const name of ['APP_URL', 'TRUSTED_PROXY_COUNT', 'ADMIN_DISCORD_IDS', 'RELEASE_TAG'])

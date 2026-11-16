@@ -4,8 +4,8 @@ This walkthrough takes an administrator from an empty Linux host to a dashboard 
 Console. It keeps the two projects clearly apart:
 
 - **RedBlink Dune Docker** (upstream, [Red-Blink/dune-awakening-selfhost-docker](https://github.com/Red-Blink/dune-awakening-selfhost-docker))
-  runs the game server and the Console. You install and update it with *its* tools.
-- **Arrakis Control Dashboard** (this repository) is installed separately and only *calls* the Console.
+  runs the game server and the Console. You install and update it with _its_ tools.
+- **Arrakis Control Dashboard** (this repository) is installed separately and only _calls_ the Console.
 
 > **What this guide could verify.** Dashboard steps are checked against this repository's code. RedBlink steps are
 > checked against the RedBlink `docs/` folder (operator guide, API keys, Discord adapter, system overview). That folder
@@ -17,15 +17,15 @@ Platform labels: **[Linux/bash]** run on the host; **[Browser]** in a web browse
 
 ## 0. Plan the layout
 
-| Component              | Typical location                                  | Listens on                                                            |
-| ---------------------- | ------------------------------------------------- | --------------------------------------------------------------------- |
-| RedBlink game stack    | Docker on the game host                           | Game ports per upstream README                                        |
-| RedBlink Console (Web) | Same host                                         | `8088` by default (upstream: `ADMIN_BIND_PORT`, Settings → Web Console Port) |
-| Redis                  | Dashboard host, loopback or private network       | `6379` (never public)                                                 |
-| Dashboard              | Dashboard host (can be the game host)             | `SERVER_HOSTNAME:SERVER_PORT` (default `127.0.0.1:2008`) behind HTTPS |
-| Reverse proxy          | Dashboard host                                    | `443`                                                                 |
+| Component              | Typical location                            | Listens on                                                                   |
+| ---------------------- | ------------------------------------------- | ---------------------------------------------------------------------------- |
+| RedBlink game stack    | Docker on the game host                     | Game ports per upstream README                                               |
+| RedBlink Console (Web) | Same host                                   | `8088` by default (upstream: `ADMIN_BIND_PORT`, Settings → Web Console Port) |
+| Redis                  | Dashboard host, loopback or private network | `6379` (never public)                                                        |
+| Dashboard              | Dashboard host (can be the game host)       | `SERVER_HOSTNAME:SERVER_PORT` (default `127.0.0.1:2008`) behind HTTPS        |
+| Reverse proxy          | Dashboard host                              | `443`                                                                        |
 
-The Console must be reachable **from the dashboard host** at `CONSOLE_URL`. If both run on one machine, that is
+The Console must be reachable **from the dashboard host** at `DUNE_API_URL`. If both run on one machine, that is
 `http://127.0.0.1:8088` (adjust if you changed the port). Do not expose the Console port to untrusted users.
 
 ## 1. Prepare the host
@@ -34,7 +34,7 @@ The Console must be reachable **from the dashboard host** at `CONSOLE_URL`. If b
 2. Install Docker following Docker's official instructions for your distribution; RedBlink Dune Docker requires it
    (see the upstream README for exact version and resource requirements).
 3. Install Node.js 22+ and Git for the dashboard ([requirements](requirements.md)).
-4. Plan firewall rules: allow only what upstream's *Ports* table requires for players, `443` for the dashboard, and keep
+4. Plan firewall rules: allow only what upstream's _Ports_ table requires for players, `443` for the dashboard, and keep
    `8088` and Redis private.
 
 ## 2. Install RedBlink Dune Docker (upstream)
@@ -57,8 +57,8 @@ cat runtime/secrets/admin-web-password.txt
 ```
 
 Persistent data (all inside the RedBlink checkout, per upstream): `runtime/secrets/` (credentials, includes the Funcom
-token and admin password), `runtime/generated/` (derived state) and `.env`. Back these up with upstream's *system
-backups* (see [backups](../administration/backups.md)).
+token and admin password), `runtime/generated/` (derived state) and `.env`. Back these up with upstream's _system
+backups_ (see [backups](../administration/backups.md)).
 
 ## 3. Create Console API keys
 
@@ -69,16 +69,15 @@ namespace. The dashboard's member features only read, except guild membership ch
 dashboard calls (`/api/players`, `/api/guilds`, `/api/exchange/*`, `/api/vehicles`, `/api/map/markers`,
 `/api/realtime/objects`, `/api/admin/landsraad`, `/api/players/online`), create:
 
-| Key                | Env variable            | Suggested scopes                                                                                                                     |
-| ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Dashboard (member) | `CONSOLE_API_KEY`       | Read on `players`, `bases`, `vehicles`, `guilds`, `exchange`, `maps`, `realtime`, `server`, `landsraad`; for guild-leader actions add the `guilds` actions you need (`guilds:membership`, `guilds:rank`) as a Custom list |
-| Dashboard (admin)  | `ADMIN_CONSOLE_API_KEY` | Only what your administrators need. **A separate key**, never the member key. Optional; administration stays disabled without it |
+| Key       | Env variable   | Suggested scopes                                                                                                                                                                                                                                                         |
+| --------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Dashboard | `DUNE_API_KEY` | Read on `players`, `bases`, `vehicles`, `guilds`, `exchange`, `maps`, `realtime`, `server`, `landsraad`, plus only the administrator and guild-leader actions you need (`guilds:membership`, `guilds:rank`) as a Custom list. One key serves members and administrators. |
 
 Confirm namespace and action names in the Console's key editor; they are authoritative. Copy each key when it is shown.
 The Console refuses setup, database, settings and community namespaces to API keys by design. Details:
 [Dune Console](../configuration/dune-console.md).
 
-## 4. Enable the Discord adapter and get `ADAPTER_TOKEN`
+## 4. Enable the Discord adapter with the same value as `DUNE_API_KEY`
 
 The dashboard also uses the Console's built-in Discord adapter (for example `/api/integrations/discord/players/me`). It is
 disabled by default upstream.
@@ -92,7 +91,8 @@ disabled by default upstream.
 
 # 2. Create the token file
 mkdir -p runtime/secrets
-head -c 36 /dev/urandom | base64 | tr -d '\n' > runtime/secrets/bot-api-token.txt
+# The adapter only accepts its own token, so write the SAME value as your dashboard DUNE_API_KEY.
+printf '%s' "$DUNE_API_KEY" > runtime/secrets/bot-api-token.txt
 chmod 600 runtime/secrets/bot-api-token.txt
 
 # 3. Rebuild the Console
@@ -106,8 +106,8 @@ TOKEN=$(cat runtime/secrets/bot-api-token.txt)
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8088/api/integrations/discord/health
 ```
 
-Expect JSON with `"ok": true` and `"enabled": true`. The dashboard's `ADAPTER_TOKEN` is the **same value** as this token.
-Keep it different from both Console API keys. The adapter's role variables (`DISCORD_OBSERVER_ROLE_IDS`, etc.) matter
+Expect JSON with `"ok": true` and `"enabled": true`. The dashboard sends `DUNE_API_KEY` as the adapter bearer, so the token must equal it.
+The adapter's role variables (`DISCORD_OBSERVER_ROLE_IDS`, etc.) matter
 for the upstream Discord bot; the dashboard sends its own checks with the bearer token only.
 
 ## 5. Install and secure Redis
@@ -157,10 +157,8 @@ DISCORD_GUILD_ID=<your server id>
 VERIFIED_MEMBER_ROLE_ID=<member role id>
 ADMIN_DISCORD_IDS=<your discord user id>
 
-CONSOLE_URL=http://127.0.0.1:8088
-CONSOLE_API_KEY=<member key>
-ADMIN_CONSOLE_API_KEY=<admin key, optional>
-ADAPTER_TOKEN=<contents of bot-api-token.txt>
+DUNE_API_URL=http://127.0.0.1:8088
+DUNE_API_KEY=<console key; identical to contents of bot-api-token.txt>
 
 REDIS_URL=redis://:<REDIS_PASSWORD>@127.0.0.1:6379/0
 ```
@@ -186,7 +184,7 @@ See [reverse proxy](../installation/reverse-proxy.md).
    `Dune Console connection ready` and `Arrakis Control Dashboard is listening`.
 2. `curl -sS https://<your-domain>/ -o /dev/null -w "%{http_code}\n"` returns `200`.
 3. Sign in with Discord, land on the portal, and see your character and server status.
-4. Open `/admin`; the *Overview* shows the admin key and adapter as configured.
+4. Open `/admin`; the _Overview_ shows the admin key and adapter as configured.
 5. If data is missing, work through [Console connection problems](../troubleshooting/console-connection.md).
 
 ## 10. Update, back up, secure
@@ -200,9 +198,9 @@ See [reverse proxy](../installation/reverse-proxy.md).
 
 ## Troubleshooting quick table
 
-| Symptom                                   | Likely cause                                                       | See                                                              |
-| ----------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| Site answers HTTP 500 after start         | Missing/invalid production variable                                | [Startup errors](../troubleshooting/startup-errors.md)            |
-| Adapter 404 / 401 / 503                   | Adapter disabled / token mismatch / token missing                  | [Console connection](../troubleshooting/console-connection.md)    |
-| Discord login loops or is refused         | Redirect URL, missing role, wrong guild                            | [Discord login](../troubleshooting/discord-login.md)              |
-| Pages empty, "unavailable"                | Console unreachable from dashboard host, key scopes too narrow     | [Console connection](../troubleshooting/console-connection.md)    |
+| Symptom                           | Likely cause                                                   | See                                                            |
+| --------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
+| Site answers HTTP 500 after start | Missing/invalid production variable                            | [Startup errors](../troubleshooting/startup-errors.md)         |
+| Adapter 404 / 401 / 503           | Adapter disabled / token mismatch / token missing              | [Console connection](../troubleshooting/console-connection.md) |
+| Discord login loops or is refused | Redirect URL, missing role, wrong guild                        | [Discord login](../troubleshooting/discord-login.md)           |
+| Pages empty, "unavailable"        | Console unreachable from dashboard host, key scopes too narrow | [Console connection](../troubleshooting/console-connection.md) |

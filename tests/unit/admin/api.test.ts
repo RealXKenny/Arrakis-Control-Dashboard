@@ -10,8 +10,7 @@ vi.mock('../../../src/config/env', () => ({
     LOG_LEVEL: 'FATAL',
     DISCORD_GUILD_ID: 'guild',
     VERIFIED_MEMBER_ROLE_ID: 'verified',
-    ADMIN_CONSOLE_API_KEY: 'admin-private-credential',
-    CONSOLE_API_KEY: 'ordinary-private-credential',
+    DUNE_API_KEY: 'admin-private-credential',
   }),
 }));
 beforeEach(() => vi.restoreAllMocks());

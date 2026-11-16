@@ -15,14 +15,14 @@ The server refuses to serve traffic in production unless these are present and w
 in `src/config/env.ts`, run at startup from `src/instrumentation.ts`; a failure now stops the server and logs the name
 of the offending variable, never its value).
 
-| Variable                                          | Requirement                                                                                           |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `APP_URL`                                         | Canonical public origin, `https://`, no path or credentials. `http://` is accepted only for loopback. |
-| `AUTH_SECRET`                                     | 32 to 256 random characters. Signs Auth.js state and seals stored Discord refresh tokens.             |
-| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`      | Discord application credentials. Callback: `<APP_URL>/api/auth/callback/discord`.                     |
-| `DISCORD_GUILD_ID`, `VERIFIED_MEMBER_ROLE_ID`     | Guild and role that authorize members.                                                                |
-| `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN` | Dune Console. `CONSOLE_API_KEY` and `ADAPTER_TOKEN` must be different values.                         |
-| `REDIS_URL`                                       | `redis://` or `rediss://`, optional database number. Carries the password and the TLS choice.         |
+| Variable                                      | Requirement                                                                                           |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `APP_URL`                                     | Canonical public origin, `https://`, no path or credentials. `http://` is accepted only for loopback. |
+| `AUTH_SECRET`                                 | 32 to 256 random characters. Signs Auth.js state and seals stored Discord refresh tokens.             |
+| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`  | Discord application credentials. Callback: `<APP_URL>/api/auth/callback/discord`.                     |
+| `DISCORD_GUILD_ID`, `VERIFIED_MEMBER_ROLE_ID` | Guild and role that authorize members.                                                                |
+| `DUNE_API_URL`, `DUNE_API_KEY`                | Dune Console and its one credential. Set the Console's Discord adapter token to the same value.       |
+| `REDIS_URL`                                   | `redis://` or `rediss://`, optional database number. Carries the password and the TLS choice.         |
 
 Strongly recommended settings (all optional in the schema, so they are easy to forget):
 
@@ -39,7 +39,6 @@ Strongly recommended settings (all optional in the schema, so they are easy to f
 | `REDIS_CLUSTER_NODES`                               | unset                      | Comma-separated `host:port` list. Switches the app and `marketplace:rekey` to Redis Cluster. `REDIS_URL` still supplies credentials.                 |
 | `REDIS_ALLOW_INSECURE`                              | `false`                    | Leave it `false`. `true` accepts a passwordless plain-text Redis on a public-looking host.                                                           |
 | `BOT_API_TOKEN`                                     | unset                      | 32 to 256 characters; enables the read-only bot API. Distinct from every other secret.                                                               |
-| `ADMIN_CONSOLE_API_KEY`                             | unset                      | Separate, narrowly scoped Console key for the administrator workspace.                                                                               |
 
 Pterodactyl-only (egg) variables: `RELEASE_TAG` (default `latest`; pin to an exact `vX.Y.Z`) and
 `ALLOW_UNVERIFIED_RELEASE` (default `false`; leave it `false`). The egg passes only variables it defines, so a setting
@@ -48,8 +47,8 @@ that is not an egg variable cannot reach the application.
 ### 1.2 Secret generation
 
 - Generate each secret independently, for example `openssl rand -base64 48` (the command `.env.example` uses).
-- Never reuse a value between `AUTH_SECRET`, `OWNER_KEY_SECRET`, `BOT_API_TOKEN`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`
-  and `ADMIN_CONSOLE_API_KEY`.
+- Never reuse a value between `AUTH_SECRET`, `OWNER_KEY_SECRET`, `BOT_API_TOKEN` and `DUNE_API_KEY`
+  (the Console adapter token is the one deliberate duplicate of `DUNE_API_KEY`).
 - Store them in the panel or secret manager only. `.env` is ignored by Git; `.env.example` is the only committed template.
 - Record the date each secret was set, so a rotation can be scheduled.
 
@@ -74,7 +73,7 @@ that is not an egg variable cannot reach the application.
 - Terminate TLS at a reverse proxy or load balancer and set `APP_URL` to the public `https://` origin.
 - Set `TRUSTED_PROXY_COUNT` to the exact number of proxies. A wrong value lets a caller spoof the address used by rate limits.
 - Outbound HTTPS from the installer to `api.github.com` and the release download host is required during installation.
-- The application needs reachability to the Console (`CONSOLE_URL`), Discord, and Redis only.
+- The application needs reachability to the Console (`DUNE_API_URL`), Discord, and Redis only.
 
 ### 1.5 Backups
 
@@ -136,7 +135,7 @@ Releases created before checksums were published (no archive assets) do not inst
 ### 2.3 Environment configuration
 
 Fill every required Startup variable in the panel (section 1.1), including the strongly recommended ones. Keep secrets
-hidden from subusers. The egg hides all credentials (`AUTH_SECRET`, `REDIS_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY`, `ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, `BOT_API_TOKEN`, `OWNER_KEY_SECRET`, `DISCORD_BOT_TOKEN`), so a **panel administrator** must enter them under Admin > Servers > Startup. Hidden is not encrypted: anyone with file, process or console access to the running server can still read them. `NEXT_TELEMETRY_DISABLED=1` is set by the egg, installer and launcher.
+hidden from subusers. The egg hides all credentials (`AUTH_SECRET`, `REDIS_URL`, `DUNE_API_KEY`, `DISCORD_CLIENT_SECRET`, `BOT_API_TOKEN`, `OWNER_KEY_SECRET`, `DISCORD_BOT_TOKEN`), so a **panel administrator** must enter them under Admin > Servers > Startup. Hidden is not encrypted: anyone with file, process or console access to the running server can still read them. `NEXT_TELEMETRY_DISABLED=1` is set by the egg, installer and launcher.
 
 ### 2.4 Startup
 

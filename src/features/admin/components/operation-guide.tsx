@@ -10,11 +10,7 @@ export default function OperationGuide({ operation }: { operation: AdminOperatio
         </div>
         <div>
           <dt>Source</dt>
-          <dd>
-            {operation.provider === 'adapter'
-              ? 'Discord adapter · ADAPTER_TOKEN'
-              : 'Console API · ADMIN_CONSOLE_API_KEY'}
-          </dd>
+          <dd>{operation.provider === 'adapter' ? 'Discord adapter · DUNE_API_KEY' : 'Console API · DUNE_API_KEY'}</dd>
         </div>
         <div>
           <dt>Behavior</dt>

@@ -22,27 +22,27 @@ const paginated = new Set(['get-players-online', 'get-players', 'get-guilds', 'g
 /** Bounded fan-out over the Console reads that feed the overview; one failing source never fails the page. */
 export async function loadAdminOverview(session: DashboardSession, signal?: AbortSignal): Promise<AdminOverview> {
   const env = getServerEnv();
-  const secure = isSecureConsoleOrigin(env.CONSOLE_URL);
+  const secure = isSecureConsoleOrigin(env.DUNE_API_URL);
   const setup: AdminOverview['setup'] = [
     {
       id: 'console',
       label: 'Console connection',
-      ready: !!env.CONSOLE_URL && secure,
-      instruction: 'Set CONSOLE_URL to your HTTPS Console address. Loopback HTTP is supported for local deployments.',
+      ready: !!env.DUNE_API_URL && secure,
+      instruction: 'Set DUNE_API_URL to your HTTPS Console address. Loopback HTTP is supported for local deployments.',
     },
     {
       id: 'admin-key',
       label: 'Administrative credential',
-      ready: !!env.ADMIN_CONSOLE_API_KEY,
+      ready: !!env.DUNE_API_KEY,
       instruction:
-        'Set ADMIN_CONSOLE_API_KEY to a separate Console API key with the read and write scopes your admin tools need. Restart after changing environment settings.',
+        'Set DUNE_API_KEY to a Console API key with the read and write scopes your admin tools need. Restart after changing environment settings.',
     },
     {
       id: 'adapter',
       label: 'Discord adapter',
-      ready: !!env.ADAPTER_TOKEN,
+      ready: !!env.DUNE_API_KEY,
       instruction:
-        'Set ADAPTER_TOKEN for the experimental Discord adapter tools. Keep it separate from both Console API keys.',
+        'The experimental Discord adapter tools send DUNE_API_KEY, so set the Console adapter token to the same value.',
     },
     {
       id: 'redis',
@@ -64,7 +64,7 @@ export async function loadAdminOverview(session: DashboardSession, signal?: Abor
     while (next < sources.length) {
       const index = next++;
       const [operation, label] = sources[index];
-      if (!env.ADMIN_CONSOLE_API_KEY || !secure) {
+      if (!env.DUNE_API_KEY || !secure) {
         results[index] = {
           operation,
           label,

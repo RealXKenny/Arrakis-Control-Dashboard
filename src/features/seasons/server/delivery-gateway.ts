@@ -13,13 +13,13 @@ export function offline(value: unknown) {
 }
 export function deliveryAvailable() {
   const env = getServerEnv();
-  return Boolean(env.ADMIN_CONSOLE_API_KEY && isSecureConsoleOrigin(env.CONSOLE_URL));
+  return Boolean(env.DUNE_API_KEY && isSecureConsoleOrigin(env.DUNE_API_URL));
 }
 function client() {
   if (!deliveryAvailable())
     fail('Season game delivery is disabled or its administrator API connection is unavailable.', 403);
   const env = getServerEnv();
-  return new DuneConsoleClient(env.CONSOLE_URL!, null, env.ADMIN_CONSOLE_API_KEY!);
+  return new DuneConsoleClient(env.DUNE_API_URL!, env.DUNE_API_KEY!);
 }
 export function solarisBalance(payload: unknown) {
   const rows = record(payload).rows;

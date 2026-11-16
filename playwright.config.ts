@@ -4,15 +4,13 @@ const browserServer = {
   // Dev note: production credentials are not invited to this test party.
   env: {
     // browser-server.mjs points this at the local fake Console it starts.
-    CONSOLE_URL: 'http://127.0.0.1:3101',
-    CONSOLE_API_KEY: 'browser-test-placeholder',
-    ADAPTER_TOKEN: 'browser-test-placeholder',
+    DUNE_API_URL: 'http://127.0.0.1:3101',
+    DUNE_API_KEY: 'browser-test-placeholder',
     DISCORD_CLIENT_ID: 'browser-test-client',
     DISCORD_CLIENT_SECRET: 'browser-test-placeholder',
     DISCORD_GUILD_ID: 'browser-test-guild',
     VERIFIED_MEMBER_ROLE_ID: 'browser-test-role',
     ADMIN_DISCORD_IDS: '456084885220884480',
-    ADMIN_CONSOLE_API_KEY: 'browser-test-admin-placeholder',
     AUTH_SECRET: 'fixture-only-authentication-secret-32',
     APP_URL: 'http://127.0.0.1:3100',
     REDIS_URL: 'redis://127.0.0.1:9',

@@ -3,9 +3,8 @@ import { GET } from '../../src/app/api/v2/admin/overview/route';
 import { summarizeAdminMetrics } from '../../src/features/admin/overview';
 const { config, session, fetcher } = vi.hoisted(() => ({
   config: {
-    CONSOLE_URL: 'https://console.test',
-    ADMIN_CONSOLE_API_KEY: 'fixture-admin-key',
-    ADAPTER_TOKEN: 'fixture-adapter-key',
+    DUNE_API_URL: 'https://console.test',
+    DUNE_API_KEY: 'fixture-admin-key',
     REDIS_URL: 'redis://fixture',
     APP_URL: 'https://dashboard.test',
     DISCORD_GUILD_ID: 'guild',
@@ -45,8 +44,8 @@ const fixtures: Record<string, unknown> = {
 beforeEach(() => {
   vi.resetAllMocks();
   vi.stubGlobal('fetch', fetcher);
-  config.CONSOLE_URL = 'https://console.test';
-  config.ADMIN_CONSOLE_API_KEY = 'fixture-admin-key';
+  config.DUNE_API_URL = 'https://console.test';
+  config.DUNE_API_KEY = 'fixture-admin-key';
   session.mockResolvedValue({
     user: { id: '456084885220884480' },
     guildId: 'guild',
@@ -89,7 +88,7 @@ it('returns normalized real readings and setup flags through read-only bounded r
     if (/\/players|\/guilds|\/bases|\/vehicles/.test(new URL(url).pathname))
       expect(new URL(url).searchParams.get('pageSize')).toBe('1');
   }
-  expect(JSON.stringify(data)).not.toMatch(/fixture-admin-key|fixture-adapter-key|redis:\/\/fixture/);
+  expect(JSON.stringify(data)).not.toMatch(/fixture-admin-key|redis:\/\/fixture/);
 });
 it('keeps working sources available when another scope is refused', async () => {
   fetcher.mockImplementation(
@@ -111,12 +110,12 @@ it('keeps working sources available when another scope is refused', async () => 
   });
 });
 it('reports setup requirements without making requests when credentials or secure transport are missing', async () => {
-  config.ADMIN_CONSOLE_API_KEY = '';
+  config.DUNE_API_KEY = '';
   let data = await read();
   expect(data.setup.find((entry) => entry.id === 'admin-key').ready).toBe(false);
   expect(fetcher).not.toHaveBeenCalled();
-  config.ADMIN_CONSOLE_API_KEY = 'fixture-admin-key';
-  config.CONSOLE_URL = 'http://remote.test';
+  config.DUNE_API_KEY = 'fixture-admin-key';
+  config.DUNE_API_URL = 'http://remote.test';
   data = await read();
   expect(data.setup.find((entry) => entry.id === 'console').ready).toBe(false);
   expect(data.sources.every((source) => source.state === 'unconfigured')).toBe(true);

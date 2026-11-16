@@ -6,7 +6,7 @@ List the vehicles the signed-in member can access, with access level, status and
 
 ## Requirements
 
-A linked character and `CONSOLE_API_KEY` Read on players/vehicles. Route: `/vehicles`.
+A linked character and `DUNE_API_KEY` Read on players/vehicles. Route: `/vehicles`.
 
 ## How it works
 

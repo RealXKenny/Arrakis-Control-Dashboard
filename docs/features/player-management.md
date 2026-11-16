@@ -17,7 +17,7 @@ function in the [administrator panel](administrator-panel.md); members cannot af
 ## Requirements
 
 Your Discord account must be linked to a character in the Console adapter. Without a link the pages explain that and show nothing
-character-specific. The Console must grant `CONSOLE_API_KEY` Read on players and bases.
+character-specific. The Console must grant `DUNE_API_KEY` Read on players and bases.
 
 ## Permissions
 

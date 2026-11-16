@@ -9,8 +9,9 @@ export function adminCatalog() {
   return {
     ok: true as const,
     operations,
-    configured: Boolean(env.ADMIN_CONSOLE_API_KEY),
-    adapterConfigured: Boolean(env.ADAPTER_TOKEN),
-    consoleOrigin: env.CONSOLE_URL && isSecureConsoleOrigin(env.CONSOLE_URL) ? new URL(env.CONSOLE_URL).origin : null,
+    configured: Boolean(env.DUNE_API_KEY),
+    adapterConfigured: Boolean(env.DUNE_API_KEY),
+    consoleOrigin:
+      env.DUNE_API_URL && isSecureConsoleOrigin(env.DUNE_API_URL) ? new URL(env.DUNE_API_URL).origin : null,
   };
 }

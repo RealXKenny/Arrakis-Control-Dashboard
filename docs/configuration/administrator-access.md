@@ -14,22 +14,22 @@ appears only for a verified administrator.
 
 ### `ADMIN_DISCORD_IDS`
 
-| Environment                  | Empty value means                                                                                   |
-| ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| Production                   | **Startup fails** (`Missing server environment configuration: ADMIN_DISCORD_IDS`), and no one is an administrator |
-| Development / test           | The project owner's built-in Discord ID is the only administrator (convenience only)                |
+| Environment        | Empty value means                                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Production         | **Startup fails** (`Missing server environment configuration: ADMIN_DISCORD_IDS`), and no one is an administrator |
+| Development / test | The project owner's built-in Discord ID is the only administrator (convenience only)                              |
 
 Format: comma-separated numeric IDs, e.g. `111111111111111111,222222222222222222`. Restart after changing.
 
 ## Step-up re-authentication
 
-An administrator who only *reads* needs just a valid session. A *change* also needs an interactive sign-in
+An administrator who only _reads_ needs just a valid session. A _change_ also needs an interactive sign-in
 (`authenticatedAt`) that is recent enough:
 
-| Window  | Variable                         | Default | Applies to                                                                                             |
-| ------- | -------------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| General | `ADMIN_REAUTH_HOURS` (1-168)     | 12      | Release announcements, administrator replies in the guild support chat, and operations on the low-risk list |
-| High    | `ADMIN_HIGH_RISK_REAUTH_MINUTES` (5-1440) | 60 | Every other mutating operation, every upload and download, signing out everywhere                       |
+| Window  | Variable                                  | Default | Applies to                                                                                                  |
+| ------- | ----------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
+| General | `ADMIN_REAUTH_HOURS` (1-168)              | 12      | Release announcements, administrator replies in the guild support chat, and operations on the low-risk list |
+| High    | `ADMIN_HIGH_RISK_REAUTH_MINUTES` (5-1440) | 60      | Every other mutating operation, every upload and download, signing out everywhere                           |
 
 The classification lives in one file, `src/features/admin/server/risk.ts`:
 
@@ -43,7 +43,7 @@ records `admin.reauth_required`.
 
 ## Console credentials
 
-Administration calls use the separate `ADMIN_CONSOLE_API_KEY` (or `ADAPTER_TOKEN` for adapter operations). Without them the
+Administration calls use `DUNE_API_KEY`, also for adapter operations. Without it the
 panel stays read-only/disabled. See [Dune Console](dune-console.md).
 
 ## Verify
@@ -52,11 +52,11 @@ panel stays read-only/disabled. See [Dune Console](dune-console.md).
 
 ## Troubleshooting
 
-| Symptom                                  | Fix                                                                                       |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `/admin` is `403`                        | Your ID is not in `ADMIN_DISCORD_IDS`, wrong guild, or the role is missing                 |
-| Site returns 500 after deploy            | `ADMIN_DISCORD_IDS` is empty in production                                                |
-| Writes keep asking to sign in again      | Window elapsed; sign in again and repeat within the window; consider the windows above     |
+| Symptom                             | Fix                                                                                    |
+| ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `/admin` is `403`                   | Your ID is not in `ADMIN_DISCORD_IDS`, wrong guild, or the role is missing             |
+| Site returns 500 after deploy       | `ADMIN_DISCORD_IDS` is empty in production                                             |
+| Writes keep asking to sign in again | Window elapsed; sign in again and repeat within the window; consider the windows above |
 
 ## Related
 

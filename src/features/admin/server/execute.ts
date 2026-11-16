@@ -109,24 +109,22 @@ export async function executeAdminOperation(
   const { operation, request, route } = parsed;
   const { upload } = options;
   const env = getServerEnv();
-  const key = operation.provider === 'adapter' ? env.ADAPTER_TOKEN : env.ADMIN_CONSOLE_API_KEY;
-  if (!env.CONSOLE_URL || !key)
+  const key = env.DUNE_API_KEY;
+  if (!env.DUNE_API_URL || !key)
     throw new AppError(
-      operation.provider === 'adapter'
-        ? 'Configure ADAPTER_TOKEN for adapter operations.'
-        : 'Configure a separate ADMIN_CONSOLE_API_KEY for administration.',
+      'Configure DUNE_API_URL and DUNE_API_KEY for administration.',
       503,
       'ADMIN_CONFIG_REQUIRED',
       true,
     );
-  if (!isSecureConsoleOrigin(env.CONSOLE_URL))
+  if (!isSecureConsoleOrigin(env.DUNE_API_URL))
     throw new AppError(
       'Administrator requests require Console HTTPS or loopback HTTP.',
       503,
       'ADMIN_SECURE_TRANSPORT_REQUIRED',
       true,
     );
-  const url = providerUrl(env.CONSOLE_URL, route);
+  const url = providerUrl(env.DUNE_API_URL, route);
   for (const [name, value] of Object.entries(request.query)) url.searchParams.set(name, String(value));
   let body: BodyInit | undefined = upload;
   const headers: Record<string, string> = { Authorization: `Bearer ${key}` };

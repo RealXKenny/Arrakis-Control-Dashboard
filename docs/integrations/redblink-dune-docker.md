@@ -9,12 +9,12 @@
 
 ## What each project is
 
-| | RedBlink Dune Docker | Arrakis Control Dashboard |
-| --- | --- | --- |
-| Purpose | Host and operate a Dune: Awakening dedicated server in Docker | A web dashboard for your community and administrators |
+|          | RedBlink Dune Docker                                                                                                                                                                                                                                                         | Arrakis Control Dashboard                                                                                                                      |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Purpose  | Host and operate a Dune: Awakening dedicated server in Docker                                                                                                                                                                                                                | A web dashboard for your community and administrators                                                                                          |
 | Provides | Orchestrator (SteamCMD game files), gameplay containers (Postgres, RabbitMQ, TextRouter, Director, Gateway, world servers), the **Console** (API and Web UI), the `dune` CLI, backups, updates, optional metrics, public-probe, TLS front, Community Addons, Discord adapter | Next.js app: Discord sign-in, member pages, guild tools, base marketplace, administrator workspace over the Console API, Redis-backed sessions |
-| Runs | Docker on a Linux host (`dune` CLI, Compose files `docker-compose*.yml`, raw `docker run` for gameplay) | Node.js 22 (directly or via Pterodactyl) |
-| Data | Game Postgres, `runtime/secrets`, `runtime/generated`, `.env` | Redis only |
+| Runs     | Docker on a Linux host (`dune` CLI, Compose files `docker-compose*.yml`, raw `docker run` for gameplay)                                                                                                                                                                      | Node.js 22 (directly or via Pterodactyl)                                                                                                       |
+| Data     | Game Postgres, `runtime/secrets`, `runtime/generated`, `.env`                                                                                                                                                                                                                | Redis only                                                                                                                                     |
 
 **The dashboard does not install, update, start, stop or back up the RedBlink stack.** It only calls the Console's HTTP API
 and Discord adapter with the credentials you give it. Server start/stop/update through the dashboard happens only as Console
@@ -25,23 +25,23 @@ operations in the [administrator panel](../features/administrator-panel.md), if 
 ```mermaid
 flowchart LR
     B[Browser] -->|HTTPS| D[Arrakis dashboard]
-    D -->|Bearer CONSOLE_API_KEY / ADMIN_CONSOLE_API_KEY<br/>GET/POST /api/*| C[RedBlink Console :8088]
-    D -->|Bearer ADAPTER_TOKEN<br/>/api/integrations/discord/*| C
+    D -->|Bearer DUNE_API_KEY<br/>GET/POST /api/*| C[RedBlink Console :8088]
+    D -->|Bearer DUNE_API_KEY<br/>/api/integrations/discord/*| C
     C --> G[Game containers + Postgres]
     D --> R[(Redis)]
 ```
 
-| Concern | Belongs to | Setting |
-| --- | --- | --- |
-| Console URL, port | RedBlink Console (`ADMIN_BIND_PORT`, Settings → Web Console Port, default `8088`) | `CONSOLE_URL` in the dashboard |
-| Console admin password | RedBlink (`runtime/secrets/admin-web-password.txt`) | **Not used by the dashboard** |
-| API keys | RedBlink Console, Settings → API Keys | `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY` |
-| Adapter enable + token | RedBlink `.env`: `DUNE_DISCORD_ADAPTER_ENABLED`, `DUNE_BOT_API_TOKEN_FILE` or `DUNE_DISCORD_ADAPTER_TOKEN` | `ADAPTER_TOKEN` (same value) |
-| Adapter roles | RedBlink `.env`: `DISCORD_OBSERVER_ROLE_IDS`, `DISCORD_MODERATOR_ROLE_IDS`, `DISCORD_ADMIN_ROLE_IDS`, `DISCORD_OWNER_ROLE_IDS` | Not read by the dashboard |
-| Console IP allow-list | RedBlink `.env`: `ADMIN_ALLOWED_IPS` | The dashboard host's address must be allowed if you set it |
-| Member sign-in and roles | Discord | `DISCORD_*`, `VERIFIED_MEMBER_ROLE_ID` |
-| Sessions, limits, guild data | Redis | `REDIS_URL` |
-| HTTPS for browsers | Reverse proxy | `APP_URL`, `TRUSTED_PROXY_COUNT` |
+| Concern                      | Belongs to                                                                                                                     | Setting                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Console URL, port            | RedBlink Console (`ADMIN_BIND_PORT`, Settings → Web Console Port, default `8088`)                                              | `DUNE_API_URL` in the dashboard                            |
+| Console admin password       | RedBlink (`runtime/secrets/admin-web-password.txt`)                                                                            | **Not used by the dashboard**                              |
+| API keys                     | RedBlink Console, Settings → API Keys                                                                                          | `DUNE_API_KEY`                                             |
+| Adapter enable + token       | RedBlink `.env`: `DUNE_DISCORD_ADAPTER_ENABLED`, `DUNE_BOT_API_TOKEN_FILE` or `DUNE_DISCORD_ADAPTER_TOKEN`                     | `DUNE_API_KEY` (same value as the API key)                 |
+| Adapter roles                | RedBlink `.env`: `DISCORD_OBSERVER_ROLE_IDS`, `DISCORD_MODERATOR_ROLE_IDS`, `DISCORD_ADMIN_ROLE_IDS`, `DISCORD_OWNER_ROLE_IDS` | Not read by the dashboard                                  |
+| Console IP allow-list        | RedBlink `.env`: `ADMIN_ALLOWED_IPS`                                                                                           | The dashboard host's address must be allowed if you set it |
+| Member sign-in and roles     | Discord                                                                                                                        | `DISCORD_*`, `VERIFIED_MEMBER_ROLE_ID`                     |
+| Sessions, limits, guild data | Redis                                                                                                                          | `REDIS_URL`                                                |
+| HTTPS for browsers           | Reverse proxy                                                                                                                  | `APP_URL`, `TRUSTED_PROXY_COUNT`                           |
 
 ## Install the upstream server
 
@@ -62,8 +62,7 @@ Documented upstream facts you will need:
 
 ## Create the Console API keys
 
-In the Console, **Settings → API Keys**. New keys have no access; grant per namespace. Create one member key and, optionally, one
-separate administrator key. Suggested scopes are in [Dune Console](../configuration/dune-console.md#suggested-key-scopes). The Console
+In the Console, **Settings → API Keys**. New keys have no access; grant per namespace. Create one key for the dashboard. Suggested scopes are in [Dune Console](../configuration/dune-console.md#suggested-key-scopes). The Console
 never lets an API key reach `settings`, `database`, `setup` or `community`, and write actions in `updates` and `addons` are denied.
 
 ## Enable the Discord adapter
@@ -78,55 +77,55 @@ DUNE_BOT_API_TOKEN_FILE=/repo/runtime/secrets/bot-api-token.txt
 
 ```bash
 mkdir -p runtime/secrets
-echo -n "<RANDOM_TOKEN>" > runtime/secrets/bot-api-token.txt
+echo -n "<same value as the dashboard DUNE_API_KEY>" > runtime/secrets/bot-api-token.txt
 chmod 600 runtime/secrets/bot-api-token.txt
 docker compose -f docker-compose.web.yml up -d --build redblink-dune-docker-console
 ```
 
-Then set the dashboard's `ADAPTER_TOKEN` to the same token. The adapter is disabled by default, read-mostly, bearer-token
+The adapter accepts only this token, so it must equal the dashboard's `DUNE_API_KEY`. The adapter is disabled by default, read-mostly, bearer-token
 protected and role-gated; `/broadcast` stays disabled on the stock compose file. Upstream error meanings:
 `404` adapter not enabled, `401` token mismatch, `503` no token/missing token file.
 
 ## Connect the dashboard
 
-1. Set `CONSOLE_URL` (e.g. `http://127.0.0.1:8088` when on the same host, or `https://…` remotely), `CONSOLE_API_KEY`,
-   optionally `ADMIN_CONSOLE_API_KEY`, and `ADAPTER_TOKEN`.
+1. Set `DUNE_API_URL` (e.g. `http://127.0.0.1:8088` when on the same host, or `https://…` remotely), and `DUNE_API_KEY`
+   (also used as the adapter token).
 2. If you set `ADMIN_ALLOWED_IPS` on the Console, include the dashboard host.
 3. Start the dashboard; the log should show `Dune Console connection ready`.
 
 ## Verify connectivity
 
 ```bash
-curl -sS -H "Authorization: Bearer $CONSOLE_API_KEY" "$CONSOLE_URL/api/players?page=1&pageSize=1"
-curl -sS -H "Authorization: Bearer $ADAPTER_TOKEN"   "$CONSOLE_URL/api/integrations/discord/health"
+curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/players?page=1&pageSize=1"
+curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/integrations/discord/health"
 ```
 
 Inside the dashboard: portal shows population, `/admin → Overview` reports the admin key and adapter as configured and healthy.
 
 ## Troubleshooting authentication and network issues
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| Dashboard log: Console API request failed | Wrong `CONSOLE_URL`, port, firewall, container down | `curl` from the dashboard host; `dune status` on the game host |
-| `401` from the Console | Wrong/disabled/expired key (a bad bearer never falls back to cookies) | Create a new key, update env, restart |
-| `403` or empty lists | Key lacks the namespace/action | Edit scopes in Settings → API Keys |
-| Adapter `404` | `DUNE_DISCORD_ADAPTER_ENABLED` not `true` | Enable and rebuild the Console container |
-| Adapter `401` | `ADAPTER_TOKEN` ≠ Console token | Make them identical |
-| Adapter `503` | Token file missing/empty | Create the file, rebuild |
-| Works locally, fails from the dashboard host | `ADMIN_ALLOWED_IPS` or firewall | Allow the dashboard host |
-| Characters not shown | No Discord↔character link | Link through the adapter flow (`players/link`, `players/link/verify`) |
+| Symptom                                      | Likely cause                                                          | Fix                                                                   |
+| -------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Dashboard log: Console API request failed    | Wrong `DUNE_API_URL`, port, firewall, container down                  | `curl` from the dashboard host; `dune status` on the game host        |
+| `401` from the Console                       | Wrong/disabled/expired key (a bad bearer never falls back to cookies) | Create a new key, update env, restart                                 |
+| `403` or empty lists                         | Key lacks the namespace/action                                        | Edit scopes in Settings → API Keys                                    |
+| Adapter `404`                                | `DUNE_DISCORD_ADAPTER_ENABLED` not `true`                             | Enable and rebuild the Console container                              |
+| Adapter `401`                                | `DUNE_API_KEY` ≠ Console adapter token                                | Make them identical                                                   |
+| Adapter `503`                                | Token file missing/empty                                              | Create the file, rebuild                                              |
+| Works locally, fails from the dashboard host | `ADMIN_ALLOWED_IPS` or firewall                                       | Allow the dashboard host                                              |
+| Characters not shown                         | No Discord↔character link                                             | Link through the adapter flow (`players/link`, `players/link/verify`) |
 
 More: [Console connection](../troubleshooting/console-connection.md) and, for game-server problems, the upstream
 [troubleshooting guides](https://github.com/Red-Blink/dune-awakening-selfhost-docker/tree/main/docs/integrations/discord-integration).
 
 ## Updating both systems
 
-| What | Command / action | Notes |
-| --- | --- | --- |
-| Game server files | `dune update` (`check`, `install`, `install-assets`, …) or the Console's Updates page | Upstream; independent of the dashboard |
-| The RedBlink stack itself | `dune self-update` (`check`, `list`, `install [latest\|<tag>]`) | Upstream |
-| Automatic updates | `dune update auto enable [interval-minutes] …` | Upstream systemd timer |
-| Dashboard | [Updating](../installation/updating.md) | Reinstall pinned release on Pterodactyl, or rebuild |
+| What                      | Command / action                                                                      | Notes                                               |
+| ------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Game server files         | `dune update` (`check`, `install`, `install-assets`, …) or the Console's Updates page | Upstream; independent of the dashboard              |
+| The RedBlink stack itself | `dune self-update` (`check`, `list`, `install [latest\|<tag>]`)                       | Upstream                                            |
+| Automatic updates         | `dune update auto enable [interval-minutes] …`                                        | Upstream systemd timer                              |
+| Dashboard                 | [Updating](../installation/updating.md)                                               | Reinstall pinned release on Pterodactyl, or rebuild |
 
 After a Console update re-check key scopes, the adapter token and that the dashboard still connects. Back up first (below).
 

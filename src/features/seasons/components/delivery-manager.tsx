@@ -27,7 +27,7 @@ export function DeliveryManager({
       <p>
         {enabled
           ? 'API execution is enabled. Each grant still needs independent review and explicit confirmation.'
-          : 'API execution is disabled. Configure ADMIN_CONSOLE_API_KEY and an HTTPS (or loopback) Console URL to enable it.'}
+          : 'API execution is disabled. Configure DUNE_API_KEY and an HTTPS (or loopback) Console URL to enable it.'}
       </p>
       <p>
         Recipients must claim the configured reward first. Failed offline/link checks send nothing and can be retried.

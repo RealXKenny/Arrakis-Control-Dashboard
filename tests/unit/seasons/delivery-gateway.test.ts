@@ -7,8 +7,8 @@ const mock = vi.hoisted(() => ({
 vi.mock('../../../src/config/env', () => ({
   getServerEnv: () => ({
     LOG_LEVEL: 'INFO',
-    ADMIN_CONSOLE_API_KEY: mock.key,
-    CONSOLE_URL: mock.url,
+    DUNE_API_KEY: mock.key,
+    DUNE_API_URL: mock.url,
   }),
 }));
 vi.mock('../../../src/server/integrations/dune', () => ({

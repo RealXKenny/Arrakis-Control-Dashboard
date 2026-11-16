@@ -17,7 +17,7 @@ Startup log order (from `src/instrumentation.ts`):
 
 In production (`NODE_ENV=production`, which `npm start` sets) an invalid configuration **stops the site from serving**:
 every request returns HTTP 500 and the log shows `Production configuration is invalid; refusing to start` followed by the
-variable that is missing or malformed (never its value). Required: `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN`,
+variable that is missing or malformed (never its value). Required: `DUNE_API_URL`, `DUNE_API_KEY`,
 `DISCORD_GUILD_ID`, `VERIFIED_MEMBER_ROLE_ID`, `APP_URL`, `REDIS_URL`, `AUTH_SECRET`, `DISCORD_CLIENT_ID`,
 `DISCORD_CLIENT_SECRET` and `ADMIN_DISCORD_IDS`. See [startup errors](../troubleshooting/startup-errors.md).
 

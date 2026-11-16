@@ -28,7 +28,7 @@ it('parses JSON exports and normalizes empty bodies', async () => {
 });
 it('returns a successful console response without exposing query strings or request secrets', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ rows: [{ id: 1 }] })));
-  const client = new DuneConsoleClient('https://console.test', null, 'test-api-key');
+  const client = new DuneConsoleClient('https://console.test', 'test-api-key');
   expect(await client.request('GET', '/api/items?q=private')).toEqual({ rows: [{ id: 1 }] });
   expect(fetch).toHaveBeenCalledWith(
     'https://console.test/api/items?q=private',
@@ -38,7 +38,7 @@ it('returns a successful console response without exposing query strings or requ
 it('does not replay mutations or disclose upstream errors', async () => {
   const fetcher = vi.fn().mockResolvedValue(Response.json({ error: 'password=private' }, { status: 503 }));
   vi.stubGlobal('fetch', fetcher);
-  const client = new DuneConsoleClient('https://console.test', null, 'test-api-key');
+  const client = new DuneConsoleClient('https://console.test', 'test-api-key');
   const error = await client.request('POST', '/api/action', { body: {} }).catch((value) => value);
   expect(fetcher).toHaveBeenCalledTimes(1);
   expect(error).toMatchObject({ message: 'Console API request failed', details: null });
@@ -50,7 +50,7 @@ it('does not retry forbidden scopes or rate limits', async () => {
     .mockResolvedValueOnce(Response.json({}, { status: 403 }))
     .mockResolvedValueOnce(Response.json({}, { status: 429 }));
   vi.stubGlobal('fetch', fetcher);
-  const client = new DuneConsoleClient('https://console.test', null, 'test-api-key');
+  const client = new DuneConsoleClient('https://console.test', 'test-api-key');
   await expect(client.request('GET', '/api/settings')).rejects.toMatchObject({ status: 403 });
   await expect(client.request('GET', '/api/items')).rejects.toMatchObject({ status: 429 });
   expect(fetcher).toHaveBeenCalledTimes(2);
@@ -61,7 +61,7 @@ it('handles multipart and network failures through the same transport', async ()
     .mockResolvedValueOnce(Response.json({ ok: true }))
     .mockRejectedValueOnce(new Error('private-network-secret'));
   vi.stubGlobal('fetch', fetcher);
-  const client = new DuneConsoleClient('https://console.test', null, 'test-api-key');
+  const client = new DuneConsoleClient('https://console.test', 'test-api-key');
   await client.requestMultipart('POST', '/api/blueprints/import', new FormData());
   await expect(client.requestMultipart('POST', '/api/blueprints/import', new FormData())).rejects.toMatchObject({
     message: 'Console API request failed',
@@ -88,7 +88,7 @@ it('propagates cancellation through the Console client without retrying a cancel
     throw new Error('aborted');
   });
   vi.stubGlobal('fetch', fetcher);
-  const client = new DuneConsoleClient('https://console.test', null, 'test-api-key');
+  const client = new DuneConsoleClient('https://console.test', 'test-api-key');
   await expect(client.request('GET', '/api/items', { signal: controller.signal })).rejects.toMatchObject({
     message: 'Console API request failed',
   });

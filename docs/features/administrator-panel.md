@@ -9,7 +9,7 @@ tasks and a generic catalog form behind `advanced=1`.
 ## Requirements and permissions
 
 - Your Discord ID in `ADMIN_DISCORD_IDS`, in the right guild, with the member role ([administrator access](../configuration/administrator-access.md)).
-- A separate `ADMIN_CONSOLE_API_KEY` (Console operations) and/or `ADAPTER_TOKEN` (adapter operations). Without them the panel is
+- `DUNE_API_KEY` (Console and adapter operations; the adapter token must equal it). Without it the panel is
   disabled for those operations (`ADMIN_CONFIG_REQUIRED`, 503).
 - HTTPS to the Console, or loopback HTTP (`ADMIN_SECURE_TRANSPORT_REQUIRED`).
 - Recent interactive sign-in for changes ([step-up](#step-up-re-authentication)).
@@ -20,19 +20,19 @@ tasks and a generic catalog form behind `advanced=1`.
 arbitrary URL or send arbitrary headers. Each entry has an id, method, route, group, title, provider (`console` or `adapter`), mode
 (`json`, `events`, `download`, `upload`, `multipart`), path parameters, confirmation phrases and an optional restriction.
 
-| Group                          | Operations |  | Group                       | Operations |
-| ------------------------------ | ---------: |--| --------------------------- | ---------: |
-| Players                        | 62         |  | Maps & World                | 45         |
-| Bases & Storage                | 41         |  | Server Operations           | 29         |
-| Discord Adapter (Experimental) | 30         |  | Market Board                | 25         |
-| Admin Tools                    | 24         |  | Backups                     | 17         |
-| Vehicles                       | 13         |  | Care Package System         | 13         |
-| Authentication & Setup         | 12         |  | Database                    | 12         |
-| Updates                        | 10         |  | Live Map                    | 10         |
-| Addons                         | 9          |  | Guilds                      | 7          |
-| Settings & Public Directory    | 7          |  | Blueprints                  | 5          |
-| API Keys                       | 5          |  | Logs & Monitoring           | 4          |
-| IAM Policies                   | 3          |  |                             |            |
+| Group                          | Operations |     | Group               | Operations |
+| ------------------------------ | ---------: | --- | ------------------- | ---------: |
+| Players                        |         62 |     | Maps & World        |         45 |
+| Bases & Storage                |         41 |     | Server Operations   |         29 |
+| Discord Adapter (Experimental) |         30 |     | Market Board        |         25 |
+| Admin Tools                    |         24 |     | Backups             |         17 |
+| Vehicles                       |         13 |     | Care Package System |         13 |
+| Authentication & Setup         |         12 |     | Database            |         12 |
+| Updates                        |         10 |     | Live Map            |         10 |
+| Addons                         |          9 |     | Guilds              |          7 |
+| Settings & Public Directory    |          7 |     | Blueprints          |          5 |
+| API Keys                       |          5 |     | Logs & Monitoring   |          4 |
+| IAM Policies                   |          3 |     |                     |            |
 
 Operations marked **restricted** (setup, database, settings, IAM, API keys, addon writes, Console login…) are permanently refused
 for API keys by the Console, and the dashboard refuses them with `CONSOLE_OPERATION_RESTRICTED` (403). Which operations actually
@@ -51,11 +51,11 @@ log/task event streams at most 60 s and 2 MiB.
 
 ## Step-up re-authentication
 
-| Class     | Rule (from `src/features/admin/server/risk.ts`)                                                                                  | Window                              |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| High risk | downloads, uploads, multipart, `DELETE`, confirmation-phrase operations, **and every other non-GET operation** not on the low-risk list | `ADMIN_HIGH_RISK_REAUTH_MINUTES` (60) |
-| Low risk  | Reviewed list: `post-updates-check-game`, `post-updates-check-stack`, `post-players-list-settings`, `post-exchange-market-buyback-probe`, `post-integrations-discord-players-link-verify`, `post-auth-login`, `post-auth-logout`, `post-setup-preflight` | `ADMIN_REAUTH_HOURS` (12)            |
-| Read      | `GET`                                                                                                                               | valid session only                  |
+| Class     | Rule (from `src/features/admin/server/risk.ts`)                                                                                                                                                                                                          | Window                                |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| High risk | downloads, uploads, multipart, `DELETE`, confirmation-phrase operations, **and every other non-GET operation** not on the low-risk list                                                                                                                  | `ADMIN_HIGH_RISK_REAUTH_MINUTES` (60) |
+| Low risk  | Reviewed list: `post-updates-check-game`, `post-updates-check-stack`, `post-players-list-settings`, `post-exchange-market-buyback-probe`, `post-integrations-discord-players-link-verify`, `post-auth-login`, `post-auth-logout`, `post-setup-preflight` | `ADMIN_REAUTH_HOURS` (12)             |
+| Read      | `GET`                                                                                                                                                                                                                                                    | valid session only                    |
 
 Examples that are **high risk**: backup delete/restore/import, server stop/restart, game updates, history clear, kick-all,
 blueprint imports, destructive bulk operations. Unknown new operations default to high risk.

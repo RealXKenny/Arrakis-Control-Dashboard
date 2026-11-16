@@ -10,10 +10,9 @@ import type { AdminOperation } from '../../src/features/admin/types';
 const { fetcher } = vi.hoisted(() => ({ fetcher: vi.fn() }));
 vi.mock('../../src/config/env', () => ({
   getServerEnv: () => ({
-    CONSOLE_URL: 'https://console.test',
+    DUNE_API_URL: 'https://console.test',
     APP_URL: 'https://dashboard.test',
-    ADMIN_CONSOLE_API_KEY: 'fixture-admin-key',
-    ADAPTER_TOKEN: 'fixture-adapter-key',
+    DUNE_API_KEY: 'fixture-admin-key',
     DISCORD_GUILD_ID: 'guild',
     VERIFIED_MEMBER_ROLE_ID: 'verified',
     LOG_LEVEL: 'FATAL',
@@ -98,9 +97,7 @@ it.each(catalog)('$method $route — $title', async (operation) => {
   );
   expect(new URL(url).pathname).toBe(expected);
   expect(options.method).toBe(operation.method);
-  expect(options.headers.Authorization).toBe(
-    operation.provider === 'adapter' ? 'Bearer fixture-adapter-key' : 'Bearer fixture-admin-key',
-  );
+  expect(options.headers.Authorization).toBe('Bearer fixture-admin-key');
   expect(options.redirect).toBe('error');
   expect(options.cache).toBe('no-store');
   if (operation.provider === 'adapter') {
@@ -135,7 +132,7 @@ afterAll(() => {
   const rows = (catalog as AdminOperation[]).map((entry) => {
     const owner = tabForOperation(entry);
     const screen = owner ? `${owner.section.label} › ${owner.tab.label}` : 'UNMAPPED';
-    const credential = entry.provider === 'adapter' ? 'ADAPTER_TOKEN (bound actor)' : 'ADMIN_CONSOLE_API_KEY';
+    const credential = entry.provider === 'adapter' ? 'DUNE_API_KEY (adapter bearer, bound actor)' : 'DUNE_API_KEY';
     const params = entry.pathParameters.length ? `path: ${entry.pathParameters.join(', ')}` : 'no path parameters';
     const interfaceKind = entry.restriction
       ? 'Console handoff, no form'

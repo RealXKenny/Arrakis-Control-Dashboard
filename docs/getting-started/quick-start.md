@@ -33,13 +33,13 @@ Copy-Item .env.example .env
 
 Minimum for signing in locally (use your own values; keep `.env` out of Git):
 
-| Variable                                         | Local value                                                         |
-| ------------------------------------------------ | ------------------------------------------------------------------- |
-| `APP_URL`                                        | `http://127.0.0.1:2008`                                              |
-| `AUTH_SECRET`                                    | 32 or more random characters (see [secrets](../security/secrets-management.md)) |
-| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`     | From the Discord developer portal                                    |
-| `DISCORD_GUILD_ID`, `VERIFIED_MEMBER_ROLE_ID`    | Your Discord server and the role that grants access                  |
-| `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADAPTER_TOKEN` | Your Console; needed for live data                                  |
+| Variable                                      | Local value                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------------------- |
+| `APP_URL`                                     | `http://127.0.0.1:2008`                                                         |
+| `AUTH_SECRET`                                 | 32 or more random characters (see [secrets](../security/secrets-management.md)) |
+| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`  | From the Discord developer portal                                               |
+| `DISCORD_GUILD_ID`, `VERIFIED_MEMBER_ROLE_ID` | Your Discord server and the role that grants access                             |
+| `DUNE_API_URL`, `DUNE_API_KEY`                | Your Console; needed for live data                                              |
 
 Add `http://127.0.0.1:2008/api/auth/callback/discord` as a redirect URL in the Discord application. In development
 `ADMIN_DISCORD_IDS` may stay empty; the project owner's Discord ID is then the only administrator. Set it to your own

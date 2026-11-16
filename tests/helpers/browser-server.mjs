@@ -134,7 +134,7 @@ const child = spawn(
       CHANGELOG_CHANNEL_ID: '',
       COMMUNITY_EVENTS_CHANNEL_ID: '',
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
-      CONSOLE_URL: fakeConsole.url,
+      DUNE_API_URL: fakeConsole.url,
       ADMIN_DISCORD_IDS: '456084885220884480,456084885220884481',
       REDIS_CLUSTER_NODES: '',
       RABBITMQ_CA_FILE: '',

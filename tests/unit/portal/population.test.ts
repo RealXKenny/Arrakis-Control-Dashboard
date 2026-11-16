@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../../src/lib/redis/client', () => ({ getRedisClient: () => mocks }));
 vi.mock('../../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
 vi.mock('../../../src/config/env', () => ({
-  getServerEnv: () => ({ CONSOLE_URL: 'https://console.test', LOG_LEVEL: 'INFO' }),
+  getServerEnv: () => ({ DUNE_API_URL: 'https://console.test', LOG_LEVEL: 'INFO' }),
 }));
 
 beforeEach(() => {

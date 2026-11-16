@@ -20,12 +20,12 @@ const overviewFixture = {
   ],
   sources: [{ operation: 'get-server-status', label: 'Server health', state: 'ready', status: 200, durationMs: 12 }],
   setup: [
-    { id: 'console', label: 'Console connection', ready: true, instruction: 'Configure CONSOLE_URL.' },
+    { id: 'console', label: 'Console connection', ready: true, instruction: 'Configure DUNE_API_URL.' },
     {
       id: 'admin-key',
       label: 'Administrative credential',
       ready: true,
-      instruction: 'Configure ADMIN_CONSOLE_API_KEY.',
+      instruction: 'Configure DUNE_API_KEY.',
     },
   ],
 };
@@ -76,7 +76,7 @@ test('admin overview is server-rendered with linked metrics, trends and connecti
   await expect(page).toHaveURL(/tab=setup/);
   const setup = page.getByRole('region', { name: 'Administration setup', exact: true });
   await expect(setup.getByRole('heading', { name: 'Setup checklist', exact: true })).toBeVisible();
-  await expect(setup).toContainText('ADMIN_CONSOLE_API_KEY');
+  await expect(setup).toContainText('DUNE_API_KEY');
   await expect(setup.getByRole('heading', { name: 'API connection checks', exact: true })).toBeVisible();
 });
 

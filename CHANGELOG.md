@@ -4,6 +4,8 @@
 
 ### New Features
 
+- Simplified Console configuration: `DUNE_API_URL` and one `DUNE_API_KEY` replace `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN`. The key is also the Discord adapter bearer, so the Console's adapter token must be set to the same value (the upstream adapter accepts only its own token). Dashboard authorization, privileged HTTPS/loopback transport and the retired-setting startup error are unchanged in intent. Season automation and delivery toggles were removed.
+
 - Automatic three-month Season 1, Season 2 and onward: admin-authorized deterministic generation, 100 free cosmetic levels, scheduling/publication/archiving, server-verified XP and atomic cosmetic claiming. Durable Redis cursors and pause fences protect multi-instance recovery. API-only objectives avoid approval of unverifiable evidence. Seasons start automatically by default (saved pauses are preserved) and count only NEW in-game progress after a per-season baseline, so existing high levels earn nothing on first observation. Configured Solaris/item rewards need separate review and explicit execution.
 
 - Added illustrated objective categories, completion summaries and filtering inspired by Icehunter/dune-admin, with preserved MIT attribution and original vector artwork.

@@ -13,13 +13,11 @@ vi.mock('../../src/lib/security/audit', () => ({ recordAudit: audit, readAudit: 
 const config = vi.hoisted(() => ({
   NODE_ENV: 'test',
   LOG_LEVEL: 'FATAL',
-  CONSOLE_URL: 'https://console.test',
+  DUNE_API_URL: 'https://console.test',
   APP_URL: 'https://dashboard.test',
   DISCORD_GUILD_ID: 'guild',
   VERIFIED_MEMBER_ROLE_ID: 'verified',
-  ADMIN_CONSOLE_API_KEY: 'separate-admin-key',
-  CONSOLE_API_KEY: 'ordinary-key',
-  ADAPTER_TOKEN: 'separate-adapter-key',
+  DUNE_API_KEY: 'separate-admin-key',
 }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => config }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'admin' }) }) }));
@@ -44,7 +42,7 @@ const run = (body: unknown, headers: Record<string, string> = {}) =>
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal('fetch', fetcher);
-  config.CONSOLE_URL = 'https://console.test';
+  config.DUNE_API_URL = 'https://console.test';
   vi.mocked(getSession).mockResolvedValue(session());
   fetcher.mockResolvedValue(
     new Response(JSON.stringify({ ok: true, rows: [{ id: '123' }], secret: 'must-hide' }), {
@@ -115,11 +113,11 @@ it('accepts a native form post for downloads', async () => {
   expect(response.status).toBe(200);
 });
 
-it('binds adapter actor identity to the verified session and never interchanges keys', async () => {
+it('binds adapter actor identity to the verified session and uses the single Console key as the adapter bearer', async () => {
   await run({ operation: 'get-integrations-discord-players-me', query: { actor: 'forged' } });
   const url = new URL(fetcher.mock.calls[0][0]);
   expect(JSON.parse(url.searchParams.get('actor')!).userId).toBe('456084885220884480');
-  expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer separate-adapter-key');
+  expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer separate-admin-key');
 });
 
 it('never retries an uncertain mutation and retains queued/conflict responses', async () => {
@@ -141,7 +139,7 @@ it('never retries an uncertain mutation and retains queued/conflict responses', 
 
 it('rejects restricted operations and insecure admin transport', async () => {
   expect((await run({ operation: 'post-database-query' })).status).toBe(403);
-  config.CONSOLE_URL = 'http://remote-console.test';
+  config.DUNE_API_URL = 'http://remote-console.test';
   expect((await run({ operation: 'get-server-status' })).status).toBe(503);
   expect(fetcher).not.toHaveBeenCalled();
 });

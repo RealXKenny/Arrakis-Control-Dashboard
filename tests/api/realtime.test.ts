@@ -7,7 +7,7 @@ import { clearRealtimeReadCache } from '../../src/features/map/server/realtime';
 
 const config = vi.hoisted(() => ({
   DISCORD_GUILD_ID: 'guild',
-  CONSOLE_URL: 'https://console.test',
+  DUNE_API_URL: 'https://console.test',
 }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => ({ NODE_ENV: 'test', LOG_LEVEL: 'FATAL', ...config }) }));
 vi.mock('../../src/server/integrations/dune', async (original) => ({
@@ -34,7 +34,7 @@ const call = async (url = '/api/map/realtime?map=HaggaBasin', method = 'GET') =>
 beforeEach(() => {
   clearRealtimeReadCache();
   vi.clearAllMocks();
-  config.CONSOLE_URL = 'https://console.test';
+  config.DUNE_API_URL = 'https://console.test';
   vi.mocked(getSession).mockResolvedValue({
     user: { id: 'user' },
     guildId: 'guild',
@@ -125,10 +125,10 @@ it.each([
 });
 
 it('rejects insecure remote transport and malformed snapshots', async () => {
-  config.CONSOLE_URL = 'http://console.test';
+  config.DUNE_API_URL = 'http://console.test';
   expect((await call()).body.error).toContain('HTTPS');
   expect(request).not.toHaveBeenCalled();
-  config.CONSOLE_URL = 'http://127.0.0.1:8088';
+  config.DUNE_API_URL = 'http://127.0.0.1:8088';
   request.mockResolvedValueOnce({ sources: [], objects: [] });
   expect((await call()).status).toBe(503);
 });

@@ -6,15 +6,15 @@ page covers only how the **dashboard** talks to it. Dashboard code: `src/server/
 
 ## Request behaviour
 
-| Aspect            | Behaviour                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Auth              | `Authorization: Bearer <key>` always. No Console passwords, cookies or CSRF tokens are used                           |
-| Which key         | Member features `CONSOLE_API_KEY`; administrator catalog `ADMIN_CONSOLE_API_KEY`; adapter routes `ADAPTER_TOKEN`      |
-| Timeouts          | 30 s default per request                                                                                              |
-| Retries           | Reads: up to 3 attempts on 408, 425, 500, 502, 503, 504. Writes: never                                                 |
-| Failures          | Provider errors become safe application errors (no stacks, credentials or raw bodies)                                  |
-| Response checks   | A JSON body with `ok: false` is treated as failure even on HTTP 200                                                    |
-| Normalization     | Every payload is parsed from `unknown`; unsafe-size numbers stay strings; IDs are URL-encoded                          |
+| Aspect          | Behaviour                                                                                     |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| Auth            | `Authorization: Bearer <key>` always. No Console passwords, cookies or CSRF tokens are used   |
+| Which key       | `DUNE_API_KEY` for member features, the administrator catalog and adapter routes              |
+| Timeouts        | 30 s default per request                                                                      |
+| Retries         | Reads: up to 3 attempts on 408, 425, 500, 502, 503, 504. Writes: never                        |
+| Failures        | Provider errors become safe application errors (no stacks, credentials or raw bodies)         |
+| Response checks | A JSON body with `ok: false` is treated as failure even on HTTP 200                           |
+| Normalization   | Every payload is parsed from `unknown`; unsafe-size numbers stay strings; IDs are URL-encoded |
 
 ## Upstream conventions worth knowing
 

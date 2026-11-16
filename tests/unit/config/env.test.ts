@@ -10,9 +10,9 @@ afterEach(() => {
 it('rejects invalid settings without echoing their values', async () => {
   // Dev note: invalid settings tried to blend in, but their values were off-key.
   vi.resetModules();
-  vi.stubEnv('CONSOLE_URL', 'private-invalid-url');
+  vi.stubEnv('DUNE_API_URL', 'private-invalid-url');
   const { getServerEnv } = await import('../../../src/config/env');
-  expect(getServerEnv).toThrow('Invalid server environment configuration: CONSOLE_URL');
+  expect(getServerEnv).toThrow('Invalid server environment configuration: DUNE_API_URL');
 });
 
 it('accepts the portal environment template', async () => {
@@ -27,7 +27,6 @@ it('accepts the portal environment template', async () => {
   expect(env.API_MAX_CONCURRENCY).toBe(100);
   expect(env.API_GLOBAL_READ_LIMIT).toBe(2400);
   expect(env.BOT_API_TOKEN).toBeUndefined();
-  expect(env.ADMIN_CONSOLE_API_KEY).toBeUndefined();
 });
 
 it.each([
@@ -47,9 +46,8 @@ it.each([
 function productionFixture() {
   const values = {
     NODE_ENV: 'production',
-    CONSOLE_URL: 'http://127.0.0.1:4000',
-    CONSOLE_API_KEY: 'test',
-    ADAPTER_TOKEN: 'test',
+    DUNE_API_URL: 'http://127.0.0.1:4000',
+    DUNE_API_KEY: 'test',
     DISCORD_CLIENT_ID: 'test',
     DISCORD_CLIENT_SECRET: 'test',
     DISCORD_GUILD_ID: 'guild',
@@ -66,6 +64,18 @@ it('requires credentials and a secure public origin at production startup', asyn
   productionFixture();
   const { validateProductionEnv } = await import('../../../src/config/env');
   expect(validateProductionEnv().NODE_ENV).toBe('production');
+});
+it('rejects retired Console settings without a replacement and names only the variables', async () => {
+  vi.resetModules();
+  productionFixture();
+  vi.stubEnv('DUNE_API_KEY', '');
+  vi.stubEnv('CONSOLE_URL', '');
+  vi.stubEnv('ADMIN_CONSOLE_API_KEY', '');
+  vi.stubEnv('CONSOLE_API_KEY', 'private-old-key');
+  vi.stubEnv('ADAPTER_TOKEN', 'private-old-token');
+  const { validateProductionEnv } = await import('../../../src/config/env');
+  expect(validateProductionEnv).toThrow('Retired Console settings found (CONSOLE_API_KEY, ADAPTER_TOKEN)');
+  expect(validateProductionEnv).not.toThrow(/private-old/);
 });
 it('derives the Discord callback from the application URL', async () => {
   vi.resetModules();
