@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { StatusBadge } from '../../../components/ui/status-badge';
 import { freshnessLabel, type ReadingHealth } from '../freshness';
 import styles from './data-freshness.module.css';
 export function DataFreshness({
@@ -25,7 +26,21 @@ export function DataFreshness({
   }, []);
   return (
     <div className={styles.root} role="group" aria-label={label}>
-      <p className={styles.state}>{freshnessLabel(health, now)}</p>
+      <p className={styles.state}>
+        <StatusBadge
+          tone={
+            health.phase === 'outage'
+              ? 'danger'
+              : freshnessLabel(health, now) === 'Fresh'
+                ? 'success'
+                : health.partial || freshnessLabel(health, now).startsWith('Stale')
+                  ? 'warning'
+                  : 'neutral'
+          }
+        >
+          {freshnessLabel(health, now)}
+        </StatusBadge>
+      </p>
       <dl>
         <div>
           <dt>{successLabel}</dt>

@@ -31,7 +31,7 @@ test('report stays under More on wide screens and mobile and resizes through the
     } else {
       await page.getByRole('button', { name: 'Open menu', exact: true }).click();
       const drawer = page.getByRole('dialog', { name: 'Navigation', exact: true });
-      await drawer.getByRole('button', { name: 'More', exact: true }).click();
+      await expect(drawer.getByRole('heading', { name: 'More', exact: true })).toBeVisible();
       await drawer.getByRole('link', { name: 'Service status', exact: true }).click();
     }
     await expect(page).toHaveURL(/\/status$/);

@@ -70,7 +70,7 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - `src/types/` contains genuinely shared TypeScript contracts. Feature-local types remain in their feature.
 
-- `src/styles/` contains global CSS and design tokens. `tokens.css` owns the Console-style baseline as `--color-*` variables; Tailwind utilities bind to those same variables with matching fallbacks; `tests/unit/styles/tokens.test.ts` guards the match. `tailwind.config.ts` uses the Obsidian/Sand/Spice palette, sharp corners, and hard unblurred shadows. Feature CSS modules stay in their feature. Never animate an ancestor of the map or full-screen base preview layers, and keep all animation off under `prefers-reduced-motion`.
+- `src/styles/` contains global CSS and design tokens. `tokens.css` owns the Console-style baseline as `--color-*` variables; Tailwind utilities bind to those same variables with matching fallbacks; `tests/unit/styles/tokens.test.ts` guards the match. `tailwind.config.ts` uses the Obsidian/Sand/Spice palette, Console-style rounded corners, readable sentence-case headings and soft shadows. Feature CSS modules stay in their feature. Never animate an ancestor of the map or full-screen base preview layers, and keep all animation off under `prefers-reduced-motion`.
 
 - `src/assets/fonts/` contains the pinned Archivo (weight/width) and JetBrains Mono variable fonts and their OFL licenses. The root layout uses `next/font/local`, preserving `--font-sans` / `--font-mono`; builds and browsers never fetch Google Fonts. Provenance is in `docs/legal/font-provenance.md`.
 

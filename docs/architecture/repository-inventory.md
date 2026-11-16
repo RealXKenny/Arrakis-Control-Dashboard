@@ -1,5 +1,7 @@
 # Repository inventory
 
+Console-inspired polish adds shared `status-badge.tsx` and `state-panel.tsx`, compact optional descriptions in `PageHeader`, normal-case typography and soft surface/button styling. Mobile navigation presents the existing filtered inventory as one/two-column grouped tiles without a second route catalog; native document-navigation security boundaries remain intact. `tests/browser/console-style.spec.ts` covers PC widths, narrow/mobile grids, permissions, focus and accessibility. Reference and screenshots are in the [shared UI guide](../development/shared-ui.md).
+
 Shared primitives in `src/components/ui/button.tsx`, `card.tsx` and `control-styles.ts` own native buttons, semantic cards and menu/control styles across features. `src/lib/ui/` owns browser-safe focus, reference-counted scroll locks and Blob downloads. Features retain content and security ownership. Architecture tests prevent new raw buttons/articles outside the primitives. See [shared UI helpers](../development/shared-ui.md).
 
 Appearance adds `src/features/appearance/` for the 66-choice catalog, custom color schemas, shared contrast/token helpers, browser storage, nonce bootstrap and lazy native-dialog picker. Root layout composes its controller; navigation consumes callbacks. Tailwind utilities and feature CSS share color properties with Console-style defaults. Unit/browser tests cover palettes, custom light roles, cache/storage and accessibility. No API routes, Redis records, dependencies or migrations are added.

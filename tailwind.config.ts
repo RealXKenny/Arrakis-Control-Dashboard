@@ -6,9 +6,8 @@ import type { Config } from 'tailwindcss';
  * Tailwind v4 loads this through `@config` in `src/app/globals.css`.
  * Rules of the system:
  *  - Shared CSS roles drive the default and all browser appearance choices.
- *  - Corners are sharp (radius 0). Depth comes from hard, unblurred shadows,
- *    like low desert sun, never from neon glow.
- *  - Headers are wide-tracked and uppercase to read as monolithic.
+ *  - Restrained rounded corners and soft depth match the Console interface.
+ *  - Readable sentence-case headings leave tracked labels for small metadata.
  */
 const config = {
   content: [
@@ -19,15 +18,15 @@ const config = {
   ],
   darkMode: 'class',
   theme: {
-    // Sharp corners everywhere; `full` survives for status dots only.
+    // Consistent Console-style radii; full remains available for status pills.
     borderRadius: {
       none: '0',
-      sm: '0',
-      DEFAULT: '0',
-      md: '0',
-      lg: '0',
-      xl: '0',
-      '2xl': '0',
+      sm: '4px',
+      DEFAULT: '6px',
+      md: '6px',
+      lg: '8px',
+      xl: '10px',
+      '2xl': '12px',
       full: '9999px',
     },
     extend: {

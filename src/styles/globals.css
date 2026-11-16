@@ -34,9 +34,8 @@
   h3,
   h4 {
     color: var(--color-sand-50);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
+    font-weight: 700;
+    letter-spacing: -0.015em;
     text-wrap: balance;
   }
 
@@ -60,32 +59,24 @@
     overflow-wrap: anywhere;
   }
 
-  /* Fremen visor: translucent sand glass over obsidian. Flat edges, no glow. */
+  /* Console-inspired surfaces: quiet borders and soft depth, shared by all themes. */
   .panel {
     position: relative;
     border-radius: 8px;
     background-color: rgb(var(--theme-text-rgb) / 0.04);
     border: 1px solid rgb(var(--theme-text-rgb) / 0.1);
-    box-shadow:
-      inset 0 1px 0 0 rgb(var(--theme-text-rgb) / 0.08),
-      6px 6px 0 0 rgb(0 0 0 / 0.6);
-    -webkit-backdrop-filter: blur(14px) saturate(1.1);
-    backdrop-filter: blur(14px) saturate(1.1);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
   }
 
   .panel-interactive {
     transition:
-      transform 160ms ease,
       border-color 160ms ease,
       box-shadow 160ms ease;
   }
 
   .panel-interactive:hover {
-    transform: translate(-2px, -2px);
     border-color: rgb(var(--theme-accent-rgb) / 0.55);
-    box-shadow:
-      inset 0 1px 0 0 rgb(var(--theme-text-rgb) / 0.1),
-      8px 8px 0 0 rgb(var(--theme-accent-rgb) / 0.85);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.2);
   }
 
   /* Solid sand surface for high-contrast callouts. */
@@ -93,7 +84,8 @@
     background-color: var(--color-sand-200);
     color: var(--color-obsidian-950);
     border: 1px solid var(--color-sand-400);
-    box-shadow: 6px 6px 0 0 rgb(0 0 0 / 0.6);
+    border-radius: 8px;
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
   }
 
   /* Signed-in page canvas: fills wide screens up to 1600px, never a narrow centred column. */
@@ -116,7 +108,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.24em;
+    letter-spacing: 0.1em;
     color: var(--color-spice-400);
   }
 
@@ -127,14 +119,14 @@
     gap: 0.625rem;
     min-height: 2.75rem;
     border-radius: 6px;
-    padding: 0 1.5rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    white-space: nowrap;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
     transition:
-      transform 120ms ease,
       box-shadow 120ms ease,
       background-color 120ms ease,
       border-color 120ms ease;
@@ -144,18 +136,15 @@
     background-color: var(--color-spice-500);
     color: var(--color-obsidian-950);
     border: 1px solid var(--color-spice-300);
-    box-shadow: 4px 4px 0 0 var(--color-spice-800);
+    box-shadow: none;
   }
 
   .btn-primary:hover {
     background-color: var(--color-spice-400);
-    transform: translate(-1px, -1px);
-    box-shadow: 5px 5px 0 0 var(--color-spice-800);
   }
 
   .btn-primary:active {
-    transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 0 var(--color-spice-800);
+    background-color: var(--color-spice-500);
   }
 
   .btn-ghost {
@@ -179,6 +168,65 @@
   background-image:
     radial-gradient(circle at 22% 0%, rgb(var(--theme-accent-rgb) / 0.07), transparent 32%),
     linear-gradient(90deg, rgb(var(--theme-accent-rgb) / 0.025), transparent 35%, rgb(var(--theme-accent-rgb) / 0.025));
+}
+
+.mobile-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.mobile-nav-group {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-block: 0.5rem;
+}
+.mobile-nav-heading {
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--color-sand-300);
+}
+.mobile-nav-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mobile-nav-tile > span {
+  min-width: 0;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  color: var(--color-sand-200);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.status-badge[data-tone='success'] {
+  color: var(--theme-success);
+}
+.status-badge[data-tone='warning'] {
+  color: var(--color-status-warn);
+}
+.status-badge[data-tone='danger'] {
+  color: var(--theme-danger);
+}
+.status-badge-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+@media (max-width: 379px) {
+  .mobile-nav-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Explicit geometry keeps the full route inventory and appearance/command controls inside the expansion edge. */

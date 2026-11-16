@@ -123,12 +123,11 @@ test('administration stays restricted and mobile keeps every destination in a fo
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole('button', { name: 'Close menu', exact: true })).toBeFocused();
 
-  await expect(drawer.getByRole('button', { name: 'Assets', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await expect(drawer.getByRole('heading', { name: 'Assets', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Holdings', exact: true })).toBeVisible();
-  await drawer.getByRole('button', { name: 'Bases', exact: true }).click();
-  await drawer.getByRole('button', { name: 'Operations', exact: true }).click();
+  await expect(drawer.getByRole('heading', { name: 'Operations', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Base Storage', exact: true })).toBeVisible();
-  await drawer.getByRole('button', { name: 'More', exact: true }).click();
+  await expect(drawer.getByRole('heading', { name: 'More', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Changelog', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Administration', exact: true })).toHaveCount(0);
   await expect(drawer.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();

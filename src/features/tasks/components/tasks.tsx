@@ -1,4 +1,5 @@
 'use client';
+import { StatePanel } from '../../../components/ui/state-panel';
 import { Button } from '../../../components/ui/button';
 import { Card } from '../../../components/ui/card';
 
@@ -406,9 +407,9 @@ export function Tasks({
           </div>
           {focus && !focused && <p className={styles.note}>That linked entry is not in your current list.</p>}
           {!shown.length && (
-            <p className={styles.note}>
+            <StatePanel title="No matching entries">
               No entries match this view. Create a task, personal project or goal to get started.
-            </p>
+            </StatePanel>
           )}
           <div className={styles.list}>
             {shown.map((task) => {

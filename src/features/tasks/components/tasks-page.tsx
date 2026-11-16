@@ -18,7 +18,11 @@ export default async function TasksPage({
   const focus = typeof query.focus === 'string' && /^[a-f0-9-]{36}$/i.test(query.focus) ? query.focus : null;
   return (
     <>
-      <PageHeader eyebrow="Your next steps" title="Personal tasks" />
+      <PageHeader
+        eyebrow="Your next steps"
+        title="Personal tasks"
+        description="Keep tasks, projects and goals together, with links to the things you are working on."
+      />
       <ActivityBar state={activity} area="tasks" />
       {(activity.status === 'none' || activity.status === 'ok') && (
         <Tasks

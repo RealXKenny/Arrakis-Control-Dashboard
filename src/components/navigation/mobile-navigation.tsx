@@ -2,14 +2,14 @@
 import { Button } from '../ui/button';
 
 import { NavigationLink as Link } from './navigation-link';
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef } from 'react';
 import { containTabFocus, restoreFocus } from '../../lib/ui/focus';
 import { lockPageScroll } from '../../lib/ui/scroll-lock';
 import { menuItemClass } from '../ui/control-styles';
 import type { NavIdentity } from '../../features/auth/identity';
 import { Avatar } from './avatar';
 import { signOutAction } from '../../features/auth/actions';
-import { ChevronDownIcon, CloseIcon, SignOutIcon } from '../icons';
+import { CloseIcon, SignOutIcon } from '../icons';
 import { NavigationGlyph } from './navigation-menu';
 import { isNavigationActive, NOTIFICATION_ITEMS, SIGN_IN_HREF, type NavigationItem } from './nav-config';
 
@@ -41,55 +41,24 @@ function MobileLink({
 function MobileItem({
   item,
   pathname,
-  expanded,
-  onExpand,
   onNavigate,
 }: {
   item: NavigationItem;
   pathname: string;
-  expanded: readonly string[];
-  onExpand: (id: string) => void;
   onNavigate: () => void;
 }) {
   if (item.href) return <MobileLink item={item} pathname={pathname} onNavigate={onNavigate} />;
-  const isOpen = expanded.includes(item.id);
-  const active = isNavigationActive(pathname, item);
   return (
-    <div>
-      <Button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls={`mobile-navigation-${item.id}`}
-        className={`flex min-h-12 w-full items-center gap-3 px-3 text-left text-sm font-semibold ${
-          active ? 'text-spice-300' : 'text-sand-200'
-        }`}
-        onClick={() => onExpand(item.id)}
-      >
-        <NavigationGlyph icon={item.icon} className="size-4 text-spice-400" />
-        <span className="flex-1">{item.label}</span>
-        <ChevronDownIcon className={`size-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </Button>
-      {isOpen && (
-        <div
-          id={`mobile-navigation-${item.id}`}
-          className="ml-4 border-l border-[var(--theme-border)] bg-[var(--theme-background)]"
-        >
-          {(item.children ?? []).map((child) => (
-            <MobileItem
-              key={child.id}
-              item={child}
-              pathname={pathname}
-              expanded={expanded}
-              onExpand={onExpand}
-              onNavigate={onNavigate}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <section className="mobile-nav-group" aria-label={item.label}>
+      <h3 className="mobile-nav-heading">{item.label}</h3>
+      <div className="mobile-nav-grid">
+        {(item.children ?? []).map((child) => (
+          <MobileItem key={child.id} item={child} pathname={pathname} onNavigate={onNavigate} />
+        ))}
+      </div>
+    </section>
   );
 }
-
 export function MobileNavigation({
   items,
   pathname,
@@ -111,13 +80,6 @@ export function MobileNavigation({
 }) {
   const drawer = useRef<HTMLDivElement>(null);
   const close = useRef<HTMLButtonElement>(null);
-  const [expanded, setExpanded] = useState<readonly string[]>(() => {
-    const active = items.find((item) => item.children?.length && isNavigationActive(pathname, item))?.id;
-    return active ? [active] : [];
-  });
-  const toggleExpanded = (id: string) =>
-    setExpanded((current) => (current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]));
-
   useEffect(() => {
     const unlockScroll = lockPageScroll(document.body);
     const trigger = triggerRef.current;
@@ -152,18 +114,18 @@ export function MobileNavigation({
         role="dialog"
         aria-modal="true"
         aria-label="Navigation"
-        className="absolute inset-y-0 right-0 flex w-[min(88vw,22rem)] flex-col border-l border-[var(--theme-border)] bg-[var(--theme-menu)] shadow-[-20px_0_50px_rgb(0_0_0/0.5)] motion-safe:animate-[nav-drawer-enter_180ms_ease-out]"
+        className="absolute inset-y-0 right-0 flex w-[min(100vw,42rem)] flex-col border-l border-[var(--theme-border)] bg-[var(--theme-menu)] shadow-[-20px_0_50px_rgb(0_0_0/0.5)] motion-safe:animate-[nav-drawer-enter_180ms_ease-out]"
       >
         <div className="flex h-20 shrink-0 items-center justify-between border-b border-[var(--theme-header-border)]/60 px-4">
           <span className="font-mono text-[0.625rem] font-bold uppercase tracking-[0.24em] text-[#C8A46A]">
-            Command navigation
+            Explore Arrakis
           </span>
           <Button
             ref={close}
             type="button"
             aria-label="Close menu"
             onClick={onClose}
-            className="inline-flex size-10 items-center justify-center border border-sand-200/15 text-sand-100 hover:border-spice-400"
+            className="inline-flex size-11 items-center justify-center rounded-md border border-sand-200/15 text-sand-100 hover:border-spice-400"
           >
             <CloseIcon className="size-5" />
           </Button>
@@ -192,18 +154,19 @@ export function MobileNavigation({
             </div>
           )}
           <nav aria-label="Mobile" className="p-3">
-            <div className="space-y-1">
-              {items.map((item) => (
-                <MobileItem
-                  key={item.id}
-                  item={item}
-                  pathname={pathname}
-                  expanded={expanded}
-                  onExpand={toggleExpanded}
-                  onNavigate={onClose}
-                />
-              ))}
+            <h2 className="mobile-nav-heading">Player tools</h2>
+            <div className="mobile-nav-grid">
+              {items
+                .filter((item) => item.href)
+                .map((item) => (
+                  <MobileItem key={item.id} item={item} pathname={pathname} onNavigate={onClose} />
+                ))}
             </div>
+            {items
+              .filter((item) => !item.href)
+              .map((item) => (
+                <MobileItem key={item.id} item={item} pathname={pathname} onNavigate={onClose} />
+              ))}
           </nav>
           {identity && (
             <section aria-labelledby="mobile-notifications" className="border-t border-[var(--theme-border)] p-3">

@@ -1,4 +1,5 @@
 'use client';
+import { StatePanel } from '../../../components/ui/state-panel';
 import { Button } from '../../../components/ui/button';
 import { Card } from '../../../components/ui/card';
 
@@ -397,7 +398,9 @@ export function ActivityManager() {
         Saved setups ({record?.views.length ?? 'unknown'} / 12)
       </h2>
       {record?.views.length === 0 && (
-        <p>No views saved yet. Create a named activity above or capture current settings from a workspace.</p>
+        <StatePanel title="Your first activity">
+          <p>No views saved yet. Create a named activity above or capture current settings from a workspace.</p>
+        </StatePanel>
       )}
       <div className={styles.grid}>
         {record?.views.map((view) => (

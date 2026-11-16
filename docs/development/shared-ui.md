@@ -18,6 +18,10 @@ Variants are `primary`, `secondary`, `ghost` and `danger`. Existing specialized 
 
 ## Cards
 
+The shared visual baseline follows the [Console reference](https://try.dunedocker.app/), reviewed at 1440 × 1000 alongside the supplied mobile captures. Headings and standard buttons use normal casing and restrained spacing; cards use subtle borders and soft shadows. The existing topbar is retained. Mobile navigation derives grouped one/two-column tiles from the existing permission-filtered inventory; below 380 pixels tiles become one column. Desktop checks cover 1280–2560 pixels. Existing artwork/illustrations remain; no reference artwork, fonts or application scripts are copied.
+
+Reviewed running-app captures: [PC portal](../assets/screenshots/console-style-portal-desktop.png) and [mobile navigation](../assets/screenshots/console-style-mobile-menu.png). Captures use disposable local fixture accounts, not production player records.
+
 Import `Card` from `src/components/ui/card.tsx`. Its default element is `article`; `as="section"`, `as="aside"` and `as="div"` preserve existing semantics. Default styling uses the shared theme-aware solid surface. Existing specialized classes retain their own styling; combine shared chrome with feature layout through `cardClass`.
 
 ```tsx
@@ -29,6 +33,8 @@ Import `Card` from `src/components/ui/card.tsx`. Its default element is `article
 `cardClass({ surface: 'glass', interactive: true, className: 'p-5' })` reuses existing panel chrome and hover treatment for a real link. Keep content and domain logic in features. Do not add clickable wrappers around nested controls. Map and full-screen preview ancestors must remain free of animation.
 
 ## Browser behavior
+
+`StatusBadge` provides text-plus-dot neutral/success/warning/danger states; freshness views supply existing server-observed health and retain explicit UTC timestamps. It never invents service readiness. `StatePanel` provides empty/loading/error presentation with an optional explicit retry callback; it performs no requests. Tasks and activity views use it for empty states. Compact `PageHeader` supports an optional short description and existing action slots.
 
 Focused modules in `src/lib/ui/` have no import-time DOM access or server imports:
 
