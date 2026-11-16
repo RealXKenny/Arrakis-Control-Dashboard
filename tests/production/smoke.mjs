@@ -15,25 +15,25 @@ const redis = createServer(async (req, res) => {
   if (req.url.startsWith('/api/')) {
     if (
       req.url.startsWith('/api/backups/fixture/download') &&
-      req.headers.authorization === 'Bearer fixture-admin-console-key'
+      req.headers.authorization === 'Bearer fixture-console-key'
     ) {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.end('fixture-backup-bytes');
       return;
     }
-    if (req.url.startsWith('/api/server/status') && req.headers.authorization === 'Bearer fixture-admin-console-key') {
+    if (req.url.startsWith('/api/server/status') && req.headers.authorization === 'Bearer fixture-console-key') {
       res.setHeader('Content-Type', 'application/json');
       res.end(
         JSON.stringify({
           schemaVersion: 1,
           ok: true,
           data: { summary: { overall: 'READY' } },
-          apiKey: 'fixture-admin-console-key',
+          apiKey: 'fixture-console-key',
         }),
       );
       return;
     }
-    const expectedToken = req.url === '/api/integrations/discord/players/me' ? 'fixture-token' : 'fixture-console-key';
+    const expectedToken = 'fixture-console-key';
     if (req.headers.authorization !== `Bearer ${expectedToken}`) {
       res.statusCode = 401;
       res.end(JSON.stringify({ ok: false }));
@@ -249,7 +249,7 @@ try {
   const overviewData = await overviewResponse.json();
   assert.equal(overviewData.data.sources.length, 10);
   assert.equal(overviewData.data.metrics.find((metric) => metric.id === 'health').value, 'READY');
-  assert.doesNotMatch(JSON.stringify(overviewData), /fixture-admin-console-key/);
+  assert.doesNotMatch(JSON.stringify(overviewData), /fixture-console-key/);
   const adminStatus = await fetch(`${base}/api/v2/admin/execute`, {
     method: 'POST',
     headers: adminHeaders,
@@ -258,7 +258,7 @@ try {
   assert.equal(adminStatus.status, 200);
   const adminReading = await adminStatus.text();
   assert.match(adminReading, /READY/);
-  assert.doesNotMatch(adminReading, /fixture-admin-console-key/);
+  assert.doesNotMatch(adminReading, /fixture-console-key/);
   const adminDownload = await fetch(`${base}/api/v2/admin/execute`, {
     method: 'POST',
     headers: adminHeaders,

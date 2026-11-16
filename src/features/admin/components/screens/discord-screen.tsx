@@ -31,8 +31,8 @@ export default function DiscordScreen({
       <Card as="section" className={ui.panel} aria-label="Adapter not configured">
         <h3>The Discord adapter is not configured</h3>
         <p>
-          Set <code>DUNE_API_KEY</code> on the dashboard server, set the Console&apos;s Discord adapter token to the same
-          value and restart both to enable adapter reads. The key is never shown in the browser.
+          Set <code>DUNE_API_KEY</code> on the dashboard server, set the Console&apos;s Discord adapter token to the
+          same value and restart both to enable adapter reads. The key is never shown in the browser.
         </p>
       </Card>
     );
