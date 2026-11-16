@@ -30,6 +30,7 @@ export async function saveSeason(id: string, revision: string, input: Definition
     definition,
     createdAt: existing.value?.createdAt ?? new Date().toISOString(),
     version: (existing.value?.version ?? 0) + 1,
+    ...(existing.value?.automatic ? { automatic: true as const } : {}),
   };
   await commit({
     id,
@@ -45,6 +46,7 @@ export async function transitionSeason(
   revision: string,
   action: 'preview' | 'publish' | 'end' | 'archive' | 'draft',
   actor: string,
+  guard?: { key: string; before: string },
 ) {
   const record = await loadSeason(id);
   const season = record.value;
@@ -63,6 +65,7 @@ export async function transitionSeason(
             : state === 'ended';
   if (!allowed) fail('This lifecycle transition is unavailable.');
   const writes: Parameters<typeof commit>[0]['writes'] = [];
+  if (guard) writes.push(guard);
   if (action === 'publish') {
     const problems = publicationProblems(season.definition);
     if (problems.length) fail(problems.join(' '), 400);
@@ -284,6 +287,66 @@ export async function claimReward(id: string, owner: string, rewardId: string) {
       { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },
     ],
     detail: { rewardId },
+  });
+  return { progress, duplicate: false };
+}
+/** One CAS commits all server-observed completions and unlocked dashboard cosmetics, never game deliveries. */
+export async function syncAutomaticProgress(id: string, owner: string, proofs: ReadonlyMap<string, string>) {
+  const data = await loadMember(id, owner),
+    season = data.season.value,
+    progress = data.progress.value,
+    totals = data.totals.value;
+  ensureActive(season);
+  if (
+    !season.automatic ||
+    season.definition.challenges.some((c) => c.verification === 'review') ||
+    season.definition.rewards.some((r) => r.gameReward)
+  )
+    fail('This season does not support automatic progression.');
+  let changed = false,
+    first = !data.progress.raw;
+  for (const challenge of season.definition.challenges) {
+    const text = proofs.get(challenge.id);
+    if (!text || progress.submissions.some((s) => s.challengeId === challenge.id && s.status === 'approved')) continue;
+    if (progress.submissions.length >= 1200) fail('Season submission limit reached.');
+    const submission: Submission = {
+      id: randomUUID(),
+      owner,
+      challengeId: challenge.id,
+      period: periodFor(challenge, season.definition, Date.now()),
+      text,
+      links: [],
+      status: 'approved',
+      submittedAt: new Date().toISOString(),
+      reviewedAt: new Date().toISOString(),
+      reviewer: `api:${challenge.verification}`,
+    };
+    const previous = progress.xp;
+    award(progress, challenge.xp, challenge.name, submission.reviewer!, submission.id);
+    progress.submissions.push(submission);
+    updateTotals(totals, season, previous, progress, first, challenge.id);
+    first = false;
+    changed = true;
+  }
+  const level = levelProgress(season.definition, progress.xp).level;
+  for (const reward of season.definition.rewards) {
+    if (reward.level > level || progress.claims.some((c) => c.reward.id === reward.id)) continue;
+    progress.claims.push({ reward: structuredClone(reward), at: new Date().toISOString() });
+    updateTotals(totals, season, progress.xp, progress, first, undefined, reward.id);
+    first = false;
+    changed = true;
+  }
+  if (!changed) return { progress, duplicate: true };
+  await commit({
+    id,
+    actor: owner,
+    action: 'progress.automated',
+    active: activeWindow(season),
+    writes: [
+      { key: seasonKeys.season(id), before: data.season.raw },
+      { key: seasonKeys.progress(id, owner), before: data.progress.raw, after: progress },
+      { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },
+    ],
   });
   return { progress, duplicate: false };
 }

@@ -1,5 +1,7 @@
 # Community seasons and the free season pass
 
+For numbered, three-month seasons with automatic publication, verified XP, cosmetic claims and archiving, see [automatic seasons](automatic-seasons.md). Manual season management remains available.
+
 Implementation status: under verification. See [implementation progress](../development/community-seasons-progress.md) for the acceptance gate and current limitations. The source requirements are N081–N090 in [V2 PR #8](https://github.com/RealXKenny/Arrakis-Control-Dashboard/pull/8).
 
 ## Member experience

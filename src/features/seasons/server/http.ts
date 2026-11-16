@@ -7,7 +7,9 @@ import { checkRateLimit } from '../../../lib/security/rate-limit';
 import { AppError } from '../../../lib/errors';
 import { requireApiAdmin, spendAdminBudget } from '../../admin/server/api-access';
 import { requireRecentSignIn } from '../../admin/server/access';
-import { verifyObjective } from './observations';
+import { verifyObjective, syncSeasonObjectives } from './observations';
+import { generatorSettingsSchema } from '../generation';
+import { configureGenerator, generatorStatus, runGenerator, setGeneratorEnabled } from './generator';
 import { definitionSchema, identifier, seasonTemplate, presentationSchema, seasonPresentation } from '../contracts';
 import { savePresentation } from './artwork';
 import { deliveryAvailable } from './delivery-gateway';
@@ -40,6 +42,7 @@ const evidenceLink = z
     'Evidence links must use HTTPS without credentials.',
   );
 const memberAction = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('sync'), seasonId: identifier }).strict(),
   z.object({
     action: z.literal('submit'),
     seasonId: identifier,
@@ -54,6 +57,17 @@ const memberAction = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delivery-request'), seasonId: identifier, rewardId: identifier }).strict(),
 ]);
 const adminAction = z.discriminatedUnion('action', [
+  z
+    .object({
+      action: z.literal('generator-configure'),
+      revision: z.string().uuid().or(z.literal('')),
+      settings: generatorSettingsSchema,
+      templateSeasonId: identifier.optional(),
+      confirmation: z.literal('ENABLE AUTOMATIC SEASONS'),
+    })
+    .strict(),
+  z.object({ action: z.literal('generator-state'), revision: z.string().uuid(), enabled: z.boolean() }).strict(),
+  z.object({ action: z.literal('generator-run') }).strict(),
   z.object({
     action: z.literal('presentation'),
     seasonId: identifier,
@@ -206,6 +220,7 @@ export async function mutateSeasons(request: Request) {
   const action = await body(request, memberAction);
   const id = action.seasonId;
   const owner = session.user.id;
+  if (action.action === 'sync') return json({ ok: true, ...(await syncSeasonObjectives(session, id, request.signal)) });
   if (action.action === 'delivery-request') {
     const delivery = await requestDelivery(
       id,
@@ -267,6 +282,7 @@ export async function getAdminSeasons(request: Request) {
     ok: true,
     seasons: await listSeasons(offset.data, true),
     template: seasonTemplate(),
+    generator: await generatorStatus(),
     deliveryEnabled: deliveryAvailable(),
   });
 }
@@ -276,8 +292,15 @@ export async function mutateAdminSeasons(request: Request) {
   requireRecentSignIn(session, { highRisk: true });
   await spendAdminBudget(session);
   const action = await body(request, adminAction);
-  const id = action.seasonId;
   const actor = session.user.id;
+  if (action.action === 'generator-configure') {
+    await configureGenerator(action.revision, action.settings, actor, action.templateSeasonId);
+    return json({ ok: true, generator: await runGenerator() });
+  }
+  if (action.action === 'generator-state')
+    return json({ ok: true, generator: await setGeneratorEnabled(action.revision, action.enabled, actor) });
+  if (action.action === 'generator-run') return json({ ok: true, generator: await runGenerator() });
+  const id = action.seasonId;
   if (action.action === 'presentation') {
     const season = (await loadSeason(id)).value;
     if (action.confirmation !== season.definition.name)

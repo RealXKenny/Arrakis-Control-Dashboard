@@ -17,10 +17,12 @@ configureApplication(target);
 let direct: Redis;
 let engine: typeof import('../../src/features/seasons/server/engine');
 let store: typeof import('../../src/features/seasons/server/store');
+let generator: typeof import('../../src/features/seasons/server/generator');
 beforeAll(async () => {
   direct = connectDirect(target);
   engine = await import('../../src/features/seasons/server/engine');
   store = await import('../../src/features/seasons/server/store');
+  generator = await import('../../src/features/seasons/server/generator');
 });
 beforeEach(async () => {
   await direct.flushdb();
@@ -35,6 +37,43 @@ async function active() {
   const draft = await engine.saveSeason(randomUUID(), '', definition, 'admin');
   return engine.transitionSeason(draft.id, draft.revision, 'publish', 'admin');
 }
+it('coordinates automatic season publication, bulk cosmetic ownership and rollover through real single-slot Lua', async () => {
+  await generator.configureGenerator(
+    '',
+    { firstNumber: 1, firstStart: new Date(Date.now() - 60000).toISOString(), timezone: 'UTC' },
+    'admin',
+  );
+  await Promise.allSettled([generator.runGenerator(), generator.runGenerator()]);
+  await generator.runGenerator();
+  let seasons = await store.listSeasons(0, true);
+  expect(seasons).toHaveLength(2);
+  expect((await generator.generatorStatus()).enabled).toBe(true);
+  const first = seasons.find((s) => s.definition.number === 1)!;
+  const proofs = new Map(first.definition.challenges.map((c) => [c.id, 'Verified disposable provider observation.']));
+  await Promise.allSettled([
+    engine.syncAutomaticProgress(first.id, 'member', proofs),
+    engine.syncAutomaticProgress(first.id, 'member', proofs),
+  ]);
+  const progress = (await store.loadMember(first.id, 'member')).progress.value;
+  expect(progress.ledger).toHaveLength(100);
+  expect(progress.claims).toHaveLength(100);
+  expect(progress.xp).toBe(250000);
+  expect((await engine.syncAutomaticProgress(first.id, 'member', proofs)).duplicate).toBe(true);
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.parse(first.definition.endsAt));
+  try {
+    await generator.runGenerator();
+    seasons = await store.listSeasons(0, true);
+    expect((await store.loadSeason(first.id)).value.phase).toBe('archived');
+    expect(seasons).toHaveLength(3);
+    expect(
+      (await store.loadMember(seasons.find((s) => s.definition.number === 2)!.id, 'member')).progress.value.xp,
+    ).toBe(0);
+  } finally {
+    clock.mockRestore();
+  }
+  expect((await store.loadMember(first.id, 'member')).progress.value.claims).toEqual(progress.claims);
+  expect(await direct.ttl(store.seasonKeys.season(first.id))).toBe(-1);
+});
 it('executes atomic single-slot publication and prevents simultaneous overlapping seasons', async () => {
   const first = await active();
   const definition = { ...first.definition, number: 2, slug: 'season-two' };

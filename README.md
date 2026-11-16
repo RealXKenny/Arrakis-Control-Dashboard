@@ -44,6 +44,8 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 
 ### Command center
 
+- **Automatic seasons:** a free 100-level engine can generate, publish and archive numbered three-month seasons, verify supported game objectives and claim unlocked profile cosmetics automatically. [Setup and API limits](docs/features/automatic-seasons.md).
+
 - **Server overview:** health, CPU, memory, population, services, and read-source status where the Console reports them.
 - **Scoped administration:** dedicated screens for players, guilds, bases, vehicles, maps, market, backups, logs, updates, addons, and server controls.
 - **Operational safeguards:** scoped credentials, same-origin mutations, confirmation dialogs, bounded transfers, and redacted audit events.

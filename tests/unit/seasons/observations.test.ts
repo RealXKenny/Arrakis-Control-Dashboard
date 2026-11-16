@@ -23,7 +23,13 @@ vi.mock('../../../src/features/player/server/linked-player', () => ({ getLinkedP
 vi.mock('../../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request: mock.request }) }));
 vi.mock('../../../src/server/read-budget', () => ({ spendReadBudget: mock.budget }));
 vi.mock('../../../src/lib/security/rate-limit', () => ({ checkRateLimit: mock.limit }));
-import { observeObjective, verifyObjective } from '../../../src/features/seasons/server/observations';
+import {
+  observeObjective,
+  verifyObjective,
+  syncSeasonObjectives,
+} from '../../../src/features/seasons/server/observations';
+import { configureGenerator, runGenerator } from '../../../src/features/seasons/server/generator';
+import { listSeasons } from '../../../src/features/seasons/server/store';
 import { saveSeason, transitionSeason, submitChallenge } from '../../../src/features/seasons/server/engine';
 import { loadMember } from '../../../src/features/seasons/server/store';
 
@@ -49,6 +55,23 @@ beforeEach(() => {
   mock.limit.mockResolvedValue({ allowed: true });
 });
 describe('Console objective evidence', () => {
+  it('observes the provider once for a full automatic track, then atomically claims cosmetics without client XP or game writes', async () => {
+    await configureGenerator(
+      '',
+      { firstNumber: 1, firstStart: new Date(Date.now() - 60000).toISOString(), timezone: 'UTC' },
+      'admin',
+    );
+    await runGenerator();
+    const season = (await listSeasons(0, true)).find((s) => s.definition.number === 1)!;
+    mock.request.mockResolvedValue({ player, capabilities: { progression: true }, level: 100 });
+    const result = await syncSeasonObjectives(session, season.id, new AbortController().signal);
+    expect(mock.request).toHaveBeenCalledTimes(1);
+    expect(result.progress.xp).toBe(250000);
+    expect(result.progress.claims).toHaveLength(100);
+    expect(result.progress.ledger).toHaveLength(100);
+    expect((await syncSeasonObjectives(session, season.id, new AbortController().signal)).duplicate).toBe(true);
+    expect(mock.request.mock.calls.every((call) => call[0] === 'GET')).toBe(true);
+  });
   it('accepts exact supported levels and exact completed canonical journey IDs', () => {
     expect(
       observeObjective(

@@ -36,6 +36,8 @@ export async function register() {
       getChatPublisher();
     }
     startup.info('Runtime configuration validated');
+    const { startSeasonGenerator } = await import('./features/seasons/server/generator');
+    startSeasonGenerator();
     if (env.DISCORD_BOT_TOKEN && env.COMMUNITY_EVENTS_CHANNEL_ID) {
       const { startCommunityEventAnnouncements } = await import('./features/events/server/announce');
       startCommunityEventAnnouncements();

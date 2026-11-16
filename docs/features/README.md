@@ -1,5 +1,7 @@
 # Features
 
+- [Automatic seasons](automatic-seasons.md): numbered three-month seasons, deterministic 100-level generation, verified progress, automatic cosmetic claims and archived history.
+
 | Feature                                                                                                                                                                  | Who uses it                    | Page                                     |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ | ---------------------------------------- |
 | [Dashboard (portal, market, status)](dashboard.md)                                                                                                                       | Every member                   | `/portal`, `/market`, landing `/`        |

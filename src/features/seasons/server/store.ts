@@ -24,6 +24,7 @@ export const seasonKeys = {
   deliveries: (id: string) => `${root}:deliveries:${identifier.parse(id)}`,
   schedules: `${root}:schedules`,
   scheduleRevision: `${root}:schedule-revision`,
+  generator: `${root}:generator`,
   season: (id: string) => `${root}:season:${identifier.parse(id)}`,
   progress: (id: string, owner: string) => `${root}:progress:${identifier.parse(id)}:${identifier.parse(owner)}`,
   totals: (id: string) => `${root}:totals:${identifier.parse(id)}`,

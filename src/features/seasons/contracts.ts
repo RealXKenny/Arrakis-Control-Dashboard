@@ -135,6 +135,7 @@ export type Season = {
   endedAt?: string;
   version?: number;
   presentation?: Presentation;
+  automatic?: true;
 };
 export type Submission = {
   id: string;
@@ -213,6 +214,7 @@ export const seasonRecordSchema = z.object({
   endedAt: z.iso.datetime().optional(),
   version: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
   presentation: presentationSchema.optional(),
+  automatic: z.literal(true).optional(),
 });
 export const progressRecordSchema = z
   .object({

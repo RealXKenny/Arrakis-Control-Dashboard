@@ -12,6 +12,89 @@ const adminCookie = '__Host-dashboard_session=browser-admin-session';
 const memberCookie = '__Host-dashboard_session=browser-member-session';
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 
+test('automatic seasons publish a three-month 100-level sequence and claim verified cosmetics without game writes', async ({
+  page,
+  browser,
+}, info) => {
+  test.setTimeout(60000);
+  await seed(page);
+  const initial = await (await page.request.get('/api/v2/admin/seasons')).json();
+  const number = Math.max(...initial.seasons.map((s: Season) => s.definition.number)) + 500;
+  await page.goto('/admin?tab=seasons');
+  await page.getByLabel('First season number', { exact: true }).fill(String(number));
+  await page
+    .getByLabel('First season start (UTC)', { exact: true })
+    .fill(new Date(Date.now() - 60000).toISOString().slice(0, 16));
+  await page.getByLabel('Type ENABLE AUTOMATIC SEASONS', { exact: true }).fill('ENABLE AUTOMATIC SEASONS');
+  const fixture = `http://127.0.0.1:${appOrigin().startsWith('https:') ? '3103' : '3101'}`;
+  const before = (await (await page.request.get(`${fixture}/__fixture/requests`)).json()).length;
+  const context = await memberBrowser(browser, info),
+    member = await context.newPage();
+  try {
+    await page.getByRole('button', { name: 'Enable automatic seasons', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Pause automatic seasons', exact: true })).toBeVisible();
+    const configured = await (await page.request.get('/api/v2/admin/seasons')).json();
+    const first = configured.seasons.find((s: Season) => s.definition.number === number) as Season;
+    const second = configured.seasons.find((s: Season) => s.definition.number === number + 1) as Season;
+    expect(first.definition.name).toBe(`Season ${number}`);
+    expect(second.definition.name).toBe(`Season ${number + 1}`);
+    expect(first.automatic).toBe(true);
+    expect(second.definition.startsAt).toBe(first.definition.endsAt);
+    const months =
+      (new Date(first.definition.endsAt).getUTCFullYear() - new Date(first.definition.startsAt).getUTCFullYear()) * 12 +
+      new Date(first.definition.endsAt).getUTCMonth() -
+      new Date(first.definition.startsAt).getUTCMonth();
+    expect(months).toBe(3);
+    await member.goto(`/seasons?season=${first.id}`);
+    await expect(
+      member.getByText('Verified progress is current. Unlocked cosmetics are claimed automatically.', { exact: true }),
+    ).toBeVisible();
+    const own = await (await member.request.get(`/api/v2/seasons?season=${first.id}`)).json();
+    expect(own.progress.xp).toBe(250000);
+    expect(own.progress.claims).toHaveLength(100);
+    expect(own.progress.ledger).toHaveLength(100);
+    const replay = await member.request.post('/api/v2/seasons', {
+      headers: { Origin: appOrigin() },
+      data: { action: 'sync', seasonId: first.id },
+    });
+    expect((await replay.json()).duplicate).toBe(true);
+    const forged = await member.request.post('/api/v2/admin/seasons', {
+      headers: { Origin: appOrigin() },
+      data: { action: 'generator-run' },
+    });
+    expect(forged.status()).toBe(403);
+    const future = await (await member.request.get(`/api/v2/seasons?season=${second.id}`)).json();
+    expect(future.progress.xp).toBe(0);
+    await accessible(member);
+    await accessible(page);
+    await member.setViewportSize({ width: 1440, height: 1000 });
+    await member.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await member.screenshot({ path: info.outputPath('automatic-season-desktop.png'), fullPage: true });
+    await member.setViewportSize({ width: 393, height: 852 });
+    await member.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await member.screenshot({ path: info.outputPath('automatic-season-mobile.png'), fullPage: true });
+    const requests = (await (await page.request.get(`${fixture}/__fixture/requests`)).json()).slice(before);
+    expect(
+      requests.filter(
+        (r: { method: string; path: string }) => r.path.startsWith('/api/players/') && r.method !== 'GET',
+      ),
+    ).toEqual([]);
+  } finally {
+    await context.close();
+    const latest = await (await page.request.get('/api/v2/admin/seasons')).json();
+    if (latest.generator.enabled)
+      await adminAction(page, { action: 'generator-state', revision: latest.generator.revision, enabled: false });
+    for (const season of latest.seasons.filter((s: Season) => s.automatic && s.phase === 'published'))
+      await adminAction(page, {
+        action: 'transition',
+        seasonId: season.id,
+        revision: season.revision,
+        transition: 'end',
+        confirmation: season.definition.name,
+      });
+  }
+});
+
 test('category catalogs configure API objectives and award once across desktop and mobile', async ({
   page,
   browser,
@@ -93,8 +176,10 @@ test('category catalogs configure API objectives and award once across desktop a
     await member.setViewportSize({ width, height: 915 });
     expect(await member.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
+  await member.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await member.screenshot({ path: info.outputPath('objective-categories-desktop.png'), fullPage: true });
   await member.setViewportSize({ width: 393, height: 852 });
+  await member.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await member.screenshot({ path: info.outputPath('objective-categories-mobile.png'), fullPage: true });
   await context.close();
   const latest = await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json();

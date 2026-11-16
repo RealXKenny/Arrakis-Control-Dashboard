@@ -21,6 +21,8 @@ import {
 } from '../contracts';
 import { categoryLabels } from '../catalog';
 import { CatalogTools } from './catalog-tools';
+import { GeneratorControls } from './generator-controls';
+import type { GeneratorView } from '../server/generator';
 import { seasonRequest, SeasonPass } from './season-pass';
 import { RewardArt } from './reward-art';
 import { ArtworkUpload } from './artwork-upload';
@@ -30,6 +32,7 @@ import { DeliveryManager } from './delivery-manager';
 
 export function SeasonManager() {
   const [seasons, setSeasons] = useState<Season[]>([]);
+  const [generator, setGenerator] = useState<GeneratorView | null>(null);
   const [season, setSeason] = useState<Season | null>(null);
   const [definition, setDefinition] = useState<Definition | null>(null);
   const [template, setTemplate] = useState<Definition | null>(null);
@@ -51,11 +54,12 @@ export function SeasonManager() {
   const [snapshot, setSnapshot] = useState<PresentationChange | null>(null);
   useEffect(() => {
     let live = true;
-    seasonRequest<{ seasons: Season[]; template: Definition }>('/api/v2/admin/seasons')
+    seasonRequest<{ seasons: Season[]; template: Definition; generator: GeneratorView }>('/api/v2/admin/seasons')
       .then((data) => {
         if (live) {
           setSeasons(data.seasons);
           setTemplate(data.template);
+          setGenerator(data.generator);
         }
       })
       .catch((e) => {
@@ -198,6 +202,16 @@ export function SeasonManager() {
           Load older season definitions
         </Button>
       </div>
+      {generator && (
+        <GeneratorControls
+          initial={generator}
+          seasons={seasons}
+          onRefresh={async () => {
+            const data = await seasonRequest<{ seasons: Season[] }>('/api/v2/admin/seasons');
+            setSeasons(data.seasons);
+          }}
+        />
+      )}
       <div className="season-editor-grid">
         {seasons.map((s) => (
           <Button className="season-editor-card" key={s.id} disabled={busy} onClick={() => select(s)}>

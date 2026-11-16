@@ -28,6 +28,7 @@ import { useCommunityProgress } from '../hooks/use-community-progress';
 import { categoryLabels, categoryOf, objectiveStatus } from '../catalog';
 import { objectiveCategories } from '../contracts';
 import { ObjectiveDeck } from './objective-deck';
+import { AutomaticProgress } from './automatic-progress';
 import '../styles/seasons.css';
 
 export type SeasonView = {
@@ -443,6 +444,21 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 })}
               </div>
             </section>
+          )}
+          {!preview && season.automatic && seasonState(season, now) === 'active' && (
+            <AutomaticProgress
+              key={season.id}
+              seasonId={season.id}
+              onProgress={(next) => {
+                setViews((previous) =>
+                  previous.map((entry) => (entry.season.id === season.id ? { ...entry, progress: next } : entry)),
+                );
+                if (next.xp > progress.xp)
+                  setMessage(
+                    `Automatic progress recorded. Level ${levelProgress(definition, next.xp).level}; unlocked cosmetics claimed.`,
+                  );
+              }}
+            />
           )}
           <ObjectiveDeck
             definition={definition}

@@ -7,8 +7,9 @@ import { record } from '../../../lib/value';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import type { DashboardSession } from '../../auth/server/session-store';
 import { seasonState, type Challenge } from '../contracts';
-import { fail, loadSeason } from './store';
-import { submitChallenge } from './engine';
+import { fail, loadSeason, loadMember } from './store';
+import { submitChallenge, syncAutomaticProgress } from './engine';
+import { AppError } from '../../../lib/errors';
 
 function canonicalId(value: unknown): string | null {
   const text =
@@ -107,4 +108,74 @@ export async function verifyObjective(
   if (after.pawn !== before.pawn || after.controller !== before.controller)
     fail('Linked character changed. Refresh before verifying.', 409);
   return submitChallenge(seasonId, session.user.id, challengeId, { text, links: [] }, true);
+}
+
+export async function syncSeasonObjectives(session: DashboardSession, seasonId: string, callerSignal: AbortSignal) {
+  const member = await loadMember(seasonId, session.user.id),
+    season = member.season.value;
+  if (!season.automatic || seasonState(season) !== 'active')
+    fail('Automatic progression is unavailable for this season.');
+  if (
+    season.definition.challenges.every((c) =>
+      member.progress.value.submissions.some((s) => s.challengeId === c.id && s.status === 'approved'),
+    ) &&
+    season.definition.rewards.every((r) => member.progress.value.claims.some((c) => c.reward.id === r.id))
+  )
+    return { progress: member.progress.value, duplicate: true };
+  const limit = await checkRateLimit(`v2:seasons:observe:${session.user.id}`, { limit: 6, windowMs: 60000 });
+  if (!limit.allowed || limit.storageUnavailable)
+    fail('Objective verification is temporarily limited.', limit.storageUnavailable ? 503 : 429);
+  if (!(await spendReadBudget()).allowed) fail('Objective read capacity reached.', 429);
+  const signal = AbortSignal.any([callerSignal, AbortSignal.timeout(12000)]);
+  const actor = {
+    guildId: session.guildId,
+    channelId: 'dashboard',
+    userId: session.user.id,
+    username: session.user.username,
+    roleIds: session.roleIds,
+    interactionId: `season-sync-${randomUUID()}`,
+    commandName: 'portal',
+  };
+  const before = character(await getLinkedPlayer(actor, { timeout: 4000 }));
+  signal.throwIfAborted();
+  const snapshots = new Map<string, unknown>();
+  for (const verification of ['character-level', 'journey-node'] as const) {
+    if (!season.definition.challenges.some((c) => c.verification === verification)) continue;
+    snapshots.set(
+      verification,
+      await getDuneClient().request(
+        'GET',
+        `/api/players/${before.pawn}/${verification === 'character-level' ? 'progression' : 'journey'}`,
+        { timeoutMs: 4000, retryRead: false, signal },
+      ),
+    );
+  }
+  const proofs = new Map<string, string>();
+  const checked = new Map<string, string | null>();
+  for (const challenge of season.definition.challenges) {
+    if (challenge.verification === 'review') fail('Automatic seasons cannot approve submitted evidence.');
+    if (challenge.verification === 'linked-character') {
+      proofs.set(challenge.id, 'Fresh adapter observation: linked character confirmed.');
+      continue;
+    }
+    const requirement = JSON.stringify([challenge.verification, challenge.minimumLevel, challenge.journeyNode]);
+    if (checked.has(requirement)) {
+      const text = checked.get(requirement);
+      if (text) proofs.set(challenge.id, text);
+      continue;
+    }
+    try {
+      const text = observeObjective(snapshots.get(challenge.verification), challenge, before);
+      proofs.set(challenge.id, text);
+      checked.set(requirement, text);
+    } catch (error) {
+      if (!(error instanceof AppError) || error.statusCode !== 409) throw error;
+      checked.set(requirement, null);
+    }
+  }
+  const after = character(await getLinkedPlayer(actor, { timeout: 4000 }));
+  signal.throwIfAborted();
+  if (after.pawn !== before.pawn || after.controller !== before.controller)
+    fail('Linked character changed. Refresh before verifying.');
+  return syncAutomaticProgress(seasonId, session.user.id, proofs);
 }
