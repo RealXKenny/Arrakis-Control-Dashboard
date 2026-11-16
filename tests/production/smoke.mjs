@@ -123,7 +123,6 @@ const child = spawn(
       DISCORD_CLIENT_SECRET: 'fixture-secret',
       DISCORD_GUILD_ID: 'fixture-guild',
       VERIFIED_MEMBER_ROLE_ID: 'fixture-role',
-      ADMIN_DISCORD_IDS: '456084885220884480',
       AUTH_SECRET: 'fixture-only-authentication-secret-32',
       APP_URL: base,
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
@@ -204,73 +203,20 @@ try {
   assert.equal(botReading.data.map, 'DeepDesert');
   assert.equal(botReading.data.rows, undefined, 'bot receives normalized world data only');
   assert.match(botWorld.headers.get('cache-control'), /no-store/);
-  const adminHeaders = {
-    cookie: '__Host-dashboard_session=fixture-admin-session',
-    Origin: base,
-    'Content-Type': 'application/json',
-  };
-  const adminPage = await fetch(`${base}/admin`, { headers: adminHeaders });
-  assert.equal(adminPage.status, 200, 'administrator page checks the server session');
-  const memberAdmin = await fetch(`${base}/api/v2/admin/catalog`, { headers: { cookie: sessionCookie } });
-  assert.equal(memberAdmin.status, 403, 'ordinary members cannot inspect admin operations');
-  const adminCatalog = await fetch(`${base}/api/v2/admin/catalog`, { headers: adminHeaders });
-  assert.equal((await adminCatalog.json()).operations.length, 383);
+  // The administrator workspace and every privileged route are gone, even for a signed-in member.
   for (const path of [
-    'v2/admin/overview',
-    'admin/guilds/test/applications',
-    'admin/guilds/test/applications/' + 'a'.repeat(64) + '/messages',
-    'admin/guilds/test/messages',
+    '/admin',
+    '/api/v2/admin/catalog',
+    '/api/v2/admin/execute',
+    '/api/v2/admin/overview',
+    '/api/v2/casino/admin/transfers',
+    '/api/admin/guilds/test/messages',
+    '/api/guilds/test/support/send',
   ]) {
-    const response = await fetch(`${base}/api/${path}`, { headers: { cookie: sessionCookie } });
-    assert.equal(response.status, 403, 'guild oversight requires the verified administrator');
+    const response = await fetch(`${base}${path}`, { headers: { cookie: sessionCookie } });
+    assert.equal(response.status, 404, `${path} no longer exists`);
     await response.text();
   }
-  for (const path of [
-    'admin/guilds/test/messages/send',
-    'guilds/test/support/send',
-    'admin/guilds/test/messages/read',
-    'guilds/test/support/read',
-  ]) {
-    const response = await fetch(`${base}/api/${path}`, {
-      method: 'POST',
-      headers: { ...adminHeaders, Origin: 'https://other.example' },
-      body: '{}',
-    });
-    assert.equal(response.status, 403, 'guild support rejects cross-site sends');
-    await response.text();
-    const wrong = await fetch(`${base}/api/${path}`);
-    assert.equal(wrong.status, 405);
-    await wrong.text();
-  }
-  const supportStatusDenied = await fetch(`${base}/api/guilds/test/support/status`);
-  assert.equal(supportStatusDenied.status, 401, 'support unread counts require authentication');
-  await supportStatusDenied.text();
-  const overviewResponse = await fetch(`${base}/api/v2/admin/overview`, { headers: adminHeaders });
-  assert.equal(overviewResponse.status, 200, 'admin statistics remain usable with partial Console permissions');
-  const overviewData = await overviewResponse.json();
-  assert.equal(overviewData.data.sources.length, 10);
-  assert.equal(overviewData.data.metrics.find((metric) => metric.id === 'health').value, 'READY');
-  assert.doesNotMatch(JSON.stringify(overviewData), /fixture-console-key/);
-  const adminStatus = await fetch(`${base}/api/v2/admin/execute`, {
-    method: 'POST',
-    headers: adminHeaders,
-    body: JSON.stringify({ operation: 'get-server-status' }),
-  });
-  assert.equal(adminStatus.status, 200);
-  const adminReading = await adminStatus.text();
-  assert.match(adminReading, /READY/);
-  assert.doesNotMatch(adminReading, /fixture-console-key/);
-  const adminDownload = await fetch(`${base}/api/v2/admin/execute`, {
-    method: 'POST',
-    headers: adminHeaders,
-    body: JSON.stringify({ operation: 'get-backups-backup-download', path: { backup: 'fixture' } }),
-  });
-  assert.equal(adminDownload.headers.get('content-type'), 'application/octet-stream');
-  assert.equal(
-    await adminDownload.text(),
-    'fixture-backup-bytes',
-    'binary responses stream through the common API boundary',
-  );
   assert.equal(home.status, 200, 'homepage with a session cookie');
   const signedInLanding = await home.text();
   assert.match(signedInLanding, /id="landing-title"/, 'landing page renders');

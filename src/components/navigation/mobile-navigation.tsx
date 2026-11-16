@@ -63,7 +63,6 @@ export function MobileNavigation({
   items,
   pathname,
   identity,
-  isAdmin,
   onClose,
   triggerRef,
   onOpenCommands,
@@ -72,7 +71,6 @@ export function MobileNavigation({
   items: readonly NavigationItem[];
   pathname: string;
   identity: NavIdentity | null;
-  isAdmin: boolean;
   onClose: () => void;
   triggerRef: RefObject<HTMLButtonElement | null>;
   onOpenCommands?: () => void;
@@ -199,13 +197,6 @@ export function MobileNavigation({
                   pathname={pathname}
                   onNavigate={onClose}
                 />
-                {isAdmin && (
-                  <MobileLink
-                    item={{ id: 'mobile-admin', label: 'Administration', href: '/admin', icon: 'guilds', order: 20 }}
-                    pathname={pathname}
-                    onNavigate={onClose}
-                  />
-                )}
                 <form action={signOutAction} className="pt-2">
                   <Button
                     type="submit"

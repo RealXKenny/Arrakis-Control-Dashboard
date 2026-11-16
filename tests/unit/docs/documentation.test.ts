@@ -48,12 +48,6 @@ describe('documentation', () => {
       expect(page.includes(`npm run ${name}`) || page.includes(`npm ${name}`), name).toBe(true);
   });
 
-  it('keeps the high-risk operation list in the administrator guide in step with the code', async () => {
-    const { LOW_RISK_MUTATING_OPERATIONS } = await import('../../../src/features/admin/server/risk');
-    const page = read('docs/features/administrator-panel.md');
-    for (const id of LOW_RISK_MUTATING_OPERATIONS) expect(page, id).toContain(id);
-  });
-
   it('keeps the Pterodactyl variable guide aligned with the generated egg', async () => {
     const { createPterodactylEgg } = await import('../../../scripts/deployment/build-pterodactyl-egg.mjs');
     const page = read('docs/installation/pterodactyl.md');

@@ -25,7 +25,6 @@ describe('unified navigation configuration', () => {
     expect(navigationItemFor('holdings')?.href).toBe('/holdings');
     expect(navigationItemFor('my-guild')?.href).toBe('/guild');
     expect(navigationItemFor('administration')).toBeUndefined();
-    expect(navigationItemFor('administration', { isAdmin: true })?.href).toBe('/admin');
     expect(navigationItemFor('unknown-shortcut')).toBeUndefined();
   });
   it('reloads documents only when entering or leaving a route with a distinct document policy', () => {
@@ -35,11 +34,8 @@ describe('unified navigation configuration', () => {
     expect(needsDocumentNavigation('/portal', '/character')).toBe(false);
   });
   it('puts Home first, for everyone, pointing at the landing page route', () => {
-    for (const isAdmin of [false, true]) {
-      const [first] = navigationFor({ isAdmin });
-      expect(first).toMatchObject({ id: 'home', label: 'Home', href: '/', exact: true, icon: 'home' });
-    }
-    expect(navigationFor()[0]!.requiredPermissions).toBeUndefined();
+    const [first] = navigationFor();
+    expect(first).toMatchObject({ id: 'home', label: 'Home', href: '/', exact: true, icon: 'home' });
   });
   it('lights Home up on the landing page only, never on dashboard routes', () => {
     const home = navigationFor()[0]!;
@@ -72,7 +68,7 @@ describe('unified navigation configuration', () => {
     expect(isNavigationActive('/status', community)).toBe(true);
   });
   it('gives every dropdown the same titled-group structure', () => {
-    for (const item of navigationFor({ isAdmin: true }).filter((entry) => entry.children)) {
+    for (const item of navigationFor().filter((entry) => entry.children)) {
       expect(item.children!.length, item.id).toBeGreaterThanOrEqual(1);
       for (const group of item.children!) {
         expect(group.href, `${item.id}/${group.id}`).toBeUndefined();
@@ -81,7 +77,7 @@ describe('unified navigation configuration', () => {
     }
   });
   it('keeps every real destination in one ordered, deduplicated inventory', () => {
-    const links = navigationLinks(navigationFor({ isAdmin: true }));
+    const links = navigationLinks(navigationFor());
     expect(links.map((item) => item.href)).toEqual([
       '/',
       '/portal',
@@ -107,7 +103,6 @@ describe('unified navigation configuration', () => {
       '/casino/wallet',
       '/casino/history',
       '/casino/fairness',
-      '/casino/admin',
       '/casino/rules',
       '/events',
       '/seasons',
@@ -118,15 +113,17 @@ describe('unified navigation configuration', () => {
       '/activity-views',
       '/privacy',
       '/personal-data',
-      '/admin',
     ]);
     expect(new Set(links.map((item) => item.href)).size).toBe(links.length);
     expect(NAVIGATION_ITEMS.map((item) => item.order)).toEqual([5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]);
   });
 
-  it('hides administration unless the server supplies admin visibility', () => {
-    expect(navigationLinks(navigationFor()).map((item) => item.href)).not.toContain('/admin');
-    expect(navigationLinks(navigationFor({ isAdmin: true })).map((item) => item.href)).toContain('/admin');
+  it('has no administration destination at all', () => {
+    expect(
+      navigationLinks(navigationFor())
+        .map((item) => item.href)
+        .join(' '),
+    ).not.toContain('admin');
   });
 
   it('supports nested feature flags and dynamic badges by stable ID', () => {

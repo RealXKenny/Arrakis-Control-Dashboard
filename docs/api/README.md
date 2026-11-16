@@ -11,7 +11,6 @@ Everything except the bot API requires a signed-in browser session cookie and, f
 | Page                                | Endpoints                                                     |
 | ----------------------------------- | ------------------------------------------------------------- |
 | [Authentication](authentication.md) | Auth.js routes, session check, set password                   |
-| [Administrator](administrator.md)   | `/api/v2/admin/*`, announcements, guild oversight             |
 | [Players](players.md)               | `/api/player`, portal world, bases export/import/preview      |
 | [Guilds](guilds.md)                 | Directory, requirements, applications, chat, members, support |
 | [Marketplace](marketplace.md)       | `/api/v2/bases/marketplace*`, legacy `/api/base-marketplace*` |

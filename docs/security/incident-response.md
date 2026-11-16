@@ -5,7 +5,6 @@ Keep this open during an incident. Report vulnerabilities in the dashboard itsel
 ## First 15 minutes (any incident)
 
 1. Preserve evidence: copy the current logs (stdout including `AUDIT` lines) and note the time.
-2. Pull the Redis audit trail as an administrator: `GET /api/v2/admin/audit?limit=500` ([audit logs](../features/audit-logs.md)).
 3. Decide: contain first (below), then investigate.
 
 ## A secret leaked
@@ -21,8 +20,6 @@ Keep this open during an incident. Report vulnerabilities in the dashboard itsel
 
 ## A session cookie or an administrator account is compromised
 
-1. Administrator: call `DELETE /api/v2/admin/sessions` (needs a sign-in within the high-risk window) to end all your sessions.
-2. Remove the person's ID from `ADMIN_DISCORD_IDS` and restart if the account itself is suspect; remove their Discord role.
 3. For a member session: removing the role ends it within 30 minutes. For everyone: change `AUTH_SECRET` or delete `arrakis:session:*` ([session management](../administration/session-management.md)).
 4. Review `admin.operation` events since the suspected time and rotate `DUNE_API_KEY`. Check the Console's own admin audit/history for what the key did.
 5. Restore from backup any game data that was changed ([backups](../administration/backups.md)).

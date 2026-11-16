@@ -17,7 +17,6 @@ The dashboard's code is reproducible from a GitHub Release; its state is Redis p
 
 1. Provision Redis (empty, or restored) and confirm `redis-cli ping`.
 2. Install the pinned release and checksum-verify it ([release verification](../security/release-verification.md)).
-3. Restore configuration from your secret store; confirm `ADMIN_DISCORD_IDS`.
 4. Start; confirm `Runtime configuration validated` and the listening line.
 5. Run [post-deployment checks](../deployment/deployment-checklist.md#3-postdeployment).
 6. If marketplace owner keys are in question, run the re-key dry run ([migration](../deployment/migration.md)).

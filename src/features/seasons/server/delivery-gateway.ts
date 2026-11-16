@@ -1,10 +1,18 @@
 import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
 import { DuneConsoleClient } from '../../../server/integrations/dune';
-import { isSecureConsoleOrigin } from '../../admin/server/execute';
 import type { GameReward } from '../contracts';
 import { fail } from './store';
 
+/** Game writes need HTTPS, or plain HTTP only on this machine. */
+export function isSecureConsoleOrigin(value: string | undefined) {
+  if (!value || !URL.canParse(value)) return false;
+  const url = new URL(value);
+  return (
+    url.protocol === 'https:' ||
+    (url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))
+  );
+}
 const whole = /^(0|[1-9][0-9]{0,24})$/;
 const record = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};

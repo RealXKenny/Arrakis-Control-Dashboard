@@ -33,7 +33,6 @@ beginning `AUDIT ` followed by JSON; parse those separately. The Redis copy of t
 set -euo pipefail
 code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://dashboard.example.com/)
 [ "$code" = 200 ] || { echo "dashboard returned $code" >&2; exit 1; }
-api=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://dashboard.example.com/api/v2/admin/overview)
 [ "$api" = 401 ] || { echo "unexpected admin API status $api" >&2; exit 1; }
 ```
 

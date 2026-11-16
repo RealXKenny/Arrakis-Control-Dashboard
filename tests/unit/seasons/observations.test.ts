@@ -87,7 +87,7 @@ describe('new in-game progress, never historical achievements', () => {
     expect(first.trackingEstablished).toBe(true);
     expect(first.progress.xp).toBe(0);
     expect(first.progress.ledger).toHaveLength(0);
-    expect(first.progress.claims).toHaveLength(1);
+    expect(first.progress.claims).toHaveLength(0);
     expect((await sync(season.id)).progress.xp).toBe(0);
     xp += 1500;
     const partial = await sync(season.id);
@@ -97,8 +97,8 @@ describe('new in-game progress, never historical achievements', () => {
     const earned = await sync(season.id);
     expect(earned.progress.xp).toBe(250000);
     expect(earned.progress.ledger).toHaveLength(100);
-    expect(earned.progress.claims).toHaveLength(100);
-    expect(earned.totals).toMatchObject({ participants: 1, completions: 100, claims: 100, xp: 250000 });
+    expect(earned.progress.claims).toHaveLength(0);
+    expect(earned.totals).toMatchObject({ participants: 1, completions: 100, claims: 0, xp: 250000 });
     expect((await sync(season.id)).duplicate).toBe(true);
     expect(mock.request.mock.calls.every((c) => c[0] === 'GET')).toBe(true);
   });
@@ -223,7 +223,7 @@ describe('new in-game progress, never historical achievements', () => {
     const first = await sync(second.id);
     expect(first.progress.xp).toBe(0);
     expect(first.tracking.newGameXp).toBe('0');
-    expect((await loadMember(season.id, 'member')).progress.value.claims).toHaveLength(100);
+    expect((await loadMember(season.id, 'member')).progress.value.claims).toHaveLength(0);
   });
   it('requires fresh threshold crossing for manual API objectives and rejects client evidence', async () => {
     const definition = seasonTemplate();

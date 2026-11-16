@@ -6,11 +6,9 @@ import { CommandPalette } from './command-palette';
 
 export function CommandNavigation({
   identity,
-  isAdmin,
   onOpenAppearance,
 }: {
   identity: NavIdentity | null;
-  isAdmin: boolean;
   onOpenAppearance?: (opener?: HTMLElement) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -54,11 +52,10 @@ export function CommandNavigation({
     <>
       <TopNavigation
         identity={identity}
-        isAdmin={isAdmin}
         onOpenCommands={identity ? openPalette : undefined}
         onOpenAppearance={onOpenAppearance}
       />
-      {identity && open && <CommandPalette isAdmin={isAdmin} onClose={close} returnFocus={opener} />}
+      {identity && open && <CommandPalette onClose={close} returnFocus={opener} />}
     </>
   );
 }

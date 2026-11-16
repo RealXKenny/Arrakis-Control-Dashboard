@@ -11,7 +11,7 @@ import { createServer } from 'node:http';
 export const FAKE_CONSOLE_PORT = 3101;
 /** The two long-standing fixture sessions of browser-server.mjs. */
 export const MEMBER_DISCORD_ID = '123456789000000000';
-export const ADMIN_DISCORD_ID = '456084885220884480';
+export const SECOND_DISCORD_ID = '456084885220884480';
 
 function baseScenario(pawnId, controllerId, name) {
   return {
@@ -114,10 +114,10 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
   const fixedMembers = () => {
     const members = new Map([
       [MEMBER_DISCORD_ID, baseScenario('4', '5', 'Desert Navigator')],
-      [ADMIN_DISCORD_ID, baseScenario('8', '9', 'Fixture Administrator')],
+      [SECOND_DISCORD_ID, baseScenario('8', '9', 'Second fixture member')],
     ]);
-    // The administrator is not in the guild roster unless a test says so.
-    members.get(ADMIN_DISCORD_ID).guild = null;
+    // The second member is not in the guild roster unless a test says so.
+    members.get(SECOND_DISCORD_ID).guild = null;
     return members;
   };
   let byDiscord = fixedMembers();

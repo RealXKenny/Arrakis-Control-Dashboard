@@ -53,7 +53,6 @@ function productionFixture() {
     DISCORD_CLIENT_SECRET: 'test',
     DISCORD_GUILD_ID: 'guild',
     VERIFIED_MEMBER_ROLE_ID: '222222222222222222',
-    ADMIN_DISCORD_IDS: '123456789012345678',
     APP_URL: 'https://portal.test',
     AUTH_SECRET: 'test-secret-test-secret-test-secret-1234',
     REDIS_URL: 'redis://default:test@redis.test:6379/0',
@@ -99,14 +98,6 @@ it('rejects missing production credentials before accepting requests', async () 
   expect(validateProductionEnv).toThrow('Missing server environment configuration: DISCORD_CLIENT_SECRET');
 });
 
-it('refuses to start production without explicit administrators, naming the variable only', async () => {
-  vi.resetModules();
-  productionFixture();
-  vi.stubEnv('ADMIN_DISCORD_IDS', '');
-  const { validateProductionEnv } = await import('../../../src/config/env');
-  expect(validateProductionEnv).toThrow('Missing server environment configuration: ADMIN_DISCORD_IDS');
-});
-
 it.each(['not-a-url', 'redis://host/not-a-database', 'redis://host/0?password=secret', 'redis://host/0#secret'])(
   'rejects malformed Redis settings without exposing their values (%s)',
   async (value) => {
@@ -141,20 +132,6 @@ describe('Discord sign-in configuration', () => {
     productionFixture();
     expect((await import('../../../src/config/env')).validateProductionEnv().DISCORD_CLIENT_ID).toBeTruthy();
   });
-});
-
-it('validates administrator settings', async () => {
-  vi.resetModules();
-  vi.stubEnv('ADMIN_DISCORD_IDS', '123456789012345678, 987654321098765432');
-  vi.stubEnv('ADMIN_REAUTH_HOURS', '4');
-  const { getServerEnv } = await import('../../../src/config/env');
-  expect(getServerEnv().ADMIN_DISCORD_IDS).toContain('987654321098765432');
-  expect(getServerEnv().ADMIN_REAUTH_HOURS).toBe(4);
-
-  vi.resetModules();
-  vi.stubEnv('ADMIN_DISCORD_IDS', 'not-an-id');
-  const invalid = await import('../../../src/config/env');
-  expect(invalid.getServerEnv).toThrow('Invalid server environment configuration: ADMIN_DISCORD_IDS');
 });
 
 it('refuses plain-text Redis in production only when REDIS_REQUIRE_TLS is enabled', async () => {

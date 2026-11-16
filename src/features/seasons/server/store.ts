@@ -7,7 +7,6 @@ import {
   type Season,
   type Progress,
   type Totals,
-  type Submission,
   emptyProgress,
   emptyTotals,
   seasonRecordSchema,
@@ -193,19 +192,4 @@ export async function commit(options: {
   if (result === 'closed') fail('This season is no longer accepting submissions.');
   if (result === 'pending') fail('Review all pending evidence before archiving.');
   if (result !== 'ok') fail('Progress changed. Refresh before trying again.');
-}
-export async function adminRecords(id: string, offset = 0) {
-  const [ids, audit] = await Promise.all([
-    storage().command(['ZRANGE', seasonKeys.inboxIndex(id), offset, offset + 49]),
-    storage().command(['LRANGE', seasonKeys.audit(id), -100, -1]),
-  ]);
-  if (!Array.isArray(ids) || !Array.isArray(audit)) throw new Error('Invalid season review records.');
-  const values = ids.length ? await storage().command(['HMGET', seasonKeys.inbox(id), ...ids.map(String)]) : [];
-  if (!Array.isArray(values)) throw new Error('Invalid season inbox.');
-  const submissions = values.filter((v) => typeof v === 'string').map((v) => JSON.parse(v) as Submission);
-  return {
-    submissions,
-    cursor: String(offset + 50),
-    audit: audit.map((v) => JSON.parse(String(v)) as Record<string, unknown>),
-  };
 }

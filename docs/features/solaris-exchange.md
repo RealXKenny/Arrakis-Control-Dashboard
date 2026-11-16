@@ -20,7 +20,6 @@ Deposits move Solaris from the member's game character to the casino wallet; wit
 - `POST /api/players/{id}/add-currency` with `{ currencyId: 0, amount, confirmation: "ADD CURRENCY" }` replies `{ supported, backupCreated, result: { ok, player: { onlineStatus }, currencyId, amount, balance: { balance }, message } }`.
 - The change is **written to the database and loaded when the player next joins**. If the player is online, their live session could overwrite it, destroying or duplicating Solaris. So the character must be **offline**:
   - a transfer is refused unless a fresh check says the character is `Offline` (anything unclear counts as online);
-  - an adjustment counts as applied only if the Console's reply names Solaris and the exact amount, says the player was `Offline` when it was written, and reports exactly the balance expected (`balance before + change`). Anything else is parked for an administrator.
 - Still not known: transaction IDs, idempotency keys, a way to query a past adjustment, and the exact error codes. The reply's after-balance lets a transfer be verified without them, but the client treats every unclear outcome as uncertain.
 
 ### States
@@ -31,7 +30,6 @@ Deposits move Solaris from the member's game character to the casino wallet; wit
 | `debit_sent`           | Deposit: the `-amount` adjustment was sent (or about to be); outcome not yet known.    |
 | `credit_sent`          | Withdrawal: the `+amount` adjustment was sent (or about to be); outcome not yet known. |
 | `game_applied`         | The Console confirmed it. Only idempotent wallet steps remain and are retried.         |
-| `needs_reconciliation` | Outcome unknown. Never retried automatically; an administrator resolves it.            |
 | `completed` / `failed` | Terminal.                                                                              |
 
 Rules:
@@ -39,8 +37,7 @@ Rules:
 1. The state is advanced with compare-and-set before the Console is called, so concurrent requests cannot both send the adjustment.
 2. Both directions read the game balance first. Only an explicit Console refusal (HTTP 400, 401, 403, 404, 409, 422) counts as "nothing happened". Timeouts, network errors, 5xx and replies that fail verification are uncertain.
 3. A withdrawal's funds stay reserved (unavailable) until it completes or provably fails.
-4. Reconciliation is a human decision: an administrator (fresh sign-in required) compares the player's real balance with what the transfer should have done and marks it `applied` or `not_applied`, with a note, at `/casino/admin`. Each resolution is audited.
-5. A withdrawal appears in the game the next time the member joins.
+4. A withdrawal appears in the game the next time the member joins.
 
 ## Provably fair randomness
 
@@ -119,21 +116,18 @@ Timing is entirely server-side. The multiplier is computed from the server clock
 
 ## Pages and API
 
-Signed-in members use these pages (each calls `requireSession()`): `/casino` (lobby), `/casino/games/<game>`, `/casino/wallet` (balance, deposit and withdrawal, breaks, ledger), `/casino/history`, `/casino/fairness` and `/casino/rules`. Administrators also see `/casino/admin` (transfers to reconcile); everyone else gets a 404 there. The navigation has one Casino menu with these entries.
-
 The browser talks to `/api/v2/casino/*`, built on the shared `route()` wrapper (same-origin mutation check, session, bounded strict JSON, no-store responses):
 
-| Route                       | Purpose                                                                                    |
-| --------------------------- | ------------------------------------------------------------------------------------------ |
-| `GET /wallet`               | Balance, limits and whether play is enabled (ledger entries with `?entries=1`). Read-only  |
-| `GET/POST /transfers`       | Your transfers; start a `deposit` or `withdrawal` with `amount` and `idempotencyKey`       |
-| `GET/POST /rounds`          | Your recent rounds (`?status=open` for unfinished); start a round                          |
-| `GET /rounds/[id]`          | A round's current view (settles a crashed flight if its time has passed)                   |
-| `POST /rounds/[id]/action`  | One player action for an open round                                                        |
-| `GET/POST /fairness`        | Public seed state; rotate the seed or set a client seed                                    |
-| `GET /verify?round=<id>`    | Verification inputs for one of your finished rounds, once its seed is retired              |
-| `GET/POST /limits`          | Voluntary break                                                                            |
-| `GET/POST /admin/transfers` | Administrators only: list uncertain transfers; record what really happened (fresh sign-in) |
+| Route                      | Purpose                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| `GET /wallet`              | Balance, limits and whether play is enabled (ledger entries with `?entries=1`). Read-only |
+| `GET/POST /transfers`      | Your transfers; start a `deposit` or `withdrawal` with `amount` and `idempotencyKey`      |
+| `GET/POST /rounds`         | Your recent rounds (`?status=open` for unfinished); start a round                         |
+| `GET /rounds/[id]`         | A round's current view (settles a crashed flight if its time has passed)                  |
+| `POST /rounds/[id]/action` | One player action for an open round                                                       |
+| `GET/POST /fairness`       | Public seed state; rotate the seed or set a client seed                                   |
+| `GET /verify?round=<id>`   | Verification inputs for one of your finished rounds, once its seed is retired             |
+| `GET/POST /limits`         | Voluntary break                                                                           |
 
 The owner is always the signed-in member. Request bodies may not name an owner, currency, balance, server or player: unknown fields are rejected, and there is no route that credits a wallet. Starting a round is limited to 40 per minute, transfers to 10, actions to 180, and a repeated idempotency key returns the original result instead of repeating it.
 
@@ -160,7 +154,6 @@ The owner is always the signed-in member. Request bodies may not name an owner, 
 | Resource exhaustion                  | Rate limits per member, at most 5 open rounds, bounded bodies, bounded histories, and recovery sweeps that isolate failures and read every page.    |
 | Leaking a live server seed           | Rotation is refused while any round is open; only retired seeds are ever returned.                                                                  |
 | Duplicating or destroying Solaris    | Transfers require an offline character (fresh check) and are verified against the Console reply: Solaris, exact amount, Offline, exact balance.     |
-| Unclear Console outcomes             | Never retried. Parked for an administrator, who must have signed in recently; funds stay reserved or uncredited until resolved.                     |
 | Unauthorised play                    | The server switch (`CASINO_SOLARIS_ENABLED`, default off) is checked on every wager and transfer.                                                   |
 | Untraceable events                   | Transfers, reconciliations, breaks, seed rotations, voided or abandoned rounds and recovery failures go to the audit trail.                         |
 
@@ -173,8 +166,6 @@ The owner is always the signed-in member. Request bodies may not name an owner, 
 - The open-round cap is checked before the round starts, so a burst of simultaneous starts can briefly exceed it.
 
 ### Before enabling real Solaris play
-
-Setting `CASINO_SOLARIS_ENABLED=true` puts real in-game currency at stake. Do it only when all of these are true: you have legal advice for your jurisdictions and the age and access controls they require; the game publisher's and your hosting provider's policies allow it; a small deposit and withdrawal have been tried against the real Console on a test server; `npm run test:integration` passes on real Redis (standalone and Cluster, as you deploy); wager and payout ceilings suit your economy; an administrator knows how to use `/casino/admin`; and an external security review is done.
 
 ## Verification status
 
@@ -197,7 +188,5 @@ Each utterance is fully loaded before its clips are scheduled consecutively on t
 The audio pack is distributed under Apache License 2.0. The model, pinned ONNX conversion revision, generation settings, file checksums and upstream acknowledgments are retained with the pack. See [casino voice pack attribution](../legal/casino-voice-pack.md). No official Dune recordings, celebrity imitations or custom voice cloning are included.
 
 Narration is derived from confirmed public round views, deduplicated by round/version/status, and suppressed on initial resume. A hidden dealer hand announces only the up card. Settlement announcements require a confirmed settlement. Results preempt lower-priority speech; route changes, hidden tabs, unmounts and new rounds cancel stale playback. Casino result speech waits for its presentation animation (immediate with reduced motion). Captions remain visible with sound off, and the existing result live regions provide screen-reader feedback without duplicating captions.
-
-Interface sounds cover committed in-app navigation, menus, local button feedback, optional throttled mouse hover, guild settings and logo notifications, event management, and confirmed administrator actions. Polling and initial notification hydration stay quiet. Audio is nonessential and never gates a request or a result. The presentation regression suites cover deck identities/pips, narration privacy, speech lifecycle and consent, persisted settings, card backs, and screenshots at desktop, 320 px and 390 px.
 
 Current sanitized production-build captures show the [casino lobby](../assets/screenshots/casino-lobby-desktop.webp), [Blackjack gameplay](../assets/screenshots/blackjack-gameplay.webp), [sound settings](../assets/screenshots/sound-settings.webp), [mobile lobby](../assets/screenshots/casino-lobby-mobile.webp) and [Casino navigation](../assets/screenshots/navigation-casino-menu.webp). They use fictional accounts and fixture-only Solaris, never player or production wallet data.

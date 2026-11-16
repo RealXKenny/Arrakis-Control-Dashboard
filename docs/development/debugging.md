@@ -20,7 +20,6 @@ generated. Legacy error bodies include `requestId`; grep the log for it.
 | `EADDRINUSE` in smoke/browser tests           | Same                                                                                                |
 | Redis integration test refuses to run         | `TEST_REDIS_URL` must be loopback with an explicit database                                         |
 | Installer tests skipped                       | `jq` (and the other tools) missing from `PATH`                                                      |
-| Admin API returns 403 `ADMIN_REAUTH_REQUIRED` | Sign in again; step-up windows ([administrator access](../configuration/administrator-access.md))   |
 | Types differ from docs                        | Next.js 16 changed APIs; read `node_modules/next/dist/docs/` for the installed version              |
 
 ## Inspecting Redis

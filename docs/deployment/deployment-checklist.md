@@ -31,9 +31,6 @@ Strongly recommended settings (all optional in the schema, so they are easy to f
 | --------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `OWNER_KEY_SECRET`                                  | derived from `AUTH_SECRET` | Dedicated HMAC secret for marketplace ownership. Set it before publishing listings you intend to keep. Changing it later orphans listings (see 2.7). |
 | `REDIS_REQUIRE_TLS`                                 | `false`                    | `true` makes startup refuse a plain `redis://` URL.                                                                                                  |
-| `ADMIN_DISCORD_IDS`                                 | **required**               | Comma-separated Discord IDs allowed into `/admin`. Production refuses to serve without it; no built-in administrator exists.                         |
-| `ADMIN_REAUTH_HOURS`                                | `12`                       | Step-up window for administrator changes (1 to 168).                                                                                                 |
-| `ADMIN_HIGH_RISK_REAUTH_MINUTES`                    | `60`                       | Step-up window for deletes, downloads and operations that carry a confirmation phrase (5 to 1440).                                                   |
 | `TRUSTED_PROXY_COUNT`                               | `1`                        | Number of reverse proxies in front of the app (0 to 5). Every per-address limit trusts only that forwarded entry. Use `0` with no proxy.             |
 | `AUDIT_LOG_STDOUT`, `AUDIT_LOG_REDIS`               | `true`, `true`             | Readable AUDIT entries on stdout and structured records in a bounded Redis sorted set.                                                               |
 | `AUDIT_LOG_RETENTION_DAYS`, `AUDIT_LOG_MAX_ENTRIES` | `90`, `10000`              | Retention of the Redis copy (1 to 3650 days; 100 to 1,000,000 entries).                                                                              |
@@ -85,11 +82,8 @@ that is not an egg variable cannot reach the application.
 
 ### 1.6 Administrator access
 
-- Decide who is an administrator and set `ADMIN_DISCORD_IDS` explicitly. Each ID must belong to `DISCORD_GUILD_ID` and
   hold `VERIFIED_MEMBER_ROLE_ID`.
 - Administrators must sign in interactively (Discord or password) within the step-up windows to make changes.
-- MFA is **not implemented** (owner decision). "Sign out everywhere" exists as an API only: `DELETE /api/v2/admin/sessions` (same-origin, administrator, sign-in within the high-risk window) ends all of the caller's sessions. There is no button yet; use it from an authenticated browser session if an administrator cookie may have leaked, then also rotate what the session could reach.
-- Every mutating administrator operation, upload and download needs the high-risk window unless it is on the reviewed low-risk list in `src/features/admin/server/risk.ts`.
 
 ### 1.7 Release artifact verification
 
@@ -154,8 +148,6 @@ does not stop the site.
 ### 2.6 Release and administrator verification
 
 - `/changelog` lists the release you intended to deploy, and the installation log names the same version.
-- Sign in with Discord as an administrator, open `/admin`, perform one harmless read, then confirm a write is accepted
-  right after sign-in and refused with `ADMIN_REAUTH_REQUIRED` once the window has passed.
 
 ### 2.7 Marketplace migration procedure (needs owner approval; irreversible only if the backup file is lost)
 
@@ -181,7 +173,6 @@ that, already-migrated listings become unmanageable by their owners until it is 
 ### 3.1 Health checks
 
 - `GET /` returns 200. `GET /portal` anonymously redirects (307). `GET /.env` returns 404.
-- `GET /api/v2/admin/overview` anonymously returns 401.
 - A `POST` to any `/api/v2/**` mutation with a foreign `Origin` header is refused (403).
 - Responses carry `Content-Security-Policy` with a nonce, `X-Content-Type-Options: nosniff`, and no `X-Powered-By`.
 
@@ -193,9 +184,6 @@ that, already-migrated listings become unmanageable by their owners until it is 
 
 ### 3.3 Administrator permission tests
 
-- A non-administrator member receives 403 on `/admin` and `/api/v2/admin/*`.
-- An administrator whose last interactive sign-in is older than `ADMIN_REAUTH_HOURS` can read but not change.
-- A destructive or download operation older than `ADMIN_HIGH_RISK_REAUTH_MINUTES` is refused (`ADMIN_REAUTH_REQUIRED`).
 
 ### 3.4 Marketplace verification
 
@@ -205,7 +193,6 @@ that, already-migrated listings become unmanageable by their owners until it is 
 ### 3.5 Audit logging verification
 
 - stdout contains readable AUDIT entries for the sign-in, the failed sign-in and the administrator write above, including event names, outcomes and audit IDs.
-- The Redis copy is readable by an administrator at `/api/v2/admin/audit`.
 - No password, token, e-mail address or request body appears in either copy.
 
 ### 3.6 Monitoring requirements

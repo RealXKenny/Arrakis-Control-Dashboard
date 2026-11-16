@@ -212,7 +212,7 @@ function buildEgg() {
       variable('Dune API URL', 'Dune Console URL reachable from this container.', 'DUNE_API_URL', '', {
         rules: 'required|url',
       }),
-      variable('Dune API Key', 'Console API key for reads, administration and season delivery.', 'DUNE_API_KEY'),
+      variable('Dune API Key', 'Console API key for reads and season delivery.', 'DUNE_API_KEY'),
       variable('Dune Adapter Token', 'Token for the Console Discord adapter.', 'DUNE_ADAPTER_TOKEN'),
       variable('Discord Client ID', 'Discord OAuth application client ID.', 'DISCORD_CLIENT_ID'),
       variable('Discord Client Secret', 'Discord OAuth application client secret.', 'DISCORD_CLIENT_SECRET'),
@@ -266,27 +266,6 @@ function buildEgg() {
         {
           rules: 'nullable|string',
         },
-      ),
-      variable(
-        'Administrator Discord IDs',
-        'Required. Comma-separated Discord user IDs allowed to use the administrator workspace.',
-        'ADMIN_DISCORD_IDS',
-        '',
-        { rules: 'required|regex:/^\\d{1,25}(\\s*,\\s*\\d{1,25})*$/' },
-      ),
-      variable(
-        'Administrator High-Risk Reauthentication Minutes',
-        'Destructive administrator actions need an interactive sign-in this recent (5-1440).',
-        'ADMIN_HIGH_RISK_REAUTH_MINUTES',
-        '60',
-        { rules: 'required|integer|min:5|max:1440' },
-      ),
-      variable(
-        'Administrator Reauthentication Hours',
-        'Administrator changes need an interactive sign-in this recent (1-168).',
-        'ADMIN_REAUTH_HOURS',
-        '12',
-        { rules: 'required|integer|min:1|max:168' },
       ),
       variable(
         'Audit Log To Console',

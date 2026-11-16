@@ -69,7 +69,6 @@ const child = spawn(process.execPath, ['--input-type=module', '-e', wrapper], {
     DISCORD_CLIENT_SECRET: 'fixture',
     DISCORD_GUILD_ID: 'fixture',
     VERIFIED_MEMBER_ROLE_ID: 'fixture',
-    ADMIN_DISCORD_IDS: '456084885220884480',
     APP_URL: `http://127.0.0.1:${port}`,
     AUTH_SECRET: 'fixture-only-authentication-secret-32',
     CHANGELOG_AUTO_ANNOUNCE: 'false',

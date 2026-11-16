@@ -43,7 +43,6 @@ Linked character, member role; leaders as in [guilds](guilds.md#roles-and-permis
 ## Limitations
 
 Redis-only storage; applications are lost with Redis. Dashboard administrators can inspect any guild's applications and chats
-(and the inspection is logged), see [administrator panel](administrator-panel.md#guild-oversight).
 
 ## Troubleshooting
 

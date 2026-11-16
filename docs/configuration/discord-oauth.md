@@ -33,7 +33,6 @@ Enable Developer Mode in Discord (_Settings → Advanced_), then right-click to 
 | ----------------- | --------------------------------------- | ------------------------- |
 | Server (guild) ID | Right-click the server icon             | `DISCORD_GUILD_ID`        |
 | Member role ID    | _Server Settings → Roles_ → right-click | `VERIFIED_MEMBER_ROLE_ID` |
-| Your user ID      | Right-click your name                   | `ADMIN_DISCORD_IDS`       |
 
 ## 3. Configure and restart
 

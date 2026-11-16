@@ -87,7 +87,7 @@ test('desktop uses one active topbar with accessible dropdowns, notifications, a
 
   await page.getByRole('button', { name: 'Notifications', exact: true }).click();
   await expect(page.getByRole('menuitem', { name: /Guild applications/ })).toBeVisible();
-  await expect(page.getByRole('menuitem', { name: /Guild support/ })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: /Guild support/ })).toHaveCount(0);
   await page.keyboard.press('Escape');
 
   await page.getByRole('button', { name: 'Account menu for Test member', exact: true }).click();
@@ -105,16 +105,7 @@ test('desktop uses one active topbar with accessible dropdowns, notifications, a
   await expect(community).toHaveCount(0);
 });
 
-test('administration stays restricted and mobile keeps every destination in a focus-managed drawer', async ({
-  page,
-}) => {
-  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.goto('/admin');
-  const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
-  await primary.getByRole('button', { name: 'Personal', exact: true }).click();
-  await expect(page.getByRole('menuitem', { name: /Administration/ })).toBeVisible();
-  await page.keyboard.press('Escape');
-
+test('mobile keeps every destination in a focus-managed drawer', async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/holdings');

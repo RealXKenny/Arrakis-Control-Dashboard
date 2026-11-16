@@ -12,13 +12,11 @@
 |          | RedBlink Dune Docker                                                                                                                                                                                                                                                         | Arrakis Control Dashboard                                                                                                                      |
 | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | Purpose  | Host and operate a Dune: Awakening dedicated server in Docker                                                                                                                                                                                                                | A web dashboard for your community and administrators                                                                                          |
-| Provides | Orchestrator (SteamCMD game files), gameplay containers (Postgres, RabbitMQ, TextRouter, Director, Gateway, world servers), the **Console** (API and Web UI), the `dune` CLI, backups, updates, optional metrics, public-probe, TLS front, Community Addons, Discord adapter | Next.js app: Discord sign-in, member pages, guild tools, base marketplace, administrator workspace over the Console API, Redis-backed sessions |
 | Runs     | Docker on a Linux host (`dune` CLI, Compose files `docker-compose*.yml`, raw `docker run` for gameplay)                                                                                                                                                                      | Node.js 22 (directly or via Pterodactyl)                                                                                                       |
 | Data     | Game Postgres, `runtime/secrets`, `runtime/generated`, `.env`                                                                                                                                                                                                                | Redis only                                                                                                                                     |
 
 **The dashboard does not install, update, start, stop or back up the RedBlink stack.** It only calls the Console's HTTP API
 and Discord adapter with the credentials you give it. Server start/stop/update through the dashboard happens only as Console
-operations in the [administrator panel](../features/administrator-panel.md), if your key allows them and the Console supports them.
 
 ## How they connect
 
@@ -34,7 +32,6 @@ flowchart LR
 | Concern                      | Belongs to                                                                                                                     | Setting                                                    |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
 | Console URL, port            | RedBlink Console (`ADMIN_BIND_PORT`, Settings → Web Console Port, default `8088`)                                              | `DUNE_API_URL` in the dashboard                            |
-| Console admin password       | RedBlink (`runtime/secrets/admin-web-password.txt`)                                                                            | **Not used by the dashboard**                              |
 | API keys                     | RedBlink Console, Settings → API Keys                                                                                          | `DUNE_API_KEY`                                             |
 | Adapter enable + token       | RedBlink `.env`: `DUNE_DISCORD_ADAPTER_ENABLED`, `DUNE_BOT_API_TOKEN_FILE` or `DUNE_DISCORD_ADAPTER_TOKEN`                     | `DUNE_ADAPTER_TOKEN` (same value)                          |
 | Adapter roles                | RedBlink `.env`: `DISCORD_OBSERVER_ROLE_IDS`, `DISCORD_MODERATOR_ROLE_IDS`, `DISCORD_ADMIN_ROLE_IDS`, `DISCORD_OWNER_ROLE_IDS` | Not read by the dashboard                                  |
@@ -52,7 +49,6 @@ These are not reproduced here because the one-line installer command is not part
 Documented upstream facts you will need:
 
 - After install, the installer prints the Web UI URL and a generated admin password; it is also persisted at
-  `runtime/secrets/admin-web-password.txt`. The password logs in as the `owner` tier.
 - **Do not expose the Web UI port (`8088` by default) to untrusted users.** Forward it only to trusted administrators.
 - Persistent state: `runtime/secrets/`, `runtime/generated/`, `.env` (git-ignored).
 - The `dune` CLI (`dune status`, `ps`, `servers`, `ports`, `update`, `self-update`, `db backup-system`, …).
@@ -100,7 +96,6 @@ curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/players?pag
 curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/integrations/discord/health"
 ```
 
-Inside the dashboard: portal shows population, `/admin → Overview` reports the admin key and adapter as configured and healthy.
 
 ## Troubleshooting authentication and network issues
 

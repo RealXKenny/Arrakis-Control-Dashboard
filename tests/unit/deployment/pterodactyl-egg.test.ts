@@ -98,20 +98,13 @@ describe('release integrity', () => {
     const byName = new Map<string, { default_value: string; rules: string }>(
       egg.variables.map((variable) => [variable.env_variable, variable] as const),
     );
-    expect(byName.get('ADMIN_DISCORD_IDS')).toMatchObject({ default_value: '' });
-    expect(byName.get('ADMIN_HIGH_RISK_REAUTH_MINUTES')?.default_value).toBe('60');
-    expect(byName.get('ADMIN_REAUTH_HOURS')?.default_value).toBe('12');
     expect(byName.get('REDIS_ALLOW_INSECURE')?.default_value).toBe('false');
     expect(byName.get('REDIS_REQUIRE_TLS')?.default_value).toBe('false');
     expect(byName.get('AUDIT_LOG_STDOUT')?.default_value).toBe('true');
     expect(byName.get('AUDIT_LOG_REDIS')?.default_value).toBe('true');
     expect(byName.get('AUDIT_LOG_MAX_ENTRIES')?.default_value).toBe('10000');
-    // The administrator list rule accepts Discord IDs only.
-    const rule = byName.get('ADMIN_DISCORD_IDS')!.rules;
-    const pattern = new RegExp(rule.slice(rule.indexOf('/') + 1, rule.lastIndexOf('/')));
-    expect(pattern.test('456084885220884480, 123')).toBe(true);
-    expect(pattern.test('everyone')).toBe(false);
-    expect(pattern.test('1;2')).toBe(false);
+    // No administrator variables exist: access control is the member role only.
+    expect([...byName.keys()].some((name) => name.startsWith('ADMIN_'))).toBe(false);
   });
 
   it('hides every credential variable from panel users and subusers without dropping any of them', () => {
@@ -138,9 +131,8 @@ describe('release integrity', () => {
     for (const name of ['AUTH_SECRET', 'REDIS_URL', 'DUNE_API_KEY', 'DUNE_ADAPTER_TOKEN', 'DISCORD_CLIENT_SECRET'])
       expect(byName.get(name)?.rules, name).toContain('required');
     // Ordinary operational settings stay editable.
-    for (const name of ['APP_URL', 'TRUSTED_PROXY_COUNT', 'ADMIN_DISCORD_IDS', 'RELEASE_TAG'])
+    for (const name of ['APP_URL', 'TRUSTED_PROXY_COUNT', 'RELEASE_TAG'])
       expect(byName.get(name), name).toMatchObject({ user_viewable: true, user_editable: true });
-    expect(byName.get('ADMIN_DISCORD_IDS')?.rules).toMatch(/^required|/);
   });
 
   it('keeps anonymous Next.js telemetry off during installation and at runtime', () => {

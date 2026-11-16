@@ -43,7 +43,7 @@ export const PILLARS = [
   },
   {
     title: 'For operators',
-    text: 'An administration panel over the Dune Console with its own credentials, recent sign-in checks for risky changes, and an audit trail.',
+    text: 'Self-hosted on Node.js and Redis, with background workers that recover interrupted transfers and rewards safely and an audit trail.',
   },
 ] as const;
 
@@ -79,11 +79,11 @@ export const FEATURED: readonly Featured[] = [
     eyebrow: 'Guilds',
     title: 'Recruit, apply and run a guild',
     summary:
-      'A directory of published recruitment listings. Players apply with the questions a guild chooses; leaders review applications, manage the roster and can reach the administrators from the same place.',
+      'A directory of published recruitment listings. Players apply with the questions a guild chooses; leaders review applications and manage the roster from the same place.',
     points: [
       'Application questions: short text, paragraphs, dropdowns, time zones, checkboxes and numbers',
       'Leader-only settings, roster management and application inbox',
-      'A support conversation between a guild leader and the administrators',
+      'Private chat between applicants and the guild leader',
     ],
     href: '/guilds',
     linkLabel: 'Browse the Guild Directory',
@@ -149,7 +149,7 @@ export const CAPABILITIES: readonly Capability[] = [
       'Six table games, blackjack, roulette, dice, mines, crash and coin flip, played with real in-game Solaris from a casino wallet. Each finished round can be checked against seeds committed in advance.',
     href: '/casino',
     icon: CasinoIcon,
-    note: 'Closed by default: a server administrator must switch it on',
+    note: 'Closed by default: the server owner switches it on in the environment',
   },
 ];
 
@@ -160,8 +160,8 @@ export const OPERATOR = {
     'Arrakis Control is a Node.js application with Redis as its only database. It runs directly or on Pterodactyl, and talks to your Dune Console with the keys you give it.',
   points: [
     'Discord sign-in, checked against your server role and re-checked while members stay signed in',
-    'An administration panel over the Console, using credentials separate from member features',
-    'Risky changes need a recent sign-in, and administrator actions go to an audit trail',
+    'Background workers recover interrupted transfers and rewards without ever resending an unverified one',
+    'Security-relevant events go to an audit trail',
     'Member pages read only the signed-in member’s own linked character',
   ],
 } as const;

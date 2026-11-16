@@ -4,9 +4,7 @@ How to end sessions as an operator. How sessions work: [Sessions](../features/se
 
 | Goal                             | Do this                                                                                                     | Effect                                               |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| End your own sessions everywhere | `DELETE /api/v2/admin/sessions` as an administrator (sign-in within the high-risk window)                   | All your sessions end immediately; sign in again     |
 | End one member's access          | Remove their Discord role                                                                                   | Session ends at the next re-check (≤ 30 minutes)     |
-| Block an administrator           | Remove from `ADMIN_DISCORD_IDS`, restart                                                                    | 403 on admin APIs immediately                        |
 | Invalidate everyone              | Change `AUTH_SECRET` (refresh tokens become unreadable) **or** delete the `arrakis:session:*` keys in Redis | Everyone signs in again                              |
 | Invalidate Redis sessions only   | `redis-cli --scan --pattern 'arrakis:session:*'` then delete in batches (`UNLINK`)                          | Everyone signs in again; accounts and data untouched |
 

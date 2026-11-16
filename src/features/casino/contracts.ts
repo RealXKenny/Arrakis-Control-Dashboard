@@ -164,8 +164,8 @@ export function transferMessage(row: Pick<TransferRow, 'kind' | 'state' | 'failu
       return 'In progress. This usually takes a moment; refresh to see the result.';
     case 'needs_reconciliation':
       return deposit
-        ? 'We could not confirm whether the game took the Solaris. Nothing more will be sent automatically. An administrator will check your balance and finish this. Your wallet is not charged until then.'
-        : 'We could not confirm whether the game received the Solaris. It stays reserved here, and nothing more will be sent automatically, until an administrator checks and finishes this.';
+        ? 'We could not confirm whether the game took the Solaris. Nothing more will be sent automatically, and your wallet is not charged. This transfer is kept safely on hold until its outcome can be verified.'
+        : 'We could not confirm whether the game received the Solaris. It stays reserved here, and nothing more will be sent automatically. This transfer is kept safely on hold until its outcome can be verified.';
     case 'failed':
       return failureText(row.failureCode);
   }
@@ -181,8 +181,6 @@ function failureText(code: string | null): string {
       return 'The game balance could not be read, so nothing was moved. Try again shortly.';
     case 'CONSOLE_REJECTED':
       return 'The game refused the change. Nothing was moved.';
-    case 'RECONCILED_NOT_APPLIED':
-      return 'An administrator confirmed the game did not apply the change. Nothing was moved.';
     default:
       return 'This transfer did not complete. Nothing was moved.';
   }

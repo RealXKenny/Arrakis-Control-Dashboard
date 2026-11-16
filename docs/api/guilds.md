@@ -155,7 +155,6 @@ stored message. Non-leaders reading someone else's chat get 403 `GUILD_LEADER_RE
 ## Support (leader ↔ administrators)
 
 `GET /api/guilds/{guildId}/support`, `POST .../support/send`, `POST .../support/read`, `GET .../support/status` (`{ unreadCount }`), with the
-same message shape. Administrators use `/api/admin/guilds/{guildId}/messages*`.
 
 ## Rate limits
 

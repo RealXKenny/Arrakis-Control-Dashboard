@@ -1,4 +1,3 @@
-export type NavigationPermission = 'admin';
 export type NavigationIcon =
   | 'assets'
   | 'bases'
@@ -27,7 +26,6 @@ export interface NavigationItem {
   readonly icon?: NavigationIcon;
   readonly description?: string;
   readonly children?: readonly NavigationItem[];
-  readonly requiredPermissions?: readonly NavigationPermission[];
   readonly featureFlag?: string;
   readonly badge?: string;
   readonly order: number;
@@ -38,7 +36,6 @@ export interface NavigationItem {
 }
 
 export type NavigationVisibility = {
-  readonly isAdmin?: boolean;
   readonly featureFlags?: Readonly<Record<string, boolean>>;
   readonly badges?: Readonly<Record<string, string>>;
 };
@@ -336,15 +333,6 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             order: 40,
           },
           {
-            id: 'casino-reconcile',
-            label: 'Reconcile transfers',
-            href: '/casino/admin',
-            icon: 'casino',
-            description: 'Settle Solaris transfers whose outcome is unknown.',
-            requiredPermissions: ['admin'],
-            order: 45,
-          },
-          {
             id: 'casino-rules',
             label: 'Rules & help',
             href: '/casino/rules',
@@ -479,24 +467,6 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
           },
         ],
       },
-      {
-        id: 'personal-admin',
-        label: 'Administration',
-        icon: 'guilds',
-        order: 30,
-        requiredPermissions: ['admin'],
-        children: [
-          {
-            id: 'administration',
-            label: 'Administration',
-            href: '/admin',
-            icon: 'guilds',
-            description: 'Authorized server operations and oversight.',
-            requiredPermissions: ['admin'],
-            order: 10,
-          },
-        ],
-      },
     ],
   },
 ] as const;
@@ -518,18 +488,9 @@ export const NOTIFICATION_ITEMS: readonly NavigationItem[] = [
     description: 'Check recruitment listings and your application status.',
     order: 10,
   },
-  {
-    id: 'notification-support',
-    label: 'Guild support',
-    href: '/guild',
-    icon: 'character',
-    description: 'Open your guild roster and leader support conversation.',
-    order: 20,
-  },
 ] as const;
 
 function permitted(item: NavigationItem, visibility: NavigationVisibility): boolean {
-  if (item.requiredPermissions?.includes('admin') && !visibility.isAdmin) return false;
   if (item.featureFlag && !visibility.featureFlags?.[item.featureFlag]) return false;
   return true;
 }

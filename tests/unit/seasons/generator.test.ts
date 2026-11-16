@@ -30,8 +30,8 @@ import {
   configureGenerator,
   generatorStatus,
   runGenerator,
-  setGeneratorEnabled,
   ensureDefaultGenerator,
+  resumeBlockedGenerator,
 } from '../../../src/features/seasons/server/generator';
 import {
   claimReward,
@@ -113,46 +113,33 @@ describe('deterministic three-month generation', () => {
   });
 });
 describe('durable automatic lifecycle and ownership', () => {
-  it('bootstraps by default exactly once and preserves explicit pause and opt-out', async () => {
+  it('starts by default exactly once and resumes only a policy it blocked itself, after an hour', async () => {
     await Promise.allSettled([ensureDefaultGenerator(), ensureDefaultGenerator()]);
-    const enabled = await generatorStatus();
-    expect(enabled.enabled).toBe(true);
-    expect(enabled.algorithm).toBe(2);
-    await setGeneratorEnabled(enabled.revision, false, 'admin');
-    await ensureDefaultGenerator();
-    expect((await generatorStatus()).enabled).toBe(false);
-  });
-  it('preserves a paused algorithm-1 policy and upgrades its template only after an explicit resume', async () => {
-    await configureGenerator('', settings, 'admin');
-    const paused = await setGeneratorEnabled((await generatorStatus()).revision, false, 'admin');
+    const status = await generatorStatus();
+    expect(status.enabled).toBe(true);
+    expect(status.algorithm).toBe(2);
+    expect(await resumeBlockedGenerator()).toBe(false);
     const key = seasonKeys.generator;
-    const raw = String(mock.reply('GET', key, [])?.value);
-    const legacy = JSON.parse(raw);
-    legacy.algorithm = 1;
-    legacy.template.challenges = legacy.template.challenges.map((c: Record<string, unknown>) => {
-      const { minimumGameXp, minimumNewJourneys, ...rest } = c;
-      void minimumGameXp;
-      void minimumNewJourneys;
-      return { ...rest, verification: 'character-level', minimumLevel: 2 };
-    });
-    const swap = mock.reply('EVAL', 'community-seasons:commit-v1', [
-      '1',
-      key,
-      JSON.stringify({ expected: [raw], values: [JSON.stringify(legacy)] }),
-      '{}',
-    ]);
-    expect(swap?.value).toBe('ok');
-    await runGenerator();
-    expect((await generatorStatus()).algorithm).toBe(1);
+    const swap = (patch: Record<string, unknown>) => {
+      const raw = String(mock.reply('GET', key, [])?.value);
+      const next = { ...JSON.parse(raw), ...patch };
+      expect(
+        mock.reply('EVAL', 'community-seasons:commit-v1', [
+          '1',
+          key,
+          JSON.stringify({ expected: [raw], values: [JSON.stringify(next)] }),
+          '{}',
+        ])?.value,
+      ).toBe('ok');
+    };
+    swap({ enabled: false, error: 'Season overlap.', updatedAt: new Date().toISOString() });
+    expect(await resumeBlockedGenerator()).toBe(false);
     expect((await generatorStatus()).enabled).toBe(false);
-    await setGeneratorEnabled((await generatorStatus()).revision, true, 'admin');
-    await runGenerator();
-    const upgraded = JSON.parse(String(mock.reply('GET', key, [])?.value));
-    expect(upgraded.algorithm).toBe(2);
-    expect(
-      upgraded.template.challenges.every((c: { verification: string }) => c.verification === 'season-progress'),
-    ).toBe(true);
-    expect(paused.enabled).toBe(false);
+    swap({ updatedAt: new Date(Date.now() - 2 * 3600000).toISOString() });
+    expect(await resumeBlockedGenerator()).toBe(true);
+    const resumed = await generatorStatus();
+    expect(resumed.enabled).toBe(true);
+    expect(resumed.error).toBeNull();
   });
   it('is disabled until authorized, then concurrently prepares only current and next seasons', async () => {
     expect((await runGenerator()).enabled).toBe(false);
@@ -168,7 +155,7 @@ describe('durable automatic lifecycle and ownership', () => {
     expect(await listSeasons(0, true)).toEqual(before);
     expect((await generatorStatus()).enabled).toBe(true);
   });
-  it('automatically claims cosmetics once and archives Season 1 while Season 2 stays independent', async () => {
+  it('awards progress without claiming anything automatically and archives Season 1 while Season 2 stays independent', async () => {
     await configureGenerator('', settings, 'admin');
     await runGenerator();
     const first = (await listSeasons(0, true)).find((s) => s.definition.number === 1)!;
@@ -180,36 +167,23 @@ describe('durable automatic lifecycle and ownership', () => {
     const completed = (await loadMember(first.id, 'member')).progress.value;
     expect(completed).toMatchObject({ xp: 250000 });
     expect(completed.ledger).toHaveLength(100);
-    expect(completed.claims).toHaveLength(100);
+    // Seasons with game rewards never claim for the player; every reward needs an explicit click.
+    expect(completed.claims).toHaveLength(0);
     expect((await syncAutomaticProgress(first.id, 'member', proofs)).duplicate).toBe(true);
+    expect((await claimReward(first.id, 'member', 'level-1')).duplicate).toBe(false);
     expect((await claimReward(first.id, 'member', 'level-1')).duplicate).toBe(true);
+    const claimed = (await loadMember(first.id, 'member')).progress.value.claims;
+    expect(claimed).toHaveLength(1);
     await equipReward(first.id, 'member', 'level-1');
     vi.setSystemTime(first.definition.endsAt);
     await runGenerator();
     expect((await loadSeason(first.id)).value.phase).toBe('archived');
-    expect((await loadMember(first.id, 'member')).progress.value.claims).toEqual(completed.claims);
+    expect((await loadMember(first.id, 'member')).progress.value.claims).toEqual(claimed);
     expect((await readRecord(seasonKeys.equipment('member'))).value).toBeTruthy();
     const second = (await listSeasons(0, true)).find((s) => s.definition.number === 2)!;
     expect(seasonState(second)).toBe('active');
     expect((await loadMember(second.id, 'member')).progress.value.xp).toBe(0);
     expect(await listSeasons(0, true)).toHaveLength(3);
-  });
-  it('fences an in-flight publisher when an administrator pauses automation', async () => {
-    const policy = await configureGenerator('', settings, 'admin'),
-      record = await readRecord(seasonKeys.generator);
-    const definition = seasonTemplate();
-    definition.startsAt = settings.firstStart;
-    definition.endsAt = seasonWindow(settings.firstStart, 0).endsAt;
-    const draft = await saveSeason(randomUUID(), '', definition, 'admin');
-    await setGeneratorEnabled(policy.revision, false, 'admin');
-    await expect(
-      transitionSeason(draft.id, draft.revision, 'publish', 'system:season-generator', {
-        key: seasonKeys.generator,
-        before: record.raw,
-      }),
-    ).rejects.toThrow('changed');
-    expect((await loadSeason(draft.id)).value.phase).toBe('draft');
-    expect((await runGenerator()).enabled).toBe(false);
   });
   it('resumes safely after downtime without fabricating expired seasons or skipping season numbers', async () => {
     await configureGenerator('', settings, 'admin');

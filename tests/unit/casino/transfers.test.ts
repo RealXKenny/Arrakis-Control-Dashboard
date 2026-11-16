@@ -9,7 +9,6 @@ import {
 } from '../../../src/features/casino/ledger/ledger';
 import {
   recoverTransfers,
-  resolveTransfer,
   startTransfer,
   transferError,
   type TransferDeps,
@@ -280,46 +279,6 @@ describe('withdrawal', () => {
 });
 
 describe('reconciliation and recovery', () => {
-  it('admin "applied" completes a parked deposit; "not_applied" fails it; each only once', async () => {
-    const h = harness();
-    h.state.outcomes = ['uncertain', 'uncertain'];
-    await startTransfer(h.deps, deposit('100', 'key-aaaaa1'));
-    await startTransfer(h.deps, deposit('50', 'key-aaaaa2'));
-    const done = await resolveTransfer(
-      h.deps,
-      { owner: O, server: S, id: 'dep_key-aaaaa1' },
-      'applied',
-      'admin-9',
-      'checked game',
-    );
-    expect(done.state).toBe('completed');
-    expect(done.resolvedBy).toBe('admin-9');
-    const failed = await resolveTransfer(
-      h.deps,
-      { owner: O, server: S, id: 'dep_key-aaaaa2' },
-      'not_applied',
-      'admin-9',
-      'no change',
-    );
-    expect(failed.state).toBe('failed');
-    expect(h.wallet().available).toBe(100n);
-    await expect(
-      resolveTransfer(h.deps, { owner: O, server: S, id: 'dep_key-aaaaa1' }, 'applied', 'admin-9', 'again'),
-    ).rejects.toMatchObject({ code: 'INVALID_STATE' });
-  });
-
-  it('reconciling an uncertain withdrawal releases or finalizes the hold', async () => {
-    const h = harness();
-    await fundWallet(h, '1000');
-    h.state.outcomes = ['uncertain', 'uncertain'];
-    await startTransfer(h.deps, withdrawal('100', 'key-bbbbb1'));
-    await startTransfer(h.deps, withdrawal('200', 'key-bbbbb2'));
-    await resolveTransfer(h.deps, { owner: O, server: S, id: 'wd_key-bbbbb1' }, 'applied', 'a', '');
-    await resolveTransfer(h.deps, { owner: O, server: S, id: 'wd_key-bbbbb2' }, 'not_applied', 'a', '');
-    expect([h.wallet().available, h.wallet().reserved]).toEqual([900n, 0n]);
-    expect(checkInvariants(h.wallet())).toEqual([]);
-  });
-
   it('recovery parks a stale in-flight transfer instead of re-sending it', async () => {
     const h = harness();
     const stuck: TransferIntent = {

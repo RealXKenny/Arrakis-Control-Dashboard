@@ -57,8 +57,6 @@ import { coinFlip } from '../../../src/features/casino/games/coin-flip';
 import type { RoundRecord } from '../../../src/features/casino/engine/types';
 import {
   MAX_OPEN_ROUNDS,
-  adminResolveTransfer,
-  adminTransfersAwaitingReconciliation,
   loadWallet,
   openRounds,
   pausePlay,
@@ -269,53 +267,6 @@ describe('Solaris transfers use the verified character, never the request', () =
     const error = (await startSolarisTransfer(session, body).catch((e) => e)) as AppError;
     expect([error.statusCode, error.code]).toEqual([409, 'IDEMPOTENCY_CONFLICT']);
     expect(error.message).not.toContain('secret');
-  });
-});
-
-describe('administrator reconciliation', () => {
-  const stuck = (id: string, state: string) => ({
-    id,
-    kind: 'deposit',
-    owner: 'u1',
-    server: 'arrakis',
-    playerId: 'p1',
-    amount: '50',
-    state,
-    createdAt: 1,
-    updatedAt: 2,
-  });
-
-  it('lists only transfers awaiting reconciliation, with the live game balance as a hint', async () => {
-    mocks.listOpen.mockResolvedValue([
-      { owner: 'u1', server: 'arrakis', id: 'a' },
-      { owner: 'u1', server: 'arrakis', id: 'b' },
-    ]);
-    mocks.getIntent.mockImplementation(async (ref: { id: string }) =>
-      ref.id === 'a' ? stuck('a', 'needs_reconciliation') : stuck('b', 'debit_sent'),
-    );
-    mocks.gameBalance.mockResolvedValue(900n);
-    const rows = await adminTransfersAwaitingReconciliation();
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ id: 'a', owner: 'u1', playerId: 'p1', gameBalance: '900' });
-    mocks.gameBalance.mockRejectedValue(new Error('console down'));
-    expect((await adminTransfersAwaitingReconciliation())[0]!.gameBalance).toBeNull();
-  });
-
-  it('resolves in the casino scope on behalf of the administrator who asked', async () => {
-    mocks.resolveTransfer.mockResolvedValue({ ...stuck('a', 'completed') });
-    await adminResolveTransfer(
-      { user: { id: 'admin-9' } } as never,
-      { owner: 'u1', id: 'a' },
-      'applied',
-      'checked the balance',
-    );
-    expect(mocks.resolveTransfer).toHaveBeenCalledWith(
-      expect.anything(),
-      { owner: 'u1', server: 'arrakis', id: 'a' },
-      'applied',
-      'admin-9',
-      'checked the balance',
-    );
   });
 });
 

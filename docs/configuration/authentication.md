@@ -33,7 +33,7 @@ with a key derived from `AUTH_SECRET`; **changing `AUTH_SECRET` invalidates ever
 ### Interactive sign-in time
 
 `authenticatedAt` records the last _interactive_ sign-in (Discord or password). Background re-verification never advances
-it. Administrator step-up uses it ([administrator access](administrator-access.md)).
+it. Administrator step-up uses it (administrator access).
 
 ## Password sign-in
 
@@ -47,7 +47,6 @@ it. Administrator step-up uses it ([administrator access](administrator-access.m
 ## Sign-out and revocation
 
 Sign-out is POST-only through Auth.js. Administrators can end all of their own sessions with
-`DELETE /api/v2/admin/sessions` ([sessions](../features/sessions.md)). There is no MFA.
 
 ## Configuration
 

@@ -3,7 +3,6 @@
 ## Purpose
 
 Show a member their own character and assets. (Operating on _other_ players — kick, grants, resets — is an administrator
-function in the [administrator panel](administrator-panel.md); members cannot affect other players.)
 
 ## Pages
 

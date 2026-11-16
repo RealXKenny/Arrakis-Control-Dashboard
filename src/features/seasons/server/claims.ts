@@ -1,6 +1,8 @@
 import '../../../lib/assert-server';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { getServerEnv } from '../../../config/env';
+import { getLinkedPlayer } from '../../player/server/linked-player';
 import { createLogger } from '../../../lib/logger';
 import { checkRateLimit } from '../../../lib/security/rate-limit';
 import {
@@ -14,11 +16,34 @@ import {
   type Reward,
 } from '../contracts';
 import { currencyOf, deliveryAvailable, deliveryGateway, offline } from './delivery-gateway';
-import { linked } from './deliveries';
 import { claimReward } from './engine';
 import { commit, fail, loadMember, readRecord, seasonKeys } from './store';
 
 const log = createLogger('SEASON CLAIMS');
+/** The recipient is always the member's own verified linked character, resolved server-side. */
+async function linked(owner: string) {
+  const player = await getLinkedPlayer(
+    {
+      guildId: getServerEnv().DISCORD_GUILD_ID,
+      channelId: 'dashboard',
+      userId: owner,
+      username: owner,
+      roleIds: [],
+      interactionId: `season-claim-${randomUUID()}`,
+      commandName: 'portal',
+    },
+    { timeout: 4000 },
+  );
+  if (
+    !player.linked ||
+    !player.pawnId ||
+    !player.controllerId ||
+    !identifier.safeParse(String(player.pawnId)).success ||
+    !identifier.safeParse(String(player.controllerId)).success
+  )
+    fail('The recipient needs a verified linked character.', 409);
+  return { pawnId: String(player.pawnId), controllerId: String(player.controllerId), status: player.onlineStatus };
+}
 /** A persisted send marker older than this is treated as an interrupted send and parked, never resent. */
 const STUCK_MS = 120000;
 export const CLAIM_ALL_BATCH = 10;
@@ -41,10 +66,18 @@ export function claimState(definition: Definition, xp: number, reward: Reward, r
   if (statuses.every((s) => s === 'delivered' || s === 'cancelled')) return 'unavailable' as const;
   return 'pending' as const;
 }
-const write = async (id: string, owner: string, before: string, value: Claims, action: string, detail = {}) => {
+const write = async (
+  id: string,
+  owner: string,
+  before: string,
+  value: Claims,
+  action: string,
+  detail = {},
+  actor = owner,
+) => {
   await commit({
     id,
-    actor: owner,
+    actor,
     action,
     writes: [{ key: seasonKeys.gameClaims(id, owner), before, after: value }],
     detail,
@@ -163,6 +196,7 @@ export async function claimGameReward(id: string, owner: string, rewardId: strin
     record.revision = randomUUID();
     // The marker is durable before the game is contacted. A lost reply can therefore never be resent.
     raw = await write(id, owner, raw, claims.value, 'claim.sending', { rewardId });
+    await markAttention(id, owner, rewardId, true);
     const outcome = await deliveryGateway.grant(record.pawnId, part.reward, expected);
     part.status = outcome === 'delivered' ? 'delivered' : 'uncertain';
     part.outcome = outcome === 'delivered' ? 'console_confirmed' : 'outcome_unknown';
@@ -179,7 +213,9 @@ export async function claimGameReward(id: string, owner: string, rewardId: strin
       };
     }
   }
-  return { rewardId, state: claimState(season.definition, data.progress.value.xp, reward, record) };
+  const finalState = claimState(season.definition, data.progress.value.xp, reward, record);
+  if (finalState === 'claimed' || finalState === 'unavailable') await markAttention(id, owner, rewardId, false);
+  return { rewardId, state: finalState };
 }
 /** Claims unlocked rewards in level order, a bounded batch per request. Stops at the first uncertain or blocking result. */
 export async function claimAllAvailable(id: string, owner: string) {
@@ -220,35 +256,37 @@ export async function claimAllAvailable(id: string, owner: string) {
   }
   return { results, remaining: Math.max(0, todo.length - results.length), blocked: null as string | null };
 }
-/** Administrator verification of an uncertain component; the owner can never resolve their own claim. */
-export async function resolveGameClaim(
-  id: string,
-  owner: string,
-  rewardId: string,
-  index: number,
-  applied: boolean,
-  note: string,
-  actor: string,
-) {
-  if (actor === owner) fail('A different administrator must verify this delivery.', 403);
-  const claims = await loadGameClaims(id, owner);
-  parkInterrupted(claims.value);
-  const part = claims.value[rewardId]?.components[index];
-  if (!part || part.status !== 'uncertain') fail('This delivery does not require verification.');
-  part.status = applied ? 'delivered' : 'cancelled';
-  part.resolvedBy = actor;
-  part.resolutionNote = note;
-  part.completedAt = new Date().toISOString();
-  part.outcome = applied ? 'operator_verified_applied' : 'operator_verified_not_applied';
-  claims.value[rewardId].revision = randomUUID();
-  await commit({
-    id,
-    actor,
-    action: 'claim.reconciled',
-    writes: [{ key: seasonKeys.gameClaims(id, owner), before: claims.raw, after: claims.value }],
-    detail: { owner, rewardId, index, applied: applied ? 1 : 0 },
-  });
-  if (!claims.value[rewardId].components.some((c) => c.status === 'uncertain' || c.status === 'sending'))
-    await markAttention(id, owner, rewardId, false);
-  return claims.value[rewardId];
+/**
+ * Worker-only. Parks interrupted sends as quarantined and clears resolved entries. It reads claim records and writes
+ * only the compare-and-set claim state; it never contacts the game, so it cannot create or repeat a grant.
+ */
+export async function recoverClaims(id: string) {
+  const result = { parked: 0, quarantined: 0, cleared: 0 };
+  for (const entry of (await claimAttention(id)).slice(0, 200)) {
+    const claims = await loadGameClaims(id, entry.owner);
+    if (parkInterrupted(claims.value)) {
+      try {
+        await write(
+          id,
+          entry.owner,
+          claims.raw,
+          claims.value,
+          'claim.parked',
+          { rewardId: entry.rewardId },
+          'system:reward-recovery',
+        );
+        result.parked += 1;
+      } catch {
+        continue; // the player or another worker changed it; reread next tick
+      }
+    }
+    const open =
+      claims.value[entry.rewardId]?.components.filter((c) => c.status === 'uncertain' || c.status === 'sending') ?? [];
+    if (open.length) result.quarantined += open.length;
+    else {
+      await markAttention(id, entry.owner, entry.rewardId, false);
+      result.cleared += 1;
+    }
+  }
+  return result;
 }

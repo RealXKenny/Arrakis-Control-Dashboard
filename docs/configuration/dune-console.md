@@ -35,14 +35,13 @@ See [RedBlink integration](../integrations/redblink-dune-docker.md#enable-the-di
 Console API keys start with no access and are scoped per namespace (None / Read / Read+write, or an explicit action list).
 These are the Console routes the member features call, so these namespaces need **Read**:
 
-| Dashboard feature          | Console routes called (GET unless noted)                                                                                    |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Portal, status, population | `/api/players`, `/api/players/online`, `/api/map/markers`, `/api/exchange/stats`, `/api/admin/landsraad`                    |
-| Character, holdings        | `/api/players/{id}/…`, `/api/players/{id}/bases`, `/api/bases/{id}/export`                                                  |
-| Vehicles                   | `/api/players/{id}/vehicles`, `/api/vehicles`                                                                               |
-| Market                     | `/api/exchange/items`, `/api/exchange/listings`, `/api/exchange/market`, `/api/exchange/stats`                              |
-| Maps                       | `/api/map/markers`, `/api/realtime/objects`, `/api/players/online`                                                          |
-| Guilds                     | `/api/guilds`, `/api/guilds/{id}/members`; **POST/DELETE/…** `/api/guilds/{id}/…` for leader tools and accepting applicants |
+| Dashboard feature   | Console routes called (GET unless noted)                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Character, holdings | `/api/players/{id}/…`, `/api/players/{id}/bases`, `/api/bases/{id}/export`                                                  |
+| Vehicles            | `/api/players/{id}/vehicles`, `/api/vehicles`                                                                               |
+| Market              | `/api/exchange/items`, `/api/exchange/listings`, `/api/exchange/market`, `/api/exchange/stats`                              |
+| Maps                | `/api/map/markers`, `/api/realtime/objects`, `/api/players/online`                                                          |
+| Guilds              | `/api/guilds`, `/api/guilds/{id}/members`; **POST/DELETE/…** `/api/guilds/{id}/…` for leader tools and accepting applicants |
 
 Grant guild write actions only if you want leaders to manage members from the dashboard. Authoritative namespace and action
 names are shown in the Console's key editor (_Settings → API Keys_). Some namespaces (`settings`, `database`, `setup`,
@@ -74,7 +73,6 @@ Invoke-RestMethod -Headers @{ Authorization = "Bearer $env:DUNE_API_KEY" } "$env
 ```
 
 A `401` means the key/token is wrong, disabled or expired (a bad bearer is **not** retried with a cookie); `403` usually means a
-missing scope; the adapter answers `404` when disabled and `503` when its token file is missing. In the dashboard, `/admin`
 → _Overview_ shows whether the admin key and adapter are configured and whether they work.
 
 ## Security

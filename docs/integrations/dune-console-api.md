@@ -19,7 +19,6 @@ page covers only how the **dashboard** talks to it. Dashboard code: `src/server/
 ## Upstream conventions worth knowing
 
 - Paginated lists use `page` (default 0), `pageSize` (default 20), `q`, `sortColumn`, `sortDirection` and return `totalCount`.
-- Mutations carry confirmation phrases in the body (the administrator panel supplies them); upstream rate-limits most mutations
   to roughly 20 requests/minute per session+IP, so heavy automation can hit Console `429` even though the dashboard's own
   administrator budget is 300/minute.
 - Long operations return a `task` object; the panel streams task and log events (server-sent events, bounded to 60 s / 2 MiB).
@@ -37,4 +36,3 @@ The dashboard's catalog marks such operations `restriction` and never forwards t
 
 ## Related
 
-[RedBlink integration](redblink-dune-docker.md) · [Administrator panel](../features/administrator-panel.md) · [Console connection troubleshooting](../troubleshooting/console-connection.md)

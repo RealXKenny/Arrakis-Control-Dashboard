@@ -11,6 +11,7 @@ import {
   type Submission,
   type Progress,
   type Totals,
+  usesManualClaims,
 } from '../contracts';
 import { commit, loadMember, loadSeason, readRecord, seasonKeys, fail, storage } from './store';
 import { validateArtworkReferences } from './artwork';
@@ -232,48 +233,6 @@ export async function submitChallenge(
   return { progress, duplicate: false };
 }
 
-export async function reviewSubmission(
-  id: string,
-  owner: string,
-  submissionId: string,
-  approve: boolean,
-  note: string,
-  actor: string,
-) {
-  const data = await loadMember(id, owner);
-  if (data.season.value.phase === 'archived') fail('Archived seasons cannot accept moderation.');
-  const progress = data.progress.value;
-  const previousXp = progress.xp;
-  const submission = progress.submissions.find((v) => v.id === submissionId);
-  if (!submission) fail('Submission not found.', 404);
-  if (submission.status !== 'pending') return { progress, duplicate: true };
-  if (actor === owner) fail('Another administrator must review your submission.', 403);
-  const challenge = data.season.value.definition.challenges.find((v) => v.id === submission.challengeId);
-  if (!challenge) fail('Challenge not found.', 404);
-  submission.status = approve ? 'approved' : 'rejected';
-  submission.note = note;
-  submission.reviewer = actor;
-  submission.reviewedAt = new Date().toISOString();
-  const totals = data.totals.value;
-  if (approve) {
-    award(progress, challenge.xp, challenge.name, actor, submission.id);
-    updateTotals(totals, data.season.value, previousXp, progress, false, challenge.id);
-  }
-  await commit({
-    id,
-    actor,
-    action: approve ? 'submission.approved' : 'submission.rejected',
-    writes: [
-      { key: seasonKeys.season(id), before: data.season.raw },
-      { key: seasonKeys.progress(id, owner), before: data.progress.raw, after: progress },
-      { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },
-    ],
-    inbox: { id: submissionId, remove: true },
-    detail: { submissionId, owner },
-  });
-  return { progress, duplicate: false };
-}
-
 export async function claimReward(id: string, owner: string, rewardId: string) {
   const data = await loadMember(id, owner);
   const state = seasonState(data.season.value);
@@ -340,8 +299,8 @@ export async function syncAutomaticProgress(
     changed = true;
   }
   const level = levelProgress(season.definition, progress.xp).level;
-  // Seasons with a reward economy require an explicit Claim Reward click for every reward, cosmetics included.
-  for (const reward of season.definition.economy ? [] : season.definition.rewards) {
+  // Seasons with game rewards require an explicit Claim Reward click for every reward, cosmetics included.
+  for (const reward of usesManualClaims(season.definition) ? [] : season.definition.rewards) {
     if (reward.level > level || progress.claims.some((c) => c.reward.id === reward.id)) continue;
     progress.claims.push({ reward: structuredClone(reward), at: new Date().toISOString() });
     updateTotals(totals, season, progress.xp, progress, first, undefined, reward.id);
@@ -384,36 +343,6 @@ export async function equipReward(id: string, owner: string, rewardId: string) {
         after: { ...equipment.value, [claim.reward.kind]: { reward: claim.reward, seasonId: id } },
       },
     ],
-  });
-  return progress;
-}
-export async function correctXp(
-  id: string,
-  owner: string,
-  delta: number,
-  reason: string,
-  operationId: string,
-  actor: string,
-) {
-  const data = await loadMember(id, owner);
-  if (['draft', 'preview', 'scheduled'].includes(seasonState(data.season.value))) fail('This season has not started.');
-  const progress = data.progress.value;
-  const previousXp = progress.xp;
-  if (progress.ledger.some((v) => v.id === operationId)) return progress;
-  award(progress, delta, `Correction: ${reason}`, actor);
-  progress.ledger[progress.ledger.length - 1].id = operationId;
-  const totals = data.totals.value;
-  updateTotals(totals, data.season.value, previousXp, progress, !data.progress.raw);
-  await commit({
-    id,
-    actor,
-    action: 'xp.corrected',
-    writes: [
-      { key: seasonKeys.season(id), before: data.season.raw },
-      { key: seasonKeys.progress(id, owner), before: data.progress.raw, after: progress },
-      { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },
-    ],
-    detail: { owner, delta, reason, operationId },
   });
   return progress;
 }

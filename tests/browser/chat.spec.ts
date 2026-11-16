@@ -375,7 +375,7 @@ test('an exhausted send is visible only to its sender and dismissal survives fre
     });
   });
   const otherContext = await browser.newContext({
-    extraHTTPHeaders: { Cookie: '__Host-dashboard_session=browser-admin-session' },
+    extraHTTPHeaders: { Cookie: '__Host-dashboard_session=browser-second-session' },
   });
   try {
     const other = await otherContext.newPage();

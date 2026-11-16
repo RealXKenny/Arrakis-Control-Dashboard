@@ -12,11 +12,6 @@ The request lacks an `Origin` header or it is not the `APP_URL` origin; or the p
 
 The cookie is not being stored or sent: `__Host-` cookies need HTTPS, path `/` and no `Domain`; check the proxy forwards `Cookie` and the browser accepts it.
 
-## 403 `ADMIN_REAUTH_REQUIRED`
-
-Sign in again; high-risk operations need a sign-in within `ADMIN_HIGH_RISK_REAUTH_MINUTES` (60), others within `ADMIN_REAUTH_HOURS` (12). New catalog operations are high risk by default
-([administrator access](../configuration/administrator-access.md)).
-
 ## Marketplace upload refused
 
 `USER_LIMIT` (25 listings), `STORAGE_LIMIT` (24 MiB), `MARKETPLACE_FULL`, `FILE_TOO_LARGE` (2 MiB), `THUMBNAIL_TOO_LARGE` (700 KiB), `RATE_LIMITED` (10/hour); a picture is required to publish an owned base ([marketplace](../features/marketplace.md)).

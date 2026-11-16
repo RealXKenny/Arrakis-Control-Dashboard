@@ -15,7 +15,6 @@ import { DisbandPanel } from '../../../features/guilds/components/management';
 import { GuildEmblem } from '../../../features/guilds/components/logo-uploader';
 import { Roster } from '../../../features/guilds/components/roster';
 import { SettingsForm } from '../../../features/guilds/components/settings-form';
-import { SupportPanel } from '../../../features/guilds/components/support-panel';
 import { GuildNoticeboard } from '../../../features/guilds/components/noticeboard';
 import { GuildOperationsPlanner } from '../../../features/guilds/components/operations-planner';
 import { GuildResourceRequests } from '../../../features/guilds/components/resource-requests';
@@ -170,7 +169,6 @@ export default async function MyGuildPage({
             initial={requirement ?? { guildName: guild.name, requirements: '', contact: '', published: false }}
           />
           <ApplicationInbox guildId={guild.id} />
-          <SupportPanel guildId={guild.id} />
           <DisbandPanel guildId={guild.id} guildName={guild.name} />
         </div>
       )}

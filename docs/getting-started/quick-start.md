@@ -42,8 +42,6 @@ Minimum for signing in locally (use your own values; keep `.env` out of Git):
 | `DUNE_API_URL`, `DUNE_API_KEY`                | Your Console; needed for live data                                              |
 
 Add `http://127.0.0.1:2008/api/auth/callback/discord` as a redirect URL in the Discord application. In development
-`ADMIN_DISCORD_IDS` may stay empty; the project owner's Discord ID is then the only administrator. Set it to your own
-Discord user ID to test `/admin`.
 
 ## 3. Start
 
@@ -60,4 +58,4 @@ The server binds `SERVER_HOSTNAME:SERVER_PORT` (default `127.0.0.1:2008`) and pr
 - **Sign in** sends you to Discord and back to `/post-login`, then the portal.
 - The startup log shows `Starting dashboard`, and warns if the Console is unreachable (the site still starts).
 
-Next: [first run](first-run.md) · [first administrator login](first-admin-login.md) · [development workflow](../development/development-workflow.md).
+Next: [first run](first-run.md) · first administrator login · [development workflow](../development/development-workflow.md).

@@ -4,13 +4,11 @@ Work through this list, then the [deployment checklist](../deployment/deployment
 
 ## Configuration
 
-- [ ] `ADMIN_DISCORD_IDS` set explicitly to the smallest list; every ID in the guild with the member role.
 - [ ] `AUTH_SECRET` 48+ random characters, unique; `OWNER_KEY_SECRET` set to a separate random value **before** publishing listings you keep.
 - [ ] `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN` and `BOT_API_TOKEN` all different; minimal Console scopes.
 - [ ] `APP_URL` is the exact public `https://` origin.
 - [ ] `REDIS_URL` uses a password and `rediss://` where traffic leaves the host; `REDIS_REQUIRE_TLS=true`; `REDIS_ALLOW_INSECURE` left `false`.
 - [ ] `TRUSTED_PROXY_COUNT` equals the real number of proxies.
-- [ ] `ADMIN_REAUTH_HOURS` / `ADMIN_HIGH_RISK_REAUTH_MINUTES` reviewed (defaults 12 / 60).
 - [ ] `AUDIT_LOG_STDOUT=true` and the output shipped off the host; `AUDIT_LOG_REDIS=true` for in-app review.
 - [ ] `LOG_LEVEL=INFO` (not `DEBUG`) in production.
 
@@ -41,7 +39,6 @@ Work through this list, then the [deployment checklist](../deployment/deployment
 ```bash
 curl -sI https://dashboard.example.com/ | grep -iE "strict-transport|content-security|x-frame|x-content-type"
 curl -s -o /dev/null -w "%{http_code}\n" https://dashboard.example.com/.env              # 404
-curl -s -o /dev/null -w "%{http_code}\n" https://dashboard.example.com/api/v2/admin/overview   # 401
 ```
 
 Cross-origin mutations must be refused (403 `INVALID_ORIGIN`); startup must show no `REDIS_URL carries no password` warning.

@@ -34,7 +34,6 @@ import {
   claimGameReward,
   claimState,
   loadGameClaims,
-  resolveGameClaim,
 } from '../../../src/features/seasons/server/claims';
 import type { Definition } from '../../../src/features/seasons/contracts';
 
@@ -122,15 +121,8 @@ describe('manual direct claims', () => {
     expect(await claimAttention(season.id)).toEqual([
       expect.objectContaining({ owner: 'member', rewardId: 'wayfarer' }),
     ]);
-    await expect(
-      resolveGameClaim(season.id, 'member', 'wayfarer', 1, true, 'Checked the inventory.', 'member'),
-    ).rejects.toMatchObject({ statusCode: 403 });
-    await resolveGameClaim(season.id, 'member', 'wayfarer', 1, true, 'Checked the inventory.', 'admin');
-    expect(await claimAttention(season.id)).toEqual([]);
-    const done = await claimGameReward(season.id, 'member', 'wayfarer');
-    expect(done.state).toBe('claimed');
-    // Only the never-attempted component was sent after reconciliation.
-    expect(mock.grant).toHaveBeenCalledTimes(3);
+    // The uncertainty stays quarantined: nothing can resend it, and the never-attempted component stays unsent.
+    expect(mock.grant).toHaveBeenCalledTimes(2);
   });
   it('can retry safely after a failure that happened before anything was sent', async () => {
     const season = await setup();

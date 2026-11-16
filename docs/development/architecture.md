@@ -29,12 +29,10 @@ flowchart TD
 
 `features/auth/server/config.ts` (Auth.js) issues the cookie; `session-store.ts` is raw Redis persistence; `session.ts` is the freshness
 orchestration every reader uses (30-minute Discord re-verification, 6-hour grace, cross-instance refresh-token lock in `reverify.ts`).
-Keep store and orchestration acyclic. Admin authority: `features/admin/server/access.ts` and `risk.ts`. See [authentication](../configuration/authentication.md).
 
 ## Console access
 
 `server/integrations/dune.ts` wraps `dunedocker/transport.ts` (timeouts, read retries, safe errors). Features normalize responses from
-`unknown`. The admin catalog (`features/admin/catalog.json`) is an allowlist executed by `features/admin/server/execute.ts`.
 
 ## Redis
 

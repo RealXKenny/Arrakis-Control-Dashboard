@@ -49,14 +49,6 @@ export const casinoApi = {
   transfers: async () => (await call<{ transfers: TransferRow[] }>('transfers')).transfers,
   transfer: async (kind: 'deposit' | 'withdrawal', amount: string, idempotencyKey: string) =>
     (await call<{ transfer: TransferRow }>('transfers', { kind, amount, idempotencyKey })).transfer,
-  adminTransfers: async () =>
-    (
-      await call<{ transfers: Array<TransferRow & { owner: string; playerId: string; gameBalance: string | null }> }>(
-        'admin/transfers',
-      )
-    ).transfers,
-  adminResolve: async (owner: string, id: string, resolution: 'applied' | 'not_applied', note: string) =>
-    (await call<{ transfer: TransferRow }>('admin/transfers', { owner, id, resolution, note })).transfer,
   startRound: async (game: string, wager: string, params: unknown, idempotencyKey: string) =>
     (await call<{ round: RoundView }>('rounds', { game, wager, params, idempotencyKey })).round,
   act: async (roundId: string, action: unknown) =>

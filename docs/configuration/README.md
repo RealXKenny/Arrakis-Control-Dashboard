@@ -8,7 +8,6 @@ committed template; `.env` is git-ignored. Empty values count as unset. Malforme
 | [Environment variables](environment-variables.md) | Every variable, default, range and whether production requires it |
 | [Authentication](authentication.md)               | Discord OAuth and email/password, sessions, re-verification       |
 | [Discord OAuth](discord-oauth.md)                 | Creating the Discord application and callback URL                 |
-| [Administrator access](administrator-access.md)   | `ADMIN_DISCORD_IDS`, step-up windows, risk classes                |
 | [Dune Console](dune-console.md)                   | `DUNE_API_URL`, API keys, adapter token, scopes                   |
 | [Redis](redis.md)                                 | Standalone Redis: URLs, TLS, persistence, what is stored          |
 | [Redis Cluster](redis-cluster.md)                 | `REDIS_CLUSTER_NODES`, hash tags, limits, failover                |

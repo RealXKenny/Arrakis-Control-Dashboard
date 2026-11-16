@@ -43,7 +43,6 @@ const lookup = (q = 'shelter', signal = new AbortController().signal) => lookupA
 it('uses the canonical route inventory with nested search and permission filtering', () => {
   expect(navigationCommands(navigationFor(), 'base storage')[0].href).toBe('/storage');
   expect(navigationCommands(navigationFor(), 'administration')).toEqual([]);
-  expect(navigationCommands(navigationFor({ isAdmin: true }), 'administration')[0].href).toBe('/admin');
   expect(new Set(navigationCommands(navigationFor(), '').map((r) => r.href)).size).toBe(
     navigationCommands(navigationFor(), '').length,
   );

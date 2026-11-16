@@ -112,16 +112,10 @@ test.describe('wallet and transfers', () => {
     await signIn(context, 50_000, { failures: { 'add-currency': 500 } });
     await transfer(page, 'Deposit to casino', 2_000);
     await expect(page.getByText('We could not confirm whether the game took the Solaris.')).toBeVisible();
-    await expect(page.getByText('Nothing more will be sent automatically.')).toBeVisible();
+    await expect(page.getByText(/Nothing more will be sent automatically/)).toBeVisible();
     await page.reload();
     expect(await walletBalance(page)).toBe('0');
     expect(await adjustments()).toHaveLength(1);
-  });
-
-  test('the reconciliation page does not exist for ordinary members', async ({ page, context }) => {
-    await signIn(context, 0);
-    const response = await page.goto('/casino/admin');
-    expect(response?.status()).toBe(404);
   });
 });
 

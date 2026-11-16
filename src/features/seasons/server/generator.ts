@@ -16,7 +16,6 @@ import {
 import { commit, fail, loadSeason, readRecord, seasonKeys, listSeasons, storage } from './store';
 import { transitionSeason } from './engine';
 import { loadItemCatalog } from './item-catalog';
-import { createLogger } from '../../../lib/logger';
 
 const policySchema = z
   .object({
@@ -129,25 +128,6 @@ export async function configureGenerator(
   });
   return view(policy);
 }
-export async function setGeneratorEnabled(revision: string, enabled: boolean, admin: string) {
-  const record = await policyRecord();
-  if (!record.value || record.value.revision !== revision) fail('Generator settings changed. Reload first.');
-  const next = {
-    ...record.value,
-    enabled,
-    error: enabled ? null : record.value.error,
-    revision: randomUUID(),
-    updatedAt: new Date().toISOString(),
-  };
-  await commit({
-    id: 'automation',
-    actor: admin,
-    action: enabled ? 'generator.resumed' : 'generator.paused',
-    writes: [{ key: seasonKeys.generator, before: record.raw, after: next }],
-  });
-  return view(next);
-}
-
 /** Each restart or instance reconciles the durable cursor. A policy CAS fences publication against pause/reconfigure. */
 async function step() {
   const record = await policyRecord(),
@@ -311,22 +291,23 @@ export async function ensureDefaultGenerator() {
     if (!(await policyRecord()).value) throw error;
   }
 }
-export function startSeasonGenerator() {
-  let running = false;
-  const log = createLogger('SEASONS');
-  const scan = async () => {
-    if (running) return;
-    running = true;
-    try {
-      await ensureDefaultGenerator();
-      await runGenerator();
-    } catch {
-      log.warn('Automatic seasons are temporarily unavailable.');
-    } finally {
-      running = false;
-    }
+/** A policy the generator disabled after an error is re-enabled once an hour has passed; nothing else can disable it. */
+export async function resumeBlockedGenerator() {
+  const record = await policyRecord();
+  const policy = record.value;
+  if (!policy || policy.enabled || !policy.error || Date.now() - Date.parse(policy.updatedAt) < 3600000) return false;
+  const next: Policy = {
+    ...policy,
+    enabled: true,
+    error: null,
+    revision: randomUUID(),
+    updatedAt: new Date().toISOString(),
   };
-  void scan();
-  const timer = setInterval(() => void scan(), 60000);
-  timer.unref();
+  await commit({
+    id: 'automation',
+    actor,
+    action: 'generator.resumed',
+    writes: [{ key: seasonKeys.generator, before: record.raw, after: next }],
+  });
+  return true;
 }

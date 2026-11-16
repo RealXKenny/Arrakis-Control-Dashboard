@@ -22,7 +22,14 @@ export const RENAMES = [
   ['ADAPTER_TOKEN', 'DUNE_ADAPTER_TOKEN'],
 ];
 /** Variables that no longer exist. Their behavior is now automatic or moved elsewhere. */
-export const REMOVED = ['SEASON_GAME_DELIVERY_ENABLED', 'SEASON_AUTOMATION_ENABLED'];
+export const REMOVED = [
+  'SEASON_GAME_DELIVERY_ENABLED',
+  'SEASON_AUTOMATION_ENABLED',
+  // The administrator system no longer exists.
+  'ADMIN_DISCORD_IDS',
+  'ADMIN_REAUTH_HOURS',
+  'ADMIN_HIGH_RISK_REAUTH_MINUTES',
+];
 
 const assignment = /^(\s*)(export\s+)?([A-Za-z_][A-Za-z0-9_]*)(\s*=)(.*)$/;
 const commentedAssignment = /^\s*#\s*([A-Z][A-Z0-9_]*)\s*=/;

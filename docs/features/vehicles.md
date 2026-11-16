@@ -16,7 +16,6 @@ Console payloads are never sent to the browser; unknown or oversized fields are 
 
 ## Limitations
 
-Vehicle management actions (permissions, custodian transfer, storage, deletion) exist only in the [administrator panel](administrator-panel.md)
 and depend on your Console's API and key scopes; the member page is read-only.
 
 ## Troubleshooting

@@ -12,15 +12,7 @@ import styles from './command-palette.module.css';
 import { DataFreshness } from '../../monitoring/components/data-freshness';
 import { beginCheck, emptyHealth, failedRead, successfulRead } from '../../monitoring/freshness';
 
-export function CommandPalette({
-  isAdmin,
-  onClose,
-  returnFocus,
-}: {
-  isAdmin: boolean;
-  onClose(): void;
-  returnFocus: HTMLElement | null;
-}) {
+export function CommandPalette({ onClose, returnFocus }: { onClose(): void; returnFocus: HTMLElement | null }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const request = useRef<AbortController | null>(null);
@@ -33,7 +25,7 @@ export function CommandPalette({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [active, setActive] = useState(0);
-  const destinations = navigationCommands(navigationFor({ isAdmin }), query);
+  const destinations = navigationCommands(navigationFor(), query);
   const storage = navigationItemFor('storage')?.href;
   const results =
     mode === 'navigation'

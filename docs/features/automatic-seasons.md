@@ -1,16 +1,12 @@
 # Automatic seasons
 
-After one-time administrator setup, the engine generates and publishes numbered three-month seasons, prepares the next season and archives the previous generated season at rollover. Each season has 100 free cosmetic levels, 100 API-observed objectives and cooperative milestones. Automatic seasons start by default on a fresh install: the engine creates its policy once if none exists, and an administrator pause saved in Redis is never overridden by a restart. Nothing is delivered automatically: every in-game reward needs the player's explicit claim, validated and executed by the server (see below).
+The dashboard generates, publishes and archives numbered three-month seasons on its own. Each season has 100 free levels, 100 API-observed objectives and cooperative milestones. There is no administrator interface: nothing needs to be configured, approved or moderated.
 
-## Setup
+## How it starts and runs
 
-1. Open **Admin → Seasons → Automatic season engine**.
-2. Set the first season number, first start in UTC and IANA calendar timezone. Start after existing published schedules. Names become `Season 1`, `Season 2`, and onward; existing records are preserved.
-3. Use the default new-progress template or select an existing 100-level, 100-reward template with exactly 20 API-observed objectives in each path. Moderator-reviewed objectives cannot enter automation.
-4. Type `ENABLE AUTOMATIC SEASONS` and enable the sequence. This audited action authorizes future generation/publication without per-season approvals.
-5. Inspect the current/next seasons. Pause stops future generation, publication and archiving; existing active-season progression continues. Resume retains the cursor. Reconfiguration while paused starts a new sequence and retains old records.
+On a fresh install the `seasons` background worker (see [background workers](../architecture/background-workers.md)) creates its policy once, starts the first season at the next calendar boundary after any existing schedule, prepares the next season and archives the previous one at rollover. Names are `Season 1`, `Season 2`, and onward; existing records are preserved and published definitions are never rewritten.
 
-Overlaps, reserved numbers/slugs, edited pending rules or invalid configurations stop automation with an explicit reason. Fix the conflict and refresh the policy revision before resuming. No published definition is overwritten. Existing manual seasons are not automatically archived.
+Overlaps, reserved numbers or slugs, or invalid generated content stop the sequence with a stored reason, and the worker resumes it automatically after an hour. Seasons with moderator-reviewed objectives cannot be generated, because nothing can review evidence.
 
 ## Verification limits
 
@@ -54,10 +50,6 @@ Not implemented because no verified evidence exists: gathering, crafting, supply
 
 ### Rewards and manual claiming
 
-When the Console is configured the generator reads its item catalog (`/api/admin/items/catalog`). The catalog has no prices or rarity, so items are classified by category into four reviewed value tiers (materials, consumables, components and tools, equipment) with quantity limits and minimum levels. Developer, quest, patent/schematic, entitlement-controlled and unclassified items are excluded. House Credits and Solaris are generated within caps. If the Console is configured but unreachable, a season more than a day away waits; an imminent season degrades to capped currency and records a note. Without a configured Console, seasons stay cosmetics-only.
-
-Seasons with an economy never claim anything automatically. The player confirms **Claim Reward** (or **Claim All Available**, processed in batches of ten, in level order). The server verifies level, the dashboard cosmetic, a fresh linked character, that the character is offline and that the season is bound to that one character, then sends each component through the administrator Console connection. A durable marker is written before each send; Solaris and House Credits are confirmed against exact balances, items against the Console's database receipt. Bundle components are tracked independently; a component that was never attempted can be retried safely. An unconfirmed, interrupted or partial send is never resent: it becomes **uncertain**, pauses Claim All for that player and appears in the administrator reconciliation queue. Character XP delivery is not offered: the Console's `add-xp` only queues a task and returns no verifiable receipt.
-
 ## Algorithm, scheduling and recovery
 
 Algorithm v2 (v1 policies upgrade for future seasons only; the personal-plan algorithm and reward economy are versioned separately) persists settings, source template, sequence identity, UUID revision and durable cursor in `arrakis:{seasons}:v1:generator`. Next.js instrumentation starts a non-blocking minute reconciler, with no build-time work. No environment variable, external queue, migration or dependency is required.
@@ -69,9 +61,5 @@ The deterministic number seed varies objective ordering, XP weights and theme. E
 Same-slot CAS fences publication against pause/reconfiguration. Durable pending identity and definition hashes recover creation/publication interruptions across instances. At most current/next seasons are prepared. Extended downtime skips expired empty windows with an audit count while numbering stays sequential; no fictional historical seasons or player progress are created. Archiving uses the normal empty-moderation-queue guard. Histories, ownership and audits never expire automatically. Safety bounds are 99,999 generated numbers and 10,001 anchor windows; exhaustion stops visibly.
 
 ## API and testing
-
-Existing `GET /api/v2/admin/seasons` returns an admin-only policy/status projection, excluding the source template. Existing admin POST actions add `generator-configure`, `generator-state` and `generator-run`, using the normal same-origin verified-admin, recent-sign-in, rate-budget, UUID revision and enable-confirmation protections. Member POST adds strict `sync` with only `seasonId`; the owner always comes from the session.
-
-Unit tests cover deterministic generation, month ends/leap years, fairness, unsupported moderation refusal, concurrent schedulers/claims, pause fences, downtime and permanent two-season history. Real standalone/Cluster Lua tests exercise generation, concurrent bulk claims and simulated rollover. Chromium, Safari WebKit, iPhone and Android tests cover admin enablement, automatic publication/progression, authorization, accessibility, screenshots and absence of game writes. Simulated tests change isolated server time; production has no clock override. Emulation does not certify physical devices or assistive technology.
 
 See [community seasons](community-seasons.md), [testing](../development/testing.md) and [battle pass provenance](../legal/battle-pass-provenance.md).

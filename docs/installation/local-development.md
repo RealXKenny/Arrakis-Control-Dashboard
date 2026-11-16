@@ -38,7 +38,6 @@ npm run dev
 | Area               | Development                                                                                 | Production                                              |
 | ------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | Redis              | Optional. Without `REDIS_URL`, sessions and rate limits use process memory                  | Required; storage failure makes rate limits fail closed |
-| Administrators     | If `ADMIN_DISCORD_IDS` is empty, the project owner's built-in ID is the administrator       | `ADMIN_DISCORD_IDS` is required                         |
 | Cookie names       | `dashboard_session`                                                                         | `__Host-dashboard_session`                              |
 | Startup validation | Not enforced                                                                                | Enforced; invalid config stops serving                  |
 | Origin checks      | The configured `APP_URL` origin **and** the request's own origin are accepted for mutations | Only `APP_URL`'s origin                                 |

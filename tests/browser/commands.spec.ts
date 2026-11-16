@@ -50,17 +50,12 @@ test('keyboard navigation filters authorized destinations, traps focus, restores
   await expect(dialog).toHaveCount(0);
   await expect(page.getByLabel('Entry title')).toHaveValue('Unsent plan');
 });
-test('members cannot see admin commands and anonymous visitors have no palette', async ({ page, browser }) => {
+test('there is no administration command and anonymous visitors have no palette', async ({ page, browser }) => {
   await setup(page);
   const dialog = await open(page);
   await dialog.getByRole('searchbox').fill('administration');
   await expect(dialog.getByRole('link')).toHaveCount(0);
   await page.keyboard.press('Escape');
-  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.goto('/portal');
-  await open(page);
-  await dialog.getByRole('searchbox').fill('administration');
-  await expect(dialog.getByRole('link', { name: /Administration/ })).toHaveAttribute('href', '/admin');
   const anonymous = await browser.newContext();
   try {
     const tab = await anonymous.newPage();

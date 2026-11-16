@@ -11,7 +11,6 @@ The top navigation has a notifications menu (and a mobile section) with two kind
 
 Unread counts are counted per conversation (at most 100) and cleared only when the browser **acknowledges the exact messages it
 displayed**; merely loading a page never marks messages read. Administrators have an equivalent unread summary across guilds
-(`GET /api/admin/guild-support-status`, up to 20 guild IDs).
 
 ## Outside the dashboard
 

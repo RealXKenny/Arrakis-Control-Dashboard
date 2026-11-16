@@ -228,31 +228,8 @@ export async function startTransfer(deps: TransferDeps, input: StartInput): Prom
   return send(deps, stored, balance);
 }
 
-/** Admin resolution of an uncertain transfer after the game balance has been checked out-of-band. */
-export async function resolveTransfer(
-  deps: TransferDeps,
-  ref: IntentRef,
-  resolution: 'applied' | 'not_applied',
-  admin: string,
-  note: string,
-): Promise<TransferIntent> {
-  const intent = await deps.intents.get(ref);
-  if (!intent) throw transferError('NOT_FOUND', 'Unknown transfer');
-  if (intent.state !== 'needs_reconciliation')
-    throw transferError('INVALID_STATE', 'Transfer is not awaiting reconciliation');
-  const patch = { resolvedBy: admin, resolutionNote: note.slice(0, 500) };
-  deps.audit({
-    event: 'casino.transfer.reconciled',
-    outcome: 'success',
-    actor: admin,
-    data: { id: intent.id, resolution },
-  });
-  if (resolution === 'applied') return finishApplied(deps, await move(deps, intent, 'game_applied', patch));
-  return fail(deps, { ...intent, ...patch }, 'RECONCILED_NOT_APPLIED');
-}
-
 /**
- * Recovery sweep (run at startup / on a timer / by an admin):
+ * Recovery sweep (run at startup and by the background worker):
  *  - game_applied: finish the idempotent wallet step;
  *  - debit_sent / credit_sent older than `staleMs`: the process died mid-call, so the outcome is unknown -> reconcile;
  *  - created older than `staleMs`: nothing was sent, so resume safely.

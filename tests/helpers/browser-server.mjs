@@ -88,21 +88,14 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
     return [1, 60000];
   }
   if (operation.toUpperCase() === 'GET') {
-    const admin = key === sessionKey('browser-admin-session');
-    const reviewer = key === sessionKey('browser-reviewer-session');
+    const second = key === sessionKey('browser-second-session');
     const member = key === sessionKey('browser-member-session');
     const slot = poolSlots.get(key);
-    return admin || reviewer || member || slot
+    return second || member || slot
       ? JSON.stringify({
           user: {
-            id: admin
-              ? '456084885220884480'
-              : reviewer
-                ? '456084885220884481'
-                : slot
-                  ? poolDiscordId(slot)
-                  : '123456789000000000',
-            username: admin ? 'Test administrator' : slot ? `Pool member ${slot}` : 'Test member',
+            id: second ? '456084885220884480' : slot ? poolDiscordId(slot) : '123456789000000000',
+            username: second ? 'Second test member' : slot ? `Pool member ${slot}` : 'Test member',
             ...(member ? { avatar: '0123456789abcdef0123456789abcdef' } : {}),
             ...(member ? { guild_nickname: 'Server Alias' } : {}),
           },
@@ -135,7 +128,6 @@ const child = spawn(
       COMMUNITY_EVENTS_CHANNEL_ID: '',
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
       DUNE_API_URL: fakeConsole.url,
-      ADMIN_DISCORD_IDS: '456084885220884480,456084885220884481',
       REDIS_CLUSTER_NODES: '',
       RABBITMQ_CA_FILE: '',
       RABBITMQ_TLS_CA: '',

@@ -47,15 +47,6 @@ const serverEnvSchema = z.object({
   /** Reverse proxies in front of the app. Rate limits trust only the X-Forwarded-For entry the last of them appended. */
   TRUSTED_PROXY_COUNT: z.coerce.number().int().min(0).max(5).default(1),
   API_GLOBAL_READ_LIMIT: z.coerce.number().int().min(1).max(100_000_000).default(2400),
-  /** Comma-separated Discord user IDs allowed to use the administrator workspace. Required in production; development defaults to the project owner. */
-  ADMIN_DISCORD_IDS: z
-    .string()
-    .regex(/^\d{1,25}(\s*,\s*\d{1,25})*$/, 'Must be a comma-separated list of Discord user IDs')
-    .optional(),
-  /** Destructive administrator operations (deletes, confirmed actions, archive downloads) need a sign-in this recent. */
-  ADMIN_HIGH_RISK_REAUTH_MINUTES: z.coerce.number().int().min(5).max(1440).default(60),
-  /** Administrator changes need an interactive sign-in within this many hours; reads are unaffected. */
-  ADMIN_REAUTH_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   /** Server-only HMAC secret for marketplace owner keys. Optional: derived from AUTH_SECRET when absent. */
   OWNER_KEY_SECRET: z.string().min(32).max(256).optional(),
   /** Security audit trail: readable entries on stdout and structured records in a bounded Redis sorted set. */
@@ -72,7 +63,7 @@ const serverEnvSchema = z.object({
   BOT_API_TOKEN: z.string().min(32).max(256).optional(),
   /** Dune Console base URL. Privileged operations and season delivery additionally require HTTPS or loopback HTTP. */
   DUNE_API_URL: z.string().url().optional(),
-  /** The server-only Console credential for reads, administration and season delivery. */
+  /** The server-only Console credential for reads and season delivery. */
   DUNE_API_KEY: z.string().min(1).optional(),
   /** Bearer token for the Console's Discord adapter. The adapter accepts only its own token, never DUNE_API_KEY. */
   DUNE_ADAPTER_TOKEN: z.string().min(1).optional(),
@@ -245,8 +236,7 @@ export function validateProductionEnv(): ServerEnv {
     throw new Error(
       `Retired Console settings found (${renamed.join(', ')}). Run npm run env:migrate or replace them with DUNE_API_URL, DUNE_API_KEY and DUNE_ADAPTER_TOKEN.`,
     );
-  // ADMIN_DISCORD_IDS has no production default: no administrator is implied by the code.
-  requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'ADMIN_DISCORD_IDS');
+  requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET');
   if (env.CHAT_ENABLED) requireServerEnv('RABBITMQ_URL', 'CHAT_BRIDGE_FUNCOM_ID', 'CHAT_SERVERS');
   const redisUrl = new URL(env.REDIS_URL!);
   // Sessions and sealed refresh tokens live in Redis: never serve traffic against an open, unauthenticated, unencrypted one.

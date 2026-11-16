@@ -244,6 +244,13 @@ export const claimRecordSchema = z
 export const claimsRecordSchema = z.record(identifier, claimRecordSchema).refine((v) => Object.keys(v).length <= 100);
 export type ClaimComponent = z.infer<typeof claimComponentSchema>;
 export type ClaimRecord = z.infer<typeof claimRecordSchema>;
+/** Any season whose rewards carry game components requires an explicit Claim Reward click for every reward. */
+export function usesManualClaims(definition: {
+  economy?: unknown;
+  rewards: ReadonlyArray<{ gameReward?: unknown; bundle?: unknown }>;
+}) {
+  return Boolean(definition.economy) || definition.rewards.some((r) => r.gameReward || r.bundle);
+}
 /** Reward components in delivery order. Legacy seasons use the single `gameReward`. */
 export function rewardComponents(reward: { gameReward?: GameReward; bundle?: GameReward[] }): GameReward[] {
   return reward.bundle ?? (reward.gameReward ? [reward.gameReward] : []);

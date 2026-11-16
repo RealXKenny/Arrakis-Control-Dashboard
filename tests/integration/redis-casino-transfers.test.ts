@@ -109,7 +109,7 @@ describe('real Redis transfer intents and recovery', () => {
     expect((await store.transferStore.get({ owner: O, server: S, id: 'dep_transfer-0001' }))?.state).toBe('completed');
     expect(await wallet.readWalletBalance(O, S, 'solaris')).toEqual({ available: 100n, reserved: 0n });
   });
-  it('keeps uncertain withdrawals reserved without resending and settles explicit reconciliation once', async () => {
+  it('keeps uncertain withdrawals reserved and quarantined without ever resending', async () => {
     const { deps, adjust } = harness();
     await wallet.applyWalletOperation(O, S, 'solaris', { type: 'deposit_credit', key: 'funding', amount: 100n });
     adjust.mockResolvedValue('uncertain');
@@ -121,17 +121,11 @@ describe('real Redis transfer intents and recovery', () => {
     await service.recoverTransfers(deps, 0);
     await service.startTransfer(deps, request);
     expect(adjust).toHaveBeenCalledTimes(1);
-    expect(
-      (await service.resolveTransfer(deps, parked, 'applied', 'test-admin', 'Fixture confirmed delivery')).state,
-    ).toBe('completed');
-    await expect(service.resolveTransfer(deps, parked, 'applied', 'test-admin', 'Repeat')).rejects.toMatchObject({
-      code: 'INVALID_STATE',
-    });
-    expect(await wallet.readWalletBalance(O, S, 'solaris')).toEqual({ available: 60n, reserved: 0n });
-    const rejected = await service.startTransfer(deps, { ...input('uncertain-002', 'withdrawal'), amount: '20' });
-    await service.resolveTransfer(deps, rejected, 'not_applied', 'test-admin', 'Fixture proved rejection');
-    expect(await wallet.readWalletBalance(O, S, 'solaris')).toEqual({ available: 60n, reserved: 0n });
-    expect(await store.transferStore.listOpen()).toEqual([]);
+    expect((await store.transferStore.get(parked))?.state).toBe('needs_reconciliation');
+    // Another sweep never resends the unconfirmed adjustment; the transfer stays quarantined.
+    await service.recoverTransfers(deps, 0);
+    expect(adjust).toHaveBeenCalledTimes(1);
+    expect((await store.transferStore.get(parked))?.state).toBe('needs_reconciliation');
   });
   it('recovers an interrupted wallet credit after reconnecting without repeating the game adjustment', async () => {
     const { deps, adjust } = harness();

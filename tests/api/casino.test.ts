@@ -54,7 +54,6 @@ vi.mock('../../src/features/admin/server/api-access', () => ({
 }));
 vi.mock('../../src/features/admin/server/access', () => ({ requireRecentSignIn: mocks.recent }));
 
-import { GET as ADMIN_GET, POST as ADMIN_POST } from '../../src/app/api/v2/casino/admin/transfers/route';
 import { GET as TRANSFERS_GET, POST as TRANSFERS_POST } from '../../src/app/api/v2/casino/transfers/route';
 import { GET as FAIRNESS_GET, POST as FAIRNESS_POST } from '../../src/app/api/v2/casino/fairness/route';
 import { GET as LIMITS_GET, POST as LIMITS_POST } from '../../src/app/api/v2/casino/limits/route';
@@ -221,53 +220,5 @@ describe('casino HTTP boundary', () => {
   it('removes any way to credit a wallet by request: there is no wallet write route', async () => {
     const wallet = await import('../../src/app/api/v2/casino/wallet/route');
     expect(Object.keys(wallet).sort()).toEqual(['GET']);
-  });
-});
-
-describe('administrator reconciliation routes', () => {
-  const resolve = {
-    owner: '123456789',
-    id: 'dep_abcdef123456',
-    resolution: 'applied',
-    note: 'balance dropped by 5,000',
-  };
-  beforeEach(() => {
-    mocks.admin.mockResolvedValue({ user: { id: 'admin-9' } });
-  });
-
-  it('are closed to everyone who is not a verified administrator, before any service work', async () => {
-    mocks.admin.mockRejectedValue(Object.assign(new Error('x'), { statusCode: 403 }));
-    const denied = [
-      await ADMIN_GET(get('/api/v2/casino/admin/transfers')),
-      await ADMIN_POST(post('/api/v2/casino/admin/transfers', resolve)),
-    ];
-    for (const response of denied) expect(response.status).toBeGreaterThanOrEqual(400);
-    expect(mocks.adminList).not.toHaveBeenCalled();
-    expect(mocks.adminResolve).not.toHaveBeenCalled();
-  });
-
-  it('lists transfers for an administrator and resolves with the administrator as the actor', async () => {
-    mocks.adminList.mockResolvedValue([{ id: 'dep_abcdef123456' }]);
-    expect((await ADMIN_GET(get('/api/v2/casino/admin/transfers'))).status).toBe(200);
-    mocks.adminResolve.mockResolvedValue({ id: 'dep_abcdef123456', state: 'completed' });
-    expect((await ADMIN_POST(post('/api/v2/casino/admin/transfers', resolve))).status).toBe(200);
-    expect(mocks.recent).toHaveBeenCalledWith({ user: { id: 'admin-9' } }, { highRisk: true });
-    expect(mocks.adminResolve).toHaveBeenCalledWith({ user: { id: 'admin-9' } }, resolve, 'applied', resolve.note);
-  });
-
-  it('needs a same-origin request, a strict body and a fresh sign-in', async () => {
-    expect((await ADMIN_POST(post('/api/v2/casino/admin/transfers', resolve, 'https://evil.test'))).status).toBe(403);
-    for (const bad of [
-      { ...resolve, resolution: 'maybe' },
-      { ...resolve, owner: '../x' },
-      { ...resolve, note: 'x'.repeat(501) },
-      { ...resolve, amount: '999999' },
-    ])
-      expect((await ADMIN_POST(post('/api/v2/casino/admin/transfers', bad))).status).toBe(400);
-    mocks.recent.mockImplementation(() => {
-      throw Object.assign(new Error('Sign in again'), { statusCode: 403 });
-    });
-    expect((await ADMIN_POST(post('/api/v2/casino/admin/transfers', resolve))).status).toBeGreaterThanOrEqual(400);
-    expect(mocks.adminResolve).not.toHaveBeenCalled();
   });
 });

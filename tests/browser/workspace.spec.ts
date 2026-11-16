@@ -8,7 +8,6 @@ import { fakeConsole, type TestMember } from '../helpers/fake-console-client';
  * Console (tests/helpers/fake-console.mjs) instead of intercepting browser requests. Every test signs in as its own
  * member with its own character, so nothing is shared except what the test sets up on purpose.
  */
-const ADMIN = '__Host-dashboard_session=browser-admin-session';
 const MEMBER = '__Host-dashboard_session=browser-member-session';
 
 const overflow = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
@@ -58,19 +57,6 @@ test.describe('landing and sign-in gates', () => {
     await page.waitForTimeout(500);
     expect(hops.length).toBeLessThanOrEqual(3);
   });
-
-  test('administration links are absent from the landing page and portal for members and administrators', async ({
-    page,
-    context,
-  }) => {
-    for (const cookie of [MEMBER, ADMIN]) {
-      await signInAs(context, cookie);
-      for (const route of ['/', '/portal']) {
-        await page.goto(route);
-        await expect(page.locator('a[href="/admin"]'), `${route} ${cookie}`).toHaveCount(0);
-      }
-    }
-  });
 });
 
 test.describe('browser security posture', () => {
@@ -104,7 +90,6 @@ test.describe('browser security posture', () => {
     for (const [path, origin] of [
       ['/api/v2/auth/password', 'https://evil.example'],
       ['/api/bases/import', 'https://evil.example'],
-      ['/api/v2/admin/execute', 'null'],
     ]) {
       const response = await context.request.post(path, { headers: { Origin: origin }, data: {} });
       expect([401, 403], `${path} from ${origin}`).toContain(response.status());

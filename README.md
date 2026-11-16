@@ -3,7 +3,6 @@
 
 # Arrakis Control Dashboard
 
-**A modern command center for Dune: Awakening server administration, guild operations, and community management.**
 
 [Overview](#overview) · [**Documentation**](docs/README.md) · [Features](#features) · [Screenshots](#screenshots) · [Quick start](#quick-start) · [Deployment](#production-deployment) · [Development](#development) · [Contributing](#contributing)
 
@@ -17,9 +16,7 @@
 
 ## Overview
 
-Arrakis Control is a self-hosted Next.js dashboard for authorized Dune: Awakening communities. It brings player telemetry, live maps, guild recruitment, base sharing, market data, and scoped server administration into one Dune-inspired workspace.
 
-The application uses Discord OAuth and linked email/password sign-in, server-verified guild roles, Redis-backed sessions, and explicit administrator authorization. Credentials and provider responses stay on the server.
 
 <img src="docs/assets/screenshots/dashboard-overview.webp" alt="Arrakis Control dashboard overview showing field conditions, player status, server population, and guild information for the fictional Arrakis Demo account" />
 
@@ -47,7 +44,6 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - **Automatic seasons:** a free 100-level engine can generate, publish and archive numbered three-month seasons, verify supported game objectives and claim unlocked profile cosmetics automatically. [Setup and API limits](docs/features/automatic-seasons.md).
 
 - **Server overview:** health, CPU, memory, population, services, and read-source status where the Console reports them.
-- **Scoped administration:** dedicated screens for players, guilds, bases, vehicles, maps, market, backups, logs, updates, addons, and server controls.
 - **Operational safeguards:** scoped credentials, same-origin mutations, confirmation dialogs, bounded transfers, and redacted audit events.
 - **Maps and telemetry:** interactive Hagga Basin and Deep Desert maps, optional realtime layers, population history, and world briefings.
 - **Live game chat:** bidirectional Map chat through the existing game RabbitMQ protocol, with a dedicated worker, bounded Redis history, and real-time dashboard updates. See [Live game chat](docs/features/live-chat.md).
@@ -75,7 +71,6 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - A versioned, token-authorized, read-only bot API for sanitized world summaries.
 - Release, progress, and community event announcements through the main Discord bot using Components V2 containers.
 
-The administration catalog distinguishes available operations, restricted Console-only operations, and planned or unsupported entries. Experimental adapter tools depend on the installed provider and configured scopes; the README does not claim that every catalog operation is supported by every Console installation.
 
 ## Screenshots
 
@@ -83,12 +78,9 @@ The administration catalog distinguishes available operations, restricted Consol
 
 | Dashboard overview                                                                                                              | Server monitoring                                                                                                                                |
 | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| <img src="docs/assets/screenshots/dashboard-overview.webp" alt="Dashboard overview with fictional world and player readings" /> | <img src="docs/assets/screenshots/server-monitoring.webp" alt="Administration overview with fictional server health and performance readings" /> |
 | World conditions, character status, and current holdings.                                                                       | Health, resource usage, services, and connection checks.                                                                                         |
 
-| Server management                                                                                                                              | Administration workspace                                                                                                       |
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| <img src="docs/assets/screenshots/server-management.webp" alt="Server management screen with fictional service status and guarded controls" /> | <img src="docs/assets/screenshots/admin-workspace.webp" alt="Administration workspace showing a fictional player directory" /> |
 | Service diagnostics and confirmation-protected server controls.                                                                                | Grouped administrative tools with scoped provider access.                                                                      |
 
 ### Guild operations
@@ -101,7 +93,6 @@ The administration catalog distinguishes available operations, restricted Consol
 | Guild applications                                                                                                                                    | Guild settings                                                                                                                     |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | <img src="docs/assets/screenshots/guild-applications.webp" alt="Guild application inbox containing fictional applications from Jessica and Gurney" /> | <img src="docs/assets/screenshots/dashboard-settings.webp" alt="Guild settings page for the fictional Sandstorm Vanguard guild" /> |
-| Application answers, review actions, and applicant conversations.                                                                                     | Recruitment settings, applications, support, and guild administration.                                                             |
 
 ### Player profile and mobile workspace
 
@@ -187,7 +178,6 @@ Use [`.env.example`](.env.example) as the complete template; every variable, ran
 | `VERIFIED_MEMBER_ROLE_ID`                                                                             | Required member role                                                                                                       |
 | `APP_URL`                                                                                             | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                             |
 | `AUTH_SECRET`                                                                                         | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters                             |
-| `ADMIN_DISCORD_IDS`                                                                                   | Comma-separated administrator Discord IDs; required in production                                                          |
 | `REDIS_URL`                                                                                           | Redis connection, credentials, database, and optional TLS                                                                  |
 | `REDIS_CLUSTER_NODES`                                                                                 | Optional Cluster bootstrap nodes; `REDIS_URL` still supplies credentials and TLS                                           |
 | `TRUSTED_PROXY_COUNT`                                                                                 | Exact reverse-proxy count used to select the trusted forwarded address                                                     |
@@ -228,7 +218,6 @@ Provide the production environment, use HTTPS at the reverse proxy, and configur
 - Redis sessions use opaque cookies and a 30-day lifetime, with explicit sign-out and revocation.
 - Discord membership and the required role are re-confirmed after 30 minutes; definitive refusal ends the session. Provider outages allow at most six hours of grace after the last successful confirmation.
 - Password login is throttled by address and email. Forwarded addresses are selected using the configured trusted-proxy count.
-- `/admin` requires a configured administrator ID, guild membership, role, and valid session. Privileged changes also enforce the configured recent-sign-in windows.
 - Scoped provider credentials, same-origin mutation checks, bounded transfers, and recursive secret redaction protect the API boundary.
 - Redacted audit events cover administrative and security-sensitive operations. MFA is not currently implemented.
 
@@ -277,9 +266,7 @@ For `test:integration`, set only disposable loopback Redis through `TEST_REDIS_U
 
 See the full [troubleshooting guides](docs/troubleshooting/README.md). Quick pointers:
 
-- **Startup reports missing settings:** compare the environment with `.env.example`; production requires the Console, Discord, Redis, canonical URL, and administrator settings.
 - **Discord cannot complete sign-in:** use `<APP_URL>/api/auth/callback/discord` exactly and verify the guild/role configuration.
-- **Console requests fail:** check provider reachability, key scopes, and adapter configuration. Remote administration requires HTTPS; loopback HTTP is supported for local deployments.
 - **Redis fails in production:** verify credentials, TLS, network reachability, and Cluster settings. Production does not use the development in-memory fallback.
 - **A provider feature is unavailable:** installed Console capabilities and key scopes can differ; unknown measurements remain unknown rather than becoming fabricated zeros.
 

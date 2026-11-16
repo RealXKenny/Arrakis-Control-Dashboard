@@ -32,7 +32,6 @@ flowchart LR
   [market](../features/dashboard.md), [maps](../features/maps.md).
 - [Guilds](../features/guilds.md), [recruitment and applications](../features/guild-recruitment.md), private chat.
 - The [base marketplace](../features/marketplace.md) (share and import blueprints with preview pictures).
-- The [administrator panel](../features/administrator-panel.md): a 383-operation catalog over the Console API with
   step-up re-authentication, confirmations and an [audit trail](../features/audit-logs.md).
 - A read-only [bot API](../api/server.md#bot-world-summary) and optional [Discord bot announcements](../integrations/webhooks.md).
 

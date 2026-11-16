@@ -6,7 +6,6 @@
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | Daily     | Check alerts ([monitoring](monitoring.md)); confirm Redis snapshots completed                                                                   |
 | Weekly    | Review `auth.login_failed`, `admin.access_denied`, `admin.reauth_required` events; review Dependabot pull requests (npm and GitHub Actions)     |
-| Monthly   | Update the dashboard to the latest verified release ([updating](../installation/updating.md)); review `ADMIN_DISCORD_IDS`; test a Redis restore |
 | Quarterly | Rotate secrets that were exposed to many people; review Console API key scopes                                                                  |
 
 ## Rotating secrets

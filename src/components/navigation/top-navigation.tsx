@@ -11,23 +11,21 @@ import { signOutAction } from '../../features/auth/actions';
 import { BellIcon, ChevronDownIcon, HomeIcon, MenuIcon, SignOutIcon } from '../icons';
 import { BrandLockup } from '../brand/logo';
 import { MobileNavigation } from './mobile-navigation';
-import { navigationFor, navigationItemFor, NOTIFICATION_ITEMS, SIGN_IN_HREF, type NavigationItem } from './nav-config';
+import { navigationFor, NOTIFICATION_ITEMS, SIGN_IN_HREF, type NavigationItem } from './nav-config';
 import { NavigationDirectLink, NavigationDropdown } from './navigation-menu';
 
-/** `identity` and `isAdmin` are resolved on the server from the verified session. */
+/** `identity` is resolved on the server from the verified session. */
 export function TopNavigation({
   identity,
-  isAdmin = false,
   onOpenCommands,
   onOpenAppearance,
 }: {
   identity: NavIdentity | null;
-  isAdmin?: boolean;
   onOpenCommands?: (opener?: HTMLElement) => void;
   onOpenAppearance?: (opener?: HTMLElement) => void;
 }) {
   const pathname = usePathname();
-  const items = navigationFor({ isAdmin });
+  const items = navigationFor();
   const [openMenu, setOpenMenu] = useState<{ id: string; pathname: string } | null>(null);
   const [mobileFor, setMobileFor] = useState<string | null>(null);
   const closeMenu = useCallback(() => setOpenMenu(null), [setOpenMenu]);
@@ -39,11 +37,9 @@ export function TopNavigation({
   const homeActive = pathname === '/';
 
   const character = items.find((item) => item.id === 'character');
-  const administration = navigationItemFor('administration', { isAdmin });
-  const accountItems = [
-    character ? { ...character, id: 'account-character', label: 'Character profile', tabletOverflow: false } : null,
-    administration ? { ...administration, id: 'account-administration' } : null,
-  ].filter((item): item is NavigationItem => item !== null);
+  const accountItems: NavigationItem[] = character
+    ? [{ ...character, id: 'account-character', label: 'Character profile', tabletOverflow: false }]
+    : [];
 
   return (
     <header className="command-header sticky top-0 z-50 border-b border-[var(--theme-header-border)]/70 bg-[var(--theme-header)]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
@@ -206,7 +202,6 @@ export function TopNavigation({
           items={items.filter((item) => item.id !== 'home')}
           pathname={pathname}
           identity={identity}
-          isAdmin={isAdmin}
           onClose={closeMobile}
           triggerRef={mobileTriggerRef}
           onOpenAppearance={

@@ -10,8 +10,6 @@ Initialization is atomic and runs once per Redis store. Editing or deleting this
 
 ## Administrator workflow
 
-Open **Administration → Players & community → Community events**, or `/admin?tab=events`.
-
 1. Choose **New event** and enter a title, short description and full description.
 2. Set an optional Solaris prize, other prizes, entry instructions and rules.
 3. Optionally select start and end times in your local timezone. An end time must follow the start time when both are provided.
@@ -31,8 +29,6 @@ The editor preserves unsaved details on a failed save and does not retry uncerta
 
 ## Access and safety
 
-Every member page and read API requires a session. Only published events leave the member read path, regardless of query parameters. The admin page and APIs independently verify the configured administrator ID, guild, role and current session. Writes require the normal high-risk administrator sign-in window, same-origin checks, bounded bodies and administrator rate limits; changes are audited without recording event bodies.
-
 All event content is rendered as text. There are no arbitrary HTML embeds, image URLs, payouts or inventory grants. Redis outages show an unavailable state rather than an unsaved, invented announcement.
 
 ## Discord announcements
@@ -44,9 +40,5 @@ A background scan starts with the dashboard and retries known failures once per 
 ## APIs and verification
 
 - `GET /api/v2/events`: published events for members.
-- `GET /api/v2/admin/events`: all events, including drafts, for administrators.
-- `POST /api/v2/admin/events`: create with a browser-generated UUID and revision zero.
-- `PATCH /api/v2/admin/events`: update by event ID and current revision.
-- `DELETE /api/v2/admin/events`: delete by event ID and current revision.
 
 Unit and API tests cover validation, privileges, publication boundaries and conflict handling. Browser tests exercise the member page and the create/draft/publish/edit/delete workflow through the real API handlers with an isolated Redis protocol fixture. `tests/integration/redis-events.test.ts` exercises the Lua scripts against an explicitly configured disposable loopback Redis; use the existing `npm run test:integration` setup, never production storage.

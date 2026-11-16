@@ -25,7 +25,6 @@ Anything unexpected becomes `500 INTERNAL_ERROR` with a generic message; stacks,
 | 401  | `UNAUTHORIZED`                                                | No valid session                                                              |
 | 403  | `FORBIDDEN`                                                   | Not permitted (not an administrator, not the owner)                           |
 | 403  | `INVALID_ORIGIN`                                              | Mutation without a same-origin `Origin`                                       |
-| 403  | `ADMIN_REAUTH_REQUIRED`                                       | Administrator step-up window elapsed                                          |
 | 403  | `CONSOLE_OPERATION_RESTRICTED`                                | Catalog operation the Console never allows to API keys                        |
 | 403  | `GUILD_LEADER_REQUIRED`                                       | Not a freshly verified guild leader                                           |
 | 404  | `NOT_FOUND`, `GUILD_APPLICATION_NOT_FOUND`                    | Missing (or deliberately indistinguishable from "not yours")                  |
@@ -40,7 +39,6 @@ Anything unexpected becomes `500 INTERNAL_ERROR` with a generic message; stacks,
 | 503  | `SERVER_BUSY`                                                 | Concurrency cap; `Retry-After: 2`                                             |
 | 503  | `RATE_LIMIT_UNAVAILABLE`                                      | Redis down; the limiter fails closed                                          |
 | 503  | `STORAGE_UNAVAILABLE`                                         | Redis-backed feature unavailable                                              |
-| 503  | `ADMIN_CONFIG_REQUIRED`, `ADMIN_SECURE_TRANSPORT_REQUIRED`    | Administrator credentials/HTTPS to the Console missing                        |
 | 502  | —                                                             | Console answered 2xx but with `ok: false` (administrator execute)             |
 
 During a bad production configuration **every** request returns HTTP 500 ([startup errors](../troubleshooting/startup-errors.md)).

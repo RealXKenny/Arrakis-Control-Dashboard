@@ -9,7 +9,6 @@ Two independent systems hold data. Back up both.
 | Dashboard configuration | `.env` / panel variables                                        | You: keep them in a secret store, not in Git |
 
 The dashboard has no backup feature of its own for Redis, and it does not drive the RedBlink backups beyond the Console operations
-available in the [administrator panel](../features/administrator-panel.md) (backup create/restore/delete operations are high-risk and
 need a recent sign-in).
 
 ## Redis

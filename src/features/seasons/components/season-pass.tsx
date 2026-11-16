@@ -20,8 +20,8 @@ import {
   artworkUrl,
   gameRewardLabel,
   rewardComponents,
+  usesManualClaims,
   type Assignment,
-  type Delivery,
 } from '../contracts';
 import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { RewardArt } from './reward-art';
@@ -39,7 +39,6 @@ export type SeasonView = {
   season: Season;
   progress: Progress;
   totals: Totals;
-  deliveries?: Pick<Delivery, 'rewardId' | 'status'>[];
   assignment?: Assignment | null;
   gameClaims?: Record<string, { status: string }[]>;
 };
@@ -72,10 +71,6 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
   const [selection, setSelection] = useState<Reward | null>(null);
   const [objectiveValues, setObjectiveValues] = useState<Record<string, number>>({});
   const [claimAll, setClaimAll] = useState<{ total: number; done: number; running: boolean } | null>(null);
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
-  const [text, setText] = useState('');
-  const [links, setLinks] = useState('');
-  const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [offset, setOffset] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const track = useRef<HTMLDivElement>(null);
@@ -172,11 +167,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                         ? 'Game delivery requested for administrator review.'
                         : 'Challenge verified. Season XP awarded.',
       );
-      setChallenge(null);
       setSelection(null);
-      setText('');
-      setLinks('');
-      setRequestId(crypto.randomUUID());
     } catch (e) {
       setError(e.message);
     } finally {
@@ -195,6 +186,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
     );
   const { season, progress, totals } = view;
   const definition = season.definition;
+  const manual = usesManualClaims(definition);
   const presentation = seasonPresentation(season);
   const leveling = levelProgress(definition, progress.xp);
   const remaining = Math.max(0, Date.parse(definition.endsAt) - now);
@@ -480,7 +472,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               )}
             </section>
           )}
-          {definition.economy && !preview && (
+          {manual && !preview && (
             <section className="season-editor-card" aria-label="Claim rewards">
               {(() => {
                 const summary = claimSummary(definition, progress.xp, view.gameClaims);
@@ -552,7 +544,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             <AutomaticProgress
               key={season.id}
               seasonId={season.id}
-              manualClaims={!!definition.economy}
+              manualClaims={manual}
               onProgress={(next, updatedTotals, plan) => {
                 setObjectiveValues(plan.objectives);
                 setViews((previous) =>
@@ -570,7 +562,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 );
                 if (next.xp > progress.xp)
                   setMessage(
-                    `Automatic progress recorded. Level ${levelProgress(definition, next.xp).level}.${definition.economy ? ' Claim your unlocked rewards.' : ' Unlocked cosmetics claimed.'}`,
+                    `Automatic progress recorded. Level ${levelProgress(definition, next.xp).level}.${manual ? ' Claim your unlocked rewards.' : ' Unlocked cosmetics claimed.'}`,
                   );
               }}
             />
@@ -687,14 +679,9 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                       disabled={
                         busy || !!preview || seasonState(season, now) !== 'active' || statusOf(c, view) !== 'available'
                       }
-                      onClick={(event) => {
-                        dialogTrigger.current = event.currentTarget;
-                        return c.verification === 'review'
-                          ? setChallenge(c)
-                          : act({ action: 'verify', challengeId: c.id });
-                      }}
+                      onClick={() => act({ action: 'verify', challengeId: c.id })}
                     >
-                      {c.verification === 'review' ? 'Submit evidence' : 'Verify now'}
+                      Verify now
                     </Button>
                   </div>
                   {progress.submissions
@@ -785,7 +772,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             </span>
             <h2 id="reward-preview-title">{selection.name}</h2>
             <p>{selection.description}</p>
-            {definition.economy && (
+            {manual && (
               <div role="group" aria-label="Reward contents">
                 <span className="season-kicker">You will receive</span>
                 <ul>
@@ -806,17 +793,6 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 </p>
               </div>
             )}
-            {!definition.economy && selection.gameReward && (
-              <p>
-                Includes {gameRewardLabel(selection.gameReward)}. Claiming records eligibility; an administrator must
-                separately review and execute delivery while your linked character is offline.
-              </p>
-            )}
-            {!definition.economy &&
-              selection.gameReward &&
-              view.deliveries?.find((v) => v.rewardId === selection.id) && (
-                <p role="status">Game delivery: {view.deliveries.find((v) => v.rewardId === selection.id)?.status}</p>
-              )}
             <div className="season-profile-preview">
               <span className="season-kicker">Profile preview</span>
               <strong>{selection.kind === 'title' ? selection.name : 'Desert Traveller'}</strong>
@@ -828,19 +804,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               <Button autoFocus className="season-button" onClick={() => setSelection(null)}>
                 Close preview
               </Button>
-              {!definition.economy &&
-                selection.gameReward &&
-                progress.claims.some((v) => v.reward.id === selection.id) &&
-                !view.deliveries?.some((v) => v.rewardId === selection.id) && (
-                  <Button
-                    className="season-button"
-                    disabled={busy || !!preview}
-                    onClick={() => act({ action: 'delivery-request', rewardId: selection.id })}
-                  >
-                    Request game delivery
-                  </Button>
-                )}
-              {definition.economy &&
+              {manual &&
                 ['available', 'pending'].includes(
                   claimStateOf(definition, progress.xp, selection, view.gameClaims),
                 ) && (
@@ -862,7 +826,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 >
                   Equip cosmetic
                 </Button>
-              ) : definition.economy ? null : (
+              ) : manual ? null : (
                 <Button
                   className="season-button season-primary"
                   disabled={
@@ -877,57 +841,6 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 </Button>
               )}
             </div>
-          </SeasonDialog>
-        </div>
-      )}
-      {challenge && (
-        <div className="season-modal-backdrop">
-          <SeasonDialog labelledBy="evidence-title" returnFocus={dialogTrigger} onClose={() => setChallenge(null)}>
-            <h2 id="evidence-title">{challenge.name}</h2>
-            <p>{challenge.description}</p>
-            <p>
-              Describe your contribution. A moderator must approve it before XP is awarded. Evidence links open
-              separately; files are never fetched automatically.
-            </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void act({
-                  action: 'submit',
-                  requestId,
-                  challengeId: challenge.id,
-                  text,
-                  links: links
-                    .split('\n')
-                    .map((v) => v.trim())
-                    .filter(Boolean),
-                });
-              }}
-            >
-              <label>
-                Description
-                <textarea
-                  autoFocus
-                  required
-                  minLength={10}
-                  maxLength={2000}
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                />
-              </label>
-              <label>
-                HTTPS evidence links (up to 3, one per line)
-                <textarea maxLength={1500} value={links} onChange={(e) => setLinks(e.target.value)} />
-              </label>
-              <div className="season-actions">
-                <Button type="button" className="season-button" onClick={() => setChallenge(null)}>
-                  Cancel
-                </Button>
-                <Button className="season-button season-primary" disabled={busy}>
-                  Submit for review
-                </Button>
-              </div>
-            </form>
           </SeasonDialog>
         </div>
       )}

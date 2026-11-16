@@ -127,7 +127,7 @@ test.describe('landing page, signed out', () => {
       'demo credits',
     ])
       expect(body, old).not.toContain(old);
-    await expect(page.getByText('Closed by default: a server administrator must switch it on')).toBeVisible();
+    await expect(page.getByText('Closed by default: the server owner switches it on in the environment')).toBeVisible();
   });
 
   test('passes automated accessibility checks on desktop and mobile', async ({ page }) => {

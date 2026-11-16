@@ -37,7 +37,6 @@ curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/integration
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Portal/market/map "unavailable"                       | Member key lacks scope or Console unreachable                                                                              |
 | Character pages empty                                 | No Discord↔character link (adapter `players/link` flow), or the adapter is not reachable                                   |
-| `/admin` Overview shows credentials missing           | `DUNE_API_KEY` unset (`ADMIN_CONFIG_REQUIRED`)                                                                             |
 | Admin requests fail `ADMIN_SECURE_TRANSPORT_REQUIRED` | Remote Console over plain `http`: use HTTPS (loopback `http` is allowed)                                                   |
 | Admin `CONSOLE_OPERATION_RESTRICTED`                  | The Console never permits that operation to API keys (setup, database, settings, IAM, key management, addon/update writes) |
 | Admin `CONSOLE_OPERATION_FAILED`                      | The Console refused or the route does not exist in your Console version                                                    |

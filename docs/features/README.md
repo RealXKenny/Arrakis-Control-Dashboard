@@ -2,24 +2,20 @@
 
 - [Automatic seasons](automatic-seasons.md): numbered three-month seasons, deterministic 100-level generation, verified progress, automatic cosmetic claims and archived history.
 
-| Feature                                                                                                                                                                  | Who uses it                    | Page                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ | ---------------------------------------- |
-| [Dashboard (portal, market, status)](dashboard.md)                                                                                                                       | Every member                   | `/portal`, `/market`, landing `/`        |
-| [Character, holdings and storage](player-management.md)                                                                                                                  | Every member                   | `/character`, `/holdings`, `/storage`    |
-| [Vehicles](vehicles.md)                                                                                                                                                  | Every member                   | `/vehicles`                              |
-| [Maps](maps.md)                                                                                                                                                          | Every member                   | `/map`                                   |
-| [Service status](dashboard.md#service-status)                                                                                                                            | Every member                   | `/status` (always under More)            |
-| [Community events](community-events.md)                                                                                                                                  | Members; administrators manage | `/events`, `/admin?tab=events`           |
-| [Community seasons](community-seasons.md)                                                                                                                                | Members; administrators manage | `/seasons`, `/admin?tab=seasons`         |
-| [Live game chat](live-chat.md)                                                                                                                                           | Every member                   | `/chat`                                  |
-| [The Solaris Exchange](solaris-exchange.md)                                                                                                                              | Every member                   | `/casino`, `/casino/games/[game]`        |
-| [Guilds](guilds.md)                                                                                                                                                      | Members; leaders manage        | `/guilds`, `/guild`                      |
-| [Guild recruitment and applications](guild-recruitment.md)                                                                                                               | Applicants, leaders            | `/guilds`, `/guild`                      |
-| [Base marketplace](marketplace.md)                                                                                                                                       | Every member                   | `/bases`, `/bases/upload`, `/bases/[id]` |
-| [Notifications](notifications.md)                                                                                                                                        | Every member                   | Top navigation                           |
-| [Administrator panel](administrator-panel.md)                                                                                                                            | Administrators only            | `/admin`                                 |
-| [Audit logs](audit-logs.md)                                                                                                                                              | Administrators                 | `/api/v2/admin/audit`, stdout            |
-| [Sessions](sessions.md)                                                                                                                                                  | Members; administrators        | Sign-in, sign-out, revocation            |
+| Feature                                                                                                                                                                  | Who uses it             | Page                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- | ---------------------------------------- |
+| [Dashboard (portal, market, status)](dashboard.md)                                                                                                                       | Every member            | `/portal`, `/market`, landing `/`        |
+| [Character, holdings and storage](player-management.md)                                                                                                                  | Every member            | `/character`, `/holdings`, `/storage`    |
+| [Vehicles](vehicles.md)                                                                                                                                                  | Every member            | `/vehicles`                              |
+| [Maps](maps.md)                                                                                                                                                          | Every member            | `/map`                                   |
+| [Service status](dashboard.md#service-status)                                                                                                                            | Every member            | `/status` (always under More)            |
+| [Live game chat](live-chat.md)                                                                                                                                           | Every member            | `/chat`                                  |
+| [The Solaris Exchange](solaris-exchange.md)                                                                                                                              | Every member            | `/casino`, `/casino/games/[game]`        |
+| [Guilds](guilds.md)                                                                                                                                                      | Members; leaders manage | `/guilds`, `/guild`                      |
+| [Guild recruitment and applications](guild-recruitment.md)                                                                                                               | Applicants, leaders     | `/guilds`, `/guild`                      |
+| [Base marketplace](marketplace.md)                                                                                                                                       | Every member            | `/bases`, `/bases/upload`, `/bases/[id]` |
+| [Notifications](notifications.md)                                                                                                                                        | Every member            | Top navigation                           |
+| [Sessions](sessions.md)                                                                                                                                                  | Members; administrators | Sign-in, sign-out, revocation            |
 | [Appearance studio](appearance.md) provides the Console default, all 66 upstream theme choices and custom role colors with shared helpers and browser-local persistence. |
 
 [Saved activity views](activity-views.md) preserve named portal widgets, inbox/task filters and planning context across workspaces, with private per-account configuration at `/activity-views`.
@@ -48,15 +44,12 @@ The [actionable inbox](actionable-inbox.md) combines authorized asset, supply an
 | [Vehicles](vehicles.md)                                    | Every member                         | `/vehicles`                              |
 | [Maps](maps.md)                                            | Every member                         | `/map`                                   |
 | [Service status](dashboard.md#service-status)              | Every member                         | `/status` (always under More)            |
-| [Community events](community-events.md)                    | Members; administrators manage       | `/events`, `/admin?tab=events`           |
 | [Live game chat](live-chat.md)                             | Every member                         | `/chat`                                  |
 | [The Solaris Exchange](solaris-exchange.md)                | Every member                         | `/casino`, `/casino/games/[game]`        |
 | [Guilds](guilds.md)                                        | Members; leaders manage              | `/guilds`, `/guild`                      |
 | [Guild recruitment and applications](guild-recruitment.md) | Applicants, leaders                  | `/guilds`, `/guild`                      |
 | [Base marketplace](marketplace.md)                         | Every member                         | `/bases`, `/bases/upload`, `/bases/[id]` |
 | [Notifications](notifications.md)                          | Every member                         | Top navigation                           |
-| [Administrator panel](administrator-panel.md)              | Administrators only                  | `/admin`                                 |
-| [Audit logs](audit-logs.md)                                | Administrators                       | `/api/v2/admin/audit`, stdout            |
 | [Sessions](sessions.md)                                    | Members; administrators              | Sign-in, sign-out, revocation            |
 
 Public pages: `/` (landing) and `/changelog`. Every page in the signed-in workspace calls `requireSession()` itself; anonymous

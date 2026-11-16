@@ -5,7 +5,6 @@ import { headers } from 'next/headers';
 import { navIdentity } from '../features/auth/identity';
 import { getServerEnv } from '../config/env';
 import { currentSession } from '../features/auth/server/session';
-import { isDashboardAdmin } from '../features/admin/server/access';
 import { SiteFooter } from '../components/layout/site-footer';
 import { AppearanceNavigation } from '../features/appearance/components/appearance-navigation';
 import { appearanceBootScript } from '../features/appearance/boot';
@@ -84,11 +83,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
           Skip to content
         </a>
-        <AppearanceNavigation
-          key={session?.user.id ?? 'anonymous'}
-          identity={session ? navIdentity(session) : null}
-          isAdmin={isDashboardAdmin(session)}
-        />
+        <AppearanceNavigation key={session?.user.id ?? 'anonymous'} identity={session ? navIdentity(session) : null} />
         <main id="main" className="flex-1">
           {children}
         </main>

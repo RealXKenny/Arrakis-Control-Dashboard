@@ -1,34 +1,5 @@
 import { test, expect } from '../helpers/browser-test';
 
-test('large releases preview every numbered Discord message without clipping later sections', async ({ page }) => {
-  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.goto('/admin/changelog');
-  const previews = page.getByLabel('Discord message preview');
-  const count = await previews.count();
-  expect(count).toBeGreaterThan(1);
-  await expect(previews.first()).toContainText(`Part 1 of ${count}`);
-  await expect(previews.last()).toContainText(`Part ${count} of ${count}`);
-  await expect(page.getByText('Upgrade Notes', { exact: true }).first()).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
-
-test('administrator previews a Components V2 progress container without sending a live message', async ({ page }) => {
-  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
-  await page.goto('/admin/changelog');
-  await page.getByText('Progress update', { exact: true }).click();
-  await page.getByLabel('Headline (optional)', { exact: true }).fill('Community update preview');
-  const preview = page.getByLabel('Discord message preview');
-  await expect(preview).toContainText('Community update preview');
-  await expect(preview).toContainText('in progress');
-  expect(await preview.locator('[data-discord-component="text-display"]').count()).toBeGreaterThan(1);
-  expect(await preview.locator('hr').count()).toBeGreaterThan(0);
-  await expect(page.getByRole('button', { name: 'Send to Discord', exact: true })).toBeDisabled();
-  await expect(page.getByText('Set DISCORD_BOT_TOKEN and CHANGELOG_CHANNEL_ID to enable sending.')).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
-
 test('public changelog previews sections, expands notes, filters and searches the full release', async ({ page }) => {
   await page.goto('/changelog');
   await expect(page.getByRole('heading', { name: 'Changelog.', exact: true })).toBeVisible();

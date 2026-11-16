@@ -50,10 +50,8 @@ dune ports       # port status
 ```
 
 After installation the installer prints the Console's URL and a generated admin password. If you lose it, upstream
-documents that it is stored at `runtime/secrets/admin-web-password.txt` inside the RedBlink checkout:
 
 ```bash
-cat runtime/secrets/admin-web-password.txt
 ```
 
 Persistent data (all inside the RedBlink checkout, per upstream): `runtime/secrets/` (credentials, includes the Funcom
@@ -67,7 +65,6 @@ backups_ (see [backups](../administration/backups.md)).
 Upstream keys start with **no** access; you grant a level (None / Read / Read+write) or an explicit action list per
 namespace. The dashboard's member features only read, except guild membership changes. Based on the Console routes the
 dashboard calls (`/api/players`, `/api/guilds`, `/api/exchange/*`, `/api/vehicles`, `/api/map/markers`,
-`/api/realtime/objects`, `/api/admin/landsraad`, `/api/players/online`), create:
 
 | Key       | Env variable   | Suggested scopes                                                                                                                                                                                                                                                         |
 | --------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -154,7 +151,6 @@ DISCORD_CLIENT_ID=<application id>
 DISCORD_CLIENT_SECRET=<application secret>
 DISCORD_GUILD_ID=<your server id>
 VERIFIED_MEMBER_ROLE_ID=<member role id>
-ADMIN_DISCORD_IDS=<your discord user id>
 
 DUNE_API_URL=http://127.0.0.1:8088
 DUNE_API_KEY=<console key>
@@ -184,7 +180,6 @@ See [reverse proxy](../installation/reverse-proxy.md).
    `Dune Console connection ready` and `Arrakis Control Dashboard is listening`.
 2. `curl -sS https://<your-domain>/ -o /dev/null -w "%{http_code}\n"` returns `200`.
 3. Sign in with Discord, land on the portal, and see your character and server status.
-4. Open `/admin`; the _Overview_ shows the admin key and adapter as configured.
 5. If data is missing, work through [Console connection problems](../troubleshooting/console-connection.md).
 
 ## 10. Update, back up, secure

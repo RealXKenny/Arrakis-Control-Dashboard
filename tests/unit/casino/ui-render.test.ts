@@ -14,7 +14,6 @@ vi.mock('next/navigation', () => ({
 import { FairnessPanel } from '../../../src/features/casino/components/fairness-panel';
 import { GameTable } from '../../../src/features/casino/components/game-table';
 import { PlayingCard } from '../../../src/features/casino/components/parts';
-import { ReconciliationPanel } from '../../../src/features/casino/components/reconciliation-panel';
 import { TransferPanel } from '../../../src/features/casino/components/transfer-panel';
 import { WalletControls } from '../../../src/features/casino/components/wallet-controls';
 import { GAMES, STAKES_NOTICE, type WalletSnapshot } from '../../../src/features/casino/contracts';
@@ -148,32 +147,6 @@ describe('wallet and fairness panels', () => {
     const closed = renderToStaticMarkup(createElement(TransferPanel, { enabled: false, available: '0', initial: [] }));
     expect(closed).toContain('switched off on this server');
     expect(closed).toMatch(/<button[^>]*disabled=""[^>]*>Review<\/button>/);
-  });
-
-  it('the reconciliation screen shows the facts an administrator needs and nothing else to guess with', () => {
-    const html = renderToStaticMarkup(
-      createElement(ReconciliationPanel, {
-        initial: [
-          {
-            id: 'dep_a',
-            kind: 'deposit',
-            amount: '5000',
-            state: 'needs_reconciliation',
-            failureCode: 'OUTCOME_UNKNOWN',
-            createdAt: 1,
-            updatedAt: 2,
-            owner: '123',
-            playerId: '4242',
-            gameBalance: '10000',
-          },
-        ],
-      }),
-    );
-    expect(html).toContain('Deposit of 5,000 Solaris');
-    expect(html).toContain('4242');
-    expect(html).toContain('Mark applied');
-    expect(html).toContain('Mark not applied');
-    expect(renderToStaticMarkup(createElement(ReconciliationPanel, { initial: [] }))).toContain('Nothing is waiting');
   });
 
   it('shows only the commitment of the active seed and the full retired seeds', () => {

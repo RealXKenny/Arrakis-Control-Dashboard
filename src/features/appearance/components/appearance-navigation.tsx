@@ -28,7 +28,7 @@ class AppearanceBoundary extends Component<{ children: ReactNode; onReset: () =>
     );
   }
 }
-export function AppearanceNavigation({ identity, isAdmin }: { identity: NavIdentity | null; isAdmin: boolean }) {
+export function AppearanceNavigation({ identity }: { identity: NavIdentity | null }) {
   const [Panel, setPanel] = useState<ComponentType<PanelProps> | null>(null);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
@@ -95,7 +95,7 @@ export function AppearanceNavigation({ identity, isAdmin }: { identity: NavIdent
   }
   return (
     <>
-      <CommandNavigation identity={identity} isAdmin={isAdmin} onOpenAppearance={openAppearance} />
+      <CommandNavigation identity={identity} onOpenAppearance={openAppearance} />
       {open && error && (
         <div
           role="alert"

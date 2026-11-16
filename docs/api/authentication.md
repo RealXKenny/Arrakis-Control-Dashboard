@@ -39,4 +39,3 @@ The email always comes from the session, never from the body. Audit: `auth.passw
 
 ## Revocation
 
-`DELETE /api/v2/admin/sessions` — see [Administrator API](administrator.md#delete-apiv2adminsessions).

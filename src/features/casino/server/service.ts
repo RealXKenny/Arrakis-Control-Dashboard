@@ -11,9 +11,9 @@ import { actOnRound, getRoundView, recoverRounds, startRound } from '../engine/r
 import type { RoundRecord, RoundView } from '../engine/types';
 import { verifyRound } from '../fairness/verify';
 import { gameRegistry } from '../games/registry';
-import { recoverTransfers, resolveTransfer, startTransfer } from '../transfers/service';
+import { recoverTransfers, startTransfer } from '../transfers/service';
 import type { TransferIntent } from '../transfers/types';
-import { consoleGateway, isOffline } from './console-gateway';
+import { isOffline } from './console-gateway';
 import { engineDeps } from './engine-deps';
 import { listRounds, roundStore } from './round-store';
 import { openRoundCount, readPublicSeedState, rotateSeed, setClientSeed } from './seed-store';
@@ -269,50 +269,18 @@ export async function ownTransfers(session: DashboardSession): Promise<PublicTra
   return rows.map(publicTransfer);
 }
 
-export type AdminTransfer = PublicTransfer & {
-  owner: string;
-  playerId: string;
-  gameBalance: string | null;
-};
-
-/** Transfers whose outcome is unknown. The game balance is read for the administrator; it is a hint, not proof. */
-export async function adminTransfersAwaitingReconciliation(): Promise<AdminTransfer[]> {
+/** Worker-only view: how many transfers are quarantined awaiting verification. Never exposed over HTTP. */
+export async function quarantinedTransferCount(): Promise<number> {
   return guard(async () => {
     const refs = await transferStore.listOpen(0, 200);
-    const found: AdminTransfer[] = [];
-    for (const ref of refs) {
-      const intent = await transferStore.get(ref);
-      if (!intent || intent.state !== 'needs_reconciliation') continue;
-      let gameBalance: string | null = null;
-      try {
-        gameBalance = (await consoleGateway.getBalance(intent.playerId)).toString();
-      } catch {
-        gameBalance = null;
-      }
-      found.push({ ...publicTransfer(intent), owner: intent.owner, playerId: intent.playerId, gameBalance });
-    }
-    return found;
+    let count = 0;
+    for (const ref of refs) if ((await transferStore.get(ref))?.state === 'needs_reconciliation') count += 1;
+    return count;
   });
 }
-
-/** An administrator records what really happened to an uncertain transfer, after checking the game balance by hand. */
-export async function adminResolveTransfer(
-  admin: DashboardSession,
-  ref: { owner: string; id: string },
-  resolution: 'applied' | 'not_applied',
-  note: string,
-): Promise<PublicTransfer> {
-  return guard(async () =>
-    publicTransfer(
-      await resolveTransfer(
-        transferDeps(),
-        { owner: ref.owner, server: CASINO_SCOPE, id: ref.id },
-        resolution,
-        admin.user.id,
-        note,
-      ),
-    ),
-  );
+/** Worker-only recovery sweep: finishes confirmed steps and parks interrupted ones; never resends an uncertain send. */
+export function sweepTransfers() {
+  return recoverTransfers(transferDeps());
 }
 
 // ---- rounds -------------------------------------------------------------------------------------------
