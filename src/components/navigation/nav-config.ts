@@ -375,6 +375,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             order: 20,
           },
           {
+            id: 'community-calendar',
+            label: 'Community calendar',
+            href: '/calendar',
+            icon: 'preview',
+            description: 'Events, your commitments, and queued restarts.',
+            order: 25,
+          },
+          {
             id: 'chat',
             label: 'Live Chat',
             href: '/chat',
