@@ -17,7 +17,10 @@ import {
   cosmeticKinds,
   seasonState,
   publicationProblems,
+  objectiveCategories,
 } from '../contracts';
+import { categoryLabels } from '../catalog';
+import { CatalogTools } from './catalog-tools';
 import { seasonRequest, SeasonPass } from './season-pass';
 import { RewardArt } from './reward-art';
 import { ArtworkUpload } from './artwork-upload';
@@ -247,6 +250,16 @@ export function SeasonManager() {
               )}
             </div>
           </div>
+          <CatalogTools
+            key={season.id + season.revision}
+            definition={definition}
+            editable={editable && !busy}
+            onImport={(next) => {
+              setDefinition(next);
+              setThresholds(next.thresholds.join(', '));
+              setError('');
+            }}
+          />
           {preview ? (
             <SeasonPass key={season.id + JSON.stringify(definition)} preview={{ ...season, definition }} />
           ) : (
@@ -458,8 +471,8 @@ export function SeasonManager() {
                   <h2>Challenge builder</h2>
                 </legend>
                 <p>
-                  Daily and weekly limits are per local calendar period. Only a linked-character check has an
-                  implemented automatic verifier. Historical game actions require moderator review.
+                  Daily and weekly limits are per local calendar period. Linked characters, character levels and exact
+                  completed journey nodes support API verification. Other game actions require moderator review.
                 </p>
                 <div className="season-editor-grid">
                   {definition.challenges.map((c, i) => {
@@ -494,9 +507,28 @@ export function SeasonManager() {
                           </select>
                         </label>
                         <label>
+                          Category
+                          <select
+                            value={c.category ?? ''}
+                            onChange={(e) =>
+                              change({
+                                category: e.target.value ? (e.target.value as Challenge['category']) : undefined,
+                              })
+                            }
+                          >
+                            <option value="">Automatic from verification</option>
+                            {objectiveCategories.map((v) => (
+                              <option key={v} value={v}>
+                                {categoryLabels[v]}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
                           Type
                           <select
                             value={c.cadence}
+                            disabled={c.verification !== 'review'}
                             onChange={(e) => change({ cadence: e.target.value as Challenge['cadence'] })}
                           >
                             {['daily', 'weekly', 'seasonal', 'once', 'event'].map((v) => (
@@ -508,12 +540,47 @@ export function SeasonManager() {
                           Verification
                           <select
                             value={c.verification}
-                            onChange={(e) => change({ verification: e.target.value as Challenge['verification'] })}
+                            onChange={(e) => {
+                              const verification = e.target.value as Challenge['verification'];
+                              change({
+                                verification,
+                                minimumLevel: verification === 'character-level' ? 10 : undefined,
+                                journeyNode: verification === 'journey-node' ? '' : undefined,
+                                ...(verification !== 'review' ? { cadence: 'once', limit: 1 } : {}),
+                              });
+                            }}
                           >
                             <option value="review">Moderator-reviewed</option>
                             <option value="linked-character">API: linked character (one-time)</option>
+                            <option value="character-level">API: character level (one-time)</option>
+                            <option value="journey-node">API: journey node (one-time)</option>
                           </select>
                         </label>
+                        {c.verification === 'character-level' && (
+                          <label>
+                            Required character level
+                            <input
+                              type="number"
+                              min="1"
+                              max="1000"
+                              value={c.minimumLevel ?? 1}
+                              onChange={(e) => change({ minimumLevel: Number(e.target.value) })}
+                            />
+                          </label>
+                        )}
+                        {c.verification === 'journey-node' && (
+                          <label>
+                            Exact journey node ID
+                            <input
+                              maxLength={200}
+                              value={c.journeyNode ?? ''}
+                              onChange={(e) => change({ journeyNode: e.target.value })}
+                            />
+                            <small>
+                              Copy the canonical node ID from verified Console data, never a translated display name.
+                            </small>
+                          </label>
+                        )}
                         <label>
                           XP award
                           <input
@@ -531,6 +598,7 @@ export function SeasonManager() {
                             min="1"
                             max="20"
                             value={c.limit}
+                            disabled={c.verification !== 'review'}
                             onChange={(e) => change({ limit: Number(e.target.value) })}
                           />
                         </label>

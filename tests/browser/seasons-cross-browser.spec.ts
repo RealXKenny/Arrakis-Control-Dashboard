@@ -5,11 +5,107 @@ import sharp from 'sharp';
 import type { Page, Browser, TestInfo } from '@playwright/test';
 import { test, expect } from '../helpers/browser-test';
 import type { Season, Definition, CommunityUpdate } from '../../src/features/seasons/contracts';
+import { exportCatalog, parseCatalog } from '../../src/features/seasons/catalog';
 
 const appOrigin = () => String(test.info().project.use.baseURL ?? 'http://127.0.0.1:3100');
 const adminCookie = '__Host-dashboard_session=browser-admin-session';
 const memberCookie = '__Host-dashboard_session=browser-member-session';
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
+
+test('category catalogs configure API objectives and award once across desktop and mobile', async ({
+  page,
+  browser,
+}, info) => {
+  test.setTimeout(60000);
+  const draft = await seed(page);
+  const definition = structuredClone(draft.definition);
+  const first = definition.challenges[0];
+  first.verification = 'character-level';
+  first.cadence = 'once';
+  first.minimumLevel = 10;
+  first.category = 'level';
+  first.xp /= 2;
+  definition.challenges.push({
+    ...first,
+    id: 'journey-proof',
+    name: 'A story in the sands',
+    verification: 'journey-node',
+    minimumLevel: undefined,
+    journeyNode: 'fixture.story.start',
+    category: 'story',
+  });
+  definition.challenges[2].category = 'exploration';
+  definition.challenges[3].category = 'faction';
+  definition.challenges[4].category = 'achievement';
+  await page.goto('/admin?tab=seasons');
+  await page
+    .getByRole('button', { name: /The Shared Horizon/ })
+    .first()
+    .click();
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByLabel('Import catalog JSON').setInputFiles({
+    name: 'catalog.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(exportCatalog(definition)),
+  });
+  await expect(page.getByRole('status').filter({ hasText: 'Catalog loaded into' })).toBeVisible();
+  await page.getByLabel('Required character level', { exact: true }).fill('20');
+  definition.challenges[0].minimumLevel = 20;
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export catalog', exact: true }).click();
+  const download = await downloadPromise;
+  expect(parseCatalog(readFileSync(await download.path(), 'utf8'))).toEqual(definition);
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.locator('.season-notice[role="status"]')).toHaveText('Season operation saved.');
+  page.once('dialog', (dialog) => dialog.accept(definition.name));
+  await page.getByRole('button', { name: 'Publish saved season', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'End season', exact: true })).toBeVisible();
+  await expect(page.getByLabel('Import catalog JSON')).toBeDisabled();
+  const context = await memberBrowser(browser, info),
+    member = await context.newPage();
+  await member.emulateMedia({ reducedMotion: 'reduce' });
+  await member.goto(`/seasons?season=${draft.id}`);
+  const deck = member.locator('.season-objective-deck');
+  await expect(deck.getByRole('button')).toHaveCount(6);
+  await deck.getByRole('button', { name: /Levels/ }).click();
+  await expect(member.getByLabel('Category', { exact: true })).toHaveValue('level');
+  await member.getByRole('button', { name: 'Verify now', exact: true }).click();
+  await expect(deck.getByRole('button', { name: /Levels/ })).toContainText('100% complete');
+  await deck.getByRole('button', { name: /Story/ }).click();
+  await member.getByRole('button', { name: 'Verify now', exact: true }).click();
+  await expect(deck.getByRole('button', { name: /Story/ })).toContainText('100% complete');
+  const repeat = await member.request.post('/api/v2/seasons', {
+    headers: { Origin: appOrigin() },
+    data: { action: 'verify', seasonId: draft.id, challengeId: 'journey-proof', xp: 100000, owner: 'forged' },
+  });
+  expect(repeat.status()).toBe(400);
+  const replay = await member.request.post('/api/v2/seasons', {
+    headers: { Origin: appOrigin() },
+    data: { action: 'verify', seasonId: draft.id, challengeId: 'journey-proof' },
+  });
+  expect(replay.ok(), await replay.text()).toBe(true);
+  const data = await replay.json();
+  expect(data.duplicate).toBe(true);
+  expect(data.progress.xp).toBe(first.xp * 2);
+  expect(data.progress.ledger).toHaveLength(2);
+  await accessible(member);
+  for (const width of [320, 412, 1440]) {
+    await member.setViewportSize({ width, height: 915 });
+    expect(await member.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await member.screenshot({ path: info.outputPath('objective-categories-desktop.png'), fullPage: true });
+  await member.setViewportSize({ width: 393, height: 852 });
+  await member.screenshot({ path: info.outputPath('objective-categories-mobile.png'), fullPage: true });
+  await context.close();
+  const latest = await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json();
+  await adminAction(page, {
+    action: 'transition',
+    seasonId: draft.id,
+    revision: latest.season.revision,
+    transition: 'end',
+    confirmation: definition.name,
+  });
+});
 async function authenticate(page: Page, cookie?: string) {
   await page.context().clearCookies();
   if (appOrigin().startsWith('https:')) {

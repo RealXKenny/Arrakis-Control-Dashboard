@@ -170,7 +170,7 @@ export async function submitChallenge(
   ensureActive(season);
   const challenge = season.definition.challenges.find((v) => v.id === challengeId);
   if (!challenge) fail('Challenge not found.', 404);
-  if ((challenge.verification === 'linked-character') !== observed) fail('Use the configured challenge verification.');
+  if ((challenge.verification !== 'review') !== observed) fail('Use the configured challenge verification.');
   const period = periodFor(challenge, season.definition, Date.now());
   const progress = data.progress.value;
   const previousXp = progress.xp;
@@ -197,9 +197,9 @@ export async function submitChallenge(
     submittedAt: new Date().toISOString(),
   };
   if (observed) {
-    submission.reviewer = 'api:linked-character';
+    submission.reviewer = `api:${challenge.verification}`;
     submission.reviewedAt = submission.submittedAt;
-    award(progress, challenge.xp, challenge.name, 'api:linked-character', submission.id);
+    award(progress, challenge.xp, challenge.name, submission.reviewer, submission.id);
   }
   const totals = data.totals.value;
   updateTotals(totals, season, previousXp, progress, !data.progress.raw, observed ? challengeId : undefined);

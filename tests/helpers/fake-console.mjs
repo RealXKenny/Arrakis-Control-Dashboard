@@ -23,7 +23,12 @@ function baseScenario(pawnId, controllerId, name) {
           { faction_name: 'Harkonnen', reputation_amount: 0 },
         ],
       },
-      progression: { level: 100, xp: 100000 },
+      progression: {
+        capabilities: { progression: true },
+        player: { actorId: pawnId, controllerId },
+        level: 100,
+        xp: 100000,
+      },
       vitals: { currentHealth: 150, maxHealth: 150, hydration: 82 },
       intel: { intel: 135, maxIntel: 2779 },
       currency: { total: 12537085 },
@@ -37,7 +42,19 @@ function baseScenario(pawnId, controllerId, name) {
           { id: 'two', display_name: 'Stillsuit', inventory_type: 1, quantity: 1, quality: 3 },
         ],
       },
-      journey: { rows: { story: [{ complete: true }, { complete: false }], codex: [], contract: [], tutorial: [] } },
+      journey: {
+        capabilities: { journey: true },
+        player: { actorId: pawnId, controllerId },
+        rows: {
+          story: [
+            { id: 'fixture.story.start', complete: true },
+            { id: 'fixture.story.later', complete: false },
+          ],
+          codex: [],
+          contract: [],
+          tutorial: [],
+        },
+      },
     },
     // Detail endpoints (by name) that answer with this HTTP status.
     failures: {},

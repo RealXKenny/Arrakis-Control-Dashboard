@@ -4,6 +4,9 @@
 
 ### New Features
 
+- Added illustrated objective categories, completion summaries and filtering inspired by Icehunter/dune-admin, with preserved MIT attribution and original vector artwork.
+- Administrators can transfer versioned season catalogs through draft-only JSON import/export and configure one-time API-observed character-level and journey-node objectives. Canonical identity, bounded evidence, rate limits and atomic XP prevent forged or duplicate awards. Existing published seasons and default-off game delivery remain protected.
+
 - Private guild polls: leader-published single-choice questions, local closing times, current-character voting, vote changes/withdrawals, aggregate results and early closure. Immutable published choices, atomic revisions, commit-time deadlines, bounded retention and disband cleanup protect voting without exposing voter identities in member views.
 
 - Recruit onboarding: private guild welcome guides, rules acknowledgments, useful locations, mentor assignments and per-character checklist progress. Verified leaders review progress; changed rules/items require fresh acknowledgment/completion, with bounded storage, revision protection, retained drafts and disband cleanup.

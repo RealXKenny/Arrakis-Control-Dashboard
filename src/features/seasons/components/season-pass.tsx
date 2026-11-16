@@ -14,7 +14,6 @@ import {
   paths,
   levelProgress,
   seasonState,
-  periodFor,
   emptyProgress,
   emptyTotals,
   seasonPresentation,
@@ -26,6 +25,9 @@ import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { RewardArt } from './reward-art';
 import { SeasonDialog } from './season-dialog';
 import { useCommunityProgress } from '../hooks/use-community-progress';
+import { categoryLabels, categoryOf, objectiveStatus } from '../catalog';
+import { objectiveCategories } from '../contracts';
+import { ObjectiveDeck } from './objective-deck';
 import '../styles/seasons.css';
 
 export type SeasonView = {
@@ -46,12 +48,7 @@ export async function seasonRequest<T>(url: string, payload?: unknown): Promise<
   return data as T;
 }
 function statusOf(challenge: Challenge, view: SeasonView) {
-  const entries = view.progress.submissions.filter(
-    (v) => v.challengeId === challenge.id && v.period === periodFor(challenge, view.season.definition, Date.now()),
-  );
-  if (entries.filter((v) => v.status === 'approved').length >= challenge.limit) return 'completed';
-  if (entries.some((v) => v.status === 'pending')) return 'pending';
-  return 'available';
+  return objectiveStatus(challenge, view.season.definition, view.progress, Date.now());
 }
 export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challenges' | 'history'; preview?: Season }) {
   const [views, setViews] = useState<SeasonView[]>(
@@ -64,6 +61,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
   const [filter, setFilter] = useState('all');
   const [status, setStatus] = useState('all');
   const [cadence, setCadence] = useState('all');
+  const [category, setCategory] = useState('all');
   const [selection, setSelection] = useState<Reward | null>(null);
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [text, setText] = useState('');
@@ -184,6 +182,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
   const filtered = definition.challenges.filter(
     (v) =>
       (filter === 'all' || v.path === filter) &&
+      (category === 'all' || categoryOf(v) === category) &&
       (status === 'all' || statusOf(v, view) === status) &&
       (cadence === 'all' || v.cadence === cadence),
   );
@@ -445,6 +444,18 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               </div>
             </section>
           )}
+          <ObjectiveDeck
+            definition={definition}
+            progress={progress}
+            now={now}
+            selected={category}
+            onSelect={(next) => {
+              setCategory(next);
+              setFilter('all');
+              setStatus('all');
+              setCadence('all');
+            }}
+          />
           <section aria-labelledby="season-challenges-title">
             <div className="season-section-heading">
               <div>
@@ -461,6 +472,17 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               review gameplay evidence before awarding XP.
             </p>
             <div className="season-filters">
+              <label>
+                Category
+                <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
+                  <option value="all">All categories</option>
+                  {objectiveCategories.map((c) => (
+                    <option key={c} value={c}>
+                      {categoryLabels[c]}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label>
                 Path
                 <select aria-label="Path" value={filter} onChange={(e) => setFilter(e.target.value)}>
@@ -495,7 +517,10 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 <Link href="/seasons/challenges">Browse every in-game quest →</Link>
               </p>
             )}
-            <div className="season-challenges">
+            {filtered.length === 0 && (
+              <p role="status">No objectives match these filters. Choose another category or path.</p>
+            )}
+            <div className="season-challenges season-objective-timeline">
               {(mode === 'challenges' ? filtered : filtered.slice(0, 6)).map((c) => (
                 <Card className="season-challenge" key={c.id}>
                   <div className="season-section-heading">

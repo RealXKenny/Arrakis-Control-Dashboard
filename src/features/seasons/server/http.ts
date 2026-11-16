@@ -7,7 +7,7 @@ import { checkRateLimit } from '../../../lib/security/rate-limit';
 import { AppError } from '../../../lib/errors';
 import { requireApiAdmin, spendAdminBudget } from '../../admin/server/api-access';
 import { requireRecentSignIn } from '../../admin/server/access';
-import { getLinkedPlayer } from '../../player/server/linked-player';
+import { verifyObjective } from './observations';
 import { definitionSchema, identifier, seasonTemplate, presentationSchema, seasonPresentation } from '../contracts';
 import { savePresentation } from './artwork';
 import { deliveryAvailable } from './delivery-gateway';
@@ -48,7 +48,7 @@ const memberAction = z.discriminatedUnion('action', [
     links: z.array(evidenceLink).max(3),
     requestId: z.string().uuid(),
   }),
-  z.object({ action: z.literal('verify'), seasonId: identifier, challengeId: identifier }),
+  z.object({ action: z.literal('verify'), seasonId: identifier, challengeId: identifier }).strict(),
   z.object({ action: z.literal('claim'), seasonId: identifier, rewardId: identifier }),
   z.object({ action: z.literal('equip'), seasonId: identifier, rewardId: identifier }),
   z.object({ action: z.literal('delivery-request'), seasonId: identifier, rewardId: identifier }).strict(),
@@ -218,31 +218,8 @@ export async function mutateSeasons(request: Request) {
   }
   if (action.action === 'claim') return json({ ok: true, ...(await claimReward(id, owner, action.rewardId)) });
   if (action.action === 'equip') return json({ ok: true, progress: await equipReward(id, owner, action.rewardId) });
-  if (action.action === 'verify') {
-    const linked = await getLinkedPlayer(
-      {
-        guildId: session.guildId,
-        channelId: 'dashboard',
-        userId: owner,
-        username: session.user.username,
-        roleIds: session.roleIds,
-        interactionId: `season-verify-${randomUUID()}`,
-        commandName: 'portal',
-      },
-      { timeout: 4000 },
-    );
-    if (!linked.linked || !linked.pawnId || !linked.controllerId) fail('A verified linked character is required.', 403);
-    return json({
-      ok: true,
-      ...(await submitChallenge(
-        id,
-        owner,
-        action.challengeId,
-        { text: 'Fresh adapter observation: linked character confirmed.', links: [] },
-        true,
-      )),
-    });
-  }
+  if (action.action === 'verify')
+    return json({ ok: true, ...(await verifyObjective(session, id, action.challengeId, request.signal)) });
   return json({
     ok: true,
     ...(await submitChallenge(id, owner, action.challengeId, {

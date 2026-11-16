@@ -26,6 +26,8 @@ All third-party names, trademarks, logos, and artwork belong to their respective
 
 ## License scope
 
+Battle pass category navigation and catalog concepts adapt [Icehunter/dune-admin](https://github.com/Icehunter/dune-admin), Copyright (c) 2026 Ryan Wilson, under the MIT License. Original category illustrations replace upstream artwork. The pinned source revision, scope and complete MIT notice are preserved in [battle pass provenance](docs/legal/battle-pass-provenance.md).
+
 Original project contributions are offered under the [MIT License](LICENSE), except where a file or component carries a different applicable license. Third-party materials remain subject to their own terms. This notice does not alter the MIT License or grant rights to third-party intellectual property.
 
 ## Locally hosted casino narration

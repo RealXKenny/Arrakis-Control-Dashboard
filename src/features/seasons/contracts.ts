@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const paths = ['solo', 'builder', 'explorer', 'supplier', 'mentor'] as const;
+export const objectiveCategories = ['level', 'story', 'side_quest', 'faction', 'exploration', 'achievement'] as const;
 export const cosmeticKinds = ['badge', 'banner', 'title', 'decoration', 'achievement'] as const;
 export const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
 const text = (max: number) => z.string().trim().min(1).max(max);
@@ -58,7 +59,13 @@ export const challengeSchema = z.object({
   description: text(1200),
   path: z.enum(paths),
   cadence: z.enum(['daily', 'weekly', 'seasonal', 'once', 'event']),
-  verification: z.enum(['review', 'linked-character']),
+  verification: z.enum(['review', 'linked-character', 'character-level', 'journey-node']),
+  category: z.enum(objectiveCategories).optional(),
+  minimumLevel: z.number().int().min(1).max(1000).optional(),
+  journeyNode: z
+    .string()
+    .regex(/^[A-Za-z0-9_.:/-]{1,200}$/)
+    .optional(),
   xp: z.number().int().min(1).max(100000),
   limit: z.number().int().min(1).max(20),
 });
@@ -106,8 +113,12 @@ export const definitionSchema = z
     for (const list of [value.rewards, value.challenges, value.milestones])
       if (new Set(list.map((v) => v.id)).size !== list.length) issue('IDs must be unique within each list.');
     if (value.rewards.some((v) => v.level > value.thresholds.length)) issue('Reward level exceeds the level cap.');
-    if (value.challenges.some((v) => v.verification === 'linked-character' && (v.cadence !== 'once' || v.limit !== 1)))
-      issue('Linked-character verification is one-time only.');
+    if (value.challenges.some((v) => v.verification !== 'review' && (v.cadence !== 'once' || v.limit !== 1)))
+      issue('API verification is one-time only.');
+    if (value.challenges.some((v) => (v.verification === 'character-level') !== (v.minimumLevel !== undefined)))
+      issue('Character-level objectives require a minimum level only.');
+    if (value.challenges.some((v) => (v.verification === 'journey-node') !== (v.journeyNode !== undefined)))
+      issue('Journey objectives require an exact node ID only.');
     if (value.challenges.some((v) => ['once', 'seasonal', 'event'].includes(v.cadence) && v.limit !== 1))
       issue('Non-recurring challenges have one completion.');
   });

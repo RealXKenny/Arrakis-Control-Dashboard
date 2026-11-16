@@ -491,3 +491,83 @@
     transform: none;
   }
 }
+.season-objectives {
+  margin-block: 2rem;
+}
+.season-objective-deck {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-block: 1.25rem;
+}
+.season-root .season-objective-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--theme-border, #302b25);
+  border-radius: 1rem;
+  color: var(--theme-text, #f3efe7);
+  background: var(--theme-surface, #171a1d);
+  overflow-wrap: anywhere;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+.season-root .season-objective-card:hover,
+.season-root .season-objective-card.is-selected {
+  border-color: var(--theme-accent, #d49a5c);
+  background: color-mix(in srgb, var(--theme-accent, #d49a5c) 12%, var(--theme-surface, #171a1d));
+}
+.season-objective-art {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  color: var(--theme-accent, #d49a5c);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, currentColor 12%, transparent), transparent 70%);
+}
+.season-objective-art svg {
+  width: 100%;
+  max-width: 170px;
+}
+.season-objective-card strong {
+  font-size: 1.1rem;
+}
+.season-objective-card > span:last-child {
+  font-size: 0.8rem;
+}
+.season-objective-meter {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--theme-border, #302b25);
+  overflow: hidden;
+}
+.season-objective-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--theme-accent, #d49a5c);
+}
+.season-objective-timeline .season-challenge {
+  border-inline-start: 3px solid var(--theme-accent, #d49a5c);
+}
+@media (max-width: 1100px) {
+  .season-objective-deck {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 580px) {
+  .season-objective-deck {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .season-root .season-objective-card {
+    padding: 0.75rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .season-root .season-objective-card {
+    transition: none;
+  }
+}
