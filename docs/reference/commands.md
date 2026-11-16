@@ -37,13 +37,13 @@
 
 ## Useful checks
 
-| Platform   | Command                                                                                 | Expect                |
-| ---------- | --------------------------------------------------------------------------------------- | --------------------- |
-| bash       | `curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:2008/`                      | `200`                 |
-| bash       | `redis-cli -u "$REDIS_URL" ping`                                                        | `PONG`                |
-| bash       | `sha256sum --check arrakis-control-dashboard-<version>.tar.gz.sha256`                   | `OK`                  |
-| PowerShell | `(Invoke-WebRequest http://127.0.0.1:2008/ -UseBasicParsing).StatusCode`                | `200`                 |
-| PowerShell | `(Get-FileHash <archive> -Algorithm SHA256).Hash`                                       | matches the `.sha256` |
+| Platform   | Command                                                                  | Expect                |
+| ---------- | ------------------------------------------------------------------------ | --------------------- |
+| bash       | `curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:2008/`       | `200`                 |
+| bash       | `redis-cli -u "$REDIS_URL" ping`                                         | `PONG`                |
+| bash       | `sha256sum --check arrakis-control-dashboard-<version>.tar.gz.sha256`    | `OK`                  |
+| PowerShell | `(Invoke-WebRequest http://127.0.0.1:2008/ -UseBasicParsing).StatusCode` | `200`                 |
+| PowerShell | `(Get-FileHash <archive> -Algorithm SHA256).Hash`                        | matches the `.sha256` |
 
 ## RedBlink `dune` CLI (upstream, not part of this repository)
 

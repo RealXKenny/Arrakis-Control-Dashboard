@@ -9,11 +9,11 @@
 
 ## What each project is
 
-|          | RedBlink Dune Docker                                                                                                                                                                                                                                                         | Arrakis Control Dashboard                                                                                                                      |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Purpose  | Host and operate a Dune: Awakening dedicated server in Docker                                                                                                                                                                                                                | A web dashboard for your community and administrators                                                                                          |
-| Runs     | Docker on a Linux host (`dune` CLI, Compose files `docker-compose*.yml`, raw `docker run` for gameplay)                                                                                                                                                                      | Node.js 22 (directly or via Pterodactyl)                                                                                                       |
-| Data     | Game Postgres, `runtime/secrets`, `runtime/generated`, `.env`                                                                                                                                                                                                                | Redis only                                                                                                                                     |
+|         | RedBlink Dune Docker                                                                                    | Arrakis Control Dashboard                             |
+| ------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Purpose | Host and operate a Dune: Awakening dedicated server in Docker                                           | A web dashboard for your community and administrators |
+| Runs    | Docker on a Linux host (`dune` CLI, Compose files `docker-compose*.yml`, raw `docker run` for gameplay) | Node.js 22 (directly or via Pterodactyl)              |
+| Data    | Game Postgres, `runtime/secrets`, `runtime/generated`, `.env`                                           | Redis only                                            |
 
 **The dashboard does not install, update, start, stop or back up the RedBlink stack.** It only calls the Console's HTTP API
 and Discord adapter with the credentials you give it. Server start/stop/update through the dashboard happens only as Console
@@ -95,7 +95,6 @@ protected and role-gated; `/broadcast` stays disabled on the stock compose file.
 curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/players?page=1&pageSize=1"
 curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/integrations/discord/health"
 ```
-
 
 ## Troubleshooting authentication and network issues
 

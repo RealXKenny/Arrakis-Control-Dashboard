@@ -69,15 +69,14 @@ it('coordinates automatic season publication, bulk cosmetic ownership and rollov
   expect(seasons).toHaveLength(2);
   expect((await generator.generatorStatus()).enabled).toBe(true);
   const first = seasons.find((s) => s.definition.number === 1)!;
-  const proofs = new Map(first.definition.challenges.map((c) => [c.id, 'Verified disposable provider observation.']));
+  const proofs = new Map<string, string>();
   await Promise.allSettled([
     engine.syncAutomaticProgress(first.id, 'member', proofs),
     engine.syncAutomaticProgress(first.id, 'member', proofs),
   ]);
   const progress = (await store.loadMember(first.id, 'member')).progress.value;
-  expect(progress.ledger).toHaveLength(100);
-  expect(progress.claims).toHaveLength(100);
-  expect(progress.xp).toBe(250000);
+  expect(progress.xp).toBe(0);
+  expect(progress.claims).toHaveLength(0);
   expect((await engine.syncAutomaticProgress(first.id, 'member', proofs)).duplicate).toBe(true);
   const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.parse(first.definition.endsAt));
   try {

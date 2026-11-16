@@ -38,4 +38,3 @@ Finish Discord signup by attaching a password to the Discord-verified email on t
 The email always comes from the session, never from the body. Audit: `auth.password_set`.
 
 ## Revocation
-

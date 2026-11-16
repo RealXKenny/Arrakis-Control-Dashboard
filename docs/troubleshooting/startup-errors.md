@@ -8,12 +8,12 @@ Cause: the production configuration check failed. The server **deliberately does
 Production configuration is invalid; refusing to start · {"reason":"Missing server environment configuration: AUTH_SECRET"}
 ```
 
-| `reason` contains                                                       | Fix                                                                                                                                                |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `REDIS_URL is plain-text and unauthenticated on a public-looking host…` | Add a password or use `rediss://`; do not set `REDIS_ALLOW_INSECURE` unless you accept the risk                                                    |
-| `REDIS_REQUIRE_TLS is enabled: REDIS_URL must use rediss://`            | Use `rediss://` or set `REDIS_REQUIRE_TLS=false`                                                                                                   |
-| `Invalid production URL configuration: APP_URL` / `DUNE_API_URL`        | No credentials, no hash; `APP_URL` has no query/path                                                                                               |
-| `Production HTTPS is required: APP_URL`                                 | Use `https://` (plain `http://` only for loopback)                                                                                                 |
+| `reason` contains                                                       | Fix                                                                                             |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `REDIS_URL is plain-text and unauthenticated on a public-looking host…` | Add a password or use `rediss://`; do not set `REDIS_ALLOW_INSECURE` unless you accept the risk |
+| `REDIS_REQUIRE_TLS is enabled: REDIS_URL must use rediss://`            | Use `rediss://` or set `REDIS_REQUIRE_TLS=false`                                                |
+| `Invalid production URL configuration: APP_URL` / `DUNE_API_URL`        | No credentials, no hash; `APP_URL` has no query/path                                            |
+| `Production HTTPS is required: APP_URL`                                 | Use `https://` (plain `http://` only for loopback)                                              |
 
 Fix the variable and **restart**; the check runs once at startup.
 

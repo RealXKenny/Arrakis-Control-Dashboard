@@ -5,7 +5,7 @@ Keep this open during an incident. Report vulnerabilities in the dashboard itsel
 ## First 15 minutes (any incident)
 
 1. Preserve evidence: copy the current logs (stdout including `AUDIT` lines) and note the time.
-3. Decide: contain first (below), then investigate.
+2. Decide: contain first (below), then investigate.
 
 ## A secret leaked
 

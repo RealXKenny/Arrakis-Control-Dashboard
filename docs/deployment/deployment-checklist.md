@@ -82,7 +82,8 @@ that is not an egg variable cannot reach the application.
 
 ### 1.6 Administrator access
 
-  hold `VERIFIED_MEMBER_ROLE_ID`.
+hold `VERIFIED_MEMBER_ROLE_ID`.
+
 - Administrators must sign in interactively (Discord or password) within the step-up windows to make changes.
 
 ### 1.7 Release artifact verification
@@ -183,7 +184,6 @@ that, already-migrated listings become unmanageable by their owners until it is 
 - A member removed from the guild or the role loses access within 30 minutes of their next request (re-verification).
 
 ### 3.3 Administrator permission tests
-
 
 ### 3.4 Marketplace verification
 

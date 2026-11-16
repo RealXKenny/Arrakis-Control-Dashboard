@@ -16,7 +16,6 @@
 
 **Is MFA supported?** No. Enable 2FA on administrators' Discord accounts ([security overview](../security/security-overview.md#known-limitations-and-accepted-risks)).
 
-
 **Can I use my own Redis Cluster?** Yes, with `REDIS_CLUSTER_NODES` plus a `REDIS_URL` for credentials ([Redis Cluster](../configuration/redis-cluster.md)).
 
 **What happens if Redis goes down?** Sessions and feature data are unavailable and the rate limiter fails closed (503); recovery is automatic when Redis returns

@@ -12,15 +12,15 @@ generated. Legacy error bodies include `requestId`; grep the log for it.
 
 ## Common developer problems
 
-| Symptom                                       | Check                                                                                               |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Mutations fail with `INVALID_ORIGIN`          | Request has no `Origin` header, or it differs from `APP_URL`'s origin                               |
-| Production start serves HTTP 500              | Missing/invalid variable; the log names it ([startup errors](../troubleshooting/startup-errors.md)) |
-| Tests hit a stale server                      | Kill processes on ports 3100/3101 before `npm run test:browser`                                     |
-| `EADDRINUSE` in smoke/browser tests           | Same                                                                                                |
-| Redis integration test refuses to run         | `TEST_REDIS_URL` must be loopback with an explicit database                                         |
-| Installer tests skipped                       | `jq` (and the other tools) missing from `PATH`                                                      |
-| Types differ from docs                        | Next.js 16 changed APIs; read `node_modules/next/dist/docs/` for the installed version              |
+| Symptom                               | Check                                                                                               |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Mutations fail with `INVALID_ORIGIN`  | Request has no `Origin` header, or it differs from `APP_URL`'s origin                               |
+| Production start serves HTTP 500      | Missing/invalid variable; the log names it ([startup errors](../troubleshooting/startup-errors.md)) |
+| Tests hit a stale server              | Kill processes on ports 3100/3101 before `npm run test:browser`                                     |
+| `EADDRINUSE` in smoke/browser tests   | Same                                                                                                |
+| Redis integration test refuses to run | `TEST_REDIS_URL` must be loopback with an explicit database                                         |
+| Installer tests skipped               | `jq` (and the other tools) missing from `PATH`                                                      |
+| Types differ from docs                | Next.js 16 changed APIs; read `node_modules/next/dist/docs/` for the installed version              |
 
 ## Inspecting Redis
 

@@ -52,6 +52,7 @@ dune ports       # port status
 After installation the installer prints the Console's URL and a generated admin password. If you lose it, upstream
 
 ```bash
+
 ```
 
 Persistent data (all inside the RedBlink checkout, per upstream): `runtime/secrets/` (credentials, includes the Funcom
@@ -180,7 +181,7 @@ See [reverse proxy](../installation/reverse-proxy.md).
    `Dune Console connection ready` and `Arrakis Control Dashboard is listening`.
 2. `curl -sS https://<your-domain>/ -o /dev/null -w "%{http_code}\n"` returns `200`.
 3. Sign in with Discord, land on the portal, and see your character and server status.
-5. If data is missing, work through [Console connection problems](../troubleshooting/console-connection.md).
+4. If data is missing, work through [Console connection problems](../troubleshooting/console-connection.md).
 
 ## 10. Update, back up, secure
 
