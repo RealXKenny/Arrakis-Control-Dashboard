@@ -49,5 +49,6 @@ This is a continuation record, not a claim of completion. Check an item only aft
 ## Initial verification observations
 
 - `npm test` on Windows: 181 test files passed, 4 failed, 1 skipped; 1,263 tests passed, 4 failed, 42 skipped. Failures involved disposable TLS certificate generation, test Redis connections and a Windows junction. Diagnose with appropriate isolated infrastructure before attributing them to the environment or declaring the suite passed.
+- Outside the sandbox, all four previously failing files passed (39 tests), and the full unit suite passed: 185 files and 1,277 tests passed, with one file and 32 tests skipped. The prior failures are consistent with sandbox restrictions.
 - Existing population recording samples one aggregate count per minute with 24-hour retention; it does not by itself implement N073's historical heatmap or per-map coverage.
 - Community events currently have a bounded Redis store and published member reads; the former administrator event editor was removed, so its old documentation is not an authoritative publishing workflow.

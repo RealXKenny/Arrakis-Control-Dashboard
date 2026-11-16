@@ -12,21 +12,16 @@
 - Mobile field quick actions, an authorized keyboard command palette (Ctrl or Command + K), and freshness and outage indicators with explicit last-success timestamps on monitoring panels.
 - Personal data export and erasure controls for dashboard-owned notes, plans and retained snapshots.
 - Private guild collaboration tools: noticeboard, operations planner with role sign-ups, resource requests with delivery tracking, shared base directory, recruit onboarding and guild polls with verified-character voting.
-- Community seasons: free 100-level reward track, atomic progression and review engine, season builder, permanent profile cosmetics, secure artwork and live presentation edits, Safari/WebKit coverage, validated launch content import and reviewed in-game reward delivery.
+- Community seasons offer a 100-level reward track, server-verified progression and permanent profile cosmetics.
 - Automatic seasons now use deterministic personal plans built from an immutable enrollment baseline. Objectives are based only on verified game data, never repeat or reroll, never complete instantly from existing progress, and report limitations instead of promising impossible completion. Level-200 characters receive journey objectives only.
 - Eight rotating seasonal themes drive season names, subtitles, descriptions and reward focus without repeating inside a cycle.
 - Catalog-backed reward economy: every one of the 100 levels carries a reward bundle of items, Solaris and House Credits generated from the Console item catalog within per-level, per-season and currency budgets. Developer, quest, entitlement-controlled and unclassified items are excluded and unsafe plans are rejected before publication.
 - Manual **Claim Reward** and **Claim All Available** deliver rewards directly with no administrator approval: server-side level, ownership, character-binding and offline checks, durable component-level claim records, a persisted send marker before every game call, exact balance and receipt verification, and no resend of uncertain or interrupted deliveries. Claims remain open after a season ends.
-- Administrator algorithm monitor shows the engine versions, theme sequence, economy budgets, a simulation across characters at levels 1 to 200 and a reconciliation queue for uncertain deliveries.
-
-- Intelligent automatic seasons: deterministic personal objective plans built from an immutable enrollment baseline, level-200-aware eligibility, eight rotating seasonal themes, catalog-backed reward bundles at all 100 levels within an explainable economy, and manual **Claim Reward** and **Claim All Available** with durable component-level delivery. Uncertain deliveries are never resent and appear in an administrator reconciliation queue; an algorithm monitor shows simulations and economy budgets. Generated seasons no longer claim cosmetics automatically.
 
 - Simplified Console configuration: `DUNE_API_URL` and `DUNE_API_KEY` replace `CONSOLE_URL`, `CONSOLE_API_KEY` and `ADMIN_CONSOLE_API_KEY`, and `ADAPTER_TOKEN` is renamed `DUNE_ADAPTER_TOKEN` for the Console's Discord adapter, which accepts only its own token. Dashboard authorization, privileged HTTPS/loopback transport and the retired-setting startup error are unchanged in intent. Season automation and delivery toggles were removed.
 
-- Automatic three-month Season 1, Season 2 and onward: admin-authorized deterministic generation, 100 free cosmetic levels, scheduling/publication/archiving, server-verified XP and atomic cosmetic claiming. Durable Redis cursors and pause fences protect multi-instance recovery. API-only objectives avoid approval of unverifiable evidence. Seasons start automatically by default (saved pauses are preserved) and count only NEW in-game progress after a per-season baseline, so existing high levels earn nothing on first observation. Configured Solaris/item rewards need separate review and explicit execution.
 
 - Added illustrated objective categories, completion summaries and filtering inspired by Icehunter/dune-admin, with preserved MIT attribution and original vector artwork.
-- Administrators can transfer versioned season catalogs through draft-only JSON import/export and configure one-time API-observed character-level and journey-node objectives. Canonical identity, bounded evidence, rate limits and atomic XP prevent forged or duplicate awards. Existing published seasons remain protected; game delivery needs no feature toggle but still requires the administrator connection, review and explicit execution.
 
 - Private guild polls: leader-published single-choice questions, local closing times, current-character voting, vote changes/withdrawals, aggregate results and early closure. Immutable published choices, atomic revisions, commit-time deadlines, bounded retention and disband cleanup protect voting without exposing voter identities in member views.
 
@@ -40,10 +35,9 @@
 
 - Guild noticeboard: current members can read a private daily message, priorities and pinned announcements on My guild. Freshly verified leaders can create, edit and remove posts, with conflict protection and drafts preserved after failed saves.
 
-- New Service status page embeds the HetrixTools hosting availability report with automatic sizing and a direct-report fallback. It requires sign-in and always stays under More on desktop and mobile.
-- New Community events page under More brings competitions, prize pools, schedules, entry instructions and rules together. Members can filter upcoming, current and past events; dates display in their own timezone.
+- New Service status page embeds the HetrixTools hosting availability report with automatic sizing and a direct-report fallback. It requires sign-in.
+- New Community events page brings competitions, prize pools, schedules, entry instructions and rules together. Members can filter upcoming, current and past events; dates display in their own timezone.
 - The first Base Building Competition offers 500,000 Solaris coins and a couple of new in-game items. Dates, specific item prizes and entry or judging details remain to be announced; prize listings do not award currency or items automatically.
-- Administrators can create, draft, publish, feature, edit and delete community events from Players & community. Events persist in Redis, drafts stay private, conflicting edits are rejected, and deleting the initial competition does not cause it to reappear.
 - Arrakis Control has been rebuilt from the ground up as version 2 with a new "Modern Dune" look: deep obsidian backgrounds, muted desert-sand panels, Spice Melange amber for actions and active states, sharp corners and flat, hard shadows.
 - New landing page with a custom dune-ridge identity, a responsive hero, feature illustrations and dedicated sections for players, communities and server operators. The header has a circular V2 badge; the simplified footer shows the brand and Funcom disclaimer without a version badge.
 - New Market grid: a strict 5 × 5 board with 25 listings per page, search, sorting and a My listings filter. The old intelligence and buyback modules have been removed.
@@ -53,15 +47,12 @@
 - New Storage page: search your inventory, filter by container and switch between a grid and a list.
 - New Overview page with live field conditions for Hagga Basin and the Deep Desert, the Coriolis countdown, exchange totals, a 24-hour server population chart and the Landsraad balance of power.
 - New Character page with vitals, faction standing, specializations, journey progress and equipped gear.
-- Guilds and My Guild have been rebuilt: browse recruiting guilds, apply with the guild's own questions, chat privately with reviewers, manage your roster and ranks, edit joining requirements, upload a logo, review applications and talk to the administrators. Application questions support short text, paragraphs, dropdowns, timezones, checkboxes and decimal-number answers.
+- Guilds and My Guild have been rebuilt: browse recruiting guilds, apply with the guild's own questions, chat privately with reviewers, manage your roster and ranks, edit joining requirements, upload a logo and review applications. Application questions support short text, paragraphs, dropdowns, timezones, checkboxes and decimal-number answers.
 - The Live Map now has its own page for Hagga Basin and the Deep Desert, with 2D and 3D views, searchable markers, bases, vehicles, and an optional realtime layer for online players and world objects. A 2D fallback remains available when WebGL2 is unavailable.
-- The Administration workspace has been rebuilt in the new design, including a new Discord announcements page.
-- Discord changelog announcements: post release notes or live progress updates through the main bot as Components V2 containers with section dividers and link buttons. The administration composer previews the container layout, and later progress updates edit the bot's tracked messages instead of posting a new copy each time.
 - Optional automatic announcement of each newly deployed release, sent once even when several servers start together.
 - New public Changelog page that the announcement buttons link to.
 - You can now sign in with your email and a password as well as with Discord. Choose a password after your first Discord sign-in. Sessions stay open for 30 days.
-- One top navigation bar now carries every destination, grouped into Portal, Character, Assets, Vehicles, Bases, Market, Guilds, Map and More, with a roomy mega menu for each group. The page you are on is underlined in amber, the menu you have open is highlighted as a box, and each menu is anchored to its button and stays inside the screen. Below 1280 pixels the bar becomes a slide-out drawer.
-- Times are now shown in your own timezone and language, for example `Nov 7, 2026, 11:19 PM EST`, with daylight saving handled for you. Hover a time to see the full local and UTC readings. This covers the Overview "Last reading", base publish dates, guild chat and application times and the administration screens. Countdowns such as the Coriolis cycle and the Landsraad term still count down as durations.
+- Times are now shown in your own timezone and language, for example `Nov 7, 2026, 11:19 PM EST`, with daylight saving handled for you. Hover a time to see the full local and UTC readings. This covers the Overview "Last reading", base publish dates, guild chat and application times. Countdowns such as the Coriolis cycle and the Landsraad term still count down as durations.
 - The Changelog page and the release announcements understand the grouped Patch Notes format (New Features, Improvements, Fixes and so on).
 - Optional Live Chat connects the dashboard to Dune: Awakening through the existing bot-compatible game chat protocol. Choose a configured destination, read incoming player messages and send messages from your authenticated dashboard account without refreshing the page.
 - Live Chat combines game, dashboard and verified Discord-relay messages in one chronological conversation. Discord relays show the relayed sender's name and a Discord-blue badge; genuine player messages keep the Game badge, even when their text imitates a Discord prefix.
@@ -69,16 +60,14 @@
 - The standard Node.js/Pterodactyl launcher automatically starts and supervises the Chat Bridge when chat is enabled. Incoming game messages are consumed before anyone opens Live Chat, and the worker exposes local health, readiness and non-content metrics endpoints.
 - RabbitMQ TLS accepts complete PEM certificates directly in `.env`, including multiline values and escaped newlines. Optional client certificates and private keys support mutual TLS; existing certificate-file settings remain supported.
 - Discord profile pictures are now stored as image bytes in Redis and served through authenticated dashboard URLs across navigation, profiles and chat. Browsers no longer load pictures from Discord's CDN; missing pictures are fetched by the server and saved before being served.
-- Administrators can inspect a bounded, redacted security audit trail and revoke dashboard sessions through the administration API.
-- The Solaris Exchange adds a Dune-themed casino lobby, wallet, round history, fairness tools, rules and administrator transfer reconciliation. Its six game modules are The Emperor's Hand (Blackjack), The Spice Wheel (Roulette), Fate of Arrakis (Dice), Spice Harvest (Mines), Ornithopter Run (Crash) and The Great Houses (Coin Flip).
+- The Solaris Exchange adds a Dune-themed casino lobby, wallet, round history, fairness tools, rules. Its six game modules are The Emperor's Hand (Blackjack), The Spice Wheel (Roulette), Fate of Arrakis (Dice), Spice Harvest (Mines), Ornithopter Run (Crash) and The Great Houses (Coin Flip).
 - Casino wagers use real in-game Solaris through a Redis-backed wallet, with exact-integer balances, reserved wagers, idempotent settlement, committed server seeds and configurable wager and payout ceilings. Deposits, withdrawals and wagering remain disabled by default; live money movement requires deployment-specific verification before enabling it.
 
 ### Improvements
 
 - `npm run env:migrate` updates an existing `.env` automatically: it renames replaced variables, removes retired ones, appends new ones as commented placeholders, keeps a timestamped backup and never prints values. It also runs before `npm run dev` and `npm start`.
 - Console configuration simplified to `DUNE_API_URL`, `DUNE_API_KEY` and `DUNE_ADAPTER_TOKEN`, replacing `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN`. Production refuses to start on the retired names without replacements. The Pterodactyl egg exposes the new variables as hidden secrets.
-- Season automation and in-game delivery no longer need feature toggles: automatic seasons start by default and saved pauses survive restarts, and delivery follows the administrator Console connection.
-- Console-style desktop and mobile polish with shared button, card, menu and control helpers used across seasons, personalization and administration.
+- Console-style desktop and mobile polish with shared button, card, menu and control helpers used across seasons and personalization.
 - Redis integration and Cluster recovery coverage expanded, including baseline, claim and delivery records on real standalone and six-node Cluster targets.
 - All coding-agent guidance now lives in one `AGENTS.md`; the per-tool rule folders and companion files were removed.
 - Component, accessibility and responsive coverage expanded across Chromium, Safari, iPhone and Android projects.
@@ -87,11 +76,10 @@
 
 - Final release-audit coverage checks 25 member routes at six desktop/tablet/mobile widths, WCAG 2.0/2.1/2.2 AA automation, keyboard navigation and reduced motion. Improved small-screen base upload and fairness forms, readable secondary text, loading announcements and unavailable gauge semantics. Added sanitized production-build screenshots for the landing page, overview, casino, Blackjack, sound settings and navigation.
 
-- Large Discord changelogs now split into numbered Components V2 messages with complete notes and all categories. The admin composer previews every part; updates reuse the same posts and remove surplus parts instead of truncating content.
 
 - Signed-in visitors now see Open dashboard actions instead of Discord sign-in prompts. Signed-out topbars show only the brand and Sign in, including mobile.
 - Discord release and progress announcements now use the main bot token and Components V2 containers instead of webhooks. Published community events announce automatically, update their existing posts, and report pending or uncertain outcomes accurately.
-- Large changelog announcements split complete notes and categories across numbered Discord messages instead of silently clipping the release. Oversized individual notes continue across parts, the composer previews the series, and announcements exceeding the 50-message limit are rejected before sending.
+- Large changelog announcements split complete notes and categories across numbered Discord messages instead of silently clipping the release. Oversized individual notes continue across parts, announcements exceeding the 50-message limit are rejected before sending.
 - Event announcements recover known failures through a non-overlapping background scan. Unpublishing replaces an existing announcement with a withdrawn notice without exposing private draft changes; event saves remain separate from Discord delivery outcomes.
 - Shared Discord announcement tracking uses Redis leases and persisted send intent. Unchanged messages are not reposted, rate limits back off, and an uncertain first creation is not blindly retried after a timeout or restart.
 - Console logs now use aligned severity and service columns, distinct Redis and Chat Bridge colors, and readable metadata rows instead of inline JSON. Audit console entries share that style, with clear sign-in/sign-out messages, colored outcomes and correlation IDs. Secret filtering and structured Redis audit records are preserved; console log shippers must adapt to the readable format.
@@ -110,7 +98,6 @@
 - Release notes use the new Patch Notes format, and the release workflow publishes the section that matches the package version.
 - Signed-in pages now use up to 1,600 pixels of width instead of a narrow centred column, and the Overview is a responsive grid: spice conditions and your character, the four summary cards, then server population and the Landsraad. Summary numbers line up in columns and small labels were enlarged for readability.
 - The spice conditions card now shows the Coriolis countdown and the last reading as two clear figures, and the Server rhythm card says in words when nobody was online instead of drawing a flat line.
-- Bases and Vehicles show up to four cards per row on very wide screens, and the administration tab bar lines up with the page.
 - The footer is now just the Arrakis Control mark and "Fan-made. Not affiliated with Funcom." with no links.
 - The code is now organised by feature (`src/features/…`) with shared pieces in `src/components`, `src/server` and `src/lib`, and automated tests enforce the layout, the browser/server boundary and the root-file list. The guides for this are in `docs/architecture/`.
 - Many more automated tests now cover the market, vehicles, sign-in, client addresses, Redis Cluster behaviour and session re-checks.
@@ -126,7 +113,7 @@
 - Documentation is consolidated under `docs/`, covering setup, configuration, features, APIs, integrations, security, operations, migration and troubleshooting. Repository inventories, placement rules and AI-tool adapters share one authoritative project contract.
 - GitHub Actions now validates quality, documentation, assistant configuration, workflow security and dependencies. Browser verification runs across four CI shards, production smoke runs alongside it, and separate disposable Redis suites cover standalone and Cluster behaviour.
 - Release automation requires successful CI for a stable version already on `main`. It publishes the exact source archive, a SHA-256 checksum and a Pterodactyl egg; the installer validates the archive and fails closed on missing or invalid integrity information by default.
-- Solaris transfers require a fresh linked-character check and an offline character. A Console adjustment must confirm the exact currency, amount, offline state and expected resulting balance before wallet settlement; unclear outcomes are held for an administrator rather than automatically retried. Recovery handles interrupted reservations and round settlement without granting duplicate balance.
+- Solaris transfers require a fresh linked-character check and an offline character. A Console adjustment must confirm the exact currency, amount, offline state and expected resulting balance before wallet settlement; unclear outcomes are quarantined rather than automatically retried. Recovery handles interrupted reservations and round settlement without granting duplicate balance.
 
 ### Fixes
 
@@ -138,10 +125,9 @@
 
 - Changelog counters distinguish release updates from their individual changes, so version 2 is shown as one update. Selected text uses a visible blue highlight for copying.
 - Restored the shared Obsidian, Sand and Spice CSS color variables so primary buttons, focus rings and feature styles consistently resolve their intended colors.
-- Header controls and branding now adapt to narrow screens while retaining usable touch targets. Lower-priority destinations move into More without horizontal overflow; Community events and Service status always remain inside More.
+- Header controls and branding now adapt to narrow screens while retaining usable touch targets. Navigation adapts to narrow screens without horizontal overflow.
 - Fixed Redis Cluster node lists written with IPv6 addresses being read with the wrong host and port.
 - A Discord outage or rate limit while re-checking a password login is no longer treated as a revoked Discord connection.
-- The administration tab bar no longer sits in a narrower column than the page below it.
 - The Market loading grid now scrolls inside the mobile workspace instead of pushing the whole page wider than the screen.
 - Chat delivery updates no longer try to append an existing Redis Stream ID. Separate expiring delivery-state records are overlaid on history, so a state change cannot collide with a stored message or leave it permanently pending.
 - Browser network failures and lost publish confirmations now remain `Unconfirmed`, rather than being reported as a definite failure. Uncertain sends are never retried automatically; a deliberate status check reuses the original idempotency key.
@@ -153,8 +139,8 @@
 
 ### Security
 
-- Season progress, claims and deliveries are bound to canonical pawn and controller IDs, use atomic CAS records, and never accept client-supplied evidence, amounts or recipients. Administrator credentials stay server-side.
-- The Discord adapter token is separate from the Console API key, and administrator and delivery requests still require HTTPS or loopback transport.
+- Season progress, claims and deliveries are bound to canonical pawn and controller IDs, use atomic CAS records, and never accept client-supplied evidence, amounts or recipients.
+- The Discord adapter token is separate from the Console API key, and privileged Console transport requires HTTPS or loopback.
 
 - Members who leave the Discord server or lose the required role are now signed out within 30 minutes. If Discord cannot be reached, a session stays valid for up to 6 hours after its last successful check.
 - Password sign-in re-checks the Discord guild and role every time. Passwords are hashed with scrypt, Discord refresh tokens are encrypted before they are stored, and only a Discord-verified email can be linked to an account.
@@ -162,17 +148,13 @@
 - Rate limits now trust only the address your reverse proxy appended to `X-Forwarded-For`, so a forged header can no longer pick a different limit bucket. Set `TRUSTED_PROXY_COUNT` to the number of proxies in front of the dashboard (default 1, use 0 when exposed directly).
 - Uploads are counted while they stream in, pictures are identified by their contents rather than their file name, and every new change request checks that it comes from the dashboard itself.
 - Discord announcement requests disable automatic mentions, use a fixed HTTPS Discord API origin, refuse redirects and verify that configured channels belong to the dashboard's Discord guild. Bot tokens and raw provider errors never enter the browser or announcement previews.
-- Administration re-verifies the exact configured Discord administrator ID, guild, role and session. Sensitive operations require a recent interactive sign-in, with stricter defaults for destructive actions, uploads and downloads; unreviewed write operations default to the stricter policy.
-- Administration routes expose only allowlisted Console operations, bounded request bodies, uploads, downloads and event streams. Provider redirects, arbitrary URLs, secret fields and raw upstream errors are rejected or sanitized.
 - Guild settings, roster changes and application decisions require freshly verified linked-character leadership. Review leases, generation checks and idempotency protect concurrent decisions and reapplications; private conversations remain restricted to their intended participants.
-- Production environment validation requires explicit administrator configuration and the required integration credentials. Console, adapter, bot and administration integrations retain separate credential settings. Redis transport settings, trusted proxy configuration and startup warnings help identify unsafe deployments before service begins.
 - Chat history, send and SSE endpoints independently require a session and a configured destination. Sends enforce same-origin checks, bounded text and per-member and per-destination rate limits; chat content is rendered as text.
 - RabbitMQ certificate-chain and hostname verification remain enabled. Inline PEM takes precedence over file paths; malformed certificates, incomplete client identities and incompatible keys fail safely without logging certificate contents, private keys, passwords or credential-bearing connection URLs.
 - Avatar downloads use a fixed HTTPS Discord endpoint with no redirects, no forwarded session credentials, a five-second timeout, strict PNG checks and bounded image sizes. Authenticated cache misses have per-member and deployment-wide limits, and concurrent downloads are capped.
 - The browser Content Security Policy no longer allows Discord's CDN as an image origin. Profile image responses are private, no-store, protected by `nosniff` and restricted to same-origin use.
 - Security audit events are redacted and bounded, and session indexes support revocation without exposing raw session tokens. Workflow permissions, action pins and release-source checks limit privileged automation to trusted release paths.
-- Community event mutations independently verify administrator identity, guild membership, role and recent sign-in. Same-origin checks, bounded bodies, rate limits and revision checks protect publishing and deletion; event text never becomes executable HTML.
-- Casino routes derive wallet ownership from the session and keep unrevealed game state on the server. Uncertain currency adjustments are never automatically repeated, and reconciliation requires administrator verification and an audit record.
+- Casino routes derive wallet ownership from the session and keep unrevealed game state on the server. Uncertain currency adjustments are never automatically repeated, and uncertain transfers are quarantined.
 
 ### Privacy
 
@@ -181,10 +163,11 @@
 - Loading a profile picture no longer connects the member's browser directly to Discord's CDN. The dashboard server downloads a missing image once for its cache and serves subsequent requests from Redis while it remains retained.
 - Pending, failed and uncertain dashboard chat payloads are excluded from shared history and SSE. Final failures remain local to the sender's open conversation; dismissing a notice does not send a deletion or retry request. Bounded internal records remain for idempotency and reconciliation.
 - Chat operational logs, health checks and metrics omit message bodies and broker credentials. Inline TLS private keys are never written to temporary certificate files.
-- Community event drafts are excluded from member pages and read APIs. The Discord bot token stays server-side, and announcement configuration is exposed to the editor only as a configured/not-configured status.
+- Community event drafts are excluded from member pages and read APIs. The Discord bot token stays server-side.
 
 ### Removed
 
+- The administrator workspace, administrator APIs, associated configuration and manual reconciliation interfaces. Scoped server-side workers handle recovery and quarantine uncertain outcomes.
 - The tracked `CLAUDE.md` project guide and Claude-specific validation; shared coding-agent instructions live in `AGENTS.md`.
 - The More navigation menu, the per-tool agent rule folders (Cursor, Windsurf, Cline, Roo, Continue, Codex, Copilot), the Codex, Kimi and Gemini companion files and the retired `CONSOLE_*`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN` variables.
 
@@ -208,7 +191,6 @@
 - Every stable release now attaches a ready-made Pterodactyl egg (`egg-arrakis-control-dashboard.json`) to its GitHub Release. The egg downloads the latest release and builds it in `/home/container`; the host supplies `SERVER_PORT`.
 - Use Node.js 22 or newer. Build with `npm run build` and start with `npm start`; `npm run dev` retains the development launcher. Docker is not required.
 - Keep `OWNER_KEY_SECRET` stable and separate from other credentials before retaining published marketplace listings. Review `npm run marketplace:rekey` and the migration guide before changing existing owner keys; legacy keys remain accepted until migrated.
-- Review `ADMIN_DISCORD_IDS`, `ADMIN_REAUTH_HOURS`, `ADMIN_HIGH_RISK_REAUTH_MINUTES`, Redis TLS settings and the production hardening guide before deployment. Keep Console, adapter, bot and administration credentials separate.
 - To enable Live Chat, configure `CHAT_ENABLED=true`, `RABBITMQ_URL`, `CHAT_BRIDGE_FUNCOM_ID` and `CHAT_SERVERS` with exact case-sensitive map keys. The launcher starts the worker automatically; `npm run chat:bridge` is a standalone diagnostic command and must not run beside that supervised worker.
 - The chat broker account needs the existing `chat.map` exchange and permissions for broker-generated `amq.gen-*` queues, bindings and publishes. `CHAT_BRIDGE_QUEUE` is retained only for compatibility and is ignored; no named dashboard dead-letter resources need to be created.
 - For RabbitMQ TLS, use `amqps://` with inline `RABBITMQ_TLS_CA`, optional paired `RABBITMQ_TLS_CERT` and `RABBITMQ_TLS_KEY`, or their `_PATH` alternatives. `RABBITMQ_CA_FILE` remains a legacy CA-file fallback. Trust the issuing CA, or an explicitly trusted self-signed server certificate; a server certificate is not a client identity. Use a hostname matching the certificate and keep verification enabled.
