@@ -15,7 +15,7 @@ Node.js 22+, Next.js 16, React 19, TypeScript, Tailwind v4, npm, Redis standalon
 7. Never commit, merge, push, rebase, or deploy without explicit approval.
 
 ## Source of truth
-If this file or `.claude/rules/` disagrees with `AGENTS.md`, follow `AGENTS.md` and report the conflict. Never assume a historical inventory is current; inspect the working tree.
+If this file disagrees with `AGENTS.md`, follow `AGENTS.md` and report the conflict. Never assume a historical inventory is current; inspect the working tree.
 
 ## Verification
 Standard: `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`.

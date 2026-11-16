@@ -18,7 +18,7 @@ weekly updates for GitHub Actions and npm (`.github/dependabot.yml`). A unit tes
 
 ## `ai-config.yml`
 
-Runs `node scripts/maintenance/validate-ai-config.mjs` on pull requests and `main` pushes that touch the coding-agent configuration (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.codex/`, `docs/ai/`, …). It checks structure and JSON only. Same pinned actions and read-only token as the other workflows.
+Runs `node scripts/maintenance/validate-ai-config.mjs` on pull requests and `main` pushes that touch the coding-agent configuration (`AGENTS.md`, `CLAUDE.md`, `.claude/`). It checks structure and JSON only. Same pinned actions and read-only token as the other workflows.
 
 ## `release.yml`
 

@@ -46,20 +46,8 @@ All tracked configuration/source directories are shown. Asset trees stop at cate
 ```text
 ./
 .claude/
-  rules/
-.clinerules/
-.codex/
-.continue/
-  rules/
-.cursor/
-  rules/
 .github/
-  instructions/
   workflows/
-.roo/
-  rules/
-.windsurf/
-  rules/
 docs/
   administration/
   ai/
@@ -307,9 +295,6 @@ tests/
 | AGENTS.md            | AI-agent architecture and engineering instructions        | Agent tools discover it from the repository root                          | Required agent entry point     |
 | CHANGELOG.md         | Release notes consumed by CI and the application          | Release workflow and documentation expect it in the root                  | Required by release tooling    |
 | CLAUDE.md            | Claude instruction entry point                            | Preserve native discovery                                                 | Agent tool convention          |
-| GEMINI.md            | Gemini instruction entry point                            | Preserve native discovery                                                 | Agent tool convention          |
-| CODEX.md             | Optional Codex companion                                  | Established explicit reference; not assumed automatically loaded          | Human convention               |
-| KIMI.md              | Optional Kimi companion                                   | Established explicit reference; discovery depends on installed tool       | Human convention               |
 | CODE_OF_CONDUCT.md   | Community behaviour policy                                | GitHub discovers community files in the root                              | GitHub community standard      |
 | CONTRIBUTING.md      | Contribution guide                                        | GitHub discovers community files in the root                              | GitHub community standard      |
 | LICENSE              | Project license                                           | License and source distribution convention                                | Required project documentation |

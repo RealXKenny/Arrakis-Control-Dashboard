@@ -153,7 +153,7 @@ flowchart LR
     Pterodactyl --> App
 ```
 
-Feature code lives in `src/features/`, route entry points in `src/app/`, shared UI in `src/components/`, and request/provider infrastructure in `src/server/`. See [file organization](docs/architecture/file-organization.md) for placement rules and the [repository inventory](docs/architecture/repository-inventory.md) for the directory map and root-file audit. Assistant setup lives in [AI guide](docs/AI.md).
+Feature code lives in `src/features/`, route entry points in `src/app/`, shared UI in `src/components/`, and request/provider infrastructure in `src/server/`. See [file organization](docs/architecture/file-organization.md) for placement rules and the [repository inventory](docs/architecture/repository-inventory.md) for the directory map and root-file audit. Assistant setup lives in [AI guide](AGENTS.md#ai-agent-guide).
 
 ## Quick start
 
