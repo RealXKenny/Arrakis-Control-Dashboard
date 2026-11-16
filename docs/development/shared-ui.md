@@ -42,7 +42,7 @@ Focused modules in `src/lib/ui/` have no import-time DOM access or server import
 - `scroll-lock.ts`: `lockPageScroll(document.body)` returns an idempotent release. Overlapping overlays can close in either order; the final release restores the preceding inline overflow value and priority.
 - `download.ts`: `downloadBlob` attaches a temporary native anchor, removes it even if clicking fails and revokes the object URL after one second. It rejects path/control filenames and never fetches remote URLs. Features must validate and bound export data before passing a Blob.
 
-Appearance/command dialogs and the mobile drawer share focus and scroll behavior. Color/personal-data exports share cleanup. Theme derivation stays in appearance; HTTP/session/rate-limit/Redis helpers retain their existing server owners. UI helpers never perform game writes, authentication or automatic request retries.
+Appearance/command/season dialogs and the mobile drawer share focus and scroll behavior. Color/personal-data exports share cleanup. Theme derivation stays in appearance; HTTP/session/rate-limit/Redis helpers retain their existing server owners. UI helpers never perform game writes, authentication or automatic request retries.
 
 ## Verification and extension
 
