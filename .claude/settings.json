@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "sonnet",
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "Write",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git diff)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git rev-parse *)",
+      "Bash(git ls-files *)",
+      "Bash(npm run format:check)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(npm test)",
+      "Bash(npm run build)"
+    ],
+    "ask": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(npm install *)",
+      "Bash(npm update *)",
+      "Bash(docker *)",
+      "Bash(npm run marketplace:rekey *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.production)",
+      "Read(./.env.*.local)",
+      "Read(./secrets/**)",
+      "Read(./credentials/**)",
+      "Read(./**/*.pem)",
+      "Read(./**/id_rsa)",
+      "Read(./**/id_ed25519)",
+      "Edit(./.env)",
+      "Edit(./.env.local)",
+      "Edit(./.env.production)",
+      "Edit(./secrets/**)",
+      "Edit(./credentials/**)"
+    ]
+  },
+  "cleanupPeriodDays": 30
+}

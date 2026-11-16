@@ -31,8 +31,12 @@ it('allows no third-party script, connect or image origins', () => {
 it('allows the HetrixTools frame only on the service status page without widening script or image policy', () => {
   for (const path of ['/status', '/status/', '/portal', '/chat', '/status/other']) {
     const policy = proxy(new NextRequest(`http://127.0.0.1:2008${path}`)).headers.get('Content-Security-Policy') ?? '';
-    const sources = policy.split('; ').flatMap((directive) => directive.split(' '));
-    expect(sources.includes('https://wl.hetrixtools.com')).toBe(path === '/status' || path === '/status/');
+    const hosts = policy
+      .split('; ')
+      .flatMap((directive) => directive.split(' '))
+      .filter((source) => URL.canParse(source))
+      .map((source) => new URL(source).hostname);
+    expect(hosts.includes('wl.hetrixtools.com')).toBe(path === '/status' || path === '/status/');
     expect(policy).not.toContain('static.hetrix.io');
     expect(policy.split('; ').find((entry) => entry.startsWith('script-src'))).not.toMatch(/https:/);
   }
