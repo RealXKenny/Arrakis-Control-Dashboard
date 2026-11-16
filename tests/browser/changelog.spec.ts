@@ -67,3 +67,11 @@ test('release journal fits desktop and mobile with readable cards and keyboard c
     await page.screenshot({ path: test.info().outputPath(`changelog-${width}.png`), fullPage: false });
   }
 });
+
+test('bot history is separate from dashboard releases', async ({ page }) => {
+  await page.goto('/changelog');
+  await page.getByRole('link', { name: 'Bot releases' }).click();
+  await expect(page.getByRole('heading', { name: 'Arrakis Control Bot release history' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Version 1.11.7' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Bot releases' })).toHaveAttribute('aria-current', 'page');
+});
