@@ -68,7 +68,10 @@ function MobileItem({
         <ChevronDownIcon className={`size-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div id={`mobile-navigation-${item.id}`} className="ml-4 border-l border-[#302B24] bg-[#0D0E10]">
+        <div
+          id={`mobile-navigation-${item.id}`}
+          className="ml-4 border-l border-[var(--theme-border)] bg-[var(--theme-background)]"
+        >
           {(item.children ?? []).map((child) => (
             <MobileItem
               key={child.id}
@@ -93,6 +96,7 @@ export function MobileNavigation({
   onClose,
   triggerRef,
   onOpenCommands,
+  onOpenAppearance,
 }: {
   items: readonly NavigationItem[];
   pathname: string;
@@ -101,6 +105,7 @@ export function MobileNavigation({
   onClose: () => void;
   triggerRef: RefObject<HTMLButtonElement | null>;
   onOpenCommands?: () => void;
+  onOpenAppearance?: () => void;
 }) {
   const drawer = useRef<HTMLDivElement>(null);
   const close = useRef<HTMLButtonElement>(null);
@@ -158,9 +163,9 @@ export function MobileNavigation({
         role="dialog"
         aria-modal="true"
         aria-label="Navigation"
-        className="absolute inset-y-0 right-0 flex w-[min(88vw,22rem)] flex-col border-l border-[#302B24] bg-[#111215] shadow-[-20px_0_50px_rgb(0_0_0/0.5)] motion-safe:animate-[nav-drawer-enter_180ms_ease-out]"
+        className="absolute inset-y-0 right-0 flex w-[min(88vw,22rem)] flex-col border-l border-[var(--theme-border)] bg-[var(--theme-menu)] shadow-[-20px_0_50px_rgb(0_0_0/0.5)] motion-safe:animate-[nav-drawer-enter_180ms_ease-out]"
       >
-        <div className="flex h-20 shrink-0 items-center justify-between border-b border-[#6f4d1f]/60 px-4">
+        <div className="flex h-20 shrink-0 items-center justify-between border-b border-[var(--theme-header-border)]/60 px-4">
           <span className="font-mono text-[0.625rem] font-bold uppercase tracking-[0.24em] text-[#C8A46A]">
             Command navigation
           </span>
@@ -175,6 +180,17 @@ export function MobileNavigation({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto pb-6">
+          {onOpenAppearance && (
+            <div className="p-3">
+              <button
+                type="button"
+                onClick={onOpenAppearance}
+                className="min-h-12 w-full border border-sand-200/30 px-3 py-2 text-left text-sm font-bold text-spice-300"
+              >
+                Themes and custom colors
+              </button>
+            </div>
+          )}
           {onOpenCommands && (
             <div className="p-3">
               <button
@@ -201,7 +217,7 @@ export function MobileNavigation({
             </div>
           </nav>
           {identity && (
-            <section aria-labelledby="mobile-notifications" className="border-t border-[#302B24] p-3">
+            <section aria-labelledby="mobile-notifications" className="border-t border-[var(--theme-border)] p-3">
               <h2 id="mobile-notifications" className="px-3 py-2 text-[0.625rem] tracking-[0.2em] text-[#C8A46A]">
                 Notifications
               </h2>
@@ -210,7 +226,7 @@ export function MobileNavigation({
               ))}
             </section>
           )}
-          <section aria-labelledby="mobile-account" className="border-t border-[#302B24] p-3">
+          <section aria-labelledby="mobile-account" className="border-t border-[var(--theme-border)] p-3">
             <h2 id="mobile-account" className="px-3 py-2 text-[0.625rem] tracking-[0.2em] text-[#C8A46A]">
               Account
             </h2>

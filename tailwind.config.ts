@@ -1,11 +1,11 @@
 import type { Config } from 'tailwindcss';
 
 /**
- * "Modern Dune" design system: sci-fi brutalism meets high-end SaaS.
+ * Console-style default palette with stable Obsidian/Sand/Spice utility names.
  *
  * Tailwind v4 loads this through `@config` in `src/app/globals.css`.
  * Rules of the system:
- *  - Obsidian is the canvas, Sand is the paper, Spice is the only loud colour.
+ *  - Shared CSS roles drive the default and all browser appearance choices.
  *  - Corners are sharp (radius 0). Depth comes from hard, unblurred shadows,
  *    like low desert sun, never from neon glow.
  *  - Headers are wide-tracked and uppercase to read as monolithic.
@@ -32,60 +32,60 @@ const config = {
     },
     extend: {
       colors: {
-        /** Deep-space canvas. 950 === Tailwind zinc-950 so `bg-zinc-950` and `bg-obsidian-950` agree. */
+        /** Graphite Console canvas, panels and raised surfaces. */
         obsidian: {
-          50: '#f4f4f5',
-          100: '#e4e4e7',
-          200: '#c9c9cf',
-          300: '#a1a1aa',
-          400: '#71717a',
-          500: '#52525b',
-          600: '#3f3f46',
-          700: '#2a2a30',
-          800: '#1c1c21',
-          900: '#121215',
-          950: '#09090b',
+          50: '#f5f6f7',
+          100: '#e6e9eb',
+          200: '#cbd0d5',
+          300: '#a4abb1',
+          400: '#7f878f',
+          500: '#565d66',
+          600: '#42474e',
+          700: '#2b3035',
+          800: '#202428',
+          900: '#171a1d',
+          950: '#0d0f12',
         },
         /** Muted desert sand: panels, body copy, hairlines. */
         sand: {
-          50: '#faf6ee',
-          100: '#f1e9d8',
-          200: '#e3d6b9',
-          300: '#d1bf96',
-          400: '#bba374',
-          500: '#a08a5c',
-          600: '#7f6c47',
-          700: '#5f5136',
-          800: '#41382a',
-          900: '#2a241b',
-          950: '#17140f',
+          50: '#fff1d4',
+          100: '#f3efe7',
+          200: '#e6e0d6',
+          300: '#ceb894',
+          400: '#ad9f89',
+          500: '#9f9586',
+          600: '#7f705a',
+          700: '#5f503f',
+          800: '#423a30',
+          900: '#2d271f',
+          950: '#1b1713',
         },
         /** Spice Melange: primary CTAs, active states, accents. */
         spice: {
-          50: '#fff8eb',
-          100: '#ffecc6',
-          200: '#ffd88a',
-          300: '#ffbf4d',
-          400: '#f9a11f',
-          500: '#ee8209',
-          600: '#d26104',
-          700: '#ae4508',
-          800: '#8d370d',
-          900: '#742f0e',
-          950: '#431603',
+          50: '#fff6e8',
+          100: '#ffedd4',
+          200: '#ffdeb2',
+          300: '#ffd08a',
+          400: '#d49a5c',
+          500: '#c68b4a',
+          600: '#b87b3f',
+          700: '#9b5f2a',
+          800: '#8d5328',
+          900: '#683d20',
+          950: '#3e2415',
         },
         /** Ibad blue: the single cool counterpoint, used sparingly for info and links. */
         ibad: {
-          300: '#8fb4e8',
-          400: '#5f93d9',
-          500: '#3f74bf',
-          600: '#2f5a98',
+          300: '#b5d4f0',
+          400: '#85b7eb',
+          500: '#6196ce',
+          600: '#4775a5',
         },
         /** Semantic status colours, desaturated to sit on obsidian. */
         status: {
-          ok: '#7fa66a',
-          warn: '#f9a11f',
-          danger: '#c8503c',
+          ok: '#9be6bd',
+          warn: '#ffd08a',
+          danger: '#ffb4a8',
         },
       },
       fontFamily: {
@@ -132,4 +132,10 @@ const config = {
   plugins: [],
 } satisfies Config;
 
+// Shared CSS properties drive utilities and feature modules alike. Fallbacks preserve the baseline without JS.
+for (const [group, shades] of Object.entries(config.theme.extend.colors)) {
+  for (const [shade, color] of Object.entries(shades)) {
+    (shades as Record<string, string>)[shade] = `var(--color-${group}-${shade}, ${color})`;
+  }
+}
 export default config;

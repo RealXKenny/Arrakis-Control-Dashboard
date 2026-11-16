@@ -1,6 +1,6 @@
 import { test, expect } from '../helpers/browser-test';
 
-test('signed-out public pages show only branding and sign in in the topbar at every screen size', async ({ page }) => {
+test('signed-out public pages show branding, appearance and sign in without private navigation', async ({ page }) => {
   for (const width of [1920, 820, 390]) {
     await page.setViewportSize({ width, height: 900 });
     for (const path of ['/', '/changelog']) {
@@ -9,7 +9,8 @@ test('signed-out public pages show only branding and sign in in the topbar at ev
       await expect(header.getByRole('link', { name: 'Arrakis Control home' })).toBeVisible();
       await expect(header.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
       await expect(header.getByRole('navigation')).toHaveCount(0);
-      await expect(header.getByRole('button')).toHaveCount(0);
+      await expect(header.getByRole('button')).toHaveCount(1);
+      await expect(header.getByRole('button', { name: 'Open appearance studio', exact: true })).toBeVisible();
       await expect(header.getByRole('link')).toHaveCount(2);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }

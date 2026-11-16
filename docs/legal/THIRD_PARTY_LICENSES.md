@@ -1,5 +1,7 @@
 # Third-Party Licenses and Attributions
 
+Appearance's MIT upstream contributions and separately licensed CC BY-NC-SA 4.0 House/outfit data are documented in [appearance provenance](appearance-provenance.md). The dataset's attribution, noncommercial/share-alike terms and modification notices remain in effect.
+
 This document records the upstream code, direct runtime dependencies, fonts and redistributed assets reviewed for version 2.0.0. Third-party materials retain their own terms; the project's MIT License does not replace them.
 
 ## dune-awakening-selfhost-docker

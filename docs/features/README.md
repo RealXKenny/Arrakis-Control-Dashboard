@@ -1,5 +1,7 @@
 # Features
 
+[Appearance studio](appearance.md) provides the Console default, all 66 upstream theme choices and custom role colors with shared helpers and browser-local persistence.
+
 [Saved activity views](activity-views.md) preserve named portal widgets, inbox/task filters and planning context across workspaces, with private per-account configuration at `/activity-views`.
 
 [Personal data controls](personal-data.md) export or erase private notes, plans and retained sharing snapshots at `/personal-data`, with explicit scope review and stale-save protection.

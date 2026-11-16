@@ -110,7 +110,7 @@ export function NavigationMenuItems({
               </Link>
             ) : (
               <section className="h-full px-3 py-2" aria-label={item.label}>
-                <div className="mb-2.5 flex items-center gap-2.5 border-b border-[#6f4d1f]/45 px-2 pb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#C8A46A]">
+                <div className="mb-2.5 flex items-center gap-2.5 border-b border-[var(--theme-header-border)]/45 px-2 pb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#C8A46A]">
                   <NavigationGlyph icon={item.icon} className="size-[18px] text-spice-400" />
                   {item.label}
                 </div>
@@ -257,8 +257,8 @@ export function NavigationDropdown({
     variant === 'category'
       ? 'command-nav-control relative uppercase'
       : variant === 'account'
-        ? 'command-utility h-12 gap-2.5 border border-[#6f4d1f]/45 bg-[#111215] px-2.5 text-sm font-bold hover:border-spice-400/60 min-[2000px]:h-[3.25rem]'
-        : 'command-utility size-12 justify-center border border-[#6f4d1f]/45 bg-[#111215] text-sand-300 hover:border-spice-400/60 hover:bg-spice-500/6 min-[2000px]:size-[3.25rem]';
+        ? 'command-utility h-12 gap-2.5 border border-[var(--theme-header-border)]/45 bg-[var(--theme-menu)] px-2.5 text-sm font-bold hover:border-spice-400/60 min-[2000px]:h-[3.25rem]'
+        : 'command-utility size-12 justify-center border border-[var(--theme-header-border)]/45 bg-[var(--theme-menu)] text-sand-300 hover:border-spice-400/60 hover:bg-spice-500/6 min-[2000px]:size-[3.25rem]';
   // "Current" (you are on this page) and "open" (this menu is expanded) are separate, visibly different states.
   const showCurrent = variant === 'category' && active && !suppressActiveOnDesktop;
   const showOverflowCurrent = variant === 'category' && active && suppressActiveOnDesktop;
@@ -312,14 +312,14 @@ export function NavigationDropdown({
             translate: `${menuOffset}px 0`,
             ...(arrowX === null ? {} : { ['--menu-arrow-x' as string]: `${arrowX}px` }),
           }}
-          className={`command-menu absolute top-[calc(100%+0.75rem)] z-[70] max-h-[min(76vh,42rem)] overflow-y-auto border border-[#a96d18]/85 bg-[#111215] ${
+          className={`command-menu absolute top-[calc(100%+0.75rem)] z-[70] max-h-[min(76vh,42rem)] overflow-y-auto border border-[#a96d18]/85 bg-[var(--theme-menu)] ${
             item.align === 'right' || variant !== 'category' ? 'right-0' : 'left-0'
           } ${category ? 'w-[min(60rem,calc(100vw-2rem))]' : 'w-88 max-w-[calc(100vw-1.5rem)]'}`}
         >
           {category ? (
             <div className="flex flex-col lg:flex-row">
               {item.description && (
-                <div className="command-summary flex shrink-0 flex-col justify-center border-b border-[#6f4d1f]/50 p-6 lg:w-64 lg:border-r lg:border-b-0">
+                <div className="command-summary flex shrink-0 flex-col justify-center border-b border-[var(--theme-header-border)]/50 p-6 lg:w-64 lg:border-r lg:border-b-0">
                   <span className="flex size-12 items-center justify-center border border-spice-500/40 bg-spice-500/8 text-spice-300">
                     <NavigationGlyph icon={item.icon} className="size-6" />
                   </span>
@@ -335,7 +335,7 @@ export function NavigationDropdown({
                 {columns.map((column) => (
                   <div
                     key={column.id}
-                    className={`min-w-0 border-l border-[#6f4d1f]/35 py-3 first:border-l-0 ${
+                    className={`min-w-0 border-l border-[var(--theme-header-border)]/35 py-3 first:border-l-0 ${
                       extraItems.length > 0 && column.overflowOnly ? 'min-[1920px]:hidden' : ''
                     }`}
                   >
@@ -357,7 +357,7 @@ export function NavigationDropdown({
               overflow={extraItems.length > 0}
             />
           )}
-          {footer && <div className="border-t border-[#6f4d1f]/45 p-2">{footer}</div>}
+          {footer && <div className="border-t border-[var(--theme-header-border)]/45 p-2">{footer}</div>}
         </div>
       )}
     </div>

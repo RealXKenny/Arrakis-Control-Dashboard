@@ -2,8 +2,8 @@
   min-width: 0;
 }
 .customizer {
-  border: 1px solid #b99e6b40;
-  background: #121618;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
   padding: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -20,20 +20,20 @@
 }
 .button {
   min-height: 44px;
-  border: 1px solid #baa57966;
-  background: #242727;
-  color: #eee1c8;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-raised);
+  color: var(--theme-text);
   padding: 0.6rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 700;
 }
 .button:hover:not(:disabled) {
-  background: #34372f;
+  background: var(--theme-hover);
 }
 .button:focus-visible,
 .setting input:focus-visible,
 .density select:focus-visible {
-  outline: 2px solid #f0b955;
+  outline: 2px solid var(--theme-accent);
   outline-offset: 4px;
 }
 .button:disabled {
@@ -41,8 +41,8 @@
   cursor: not-allowed;
 }
 .primary {
-  background: #efab30;
-  color: #14191b;
+  background: var(--color-spice-500);
+  color: var(--theme-on-accent);
 }
 .editor {
   display: grid;
@@ -53,14 +53,14 @@
   display: grid;
   gap: 0.4rem;
   width: min(100%, 20rem);
-  color: #eee1c8;
+  color: var(--theme-text);
 }
 .density select {
   min-height: 44px;
   padding: 0.6rem;
-  border: 1px solid #baa57966;
-  background: #111719;
-  color: #eee1c8;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-background);
+  color: var(--theme-text);
 }
 .list {
   display: grid;
@@ -76,7 +76,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
-  border: 1px solid #baa57933;
+  border: 1px solid var(--theme-border);
   padding: 0.7rem;
   min-width: 0;
 }
@@ -91,7 +91,7 @@
 .setting input {
   width: 1.2rem;
   height: 1.2rem;
-  accent-color: #efab30;
+  accent-color: var(--color-spice-500);
   flex-shrink: 0;
 }
 .setting strong,
@@ -99,23 +99,23 @@
   display: block;
 }
 .setting strong {
-  color: #eee1c8;
+  color: var(--theme-text);
 }
 .setting small {
-  color: #c6bfae;
+  color: var(--theme-muted);
   font-size: 0.8rem;
   line-height: 1.5;
 }
 .notice {
   margin-top: 0.8rem;
-  color: #eed9ad;
+  color: var(--theme-soft);
   font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
 .empty {
-  border: 1px dashed #baa57966;
+  border: 1px dashed var(--theme-border);
   padding: 2rem;
-  color: #d6c7ad;
+  color: var(--theme-muted);
 }
 .grid {
   display: grid;

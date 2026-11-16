@@ -4,7 +4,15 @@ import type { NavIdentity } from '../../auth/identity';
 import { TopNavigation } from '../../../components/navigation/top-navigation';
 import { CommandPalette } from './command-palette';
 
-export function CommandNavigation({ identity, isAdmin }: { identity: NavIdentity | null; isAdmin: boolean }) {
+export function CommandNavigation({
+  identity,
+  isAdmin,
+  onOpenAppearance,
+}: {
+  identity: NavIdentity | null;
+  isAdmin: boolean;
+  onOpenAppearance?: (opener?: HTMLElement) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [opener, setOpener] = useState<HTMLElement | null>(null);
   const openPalette = useCallback((target?: HTMLElement) => {
@@ -44,7 +52,12 @@ export function CommandNavigation({ identity, isAdmin }: { identity: NavIdentity
   }, [identity, open, close, openPalette]);
   return (
     <>
-      <TopNavigation identity={identity} isAdmin={isAdmin} onOpenCommands={identity ? openPalette : undefined} />
+      <TopNavigation
+        identity={identity}
+        isAdmin={isAdmin}
+        onOpenCommands={identity ? openPalette : undefined}
+        onOpenAppearance={onOpenAppearance}
+      />
       {identity && open && <CommandPalette isAdmin={isAdmin} onClose={close} returnFocus={opener} />}
     </>
   );

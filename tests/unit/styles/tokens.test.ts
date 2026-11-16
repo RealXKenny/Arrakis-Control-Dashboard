@@ -22,7 +22,11 @@ describe('colour tokens', () => {
     const palette = config.theme.extend.colors as Record<string, Record<string, string>>;
     const expected = new Map(
       Object.entries(palette).flatMap(([group, shades]) =>
-        Object.entries(shades).map(([shade, value]) => [`${group}-${shade}`, value.toLowerCase()] as const),
+        Object.entries(shades).map(([shade, value]) => {
+          const match = new RegExp(`^var\\(--color-${group}-${shade}, (#[0-9a-fA-F]{6})\\)$`).exec(value);
+          expect(match, `Utility color ${group}-${shade} must bind to its shared CSS token`).not.toBeNull();
+          return [`${group}-${shade}`, match![1].toLowerCase()] as const;
+        }),
       ),
     );
     expect(defined).toEqual(expected);

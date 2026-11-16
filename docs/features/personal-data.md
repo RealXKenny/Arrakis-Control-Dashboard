@@ -12,7 +12,7 @@ Open **More → Personal data** (`/personal-data`) to export or erase your saved
 
 The summary shows counts and opaque revision IDs without loading note text into the page. Sharing draft counts describe customized drafts; blank defaults are not counted. Published snapshots are counted separately. These are manually chosen dashboard cards, not a historical game inventory or location archive. Inventory observations and freshness history are view-local rather than a retained personal archive.
 
-Portal layout, notification preferences and pinned-item selections retain their own settings controls. Account credentials, sessions, security audits, game characters, shared guild records, chat messages, marketplace publications and financial/game ledgers are outside this feature. Shared publications retain the controls in their original workspace. This is not account deletion or erasure of all community records.
+Portal layout, notification preferences and pinned-item selections retain their own settings controls. Browser-local appearance has separate Default and color export/import controls; it is independent of account-owned data. Account credentials, sessions, security audits, game characters, shared guild records, chat messages, marketplace publications and financial/game ledgers are outside this feature. Shared publications retain the controls in their original workspace. This is not account deletion or erasure of all community records.
 
 ## JSON export
 

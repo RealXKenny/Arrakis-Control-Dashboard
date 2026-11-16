@@ -52,6 +52,8 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 
 ### Players and community
 
+- **Appearance studio:** the Console default look, all 66 upstream themes and custom surface/text/accent colors, with shared UI helpers and browser-local persistence. See [Appearance](docs/features/appearance.md).
+
 - **Data freshness:** explicit last-success timestamps, stale/partial/outage indicators and clear-on-failure private readings. See [Data freshness](docs/features/data-freshness.md).
 - **Personal data controls:** selectively export notes, plans and retained sharing snapshots, or erase one scope with explicit confirmation and stale-save protection. See [Personal data](docs/features/personal-data.md).
 - **Saved activity views:** named widget layouts, inbox/task filters and project/goal context, with capture, duplication and separate data controls. See [Activity views](docs/features/activity-views.md).

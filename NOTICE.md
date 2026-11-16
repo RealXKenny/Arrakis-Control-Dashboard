@@ -14,6 +14,10 @@ Arrakis Control Dashboard incorporates or adapts software from:
 
 The original copyright notice and MIT permission and warranty terms are retained in the root [LICENSE](LICENSE) and reproduced for reference in [Third-Party Licenses](docs/legal/THIRD_PARTY_LICENSES.md). RedBlink retains copyright in the original upstream contributions. Arrakis Control Dashboard contributors retain copyright in their own original contributions.
 
+## Appearance palettes
+
+The Console palette catalog/theme-helper approach adapts RedBlink/yacketrj work under MIT. The 42 wiki-derived House/outfit color records retain CC BY-NC-SA 4.0 terms and are not MIT. See [appearance provenance](docs/legal/appearance-provenance.md) for contributor credit, source revisions, license links and modification notices.
+
 ## Independent project
 
 Arrakis Control Dashboard is not affiliated with, sponsored by, approved by, or endorsed by Funcom or the owners, developers, or publishers of Dune: Awakening or the Dune intellectual property.

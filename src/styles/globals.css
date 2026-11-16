@@ -22,6 +22,7 @@
   body {
     min-height: 100dvh;
     background-color: var(--color-obsidian-950);
+    background-image: radial-gradient(circle at top left, rgb(var(--theme-accent-rgb) / 0.12), transparent 38%);
     color: var(--color-sand-200);
     font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -54,10 +55,11 @@
   /* Fremen visor: translucent sand glass over obsidian. Flat edges, no glow. */
   .panel {
     position: relative;
-    background-color: rgb(241 233 216 / 0.04);
-    border: 1px solid rgb(241 233 216 / 0.1);
+    border-radius: 8px;
+    background-color: rgb(var(--theme-text-rgb) / 0.04);
+    border: 1px solid rgb(var(--theme-text-rgb) / 0.1);
     box-shadow:
-      inset 0 1px 0 0 rgb(241 233 216 / 0.08),
+      inset 0 1px 0 0 rgb(var(--theme-text-rgb) / 0.08),
       6px 6px 0 0 rgb(0 0 0 / 0.6);
     -webkit-backdrop-filter: blur(14px) saturate(1.1);
     backdrop-filter: blur(14px) saturate(1.1);
@@ -72,10 +74,10 @@
 
   .panel-interactive:hover {
     transform: translate(-2px, -2px);
-    border-color: rgb(249 161 31 / 0.55);
+    border-color: rgb(var(--theme-accent-rgb) / 0.55);
     box-shadow:
-      inset 0 1px 0 0 rgb(241 233 216 / 0.1),
-      8px 8px 0 0 rgb(174 69 8 / 0.85);
+      inset 0 1px 0 0 rgb(var(--theme-text-rgb) / 0.1),
+      8px 8px 0 0 rgb(var(--theme-accent-rgb) / 0.85);
   }
 
   /* Solid sand surface for high-contrast callouts. */
@@ -116,6 +118,7 @@
     justify-content: center;
     gap: 0.625rem;
     min-height: 2.75rem;
+    border-radius: 6px;
     padding: 0 1.5rem;
     font-size: 0.75rem;
     font-weight: 700;
@@ -149,8 +152,8 @@
 
   .btn-ghost {
     color: var(--color-sand-100);
-    border: 1px solid rgb(241 233 216 / 0.25);
-    background-color: rgb(241 233 216 / 0.03);
+    border: 1px solid rgb(var(--theme-text-rgb) / 0.25);
+    background-color: rgb(var(--theme-text-rgb) / 0.03);
   }
 
   .btn-ghost:hover {
@@ -166,8 +169,22 @@
 
 .command-header {
   background-image:
-    radial-gradient(circle at 22% 0%, rgb(240 160 32 / 0.07), transparent 32%),
-    linear-gradient(90deg, rgb(200 164 106 / 0.025), transparent 35%, rgb(240 160 32 / 0.025));
+    radial-gradient(circle at 22% 0%, rgb(var(--theme-accent-rgb) / 0.07), transparent 32%),
+    linear-gradient(90deg, rgb(var(--theme-accent-rgb) / 0.025), transparent 35%, rgb(var(--theme-accent-rgb) / 0.025));
+}
+
+/* Explicit geometry keeps the full route inventory and appearance/command controls inside the expansion edge. */
+@media (min-width: 1840px) and (max-width: 2399px) {
+  .command-header > .command-shell {
+    padding-inline: 16px;
+    column-gap: 4px;
+  }
+  .command-shell > a {
+    padding-right: 12px;
+  }
+  .command-shell > div:last-child {
+    gap: 8px;
+  }
 }
 
 /*
@@ -185,7 +202,7 @@
   padding: 0 0.75rem;
   border: 1px solid transparent;
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  color: #c8bda9;
+  color: var(--theme-ink);
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.055em;
@@ -210,14 +227,14 @@
 }
 
 .command-nav-control:hover {
-  border-color: rgb(200 164 106 / 0.25);
-  background: rgb(200 164 106 / 0.055);
-  color: #f1e9d8;
+  border-color: rgb(var(--theme-accent-rgb) / 0.25);
+  background: rgb(var(--theme-accent-rgb) / 0.055);
+  color: var(--theme-ink-strong);
 }
 
 .command-nav-control[data-current='true'],
 .command-nav-control[data-overflow-current='true'] {
-  color: #f6c56d;
+  color: var(--theme-accent-soft);
 }
 
 .command-nav-control[data-current='true']::after,
@@ -227,24 +244,24 @@
   bottom: 0.3125rem;
   left: 0.75rem;
   height: 2px;
-  background: #f0a020;
+  background: var(--theme-accent);
   content: '';
 }
 
 .command-nav-control[data-open='true'],
 .command-utility[data-open='true'] {
-  border-color: #d78d1c;
-  background: linear-gradient(180deg, rgb(240 160 32 / 0.26), rgb(174 69 8 / 0.14));
-  color: #ffe0a6;
+  border-color: var(--theme-accent);
+  background: linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 0.26), rgb(var(--theme-accent-rgb) / 0.14));
+  color: var(--theme-accent-soft);
   box-shadow:
-    inset 0 1px 0 rgb(255 224 166 / 0.16),
-    0 0 20px rgb(240 160 32 / 0.16);
+    inset 0 1px 0 rgb(var(--theme-text-rgb) / 0.16),
+    0 0 20px rgb(var(--theme-accent-rgb) / 0.16);
 }
 
 /* More signals "current" for overflow destinations only while they are tucked inside it. */
 @media (min-width: 1920px) {
   .command-nav-control[data-overflow-current='true'] {
-    color: #c8bda9;
+    color: var(--theme-ink);
   }
 
   .command-nav-control[data-overflow-current='true']::after {
@@ -254,10 +271,10 @@
 
 .command-menu {
   background-image:
-    radial-gradient(circle at 12% 0%, rgb(240 160 32 / 0.08), transparent 34%),
-    linear-gradient(145deg, #171714, #0d0e10 70%);
+    radial-gradient(circle at 12% 0%, rgb(var(--theme-accent-rgb) / 0.08), transparent 34%),
+    linear-gradient(145deg, var(--theme-menu), var(--theme-background) 70%);
   box-shadow:
-    inset 0 2px 0 rgb(240 160 32 / 0.5),
+    inset 0 2px 0 rgb(var(--theme-accent-rgb) / 0.5),
     0 22px 65px rgb(0 0 0 / 0.65);
   transform-origin: top center;
 }
@@ -270,9 +287,9 @@
   width: 9px;
   height: 9px;
   margin-left: -4.5px;
-  border-top: 1px solid #d78d1c;
-  border-left: 1px solid #d78d1c;
-  background: #d78d1c;
+  border-top: 1px solid var(--theme-accent);
+  border-left: 1px solid var(--theme-accent);
+  background: var(--theme-accent);
   content: '';
   transform: rotate(45deg);
 }
@@ -288,13 +305,13 @@
 
 .command-summary {
   background-image:
-    linear-gradient(145deg, rgb(240 160 32 / 0.1), transparent 60%),
-    repeating-linear-gradient(135deg, transparent 0 18px, rgb(200 164 106 / 0.025) 18px 19px);
+    linear-gradient(145deg, rgb(var(--theme-accent-rgb) / 0.1), transparent 60%),
+    repeating-linear-gradient(135deg, transparent 0 18px, rgb(var(--theme-accent-rgb) / 0.025) 18px 19px);
 }
 
 /* Footer: one quiet amber hairline above the border, nothing glowing. */
 .site-footer {
-  background-image: linear-gradient(90deg, transparent, rgb(240 160 32 / 0.5) 50%, transparent);
+  background-image: linear-gradient(90deg, transparent, rgb(var(--theme-accent-rgb) / 0.5) 50%, transparent);
   background-position: top;
   background-repeat: no-repeat;
   background-size: 100% 1px;
