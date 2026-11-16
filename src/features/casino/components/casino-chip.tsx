@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import type { CSSProperties } from 'react';
 import styles from './casino.module.css';
@@ -37,7 +38,7 @@ export function CasinoChip({
     '--chip-ink': value >= 1000 && value < 5000 ? '#191b16' : '#fff1d0',
   } as CSSProperties;
   return onClick ? (
-    <button
+    <Button
       type="button"
       className={styles.chip}
       style={style}
@@ -47,7 +48,7 @@ export function CasinoChip({
       onClick={onClick}
     >
       {face}
-    </button>
+    </Button>
   ) : (
     <span className={styles.chip} style={style} aria-label={`${value} Solaris`}>
       {face}

@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../ui/button';
 
 import { NavigationLink as Link } from './navigation-link';
 import { usePathname } from 'next/navigation';
@@ -14,7 +15,17 @@ import { isNavigationActive, navigationFor, NOTIFICATION_ITEMS, SIGN_IN_HREF, ty
 import { NavigationDirectLink, NavigationDropdown } from './navigation-menu';
 
 /** `identity` and `isAdmin` are resolved on the server from the verified session. */
-export function TopNavigation({ identity, isAdmin = false }: { identity: NavIdentity | null; isAdmin?: boolean }) {
+export function TopNavigation({
+  identity,
+  isAdmin = false,
+  onOpenCommands,
+  onOpenAppearance,
+}: {
+  identity: NavIdentity | null;
+  isAdmin?: boolean;
+  onOpenCommands?: (opener?: HTMLElement) => void;
+  onOpenAppearance?: (opener?: HTMLElement) => void;
+}) {
   const pathname = usePathname();
   const items = navigationFor({ isAdmin });
   const [openMenu, setOpenMenu] = useState<{ id: string; pathname: string } | null>(null);
@@ -39,19 +50,19 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
   ].filter((item): item is NavigationItem => item !== null);
 
   return (
-    <header className="command-header sticky top-0 z-50 border-b border-[#6f4d1f]/70 bg-[#090A0C]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
-      <div className="flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-1 min-[1840px]:px-6 min-[2000px]:gap-6 min-[2000px]:px-8">
+    <header className="command-header sticky top-0 z-50 border-b border-[var(--theme-header-border)]/70 bg-[var(--theme-header)]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
+      <div className="command-shell flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-1 min-[1840px]:px-4 min-[2400px]:gap-6 min-[2400px]:px-8">
         <Link
           href="/"
           aria-label="Arrakis Control home"
-          className="shrink-0 border-r border-[#6f4d1f]/50 pr-3 min-[400px]:pr-5 sm:pr-6"
+          className="shrink-0 border-r border-[var(--theme-header-border)]/50 pr-3 min-[400px]:pr-5 sm:pr-6 min-[1840px]:pr-3"
         >
           <BrandLockup size="large" />
         </Link>
 
         {identity && (
           <nav aria-label="Primary" className="hidden xl:block">
-            <ul className="flex items-center gap-1 min-[2000px]:gap-2">
+            <ul className="flex items-center gap-1 min-[1920px]:gap-0 min-[2400px]:gap-2">
               {items.map((item) => (
                 <li key={item.id}>
                   {item.href ? (
@@ -81,17 +92,52 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
           </nav>
         )}
 
-        <div className="flex shrink-0 items-center gap-2 xl:gap-3">
+        <div className="flex shrink-0 items-center gap-2 xl:gap-3 min-[1840px]:gap-2 min-[2400px]:gap-3">
           <AudioControls />
+          {onOpenAppearance && (
+            <Button
+              type="button"
+              aria-label="Open appearance studio"
+              title="Themes and custom colors"
+              onClick={(event) => onOpenAppearance(event.currentTarget)}
+              className={`${identity ? 'hidden xl:inline-flex' : 'inline-flex'} size-11 items-center justify-center border border-sand-500/40 text-sand-100 hover:border-spice-400 hover:text-spice-300`}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
+                <path d="M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 2-4 1 1 0 0 1 .8-1.6H18A4 4 0 0 0 22 11a10 10 0 0 0-10-8Z" />
+                <circle cx="7.5" cy="10" r=".8" />
+                <circle cx="11" cy="6.5" r=".8" />
+                <circle cx="16" cy="8" r=".8" />
+              </svg>
+            </Button>
+          )}
           {identity ? (
             <>
+              {onOpenCommands && (
+                <Button
+                  type="button"
+                  aria-label="Open command palette"
+                  title="Commands (Ctrl or Command + K)"
+                  onClick={(event) => onOpenCommands(event.currentTarget)}
+                  className="hidden size-11 items-center justify-center border border-[var(--theme-header-border)]/50 font-mono text-sm text-sand-100 hover:text-spice-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-spice-300 xl:inline-flex"
+                >
+                  ⌘K
+                </Button>
+              )}
               {/* Below the desktop bar the primary navigation is hidden, so Home stays one tap away. */}
               <Link
                 href="/"
                 aria-label="Home"
                 aria-current={homeActive ? 'page' : undefined}
                 data-current={homeActive ? 'true' : undefined}
-                className="inline-flex h-11 min-w-11 items-center justify-center gap-2 border border-[#6f4d1f]/50 px-3 text-xs font-bold uppercase tracking-[0.2em] text-sand-100 transition-colors hover:border-spice-400 hover:text-spice-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spice-300 data-[current=true]:border-spice-400 data-[current=true]:text-spice-300 xl:hidden"
+                className="inline-flex h-11 min-w-11 items-center justify-center gap-2 border border-[var(--theme-header-border)]/50 px-3 text-xs font-bold uppercase tracking-[0.2em] text-sand-100 transition-colors hover:border-spice-400 hover:text-spice-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spice-300 data-[current=true]:border-spice-400 data-[current=true]:text-spice-300 xl:hidden"
               >
                 <HomeIcon className="size-5" />
                 <span className="hidden md:inline">Home</span>
@@ -122,7 +168,7 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
                   trigger={
                     <>
                       <Avatar identity={identity} size="large" />
-                      <span className="hidden max-w-32 truncate tracking-normal text-sand-100 min-[2000px]:inline">
+                      <span className="hidden max-w-32 truncate tracking-normal text-sand-100 min-[2400px]:inline">
                         {identity.ign}
                       </span>
                       <ChevronDownIcon className="size-4 text-sand-500" />
@@ -132,14 +178,14 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
                   variant="account"
                   footer={
                     <form action={signOutAction}>
-                      <button
+                      <Button
                         type="submit"
                         role="menuitem"
                         className="flex w-full items-center gap-3 border-l-2 border-transparent px-3 py-3 text-left text-sm font-bold text-sand-200 hover:border-spice-400 hover:bg-spice-500/6 hover:text-spice-300"
                       >
                         <SignOutIcon className="size-[18px]" />
                         Sign out
-                      </button>
+                      </Button>
                     </form>
                   }
                 />
@@ -151,17 +197,17 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
             </Link>
           )}
           {identity && (
-            <button
+            <Button
               ref={mobileTriggerRef}
               type="button"
-              className="inline-flex size-11 items-center justify-center border border-[#6f4d1f]/50 text-sand-100 hover:border-spice-400 hover:text-spice-300 xl:hidden"
+              className="inline-flex size-11 items-center justify-center border border-[var(--theme-header-border)]/50 text-sand-100 hover:border-spice-400 hover:text-spice-300 xl:hidden"
               aria-expanded={mobileOpen}
               aria-controls="mobile-nav"
               aria-label="Open menu"
               onClick={() => setMobileFor(mobileOpen ? null : pathname)}
             >
               <MenuIcon className="size-6" />
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -174,6 +220,24 @@ export function TopNavigation({ identity, isAdmin = false }: { identity: NavIden
           isAdmin={isAdmin}
           onClose={closeMobile}
           triggerRef={mobileTriggerRef}
+          onOpenAppearance={
+            onOpenAppearance
+              ? () => {
+                  closeMobile();
+                  const target = mobileTriggerRef.current;
+                  requestAnimationFrame(() => onOpenAppearance(target ?? undefined));
+                }
+              : undefined
+          }
+          onOpenCommands={
+            onOpenCommands
+              ? () => {
+                  closeMobile();
+                  const target = mobileTriggerRef.current;
+                  requestAnimationFrame(() => onOpenCommands(target ?? undefined));
+                }
+              : undefined
+          }
         />
       )}
     </header>

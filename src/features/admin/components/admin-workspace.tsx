@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -284,7 +285,7 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
             <aside className={ui.sidebar} aria-label="API categories">
               <h2>Browse categories</h2>
               {groups.map((name) => (
-                <button
+                <Button
                   key={name}
                   aria-pressed={name === group}
                   disabled={busy}
@@ -299,7 +300,7 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
                       ? tabOperations.length
                       : operations.filter((entry) => entry.group === name).length}
                   </span>
-                </button>
+                </Button>
               ))}
             </aside>
           )}
@@ -324,7 +325,7 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
             <p className={ui.count}>{filtered.length} operations</p>
             <div className={ui.operationList}>
               {filtered.map((entry) => (
-                <button
+                <Button
                   key={entry.id}
                   disabled={busy}
                   aria-pressed={entry.id === operation?.id}
@@ -335,7 +336,7 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
                     {entry.title}
                     <small>{entry.restriction ? 'Restricted' : entry.mode === 'json' ? entry.route : entry.mode}</small>
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           </section>
@@ -482,7 +483,7 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
                       </div>
                     )}
                     <div className={ui.actions}>
-                      <button
+                      <Button
                         disabled={busy || !validFields || (mutation && acknowledgement !== confirmation)}
                         onClick={() => void run()}
                       >
@@ -495,8 +496,8 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
                               : mutation
                                 ? 'Execute operation'
                                 : 'Run read'}
-                      </button>
-                      {busy && <button onClick={() => request.current?.abort()}>Stop waiting</button>}
+                      </Button>
+                      {busy && <Button onClick={() => request.current?.abort()}>Stop waiting</Button>}
                     </div>
                   </>
                 )}
@@ -532,16 +533,16 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
                 {operation &&
                   operationFields(operation).some((field) => field.name === 'page' && field.location === 'query') && (
                     <nav className={ui.actions} aria-label="Provider result pages">
-                      <button
+                      <Button
                         disabled={busy || Number(objectInput(query).page ?? 0) <= 0}
                         onClick={() =>
                           void run({ ...objectInput(query), page: Number(objectInput(query).page ?? 0) - 1 })
                         }
                       >
                         Previous page
-                      </button>
+                      </Button>
                       <span>Page {Number(objectInput(query).page ?? 0) + 1}</span>
-                      <button
+                      <Button
                         disabled={
                           busy ||
                           !resultHasNext(
@@ -555,7 +556,7 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
                         }
                       >
                         Next page
-                      </button>
+                      </Button>
                     </nav>
                   )}
               </div>

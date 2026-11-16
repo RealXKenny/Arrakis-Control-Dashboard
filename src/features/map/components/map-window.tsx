@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import React from 'react';
 import { uniqueMapMarkers } from '../utils/markers';
@@ -543,7 +544,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
       </section>
 
       <aside className={`${styles.mapLegend} ${legendOpen ? '' : styles.mapLegendCollapsed}`}>
-        <button
+        <Button
           type="button"
           className={styles.mapLegendHeader}
           onClick={toggleLegendOpen}
@@ -552,18 +553,18 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
           <span>Map layers</span>
 
           <span>{legendOpen ? '−' : '+'}</span>
-        </button>
+        </Button>
 
         {legendOpen && (
           <div className={styles.realtimeControls}>
-            <button
+            <Button
               type="button"
               className={styles.mapButton}
               aria-pressed={realtime.enabled}
               onClick={realtime.toggle}
             >
               Realtime {realtime.enabled ? 'on' : 'off'}
-            </button>
+            </Button>
             {realtime.enabled && realtime.sources.length > 0 && (
               <select
                 aria-label="Realtime instance"
@@ -608,14 +609,14 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
                     </label>
 
                     {hasSubtypes && (
-                      <button
+                      <Button
                         type="button"
                         className={styles.mapLegendExpandButton}
                         onClick={() => toggleLegendExpanded(category.type)}
                         title={expanded ? `Collapse ${category.label}` : `Expand ${category.label}`}
                       >
                         {expanded ? '⌄' : '›'}
-                      </button>
+                      </Button>
                     )}
                   </div>
 

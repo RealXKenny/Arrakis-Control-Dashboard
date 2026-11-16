@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/button';
 import { useState } from 'react';
 import type { AdminOperation } from '../types';
 import { fieldLabel, resultRows, rowContext } from '../operation-fields';
@@ -101,13 +102,13 @@ export default function AdminResults({
           {!filtered.length && <p>No matching rows.</p>}
           {filtered.length > 20 && (
             <nav className={ui.actions} aria-label="Returned rows">
-              <button disabled={page === 0} onClick={() => setPage(page - 1)}>
+              <Button disabled={page === 0} onClick={() => setPage(page - 1)}>
                 Previous rows
-              </button>
+              </Button>
               <span>Page {page + 1}</span>
-              <button disabled={(page + 1) * 20 >= filtered.length} onClick={() => setPage(page + 1)}>
+              <Button disabled={(page + 1) * 20 >= filtered.length} onClick={() => setPage(page + 1)}>
                 Next rows
-              </button>
+              </Button>
             </nav>
           )}
         </>

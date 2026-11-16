@@ -1,70 +1,80 @@
 /*
- * The palette from tailwind.config.ts as CSS variables. Tailwind v4 only turns a JS-config colour into a CSS variable
- * when a utility needs it, but plain CSS (globals.css, the map and casino modules) reads these by name: without them
- * `var(--color-spice-400)` is invalid, so the focus ring, `.btn-primary` and `.eyebrow` silently lose their styling.
- * tests/unit/styles/tokens.test.ts fails if this block drifts from the config.
+ * Console-style baseline. Tailwind utilities bind to these same properties with matching fallbacks;
+ * the appearance engine overrides one shared palette for utilities and feature modules together.
+ * tests/unit/styles/tokens.test.ts guards both the bindings and their exact default values.
  */
 :root {
-  --color-obsidian-50: #f4f4f5;
-  --color-obsidian-100: #e4e4e7;
-  --color-obsidian-200: #c9c9cf;
-  --color-obsidian-300: #a1a1aa;
-  --color-obsidian-400: #71717a;
-  --color-obsidian-500: #52525b;
-  --color-obsidian-600: #3f3f46;
-  --color-obsidian-700: #2a2a30;
-  --color-obsidian-800: #1c1c21;
-  --color-obsidian-900: #121215;
-  --color-obsidian-950: #09090b;
-  --color-sand-50: #faf6ee;
-  --color-sand-100: #f1e9d8;
-  --color-sand-200: #e3d6b9;
-  --color-sand-300: #d1bf96;
-  --color-sand-400: #bba374;
-  --color-sand-500: #a08a5c;
-  --color-sand-600: #7f6c47;
-  --color-sand-700: #5f5136;
-  --color-sand-800: #41382a;
-  --color-sand-900: #2a241b;
-  --color-sand-950: #17140f;
-  --color-spice-50: #fff8eb;
-  --color-spice-100: #ffecc6;
-  --color-spice-200: #ffd88a;
-  --color-spice-300: #ffbf4d;
-  --color-spice-400: #f9a11f;
-  --color-spice-500: #ee8209;
-  --color-spice-600: #d26104;
-  --color-spice-700: #ae4508;
-  --color-spice-800: #8d370d;
-  --color-spice-900: #742f0e;
-  --color-spice-950: #431603;
-  --color-ibad-300: #8fb4e8;
-  --color-ibad-400: #5f93d9;
-  --color-ibad-500: #3f74bf;
-  --color-ibad-600: #2f5a98;
-  --color-status-ok: #7fa66a;
-  --color-status-warn: #f9a11f;
-  --color-status-danger: #c8503c;
+  --color-obsidian-50: #f5f6f7;
+  --color-obsidian-100: #e6e9eb;
+  --color-obsidian-200: #cbd0d5;
+  --color-obsidian-300: #a4abb1;
+  --color-obsidian-400: #7f878f;
+  --color-obsidian-500: #565d66;
+  --color-obsidian-600: #42474e;
+  --color-obsidian-700: #2b3035;
+  --color-obsidian-800: #202428;
+  --color-obsidian-900: #171a1d;
+  --color-obsidian-950: #0d0f12;
+  --color-sand-50: #fff1d4;
+  --color-sand-100: #f3efe7;
+  --color-sand-200: #e6e0d6;
+  --color-sand-300: #ceb894;
+  --color-sand-400: #ad9f89;
+  --color-sand-500: #9f9586;
+  --color-sand-600: #7f705a;
+  --color-sand-700: #5f503f;
+  --color-sand-800: #423a30;
+  --color-sand-900: #2d271f;
+  --color-sand-950: #1b1713;
+  --color-spice-50: #fff6e8;
+  --color-spice-100: #ffedd4;
+  --color-spice-200: #ffdeb2;
+  --color-spice-300: #ffd08a;
+  --color-spice-400: #d49a5c;
+  --color-spice-500: #c68b4a;
+  --color-spice-600: #b87b3f;
+  --color-spice-700: #9b5f2a;
+  --color-spice-800: #8d5328;
+  --color-spice-900: #683d20;
+  --color-spice-950: #3e2415;
+  --color-ibad-300: #b5d4f0;
+  --color-ibad-400: #85b7eb;
+  --color-ibad-500: #6196ce;
+  --color-ibad-600: #4775a5;
+  --color-status-ok: #9be6bd;
+  --color-status-warn: #ffd08a;
+  --color-status-danger: #ffb4a8;
 }
 
 /*
  * Design tokens consumed by the CSS modules of the map and the 3D base preview. They keep the
- * older `--theme-*` names but resolve to the Modern Dune palette. New code should use Tailwind.
+ * stable `--theme-*` names and resolve to the same Console-style palette as the rest of the UI.
  */
 :root {
-  --theme-text: #f1e9d8;
-  --theme-muted: #bba374;
-  --theme-accent: #f9a11f;
-  --theme-on-accent: #09090b;
-  --theme-border: rgb(241 233 216 / 0.1);
-  --theme-background: #09090b;
-  --theme-surface: #121215;
-  --theme-raised: #1c1c21;
-  --theme-hover: #2a2a30;
-  --theme-soft: #d1bf96;
-  --theme-success: #7fa66a;
-  --theme-danger: #c8503c;
-  --theme-masthead: rgb(9 9 11 / 0.8);
+  --theme-text: var(--color-sand-100);
+  --theme-muted: var(--color-sand-400);
+  --theme-accent: var(--color-spice-400);
+  --theme-on-accent: var(--color-obsidian-950);
+  --theme-border: #302b25;
+  --theme-background: var(--color-obsidian-950);
+  --theme-surface: var(--color-obsidian-900);
+  --theme-raised: var(--color-obsidian-800);
+  --theme-hover: var(--color-obsidian-700);
+  --theme-soft: var(--color-sand-300);
+  --theme-success: var(--color-status-ok);
+  --theme-danger: var(--color-status-danger);
+  --theme-masthead: #101316;
+  --theme-header: #101316;
+  --theme-menu: #171a1d;
+  --theme-header-border: #4d4032;
+  --theme-ink: #ad9f89;
+  --theme-ink-strong: #f3efe7;
+  --theme-accent-ink: #d49a5c;
+  --theme-accent-soft: #ffd08a;
+  --theme-accent-rgb: 198 139 74;
+  --theme-text-rgb: 243 239 231;
+  --theme-panel-rgb: 23 26 29;
+  --theme-border-rgb: 77 64 50;
   --workspace-gutter: clamp(16px, 2.5vw, 80px);
 }
 

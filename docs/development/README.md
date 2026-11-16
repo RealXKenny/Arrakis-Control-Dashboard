@@ -6,6 +6,7 @@
 | [Project structure](project-structure.md)           | Where code lives and the import rules                                    |
 | [Development workflow](development-workflow.md)     | Setup, daily commands, conventions, releases, pull requests              |
 | [Testing](testing.md)                               | Vitest, Playwright, production smoke, Redis integration, installer tests |
+| [Shared UI helpers](shared-ui.md)                   | Buttons, menus, cards, focus, scroll locks and downloads                 |
 | [GitHub Actions](github-actions.md)                 | CI workflows, security automation, status checks, and troubleshooting    |
 | [GitHub branch rulesets](github-branch-rulesets.md) | Protected branches, exact required checks, and merge-queue setup         |
 | [Debugging](debugging.md)                           | Logging, request IDs, reproducing issues                                 |

@@ -22,6 +22,7 @@
   body {
     min-height: 100dvh;
     background-color: var(--color-obsidian-950);
+    background-image: radial-gradient(circle at top left, rgb(var(--theme-accent-rgb) / 0.12), transparent 38%);
     color: var(--color-sand-200);
     font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -33,9 +34,8 @@
   h3,
   h4 {
     color: var(--color-sand-50);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
+    font-weight: 700;
+    letter-spacing: -0.015em;
     text-wrap: balance;
   }
 
@@ -51,31 +51,32 @@
 }
 
 @layer components {
-  /* Fremen visor: translucent sand glass over obsidian. Flat edges, no glow. */
+  .ui-card {
+    min-width: 0;
+    border: 1px solid var(--color-sand-500);
+    border-radius: 8px;
+    background: var(--color-obsidian-900);
+    overflow-wrap: anywhere;
+  }
+
+  /* Console-inspired surfaces: quiet borders and soft depth, shared by all themes. */
   .panel {
     position: relative;
-    background-color: rgb(241 233 216 / 0.04);
-    border: 1px solid rgb(241 233 216 / 0.1);
-    box-shadow:
-      inset 0 1px 0 0 rgb(241 233 216 / 0.08),
-      6px 6px 0 0 rgb(0 0 0 / 0.6);
-    -webkit-backdrop-filter: blur(14px) saturate(1.1);
-    backdrop-filter: blur(14px) saturate(1.1);
+    border-radius: 8px;
+    background-color: rgb(var(--theme-text-rgb) / 0.04);
+    border: 1px solid rgb(var(--theme-text-rgb) / 0.1);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
   }
 
   .panel-interactive {
     transition:
-      transform 160ms ease,
       border-color 160ms ease,
       box-shadow 160ms ease;
   }
 
   .panel-interactive:hover {
-    transform: translate(-2px, -2px);
-    border-color: rgb(249 161 31 / 0.55);
-    box-shadow:
-      inset 0 1px 0 0 rgb(241 233 216 / 0.1),
-      8px 8px 0 0 rgb(174 69 8 / 0.85);
+    border-color: rgb(var(--theme-accent-rgb) / 0.55);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.2);
   }
 
   /* Solid sand surface for high-contrast callouts. */
@@ -83,7 +84,8 @@
     background-color: var(--color-sand-200);
     color: var(--color-obsidian-950);
     border: 1px solid var(--color-sand-400);
-    box-shadow: 6px 6px 0 0 rgb(0 0 0 / 0.6);
+    border-radius: 8px;
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
   }
 
   /* Signed-in page canvas: fills wide screens up to 1600px, never a narrow centred column. */
@@ -106,7 +108,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.24em;
+    letter-spacing: 0.1em;
     color: var(--color-spice-400);
   }
 
@@ -116,14 +118,15 @@
     justify-content: center;
     gap: 0.625rem;
     min-height: 2.75rem;
-    padding: 0 1.5rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    white-space: nowrap;
+    border-radius: 6px;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
     transition:
-      transform 120ms ease,
       box-shadow 120ms ease,
       background-color 120ms ease,
       border-color 120ms ease;
@@ -133,24 +136,21 @@
     background-color: var(--color-spice-500);
     color: var(--color-obsidian-950);
     border: 1px solid var(--color-spice-300);
-    box-shadow: 4px 4px 0 0 var(--color-spice-800);
+    box-shadow: none;
   }
 
   .btn-primary:hover {
     background-color: var(--color-spice-400);
-    transform: translate(-1px, -1px);
-    box-shadow: 5px 5px 0 0 var(--color-spice-800);
   }
 
   .btn-primary:active {
-    transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 0 var(--color-spice-800);
+    background-color: var(--color-spice-500);
   }
 
   .btn-ghost {
     color: var(--color-sand-100);
-    border: 1px solid rgb(241 233 216 / 0.25);
-    background-color: rgb(241 233 216 / 0.03);
+    border: 1px solid rgb(var(--theme-text-rgb) / 0.25);
+    background-color: rgb(var(--theme-text-rgb) / 0.03);
   }
 
   .btn-ghost:hover {
@@ -166,13 +166,86 @@
 
 .command-header {
   background-image:
-    radial-gradient(circle at 22% 0%, rgb(240 160 32 / 0.07), transparent 32%),
-    linear-gradient(90deg, rgb(200 164 106 / 0.025), transparent 35%, rgb(240 160 32 / 0.025));
+    radial-gradient(circle at 22% 0%, rgb(var(--theme-accent-rgb) / 0.07), transparent 32%),
+    linear-gradient(90deg, rgb(var(--theme-accent-rgb) / 0.025), transparent 35%, rgb(var(--theme-accent-rgb) / 0.025));
+}
+
+.mobile-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.mobile-nav-group {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-block: 0.5rem;
+}
+.mobile-nav-heading {
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--color-sand-300);
+}
+.mobile-nav-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mobile-nav-tile > span {
+  min-width: 0;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  color: var(--color-sand-200);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.status-badge[data-tone='success'] {
+  color: var(--theme-success);
+}
+.status-badge[data-tone='warning'] {
+  color: var(--color-status-warn);
+}
+.status-badge[data-tone='danger'] {
+  color: var(--theme-danger);
+}
+.status-badge-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+@media (max-width: 379px) {
+  .mobile-nav-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Explicit geometry keeps the full route inventory and appearance/command controls inside the expansion edge. */
+@media (min-width: 1840px) and (max-width: 2399px) {
+  .command-header > .command-shell {
+    padding-inline: 16px;
+    column-gap: 4px;
+  }
+  .command-shell > a {
+    padding-right: 12px;
+  }
+  .command-shell > div:last-child {
+    gap: 8px;
+  }
 }
 
 /*
  * Top-level navigation controls. Sizes step up with the viewport instead of being fixed:
- * compact up to 2000px (so every item still fits beside the account controls), roomier above it.
+ * compact up to 2400px (so every item still fits beside the account controls), roomier above it.
  *
  * Two states are deliberately different:
  *  - data-current: the page you are on. Quiet and persistent: amber text and a thin underline, no box.
@@ -185,14 +258,14 @@
   padding: 0 0.75rem;
   border: 1px solid transparent;
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  color: #c8bda9;
+  color: var(--theme-ink);
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.055em;
   white-space: nowrap;
 }
 
-@media (min-width: 1280px) and (max-width: 2159px) {
+@media (min-width: 1280px) and (max-width: 2399px) {
   .command-nav-control {
     gap: 0.375rem;
     padding: 0 0.5rem;
@@ -200,7 +273,7 @@
 }
 
 /* Only very wide screens get larger controls; the complete menu and account block must still fit. */
-@media (min-width: 2160px) {
+@media (min-width: 2400px) {
   .command-nav-control {
     min-height: 3.25rem;
     gap: 0.5625rem;
@@ -210,14 +283,14 @@
 }
 
 .command-nav-control:hover {
-  border-color: rgb(200 164 106 / 0.25);
-  background: rgb(200 164 106 / 0.055);
-  color: #f1e9d8;
+  border-color: rgb(var(--theme-accent-rgb) / 0.25);
+  background: rgb(var(--theme-accent-rgb) / 0.055);
+  color: var(--theme-ink-strong);
 }
 
 .command-nav-control[data-current='true'],
 .command-nav-control[data-overflow-current='true'] {
-  color: #f6c56d;
+  color: var(--theme-accent-soft);
 }
 
 .command-nav-control[data-current='true']::after,
@@ -227,24 +300,24 @@
   bottom: 0.3125rem;
   left: 0.75rem;
   height: 2px;
-  background: #f0a020;
+  background: var(--theme-accent);
   content: '';
 }
 
 .command-nav-control[data-open='true'],
 .command-utility[data-open='true'] {
-  border-color: #d78d1c;
-  background: linear-gradient(180deg, rgb(240 160 32 / 0.26), rgb(174 69 8 / 0.14));
-  color: #ffe0a6;
+  border-color: var(--theme-accent);
+  background: linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 0.26), rgb(var(--theme-accent-rgb) / 0.14));
+  color: var(--theme-accent-soft);
   box-shadow:
-    inset 0 1px 0 rgb(255 224 166 / 0.16),
-    0 0 20px rgb(240 160 32 / 0.16);
+    inset 0 1px 0 rgb(var(--theme-text-rgb) / 0.16),
+    0 0 20px rgb(var(--theme-accent-rgb) / 0.16);
 }
 
 /* More signals "current" for overflow destinations only while they are tucked inside it. */
 @media (min-width: 1920px) {
   .command-nav-control[data-overflow-current='true'] {
-    color: #c8bda9;
+    color: var(--theme-ink);
   }
 
   .command-nav-control[data-overflow-current='true']::after {
@@ -254,10 +327,10 @@
 
 .command-menu {
   background-image:
-    radial-gradient(circle at 12% 0%, rgb(240 160 32 / 0.08), transparent 34%),
-    linear-gradient(145deg, #171714, #0d0e10 70%);
+    radial-gradient(circle at 12% 0%, rgb(var(--theme-accent-rgb) / 0.08), transparent 34%),
+    linear-gradient(145deg, var(--theme-menu), var(--theme-background) 70%);
   box-shadow:
-    inset 0 2px 0 rgb(240 160 32 / 0.5),
+    inset 0 2px 0 rgb(var(--theme-accent-rgb) / 0.5),
     0 22px 65px rgb(0 0 0 / 0.65);
   transform-origin: top center;
 }
@@ -270,9 +343,9 @@
   width: 9px;
   height: 9px;
   margin-left: -4.5px;
-  border-top: 1px solid #d78d1c;
-  border-left: 1px solid #d78d1c;
-  background: #d78d1c;
+  border-top: 1px solid var(--theme-accent);
+  border-left: 1px solid var(--theme-accent);
+  background: var(--theme-accent);
   content: '';
   transform: rotate(45deg);
 }
@@ -288,13 +361,13 @@
 
 .command-summary {
   background-image:
-    linear-gradient(145deg, rgb(240 160 32 / 0.1), transparent 60%),
-    repeating-linear-gradient(135deg, transparent 0 18px, rgb(200 164 106 / 0.025) 18px 19px);
+    linear-gradient(145deg, rgb(var(--theme-accent-rgb) / 0.1), transparent 60%),
+    repeating-linear-gradient(135deg, transparent 0 18px, rgb(var(--theme-accent-rgb) / 0.025) 18px 19px);
 }
 
 /* Footer: one quiet amber hairline above the border, nothing glowing. */
 .site-footer {
-  background-image: linear-gradient(90deg, transparent, rgb(240 160 32 / 0.5) 50%, transparent);
+  background-image: linear-gradient(90deg, transparent, rgb(var(--theme-accent-rgb) / 0.5) 50%, transparent);
   background-position: top;
   background-repeat: no-repeat;
   background-size: 100% 1px;

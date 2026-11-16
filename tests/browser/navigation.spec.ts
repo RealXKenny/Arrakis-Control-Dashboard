@@ -1,6 +1,6 @@
 import { test, expect } from '../helpers/browser-test';
 
-test('signed-out public pages show only branding and sign in in the topbar at every screen size', async ({ page }) => {
+test('signed-out public pages show branding, appearance and sign in without private navigation', async ({ page }) => {
   for (const width of [1920, 820, 390]) {
     await page.setViewportSize({ width, height: 900 });
     for (const path of ['/', '/changelog']) {
@@ -9,7 +9,8 @@ test('signed-out public pages show only branding and sign in in the topbar at ev
       await expect(header.getByRole('link', { name: 'Arrakis Control home' })).toBeVisible();
       await expect(header.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
       await expect(header.getByRole('navigation')).toHaveCount(0);
-      await expect(header.getByRole('button')).toHaveCount(0);
+      await expect(header.getByRole('button')).toHaveCount(1);
+      await expect(header.getByRole('button', { name: 'Open appearance studio', exact: true })).toBeVisible();
       await expect(header.getByRole('link')).toHaveCount(2);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
@@ -122,12 +123,11 @@ test('administration stays restricted and mobile keeps every destination in a fo
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole('button', { name: 'Close menu', exact: true })).toBeFocused();
 
-  await expect(drawer.getByRole('button', { name: 'Assets', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await expect(drawer.getByRole('heading', { name: 'Assets', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Holdings', exact: true })).toBeVisible();
-  await drawer.getByRole('button', { name: 'Bases', exact: true }).click();
-  await drawer.getByRole('button', { name: 'Operations', exact: true }).click();
+  await expect(drawer.getByRole('heading', { name: 'Operations', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Base Storage', exact: true })).toBeVisible();
-  await drawer.getByRole('button', { name: 'More', exact: true }).click();
+  await expect(drawer.getByRole('heading', { name: 'More', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Changelog', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Administration', exact: true })).toHaveCount(0);
   await expect(drawer.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();

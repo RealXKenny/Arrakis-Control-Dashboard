@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -84,9 +85,9 @@ export function SetPasswordForm({ email, next }: { email: string; next: string }
           {errors.form}
         </p>
       )}
-      <button type="submit" disabled={pending} className="btn btn-primary w-full disabled:opacity-60">
+      <Button type="submit" disabled={pending} className="btn btn-primary w-full disabled:opacity-60">
         {pending ? 'Saving…' : 'Save password'}
-      </button>
+      </Button>
     </form>
   );
 }

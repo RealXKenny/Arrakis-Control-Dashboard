@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { Field, FormMessage, inputClass } from '../../../components/ui/form-controls';
@@ -78,7 +80,8 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
   );
   const completed = view?.self?.completed ?? [];
   return (
-    <section
+    <Card
+      as="section"
       aria-label="Guild recruit onboarding"
       className="panel min-w-0 p-5 sm:p-6 [&_button]:max-w-full [&_button]:whitespace-normal [&_button]:[overflow-wrap:anywhere] [&_button:disabled]:opacity-50"
     >
@@ -90,18 +93,18 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={loading || saving} onClick={refresh} className="btn btn-secondary">
+          <Button type="button" disabled={loading || saving} onClick={refresh} className="btn btn-secondary">
             Refresh onboarding
-          </button>
+          </Button>
           {verified && view?.canEdit && (
-            <button
+            <Button
               type="button"
               disabled={busy || Boolean(guideDraft)}
               onClick={() => setGuideDraft(view.guide)}
               className="btn btn-primary"
             >
               Edit welcome guide
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -126,13 +129,13 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
       {view && (
         <div hidden={!verified}>
           <div className="mt-6 grid min-w-0 gap-5">
-            <article className="min-w-0 border border-sand-200/20 p-4">
+            <Card className="min-w-0 border border-sand-200/20 p-4">
               <h3 className="text-sm">Welcome</h3>
               <p className="mt-3 whitespace-pre-wrap break-words text-sm text-sand-300">
                 {view.guide.welcome || 'Your leader has not added a welcome message yet.'}
               </p>
-            </article>
-            <article className="min-w-0 border border-sand-200/20 p-4">
+            </Card>
+            <Card className="min-w-0 border border-sand-200/20 p-4">
               <h3 className="text-sm">Guild rules</h3>
               <p className="mt-3 whitespace-pre-wrap break-words text-sm text-sand-300">
                 {view.guide.rules || 'No guild rules have been added yet.'}
@@ -142,19 +145,19 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
                   {acknowledged ? (
                     <p className="text-sm text-status-ok">You acknowledged the current guild rules.</p>
                   ) : (
-                    <button
+                    <Button
                       type="button"
                       disabled={busy}
                       className="btn btn-secondary"
                       onClick={() => mutate({ action: 'acknowledge-rules', revision: view.revision })}
                     >
                       I have read the guild rules
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}
-            </article>
-            <article className="min-w-0 border border-sand-200/20 p-4">
+            </Card>
+            <Card className="min-w-0 border border-sand-200/20 p-4">
               <h3 className="text-sm">Useful locations</h3>
               <p className="mt-3 whitespace-pre-wrap break-words text-sm text-sand-300">
                 {view.guide.locations || 'Your leader has not added locations yet.'}
@@ -162,8 +165,8 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
               <a href="/guild?tab=bases" className="mt-4 inline-block text-sm text-spice-300 underline">
                 Open shared base directory
               </a>
-            </article>
-            <article aria-label="Your onboarding progress" className="min-w-0 border border-sand-200/20 p-4">
+            </Card>
+            <Card aria-label="Your onboarding progress" className="min-w-0 border border-sand-200/20 p-4">
               <h3 className="text-sm">Your welcome checklist</h3>
               <p className="mt-3 break-words text-sm text-sand-300">
                 Mentor:{' '}
@@ -180,7 +183,7 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
                 {view.guide.steps.map((step) => (
                   <li key={step.id} className="min-w-0 border-l border-spice-400/40 pl-3">
                     <p className="break-words text-sm text-sand-200">{step.text}</p>
-                    <button
+                    <Button
                       type="button"
                       disabled={busy}
                       aria-pressed={completed.includes(step.id)}
@@ -195,7 +198,7 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
                       }
                     >
                       {completed.includes(step.id) ? 'Mark incomplete' : 'Mark complete'}: {step.text}
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -203,7 +206,7 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
                 Progress is self-reported and visible to your guild leader. A checklist mark or rules acknowledgment
                 does not grant game permissions or change your guild rank.
               </p>
-            </article>
+            </Card>
           </div>
           {view.canEdit && (
             <section aria-label="Manage recruit progress" className="mt-6 min-w-0 border border-sand-200/20 p-4">
@@ -252,9 +255,9 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
                       ))}
                   </select>
                 </Field>
-                <button type="submit" disabled={busy || !memberKey} className="btn btn-secondary justify-self-start">
+                <Button type="submit" disabled={busy || !memberKey} className="btn btn-secondary justify-self-start">
                   Save mentor assignment
-                </button>
+                </Button>
               </form>
               <p className="mt-4 text-xs text-sand-500">
                 Up to 200 progress records and 20 checklist items. Inactive onboarding records expire together 90 days
@@ -271,7 +274,7 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
                     a member.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-3">
-                    <button
+                    <Button
                       type="button"
                       disabled={busy}
                       className="btn btn-primary"
@@ -280,22 +283,22 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
                       }
                     >
                       Confirm removal
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       disabled={saving}
                       className="btn btn-secondary"
                       onClick={() => setRemoving(null)}
                     >
                       Keep progress
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
               <ul className="mt-5 grid min-w-0 gap-4" aria-label="Recruit progress records">
                 {view.members.map((member) => (
                   <li key={member.memberKey} className="min-w-0">
-                    <article aria-label={member.memberName} className="min-w-0 border border-sand-200/20 p-3">
+                    <Card aria-label={member.memberName} className="min-w-0 border border-sand-200/20 p-3">
                       <h4 className="break-words text-sm">{member.memberName}</h4>
                       <p className="mt-2 text-xs text-sand-400">
                         {member.currentMember ? 'Current member' : 'Former member'}
@@ -317,15 +320,15 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
                       <p className="mt-3 text-xs text-sand-500">
                         Updated <LocalTime value={member.updatedAt} />
                       </p>
-                      <button
+                      <Button
                         type="button"
                         disabled={busy}
                         className="btn btn-secondary mt-4"
                         onClick={() => setRemoving(member.memberKey)}
                       >
                         Remove progress
-                      </button>
-                    </article>
+                      </Button>
+                    </Card>
                   </li>
                 ))}
               </ul>
@@ -333,6 +336,6 @@ export function GuildOnboarding({ guildId }: { guildId: string }) {
           )}
         </div>
       )}
-    </section>
+    </Card>
   );
 }

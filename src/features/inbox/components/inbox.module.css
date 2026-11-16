@@ -1,0 +1,135 @@
+.root {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.toolbar p {
+  max-width: 65ch;
+  color: var(--color-sand-300);
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: end;
+}
+.filters label {
+  display: grid;
+  gap: 0.5rem;
+  color: var(--color-sand-200);
+}
+.filters select {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0.6rem;
+  background: var(--color-obsidian-900);
+  border: 1px solid var(--color-sand-500);
+}
+.root input[type='number'],
+.root input[type='time'],
+.root input[type='text'] {
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.6rem;
+  background: var(--color-obsidian-900);
+  border: 1px solid var(--color-sand-500);
+  color: var(--color-sand-100);
+}
+.root fieldset {
+  min-width: 0;
+  margin-top: 1rem;
+}
+.filters > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.root button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.check {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 0.75rem;
+}
+.filters .check {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 0.75rem;
+}
+.check input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-spice-400);
+}
+.sources,
+.alerts {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.source,
+.card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--color-sand-500);
+  padding: 1.25rem;
+  background: var(--color-obsidian-900);
+}
+.source h2 {
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-sand-100);
+}
+.source p,
+.card p,
+.notice {
+  color: var(--color-sand-300);
+  font-size: 0.875rem;
+}
+.card {
+  border-left: 3px solid var(--color-spice-400);
+}
+.card h2 {
+  margin: 0.75rem 0;
+  font-size: 1.125rem;
+  color: var(--color-sand-100);
+}
+.card .eyebrow {
+  color: var(--color-spice-300);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 0.75rem;
+  color: var(--color-spice-300);
+  text-decoration: underline;
+}
+.root button:focus-visible,
+.root a:focus-visible,
+.root input:focus-visible,
+.root select:focus-visible {
+  outline: 2px solid var(--color-spice-300);
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .sources,
+  .alerts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

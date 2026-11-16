@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -218,7 +220,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             <p>Every contribution leaves a mark. Cosmetics and recognition remain yours.</p>
           </header>
           {views.map((entry) => (
-            <article className="season-history" key={entry.season.id}>
+            <Card className="season-history" key={entry.season.id}>
               <div>
                 <span className="season-kicker">
                   Season {entry.season.definition.number} · {seasonState(entry.season)}
@@ -235,7 +237,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               </div>
               <div className="season-cosmetics">
                 {entry.progress.claims.map((claim) => (
-                  <button
+                  <Button
                     key={claim.reward.id}
                     disabled={busy}
                     onClick={() => {
@@ -252,7 +254,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                   >
                     <RewardArt reward={claim.reward} seasonId={entry.season.id} />
                     <span>Equip {claim.reward.name}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
               <details>
@@ -277,9 +279,9 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                   ))}
                 </ol>
               </details>
-            </article>
+            </Card>
           ))}
-          <button
+          <Button
             disabled={busy}
             className="season-button"
             onClick={async () => {
@@ -298,7 +300,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             }}
           >
             Load older seasons
-          </button>
+          </Button>
         </>
       ) : (
         <>
@@ -354,7 +356,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                   All rewards are free · {progress.claims.length}/{rewards.length} claimed
                 </span>
                 <div className="season-actions">
-                  <button
+                  <Button
                     type="button"
                     className="season-button"
                     aria-controls={trackId}
@@ -367,8 +369,8 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     }
                   >
                     ← Previous
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     className="season-button"
                     aria-controls={trackId}
@@ -381,13 +383,13 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     }
                   >
                     Next →
-                  </button>
+                  </Button>
                 </div>
               </div>
               {rewards.length > 20 && (
                 <nav className="season-actions season-track-chapters" aria-label="Reward level chapters">
                   {Array.from({ length: Math.ceil(rewards.length / 10) }, (_, chapter) => (
-                    <button
+                    <Button
                       key={chapter}
                       type="button"
                       className="season-button"
@@ -404,7 +406,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     >
                       Levels {rewards[chapter * 10].level}–
                       {rewards[Math.min(chapter * 10 + 9, rewards.length - 1)].level}
-                    </button>
+                    </Button>
                   ))}
                 </nav>
               )}
@@ -422,7 +424,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     leveling.level >= reward.level &&
                     !['draft', 'preview', 'scheduled'].includes(seasonState(season, now));
                   return (
-                    <button
+                    <Button
                       key={reward.id}
                       className={`season-reward ${claimed ? 'is-claimed' : unlocked ? 'is-unlocked' : ''}`}
                       onClick={(event) => {
@@ -437,7 +439,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                       <span className="season-reward-state">
                         {claimed ? '✓ Claimed' : unlocked ? 'Ready to claim' : 'Locked · Preview'}
                       </span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -495,7 +497,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             )}
             <div className="season-challenges">
               {(mode === 'challenges' ? filtered : filtered.slice(0, 6)).map((c) => (
-                <article className="season-challenge" key={c.id}>
+                <Card className="season-challenge" key={c.id}>
                   <div className="season-section-heading">
                     <span className="season-kicker">
                       {c.path} / {c.cadence}
@@ -508,7 +510,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     <span>
                       {c.verification === 'review' ? 'Moderator-reviewed' : 'API-observed'} · {statusOf(c, view)}
                     </span>
-                    <button
+                    <Button
                       className="season-button"
                       disabled={
                         busy || !!preview || seasonState(season, now) !== 'active' || statusOf(c, view) !== 'available'
@@ -521,7 +523,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                       }}
                     >
                       {c.verification === 'review' ? 'Submit evidence' : 'Verify now'}
-                    </button>
+                    </Button>
                   </div>
                   {progress.submissions
                     .filter((s) => s.challengeId === c.id)
@@ -531,7 +533,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                         {s.note ? `: ${s.note}` : ''}
                       </p>
                     ))}
-                </article>
+                </Card>
               ))}
             </div>
             {!filtered.length && <p>No challenges match these filters.</p>}
@@ -557,7 +559,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             )}
             <div className="season-challenges">
               {definition.milestones.map((m) => (
-                <article className="season-challenge" key={m.id}>
+                <Card className="season-challenge" key={m.id}>
                   <span className="season-kicker" aria-live="polite">
                     {totals.completions >= m.target ? '✦ Shared achievement unlocked' : 'Community objective'}
                   </span>
@@ -570,7 +572,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                   <p>
                     {totals.completions.toLocaleString()} / {m.target.toLocaleString()} approved challenges
                   </p>
-                </article>
+                </Card>
               ))}
             </div>
           </section>
@@ -582,7 +584,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                   .slice(-5)
                   .reverse()
                   .map((c) => (
-                    <button
+                    <Button
                       key={c.reward.id}
                       onClick={(event) => {
                         dialogTrigger.current = event.currentTarget;
@@ -591,7 +593,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     >
                       <RewardArt reward={c.reward} seasonId={season.id} />
                       <span>{c.reward.name}</span>
-                    </button>
+                    </Button>
                   ))}
               </div>
             </section>
@@ -628,30 +630,30 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               </span>
             </div>
             <div className="season-actions">
-              <button autoFocus className="season-button" onClick={() => setSelection(null)}>
+              <Button autoFocus className="season-button" onClick={() => setSelection(null)}>
                 Close preview
-              </button>
+              </Button>
               {selection.gameReward &&
                 progress.claims.some((v) => v.reward.id === selection.id) &&
                 !view.deliveries?.some((v) => v.rewardId === selection.id) && (
-                  <button
+                  <Button
                     className="season-button"
                     disabled={busy || !!preview}
                     onClick={() => act({ action: 'delivery-request', rewardId: selection.id })}
                   >
                     Request game delivery
-                  </button>
+                  </Button>
                 )}
               {progress.claims.some((v) => v.reward.id === selection.id) ? (
-                <button
+                <Button
                   className="season-button"
                   disabled={busy || !!preview}
                   onClick={() => act({ action: 'equip', rewardId: selection.id })}
                 >
                   Equip cosmetic
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   className="season-button season-primary"
                   disabled={
                     busy ||
@@ -662,7 +664,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                   onClick={() => act({ action: 'claim', rewardId: selection.id })}
                 >
                   Confirm free claim
-                </button>
+                </Button>
               )}
             </div>
           </SeasonDialog>
@@ -708,12 +710,12 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 <textarea maxLength={1500} value={links} onChange={(e) => setLinks(e.target.value)} />
               </label>
               <div className="season-actions">
-                <button type="button" className="season-button" onClick={() => setChallenge(null)}>
+                <Button type="button" className="season-button" onClick={() => setChallenge(null)}>
                   Cancel
-                </button>
-                <button className="season-button season-primary" disabled={busy}>
+                </Button>
+                <Button className="season-button season-primary" disabled={busy}>
                   Submit for review
-                </button>
+                </Button>
               </div>
             </form>
           </SeasonDialog>

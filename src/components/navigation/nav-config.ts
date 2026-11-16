@@ -318,6 +318,38 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
         order: 10,
       },
       {
+        id: 'personal-tasks',
+        label: 'Personal tasks',
+        href: '/tasks',
+        icon: 'portal',
+        description: 'Your private task list, projects and goals.',
+        order: 12,
+      },
+      {
+        id: 'personal-data',
+        label: 'Personal data',
+        href: '/personal-data',
+        icon: 'storage',
+        description: 'Export or erase your dashboard notes, plans and sharing snapshots.',
+        order: 13,
+      },
+      {
+        id: 'activity-views',
+        label: 'Activity views',
+        href: '/activity-views',
+        icon: 'portal',
+        description: 'Saved widgets, filters and planning context for your activities.',
+        order: 13.5,
+      },
+      {
+        id: 'privacy-center',
+        label: 'Privacy center',
+        href: '/privacy',
+        icon: 'portal',
+        description: 'Control voluntary member sharing and revoke your links.',
+        order: 14,
+      },
+      {
         id: 'service-status',
         label: 'Service status',
         href: '/status',
@@ -356,6 +388,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
 ] as const;
 
 export const NOTIFICATION_ITEMS: readonly NavigationItem[] = [
+  {
+    id: 'notification-inbox',
+    label: 'Actionable inbox',
+    href: '/inbox',
+    icon: 'portal',
+    description: 'Asset needs, supply follow-ups and operation briefings.',
+    order: 0,
+  },
   {
     id: 'notification-applications',
     label: 'Guild applications',
@@ -398,6 +438,18 @@ export function resolveNavigationItems(
 
 export function navigationFor(visibility: NavigationVisibility = {}): readonly NavigationItem[] {
   return resolveNavigationItems(NAVIGATION_ITEMS, visibility);
+}
+
+/** Feature shortcuts resolve the same permission-filtered inventory as the topbar. */
+export function navigationItemFor(id: string, visibility: NavigationVisibility = {}): NavigationItem | undefined {
+  const find = (items: readonly NavigationItem[]): NavigationItem | undefined => {
+    for (const item of items) {
+      if (item.id === id) return item;
+      const child = item.children && find(item.children);
+      if (child) return child;
+    }
+  };
+  return find(navigationFor(visibility));
 }
 
 export function isNavigationActive(pathname: string, item: NavigationItem): boolean {

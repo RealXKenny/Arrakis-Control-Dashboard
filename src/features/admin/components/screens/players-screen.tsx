@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { adminCall, findOperation, type AdminInput } from '../../client';
@@ -46,7 +48,7 @@ function Panel({
   const operation = findOperation(operations, id);
   const query = useAdminQuery(operation, { path: { playerId } });
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <QueryState loading={query.loading} error={query.error} onRetry={query.refresh}>
         {kind === 'table' ? (
@@ -55,7 +57,7 @@ function Panel({
           <Facts value={query.data} />
         )}
       </QueryState>
-    </section>
+    </Card>
   );
 }
 
@@ -147,22 +149,22 @@ function PlayerDetail({
   return (
     <div className={ui.screen}>
       <div className={ui.toolbar}>
-        <button type="button" onClick={() => url.update({ player: null, section: null })}>
+        <Button type="button" onClick={() => url.update({ player: null, section: null })}>
           ← All players
-        </button>
+        </Button>
         <h3 style={{ margin: 0 }}>{name}</h3>
         <span className={ui.stateLine}>ID {playerId}</span>
       </div>
       <div className={ui.subTabs} role="group" aria-label="Player sections">
         {SECTIONS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === section}
             onClick={() => url.update({ section: id }, 'replace')}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {notice && (
@@ -225,7 +227,7 @@ function PlayerDetail({
         </>
       )}
       {section === 'moderation' && (
-        <section className={ui.panel} aria-label="Moderation">
+        <Card as="section" className={ui.panel} aria-label="Moderation">
           <h3>Moderation</h3>
           <QueryState loading={ban.loading} error={ban.error} onRetry={ban.refresh}>
             <p>
@@ -236,7 +238,7 @@ function PlayerDetail({
             </p>
           </QueryState>
           <div className={ui.actions}>
-            <button
+            <Button
               type="button"
               onClick={() =>
                 act(
@@ -252,8 +254,8 @@ function PlayerDetail({
               }
             >
               Kick
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() =>
                 act(
@@ -273,9 +275,9 @@ function PlayerDetail({
               }
             >
               Repair login queue
-            </button>
+            </Button>
             {banned ? (
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   act(
@@ -292,9 +294,9 @@ function PlayerDetail({
                 }
               >
                 Lift ban
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 type="button"
                 className={ui.danger}
                 onClick={() =>
@@ -315,7 +317,7 @@ function PlayerDetail({
                 }
               >
                 Ban…
-              </button>
+              </Button>
             )}
           </div>
           {!banned && (
@@ -324,21 +326,21 @@ function PlayerDetail({
               <input value={reason} maxLength={200} onChange={(event) => setReason(event.target.value)} />
             </label>
           )}
-        </section>
+        </Card>
       )}
       {section === 'manage' && (
         <>
-          <section className={ui.panel} aria-label="Add experience">
+          <Card as="section" className={ui.panel} aria-label="Add experience">
             <h3>Add experience</h3>
             <form onSubmit={submitXp}>
               <label className={ui.field}>
                 Amount of XP
                 <input inputMode="numeric" value={amount} onChange={(event) => setAmount(event.target.value)} />
               </label>
-              <button type="submit">Review…</button>
+              <Button type="submit">Review…</Button>
             </form>
-          </section>
-          <section className={ui.panel} aria-label="Give item">
+          </Card>
+          <Card as="section" className={ui.panel} aria-label="Give item">
             <h3>Give item</h3>
             <form onSubmit={submitItem}>
               <label className={ui.field}>
@@ -349,13 +351,13 @@ function PlayerDetail({
                 Quantity
                 <input inputMode="numeric" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
               </label>
-              <button type="submit">Review…</button>
+              <Button type="submit">Review…</Button>
             </form>
-          </section>
-          <section className={ui.panel} aria-label="Quick actions">
+          </Card>
+          <Card as="section" className={ui.panel} aria-label="Quick actions">
             <h3>Quick actions</h3>
             <div className={ui.actions}>
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   act(
@@ -372,8 +374,8 @@ function PlayerDetail({
                 }
               >
                 Refill water
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() =>
                   act(
@@ -390,9 +392,9 @@ function PlayerDetail({
                 }
               >
                 Repair gear
-              </button>
+              </Button>
             </div>
-          </section>
+          </Card>
         </>
       )}
       {pending && (
@@ -450,10 +452,10 @@ export default function PlayersScreen({ operations }: { operations: AdminOperati
             <option value="banned">Banned</option>
           </select>
         </label>
-        <button type="submit">Search</button>
-        <button type="button" onClick={list.refresh} disabled={list.loading}>
+        <Button type="submit">Search</Button>
+        <Button type="button" onClick={list.refresh} disabled={list.loading}>
           Refresh
-        </button>
+        </Button>
       </form>
       <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
         <Table
@@ -463,28 +465,28 @@ export default function PlayersScreen({ operations }: { operations: AdminOperati
           action={(row) => {
             const id = idFrom(row, 'player');
             return id ? (
-              <button
+              <Button
                 aria-label={`Open ${text(row, ['character_name', 'name'], 'player')}`}
                 type="button"
                 onClick={() => url.update({ player: id, section: null })}
               >
                 Open
-              </button>
+              </Button>
             ) : null;
           }}
         />
         <nav className={ui.pager} aria-label="Player pages">
-          <button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
+          <Button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
             Previous page
-          </button>
+          </Button>
           <span>Page {page + 1}</span>
-          <button
+          <Button
             type="button"
             disabled={!hasMore(list.data, page, PAGE_SIZE)}
             onClick={() => url.update({ page: page + 1 })}
           >
             Next page
-          </button>
+          </Button>
         </nav>
       </QueryState>
     </div>

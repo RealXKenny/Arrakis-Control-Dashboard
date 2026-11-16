@@ -1,3 +1,4 @@
+import { Card } from '../../../../components/ui/card';
 import type { Metadata } from 'next';
 import { LocalTime } from '../../../../components/ui/local-time';
 import Link from 'next/link';
@@ -53,9 +54,9 @@ export default async function BaseDetailPage({ params }: { params: Promise<{ id:
 
       <div className="mt-6 grid gap-8 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <div className="panel overflow-hidden">
+          <Card as="div" className="panel overflow-hidden">
             <Thumbnail summary={summary} className="aspect-[16/10]" />
-          </div>
+          </Card>
         </div>
 
         <div className="flex flex-col gap-6 lg:col-span-5">
@@ -89,7 +90,7 @@ export default async function BaseDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       {pieces.length > 0 && (
-        <section aria-labelledby="composition" className="panel mt-10 p-6 sm:p-8">
+        <Card as="section" aria-labelledby="composition" className="panel mt-10 p-6 sm:p-8">
           <h2 id="composition" className="text-base">
             Composition
           </h2>
@@ -108,7 +109,7 @@ export default async function BaseDetailPage({ params }: { params: Promise<{ id:
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       )}
     </>
   );

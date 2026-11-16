@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { factionEmblem } from '../../../features/guilds/details';
@@ -126,7 +127,11 @@ export default async function MyGuildPage({
         <GuildOperationsPlanner key={guild.id} guildId={guild.id} />
       ) : tab === 'roster' ? (
         <div className="flex flex-col gap-8">
-          <section aria-label="Guild membership" className="panel flex flex-col gap-6 p-6 sm:flex-row sm:items-start">
+          <Card
+            as="section"
+            aria-label="Guild membership"
+            className="panel flex flex-col gap-6 p-6 sm:flex-row sm:items-start"
+          >
             <GuildEmblem guildId={guild.id} guildName={guild.name} editable={canEdit} />
             <div className="min-w-0 flex-1">
               <h2 className="text-2xl">{guild.name}</h2>
@@ -153,7 +158,7 @@ export default async function MyGuildPage({
                 </div>
               </dl>
             </div>
-          </section>
+          </Card>
           <GuildNoticeboard key={guild.id} guildId={guild.id} />
           <Roster guildId={guild.id} guildName={guild.name} groups={groups} canEdit={canEdit} />
         </div>

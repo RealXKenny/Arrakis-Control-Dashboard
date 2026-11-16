@@ -42,6 +42,15 @@ const viewports = [
 ] as const;
 
 async function accessibilityProblems(page: Page) {
+  // Audit settled presentation, rather than sampling a chip midway through its opacity transition.
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    const finite = document.getAnimations().filter((animation) => {
+      const end = animation.effect?.getComputedTiming().endTime;
+      return typeof end === 'number' && Number.isFinite(end);
+    });
+    await Promise.allSettled(finite.map((animation) => animation.finished));
+  });
   await page.evaluate(axeSource);
   return page.evaluate(async () => {
     const result = await (

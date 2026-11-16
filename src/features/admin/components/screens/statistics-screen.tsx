@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useEffect, useState } from 'react';
 import { formatTimestamp } from '../../../../lib/time';
 import { findOperation } from '../../client';
@@ -79,7 +81,7 @@ function StatPanel({
   const query = useAdminQuery(operation);
   const now = useNow();
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <p className={ui.stateLine}>
         {description} Source: {operation?.title ?? id}.
@@ -91,11 +93,11 @@ function StatPanel({
         <Facts value={query.data} />
       </QueryState>
       <div className={ui.actions}>
-        <button type="button" onClick={query.refresh} disabled={query.loading}>
+        <Button type="button" onClick={query.refresh} disabled={query.loading}>
           Refresh
-        </button>
+        </Button>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -113,7 +115,7 @@ export default function StatisticsScreen({
   const rows = overview.data ? readingRows(overview.data, operations) : [];
   return (
     <div className={ui.screen}>
-      <section className={ui.panel} aria-label="How to read these statistics">
+      <Card as="section" className={ui.panel} aria-label="How to read these statistics">
         <h3>How to read these statistics</h3>
         <ul>
           <li>
@@ -131,8 +133,8 @@ export default function StatisticsScreen({
           </li>
           <li>Units appear only where the source states them (percentages for CPU and memory).</li>
         </ul>
-      </section>
-      <section className={ui.panel} aria-label="Current readings">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Current readings">
         <h3>Current readings</h3>
         <p className={ui.stateLine} role="status">
           {overview.data
@@ -147,9 +149,9 @@ export default function StatisticsScreen({
           </p>
         )}
         <div className={ui.actions}>
-          <button type="button" onClick={overview.refresh} disabled={overview.loading}>
+          <Button type="button" onClick={overview.refresh} disabled={overview.loading}>
             {overview.loading ? 'Refreshing…' : 'Refresh readings'}
-          </button>
+          </Button>
         </div>
         {rows.length > 0 && (
           <div className={ui.tableScroll}>
@@ -179,7 +181,7 @@ export default function StatisticsScreen({
             </table>
           </div>
         )}
-      </section>
+      </Card>
       <div className={ui.trendGrid}>
         <Trend label="Online player trend" values={overview.history.map((entry) => entry.online)} />
         <Trend label="CPU usage trend" values={overview.history.map((entry) => entry.cpu)} />

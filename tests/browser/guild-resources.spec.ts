@@ -41,6 +41,7 @@ test('members request materials, pledge quantities and confirm delivered resourc
   await request.getByRole('button', { name: 'Withdraw my pledge', exact: true }).click();
   await expect(request.getByRole('button', { name: 'Withdraw my pledge', exact: true })).toHaveCount(0);
   await request.getByRole('button', { name: 'Volunteer to supply', exact: true }).click();
+  await expect(request.getByRole('button', { name: 'Update my pledge', exact: true })).toBeVisible();
   const view = await (await page.request.get('/api/v2/guilds/2/resource-requests')).json();
   const record = view.data.requests.find((entry) => entry.material === 'Steel ingots');
   expect(JSON.stringify(view)).not.toMatch(/requesterId|supplierId|confirmedById/);
@@ -71,8 +72,10 @@ test('members request materials, pledge quantities and confirm delivered resourc
   await page.goto('/guild?tab=resources');
   await request.getByLabel('Quantity to supply').fill('60');
   await request.getByRole('button', { name: 'Volunteer to supply', exact: true }).click();
+  await expect(request.getByRole('button', { name: 'Update my pledge', exact: true })).toBeVisible();
   await request.getByRole('button', { name: 'Report delivery', exact: true }).click();
   await tracker.getByRole('button', { name: 'Confirm change', exact: true }).click();
+  await expect(request.getByText('Your delivery is awaiting confirmation.', { exact: false })).toBeVisible();
   await context.setExtraHTTPHeaders({ Cookie: requester.cookie });
   await page.goto('/guild?tab=resources');
   await request.getByText('Pledges and deliveries (2)', { exact: true }).click();
@@ -145,4 +148,5 @@ test('failed saves and refreshes retain request drafts and large exact quantitie
   await expect(request.getByText('normal · cancelled', { exact: true })).toBeVisible();
   await request.getByRole('button', { name: 'Remove request', exact: true }).click();
   await tracker.getByRole('button', { name: 'Confirm change', exact: true }).click();
+  await expect(request).toHaveCount(0);
 });

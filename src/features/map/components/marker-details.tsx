@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import styles from '../styles/map.module.css';
 
 function friendlyMarkerType(type) {
@@ -31,7 +33,7 @@ export default function MarkerDetails({ marker, onClose, onFlyTo }) {
     <section className={styles.markerDetails} aria-label="Location details">
       <header>
         <span>{friendlyMarkerType(type)}</span>
-        <button type="button" onClick={onClose} aria-label="Close location details">
+        <Button type="button" onClick={onClose} aria-label="Close location details">
           <svg
             width="14"
             height="14"
@@ -43,7 +45,7 @@ export default function MarkerDetails({ marker, onClose, onFlyTo }) {
           >
             <path d="m5 5 10 10M15 5 5 15" />
           </svg>
-        </button>
+        </Button>
       </header>
       <h2>{name}</h2>
       <div className={styles.detailTags}>
@@ -62,9 +64,9 @@ export default function MarkerDetails({ marker, onClose, onFlyTo }) {
         </dl>
       )}
       {onFlyTo && (
-        <button type="button" className={styles.detailFlyTo} onClick={onFlyTo}>
+        <Button type="button" className={styles.detailFlyTo} onClick={onFlyTo}>
           Fly to <span aria-hidden="true">↗</span>
-        </button>
+        </Button>
       )}
     </section>
   );

@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
 import { navIdentity } from '../features/auth/identity';
 import { getServerEnv } from '../config/env';
 import { currentSession } from '../features/auth/server/session';
 import { isDashboardAdmin } from '../features/admin/server/access';
 import { SiteFooter } from '../components/layout/site-footer';
-import { TopNavigation } from '../components/navigation/top-navigation';
+import { AppearanceNavigation } from '../features/appearance/components/appearance-navigation';
+import { appearanceBootScript } from '../features/appearance/boot';
 import '../styles/globals.css';
 
 // Archivo's width axis gives the monolithic, wide-set headline voice; Mono carries data and labels.
@@ -51,7 +53,7 @@ export function generateMetadata(): Metadata {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#09090b',
+  themeColor: '#0d0f12',
   colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,
@@ -60,8 +62,21 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // A storage hiccup must not take the public pages down: fall back to the signed-out navigation.
   const session = await currentSession().catch(() => null);
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${sans.variable} ${mono.variable} dark`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+      className={`${sans.variable} ${mono.variable} dark`}
+    >
+      <head>
+        <script
+          id="arrakis-appearance-boot"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: appearanceBootScript() }}
+        />
+      </head>
       <body className="flex min-h-dvh flex-col bg-obsidian-950 text-sand-200 antialiased">
         <a
           href="#main"
@@ -69,7 +84,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
           Skip to content
         </a>
-        <TopNavigation identity={session ? navIdentity(session) : null} isAdmin={isDashboardAdmin(session)} />
+        <AppearanceNavigation
+          key={session?.user.id ?? 'anonymous'}
+          identity={session ? navIdentity(session) : null}
+          isAdmin={isDashboardAdmin(session)}
+        />
         <main id="main" className="flex-1">
           {children}
         </main>

@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState } from 'react';
 import Link from 'next/link';
 import { QueryState, ReadPanel, Table } from '../data-panel';
@@ -27,14 +29,14 @@ function Overview({ operations }: { operations: AdminOperation[] }) {
       )}
       <ReadPanel operations={operations} id="get-care-package-capabilities" title="What the Console supports" />
       <ReadPanel operations={operations} id="get-care-package-config" title="Current configuration" />
-      <section className={ui.panel} aria-label="Care package controls">
+      <Card as="section" className={ui.panel} aria-label="Care package controls">
         <h3>Controls</h3>
         <p className={ui.stateLine}>
           Enabling lets the Console grant care packages to eligible players on its own. A scan checks eligibility now;
           it is separate from granting.
         </p>
         <div className={ui.actions}>
-          <button
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -53,8 +55,8 @@ function Overview({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Enable…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -72,8 +74,8 @@ function Overview({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Disable…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -95,7 +97,7 @@ function Overview({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Run scan…
-          </button>
+          </Button>
         </div>
         <p className={ui.stateLine}>
           Saving the configuration, granting to every eligible player or one player, and retrying a failed grant each
@@ -108,7 +110,7 @@ function Overview({ operations }: { operations: AdminOperation[] }) {
           {' · '}
           <Link href={adminHref('care', 'post-care-package-retry-grantid')}>retry a failed grant</Link>.
         </p>
-      </section>
+      </Card>
       {dialog}
     </>
   );
@@ -121,7 +123,7 @@ function Eligible({ operations }: { operations: AdminOperation[] }) {
     query: only ? { onlyEligible: true } : {},
   });
   return (
-    <section className={ui.panel} aria-label="Eligible players">
+    <Card as="section" className={ui.panel} aria-label="Eligible players">
       <h3>Eligible players</h3>
       <div className={ui.toolbar}>
         <label className={ui.field}>
@@ -134,14 +136,14 @@ function Eligible({ operations }: { operations: AdminOperation[] }) {
             Only players who are eligible now
           </span>
         </label>
-        <button type="button" onClick={list.refresh} disabled={list.loading}>
+        <Button type="button" onClick={list.refresh} disabled={list.loading}>
           Refresh
-        </button>
+        </Button>
       </div>
       <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
         <Table value={list.data} caption="Care package eligibility" empty="No players to show." />
       </QueryState>
-    </section>
+    </Card>
   );
 }
 
@@ -172,7 +174,7 @@ function Grants({ operations }: { operations: AdminOperation[] }) {
         query={{ limit: 50 }}
       />
       <div className={ui.actions}>
-        <button
+        <Button
           type="button"
           className={ui.danger}
           onClick={() =>
@@ -194,7 +196,7 @@ function Grants({ operations }: { operations: AdminOperation[] }) {
           }
         >
           Clear history…
-        </button>
+        </Button>
       </div>
       {dialog}
     </>
@@ -208,14 +210,14 @@ export default function CareScreen({ operations }: { operations: AdminOperation[
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Care package views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'overview' ? null : id, only: null })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'overview' && <Overview operations={operations} />}

@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 import { useState } from 'react';
 import { formatCredits } from '../contracts';
@@ -73,7 +75,7 @@ export function MinesTable({ game, paused, maxWager, onSettled }: TableProps) {
               const safe = revealed.has(tile);
               const hazard = hazardSet.has(tile);
               return (
-                <button
+                <Button
                   key={tile}
                   type="button"
                   disabled={!open || busy || safe}
@@ -82,7 +84,7 @@ export function MinesTable({ game, paused, maxWager, onSettled }: TableProps) {
                   className={`${styles.tile} ${safe ? styles.tileSafe : ''} ${hazard ? styles.tileHazard : ''}`}
                 >
                   <HarvestTileArt kind={safe ? 'cache' : hazard ? 'hazard' : 'hidden'} />
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -100,50 +102,50 @@ export function MinesTable({ game, paused, maxWager, onSettled }: TableProps) {
 
         <div className="flex flex-wrap gap-3">
           {!round && (
-            <button
+            <Button
               type="button"
               className="btn btn-primary disabled:opacity-50"
               disabled={busy || paused || !/^[1-9][0-9]*$/.test(wager)}
               onClick={() => void start(wager, { hazards })}
             >
               {busy ? 'Starting...' : 'Begin expedition'}
-            </button>
+            </Button>
           )}
           {open && (
-            <button
+            <Button
               type="button"
               className="btn btn-primary disabled:opacity-50"
               disabled={busy || !view?.cashoutValue}
               onClick={() => void act({ type: 'cashout' })}
             >
               Cash out{view?.cashoutValue ? ` ${formatCredits(view.cashoutValue)}` : ''}
-            </button>
+            </Button>
           )}
           {finished && (
-            <button type="button" className="btn btn-ghost" onClick={reset}>
+            <Button type="button" className="btn btn-ghost" onClick={reset}>
               New expedition
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       <dl className="grid grid-cols-2 content-start gap-3 text-sm md:w-56 md:grid-cols-1">
-        <div className="panel p-3">
+        <Card as="div" className="panel p-3">
           <dt className="text-xs text-sand-500">Hazards</dt>
           <dd className="font-bold text-sand-50">{view?.hazardCount ?? hazards}</dd>
-        </div>
-        <div className="panel p-3">
+        </Card>
+        <Card as="div" className="panel p-3">
           <dt className="text-xs text-sand-500">Caches found</dt>
           <dd className="font-bold text-sand-50">{view?.revealed.length ?? 0}</dd>
-        </div>
-        <div className="panel p-3">
+        </Card>
+        <Card as="div" className="panel p-3">
           <dt className="text-xs text-sand-500">Multiplier</dt>
           <dd className="font-bold text-sand-50">{view ? x(view.multiplierBps) : '1.00x'}</dd>
-        </div>
-        <div className="panel p-3">
+        </Card>
+        <Card as="div" className="panel p-3">
           <dt className="text-xs text-sand-500">Next safe tile</dt>
           <dd className="font-bold text-sand-50">{view?.nextMultiplierBps ? x(view.nextMultiplierBps) : '-'}</dd>
-        </div>
+        </Card>
       </dl>
     </div>
   );

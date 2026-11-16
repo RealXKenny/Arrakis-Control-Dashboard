@@ -748,12 +748,12 @@
   --theme-surface: var(--color-obsidian-900);
   --theme-raised: var(--color-obsidian-800);
   --theme-hover: var(--color-obsidian-700);
-  --theme-border: rgb(241 233 216 / 0.14);
+  --theme-border: rgb(var(--theme-border-rgb) / 0.5);
   --theme-text: var(--color-sand-50);
   --theme-soft: var(--color-sand-200);
   --theme-muted: var(--color-sand-400);
   --theme-accent: var(--color-spice-400);
-  --theme-masthead: rgb(18 18 21 / 0.92);
+  --theme-masthead: rgb(var(--theme-panel-rgb) / 0.92);
   --theme-danger: var(--color-status-danger);
   --theme-success: var(--color-status-ok);
   --map-panel-height: clamp(480px, calc(100dvh - 300px), 980px);

@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/button';
 import styles from '../styles/map.module.css';
 import CoriolisCountdown from './coriolis-countdown';
 
@@ -14,16 +15,16 @@ export default function MapToolbar({
   return (
     <div className={styles.toolbar}>
       <div className={styles.zoomControls}>
-        <button type="button" className={styles.mapButton} aria-label="Zoom out" onClick={onZoomOut}>
+        <Button type="button" className={styles.mapButton} aria-label="Zoom out" onClick={onZoomOut}>
           −
-        </button>
+        </Button>
         <span className={styles.zoomReading}>{view3D ? '3D' : `${zoomPercent}%`}</span>
-        <button type="button" className={styles.mapButton} aria-label="Zoom in" onClick={onZoomIn}>
+        <Button type="button" className={styles.mapButton} aria-label="Zoom in" onClick={onZoomIn}>
           +
-        </button>
+        </Button>
       </div>
       <div className={styles.mapActions}>
-        <button
+        <Button
           type="button"
           className={styles.mapButton}
           aria-label={view3D ? '2D map' : '3D map'}
@@ -31,13 +32,13 @@ export default function MapToolbar({
           onClick={onToggleView}
         >
           {view3D ? '2D' : '3D'}
-        </button>
-        <button type="button" className={styles.mapButton} onClick={onFit}>
+        </Button>
+        <Button type="button" className={styles.mapButton} onClick={onFit}>
           Fit map
-        </button>
-        <button type="button" className={styles.mapButton} onClick={onRefresh}>
+        </Button>
+        <Button type="button" className={styles.mapButton} onClick={onRefresh}>
           Refresh
-        </button>
+        </Button>
       </div>
       <CoriolisCountdown cycleAt={coriolisNextCycleAt} />
     </div>

@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/button';
 import useSupportUnread from '../../guilds/hooks/use-support-unread';
 import { LocalTime } from '../../../components/ui/local-time';
 import { UnreadPill } from '../../../components/ui/form-controls';
@@ -129,9 +130,9 @@ export default function GuildOversight({
           <h2>Guild oversight</h2>
           <p>Manage membership, inspect recruitment and application conversations, and contact guild leaders.</p>
         </div>
-        <button disabled={loading} onClick={() => setReload(reload + 1)}>
+        <Button disabled={loading} onClick={() => setReload(reload + 1)}>
           Refresh guild data
-        </button>
+        </Button>
       </header>
       <form
         className={ui.actions}
@@ -145,7 +146,7 @@ export default function GuildOversight({
           Search guilds
           <input value={search} onChange={(event) => setSearch(event.target.value)} />
         </label>
-        <button type="submit">Search guilds</button>
+        <Button type="submit">Search guilds</Button>
       </form>
       {error && (
         <p role="alert" className={ui.error}>
@@ -160,7 +161,7 @@ export default function GuildOversight({
           const id = String(raw);
           const name = String(guild.guild_name ?? guild.guildName ?? guild.name ?? id);
           return (
-            <button
+            <Button
               key={`${id}-${index}`}
               aria-pressed={selected?.id === id}
               onClick={() => {
@@ -173,19 +174,19 @@ export default function GuildOversight({
                 {name} <UnreadPill count={supportUnread.guilds[id] ?? 0} />
               </strong>
               <span>Guild {id}</span>
-            </button>
+            </Button>
           );
         })}
       </div>
       {!loading && !guilds.length && <p>No guilds found.</p>}
       <nav className={ui.actions} aria-label="Admin guild pages">
-        <button disabled={page === 0 || loading} onClick={() => setPage(page - 1)}>
+        <Button disabled={page === 0 || loading} onClick={() => setPage(page - 1)}>
           Previous guilds
-        </button>
+        </Button>
         <span>Page {page + 1}</span>
-        <button disabled={!more || loading} onClick={() => setPage(page + 1)}>
+        <Button disabled={!more || loading} onClick={() => setPage(page + 1)}>
           Next guilds
-        </button>
+        </Button>
       </nav>
       {selected && (
         <section className={ui.guildDetail} aria-label={`Managing ${selected.name}`}>
@@ -194,15 +195,15 @@ export default function GuildOversight({
             {['post-guilds-guildid-members', 'delete-guilds-guildid'].map((id) => {
               const operation = operations.find((entry) => entry.id === id);
               return operation ? (
-                <button key={id} onClick={() => onSelect(operation, { guildId: selected.id })}>
+                <Button key={id} onClick={() => onSelect(operation, { guildId: selected.id })}>
                   {operation.title}
-                </button>
+                </Button>
               ) : null;
             })}
-            <button onClick={() => setChatOpen(!chatOpen)} aria-expanded={chatOpen}>
+            <Button onClick={() => setChatOpen(!chatOpen)} aria-expanded={chatOpen}>
               {chatOpen ? 'Close leader chat' : 'Message guild leader'}{' '}
               <UnreadPill count={supportUnread.guilds[selected.id] ?? 0} />
-            </button>
+            </Button>
           </div>
           {chatOpen && (
             <GuildChat
@@ -259,7 +260,7 @@ export default function GuildOversight({
                 ))}
               </dl>
               {application.message && <p>{application.message}</p>}
-              <button
+              <Button
                 onClick={async () => {
                   const guildId = selected.id;
                   inspection.current?.abort();
@@ -280,23 +281,23 @@ export default function GuildOversight({
                 }}
               >
                 Inspect application chat
-              </button>
+              </Button>
             </details>
           ))}
           {!loading && !applications.length && <p>No applications on this page.</p>}
           <nav className={ui.actions} aria-label="Admin application pages">
-            <button disabled={!applicationPage || loading} onClick={() => setApplicationPage(applicationPage - 1)}>
+            <Button disabled={!applicationPage || loading} onClick={() => setApplicationPage(applicationPage - 1)}>
               Previous applications
-            </button>
+            </Button>
             <span>Page {applicationPage + 1}</span>
-            <button disabled={!applicationMore || loading} onClick={() => setApplicationPage(applicationPage + 1)}>
+            <Button disabled={!applicationMore || loading} onClick={() => setApplicationPage(applicationPage + 1)}>
               Next applications
-            </button>
+            </Button>
           </nav>
           {conversation && (
             <section aria-label={`Application chat with ${conversation.name}`}>
               <h3>Application chat · {conversation.name}</h3>
-              <button onClick={() => setConversation(null)}>Close conversation</button>
+              <Button onClick={() => setConversation(null)}>Close conversation</Button>
               {!conversation.messages.length && <p>No messages.</p>}
               <ol className={ui.conversation}>
                 {conversation.messages.map((message) => (

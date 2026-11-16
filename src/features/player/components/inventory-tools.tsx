@@ -1,7 +1,11 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { ItemFinder } from './item-finder';
+import { DataFreshness } from '../../monitoring/components/data-freshness';
+import { beginCheck, emptyHealth, failedRead, sourceReadTime, successfulRead } from '../../monitoring/freshness';
 import {
   ITEM_PIN_LIMIT,
   itemPinsRecordSchema,
@@ -10,9 +14,21 @@ import {
   type ItemPinsRecord,
 } from '../item-pins';
 
+class InventoryRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 async function payload(response: Response): Promise<unknown> {
   const value = await response.json();
-  if (!response.ok) throw new Error(typeof value.error === 'string' ? value.error : 'Pinned item request failed.');
+  if (!response.ok)
+    throw new InventoryRequestError(
+      typeof value.error === 'string' ? value.error : 'Pinned item request failed.',
+      response.status,
+    );
   return value;
 }
 function pinRecord(value: unknown): ItemPinsRecord {
@@ -21,9 +37,10 @@ function pinRecord(value: unknown): ItemPinsRecord {
   return parsed.data;
 }
 
-export function InventoryTools() {
+export function InventoryTools({ initialFind = '' }: { initialFind?: string }) {
   const [record, setRecord] = useState<ItemPinsRecord | null>(null);
   const [reading, setReading] = useState<ItemPinReading | null>(null);
+  const [health, setHealth] = useState(emptyHealth);
   const [message, setMessage] = useState('Loading pinned items…');
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -36,6 +53,9 @@ export function InventoryTools() {
     settings.current = controller;
     setSaving(true);
     setMessage('Loading pinned items…');
+    scan.current?.abort();
+    setReading(null);
+    setHealth(emptyHealth());
     try {
       const value = pinRecord(
         await payload(
@@ -61,9 +81,19 @@ export function InventoryTools() {
   }
   useEffect(() => {
     void loadPins();
+    const hide = () => {
+      if (document.hidden) {
+        scan.current?.abort();
+        setReading(null);
+        setBusy(false);
+        setHealth((previous) => ({ ...previous, phase: 'paused' }));
+      }
+    };
+    document.addEventListener('visibilitychange', hide);
     return () => {
       settings.current?.abort();
       scan.current?.abort();
+      document.removeEventListener('visibilitychange', hide);
     };
   }, []);
 
@@ -79,6 +109,8 @@ export function InventoryTools() {
     settings.current = controller;
     setSaving(true);
     setMessage('Saving pinned items…');
+    setReading(null);
+    setHealth(emptyHealth());
     try {
       const next = pinRecord(
         await payload(
@@ -124,6 +156,8 @@ export function InventoryTools() {
     const controller = new AbortController();
     scan.current = controller;
     setBusy(true);
+    setReading(null);
+    setHealth((previous) => beginCheck(previous));
     setMessage('Checking current authorized sources…');
     try {
       const next = (await payload(
@@ -136,23 +170,35 @@ export function InventoryTools() {
         if (next.revision !== record?.revision) {
           setMessage('Pinned items changed. Refresh settings before checking counts.');
           setReading(null);
+          setHealth(emptyHealth());
         } else {
+          const observedAt = sourceReadTime(next.coverage.sources);
+          const partial =
+            next.counters.some((counter) => !counter.complete) ||
+            next.coverage.limited ||
+            next.coverage.sources.some((source) => source.status !== 'ok');
           setReading(next);
+          setHealth((previous) => successfulRead(previous, observedAt, partial));
           setMessage('Counts checked. Review source coverage for incomplete readings.');
         }
       }
     } catch (error) {
-      if (!controller.signal.aborted)
+      if (!controller.signal.aborted) {
+        setReading(null);
+        setHealth((previous) =>
+          failedRead(previous, error instanceof InventoryRequestError && [401, 403, 409].includes(error.status)),
+        );
         setMessage(
           error instanceof Error ? error.message : 'Counts unavailable; previous readings have not been refreshed.',
         );
+      }
     } finally {
       if (scan.current === controller) setBusy(false);
     }
   }
   return (
     <>
-      <section className="panel mb-6 min-w-0 p-6" aria-labelledby="pins-title">
+      <Card as="section" className="panel mb-6 min-w-0 p-6" aria-labelledby="pins-title">
         <h2 id="pins-title" className="text-base">
           Pinned item counters
         </h2>
@@ -161,34 +207,37 @@ export function InventoryTools() {
           Counts observe current authorized storage; they never reserve or move items.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <button type="button" className="btn btn-ghost" disabled={saving || busy} onClick={() => void loadPins()}>
+          <Button type="button" className="btn btn-ghost" disabled={saving || busy} onClick={() => void loadPins()}>
             Refresh pin settings
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="btn btn-primary"
             disabled={saving || busy || !record?.pins.length}
             onClick={() => void refreshCounts()}
           >
             Refresh counts
-          </button>
+          </Button>
           {busy && (
-            <button
+            <Button
               type="button"
               className="btn btn-ghost"
               onClick={() => {
                 scan.current?.abort();
                 setBusy(false);
-                setMessage('Count refresh cancelled. Earlier readings retain their original timestamp.');
+                setReading(null);
+                setHealth((previous) => ({ ...previous, phase: 'paused' }));
+                setMessage('Count refresh cancelled. No counts retained; earlier success time is unchanged.');
               }}
             >
               Cancel count refresh
-            </button>
+            </Button>
           )}
         </div>
         <p role="status" className="mt-4 break-words text-sm text-sand-400">
           {message}
         </p>
+        <DataFreshness label="Pinned counter freshness" health={health} />
         {record && record.pins.length === 0 && (
           <p className="mt-4 text-sm">No pinned items. Find an item below and select Pin counter.</p>
         )}
@@ -211,7 +260,7 @@ export function InventoryTools() {
                   {item.templateId}
                   {counter && !counter.complete ? ' · incomplete coverage' : ''}
                 </p>
-                <button
+                <Button
                   type="button"
                   className="btn btn-ghost mt-3"
                   disabled={saving || busy}
@@ -219,7 +268,7 @@ export function InventoryTools() {
                   onClick={() => void savePins(record.pins.filter((entry) => entry.templateId !== item.templateId))}
                 >
                   Unpin
-                </button>
+                </Button>
               </li>
             );
           })}
@@ -242,8 +291,8 @@ export function InventoryTools() {
             </ul>
           </details>
         )}
-      </section>
-      <ItemFinder onPin={pin} />
+      </Card>
+      <ItemFinder onPin={pin} initialQuery={initialFind} />
     </>
   );
 }

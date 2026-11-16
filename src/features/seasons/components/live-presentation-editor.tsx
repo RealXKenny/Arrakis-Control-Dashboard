@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import { useState } from 'react';
 import { seasonPresentation, type Season, type Presentation } from '../contracts';
 import { ArtworkUpload } from './artwork-upload';
@@ -91,10 +93,10 @@ export function LivePresentationEditor({
             />
           </label>
           <div className="season-actions">
-            <button className="season-button season-primary" disabled={confirmation !== season.definition.name}>
+            <Button className="season-button season-primary" disabled={confirmation !== season.definition.name}>
               Save live presentation
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               className="season-button"
               onClick={() =>
@@ -107,10 +109,10 @@ export function LivePresentationEditor({
               }
             >
               Restore published presentation in form
-            </button>
-            <button type="button" className="season-button" onClick={() => setPresentation(seasonPresentation(season))}>
+            </Button>
+            <Button type="button" className="season-button" onClick={() => setPresentation(seasonPresentation(season))}>
               Discard live edits
-            </button>
+            </Button>
           </div>
         </fieldset>
       </form>

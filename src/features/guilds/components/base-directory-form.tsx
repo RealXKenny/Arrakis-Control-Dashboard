@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useState, type FormEvent } from 'react';
 import { Field, FormMessage, inputClass } from '../../../components/ui/form-controls';
@@ -123,12 +124,12 @@ export function BaseDirectoryForm({
         blueprint or grant in-game access.
       </p>
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={busy} className="btn btn-primary">
+        <Button type="submit" disabled={busy} className="btn btn-primary">
           {busy ? 'Saving…' : 'Save base listing'}
-        </button>
-        <button type="button" disabled={busy} className="btn btn-secondary" onClick={onCancel}>
+        </Button>
+        <Button type="button" disabled={busy} className="btn btn-secondary" onClick={onCancel}>
           Cancel editing
-        </button>
+        </Button>
       </div>
     </form>
   );

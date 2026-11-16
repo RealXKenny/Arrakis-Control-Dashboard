@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/button';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -575,32 +576,32 @@ export default function BaseModelViewer({
         <div className={css.toolbar}>
           <span>{ready ? status.message : 'Base structure'}</span>
           <div>
-            <button
+            <Button
               type="button"
               disabled={!ready}
               aria-label="Zoom base preview out"
               onClick={() => controlsRef.current?.zoom(0.8)}
             >
               −
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               disabled={!ready}
               aria-label="Zoom base preview in"
               onClick={() => controlsRef.current?.zoom(1.25)}
             >
               +
-            </button>
-            <button type="button" disabled={!ready} onClick={() => controlsRef.current?.fit()}>
+            </Button>
+            <Button type="button" disabled={!ready} onClick={() => controlsRef.current?.fit()}>
               Fit whole base
-            </button>
-            <button type="button" disabled={!ready} onClick={() => controlsRef.current?.top()}>
+            </Button>
+            <Button type="button" disabled={!ready} onClick={() => controlsRef.current?.top()}>
               Top view
-            </button>
-            <button type="button" disabled={!ready} onClick={() => controlsRef.current?.front()}>
+            </Button>
+            <Button type="button" disabled={!ready} onClick={() => controlsRef.current?.front()}>
               Level front view
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               disabled={!ready}
               aria-pressed={nightMode}
@@ -613,12 +614,12 @@ export default function BaseModelViewer({
               }}
             >
               {nightMode ? '☾ Night' : '☼ Day'}
-            </button>
+            </Button>
             {(canSave || onCapture) && (
               <>
-                <button type="button" disabled={!ready || saving} onClick={() => void save()}>
+                <Button type="button" disabled={!ready || saving} onClick={() => void save()}>
                   {onCapture ? 'Use this front and picture' : 'Take picture & save front'}
-                </button>
+                </Button>
               </>
             )}
             <label className={css.facingControl}>
@@ -639,7 +640,7 @@ export default function BaseModelViewer({
               />
               <output>{baseFacing}°</output>
             </label>
-            <button
+            <Button
               type="button"
               disabled={!ready || baseFacing === 0}
               onClick={() => {
@@ -648,7 +649,7 @@ export default function BaseModelViewer({
               }}
             >
               Face 0°
-            </button>
+            </Button>
           </div>
         </div>
       </details>
@@ -706,7 +707,7 @@ export default function BaseModelViewer({
               </span>
             </div>
             <div className={css.lightingSwitch} role="group" aria-label="Lighting">
-              <button
+              <Button
                 type="button"
                 aria-label="Daytime lighting"
                 aria-pressed={!nightMode}
@@ -717,8 +718,8 @@ export default function BaseModelViewer({
                 }}
               >
                 ☼
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 aria-label="Nighttime lighting"
                 aria-pressed={nightMode}
@@ -729,10 +730,10 @@ export default function BaseModelViewer({
                 }}
               >
                 ☾
-              </button>
+              </Button>
             </div>
             <div className={css.viewDock} role="group" aria-label="Camera views">
-              <button
+              <Button
                 type="button"
                 aria-pressed={cameraView === 'iso'}
                 disabled={!ready}
@@ -742,8 +743,8 @@ export default function BaseModelViewer({
                 }}
               >
                 Iso
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 aria-pressed={cameraView === 'top'}
                 disabled={!ready}
@@ -753,8 +754,8 @@ export default function BaseModelViewer({
                 }}
               >
                 Top
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 aria-pressed={cameraView === 'inside'}
                 disabled={!ready}
@@ -764,8 +765,8 @@ export default function BaseModelViewer({
                 }}
               >
                 Inside
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 aria-pressed={autoRotate}
                 disabled={!ready}
@@ -776,7 +777,7 @@ export default function BaseModelViewer({
                 }}
               >
                 {autoRotate ? 'Stop rotation' : 'Auto Rotate'}
-              </button>
+              </Button>
             </div>
           </>
         )}

@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import { ui } from './ui';
 
 /** Dependency-free sparkline for session-local readings; `null` values leave gaps. */
@@ -10,7 +11,7 @@ export function Trend({ values, label }: { values: (number | null)[]; label: str
     .filter(Boolean)
     .join(' ');
   return (
-    <article className={ui.trend}>
+    <Card className={ui.trend}>
       <h3>{label}</h3>
       {values.filter((value) => value !== null).length < 2 ? (
         <p>Collecting readings. Trends appear after the next refresh.</p>
@@ -23,6 +24,6 @@ export function Trend({ values, label }: { values: (number | null)[]; label: str
       <small>
         Last {values.length} reading{values.length === 1 ? '' : 's'} in this session · refreshes every 30 seconds
       </small>
-    </article>
+    </Card>
   );
 }

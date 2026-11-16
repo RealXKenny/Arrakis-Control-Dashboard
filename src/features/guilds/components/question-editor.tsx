@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import {
   addQuestion,
@@ -84,23 +85,23 @@ export function QuestionEditor({
             checked={question.required}
             onChange={(required) => onChange(patchQuestion(questions, question.id, { required }))}
           />
-          <button
+          <Button
             type="button"
             className="btn btn-ghost self-start"
             onClick={() => onChange(removeQuestion(questions, question.id))}
           >
             Remove question {index + 1}
-          </button>
+          </Button>
         </fieldset>
       ))}
-      <button
+      <Button
         type="button"
         className="btn btn-ghost self-start disabled:opacity-50"
         disabled={questions.length >= MAX_QUESTIONS}
         onClick={() => onChange(addQuestion(questions, crypto.randomUUID()))}
       >
         Add application question
-      </button>
+      </Button>
     </fieldset>
   );
 }

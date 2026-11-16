@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState } from 'react';
 import { formatTimestamp } from '../../../../lib/time';
 import { adminCall, findOperation } from '../../client';
@@ -46,7 +48,7 @@ function Checker({
     }
   }
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <p className={ui.stateLine}>A check only looks for updates. It does not download or install anything.</p>
       {fresh && (
@@ -58,9 +60,9 @@ function Checker({
         </label>
       )}
       <div className={ui.actions}>
-        <button type="button" onClick={() => void run()} disabled={busy}>
+        <Button type="button" onClick={() => void run()} disabled={busy}>
           {busy ? 'Checking…' : 'Check now'}
-        </button>
+        </Button>
       </div>
       {result?.error && (
         <p role="alert" className={ui.error}>
@@ -75,7 +77,7 @@ function Checker({
           <Facts value={result.data} />
         </>
       )}
-    </section>
+    </Card>
   );
 }
 

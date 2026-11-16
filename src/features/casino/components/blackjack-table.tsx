@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useState } from 'react';
 import { formatCredits } from '../contracts';
@@ -137,7 +138,7 @@ export function BlackjackTable({ game, paused, maxWager, onSettled }: TableProps
                 }}
               />
             ))}
-          <button
+          <Button
             type="button"
             className="btn btn-ghost"
             disabled={busy || !wagers.length}
@@ -147,8 +148,8 @@ export function BlackjackTable({ game, paused, maxWager, onSettled }: TableProps
             }}
           >
             Undo chip
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="btn btn-ghost"
             disabled={busy}
@@ -158,7 +159,7 @@ export function BlackjackTable({ game, paused, maxWager, onSettled }: TableProps
             }}
           >
             Clear wager
-          </button>
+          </Button>
         </div>
       )}
       <ErrorBanner message={error} />
@@ -169,18 +170,18 @@ export function BlackjackTable({ game, paused, maxWager, onSettled }: TableProps
 
       <div className="flex flex-wrap items-center gap-3">
         {!round && (
-          <button
+          <Button
             type="button"
             className="btn btn-primary disabled:opacity-50"
             disabled={busy || paused || !/^[1-9][0-9]*$/.test(wager)}
             onClick={() => void start(wager, {})}
           >
             {busy ? 'Dealing...' : 'Deal'}
-          </button>
+          </Button>
         )}
         {open &&
           view?.actions.map((action) => (
-            <button
+            <Button
               key={action}
               type="button"
               className="btn btn-ghost disabled:opacity-50"
@@ -188,12 +189,12 @@ export function BlackjackTable({ game, paused, maxWager, onSettled }: TableProps
               onClick={() => void act({ type: action })}
             >
               {LABELS[action] ?? action}
-            </button>
+            </Button>
           ))}
         {finished && (
-          <button type="button" className="btn btn-primary" onClick={reset}>
+          <Button type="button" className="btn btn-primary" onClick={reset}>
             New hand
-          </button>
+          </Button>
         )}
         {round && <span className="text-xs text-sand-500">In play: {formatCredits(stake)}</span>}
       </div>

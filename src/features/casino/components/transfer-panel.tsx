@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
@@ -61,7 +63,7 @@ export function TransferPanel({
   };
 
   return (
-    <section aria-labelledby="transfer-title" className="panel p-6">
+    <Card as="section" aria-labelledby="transfer-title" className="panel p-6">
       <h2 id="transfer-title" className="eyebrow">
         Deposit and withdraw
       </h2>
@@ -116,9 +118,9 @@ export function TransferPanel({
             className="w-48 border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 text-sm text-sand-50 focus:border-spice-400 disabled:opacity-50"
           />
         </label>
-        <button type="submit" className="btn btn-primary disabled:opacity-50" disabled={!enabled || busy || !valid}>
+        <Button type="submit" className="btn btn-primary disabled:opacity-50" disabled={!enabled || busy || !valid}>
           Review
-        </button>
+        </Button>
       </form>
 
       {confirming && (
@@ -134,17 +136,17 @@ export function TransferPanel({
             This moves real in-game currency.
           </p>
           <div className="mt-3 flex gap-3">
-            <button
+            <Button
               type="button"
               className="btn btn-primary disabled:opacity-50"
               disabled={busy}
               onClick={() => void submit()}
             >
               {busy ? 'Working...' : 'Confirm'}
-            </button>
-            <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setConfirming(false)}>
+            </Button>
+            <Button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setConfirming(false)}>
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -154,9 +156,9 @@ export function TransferPanel({
 
       <div className="mt-6 flex items-center justify-between">
         <h3 className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">Your transfers</h3>
-        <button type="button" className="text-sm underline" onClick={() => void refresh()}>
+        <Button type="button" className="text-sm underline" onClick={() => void refresh()}>
           Refresh
-        </button>
+        </Button>
       </div>
       {rows.length === 0 ? (
         <p className="mt-2 text-sm text-sand-500">No transfers yet.</p>
@@ -173,6 +175,6 @@ export function TransferPanel({
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 }

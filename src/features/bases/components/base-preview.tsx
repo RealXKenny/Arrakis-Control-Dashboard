@@ -1,3 +1,5 @@
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getBaseId, getBaseName } from '../view-model';
@@ -49,7 +51,7 @@ export default function BasePreview({
     setRequest({ id: options[0].id, revision: 1 });
   }, [immersive, options]);
   return (
-    <section className={`${css.panel} ${immersive ? css.immersivePanel : ''}`} aria-label="3D base preview">
+    <Card as="section" className={`${css.panel} ${immersive ? css.immersivePanel : ''}`} aria-label="3D base preview">
       <header className={`${css.header} ${immersive ? css.immersiveHeader : ''}`}>
         <div>
           <p className={css.eyebrow}>{immersive ? 'DESERT ARCHITECTURE' : 'Your structures'}</p>
@@ -81,7 +83,7 @@ export default function BasePreview({
               ))}
             </select>
           </label>
-          <button
+          <Button
             type="button"
             disabled={!selected || loading}
             onClick={() => {
@@ -99,9 +101,9 @@ export default function BasePreview({
             }}
           >
             {loading ? 'Loading preview…' : active ? 'Reload preview' : 'Load 3D preview'}
-          </button>
+          </Button>
           {active && (
-            <button
+            <Button
               type="button"
               onClick={() => {
                 setRequest(null);
@@ -109,12 +111,12 @@ export default function BasePreview({
               }}
             >
               Close preview
-            </button>
+            </Button>
           )}
           {immersive && onExit && (
-            <button type="button" className={css.exitPreview} onClick={onExit}>
+            <Button type="button" className={css.exitPreview} onClick={onExit}>
               My bases <span aria-hidden="true">↗</span>
-            </button>
+            </Button>
           )}
         </div>
       </header>
@@ -148,6 +150,6 @@ export default function BasePreview({
           </span>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

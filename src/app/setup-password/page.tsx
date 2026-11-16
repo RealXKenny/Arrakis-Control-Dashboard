@@ -1,3 +1,4 @@
+import { Card } from '../../components/ui/card';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -18,7 +19,7 @@ export default async function SetupPasswordPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto w-full max-w-xl px-4 py-12 sm:px-6 lg:py-20">
-      <section className="panel flex flex-col gap-6 p-6 sm:p-8" aria-labelledby="setup-title">
+      <Card as="section" className="panel flex flex-col gap-6 p-6 sm:p-8" aria-labelledby="setup-title">
         <div className="flex flex-col gap-3">
           <p className="eyebrow">Step 2 of 2</p>
           <h1 id="setup-title" className="text-2xl tracking-monolith">
@@ -41,7 +42,7 @@ export default async function SetupPasswordPage({ searchParams }: { searchParams
         <Link href={next} className="self-start text-xs uppercase tracking-[0.2em] text-sand-400 hover:text-spice-300">
           Skip for now
         </Link>
-      </section>
+      </Card>
     </div>
   );
 }

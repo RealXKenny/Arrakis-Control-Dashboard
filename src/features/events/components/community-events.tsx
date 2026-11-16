@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 import { useState } from 'react';
 import { LocalTime } from '../../../components/ui/local-time';
@@ -19,7 +21,7 @@ export function CommunityEvents({ events }: { events: CommunityEvent[] }) {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border border-sand-200/10 bg-obsidian-900/40 p-4">
         <div role="group" aria-label="Filter community events" className="flex flex-wrap gap-2">
           {['All events', 'Upcoming', 'Happening now', 'Past events'].map((label) => (
-            <button
+            <Button
               type="button"
               key={label}
               aria-pressed={filter === label}
@@ -27,7 +29,7 @@ export function CommunityEvents({ events }: { events: CommunityEvent[] }) {
               className={`min-h-10 border px-3 text-xs font-semibold ${filter === label ? 'border-spice-500/40 bg-spice-500/10 text-spice-300' : 'border-sand-200/10 text-sand-400 hover:text-sand-100'}`}
             >
               {label}
-            </button>
+            </Button>
           ))}
         </div>
         <p role="status" className="font-mono text-xs text-sand-500">
@@ -36,7 +38,7 @@ export function CommunityEvents({ events }: { events: CommunityEvent[] }) {
       </div>
       <div className="space-y-6">
         {visible.map((event) => (
-          <article
+          <Card
             key={event.id}
             id={event.id}
             className={`panel overflow-hidden border-t-2 ${event.featured ? 'border-t-spice-500' : 'border-t-sand-500'}`}
@@ -140,16 +142,16 @@ export function CommunityEvents({ events }: { events: CommunityEvent[] }) {
                 </div>
               </div>
             </details>
-          </article>
+          </Card>
         ))}
       </div>
       {!visible.length && (
-        <div className="panel px-6 py-14 text-center">
+        <Card as="div" className="panel px-6 py-14 text-center">
           <h2 className="text-lg">More adventures ahead</h2>
           <p className="mt-3 text-sm text-sand-500">
             There are no events in this category yet. Check back for the next community announcement.
           </p>
-        </div>
+        </Card>
       )}
     </>
   );

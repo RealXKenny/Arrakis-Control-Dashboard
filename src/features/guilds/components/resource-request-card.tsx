@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useState, type FormEvent } from 'react';
 import { Field, FormMessage, inputClass } from '../../../components/ui/form-controls';
@@ -46,7 +48,7 @@ export function ResourceRequestCard({
     onMutate({ action: 'pledge', ...target, quantity: parsed.data });
   }
   return (
-    <article aria-label={request.material} className="min-w-0 border border-sand-200/20 p-4 sm:p-5">
+    <Card aria-label={request.material} className="min-w-0 border border-sand-200/20 p-4 sm:p-5">
       <p className="font-mono text-xs uppercase tracking-wider text-spice-300">
         {request.priority} · {request.status}
       </p>
@@ -99,14 +101,14 @@ export function ResourceRequestCard({
               className={`${inputClass} max-w-xs`}
             />
           </Field>
-          <button type="submit" disabled={busy} className="btn btn-primary justify-self-start">
+          <Button type="submit" disabled={busy} className="btn btn-primary justify-self-start">
             {own ? 'Update my pledge' : 'Volunteer to supply'}
-          </button>
+          </Button>
         </form>
       )}
       {open && own?.status === 'promised' && (
         <div className="mt-4 flex flex-wrap gap-3">
-          <button
+          <Button
             type="button"
             disabled={busy}
             className="btn btn-secondary"
@@ -118,15 +120,15 @@ export function ResourceRequestCard({
             }
           >
             Report delivery
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={busy}
             className="btn btn-secondary"
             onClick={() => onMutate({ action: 'withdraw', ...target })}
           >
             Withdraw my pledge
-          </button>
+          </Button>
         </div>
       )}
       {open && own?.status === 'reported' && (
@@ -160,7 +162,7 @@ export function ResourceRequestCard({
                   {entry.status === 'reported' && (
                     <>
                       {!entry.isSelf && (
-                        <button
+                        <Button
                           type="button"
                           disabled={busy}
                           className="btn btn-primary"
@@ -173,9 +175,9 @@ export function ResourceRequestCard({
                           aria-label={`Confirm receipt from ${entry.name}`}
                         >
                           Confirm receipt
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
                         type="button"
                         disabled={busy}
                         className="btn btn-secondary"
@@ -183,10 +185,10 @@ export function ResourceRequestCard({
                         aria-label={`Return delivery from ${entry.name}`}
                       >
                         Return to promised
-                      </button>
+                      </Button>
                     </>
                   )}
-                  <button
+                  <Button
                     type="button"
                     disabled={busy}
                     className="btn btn-secondary"
@@ -199,7 +201,7 @@ export function ResourceRequestCard({
                     aria-label={`Release pledge from ${entry.name}`}
                   >
                     Release pledge
-                  </button>
+                  </Button>
                 </div>
               )}
             </li>
@@ -210,10 +212,10 @@ export function ResourceRequestCard({
         <div className="mt-5 flex flex-wrap gap-3">
           {open && (
             <>
-              <button type="button" disabled={busy || editing} className="btn btn-secondary" onClick={onEdit}>
+              <Button type="button" disabled={busy || editing} className="btn btn-secondary" onClick={onEdit}>
                 Edit request
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 disabled={busy}
                 className="btn btn-secondary"
@@ -222,10 +224,10 @@ export function ResourceRequestCard({
                 }
               >
                 Cancel request
-              </button>
+              </Button>
             </>
           )}
-          <button
+          <Button
             type="button"
             disabled={busy}
             className="btn btn-secondary"
@@ -237,9 +239,9 @@ export function ResourceRequestCard({
             }
           >
             Remove request
-          </button>
+          </Button>
         </div>
       )}
-    </article>
+    </Card>
   );
 }

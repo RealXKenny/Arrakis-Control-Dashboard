@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ArrowRightIcon } from '../../../components/icons';
@@ -27,7 +28,7 @@ function FeatureRow({ feature, flip }: { feature: Featured; flip: boolean }) {
   const Icon = feature.icon;
   const Illustration = ILLUSTRATION[feature.id];
   return (
-    <article
+    <Card
       aria-labelledby={`feature-${feature.id}`}
       className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-14"
     >
@@ -53,7 +54,7 @@ function FeatureRow({ feature, flip }: { feature: Featured; flip: boolean }) {
       <div className={`min-w-0 lg:col-span-7 ${flip ? 'lg:order-1' : ''}`}>
         <Illustration />
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -177,7 +178,7 @@ export default async function LandingPage() {
             const Icon = capability.icon;
             return (
               <li key={capability.id} className="flex">
-                <article className="panel panel-interactive relative flex w-full flex-col gap-4 p-6 focus-within:border-spice-400">
+                <Card className="panel panel-interactive relative flex w-full flex-col gap-4 p-6 focus-within:border-spice-400">
                   <Icon className="size-7 text-spice-400" />
                   <h3 className="text-base leading-snug tracking-monolith">
                     <Link
@@ -193,7 +194,7 @@ export default async function LandingPage() {
                       {capability.note}
                     </p>
                   )}
-                </article>
+                </Card>
               </li>
             );
           })}
@@ -220,7 +221,7 @@ export default async function LandingPage() {
 
       {/* FINAL CALL TO ACTION */}
       <section aria-labelledby="cta-title" className={`${SHELL} py-16 sm:py-24`}>
-        <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+        <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:flex-wrap lg:items-center">
           <div>
             <Eyebrow>{final.eyebrow}</Eyebrow>
             <h2 id="cta-title" className="mt-4 text-2xl leading-snug sm:text-3xl">
@@ -228,7 +229,7 @@ export default async function LandingPage() {
             </h2>
             <p className="mt-3 max-w-lg text-base text-sand-300">{final.text}</p>
           </div>
-          <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center">
+          <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
             <Link href={primaryHref} prefetch={false} className="btn btn-primary shrink-0">
               {primaryLabel}
               <ArrowRightIcon className="size-4" />

@@ -274,7 +274,8 @@ describe('repository organization', () => {
     ]);
     const rootFiles = fs
       .readdirSync(path.dirname(root), { withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name !== 'tsconfig.tsbuildinfo')
+      // Linked Git worktrees use a .git pointer file instead of a metadata directory.
+      .filter((entry) => entry.isFile() && !['tsconfig.tsbuildinfo', '.git'].includes(entry.name))
       .map((entry) => entry.name);
     expect(rootFiles.filter((file) => !allowed.has(file))).toEqual([]);
   });

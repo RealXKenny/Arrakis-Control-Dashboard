@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, type ReactNode } from 'react';
 
@@ -41,14 +42,14 @@ export function Modal({
           {title}
         </h2>
         {children}
-        <button
+        <Button
           type="button"
           className="btn btn-ghost self-start disabled:opacity-50"
           disabled={busy}
           onClick={onClose}
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </dialog>
   );

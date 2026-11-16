@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import type { AdminOperation } from '../types';
 import { findOperation } from '../client';
 import { ui } from './ui';
@@ -19,7 +20,7 @@ export default function ConsoleHandoff({
     .filter((entry): entry is AdminOperation => Boolean(entry));
   if (!entries.length) return null;
   return (
-    <section className={ui.panel} aria-label={heading}>
+    <Card as="section" className={ui.panel} aria-label={heading}>
       <h3>{heading}</h3>
       <p className={ui.notice}>
         The dashboard’s API credential is not allowed to perform these, so no form is offered. They are never run on
@@ -40,6 +41,6 @@ export default function ConsoleHandoff({
           </a>
         </p>
       )}
-    </section>
+    </Card>
   );
 }

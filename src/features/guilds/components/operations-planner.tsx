@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
@@ -163,7 +165,8 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
         (operation.status === 'scheduled' && Date.parse(operation.endsAt) > now) === (filter === 'upcoming'),
     ) ?? [];
   return (
-    <section
+    <Card
+      as="section"
       aria-label="Guild operations planner"
       className="panel min-w-0 p-5 sm:p-6 [&_button]:max-w-full [&_button]:whitespace-normal"
     >
@@ -176,18 +179,18 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button type="button" className="btn btn-secondary" disabled={loading || saving} onClick={refresh}>
+          <Button type="button" className="btn btn-secondary" disabled={loading || saving} onClick={refresh}>
             Refresh operations
-          </button>
+          </Button>
           {view?.canEdit && (
-            <button
+            <Button
               type="button"
               className="btn btn-primary"
               disabled={loading || saving || Boolean(editor)}
               onClick={create}
             >
               New operation
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -214,7 +217,7 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
         <>
           <div role="group" aria-label="Operation schedule" className="mt-6 flex flex-wrap gap-3">
             {(['upcoming', 'past'] as const).map((value) => (
-              <button
+              <Button
                 key={value}
                 type="button"
                 aria-pressed={filter === value}
@@ -222,7 +225,7 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                 onClick={() => setFilter(value)}
               >
                 {value === 'upcoming' ? 'Upcoming and active' : 'Past and closed'}
-              </button>
+              </Button>
             ))}
           </div>
           <p className="mt-4 text-xs text-sand-500">
@@ -241,7 +244,7 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
               const confirm = confirmation && 'id' in confirmation && confirmation.id === operation.id;
               return (
                 <li key={operation.id} className="min-w-0 border border-sand-200/20 p-4 sm:p-5">
-                  <article aria-label={operation.title}>
+                  <Card aria-label={operation.title}>
                     <p className="font-mono text-xs uppercase tracking-wider text-spice-300">
                       {operationKindLabel[operation.kind]} ·{' '}
                       {operation.status === 'scheduled'
@@ -276,7 +279,7 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                             <p className="text-sm text-sand-200">
                               {operationRoleLabel[slot.role]} · {occupied}/{slot.capacity}
                             </p>
-                            <button
+                            <Button
                               type="button"
                               className="btn btn-secondary mt-3"
                               disabled={
@@ -294,20 +297,20 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                               {own?.role === slot.role
                                 ? `Your role: ${operationRoleLabel[slot.role]}`
                                 : `Join as ${operationRoleLabel[slot.role]}`}
-                            </button>
+                            </Button>
                           </li>
                         );
                       })}
                     </ul>
                     {own && (
-                      <button
+                      <Button
                         type="button"
                         disabled={!open || saving || loading}
                         className="btn btn-secondary mt-4"
                         onClick={() => mutate({ action: 'leave', id: operation.id, revision: operation.revision })}
                       >
                         Withdraw sign-up
-                      </button>
+                      </Button>
                     )}
                     <details className="mt-5 text-sm">
                       <summary className="cursor-pointer text-sand-200">
@@ -321,7 +324,7 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                               {signup.isSelf ? ' · You' : ''}
                             </span>
                             {view.canEdit && (
-                              <button
+                              <Button
                                 type="button"
                                 className="btn btn-secondary"
                                 disabled={loading || saving}
@@ -336,7 +339,7 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                                 aria-label={`Remove sign-up for ${signup.name}`}
                               >
                                 Remove sign-up
-                              </button>
+                              </Button>
                             )}
                           </li>
                         ))}
@@ -345,18 +348,18 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                     {view.canEdit && (
                       <div className="mt-5 flex flex-wrap gap-3">
                         {open && (
-                          <button
+                          <Button
                             type="button"
                             className="btn btn-secondary"
                             disabled={loading || saving || Boolean(editor)}
                             onClick={() => edit(operation)}
                           >
                             Edit operation
-                          </button>
+                          </Button>
                         )}
                         {operation.status === 'scheduled' && (
                           <>
-                            <button
+                            <Button
                               type="button"
                               className="btn btn-secondary"
                               disabled={loading || saving}
@@ -370,8 +373,8 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                               }
                             >
                               Mark completed
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
                               className="btn btn-secondary"
                               disabled={loading || saving}
@@ -385,10 +388,10 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                               }
                             >
                               Cancel operation
-                            </button>
+                            </Button>
                           </>
                         )}
-                        <button
+                        <Button
                           type="button"
                           className="btn btn-secondary"
                           disabled={loading || saving}
@@ -397,7 +400,7 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                           }
                         >
                           Remove operation
-                        </button>
+                        </Button>
                       </div>
                     )}
                     {confirm && (
@@ -412,32 +415,32 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                           ?
                         </p>
                         <div className="mt-3 flex flex-wrap gap-3">
-                          <button
+                          <Button
                             type="button"
                             className="btn btn-primary"
                             disabled={loading || saving}
                             onClick={() => mutate(confirmation)}
                           >
                             Confirm change
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             className="btn btn-secondary"
                             disabled={saving}
                             onClick={() => setConfirmation(null)}
                           >
                             Keep current plan
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}
-                  </article>
+                  </Card>
                 </li>
               );
             })}
           </ul>
         </>
       )}
-    </section>
+    </Card>
   );
 }

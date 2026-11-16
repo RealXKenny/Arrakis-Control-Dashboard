@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useState, type FormEvent } from 'react';
 import { Field, FormMessage, inputClass } from '../../../components/ui/form-controls';
@@ -105,12 +106,12 @@ export function ResourceRequestForm({
         are delivered in game; this form records coordination only.
       </p>
       <div className="flex flex-wrap gap-3">
-        <button type="submit" className="btn btn-primary" disabled={busy}>
+        <Button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? 'Saving…' : 'Save resource request'}
-        </button>
-        <button type="button" className="btn btn-secondary" disabled={busy} onClick={onCancel}>
+        </Button>
+        <Button type="button" className="btn btn-secondary" disabled={busy} onClick={onCancel}>
           Cancel editing
-        </button>
+        </Button>
       </div>
     </form>
   );
