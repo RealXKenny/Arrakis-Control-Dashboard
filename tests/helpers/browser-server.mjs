@@ -47,6 +47,10 @@ const personalTasksReply = createPersonalTasksFixture();
 const activityViewsReply = createActivityViewsFixture();
 const privacyReply = createPrivacyFixture();
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  if (operation.toUpperCase() === 'ZREVRANGEBYSCORE' && key.startsWith('arrakis:population:')) {
+    const now = Date.now() - 60000;
+    return [JSON.stringify({ at: now, online: 0 }), JSON.stringify({ at: now - 2 * 3600000, online: 4 })];
+  }
   const seasons = seasonReply(operation, key, args);
   if (seasons !== undefined) return seasons.value;
   const activities = activityViewsReply(operation, key, args);

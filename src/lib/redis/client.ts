@@ -130,9 +130,15 @@ export function createDashboardRedis(url: string | undefined, options: { cluster
       key: string,
       min: number,
       max: number,
-      options: { byScore: boolean },
+      options: { byScore: boolean; limit?: number; reverse?: boolean },
     ): Promise<T> {
-      const values = await command([options.byScore ? 'ZRANGEBYSCORE' : 'ZRANGE', key, min, max]);
+      const args: (string | number)[] = options.byScore
+        ? options.reverse
+          ? ['ZREVRANGEBYSCORE', key, max, min]
+          : ['ZRANGEBYSCORE', key, min, max]
+        : ['ZRANGE', key, min, max];
+      if (options.byScore && options.limit !== undefined) args.push('LIMIT', 0, options.limit);
+      const values = await command(args);
       if (!Array.isArray(values)) throw new Error('Invalid Redis sorted-set response');
       return values.map((value) => decode(String(value))) as T;
     },

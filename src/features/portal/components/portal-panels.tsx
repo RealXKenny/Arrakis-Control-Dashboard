@@ -11,6 +11,7 @@ import { timeRemaining, type WorldReading } from '../world';
 import type { PortalProfile } from '../view-model';
 import type { PortalWidgetId } from '../layout';
 import { PopulationChart } from './population-chart';
+import { ActivityHeatmap } from './activity-heatmap';
 
 function Stat({ label, value, hint, href }: { label: string; value: string; hint: string; href: string }) {
   return (
@@ -169,6 +170,7 @@ export function portalPanels(
         </h2>
         <div className="mt-6">
           <PopulationChart history={world?.population} />
+          {world?.population?.activity && <ActivityHeatmap points={world.population.activity} />}
         </div>
       </Card>
     ),

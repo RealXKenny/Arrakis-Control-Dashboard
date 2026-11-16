@@ -5,7 +5,7 @@ import { getServerEnv } from '../../../config/env';
 import { getRedisClient } from '../../../lib/redis/client';
 import { getDuneClient } from '../../../server/integrations/dune';
 import { logger } from '../../../lib/logger';
-import { DAY_MS, summarizePopulation } from '../population';
+import { ACTIVITY_RETENTION_MS, summarizePopulation, type PopulationPoint } from '../population';
 
 function historyKey() {
   const origin = getServerEnv().DUNE_API_URL ?? 'unconfigured';
@@ -26,8 +26,8 @@ export async function recordPopulation(now = Date.now()): Promise<void> {
   if (!Number.isSafeInteger(online) || online < 0) return;
   const at = Date.now();
   await redis.zadd(key, { score: at, member: { at, online } });
-  await redis.zremrangebyscore(key, 0, at - DAY_MS);
-  await redis.expire(key, 172800);
+  await redis.zremrangebyscore(key, 0, at - ACTIVITY_RETENTION_MS);
+  await redis.expire(key, 8 * 86400);
 }
 
 export async function readPopulationHistory() {
@@ -35,8 +35,23 @@ export async function readPopulationHistory() {
     const redis = getRedisClient();
     if (!redis) return null;
     const now = Date.now();
-    const values = await redis.zrange<unknown[]>(historyKey(), now - DAY_MS, now, { byScore: true });
-    return summarizePopulation(values, now);
+    const values = await redis.zrange<unknown[]>(historyKey(), now - ACTIVITY_RETENTION_MS, now, {
+      byScore: true,
+      reverse: true,
+      limit: 10081,
+    });
+    const activity = values.flatMap((value): PopulationPoint[] => {
+      if (!value || typeof value !== 'object') return [];
+      const point = value as PopulationPoint;
+      return Number.isFinite(point.at) &&
+        point.at >= now - ACTIVITY_RETENTION_MS &&
+        point.at <= now &&
+        Number.isSafeInteger(point.online) &&
+        point.online >= 0
+        ? [{ at: point.at, online: point.online }]
+        : [];
+    });
+    return { ...summarizePopulation(activity, now), activity };
   } catch {
     logger.warn('Population history unavailable');
     return null;

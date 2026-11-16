@@ -6,6 +6,7 @@ export type PopulationHistory = {
   peak: number | null;
   playHours: number | null;
   coverageHours: number;
+  activity?: PopulationPoint[];
 };
 
 export function totalPlayHours(players: unknown): number | null {
@@ -23,6 +24,7 @@ export function totalPlayHours(players: unknown): number | null {
 }
 
 export const DAY_MS = 86400000;
+export const ACTIVITY_RETENTION_MS = 7 * DAY_MS;
 const MAX_SAMPLE_GAP_MS = 90000;
 
 export function summarizePopulation(values: unknown[], now: number): PopulationHistory {
@@ -67,4 +69,18 @@ export function populationSegments(history: PopulationHistory): PopulationPoint[
     else current.push(point);
   }
   return segments;
+}
+
+/** Aggregate observed samples by the viewer's local weekday and hour, without filling missing readings. */
+export function activityByLocalHour(points: PopulationPoint[]) {
+  const cells = Array.from({ length: 7 * 24 }, () => ({ samples: 0, total: 0 }));
+  for (const point of points) {
+    if (!Number.isFinite(point.at) || !Number.isSafeInteger(point.online) || point.online < 0) continue;
+    const time = new Date(point.at);
+    if (!Number.isFinite(time.getTime())) continue;
+    const cell = cells[time.getDay() * 24 + time.getHours()];
+    cell.samples++;
+    cell.total += point.online;
+  }
+  return cells.map(({ samples, total }) => ({ samples, average: samples ? total / samples : null }));
 }

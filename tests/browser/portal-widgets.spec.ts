@@ -7,6 +7,50 @@ const origin = 'http://127.0.0.1:3100';
 const endpoint = '/api/v2/portal/layout';
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 
+test('population activity supports local days, missing samples and mobile accessibility', async ({ browser }) => {
+  const member = await fakeConsole.newMember('Activity Viewer', { guild: { id: '2', role: 100 } });
+  const context = await browser.newContext({
+    baseURL: origin,
+    extraHTTPHeaders: { Cookie: member.cookie },
+    viewport: { width: 393, height: 852 },
+    timezoneId: 'America/New_York',
+    reducedMotion: 'reduce',
+  });
+  const page = await context.newPage();
+  await page.goto('/portal');
+  const activity = page.getByRole('region', { name: 'Activity by local day and hour' });
+  await expect(activity).toBeVisible();
+  await expect(activity.getByText('No data').first()).toBeVisible();
+  const observedDay = await page.evaluate(() => {
+    const now = new Date(Date.now() - 60000);
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
+  });
+  await activity.getByRole('button', { name: observedDay, exact: true }).click();
+  await expect(activity.getByText('0.0 avg', { exact: true })).toBeVisible();
+  await activity.getByRole('button', { name: 'Mon', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(activity.getByRole('button', { name: 'Mon', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  for (const width of [320, 393, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await page.evaluate(axeSource);
+  const violations = await page.evaluate(async () => {
+    const axe = (
+      window as unknown as {
+        axe: { run(element: Element, options: object): Promise<{ violations: { id: string }[] }> };
+      }
+    ).axe;
+    const element = document.querySelector('[aria-labelledby="activity-heading"]');
+    if (!element) throw new Error('Activity panel missing');
+    return (await axe.run(element, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'] })).violations.map(
+      (v) => v.id,
+    );
+  });
+  expect(violations).toEqual([]);
+  await context.close();
+});
+
 test('widgets save order, visibility and density privately across reload and map navigation', async ({
   page,
   context,
