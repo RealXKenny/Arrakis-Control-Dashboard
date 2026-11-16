@@ -6,7 +6,7 @@ export const activityDefinitionSchema = z
     map: z.enum(['HaggaBasin', 'DeepDesert']),
     inbox: z
       .object({
-        category: z.enum(['all', 'assets', 'supply', 'market', 'operations']),
+        category: z.enum(['all', 'assets', 'supply', 'market', 'operations', 'events', 'maintenance']),
         urgent: z.boolean(),
         showMuted: z.boolean(),
       })

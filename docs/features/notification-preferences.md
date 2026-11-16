@@ -1,6 +1,6 @@
 # Notification preferences (N093)
 
-Open **Notifications → Actionable inbox → Notification preferences**. Preferences apply to the inbox's Assets, Supply, Market and Operations categories, including urgent alerts. They do not change existing chat/support notifications, sound settings, game state or source permissions. Unsupported market/stockpile/generator monitoring remains unsupported; a preference does not enable those engines.
+Open **Notifications → Actionable inbox → Notification preferences**. Preferences apply to the inbox's Assets, Supply, Market, Operations, Events and Maintenance categories, including urgent alerts. They do not change existing chat/support notifications, sound settings, game state or source permissions. Unsupported market/stockpile/generator monitoring remains unsupported; a preference does not enable those engines. Existing records without the two newer feature fields receive enabled, zero-cooldown defaults when read.
 
 ## Controls
 
@@ -27,13 +27,13 @@ The stored record is bounded to 64 KiB, with 90-day inactivity retention refresh
 
 `POST /api/v2/inbox/preferences` accepts one strict action:
 
-| Action      | Fields beyond `action`                                                                  |
-| ----------- | --------------------------------------------------------------------------------------- |
-| `configure` | `revision`, `config` (schema version 1, all four feature settings, quiet-hour settings) |
-| `dismiss`   | `revision`, opaque 64-character hex `id`, 64-character hex content `fingerprint`        |
-| `snooze`    | `revision`, `id`, `minutes` (15, 60, 480 or 1440)                                       |
-| `review`    | `revision`, `id`                                                                        |
-| `restore`   | `revision`, `id`                                                                        |
+| Action      | Fields beyond `action`                                                                 |
+| ----------- | -------------------------------------------------------------------------------------- |
+| `configure` | `revision`, `config` (schema version 1, all six feature settings, quiet-hour settings) |
+| `dismiss`   | `revision`, opaque 64-character hex `id`, 64-character hex content `fingerprint`       |
+| `snooze`    | `revision`, `id`, `minutes` (15, 60, 480 or 1440)                                      |
+| `review`    | `revision`, `id`                                                                       |
+| `restore`   | `revision`, `id`                                                                       |
 
 Responses return the confirmed record and server check time. Subsequent writes must carry its UUID revision. Stale revisions return 409; drafts remain visible. Request bounds are 8 KiB. Unknown fields, ownership claims, timestamps, invalid zones and out-of-range values are rejected. Both endpoints derive ownership only from the verified session, do not require a game guild or character link, return no-store JSON and share a 30-request/account/minute budget that fails closed. Mutations require same-origin JSON requests. Invalid or invented opaque IDs can affect only the caller's bounded private controls, never another account or source eligibility.
 

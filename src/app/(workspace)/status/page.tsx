@@ -4,6 +4,7 @@ import { PageHeader } from '../../../components/ui/page-header';
 import { UptimeReport } from '../../../features/server-status/components/uptime-report';
 import { RestartQueue } from '../../../features/monitoring/components/restart-queue';
 import { RestartHistory } from '../../../features/monitoring/components/restart-history';
+import { IncidentTimeline } from '../../../features/monitoring/components/incident-timeline';
 import { BackupConfidence } from '../../../features/monitoring/components/backup-confidence';
 import { CapabilityReport } from '../../../features/monitoring/components/capability-report';
 
@@ -20,6 +21,7 @@ export default async function ServiceStatusPage() {
       </PageHeader>
       <RestartQueue />
       <RestartHistory />
+      <IncidentTimeline />
       <BackupConfidence session={session} />
       <CapabilityReport />
       <UptimeReport />

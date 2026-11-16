@@ -1,19 +1,21 @@
 # Actionable inbox (N092)
 
-Open **Notifications → Actionable inbox** or `/inbox`. One view combines reported asset needs, supply follow-ups and operation briefings. Filter by category or urgent priority, then follow the action link to the source workspace. Refresh is explicit; there is no background polling or automatic game mutation.
+Open **Notifications → Actionable inbox** or `/inbox`. One view combines reported asset needs, supply follow-ups, operation briefings, scheduled community events and active queued restarts. Filter by category or urgent priority, then follow the action link to the source workspace. Refresh is explicit; there is no background polling or automatic game mutation.
 
 ## Sources and limits
 
-| Source     | Available behavior                                                                                                                                                                                              |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Assets     | Reported base water at/below 10%, storage at/above 90%, vehicle condition at/below 20%, fuel at/below 10%. Zero readings are urgent. Container vehicles have no fuel alert. Missing values are unknown.         |
-| Supply     | Freshly verified guild members see urgent open requests, their outstanding promises and reported deliveries they may review. A supplier cannot review their own delivery.                                       |
-| Operations | Freshly verified guild members see scheduled runs starting within 24 hours and runs currently in progress. Starts within one hour are urgent. Completed, cancelled and expired runs are excluded.               |
-| Market     | Personal price-watch alerts depend on the unimplemented N042 engine. The inbox reports this source as unsupported and links to current market browsing; it never infers sales or price crossings from listings. |
+| Source      | Available behavior                                                                                                                                                                                              |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Assets      | Reported base water at/below 10%, storage at/above 90%, vehicle condition at/below 20%, fuel at/below 10%. Zero readings are urgent. Container vehicles have no fuel alert. Missing values are unknown.         |
+| Supply      | Freshly verified guild members see urgent open requests, their outstanding promises and reported deliveries they may review. A supplier cannot review their own delivery.                                       |
+| Operations  | Freshly verified guild members see scheduled runs starting within 24 hours and runs currently in progress. Starts within one hour are urgent. Completed, cancelled and expired runs are excluded.               |
+| Market      | Personal price-watch alerts depend on the unimplemented N042 engine. The inbox reports this source as unsupported and links to current market browsing; it never infers sales or price crossings from listings. |
+| Events      | Published upcoming/open events starting within seven days. Unscheduled, cancelled and expired events are excluded; an unspecified confirmation state is not upgraded to confirmed.                              |
+| Maintenance | Confirmed active Console restart entries for the next 24 hours and entries already restarting. Daily/IP-change schedules are not inferred from command output.                                                  |
 
 N021 generator monitoring and N025 personal stockpile thresholds are also unimplemented prerequisites. The inbox does not create them or fabricate their alerts. Current asset rules are fixed and displayed with each alert. [N093 notification preferences](notification-preferences.md) add category controls, quiet hours, cooldowns, dismiss and snooze.
 
-At most 20 bases and 20 vehicles are inspected, plus the existing bounded 20 guild requests and 20 operations. There are at most 120 deduplicated alerts. Unknown readings or exceeded asset limits produce partial coverage. An empty filtered list is never presented as an all-clear when sources are partial, unavailable, unlinked or unsupported.
+At most 20 bases and 20 vehicles are inspected, plus the existing bounded 20 guild requests, 20 operations, 50 events and 20 restart entries. There are at most 120 deduplicated alerts after urgent-first ordering. Unknown readings or exceeded asset limits produce partial coverage. Public event and maintenance reads remain independent when private character/guild sources fail. An empty filtered list is never presented as an all-clear when sources are partial, unavailable, unlinked or unsupported.
 
 ## API and security
 

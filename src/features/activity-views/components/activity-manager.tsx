@@ -286,7 +286,7 @@ export function ActivityManager() {
                     })
                   }
                 >
-                  {['all', 'assets', 'supply', 'market', 'operations'].map((v) => (
+                  {['all', 'assets', 'supply', 'market', 'operations', 'events', 'maintenance'].map((v) => (
                     <option key={v} value={v}>
                       {v}
                     </option>

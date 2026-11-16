@@ -85,3 +85,11 @@ it('keeps dismissed versions, snooze deadlines and per-alert cooldowns distinct,
   p.config.features.assets.enabled = false;
   expect(mutedReason(alert, p, now)).toBe('Category disabled');
 });
+
+it('upgrades existing preference records with enabled event and maintenance defaults', () => {
+  const config = defaultNotifications().config;
+  const { events: _events, maintenance: _maintenance, ...legacyFeatures } = config.features;
+  const parsed = notificationConfigSchema.parse({ ...config, features: legacyFeatures });
+  expect(parsed.features.events).toEqual({ enabled: true, cooldownMinutes: 0 });
+  expect(parsed.features.maintenance).toEqual({ enabled: true, cooldownMinutes: 0 });
+});

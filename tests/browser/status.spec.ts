@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { test, expect } from '../helpers/browser-test';
 
 const REPORT = 'https://wl.hetrixtools.com/r/6fb3cbf6a8f67831f3e046b945b82450/';
 const child = readFileSync('node_modules/iframe-resizer/js/iframeResizer.contentWindow.js', 'utf8');
+const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 
 test('capability checks are manual and report sanitized states', async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
@@ -140,4 +142,34 @@ test('report stays under Community on wide screens and mobile and resizes throug
     }
     expect((await portal).headers()['content-security-policy']).not.toContain('wl.hetrixtools.com');
   }
+});
+
+test('health timeline separates observations from restarts and remains accessible on mobile', async ({ page }) => {
+  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
+  await page.goto('/status');
+  const timeline = page.getByRole('region', { name: 'Health and restart timeline' });
+  await expect(timeline).toContainText('Observed outage');
+  await expect(timeline).toContainText('Healthy reading recovered the observation');
+  await expect(timeline).toContainText('Verified restart — completed');
+  await expect(timeline).not.toContainText('private-operator-reason');
+  await timeline.getByLabel('Entry type').selectOption('observation');
+  await expect(timeline).not.toContainText('Verified restart — completed');
+  await timeline.getByLabel('Observed state').selectOption('unavailable');
+  await expect(timeline).toContainText('No health episodes or restart records match this view.');
+  await timeline.getByLabel('Observed state').selectOption('outage');
+  await expect(timeline).toContainText('Observed outage');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.evaluate(axeSource);
+  const violations = await page.evaluate(async () => {
+    const axe = (
+      window as unknown as {
+        axe: { run(document: Document, options: object): Promise<{ violations: { id: string }[] }> };
+      }
+    ).axe;
+    return (await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'] })).violations.map(
+      (item) => item.id,
+    );
+  });
+  expect(violations).toEqual([]);
 });

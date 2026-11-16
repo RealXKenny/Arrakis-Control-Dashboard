@@ -6,7 +6,17 @@ import { reportedGuild } from '../../guilds/details';
 import { requireGuildMember } from '../../guilds/server/member-access';
 import { readGuildOperations } from '../../guilds/server/operations-store';
 import { readResourceRequests } from '../../guilds/server/resource-requests-store';
-import { assetAlerts, supplyAlerts, operationAlerts, inboxViewSchema, type InboxView } from '../model';
+import { listCommunityEvents } from '../../events/server/store';
+import { readRestartQueue } from '../../monitoring/server/restart-queue';
+import {
+  assetAlerts,
+  supplyAlerts,
+  operationAlerts,
+  eventAlerts,
+  maintenanceAlerts,
+  inboxViewSchema,
+  type InboxView,
+} from '../model';
 
 /** Read-through inbox: no private guild snapshots survive a membership or character change. */
 export async function loadInbox(session: DashboardSession): Promise<InboxView> {
@@ -23,6 +33,8 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
         'Personal market-price alerts are not available yet. Browse current listings to check prices; listings do not confirm a sale.',
     },
     { category: 'operations', status: 'unavailable', detail: 'Guild membership could not be checked.' },
+    { category: 'events', status: 'unavailable', detail: 'Published event readings could not be checked.' },
+    { category: 'maintenance', status: 'unavailable', detail: 'Active restart readings could not be checked.' },
   ];
   let alerts: InboxView['alerts'] = [];
   const result = await loadPortalProfile(session);
@@ -103,6 +115,33 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
         detail: 'Link a character through the Discord bot to check this source.',
       };
   }
+
+  const [events, maintenance] = await Promise.allSettled([
+    Promise.resolve()
+      .then(() => listCommunityEvents())
+      .then((value) => ({ value, readAt: new Date().toISOString() })),
+    Promise.resolve().then(() => readRestartQueue()),
+  ]);
+  if (events.status === 'fulfilled') {
+    alerts.push(...eventAlerts(events.value.value, Date.now()));
+    sources[4] = {
+      category: 'events',
+      status: 'checked',
+      readAt: events.value.readAt,
+      detail: 'Published events starting within seven days. Unscheduled and cancelled events are not alerted.',
+    };
+  }
+  if (maintenance.status === 'fulfilled') {
+    alerts.push(...maintenanceAlerts(maintenance.value.entries, Date.now()));
+    sources[5] = {
+      category: 'maintenance',
+      status: 'checked',
+      readAt: new Date(maintenance.value.observedAt).toISOString(),
+      detail:
+        'Confirmed active Console restart queue for the next 24 hours. Daily and IP-change schedules are not inferred.',
+    };
+  }
+
   // Opaque response IDs never expose raw asset, member, controller or pawn identifiers.
   const seen = new Set<string>();
   alerts = alerts
@@ -116,8 +155,7 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
       seen.add(alert.id);
       return true;
     })
-    .sort(
-      (a, b) => Number(b.priority === 'urgent') - Number(a.priority === 'urgent') || a.title.localeCompare(b.title),
-    );
+    .sort((a, b) => Number(b.priority === 'urgent') - Number(a.priority === 'urgent') || a.title.localeCompare(b.title))
+    .slice(0, 120);
   return inboxViewSchema.parse({ checkedAt: new Date().toISOString(), alerts, sources });
 }

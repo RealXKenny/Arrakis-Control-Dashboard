@@ -10,6 +10,7 @@
 - Members with a separately configured backup-viewer role can see sanitized scheduled-system-backup status. Restore-rehearsal evidence is not currently available.
 - Service status includes an optional read-only check of server status, restart-queue and online-population integration health, with permission and unavailable states and process-local last-success timestamps.
 - A community calendar brings scheduled published events, verified personal guild signups and active queued restarts together in local-time agenda, week and month views; missing sources remain visible.
+- Service status records seven days of sanitized health observations and separates observed degradation, outages and recovery from confirmed restart history. The actionable inbox adds scheduled-event and queued-restart categories with per-account notification controls.
 - Navigation reorganized: the More menu is gone. Everything now sits in the top row as categories (Assets, Bases, Guilds, Casino, Community and Personal), and every dropdown uses the same Bases-style panel with an introduction card and titled groups. Narrower desktop widths place the row on its own line instead of hiding destinations.
 - Universal item finder searches your authorized backpack, base containers and vehicle cargo with permission checks, and private pinned item counters track the stacks you care about.
 - Customizable portal widgets with a compact personal view, saved activity views for different activities, and a Console-default theme with 66 additional themes and a custom color studio.
@@ -25,7 +26,6 @@
 - Manual **Claim Reward** and **Claim All Available** deliver rewards directly with no administrator approval: server-side level, ownership, character-binding and offline checks, durable component-level claim records, a persisted send marker before every game call, exact balance and receipt verification, and no resend of uncertain or interrupted deliveries. Claims remain open after a season ends.
 
 - Simplified Console configuration: `DUNE_API_URL` and `DUNE_API_KEY` replace `CONSOLE_URL`, `CONSOLE_API_KEY` and `ADMIN_CONSOLE_API_KEY`, and `ADAPTER_TOKEN` is renamed `DUNE_ADAPTER_TOKEN` for the Console's Discord adapter, which accepts only its own token. Dashboard authorization, privileged HTTPS/loopback transport and the retired-setting startup error are unchanged in intent. Season automation and delivery toggles were removed.
-
 
 - Added illustrated objective categories, completion summaries and filtering inspired by Icehunter/dune-admin, with preserved MIT attribution and original vector artwork.
 
@@ -81,7 +81,6 @@
 - Redis Cluster verification runs on V2 pushes using three masters and three replicas, retaining test logs and final topology. Expanded real-Redis coverage exercises transfer concurrency, uncertainty/reconciliation, multi-page recovery and interrupted round settlement after reconnecting. Cluster pool connections no longer inherit a standalone database selection, and pool shutdown now closes every connection.
 
 - Final release-audit coverage checks 25 member routes at six desktop/tablet/mobile widths, WCAG 2.0/2.1/2.2 AA automation, keyboard navigation and reduced motion. Improved small-screen base upload and fairness forms, readable secondary text, loading announcements and unavailable gauge semantics. Added sanitized production-build screenshots for the landing page, overview, casino, Blackjack, sound settings and navigation.
-
 
 - Signed-in visitors now see Open dashboard actions instead of Discord sign-in prompts. Signed-out topbars show only the brand and Sign in, including mobile.
 - Discord release and progress announcements now use the main bot token and Components V2 containers instead of webhooks. Published community events announce automatically, update their existing posts, and report pending or uncertain outcomes accurately.

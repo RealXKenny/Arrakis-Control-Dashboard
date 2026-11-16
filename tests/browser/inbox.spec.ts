@@ -161,3 +161,42 @@ test('failed refresh removes previous details, preserves filters and permits an 
   await page.getByRole('button', { name: 'Notifications', exact: true }).click();
   await expect(page.getByRole('menuitem', { name: /Actionable inbox/ })).toBeVisible();
 });
+
+test('maintenance alerts work without a linked character and expose notification controls', async ({
+  page,
+  context,
+}) => {
+  const member = await fakeConsole.newMember('Maintenance inbox', { guild: null });
+  await fakeConsole.setShared({
+    finderSources: {
+      '/api/server/restart-queue': {
+        state: {
+          entries: [
+            {
+              id: 'inbox-restart',
+              status: 'counting',
+              target: 'map',
+              mapLabel: 'Hagga Basin',
+              restartAt: Date.now() + 3600000,
+            },
+          ],
+        },
+      },
+    },
+  });
+  await context.setExtraHTTPHeaders({ Cookie: member.cookie });
+  await page.goto('/inbox');
+  const inbox = page.getByRole('region', { name: 'Actionable inbox' });
+  await inbox.getByLabel('Alert category').selectOption('maintenance');
+  const alert = inbox.getByRole('article', { name: 'Hagga Basin restart' });
+  await expect(alert).toContainText('Confirmed active Console queue');
+  await alert.getByRole('link', { name: 'Review restart status' }).click();
+  await expect(page).toHaveURL(/\/status$/);
+  await page.goto('/inbox');
+  await inbox.getByText('Notification preferences', { exact: true }).click();
+  await expect(inbox.getByLabel('Events notifications')).toBeChecked();
+  await expect(inbox.getByLabel('Maintenance notifications')).toBeChecked();
+  await inbox.getByLabel('Maintenance notifications').uncheck();
+  await inbox.getByRole('button', { name: 'Save notification preferences' }).click();
+  await expect(inbox.getByLabel('Maintenance notifications')).not.toBeChecked();
+});

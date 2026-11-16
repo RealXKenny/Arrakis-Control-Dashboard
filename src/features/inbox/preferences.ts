@@ -6,7 +6,16 @@ const clock = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/);
 export const notificationConfigSchema = z
   .object({
     schemaVersion: z.literal(1),
-    features: z.object({ assets: feature, supply: feature, market: feature, operations: feature }).strict(),
+    features: z
+      .object({
+        assets: feature,
+        supply: feature,
+        market: feature,
+        operations: feature,
+        events: feature.default({ enabled: true, cooldownMinutes: 0 }),
+        maintenance: feature.default({ enabled: true, cooldownMinutes: 0 }),
+      })
+      .strict(),
     quiet: z
       .object({
         enabled: z.boolean(),
@@ -87,6 +96,8 @@ export function defaultNotifications(): NotificationRecord {
         supply: { enabled: true, cooldownMinutes: 0 },
         market: { enabled: true, cooldownMinutes: 0 },
         operations: { enabled: true, cooldownMinutes: 0 },
+        events: { enabled: true, cooldownMinutes: 0 },
+        maintenance: { enabled: true, cooldownMinutes: 0 },
       },
       quiet: { enabled: false, start: '22:00', end: '07:00', timeZone: 'UTC' },
     },

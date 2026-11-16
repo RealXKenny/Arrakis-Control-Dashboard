@@ -18,11 +18,12 @@ Workers receive no input from players, hold no credentials beyond the server env
 
 ## Workers
 
-| Worker            | Responsibility                                                                                                                                                                                                     |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `seasons`         | Creates the default policy once, prepares, publishes and archives generated seasons through the existing compare-and-set path, and re-enables a policy the generator itself blocked after an hour. No game writes. |
-| `casino-recovery` | Finishes confirmed wallet steps, resumes transfers that were never sent, and parks interrupted ones. Never resends an unconfirmed Console adjustment.                                                              |
-| `reward-recovery` | Parks interrupted season reward sends as quarantined and clears resolved entries. Reads claim records only; never contacts the game.                                                                               |
+| Worker                | Responsibility                                                                                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `seasons`             | Creates the default policy once, prepares, publishes and archives generated seasons through the existing compare-and-set path, and re-enables a policy the generator itself blocked after an hour. No game writes. |
+| `casino-recovery`     | Finishes confirmed wallet steps, resumes transfers that were never sent, and parks interrupted ones. Never resends an unconfirmed Console adjustment.                                                              |
+| `reward-recovery`     | Parks interrupted season reward sends as quarantined and clears resolved entries. Reads claim records only; never contacts the game.                                                                               |
+| `health-observations` | Records one bounded, sanitized structured Console health observation per tick for the member-safe health timeline. Retains seven days and never changes Console or game state.                                     |
 
 ## Uncertain operations are quarantined
 

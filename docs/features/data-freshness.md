@@ -18,7 +18,7 @@ The actionable inbox, pinned item counters, universal item finder and command-pa
 
 Times are rendered as explicit UTC ISO timestamps using semantic `time` elements. **Last attempt (device time)** is separate from **Last successful read**, which comes from server response/source metadata. A failed or cancelled request never advances the successful-read time. While the page is visible, a five-second local timer ages the label; it never polls the network, scans inventory, changes notifications or performs a game action. No animation, sound or repeated live-region announcement is added.
 
-History is **in memory for the current view and context only**. Reloading, leaving a view, changing the selected query/settings or reopening the command palette can reset it. There is no persistent outage archive, cross-instance success ledger, browser storage or source snapshot. Unknown history is stated explicitly. This deliberate boundary prevents old character/guild readings from becoming a new account's history.
+History is **in memory for the current view and context only**. Reloading, leaving a view, changing the selected query/settings or reopening the command palette can reset it. N098 has no persistent private-outage archive, cross-instance success ledger, browser storage or source snapshot. Unknown history is stated explicitly. This deliberate boundary prevents old character/guild readings from becoming a new account's history. The separate N072 service-health worker stores only sanitized infrastructure observations; it does not weaken this private view-local contract.
 
 ## Inbox source timestamps
 

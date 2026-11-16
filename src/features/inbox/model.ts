@@ -2,14 +2,18 @@ import { z } from 'zod';
 import type { PortalProfile } from '../portal/view-model';
 import type { StoredOperation } from '../guilds/operations';
 import type { StoredResourceRequest } from '../guilds/resource-requests';
+import type { CommunityEvent } from '../events/contracts';
+import type { RestartEntry } from '../monitoring/restart-queue';
 
-export const inboxCategories = ['assets', 'supply', 'market', 'operations'] as const;
+export const inboxCategories = ['assets', 'supply', 'market', 'operations', 'events', 'maintenance'] as const;
 export type InboxCategory = (typeof inboxCategories)[number];
 export const categoryNames: Record<InboxCategory, string> = {
   assets: 'Assets',
   supply: 'Supply',
   market: 'Market',
   operations: 'Operations',
+  events: 'Events',
+  maintenance: 'Maintenance',
 };
 export const inboxAlertSchema = z
   .object({
@@ -23,7 +27,7 @@ export const inboxAlertSchema = z
     title: z.string().min(1).max(240),
     detail: z.string().max(600),
     action: z.string().max(80),
-    href: z.string().regex(/^\/(?:holdings|vehicles|guild)(?:[?#][a-zA-Z0-9_%=&#.~-]*)?$/),
+    href: z.string().regex(/^\/(?:holdings|vehicles|guild|calendar|status|events)(?:[?#][a-zA-Z0-9_%=&#.~-]*)?$/),
   })
   .strict();
 export type InboxAlert = z.infer<typeof inboxAlertSchema>;
@@ -47,7 +51,7 @@ export const inboxViewSchema = z
           })
           .strict(),
       )
-      .length(4),
+      .length(inboxCategories.length),
   })
   .strict();
 export type InboxView = z.infer<typeof inboxViewSchema>;
@@ -157,5 +161,44 @@ export function operationAlerts(operations: StoredOperation[], memberId: string,
       detail: `${o.signups.some((s) => s.memberId === memberId) ? 'You are signed up.' : 'Guild briefing available.'} Starts ${o.startsAt}; ends ${o.endsAt}.`,
       href: '/guild?tab=operations',
       action: 'Read operation briefing',
+    }));
+}
+
+export function eventAlerts(events: CommunityEvent[], now: number): InboxAlert[] {
+  return events
+    .filter((event) => {
+      if (!event.startsAt || !['upcoming', 'open'].includes(event.status)) return false;
+      const starts = Date.parse(event.startsAt);
+      const ends = event.endsAt ? Date.parse(event.endsAt) : starts + 1;
+      return starts <= now + 7 * 86_400_000 && ends > now;
+    })
+    .map((event) => ({
+      id: `event:${event.id}`,
+      category: 'events',
+      priority: Date.parse(event.startsAt!) <= now + 3_600_000 ? 'urgent' : 'attention',
+      title: event.title,
+      detail: `Published community event. Starts ${event.startsAt}. Confirmation state is not separately reported.`,
+      href: '/calendar',
+      action: 'Open community calendar',
+    }));
+}
+
+export function maintenanceAlerts(entries: RestartEntry[], now: number): InboxAlert[] {
+  return entries
+    .filter(
+      (entry) =>
+        entry.status === 'restarting' || (entry.restartAt >= now - 300_000 && entry.restartAt <= now + 86_400_000),
+    )
+    .map((entry) => ({
+      id: `maintenance:${entry.id}`,
+      category: 'maintenance',
+      priority:
+        entry.status === 'restarting' || entry.restartAt <= now + 3_600_000
+          ? ('urgent' as const)
+          : ('attention' as const),
+      title: entry.target === 'battlegroup' ? 'All servers restart' : `${entry.mapLabel} restart`,
+      detail: `Confirmed active Console queue. Active play may be interrupted. Scheduled for ${new Date(entry.restartAt).toISOString()}.`,
+      href: '/status',
+      action: 'Review restart status',
     }));
 }

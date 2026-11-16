@@ -46,7 +46,13 @@ const notificationReply = createNotificationPreferencesFixture();
 const personalTasksReply = createPersonalTasksFixture();
 const activityViewsReply = createActivityViewsFixture();
 const privacyReply = createPrivacyFixture();
+const healthObservations = [
+  { at: Date.now() - 120000, state: 'outage', services: [{ name: 'Survival_1', status: 'STOPPED' }] },
+  { at: Date.now() - 60000, state: 'healthy', services: [{ name: 'Survival_1', status: 'READY' }] },
+];
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  if (operation.toUpperCase() === 'ZREVRANGEBYSCORE' && key.startsWith('arrakis:monitoring:health:'))
+    return healthObservations.toReversed().map((value) => JSON.stringify(value));
   if (operation.toUpperCase() === 'ZREVRANGEBYSCORE' && key.startsWith('arrakis:population:')) {
     const now = Date.now() - 60000;
     return [JSON.stringify({ at: now, online: 0 }), JSON.stringify({ at: now - 2 * 3600000, online: 4 })];

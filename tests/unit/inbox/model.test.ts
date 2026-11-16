@@ -1,5 +1,13 @@
 import { expect, it } from 'vitest';
-import { assetAlerts, operationAlerts, supplyAlerts, inboxAlertSchema } from '../../../src/features/inbox/model';
+import {
+  assetAlerts,
+  operationAlerts,
+  supplyAlerts,
+  eventAlerts,
+  maintenanceAlerts,
+  inboxAlertSchema,
+} from '../../../src/features/inbox/model';
+import { firstCommunityEvent } from '../../../src/features/events/contracts';
 import { buildPortalProfile } from '../../../src/features/portal/view-model';
 import type { StoredResourceRequest } from '../../../src/features/guilds/resource-requests';
 import type { StoredOperation } from '../../../src/features/guilds/operations';
@@ -72,4 +80,30 @@ it('shows upcoming and active operations, excludes closed/expired and respects 2
   expect(operationAlerts([o], 'self', now)).toEqual([]);
   o.status = 'cancelled';
   expect(operationAlerts([o], 'self', now - 10000)).toEqual([]);
+});
+
+it('alerts only scheduled current events and confirmed active restarts within bounded windows', () => {
+  const now = Date.parse('2026-11-16T00:00:00Z');
+  const event = {
+    ...firstCommunityEvent(),
+    startsAt: new Date(now + 3600000).toISOString(),
+    endsAt: new Date(now + 7200000).toISOString(),
+  };
+  expect(eventAlerts([event], now)[0]).toMatchObject({ category: 'events', priority: 'urgent', href: '/calendar' });
+  expect(eventAlerts([{ ...event, startsAt: null }], now)).toEqual([]);
+  expect(eventAlerts([{ ...event, status: 'cancelled' }], now)).toEqual([]);
+  expect(eventAlerts([{ ...event, startsAt: new Date(now + 8 * 86400000).toISOString() }], now)).toEqual([]);
+  const restart = {
+    id: 'restart',
+    status: 'counting' as const,
+    target: 'map' as const,
+    mapLabel: 'Hagga Basin',
+    restartAt: now + 3600000,
+  };
+  expect(maintenanceAlerts([restart], now)[0]).toMatchObject({
+    category: 'maintenance',
+    priority: 'urgent',
+    href: '/status',
+  });
+  expect(maintenanceAlerts([{ ...restart, restartAt: now + 25 * 3600000 }], now)).toEqual([]);
 });

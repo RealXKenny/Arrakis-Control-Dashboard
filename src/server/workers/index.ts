@@ -60,6 +60,18 @@ export const WORKERS: ReadonlyArray<WorkerDefinition> = [
       return { parked, quarantined, cleared };
     },
   },
+  {
+    name: 'health-observations',
+    scope: 'Records bounded, sanitized Console health observations in Redis. Never changes game or Console state.',
+    intervalMs: 60_000,
+    timeoutMs: 15_000,
+    retryBudget: 5,
+    cooldownMs: 15 * 60_000,
+    async run() {
+      const { observeServerHealth } = await import('../../features/monitoring/server/health');
+      return observeServerHealth();
+    },
+  },
 ];
 export function startBackgroundWorkers() {
   startWorkers(WORKERS);
