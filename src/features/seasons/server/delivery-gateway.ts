@@ -21,15 +21,26 @@ function client() {
   const env = getServerEnv();
   return new DuneConsoleClient(env.DUNE_API_URL!, env.DUNE_API_KEY!);
 }
-export function solarisBalance(payload: unknown) {
+type Currency = 'solaris' | 'house-credits';
+const CURRENCY: Record<Currency, { id: 0 | 1; names: string[] }> = {
+  solaris: { id: 0, names: ['0', 'solaris'] },
+  'house-credits': { id: 1, names: ['1', 'housecredit'] },
+};
+export const currencyOf = (reward: GameReward): Currency | null =>
+  reward.type === 'solaris' || reward.type === 'house-credits' ? reward.type : null;
+/** Exactly one balance row must match; enum-mode databases report the currency by name, others by number. */
+export function currencyBalance(payload: unknown, currency: Currency = 'solaris') {
   const rows = record(payload).rows;
-  if (!Array.isArray(rows)) throw new Error('Invalid Solaris response.');
-  const matches = rows.map(record).filter((v) => v.currency_id === 0 || v.currency_id === '0');
+  if (!Array.isArray(rows)) throw new Error('Invalid currency response.');
+  const matches = rows
+    .map(record)
+    .filter((v) => CURRENCY[currency].names.includes(String(v.currency_id).toLowerCase()));
   const value = matches[0]?.balance;
   if (matches.length !== 1 || typeof value !== 'string' || !whole.test(value))
-    throw new Error('Invalid Solaris response.');
+    throw new Error('Invalid currency response.');
   return BigInt(value);
 }
+export const solarisBalance = (payload: unknown) => currencyBalance(payload, 'solaris');
 /** Official Console server.js/grantPlayerItem and duneDb.js/giveItemToPlayer receipts, reviewed at 480bb5f.
  * Broker publication, tasks, partial stacks and relog-required writes never count as confirmed delivery.
  */
@@ -37,19 +48,22 @@ export function confirmedGrant(payload: unknown, reward: GameReward, pawnId: str
   const root = record(payload);
   const result = record(root.result);
   if (root.ok === false || root.supported === false) return false;
-  if (reward.type === 'solaris') {
+  const currency = currencyOf(reward);
+  if (currency) {
     const balance = record(result.balance);
     return (
       result.ok === true &&
       offline(record(result.player).onlineStatus) &&
-      (result.currencyId === 0 || result.currencyId === '0') &&
-      result.amount === Number(reward.amount) &&
+      String(result.currencyId) === String(CURRENCY[currency].id) &&
+      CURRENCY[currency].names.includes(String(balance.currency_id).toLowerCase()) &&
+      result.amount === Number((reward as { amount: string }).amount) &&
       typeof balance.balance === 'string' &&
       whole.test(balance.balance) &&
       expectedBalance !== undefined &&
       BigInt(balance.balance) === expectedBalance
     );
   }
+  if (reward.type !== 'item') return false;
   const item = record(root.item);
   if (
     root.ok !== true ||
@@ -84,24 +98,30 @@ export function confirmedGrant(payload: unknown, reward: GameReward, pawnId: str
   return total === reward.quantity && (result.given === undefined || result.given === reward.quantity);
 }
 export const deliveryGateway = {
-  async balance(pawnId: string) {
-    return solarisBalance(
+  async balance(pawnId: string, currency: Currency = 'solaris') {
+    return currencyBalance(
       await client().request('GET', `/api/players/${encodeURIComponent(pawnId)}/currency`, {
         timeoutMs: 5000,
         retryRead: false,
       }),
+      currency,
     );
   },
   async grant(pawnId: string, reward: GameReward, expectedBalance?: bigint): Promise<'delivered' | 'uncertain'> {
     try {
       const item = reward.type === 'item';
+      const currency = currencyOf(reward);
       const payload = await client().request(
         'POST',
         `/api/players/${encodeURIComponent(pawnId)}/${item ? 'give-item-id' : 'add-currency'}`,
         {
           body: item
             ? { itemId: reward.itemId, quantity: reward.quantity, quality: reward.quality }
-            : { currencyId: 0, amount: Number(reward.amount), confirmation: 'ADD CURRENCY' },
+            : {
+                currencyId: CURRENCY[currency!].id,
+                amount: Number((reward as { amount: string }).amount),
+                confirmation: 'ADD CURRENCY',
+              },
           timeoutMs: 15000,
           retryRead: false,
         },

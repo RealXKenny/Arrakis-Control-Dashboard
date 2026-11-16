@@ -12,20 +12,21 @@ export function GameRewardFields({ value, onChange }: { value?: GameReward; onCh
             onChange(
               event.target.value === 'none'
                 ? undefined
-                : event.target.value === 'solaris'
-                  ? { type: 'solaris', amount: '100' }
+                : event.target.value === 'solaris' || event.target.value === 'house-credits'
+                  ? { type: event.target.value, amount: '100' }
                   : { type: 'item', itemId: '', quantity: 1, quality: 0 },
             )
           }
         >
           <option value="none">Dashboard cosmetic only</option>
           <option value="solaris">Solaris</option>
+          <option value="house-credits">House Credits</option>
           <option value="item">Item by template ID</option>
         </select>
       </label>
-      {value?.type === 'solaris' && (
+      {(value?.type === 'solaris' || value?.type === 'house-credits') && (
         <label>
-          Whole Solaris (1–999999)
+          Whole amount (1–999999)
           <input
             required
             inputMode="numeric"

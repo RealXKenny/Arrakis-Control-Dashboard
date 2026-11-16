@@ -102,13 +102,35 @@ it('requires exact Solaris balance, amount, currency and offline receipt', () =>
   const solaris = { type: 'solaris' as const, amount: '100' };
   const receipt = {
     supported: true,
-    result: { ok: true, player: { onlineStatus: 'Offline' }, currencyId: 0, amount: 100, balance: { balance: '1100' } },
+    result: {
+      ok: true,
+      player: { onlineStatus: 'Offline' },
+      currencyId: 0,
+      amount: 100,
+      balance: { currency_id: 0, balance: '1100' },
+    },
   };
   expect(confirmedGrant(receipt, solaris, '42', 1100n)).toBe(true);
   expect(confirmedGrant(receipt, solaris, '42', 1099n)).toBe(false);
   receipt.result.player.onlineStatus = 'Online';
   expect(confirmedGrant(receipt, solaris, '42', 1100n)).toBe(false);
   expect(solarisBalance({ rows: [{ currency_id: 0, balance: '9007199254740993' }] })).toBe(9007199254740993n);
+  expect(solarisBalance({ rows: [{ currency_id: 'Solaris', balance: '5' }] })).toBe(5n);
+  const credits = { type: 'house-credits' as const, amount: '50' };
+  const creditReceipt = {
+    supported: true,
+    result: {
+      ok: true,
+      player: { onlineStatus: 'Offline' },
+      currencyId: 1,
+      amount: 50,
+      balance: { currency_id: 'HouseCredit', balance: '70' },
+    },
+  };
+  expect(confirmedGrant(creditReceipt, credits, '42', 70n)).toBe(true);
+  // A Solaris receipt can never confirm a House Credits grant, or the reverse.
+  expect(confirmedGrant(receipt, credits, '42', 1100n)).toBe(false);
+  expect(confirmedGrant(creditReceipt, solaris, '42', 70n)).toBe(false);
   for (const rows of [
     [],
     [{ currency_id: null, balance: '0' }],

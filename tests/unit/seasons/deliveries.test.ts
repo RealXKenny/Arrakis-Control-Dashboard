@@ -21,6 +21,7 @@ vi.mock('../../../src/features/player/server/linked-player', () => ({ getLinkedP
 vi.mock('../../../src/features/seasons/server/delivery-gateway', () => ({
   deliveryAvailable: () => mock.enabled,
   offline: (v: unknown) => v === 'Offline',
+  currencyOf: (r: { type: string }) => (r.type === 'solaris' || r.type === 'house-credits' ? r.type : null),
   deliveryGateway: { grant: mock.grant, balance: mock.balance },
 }));
 import { saveSeason, transitionSeason, claimReward } from '../../../src/features/seasons/server/engine';

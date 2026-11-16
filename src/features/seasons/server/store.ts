@@ -22,6 +22,8 @@ export const seasonKeys = {
   published: `${root}:published`,
   unique: (value: string) => `${root}:unique:${value}`,
   equipment: (owner: string) => `${root}:equipment:${identifier.parse(owner)}`,
+  gameClaims: (id: string, owner: string) => `${root}:game-claims:${identifier.parse(id)}:${identifier.parse(owner)}`,
+  claimAttention: (id: string) => `${root}:claim-attention:${identifier.parse(id)}`,
   deliveries: (id: string) => `${root}:deliveries:${identifier.parse(id)}`,
   schedules: `${root}:schedules`,
   scheduleRevision: `${root}:schedule-revision`,

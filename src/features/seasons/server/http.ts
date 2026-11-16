@@ -22,6 +22,7 @@ import {
   recoverDelivery,
   resolveDelivery,
 } from './deliveries';
+import { claimAllAvailable, claimAttention, claimGameReward, loadGameClaims, resolveGameClaim } from './claims';
 import {
   adminRecords,
   fail,
@@ -64,6 +65,8 @@ const memberAction = z.discriminatedUnion('action', [
   z.object({ action: z.literal('claim'), seasonId: identifier, rewardId: identifier }),
   z.object({ action: z.literal('equip'), seasonId: identifier, rewardId: identifier }),
   z.object({ action: z.literal('delivery-request'), seasonId: identifier, rewardId: identifier }).strict(),
+  z.object({ action: z.literal('claim-rewards'), seasonId: identifier, rewardId: identifier }).strict(),
+  z.object({ action: z.literal('claim-all'), seasonId: identifier }).strict(),
 ]);
 const adminAction = z.discriminatedUnion('action', [
   z
@@ -85,6 +88,18 @@ const adminAction = z.discriminatedUnion('action', [
     reason: z.string().trim().min(10).max(500),
     confirmation: z.string().max(100),
   }),
+  z
+    .object({
+      action: z.literal('claim-resolve'),
+      seasonId: identifier,
+      owner: identifier,
+      rewardId: identifier,
+      index: z.number().int().min(0).max(3),
+      applied: z.boolean(),
+      note: z.string().trim().min(10).max(1000),
+      confirmation: z.string().max(100),
+    })
+    .strict(),
   z.object({
     action: z.literal('delivery-request'),
     seasonId: identifier,
@@ -177,6 +192,13 @@ async function body<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
   if (!parsed.success) fail(parsed.error.issues[0]?.message ?? 'Invalid season details.', 400);
   return parsed.data;
 }
+/** Browser-safe claim view: component statuses only, never character IDs or administrator notes. */
+async function ownGameClaims(id: string, owner: string) {
+  const claims = await loadGameClaims(id, owner);
+  return Object.fromEntries(
+    Object.values(claims.value).map((r) => [r.rewardId, r.components.map((c) => ({ status: c.status }))]),
+  );
+}
 export async function getSeasons(request: Request) {
   const session = await requireApiSession();
   const params = new URL(request.url).searchParams;
@@ -191,6 +213,7 @@ export async function getSeasons(request: Request) {
       progress: data.progress.value,
       totals: data.totals.value,
       assignment: await loadAssignment(id, session.user.id),
+      gameClaims: await ownGameClaims(id, session.user.id),
       deliveries: await ownDeliveryStatuses(id, session.user.id),
     });
   }
@@ -242,6 +265,9 @@ export async function mutateSeasons(request: Request) {
     return json({ ok: true, delivery: { rewardId: delivery.rewardId, status: delivery.status } });
   }
   if (action.action === 'claim') return json({ ok: true, ...(await claimReward(id, owner, action.rewardId)) });
+  if (action.action === 'claim-rewards')
+    return json({ ok: true, result: await claimGameReward(id, owner, action.rewardId) });
+  if (action.action === 'claim-all') return json({ ok: true, ...(await claimAllAvailable(id, owner)) });
   if (action.action === 'equip') return json({ ok: true, progress: await equipReward(id, owner, action.rewardId) });
   if (action.action === 'verify')
     return json({ ok: true, ...(await verifyObjective(session, id, action.challengeId, request.signal)) });
@@ -283,6 +309,7 @@ export async function getAdminSeasons(request: Request) {
       ...records,
       totals: totals.value,
       deliveries: deliveries.value,
+      claimAttention: await claimAttention(id),
       deliveryEnabled: deliveryAvailable(),
       member,
       snapshot,
@@ -318,6 +345,22 @@ export async function mutateAdminSeasons(request: Request) {
     return json({
       ok: true,
       season: await savePresentation(id, action.revision, action.presentation, action.reason, actor),
+    });
+  }
+  if (action.action === 'claim-resolve') {
+    const season = (await loadSeason(id)).value;
+    if (action.confirmation !== season.definition.name) fail('Type the saved season name to confirm.', 400);
+    return json({
+      ok: true,
+      claim: await resolveGameClaim(
+        id,
+        action.owner,
+        action.rewardId,
+        action.index,
+        action.applied,
+        action.note,
+        actor,
+      ),
     });
   }
   if (action.action === 'delivery-request')

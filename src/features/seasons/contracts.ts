@@ -29,6 +29,7 @@ export function artworkUrl(seasonId: string, artworkId: string) {
 }
 export const gameRewardSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('solaris'), amount: z.string().regex(/^[1-9][0-9]{0,5}$/) }).strict(),
+  z.object({ type: z.literal('house-credits'), amount: z.string().regex(/^[1-9][0-9]{0,5}$/) }).strict(),
   z
     .object({
       type: z.literal('item'),
@@ -40,9 +41,9 @@ export const gameRewardSchema = z.discriminatedUnion('type', [
 ]);
 export type GameReward = z.infer<typeof gameRewardSchema>;
 export function gameRewardLabel(reward: GameReward) {
-  return reward.type === 'solaris'
-    ? `${reward.amount} Solaris`
-    : `${reward.itemId} × ${reward.quantity} · grade ${reward.quality}`;
+  if (reward.type === 'solaris') return `${reward.amount} Solaris`;
+  if (reward.type === 'house-credits') return `${reward.amount} House Credits`;
+  return `${reward.itemId} × ${reward.quantity} · grade ${reward.quality}`;
 }
 export const rewardSchema = z.object({
   id: identifier,
@@ -54,6 +55,8 @@ export const rewardSchema = z.object({
   color: z.enum(['sand', 'spice', 'blue']),
   artwork: artworkSchema.optional(),
   gameReward: gameRewardSchema.optional(),
+  /** Multi-component bundle, delivered and tracked component by component. Replaces `gameReward` for new seasons. */
+  bundle: z.array(gameRewardSchema).min(1).max(4).optional(),
 });
 export const challengeSchema = z.object({
   id: identifier,
@@ -81,6 +84,20 @@ export const milestoneSchema = z.object({
   description: text(600),
   target: z.number().int().min(1).max(100000000),
 });
+/** Audit metadata for the reward economy that produced a season. Display and validation only; never trusted for grants. */
+export const economySchema = z
+  .object({
+    algorithm: z.number().int().min(1).max(1000),
+    catalogHash: z.string().regex(/^[a-f0-9]{64}$/),
+    catalogItems: z.number().int().min(0).max(1000000),
+    totalPoints: z.number().int().min(0).max(100000000),
+    playerBudgetPoints: z.number().int().min(0).max(100000000),
+    solaris: z.number().int().min(0).max(1000000000),
+    houseCredits: z.number().int().min(0).max(1000000000),
+    notes: z.array(z.string().max(300)).max(20),
+  })
+  .strict();
+export type Economy = z.infer<typeof economySchema>;
 export const definitionSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -108,6 +125,7 @@ export const definitionSchema = z
     rewards: z.array(rewardSchema).min(1).max(100),
     challenges: z.array(challengeSchema).min(1).max(100),
     milestones: z.array(milestoneSchema).max(20),
+    economy: economySchema.optional(),
   })
   .superRefine((value, ctx) => {
     const issue = (message: string) => ctx.addIssue({ code: 'custom', message });
@@ -200,6 +218,36 @@ export type CommunityUpdate = {
   totals: Totals;
   observedAt: string;
 };
+/** Component-level state of one player's claim of one reward. Never rewound; uncertain outcomes need an administrator. */
+export const claimComponentSchema = z
+  .object({
+    reward: gameRewardSchema,
+    status: z.enum(['pending', 'sending', 'delivered', 'uncertain', 'cancelled']),
+    attemptedAt: z.iso.datetime().optional(),
+    completedAt: z.iso.datetime().optional(),
+    outcome: z.string().max(120).optional(),
+    resolvedBy: identifier.optional(),
+    resolutionNote: z.string().max(1000).optional(),
+  })
+  .strict();
+export const claimRecordSchema = z
+  .object({
+    version: z.literal(1),
+    rewardId: identifier,
+    pawnId: identifier,
+    controllerId: identifier,
+    createdAt: z.iso.datetime(),
+    revision: z.string().uuid(),
+    components: z.array(claimComponentSchema).min(1).max(4),
+  })
+  .strict();
+export const claimsRecordSchema = z.record(identifier, claimRecordSchema).refine((v) => Object.keys(v).length <= 100);
+export type ClaimComponent = z.infer<typeof claimComponentSchema>;
+export type ClaimRecord = z.infer<typeof claimRecordSchema>;
+/** Reward components in delivery order. Legacy seasons use the single `gameReward`. */
+export function rewardComponents(reward: { gameReward?: GameReward; bundle?: GameReward[] }): GameReward[] {
+  return reward.bundle ?? (reward.gameReward ? [reward.gameReward] : []);
+}
 export type Delivery = {
   id: string;
   owner: string;

@@ -334,7 +334,8 @@ export async function syncAutomaticProgress(
     changed = true;
   }
   const level = levelProgress(season.definition, progress.xp).level;
-  for (const reward of season.definition.rewards) {
+  // Seasons with a reward economy require an explicit Claim Reward click for every reward, cosmetics included.
+  for (const reward of season.definition.economy ? [] : season.definition.rewards) {
     if (reward.level > level || progress.claims.some((c) => c.reward.id === reward.id)) continue;
     progress.claims.push({ reward: structuredClone(reward), at: new Date().toISOString() });
     updateTotals(totals, season, progress.xp, progress, first, undefined, reward.id);

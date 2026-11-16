@@ -5,7 +5,7 @@ import { getServerEnv } from '../../../config/env';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import { identifier, gameRewardSchema, type Delivery } from '../contracts';
 import { commit, fail, loadMember, readRecord, seasonKeys } from './store';
-import { deliveryAvailable, deliveryGateway, offline } from './delivery-gateway';
+import { currencyOf, deliveryAvailable, deliveryGateway, offline } from './delivery-gateway';
 
 const schema = z
   .array(
@@ -43,7 +43,7 @@ export async function ownDeliveryStatuses(id: string, owner: string) {
     .filter((v) => v.owner === owner && v.rewardId)
     .map((v) => ({ rewardId: v.rewardId!, status: v.status }));
 }
-async function linked(owner: string) {
+export async function linked(owner: string) {
   const player = await getLinkedPlayer(
     {
       guildId: getServerEnv().DISCORD_GUILD_ID,
@@ -164,8 +164,11 @@ export async function executeDelivery(id: string, deliveryId: string, revision: 
   if (!claim?.reward.gameReward || JSON.stringify(claim.reward.gameReward) !== JSON.stringify(delivery.gameReward))
     fail('The original reward ownership could not be verified.');
   let expected: bigint | undefined;
-  if (delivery.gameReward.type === 'solaris')
-    expected = (await deliveryGateway.balance(delivery.pawnId)) + BigInt(delivery.gameReward.amount);
+  const currency = currencyOf(delivery.gameReward);
+  if (currency)
+    expected =
+      (await deliveryGateway.balance(delivery.pawnId, currency)) +
+      BigInt((delivery.gameReward as { amount: string }).amount);
   const target = await linked(delivery.owner);
   if (target.pawnId !== delivery.pawnId || target.controllerId !== delivery.controllerId)
     fail('The linked character changed. Do not redirect an approved grant.');
