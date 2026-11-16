@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { themeForSeason } from './engine/themes';
+import { generateRewardPlan } from './engine/rewards';
+import type { CatalogItem } from './engine/economy';
 import { definitionSchema, paths, publicationProblems, type Definition } from './contracts';
 
 export const generatorSettingsSchema = z
@@ -99,6 +101,8 @@ export function generateSeason(
   settings: GeneratorSettings,
   number: number,
   windowIndex: number,
+  /** `undefined`: no game-reward economy (cosmetics only). `null`: Console reachable but no catalog; currency only. */
+  items?: { items: CatalogItem[]; hash: string } | null,
 ): Definition {
   validateGeneratorTemplate(base);
   const window = seasonWindow(settings.firstStart, windowIndex);
@@ -128,6 +132,15 @@ export function generateSeason(
       xp: awards[i] + (remainder-- > 0 ? 1 : 0),
     }));
   });
+  const plan =
+    items === undefined
+      ? null
+      : generateRewardPlan({
+          seed: `${settings.firstStart}:${number}`,
+          focus: theme.focus,
+          catalog: items?.items ?? null,
+        });
+  if (plan?.problems.length) throw new Error(`Unsafe reward economy: ${plan.problems.slice(0, 3).join(' ')}`);
   const rewards = [...base.rewards]
     .sort((a, b) => a.level - b.level)
     .map(({ artwork: _art, ...r }) => ({
@@ -135,6 +148,7 @@ export function generateSeason(
       id: `level-${r.level}`,
       name: `Season ${number} · ${r.name}`.slice(0, 100),
       description: `Permanent Season ${number} recognition. ${r.description}`.slice(0, 600),
+      ...(plan ? { bundle: plan.levels[r.level - 1].components } : {}),
     }));
   const definition = definitionSchema.parse({
     schemaVersion: 1,
@@ -142,13 +156,14 @@ export function generateSeason(
     number,
     name: `Season ${number}`,
     subtitle: theme.subtitle,
-    description: `${theme.blurb} A free community season requiring new in-game progress after tracking begins. Each path offers 50,000 Season XP and can reach all 100 levels. Existing levels and completed journeys do not count. Verified XP and cosmetic claiming are automatic; configured game rewards use the separate reviewed delivery queue.`,
+    description: `${theme.blurb} A free community season requiring new in-game progress after tracking begins. Each path offers 50,000 Season XP and can reach all 100 levels. Existing levels and completed journeys do not count. Every reward is claimed manually with Claim Reward or Claim All.`,
     theme: theme.visual,
     ...window,
     timezone: settings.timezone,
     thresholds: Array.from({ length: 100 }, (_, i) => Math.round(49500 * Math.pow(i / 99, 1.12))),
     challenges,
     rewards,
+    ...(plan ? { economy: { ...plan.economy, catalogHash: items?.hash ?? '0'.repeat(64) } } : {}),
     milestones: [
       {
         id: 'first-steps',

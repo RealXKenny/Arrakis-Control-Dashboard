@@ -6,6 +6,7 @@ import { definitionSchema, seasonState, type Season } from '../contracts';
 import { AppError } from '../../../lib/errors';
 import {
   currentWindow,
+  seasonWindow,
   generateSeason,
   generatorSettingsSchema,
   validateGeneratorTemplate,
@@ -14,6 +15,7 @@ import {
 } from '../generation';
 import { commit, fail, loadSeason, readRecord, seasonKeys, listSeasons, storage } from './store';
 import { transitionSeason } from './engine';
+import { loadItemCatalog } from './item-catalog';
 import { createLogger } from '../../../lib/logger';
 
 const policySchema = z
@@ -218,7 +220,11 @@ async function step() {
   }
   if (policy.nextNumber > 99999) fail('Automatic season numbering reached its configured safety bound.');
   const index = Math.max(policy.nextWindow, currentWindow(policy.settings.firstStart, Date.now()));
-  const definition = generateSeason(policy.template, policy.settings, policy.nextNumber, index);
+  const catalog = await loadItemCatalog();
+  // A temporarily unreachable Console must not downgrade a season that starts days from now; wait and retry instead.
+  if (catalog === null && Date.parse(seasonWindow(policy.settings.firstStart, index).startsAt) - Date.now() > 86400000)
+    return false;
+  const definition = generateSeason(policy.template, policy.settings, policy.nextNumber, index, catalog);
   // UUID derives from the series and cursor; parallel/restarted schedulers converge on the same record.
   const hex = hash(`${policy.series}:${policy.nextNumber}`);
   const id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
