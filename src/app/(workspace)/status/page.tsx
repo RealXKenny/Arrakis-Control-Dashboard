@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { requireSession } from '../../../features/auth/server/session';
 import { PageHeader } from '../../../components/ui/page-header';
 import { UptimeReport } from '../../../features/server-status/components/uptime-report';
+import { RestartQueue } from '../../../features/monitoring/components/restart-queue';
 
 export const metadata: Metadata = { title: 'Service status' };
 
@@ -14,6 +15,7 @@ export default async function ServiceStatusPage() {
           Hosting uptime and incident reports, provided by HetrixTools.
         </p>
       </PageHeader>
+      <RestartQueue />
       <UptimeReport />
     </>
   );

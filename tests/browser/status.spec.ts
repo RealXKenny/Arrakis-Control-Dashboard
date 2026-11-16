@@ -4,6 +4,37 @@ import { test, expect } from '../helpers/browser-test';
 const REPORT = 'https://wl.hetrixtools.com/r/6fb3cbf6a8f67831f3e046b945b82450/';
 const child = readFileSync('node_modules/iframe-resizer/js/iframeResizer.contentWindow.js', 'utf8');
 
+test('shows the confirmed queue and clears it when the provider becomes unavailable', async ({ page }) => {
+  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
+  let available = true;
+  await page.route('**/api/v2/monitoring/restart-queue', (route) => {
+    const now = Date.now();
+    return route.fulfill({
+      status: available ? 200 : 503,
+      json: available
+        ? {
+            ok: true,
+            serverTime: now,
+            observedAt: now,
+            entries: [
+              { id: 'one', status: 'counting', target: 'map', mapLabel: 'Hagga Basin', restartAt: now + 600000 },
+            ],
+          }
+        : { ok: false },
+    });
+  });
+  await page.clock.install();
+  await page.goto('/status');
+  const queue = page.getByRole('region', { name: 'Active restart queue' });
+  await expect(queue).toContainText('Hagga Basin');
+  await expect(queue).toContainText('may restart in 10 min');
+  await expect(queue).toContainText('Daily and IP-change restarts may not appear');
+  available = false;
+  await page.clock.fastForward(21000);
+  await expect(queue).toContainText('Restart information is unavailable.');
+  await expect(queue).not.toContainText('Hagga Basin');
+});
+
 test('service report requires a dashboard session', async ({ page }) => {
   await page.goto('/status');
   await expect(page).toHaveURL(/\/login/);

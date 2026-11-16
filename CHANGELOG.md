@@ -5,6 +5,7 @@
 ### New Features
 
 - The portal's server rhythm panel can show seven days of observed aggregate population by local weekday and hour, including sample counts and missing-data states.
+- Service status shows the active Console restart queue with server-adjusted countdowns and an explicit unavailable state. Daily and IP-change restart schedules are not included in that queue.
 - Navigation reorganized: the More menu is gone. Everything now sits in the top row as categories (Assets, Bases, Guilds, Casino, Community and Personal), and every dropdown uses the same Bases-style panel with an introduction card and titled groups. Narrower desktop widths place the row on its own line instead of hiding destinations.
 - Universal item finder searches your authorized backpack, base containers and vehicle cargo with permission checks, and private pinned item counters track the stacks you care about.
 - Customizable portal widgets with a compact personal view, saved activity views for different activities, and a Console-default theme with 66 additional themes and a custom color studio.
