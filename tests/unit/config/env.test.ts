@@ -48,6 +48,7 @@ function productionFixture() {
     NODE_ENV: 'production',
     DUNE_API_URL: 'http://127.0.0.1:4000',
     DUNE_API_KEY: 'test',
+    DUNE_ADAPTER_TOKEN: 'test',
     DISCORD_CLIENT_ID: 'test',
     DISCORD_CLIENT_SECRET: 'test',
     DISCORD_GUILD_ID: 'guild',

@@ -10,7 +10,7 @@ export function adminCatalog() {
     ok: true as const,
     operations,
     configured: Boolean(env.DUNE_API_KEY),
-    adapterConfigured: Boolean(env.DUNE_API_KEY),
+    adapterConfigured: Boolean(env.DUNE_ADAPTER_TOKEN),
     consoleOrigin:
       env.DUNE_API_URL && isSecureConsoleOrigin(env.DUNE_API_URL) ? new URL(env.DUNE_API_URL).origin : null,
   };

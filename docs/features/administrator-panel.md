@@ -9,7 +9,7 @@ tasks and a generic catalog form behind `advanced=1`.
 ## Requirements and permissions
 
 - Your Discord ID in `ADMIN_DISCORD_IDS`, in the right guild, with the member role ([administrator access](../configuration/administrator-access.md)).
-- `DUNE_API_KEY` (Console and adapter operations; the adapter token must equal it). Without it the panel is
+- `DUNE_API_KEY` (Console operations) and/or `DUNE_ADAPTER_TOKEN` (adapter operations). Without them the panel is
   disabled for those operations (`ADMIN_CONFIG_REQUIRED`, 503).
 - HTTPS to the Console, or loopback HTTP (`ADMIN_SECURE_TRANSPORT_REQUIRED`).
 - Recent interactive sign-in for changes ([step-up](#step-up-re-authentication)).

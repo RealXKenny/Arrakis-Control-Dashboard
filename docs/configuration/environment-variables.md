@@ -6,18 +6,19 @@ Source of truth: `src/config/env.ts` (schema), `.env.example` (template). Values
 
 Startup stops serving (HTTP 500 on every request, reason logged by variable name) if any of these is missing or malformed.
 
-| Variable                  | Format / rule                                                  | Purpose                                                                                              |
-| ------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `APP_URL`                 | URL, no credentials/hash/query/path; `https` unless loopback   | Canonical origin; OAuth callback is `<APP_URL>/api/auth/callback/discord`                            |
-| `AUTH_SECRET`             | 32 to 256 characters                                           | Signs Auth.js state, seals stored Discord refresh tokens                                             |
-| `DISCORD_CLIENT_ID`       | non-empty                                                      | Discord application                                                                                  |
-| `DISCORD_CLIENT_SECRET`   | non-empty                                                      | Discord application secret                                                                           |
-| `DISCORD_GUILD_ID`        | non-empty                                                      | Server whose members may sign in                                                                     |
-| `VERIFIED_MEMBER_ROLE_ID` | non-empty                                                      | Role required for access                                                                             |
-| `ADMIN_DISCORD_IDS`       | comma-separated numeric Discord user IDs (1 to 25 digits each) | Who may use `/admin`; no built-in administrator in production                                        |
-| `DUNE_API_URL`            | URL (`http` or `https`, no credentials)                        | Dune Console                                                                                         |
-| `DUNE_API_KEY`            | non-empty                                                      | The single Console credential: reads, administration, season delivery and the Discord adapter bearer |
-| `REDIS_URL`               | `redis://` or `rediss://`, optional `/db`, no query/hash       | Redis (also supplies credentials in Cluster mode)                                                    |
+| Variable                  | Format / rule                                                  | Purpose                                                                                 |
+| ------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `APP_URL`                 | URL, no credentials/hash/query/path; `https` unless loopback   | Canonical origin; OAuth callback is `<APP_URL>/api/auth/callback/discord`               |
+| `AUTH_SECRET`             | 32 to 256 characters                                           | Signs Auth.js state, seals stored Discord refresh tokens                                |
+| `DISCORD_CLIENT_ID`       | non-empty                                                      | Discord application                                                                     |
+| `DISCORD_CLIENT_SECRET`   | non-empty                                                      | Discord application secret                                                              |
+| `DISCORD_GUILD_ID`        | non-empty                                                      | Server whose members may sign in                                                        |
+| `VERIFIED_MEMBER_ROLE_ID` | non-empty                                                      | Role required for access                                                                |
+| `ADMIN_DISCORD_IDS`       | comma-separated numeric Discord user IDs (1 to 25 digits each) | Who may use `/admin`; no built-in administrator in production                           |
+| `DUNE_API_URL`            | URL (`http` or `https`, no credentials)                        | Dune Console                                                                            |
+| `DUNE_API_KEY`            | non-empty                                                      | Console credential for reads, administration and season delivery                        |
+| `DUNE_ADAPTER_TOKEN`      | non-empty                                                      | Bearer token for the Console's Discord adapter (the Discord side); never `DUNE_API_KEY` |
+| `REDIS_URL`               | `redis://` or `rediss://`, optional `/db`, no query/hash       | Redis (also supplies credentials in Cluster mode)                                       |
 
 ## Optional
 

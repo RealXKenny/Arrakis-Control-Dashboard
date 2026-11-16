@@ -25,7 +25,7 @@ curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/integration
 
 | Response      | Cause and fix                                                                                                                                                             |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `401`         | Key/token wrong, disabled or expired (a bad bearer never falls back to a cookie). Create a new key; for the adapter make the Console's adapter token equal `DUNE_API_KEY` |
+| `401`         | Key/token wrong, disabled or expired (a bad bearer never falls back to a cookie). Create a new key; for the adapter make `DUNE_ADAPTER_TOKEN` equal the Console's adapter token |
 | `403`         | The key lacks the namespace/action. Edit scopes in Console Settings → API Keys                                                                                            |
 | Adapter `404` | Adapter disabled: `DUNE_DISCORD_ADAPTER_ENABLED=true`, rebuild the Console container                                                                                      |
 | Adapter `503` | Token missing or the token file is empty/absent                                                                                                                           |

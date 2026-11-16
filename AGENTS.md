@@ -158,7 +158,7 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 - Password login has per-address and per-email throttles. `TRUSTED_PROXY_COUNT` controls the forwarded address trusted by all per-IP limits: default `1`, or `0` without a proxy.
 
-- Dune Console uses `Authorization: Bearer <DUNE_API_KEY>`. Do not restore Console password login, Console session cookies, CSRF, or automatic reauthentication. `DUNE_API_KEY` is the single Console credential (reads, administration, season delivery and the adapter bearer, which the Console adapter token must equal); the retired `CONSOLE_*`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN` settings are rejected in production. Dashboard authorization must never depend on the key's power; keep privileged transport HTTPS/loopback.
+- Dune Console uses `Authorization: Bearer <DUNE_API_KEY>`. Do not restore Console password login, Console session cookies, CSRF, or automatic reauthentication. `DUNE_API_KEY` is the Console credential for reads, administration and season delivery; `DUNE_ADAPTER_TOKEN` is the separate bearer for the Console's Discord adapter and is never interchangeable with it. The retired `CONSOLE_*`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN` settings are rejected in production. Dashboard authorization must never depend on a key's power; keep privileged transport HTTPS/loopback.
 
 - `/items/*`, `/maps/*`, and `/favicon.ico` rewrite to the hardened asset route backed by `src/assets/`; terrain bundles use `/api/assets/terrain/*` directly. Do not recreate `public/`.
 

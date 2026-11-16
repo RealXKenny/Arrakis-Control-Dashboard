@@ -33,7 +33,7 @@ const redis = createServer(async (req, res) => {
       );
       return;
     }
-    const expectedToken = 'fixture-console-key';
+    const expectedToken = req.url === '/api/integrations/discord/players/me' ? 'fixture-token' : 'fixture-console-key';
     if (req.headers.authorization !== `Bearer ${expectedToken}`) {
       res.statusCode = 401;
       res.end(JSON.stringify({ ok: false }));
@@ -118,6 +118,7 @@ const child = spawn(
       CHAT_ENABLED: 'false',
       DUNE_API_URL: `http://127.0.0.1:${redisPort}`,
       DUNE_API_KEY: 'fixture-console-key',
+      DUNE_ADAPTER_TOKEN: 'fixture-token',
       DISCORD_CLIENT_ID: 'fixture-client',
       DISCORD_CLIENT_SECRET: 'fixture-secret',
       DISCORD_GUILD_ID: 'fixture-guild',

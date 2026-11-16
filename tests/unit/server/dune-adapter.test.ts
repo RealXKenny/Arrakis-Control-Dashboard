@@ -3,7 +3,7 @@ import { getDiscordPlayer } from '../../../src/server/integrations/dune';
 
 vi.mock('../../../src/config/env', () => ({
   getServerEnv: () => ({ NODE_ENV: 'test', LOG_LEVEL: 'INFO' }),
-  requireServerEnv: () => ({ DUNE_API_URL: 'https://console.test/prefix', DUNE_API_KEY: 'test-adapter-token' }),
+  requireServerEnv: () => ({ DUNE_API_URL: 'https://console.test/prefix', DUNE_ADAPTER_TOKEN: 'test-adapter-token' }),
 }));
 afterEach(() => vi.unstubAllGlobals());
 

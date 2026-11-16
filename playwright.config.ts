@@ -6,6 +6,7 @@ const browserServer = {
     // browser-server.mjs points this at the local fake Console it starts.
     DUNE_API_URL: 'http://127.0.0.1:3101',
     DUNE_API_KEY: 'browser-test-placeholder',
+    DUNE_ADAPTER_TOKEN: 'browser-test-adapter-placeholder',
     DISCORD_CLIENT_ID: 'browser-test-client',
     DISCORD_CLIENT_SECRET: 'browser-test-placeholder',
     DISCORD_GUILD_ID: 'browser-test-guild',

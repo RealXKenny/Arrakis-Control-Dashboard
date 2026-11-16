@@ -5,6 +5,7 @@ const { config, session, fetcher } = vi.hoisted(() => ({
   config: {
     DUNE_API_URL: 'https://console.test',
     DUNE_API_KEY: 'fixture-admin-key',
+    DUNE_ADAPTER_TOKEN: 'fixture-adapter-key',
     REDIS_URL: 'redis://fixture',
     APP_URL: 'https://dashboard.test',
     DISCORD_GUILD_ID: 'guild',
@@ -88,7 +89,7 @@ it('returns normalized real readings and setup flags through read-only bounded r
     if (/\/players|\/guilds|\/bases|\/vehicles/.test(new URL(url).pathname))
       expect(new URL(url).searchParams.get('pageSize')).toBe('1');
   }
-  expect(JSON.stringify(data)).not.toMatch(/fixture-admin-key|redis:\/\/fixture/);
+  expect(JSON.stringify(data)).not.toMatch(/fixture-admin-key|fixture-adapter-key|redis:\/\/fixture/);
 });
 it('keeps working sources available when another scope is refused', async () => {
   fetcher.mockImplementation(

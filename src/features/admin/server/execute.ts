@@ -109,10 +109,12 @@ export async function executeAdminOperation(
   const { operation, request, route } = parsed;
   const { upload } = options;
   const env = getServerEnv();
-  const key = env.DUNE_API_KEY;
+  const key = operation.provider === 'adapter' ? env.DUNE_ADAPTER_TOKEN : env.DUNE_API_KEY;
   if (!env.DUNE_API_URL || !key)
     throw new AppError(
-      'Configure DUNE_API_URL and DUNE_API_KEY for administration.',
+      operation.provider === 'adapter'
+        ? 'Configure DUNE_ADAPTER_TOKEN for adapter operations.'
+        : 'Configure DUNE_API_URL and DUNE_API_KEY for administration.',
       503,
       'ADMIN_CONFIG_REQUIRED',
       true,

@@ -21,7 +21,8 @@ of the offending variable, never its value).
 | `AUTH_SECRET`                                 | 32 to 256 random characters. Signs Auth.js state and seals stored Discord refresh tokens.             |
 | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`  | Discord application credentials. Callback: `<APP_URL>/api/auth/callback/discord`.                     |
 | `DISCORD_GUILD_ID`, `VERIFIED_MEMBER_ROLE_ID` | Guild and role that authorize members.                                                                |
-| `DUNE_API_URL`, `DUNE_API_KEY`                | Dune Console and its one credential. Set the Console's Discord adapter token to the same value.       |
+| `DUNE_API_URL`, `DUNE_API_KEY`                | Dune Console and its API key; the key must differ from the adapter token.                             |
+| `DUNE_ADAPTER_TOKEN`                          | Bearer token for the Console's Discord adapter (Discord side).                                        |
 | `REDIS_URL`                                   | `redis://` or `rediss://`, optional database number. Carries the password and the TLS choice.         |
 
 Strongly recommended settings (all optional in the schema, so they are easy to forget):
@@ -47,8 +48,8 @@ that is not an egg variable cannot reach the application.
 ### 1.2 Secret generation
 
 - Generate each secret independently, for example `openssl rand -base64 48` (the command `.env.example` uses).
-- Never reuse a value between `AUTH_SECRET`, `OWNER_KEY_SECRET`, `BOT_API_TOKEN` and `DUNE_API_KEY`
-  (the Console adapter token is the one deliberate duplicate of `DUNE_API_KEY`).
+- Never reuse a value between `AUTH_SECRET`, `OWNER_KEY_SECRET`, `BOT_API_TOKEN`, `DUNE_API_KEY`
+  and `DUNE_ADAPTER_TOKEN`.
 - Store them in the panel or secret manager only. `.env` is ignored by Git; `.env.example` is the only committed template.
 - Record the date each secret was set, so a rotation can be scheduled.
 
@@ -135,7 +136,7 @@ Releases created before checksums were published (no archive assets) do not inst
 ### 2.3 Environment configuration
 
 Fill every required Startup variable in the panel (section 1.1), including the strongly recommended ones. Keep secrets
-hidden from subusers. The egg hides all credentials (`AUTH_SECRET`, `REDIS_URL`, `DUNE_API_KEY`, `DISCORD_CLIENT_SECRET`, `BOT_API_TOKEN`, `OWNER_KEY_SECRET`, `DISCORD_BOT_TOKEN`), so a **panel administrator** must enter them under Admin > Servers > Startup. Hidden is not encrypted: anyone with file, process or console access to the running server can still read them. `NEXT_TELEMETRY_DISABLED=1` is set by the egg, installer and launcher.
+hidden from subusers. The egg hides all credentials (`AUTH_SECRET`, `REDIS_URL`, `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN`, `DISCORD_CLIENT_SECRET`, `BOT_API_TOKEN`, `OWNER_KEY_SECRET`, `DISCORD_BOT_TOKEN`), so a **panel administrator** must enter them under Admin > Servers > Startup. Hidden is not encrypted: anyone with file, process or console access to the running server can still read them. `NEXT_TELEMETRY_DISABLED=1` is set by the egg, installer and launcher.
 
 ### 2.4 Startup
 

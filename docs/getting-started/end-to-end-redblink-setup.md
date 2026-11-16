@@ -77,7 +77,7 @@ Confirm namespace and action names in the Console's key editor; they are authori
 The Console refuses setup, database, settings and community namespaces to API keys by design. Details:
 [Dune Console](../configuration/dune-console.md).
 
-## 4. Enable the Discord adapter with the same value as `DUNE_API_KEY`
+## 4. Enable the Discord adapter and get `DUNE_ADAPTER_TOKEN`
 
 The dashboard also uses the Console's built-in Discord adapter (for example `/api/integrations/discord/players/me`). It is
 disabled by default upstream.
@@ -91,8 +91,7 @@ disabled by default upstream.
 
 # 2. Create the token file
 mkdir -p runtime/secrets
-# The adapter only accepts its own token, so write the SAME value as your dashboard DUNE_API_KEY.
-printf '%s' "$DUNE_API_KEY" > runtime/secrets/bot-api-token.txt
+head -c 36 /dev/urandom | base64 | tr -d '\n' > runtime/secrets/bot-api-token.txt
 chmod 600 runtime/secrets/bot-api-token.txt
 
 # 3. Rebuild the Console
@@ -106,7 +105,7 @@ TOKEN=$(cat runtime/secrets/bot-api-token.txt)
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8088/api/integrations/discord/health
 ```
 
-Expect JSON with `"ok": true` and `"enabled": true`. The dashboard sends `DUNE_API_KEY` as the adapter bearer, so the token must equal it.
+Expect JSON with `"ok": true` and `"enabled": true`. The dashboard's `DUNE_ADAPTER_TOKEN` is the **same value** as this token. Keep it different from `DUNE_API_KEY`.
 The adapter's role variables (`DISCORD_OBSERVER_ROLE_IDS`, etc.) matter
 for the upstream Discord bot; the dashboard sends its own checks with the bearer token only.
 
@@ -158,7 +157,8 @@ VERIFIED_MEMBER_ROLE_ID=<member role id>
 ADMIN_DISCORD_IDS=<your discord user id>
 
 DUNE_API_URL=http://127.0.0.1:8088
-DUNE_API_KEY=<console key; identical to contents of bot-api-token.txt>
+DUNE_API_KEY=<console key>
+DUNE_ADAPTER_TOKEN=<contents of bot-api-token.txt>
 
 REDIS_URL=redis://:<REDIS_PASSWORD>@127.0.0.1:6379/0
 ```

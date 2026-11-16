@@ -14,7 +14,8 @@ DISCORD_CLIENT_SECRET=<secret>
 DISCORD_GUILD_ID=<server id>
 VERIFIED_MEMBER_ROLE_ID=<role id>
 DUNE_API_URL=http://127.0.0.1:8088
-DUNE_API_KEY=<console key; also the Console adapter token>
+DUNE_API_KEY=<console key>
+DUNE_ADAPTER_TOKEN=<console discord adapter token>
 # Optional in development: ADMIN_DISCORD_IDS (defaults to the project owner), REDIS_URL (memory fallback)
 ADMIN_DISCORD_IDS=<your discord user id>
 ```
@@ -34,7 +35,8 @@ DISCORD_GUILD_ID=<server id>
 VERIFIED_MEMBER_ROLE_ID=<role id>
 ADMIN_DISCORD_IDS=<id1>,<id2>
 DUNE_API_URL=http://127.0.0.1:8088
-DUNE_API_KEY=<console key; also the Console adapter token>
+DUNE_API_KEY=<console key>
+DUNE_ADAPTER_TOKEN=<console discord adapter token>
 REDIS_URL=redis://:<password>@127.0.0.1:6379/0
 AUDIT_LOG_STDOUT=true
 LOG_LEVEL=INFO

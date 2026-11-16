@@ -40,9 +40,9 @@ export async function loadAdminOverview(session: DashboardSession, signal?: Abor
     {
       id: 'adapter',
       label: 'Discord adapter',
-      ready: !!env.DUNE_API_KEY,
+      ready: !!env.DUNE_ADAPTER_TOKEN,
       instruction:
-        'The experimental Discord adapter tools send DUNE_API_KEY, so set the Console adapter token to the same value.',
+        'Set DUNE_ADAPTER_TOKEN to the Console Discord adapter token for the Discord-side tools. Keep it different from DUNE_API_KEY.',
     },
     {
       id: 'redis',

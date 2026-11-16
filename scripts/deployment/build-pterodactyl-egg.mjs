@@ -95,6 +95,7 @@ export const SECRET_VARIABLES = Object.freeze([
   'AUTH_SECRET',
   'REDIS_URL',
   'DUNE_API_KEY',
+  'DUNE_ADAPTER_TOKEN',
   'DISCORD_CLIENT_SECRET',
   'BOT_API_TOKEN',
   'OWNER_KEY_SECRET',
@@ -211,11 +212,8 @@ function buildEgg() {
       variable('Dune API URL', 'Dune Console URL reachable from this container.', 'DUNE_API_URL', '', {
         rules: 'required|url',
       }),
-      variable(
-        'Dune API Key',
-        'Console API key for reads, administration and season delivery. Set the Console Discord adapter token to the same value.',
-        'DUNE_API_KEY',
-      ),
+      variable('Dune API Key', 'Console API key for reads, administration and season delivery.', 'DUNE_API_KEY'),
+      variable('Dune Adapter Token', 'Token for the Console Discord adapter.', 'DUNE_ADAPTER_TOKEN'),
       variable('Discord Client ID', 'Discord OAuth application client ID.', 'DISCORD_CLIENT_ID'),
       variable('Discord Client Secret', 'Discord OAuth application client secret.', 'DISCORD_CLIENT_SECRET'),
       variable('Discord Guild ID', 'Discord server whose members may access the dashboard.', 'DISCORD_GUILD_ID'),

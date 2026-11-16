@@ -11,14 +11,15 @@
 
 ## Rotating secrets
 
-| Secret                  | Effect of rotating                                                                           | Procedure                                                                                                                    |
-| ----------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `DUNE_API_KEY`          | Console calls fail until updated; adapter calls fail until the Console adapter token matches | Create the new key in the Console, set the same value as the adapter token, update the variable, restart, delete the old key |
-| `DISCORD_CLIENT_SECRET` | New sign-ins fail until updated                                                              | Reset in the Developer Portal, update, restart                                                                               |
-| `AUTH_SECRET`           | Everyone signed out; stored refresh tokens unreadable                                        | Schedule it; announce it                                                                                                     |
-| `OWNER_KEY_SECRET`      | Existing marketplace listings lose their owners unless migrated                              | Follow [migration](../deployment/migration.md) with `OWNER_KEY_PREVIOUS_SECRET`                                              |
-| `BOT_API_TOKEN`         | The bot loses access                                                                         | Replace on both services, restart the dashboard                                                                              |
-| Redis password          | Dashboard cannot connect until `REDIS_URL` matches                                           | Change Redis `requirepass`/ACL and `REDIS_URL` together; restart both                                                        |
+| Secret                  | Effect of rotating                                              | Procedure                                                                                                            |
+| ----------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `DUNE_API_KEY`          | Console calls fail until updated                                | Create the new key in the Console, update the variable, restart, delete the old key                                  |
+| `DUNE_ADAPTER_TOKEN`    | Adapter calls fail until both sides match                       | Change the Console token file / variable and the dashboard variable together, rebuild the Console container, restart |
+| `DISCORD_CLIENT_SECRET` | New sign-ins fail until updated                                 | Reset in the Developer Portal, update, restart                                                                       |
+| `AUTH_SECRET`           | Everyone signed out; stored refresh tokens unreadable           | Schedule it; announce it                                                                                             |
+| `OWNER_KEY_SECRET`      | Existing marketplace listings lose their owners unless migrated | Follow [migration](../deployment/migration.md) with `OWNER_KEY_PREVIOUS_SECRET`                                      |
+| `BOT_API_TOKEN`         | The bot loses access                                            | Replace on both services, restart the dashboard                                                                      |
+| Redis password          | Dashboard cannot connect until `REDIS_URL` matches              | Change Redis `requirepass`/ACL and `REDIS_URL` together; restart both                                                |
 
 ## Redis hygiene
 

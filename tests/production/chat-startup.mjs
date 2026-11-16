@@ -64,6 +64,7 @@ const child = spawn(process.execPath, ['--input-type=module', '-e', wrapper], {
     REDIS_CLUSTER_NODES: '',
     DUNE_API_URL: 'http://127.0.0.1:9',
     DUNE_API_KEY: 'fixture-only',
+    DUNE_ADAPTER_TOKEN: 'fixture-only-adapter',
     DISCORD_CLIENT_ID: 'fixture',
     DISCORD_CLIENT_SECRET: 'fixture',
     DISCORD_GUILD_ID: 'fixture',

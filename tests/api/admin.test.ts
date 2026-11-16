@@ -18,6 +18,7 @@ const config = vi.hoisted(() => ({
   DISCORD_GUILD_ID: 'guild',
   VERIFIED_MEMBER_ROLE_ID: 'verified',
   DUNE_API_KEY: 'separate-admin-key',
+  DUNE_ADAPTER_TOKEN: 'separate-adapter-key',
 }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => config }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: 'admin' }) }) }));
@@ -113,11 +114,11 @@ it('accepts a native form post for downloads', async () => {
   expect(response.status).toBe(200);
 });
 
-it('binds adapter actor identity to the verified session and uses the single Console key as the adapter bearer', async () => {
+it('binds adapter actor identity to the verified session and uses the separate adapter token and never the Console key', async () => {
   await run({ operation: 'get-integrations-discord-players-me', query: { actor: 'forged' } });
   const url = new URL(fetcher.mock.calls[0][0]);
   expect(JSON.parse(url.searchParams.get('actor')!).userId).toBe('456084885220884480');
-  expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer separate-admin-key');
+  expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer separate-adapter-key');
 });
 
 it('never retries an uncertain mutation and retains queued/conflict responses', async () => {

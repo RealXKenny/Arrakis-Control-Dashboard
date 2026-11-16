@@ -88,7 +88,7 @@ export default function AdminWorkspace({ catalog }: { catalog: AdminCatalog }) {
     (operation?.provider === 'console' && !configured
       ? 'Set DUNE_API_KEY on the server to enable these operations.'
       : operation?.provider === 'adapter' && !adapterConfigured
-        ? 'Set DUNE_API_KEY on the server to enable adapter operations.'
+        ? 'Set DUNE_ADAPTER_TOKEN on the server to enable adapter operations.'
         : '');
 
   function select(next: AdminOperation, context: Record<string, string> = {}) {

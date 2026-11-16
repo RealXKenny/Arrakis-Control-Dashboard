@@ -37,6 +37,7 @@ describe('Pterodactyl dashboard egg', () => {
     for (const key of [
       'DUNE_API_URL',
       'DUNE_API_KEY',
+      'DUNE_ADAPTER_TOKEN',
       'DISCORD_GUILD_ID',
       'VERIFIED_MEMBER_ROLE_ID',
       'APP_URL',
@@ -118,6 +119,7 @@ describe('release integrity', () => {
       [
         'AUTH_SECRET',
         'BOT_API_TOKEN',
+        'DUNE_ADAPTER_TOKEN',
         'DISCORD_BOT_TOKEN',
         'DUNE_API_KEY',
         'DISCORD_CLIENT_SECRET',
@@ -133,7 +135,7 @@ describe('release integrity', () => {
       expect(byName.get(name), name).toMatchObject({ user_viewable: false, user_editable: false });
     }
     // Required settings stay required, so installation and startup validation still demand them.
-    for (const name of ['AUTH_SECRET', 'REDIS_URL', 'DUNE_API_KEY', 'DISCORD_CLIENT_SECRET'])
+    for (const name of ['AUTH_SECRET', 'REDIS_URL', 'DUNE_API_KEY', 'DUNE_ADAPTER_TOKEN', 'DISCORD_CLIENT_SECRET'])
       expect(byName.get(name)?.rules, name).toContain('required');
     // Ordinary operational settings stay editable.
     for (const name of ['APP_URL', 'TRUSTED_PROXY_COUNT', 'ADMIN_DISCORD_IDS', 'RELEASE_TAG'])

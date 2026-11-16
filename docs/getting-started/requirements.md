@@ -14,13 +14,13 @@ Production installs through the Pterodactyl egg additionally need a Pterodactyl 
 
 ## Accounts and external services
 
-| Item                             | Why                                                                                         | Guide                                                |
-| -------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Discord application              | OAuth2 sign-in (client ID and secret)                                                       | [Discord OAuth](../configuration/discord-oauth.md)   |
-| Discord server and a member role | Only members who hold `VERIFIED_MEMBER_ROLE_ID` in `DISCORD_GUILD_ID` may use the dashboard | [Authentication](../configuration/authentication.md) |
-| A running Dune Console           | `DUNE_API_URL` plus an API key; usually the RedBlink Dune Docker Console                    | [Dune Console](../configuration/dune-console.md)     |
-| Console API key                  | One `DUNE_API_KEY` for members and administrators, also set as the Console adapter token    | [Dune Console](../configuration/dune-console.md)     |
-| Public HTTPS origin              | `APP_URL`; production refuses plain `http://` except for loopback                           | [Reverse proxy](../installation/reverse-proxy.md)    |
+| Item                              | Why                                                                                         | Guide                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Discord application               | OAuth2 sign-in (client ID and secret)                                                       | [Discord OAuth](../configuration/discord-oauth.md)   |
+| Discord server and a member role  | Only members who hold `VERIFIED_MEMBER_ROLE_ID` in `DISCORD_GUILD_ID` may use the dashboard | [Authentication](../configuration/authentication.md) |
+| A running Dune Console            | `DUNE_API_URL` plus an API key; usually the RedBlink Dune Docker Console                    | [Dune Console](../configuration/dune-console.md)     |
+| Console API key and adapter token | `DUNE_API_KEY` for members and administrators; `DUNE_ADAPTER_TOKEN` for the Discord adapter | [Dune Console](../configuration/dune-console.md)     |
+| Public HTTPS origin               | `APP_URL`; production refuses plain `http://` except for loopback                           | [Reverse proxy](../installation/reverse-proxy.md)    |
 
 ## Network
 

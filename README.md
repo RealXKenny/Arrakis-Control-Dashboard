@@ -182,7 +182,7 @@ Use [`.env.example`](.env.example) as the complete template; every variable, ran
 
 | Setting                                                                                               | Purpose                                                                                                                    |
 | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `DUNE_API_URL`, `DUNE_API_KEY`                                                                        | Dune Console URL and its single credential (also the adapter bearer)                                                       |
+| `DUNE_API_URL`, `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN`                                                  | Dune Console URL, API key and Discord adapter token                                                                        |
 | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`                                      | Discord OAuth and guild authorization                                                                                      |
 | `VERIFIED_MEMBER_ROLE_ID`                                                                             | Required member role                                                                                                       |
 | `APP_URL`                                                                                             | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                             |

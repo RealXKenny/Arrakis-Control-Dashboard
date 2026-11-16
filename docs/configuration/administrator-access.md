@@ -43,7 +43,7 @@ records `admin.reauth_required`.
 
 ## Console credentials
 
-Administration calls use `DUNE_API_KEY`, also for adapter operations. Without it the
+Administration calls use `DUNE_API_KEY` (or `DUNE_ADAPTER_TOKEN` for adapter operations). Without them the
 panel stays read-only/disabled. See [Dune Console](dune-console.md).
 
 ## Verify

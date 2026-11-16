@@ -7,7 +7,7 @@ import { z } from 'zod';
  * This module is the single source of truth for environment validation
  * for both App Router and legacy Pages Router modules. It may only be imported from
  * server-side code — `assert-server` throws at module load otherwise — so
- * secrets (DUNE_API_URL, DUNE_API_KEY, Redis credentials)
+ * secrets (DUNE_API_URL, DUNE_API_KEY, DUNE_ADAPTER_TOKEN, Redis credentials)
  * can never reach a client bundle.
  *
  * Posture: parsing is strict about *shape* (malformed values fail loudly
@@ -72,12 +72,10 @@ const serverEnvSchema = z.object({
   BOT_API_TOKEN: z.string().min(32).max(256).optional(),
   /** Dune Console base URL. Privileged operations and season delivery additionally require HTTPS or loopback HTTP. */
   DUNE_API_URL: z.string().url().optional(),
-  /**
-   * The single server-only Console credential for reads, administration and season delivery. The Console's Discord
-   * adapter accepts only its own configured bearer token, so set that token to this same value on the Console side.
-   * Dashboard authorization never depends on this key's power; see docs/configuration/dune-console.md.
-   */
+  /** The server-only Console credential for reads, administration and season delivery. */
   DUNE_API_KEY: z.string().min(1).optional(),
+  /** Bearer token for the Console's Discord adapter. The adapter accepts only its own token, never DUNE_API_KEY. */
+  DUNE_ADAPTER_TOKEN: z.string().min(1).optional(),
   /**
    * Solaris Exchange: real Solaris deposits, withdrawals and play. Off unless explicitly set to `true`; the server
    * refuses every wager and transfer while it is off. See docs/features/solaris-exchange.md before enabling.
@@ -229,6 +227,7 @@ export function getDiscordRedirectUri(): string | undefined {
 const PRODUCTION_REQUIREMENTS: ReadonlyArray<keyof ServerEnv> = [
   'DUNE_API_URL',
   'DUNE_API_KEY',
+  'DUNE_ADAPTER_TOKEN',
   'DISCORD_GUILD_ID',
   'VERIFIED_MEMBER_ROLE_ID',
   'APP_URL',
@@ -242,9 +241,9 @@ export function validateProductionEnv(): ServerEnv {
   const renamed = ['CONSOLE_URL', 'CONSOLE_API_KEY', 'ADMIN_CONSOLE_API_KEY', 'ADAPTER_TOKEN'].filter(
     (name) => process.env[name],
   );
-  if (renamed.length && (!env.DUNE_API_URL || !env.DUNE_API_KEY))
+  if (renamed.length && (!env.DUNE_API_URL || !env.DUNE_API_KEY || !env.DUNE_ADAPTER_TOKEN))
     throw new Error(
-      `Retired Console settings found (${renamed.join(', ')}). Replace them with DUNE_API_URL and one DUNE_API_KEY.`,
+      `Retired Console settings found (${renamed.join(', ')}). Replace them with DUNE_API_URL, DUNE_API_KEY and DUNE_ADAPTER_TOKEN.`,
     );
   // ADMIN_DISCORD_IDS has no production default: no administrator is implied by the code.
   requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'ADMIN_DISCORD_IDS');

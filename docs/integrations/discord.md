@@ -13,7 +13,7 @@
 
 The dashboard runs **no Discord bot** and has no bot token. Slash commands, the companion Discord bot, and Console broadcasts are
 separate projects: the RedBlink Console includes a Discord **adapter** for an external bot
-([RedBlink integration](redblink-dune-docker.md#enable-the-discord-adapter)). The dashboard's `DUNE_API_KEY` talks to that adapter
+([RedBlink integration](redblink-dune-docker.md#enable-the-discord-adapter)). The dashboard's `DUNE_ADAPTER_TOKEN` talks to that adapter
 (for example to look up your linked character); it does not make the dashboard a bot.
 
 ## Outages and rate limits

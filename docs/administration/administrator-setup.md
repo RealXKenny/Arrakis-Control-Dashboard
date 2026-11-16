@@ -7,8 +7,8 @@ Administrators can change your game server through the Console (restart, restore
 1. Collect each person's Discord user ID ([how](../getting-started/first-admin-login.md)).
 2. Set `ADMIN_DISCORD_IDS=id1,id2` (required in production) and restart.
 3. Each administrator must be in `DISCORD_GUILD_ID` and hold `VERIFIED_MEMBER_ROLE_ID`.
-4. Configure the Console credentials: `DUNE_API_KEY` with the scopes your members and administrators need, and the same
-   value as the Console's Discord adapter token for adapter tools ([Dune Console](../configuration/dune-console.md)).
+4. Configure the Console credentials: `DUNE_API_KEY` with the scopes your members and administrators need, and
+   `DUNE_ADAPTER_TOKEN` (the Console's Discord adapter token) for adapter tools ([Dune Console](../configuration/dune-console.md)).
 5. Decide the step-up windows (`ADMIN_REAUTH_HOURS` 12, `ADMIN_HIGH_RISK_REAUTH_MINUTES` 60). Shorter is safer.
 
 ## Permissions model

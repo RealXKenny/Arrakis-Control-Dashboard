@@ -8,22 +8,26 @@ dashboard has no direct access to the game database or containers.
 
 ## Credentials
 
-One credential, `DUNE_API_KEY`, is sent as `Authorization: Bearer <key>` to `DUNE_API_URL` for member reads, administrator
-operations, season delivery and the Console's Discord adapter (`/api/integrations/discord/*`). Never reuse its value for
-`AUTH_SECRET` or any other dashboard secret.
+Two credentials; never reuse a value between them or with `AUTH_SECRET`:
+
+| Variable             | Sent as                                                          | Used for                                                                             |
+| -------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `DUNE_API_KEY`       | `Authorization: Bearer <key>` to `DUNE_API_URL`                  | Member reads, administrator operations and season delivery                           |
+| `DUNE_ADAPTER_TOKEN` | `Authorization: Bearer <token>` to `/api/integrations/discord/*` | The Console's Discord adapter (linked-character lookup, adapter tools, Discord side) |
 
 The dashboard never uses Console passwords or browser sessions, never performs CSRF or re-login with the Console, and never
-returns the key to browsers. Dashboard authorization stays independent of the key's power: members still need verified
+returns these values to browsers. Dashboard authorization stays independent of the key's power: members still need verified
 sessions, canonical player/asset/guild checks and fresh leader verification, and administrators still need the exact
-verified identity, recent sign-in and request budgets. Console operations are refused without the key, and administrator
-and delivery requests are additionally refused unless `DUNE_API_URL` is HTTPS or loopback HTTP.
+verified identity, recent sign-in and request budgets. Console operations are refused without `DUNE_API_KEY`, adapter
+operations without `DUNE_ADAPTER_TOKEN`, and administrator and delivery requests are additionally refused unless
+`DUNE_API_URL` is HTTPS or loopback HTTP.
 
 ### Adapter token
 
 The upstream adapter does not accept Console API keys: it compares the bearer against its own token, configured on the
-Console side (`DUNE_BOT_API_TOKEN_FILE` or `DUNE_DISCORD_ADAPTER_TOKEN`, verified in upstream `requireDiscordBotToken`). To keep one
-credential, set that adapter token to the **same value** as `DUNE_API_KEY`; the adapter stays disabled until
-`DUNE_DISCORD_ADAPTER_ENABLED=true`. If the values differ, adapter calls fail with `401` while ordinary Console calls keep working.
+Console side (`DUNE_BOT_API_TOKEN_FILE` or `DUNE_DISCORD_ADAPTER_TOKEN`, verified in upstream `requireDiscordBotToken`). Use the
+identical value for `DUNE_ADAPTER_TOKEN`; the adapter stays disabled until `DUNE_DISCORD_ADAPTER_ENABLED=true`. Mismatched values
+make adapter calls fail with `401` while ordinary Console calls keep working.
 See [RedBlink integration](../integrations/redblink-dune-docker.md#enable-the-discord-adapter).
 
 ## Suggested key scopes
@@ -75,7 +79,7 @@ missing scope; the adapter answers `404` when disabled and `503` when its token 
 
 ## Security
 
-Treat the key as a secret ([secrets management](../security/secrets-management.md)). Prefer the narrowest scopes that cover the features you use. Because one key now serves members and administrators, protect
+Treat both values as secrets ([secrets management](../security/secrets-management.md)). Prefer the narrowest scopes that cover the features you use. Because one key now serves members and administrators, protect
 it like an administrator credential and rotate it when an administrator leaves.
 
 ## Troubleshooting

@@ -32,7 +32,7 @@ import type {
  *   same payload shapes, used when Redis is not configured or while the
  *   circuit breaker is open.
  *
- * Credential boundary: DUNE_API_URL / DUNE_API_KEY are only
+ * Credential boundary: DUNE_API_URL / DUNE_API_KEY / DUNE_ADAPTER_TOKEN are only
  * referenced inside this server module (via the Dune client) and inside
  * `src/lib/redis-client.ts`; nothing here may be imported by a 'use client'
  * file — `assert-server` enforces that at module load.

@@ -6,7 +6,7 @@ Work through this list, then the [deployment checklist](../deployment/deployment
 
 - [ ] `ADMIN_DISCORD_IDS` set explicitly to the smallest list; every ID in the guild with the member role.
 - [ ] `AUTH_SECRET` 48+ random characters, unique; `OWNER_KEY_SECRET` set to a separate random value **before** publishing listings you keep.
-- [ ] `DUNE_API_KEY` and `BOT_API_TOKEN` different; minimal Console scopes. The Console adapter token intentionally equals `DUNE_API_KEY`.
+- [ ] `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN` and `BOT_API_TOKEN` all different; minimal Console scopes.
 - [ ] `APP_URL` is the exact public `https://` origin.
 - [ ] `REDIS_URL` uses a password and `rediss://` where traffic leaves the host; `REDIS_REQUIRE_TLS=true`; `REDIS_ALLOW_INSECURE` left `false`.
 - [ ] `TRUSTED_PROXY_COUNT` equals the real number of proxies.

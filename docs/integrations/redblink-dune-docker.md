@@ -36,7 +36,7 @@ flowchart LR
 | Console URL, port            | RedBlink Console (`ADMIN_BIND_PORT`, Settings → Web Console Port, default `8088`)                                              | `DUNE_API_URL` in the dashboard                            |
 | Console admin password       | RedBlink (`runtime/secrets/admin-web-password.txt`)                                                                            | **Not used by the dashboard**                              |
 | API keys                     | RedBlink Console, Settings → API Keys                                                                                          | `DUNE_API_KEY`                                             |
-| Adapter enable + token       | RedBlink `.env`: `DUNE_DISCORD_ADAPTER_ENABLED`, `DUNE_BOT_API_TOKEN_FILE` or `DUNE_DISCORD_ADAPTER_TOKEN`                     | `DUNE_API_KEY` (same value as the API key)                 |
+| Adapter enable + token       | RedBlink `.env`: `DUNE_DISCORD_ADAPTER_ENABLED`, `DUNE_BOT_API_TOKEN_FILE` or `DUNE_DISCORD_ADAPTER_TOKEN`                     | `DUNE_ADAPTER_TOKEN` (same value)                          |
 | Adapter roles                | RedBlink `.env`: `DISCORD_OBSERVER_ROLE_IDS`, `DISCORD_MODERATOR_ROLE_IDS`, `DISCORD_ADMIN_ROLE_IDS`, `DISCORD_OWNER_ROLE_IDS` | Not read by the dashboard                                  |
 | Console IP allow-list        | RedBlink `.env`: `ADMIN_ALLOWED_IPS`                                                                                           | The dashboard host's address must be allowed if you set it |
 | Member sign-in and roles     | Discord                                                                                                                        | `DISCORD_*`, `VERIFIED_MEMBER_ROLE_ID`                     |
@@ -77,12 +77,12 @@ DUNE_BOT_API_TOKEN_FILE=/repo/runtime/secrets/bot-api-token.txt
 
 ```bash
 mkdir -p runtime/secrets
-echo -n "<same value as the dashboard DUNE_API_KEY>" > runtime/secrets/bot-api-token.txt
+echo -n "<RANDOM_TOKEN>" > runtime/secrets/bot-api-token.txt
 chmod 600 runtime/secrets/bot-api-token.txt
 docker compose -f docker-compose.web.yml up -d --build redblink-dune-docker-console
 ```
 
-The adapter accepts only this token, so it must equal the dashboard's `DUNE_API_KEY`. The adapter is disabled by default, read-mostly, bearer-token
+Then set the dashboard's `DUNE_ADAPTER_TOKEN` to the same token. The adapter is disabled by default, read-mostly, bearer-token
 protected and role-gated; `/broadcast` stays disabled on the stock compose file. Upstream error meanings:
 `404` adapter not enabled, `401` token mismatch, `503` no token/missing token file.
 
@@ -110,7 +110,7 @@ Inside the dashboard: portal shows population, `/admin → Overview` reports the
 | `401` from the Console                       | Wrong/disabled/expired key (a bad bearer never falls back to cookies) | Create a new key, update env, restart                                 |
 | `403` or empty lists                         | Key lacks the namespace/action                                        | Edit scopes in Settings → API Keys                                    |
 | Adapter `404`                                | `DUNE_DISCORD_ADAPTER_ENABLED` not `true`                             | Enable and rebuild the Console container                              |
-| Adapter `401`                                | `DUNE_API_KEY` ≠ Console adapter token                                | Make them identical                                                   |
+| Adapter `401`                                | `DUNE_ADAPTER_TOKEN` ≠ Console token                                  | Make them identical                                                   |
 | Adapter `503`                                | Token file missing/empty                                              | Create the file, rebuild                                              |
 | Works locally, fails from the dashboard host | `ADMIN_ALLOWED_IPS` or firewall                                       | Allow the dashboard host                                              |
 | Characters not shown                         | No Discord↔character link                                             | Link through the adapter flow (`players/link`, `players/link/verify`) |
