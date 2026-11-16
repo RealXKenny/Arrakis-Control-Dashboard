@@ -7,17 +7,17 @@ start without `REDIS_URL`. Redis can be a single node (this page) or a Cluster (
 
 ## What is stored
 
-| Data                         | Key pattern (prefix)                                    | Notes                                                                      |
-| ---------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Sessions                     | `arrakis:session:<sha256>`                              | 30 days; the cookie holds only the opaque ID                                |
-| Session revocation markers   | `arrakis:session-epoch:<sha256 of user id>`             | Written by "sign out everywhere"                                            |
-| Accounts and email claims    | `arrakis:auth:user:<discordId>`, `arrakis:auth:email2:<hash>`, `arrakis:auth:reverify:<discordId>` | Password hash, linked email, re-verification lock |
-| Rate-limit counters          | `arrakis:rate:<sha256>`                                 | One counter per key and window; always has a TTL                            |
-| Audit trail                  | `arrakis:{audit}:v1:events`                             | Sorted set, trimmed by age and count                                         |
-| Guild data                   | `arrakis:{guilds}:…`                                    | Listings, applications, chats, support threads, logos                        |
-| Base marketplace             | `arrakis:{bm}:v2:…` (and legacy `arrakis:{bm}:v1:…`)    | Listings, pictures, per-member counters                                      |
-| Base-import ledger           | `arrakis:{solido:<owner>}:history:<day>` / `operation:<id>` | Per-member                                                               |
-| Read caches, snapshots       | `arrakis:read:v1:…`, `arrakis:dashboard:snapshot`, `arrakis:population:…` | Rebuilt from the Console                                      |
+| Data                       | Key pattern (prefix)                                                                               | Notes                                                 |
+| -------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Sessions                   | `arrakis:session:<sha256>`                                                                         | 30 days; the cookie holds only the opaque ID          |
+| Session revocation markers | `arrakis:session-epoch:<sha256 of user id>`                                                        | Written by "sign out everywhere"                      |
+| Accounts and email claims  | `arrakis:auth:user:<discordId>`, `arrakis:auth:email2:<hash>`, `arrakis:auth:reverify:<discordId>` | Password hash, linked email, re-verification lock     |
+| Rate-limit counters        | `arrakis:rate:<sha256>`                                                                            | One counter per key and window; always has a TTL      |
+| Audit trail                | `arrakis:{audit}:v1:events`                                                                        | Sorted set, trimmed by age and count                  |
+| Guild data                 | `arrakis:{guilds}:…`                                                                               | Listings, applications, chats, support threads, logos |
+| Base marketplace           | `arrakis:{bm}:v2:…` (and legacy `arrakis:{bm}:v1:…`)                                               | Listings, pictures, per-member counters               |
+| Base-import ledger         | `arrakis:{solido:<owner>}:history:<day>` / `operation:<id>`                                        | Per-member                                            |
+| Read caches, snapshots     | `arrakis:read:v1:…`, `arrakis:dashboard:snapshot`, `arrakis:population:…`                          | Rebuilt from the Console                              |
 
 Losing Redis signs everyone out and deletes guild data, marketplace listings and the Redis copy of the audit trail. Treat it as
 production data and [back it up](../administration/backups.md).

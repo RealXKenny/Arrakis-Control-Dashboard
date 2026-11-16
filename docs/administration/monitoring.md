@@ -5,20 +5,20 @@ its logs, Redis and the Console from outside.
 
 ## What to watch
 
-| Signal                                   | How                                                                                 | Alert when                                       |
-| ---------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Process up                               | `GET /` returns 200 (any uptime monitor)                                             | non-200 or timeout                                |
-| Readiness line                           | Console/log line `Arrakis Control Dashboard is listening` after each start           | missing after a restart                            |
-| Fail-closed configuration                | Log line `Production configuration is invalid; refusing to start`; HTTP 500 on all pages | any occurrence                                  |
-| Rate limiter storage                     | Audit event `security.control_failure`; HTTP 503 `RATE_LIMIT_UNAVAILABLE`            | any occurrence (Redis unreachable)                 |
-| Failed sign-ins                          | Audit `auth.login_failed` (`reason` in `data`)                                       | many from one `ip`, or many `rate_limited`         |
-| Administrator denials                    | `admin.access_denied`, `admin.reauth_required`                                       | bursts, or unknown actors                           |
-| Rejected origins                         | `security.origin_rejected`                                                           | bursts (a probing client)                          |
-| Administrator changes                    | `admin.operation`, `admin.sessions_revoked`                                          | outside expected change windows                     |
-| Console reachability                     | Log lines `Provider network failure`, `Console API request failed`                   | repeated                                            |
-| Overload                                 | HTTP 503 `SERVER_BUSY`                                                               | sustained                                           |
-| Redis                                    | memory, evictions, connection errors, replication lag (Redis tooling)                | evictions > 0, memory near `maxmemory`              |
-| Startup warnings                         | `REDIS_URL carries no password`, `unencrypted redis://`                              | present in production                               |
+| Signal                    | How                                                                                      | Alert when                                 |
+| ------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Process up                | `GET /` returns 200 (any uptime monitor)                                                 | non-200 or timeout                         |
+| Readiness line            | Console/log line `Arrakis Control Dashboard is listening` after each start               | missing after a restart                    |
+| Fail-closed configuration | Log line `Production configuration is invalid; refusing to start`; HTTP 500 on all pages | any occurrence                             |
+| Rate limiter storage      | Audit event `security.control_failure`; HTTP 503 `RATE_LIMIT_UNAVAILABLE`                | any occurrence (Redis unreachable)         |
+| Failed sign-ins           | Audit `auth.login_failed` (`reason` in `data`)                                           | many from one `ip`, or many `rate_limited` |
+| Administrator denials     | `admin.access_denied`, `admin.reauth_required`                                           | bursts, or unknown actors                  |
+| Rejected origins          | `security.origin_rejected`                                                               | bursts (a probing client)                  |
+| Administrator changes     | `admin.operation`, `admin.sessions_revoked`                                              | outside expected change windows            |
+| Console reachability      | Log lines `Provider network failure`, `Console API request failed`                       | repeated                                   |
+| Overload                  | HTTP 503 `SERVER_BUSY`                                                                   | sustained                                  |
+| Redis                     | memory, evictions, connection errors, replication lag (Redis tooling)                    | evictions > 0, memory near `maxmemory`     |
+| Startup warnings          | `REDIS_URL carries no password`, `unencrypted redis://`                                  | present in production                      |
 
 ## Log shipping
 

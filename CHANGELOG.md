@@ -4,6 +4,21 @@
 
 ### New Features
 
+- Navigation reorganized: the More menu is gone. Everything now sits in the top row as categories (Assets, Bases, Guilds, Casino, Community and Personal), and every dropdown uses the same Bases-style panel with an introduction card and titled groups. Narrower desktop widths place the row on its own line instead of hiding destinations.
+- Universal item finder searches your authorized backpack, base containers and vehicle cargo with permission checks, and private pinned item counters track the stacks you care about.
+- Customizable portal widgets with a compact personal view, saved activity views for different activities, and a Console-default theme with 66 additional themes and a custom color studio.
+- Unified actionable inbox for asset needs, supply follow-ups and operation briefings, with per-feature notification preferences, quiet hours, cooldowns and snooze controls.
+- Private personal tasks and goals linked to items, vehicles, bases and projects, and a privacy center for voluntary profile, location, crafting and supply sharing with revocable links.
+- Mobile field quick actions, an authorized keyboard command palette (Ctrl or Command + K), and freshness and outage indicators with explicit last-success timestamps on monitoring panels.
+- Personal data export and erasure controls for dashboard-owned notes, plans and retained snapshots.
+- Private guild collaboration tools: noticeboard, operations planner with role sign-ups, resource requests with delivery tracking, shared base directory, recruit onboarding and guild polls with verified-character voting.
+- Community seasons: free 100-level reward track, atomic progression and review engine, season builder, permanent profile cosmetics, secure artwork and live presentation edits, Safari/WebKit coverage, validated launch content import and reviewed in-game reward delivery.
+- Automatic seasons now use deterministic personal plans built from an immutable enrollment baseline. Objectives are based only on verified game data, never repeat or reroll, never complete instantly from existing progress, and report limitations instead of promising impossible completion. Level-200 characters receive journey objectives only.
+- Eight rotating seasonal themes drive season names, subtitles, descriptions and reward focus without repeating inside a cycle.
+- Catalog-backed reward economy: every one of the 100 levels carries a reward bundle of items, Solaris and House Credits generated from the Console item catalog within per-level, per-season and currency budgets. Developer, quest, entitlement-controlled and unclassified items are excluded and unsafe plans are rejected before publication.
+- Manual **Claim Reward** and **Claim All Available** deliver rewards directly with no administrator approval: server-side level, ownership, character-binding and offline checks, durable component-level claim records, a persisted send marker before every game call, exact balance and receipt verification, and no resend of uncertain or interrupted deliveries. Claims remain open after a season ends.
+- Administrator algorithm monitor shows the engine versions, theme sequence, economy budgets, a simulation across characters at levels 1 to 200 and a reconciliation queue for uncertain deliveries.
+
 - Intelligent automatic seasons: deterministic personal objective plans built from an immutable enrollment baseline, level-200-aware eligibility, eight rotating seasonal themes, catalog-backed reward bundles at all 100 levels within an explainable economy, and manual **Claim Reward** and **Claim All Available** with durable component-level delivery. Uncertain deliveries are never resent and appear in an administrator reconciliation queue; an algorithm monitor shows simulations and economy budgets. Generated seasons no longer claim cosmetics automatically.
 
 - Simplified Console configuration: `DUNE_API_URL` and `DUNE_API_KEY` replace `CONSOLE_URL`, `CONSOLE_API_KEY` and `ADMIN_CONSOLE_API_KEY`, and `ADAPTER_TOKEN` is renamed `DUNE_ADAPTER_TOKEN` for the Console's Discord adapter, which accepts only its own token. Dashboard authorization, privileged HTTPS/loopback transport and the retired-setting startup error are unchanged in intent. Season automation and delivery toggles were removed.
@@ -60,6 +75,14 @@
 
 ### Improvements
 
+- `npm run env:migrate` updates an existing `.env` automatically: it renames replaced variables, removes retired ones, appends new ones as commented placeholders, keeps a timestamped backup and never prints values. It also runs before `npm run dev` and `npm start`.
+- Console configuration simplified to `DUNE_API_URL`, `DUNE_API_KEY` and `DUNE_ADAPTER_TOKEN`, replacing `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN`. Production refuses to start on the retired names without replacements. The Pterodactyl egg exposes the new variables as hidden secrets.
+- Season automation and in-game delivery no longer need feature toggles: automatic seasons start by default and saved pauses survive restarts, and delivery follows the administrator Console connection.
+- Console-style desktop and mobile polish with shared button, card, menu and control helpers used across seasons, personalization and administration.
+- Redis integration and Cluster recovery coverage expanded, including baseline, claim and delivery records on real standalone and six-node Cluster targets.
+- All coding-agent guidance now lives in one `AGENTS.md`; the per-tool rule folders and companion files were removed.
+- Component, accessibility and responsive coverage expanded across Chromium, Safari, iPhone and Android projects.
+
 - Redis Cluster verification runs on V2 pushes using three masters and three replicas, retaining test logs and final topology. Expanded real-Redis coverage exercises transfer concurrency, uncertainty/reconciliation, multi-page recovery and interrupted round settlement after reconnecting. Cluster pool connections no longer inherit a standalone database selection, and pool shutdown now closes every connection.
 
 - Final release-audit coverage checks 25 member routes at six desktop/tablet/mobile widths, WCAG 2.0/2.1/2.2 AA automation, keyboard navigation and reduced motion. Improved small-screen base upload and fairness forms, readable secondary text, loading announcements and unavailable gauge semantics. Added sanitized production-build screenshots for the landing page, overview, casino, Blackjack, sound settings and navigation.
@@ -107,6 +130,12 @@
 
 ### Fixes
 
+- Participant counts in season totals now start at a member's first recorded activity instead of when tracking creates an empty record.
+- Existing character levels and completed journeys no longer complete a new season immediately.
+- Inventory readings reset when the account context changes, tablet actions wrap, viewed chat receipts are verified, and command navigation stays inside desktop breakpoint bounds.
+- Base upload grids and labels no longer overflow on narrow screens, and the storage grid fits phone screens.
+- Seven-tab guild navigation fits its width and season browser fixtures are isolated across CI shards and retries.
+
 - Changelog counters distinguish release updates from their individual changes, so version 2 is shown as one update. Selected text uses a visible blue highlight for copying.
 - Restored the shared Obsidian, Sand and Spice CSS color variables so primary buttons, focus rings and feature styles consistently resolve their intended colors.
 - Header controls and branding now adapt to narrow screens while retaining usable touch targets. Lower-priority destinations move into More without horizontal overflow; Community events and Service status always remain inside More.
@@ -123,6 +152,9 @@
 - Authenticated profile images now use a consistent initials fallback if Redis storage or image loading is unavailable, instead of leaving a broken image in navigation, profiles or chat.
 
 ### Security
+
+- Season progress, claims and deliveries are bound to canonical pawn and controller IDs, use atomic CAS records, and never accept client-supplied evidence, amounts or recipients. Administrator credentials stay server-side.
+- The Discord adapter token is separate from the Console API key, and administrator and delivery requests still require HTTPS or loopback transport.
 
 - Members who leave the Discord server or lose the required role are now signed out within 30 minutes. If Discord cannot be reached, a session stays valid for up to 6 hours after its last successful check.
 - Password sign-in re-checks the Discord guild and role every time. Passwords are hashed with scrypt, Discord refresh tokens are encrypted before they are stored, and only a Discord-verified email can be linked to an account.
@@ -152,6 +184,8 @@
 - Community event drafts are excluded from member pages and read APIs. The Discord bot token stays server-side, and announcement configuration is exposed to the editor only as a configured/not-configured status.
 
 ### Removed
+
+- The More navigation menu, the per-tool agent rule folders (Cursor, Windsurf, Cline, Roo, Continue, Codex, Copilot), the Codex, Kimi and Gemini companion files and the retired `CONSOLE_*`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN` variables.
 
 - Root Docker build, Compose and ignore files, container entrypoint scripts and the custom application image. Releases use the standard Pterodactyl Node.js runtime, and optional chat starts through the existing Node.js launcher without an additional required process manager.
 - The second navigation row that used to sit under the top bar.

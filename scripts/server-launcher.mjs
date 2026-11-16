@@ -6,6 +6,7 @@ import { access, lstat, mkdir, readlink } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import dotenv from 'dotenv';
+import { migrateEnvFile } from './maintenance/migrate-env.mjs';
 
 const DEFAULT_HOSTNAME = '127.0.0.1';
 const DEFAULT_PORT = '2008';
@@ -145,6 +146,19 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
     throw new Error('Server command must be either "dev" or "start".');
   }
 
+  // Bring an existing .env up to date (renamed, removed and new variables) before it is loaded. Names only are logged.
+  if (!process.env.VITEST && process.env.ARRAKIS_ENV_MIGRATE !== '0') {
+    try {
+      const migrated = migrateEnvFile();
+      if (migrated.applied) {
+        console.log(`Updated .env for this release (${migrated.changes.length} change(s)); backup: ${migrated.backup}`);
+        for (const change of migrated.changes) console.log(` - ${change}`);
+        for (const warning of migrated.warnings) console.log(` ! ${warning}`);
+      }
+    } catch {
+      console.warn('Could not migrate .env automatically; run npm run env:migrate to see why.');
+    }
+  }
   // Dev note: load the environment before Next pitches its server tent.
   dotenv.config({ quiet: true });
   const serverArgs = resolveServerOptions(process.env, forwardedArgs);

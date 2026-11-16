@@ -243,7 +243,7 @@ export function validateProductionEnv(): ServerEnv {
   );
   if (renamed.length && (!env.DUNE_API_URL || !env.DUNE_API_KEY || !env.DUNE_ADAPTER_TOKEN))
     throw new Error(
-      `Retired Console settings found (${renamed.join(', ')}). Replace them with DUNE_API_URL, DUNE_API_KEY and DUNE_ADAPTER_TOKEN.`,
+      `Retired Console settings found (${renamed.join(', ')}). Run npm run env:migrate or replace them with DUNE_API_URL, DUNE_API_KEY and DUNE_ADAPTER_TOKEN.`,
     );
   // ADMIN_DISCORD_IDS has no production default: no administrator is implied by the code.
   requireServerEnv(...PRODUCTION_REQUIREMENTS, 'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'ADMIN_DISCORD_IDS');

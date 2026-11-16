@@ -17,12 +17,12 @@ How sign-ins persist and how they end.
 
 ## Revoking sessions
 
-| Mechanism                         | Scope                                   | Who                                             |
-| --------------------------------- | --------------------------------------- | ----------------------------------------------- |
-| Sign out                          | this browser's session                  | the member                                       |
-| Failed Discord re-check           | that member's session                   | automatic (`auth.session_revoked`)               |
-| `DELETE /api/v2/admin/sessions`   | **all** sessions of the calling administrator | an administrator with a sign-in within the high-risk window |
-| Delete the Redis keys             | one or all sessions                     | an operator with Redis access (everyone signs in again) |
+| Mechanism                       | Scope                                         | Who                                                         |
+| ------------------------------- | --------------------------------------------- | ----------------------------------------------------------- |
+| Sign out                        | this browser's session                        | the member                                                  |
+| Failed Discord re-check         | that member's session                         | automatic (`auth.session_revoked`)                          |
+| `DELETE /api/v2/admin/sessions` | **all** sessions of the calling administrator | an administrator with a sign-in within the high-risk window |
+| Delete the Redis keys           | one or all sessions                           | an operator with Redis access (everyone signs in again)     |
 
 "Sign out everywhere" stores a per-member marker (`arrakis:session-epoch:<sha256(user id)>`, kept 30 days, never moved backwards).
 A session whose interactive sign-in is not newer than the marker is rejected and deleted on its next use, including sessions on
@@ -33,7 +33,7 @@ one administrator to revoke another member's sessions from the dashboard.
 Example (from an authenticated administrator browser console on the same origin):
 
 ```js
-await fetch('/api/v2/admin/sessions', { method: 'DELETE' }).then((r) => r.json());   // { ok: true, signedOut: true }
+await fetch('/api/v2/admin/sessions', { method: 'DELETE' }).then((r) => r.json()); // { ok: true, signedOut: true }
 ```
 
 ## Cookie details

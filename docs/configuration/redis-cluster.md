@@ -6,13 +6,13 @@ Set `REDIS_CLUSTER_NODES` to run the dashboard against a Redis Cluster. The comm
 `ioredis` `Cluster` with topology refresh, redirection following and endless capped retries. Multi-key Lua scripts only work
 when all their keys are in one hash slot, so the key layout uses hash tags:
 
-| Hash tag               | Holds                                                    | Consequence                                    |
-| ---------------------- | -------------------------------------------------------- | ---------------------------------------------- |
-| `{guilds}`             | all guild recruitment, applications, chats, support data | All guild data lives on one shard              |
-| `{bm}`                 | base marketplace                                         | One shard                                      |
-| `{audit}`              | audit trail                                              | One shard                                      |
-| `{solido:<owner>}`     | one member's base-import ledger                          | Spreads across shards per member               |
-| none                   | sessions, rate limits, caches, accounts                  | Spread across all shards                       |
+| Hash tag           | Holds                                                    | Consequence                       |
+| ------------------ | -------------------------------------------------------- | --------------------------------- |
+| `{guilds}`         | all guild recruitment, applications, chats, support data | All guild data lives on one shard |
+| `{bm}`             | base marketplace                                         | One shard                         |
+| `{audit}`          | audit trail                                              | One shard                         |
+| `{solido:<owner>}` | one member's base-import ledger                          | Spreads across shards per member  |
+| none               | sessions, rate limits, caches, accounts                  | Spread across all shards          |
 
 The client refuses a script whose keys span slots (client-side check) instead of sending a request the server would reject.
 

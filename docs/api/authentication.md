@@ -15,11 +15,11 @@
 
 Reports whether the cookie maps to a live server-side session.
 
-| | |
-| --- | --- |
-| Auth | Session cookie |
-| 200 | `{ "ok": true, "cacheScope": "<opaque>", "expiresAt": 1799999999999 }` |
-| 401 | `{ "error": "Unauthorized" }` and the stale cookie is cleared |
+|      |                                                                        |
+| ---- | ---------------------------------------------------------------------- |
+| Auth | Session cookie                                                         |
+| 200  | `{ "ok": true, "cacheScope": "<opaque>", "expiresAt": 1799999999999 }` |
+| 401  | `{ "error": "Unauthorized" }` and the stale cookie is cleared          |
 
 `cacheScope` is a derived value the UI uses to keep per-user caches apart; it is not the session ID.
 
@@ -27,12 +27,12 @@ Reports whether the cookie maps to a live server-side session.
 
 Finish Discord signup by attaching a password to the Discord-verified email on the session.
 
-| | |
-| --- | --- |
-| Auth | Session cookie; same-origin |
-| Limit | 6 per 15 minutes per member; body ≤ 2048 bytes |
-| Body | `{ "password": "…", "confirmPassword": "…" }` (12 to 128 characters, must match) |
-| 200 | `{ "ok": true }` |
+|        |                                                                                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Auth   | Session cookie; same-origin                                                                                                                            |
+| Limit  | 6 per 15 minutes per member; body ≤ 2048 bytes                                                                                                         |
+| Body   | `{ "password": "…", "confirmPassword": "…" }` (12 to 128 characters, must match)                                                                       |
+| 200    | `{ "ok": true }`                                                                                                                                       |
 | Errors | 401 `UNAUTHORIZED`; 403 `INVALID_ORIGIN`; 409 `NO_VERIFIED_EMAIL`, `PASSWORD_EXISTS`; 413 `BODY_TOO_LARGE`; 422 `INVALID_PASSWORD`; 429 `RATE_LIMITED` |
 
 The email always comes from the session, never from the body. Audit: `auth.password_set`.

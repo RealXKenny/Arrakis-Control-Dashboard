@@ -51,7 +51,7 @@ test('realtime layer updates, filters instances, clears failures and switches ma
       },
     });
   });
-  await page.goto('/map');
+  await page.goto('/map/hagga-basin');
   await page.getByRole('button', { name: '2D map', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Base: My base', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Realtime on', exact: true })).toBeVisible();
@@ -135,7 +135,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
       },
     });
   });
-  await page.goto('/map');
+  await page.goto('/map/hagga-basin');
   await page.getByRole('button', { name: '2D map', exact: true }).click();
   const mapPanel = page.locator('[data-map-panel]');
   await expect.poll(async () => (await mapPanel.boundingBox())?.width ?? 0).toBeGreaterThan(500);
@@ -243,7 +243,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await page.getByRole('button', { name: 'Refresh', exact: true }).click();
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
   await page.screenshot({ path: 'test-results/map-desktop.png', fullPage: true });
-  await expect(page).toHaveURL(/\/map$/);
+  await expect(page).toHaveURL(/\/map\/hagga-basin$/);
   await expect(page.getByRole('link', { name: 'Hagga Basin', exact: true })).toHaveAttribute('aria-current', 'page');
   const desertLinks = page.locator('nav a').filter({ hasText: /Hagga Basin|Deep Desert/ });
   await expect(desertLinks).toHaveText(['Hagga Basin', 'Deep Desert']);
@@ -251,7 +251,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(page.getByRole('link', { name: 'Deep Desert', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('checkbox', { name: 'Sector Grid', exact: true })).toBeChecked();
   await expect(page.getByTitle('Show Storage', { exact: true })).toHaveCount(1);
-  await expect(page).toHaveURL(/\/map(\?map=DeepDesert)?$/);
+  await expect(page).toHaveURL(/\/map\/deep-desert$/);
   await page.getByRole('button', { name: '2D map', exact: true }).click();
   // CI's software renderer can spend over 20 seconds uploading the full legacy terrain.
   await expect(page.locator('canvas[aria-hidden="true"]')).toHaveCount(1, {
@@ -355,7 +355,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
       },
     });
   });
-  await page.goto('/map');
+  await page.goto('/map/hagga-basin');
   const scene = page.locator('[data-map-view="3d"]');
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
   const marker = page.getByRole('button', { name: 'Base: 3D stronghold', exact: true, includeHidden: true });
@@ -503,7 +503,7 @@ for (const mapName of ['Hagga Basin', 'Deep Desert']) {
     });
     // Separate per-map budgets retain full geometry, marker density and wheel sequences.
     // A normal desktop canvas avoids making software rasterization an ultrawide benchmark.
-    await page.goto(mapName === 'Deep Desert' ? '/map?map=DeepDesert' : '/map');
+    await page.goto(mapName === 'Deep Desert' ? '/map/deep-desert' : '/map/hagga-basin');
     const scene = page.locator('[data-map-view="3d"]');
     await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
     const markerNodes = scene.locator('[data-marker-id]');
@@ -661,7 +661,7 @@ test('sandworm models appear up close, update in place, and respect the realtime
       },
     }),
   );
-  await page.goto('/map');
+  await page.goto('/map/hagga-basin');
   const scene = page.locator('[data-map-view="3d"]');
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
   const worm = page.getByRole('button', { name: 'Sandworm: Shai-Hulud', exact: true, includeHidden: true });
@@ -741,7 +741,7 @@ test('base models render from the full map and vehicles appear up close with map
       ? r.fulfill({ status: 403, json: { error: 'You do not own this base' } })
       : r.fulfill({ json: { instances: pieces, placeables: [] } });
   });
-  await page.goto('/map');
+  await page.goto('/map/hagga-basin');
   const scene = page.locator('[data-map-view="3d"]');
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
   const base = page.getByRole('button', { name: 'Base: Atreides stronghold', exact: true });
@@ -829,7 +829,7 @@ test('spice fields, shipwrecks, and flour sand have terrain models that follow l
       },
     }),
   );
-  await page.goto('/map');
+  await page.goto('/map/hagga-basin');
   const scene = page.locator('[data-map-view="3d"]');
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
   for (const [name, kind] of [

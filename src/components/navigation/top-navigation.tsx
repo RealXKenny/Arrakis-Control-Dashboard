@@ -11,7 +11,7 @@ import { signOutAction } from '../../features/auth/actions';
 import { BellIcon, ChevronDownIcon, HomeIcon, MenuIcon, SignOutIcon } from '../icons';
 import { BrandLockup } from '../brand/logo';
 import { MobileNavigation } from './mobile-navigation';
-import { isNavigationActive, navigationFor, NOTIFICATION_ITEMS, SIGN_IN_HREF, type NavigationItem } from './nav-config';
+import { navigationFor, navigationItemFor, NOTIFICATION_ITEMS, SIGN_IN_HREF, type NavigationItem } from './nav-config';
 import { NavigationDirectLink, NavigationDropdown } from './navigation-menu';
 
 /** `identity` and `isAdmin` are resolved on the server from the verified session. */
@@ -38,12 +38,8 @@ export function TopNavigation({
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const homeActive = pathname === '/';
 
-  const overflow = items.filter((item) => item.tabletOverflow);
-  const more = items.find((item) => item.id === 'more');
-  const moreActive = more ? isNavigationActive(pathname, more) : false;
-  const overflowActive = overflow.some((item) => isNavigationActive(pathname, item));
   const character = items.find((item) => item.id === 'character');
-  const administration = more?.children?.find((item) => item.id === 'administration');
+  const administration = navigationItemFor('administration', { isAdmin });
   const accountItems = [
     character ? { ...character, id: 'account-character', label: 'Character profile', tabletOverflow: false } : null,
     administration ? { ...administration, id: 'account-administration' } : null,
@@ -51,7 +47,7 @@ export function TopNavigation({
 
   return (
     <header className="command-header sticky top-0 z-50 border-b border-[var(--theme-header-border)]/70 bg-[var(--theme-header)]/98 shadow-[0_12px_36px_rgb(0_0_0/0.45)]">
-      <div className="command-shell flex h-[4.5rem] w-full items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:h-20 min-[1840px]:gap-1 min-[1840px]:px-4 min-[2400px]:gap-6 min-[2400px]:px-8">
+      <div className="command-shell flex min-h-[4.5rem] w-full flex-wrap items-center justify-between gap-3 px-4 sm:px-6 xl:gap-4 xl:px-6 2xl:min-h-20 min-[1840px]:gap-1 min-[1840px]:px-4 min-[2400px]:gap-6 min-[2400px]:px-8">
         <Link
           href="/"
           aria-label="Arrakis Control home"
@@ -61,22 +57,15 @@ export function TopNavigation({
         </Link>
 
         {identity && (
-          <nav aria-label="Primary" className="hidden xl:block">
-            <ul className="flex items-center gap-1 min-[1920px]:gap-0 min-[2400px]:gap-2">
+          <nav
+            aria-label="Primary"
+            className="hidden xl:block xl:max-[1839px]:order-last xl:max-[1839px]:w-full xl:max-[1839px]:basis-full xl:max-[1839px]:border-t xl:max-[1839px]:border-[var(--theme-header-border)]/40 xl:max-[1839px]:py-1"
+          >
+            <ul className="flex items-center gap-1 xl:max-[1839px]:justify-center min-[1920px]:gap-0 min-[2400px]:gap-2">
               {items.map((item) => (
                 <li key={item.id}>
                   {item.href ? (
                     <NavigationDirectLink item={item} pathname={pathname} />
-                  ) : item.id === 'more' ? (
-                    <NavigationDropdown
-                      item={item}
-                      pathname={pathname}
-                      open={menuOpen(item.id)}
-                      onToggle={() => toggleMenu(item.id)}
-                      onClose={closeMenu}
-                      extraItems={overflow}
-                      suppressActiveOnDesktop={overflowActive && !moreActive}
-                    />
                   ) : (
                     <NavigationDropdown
                       item={item}

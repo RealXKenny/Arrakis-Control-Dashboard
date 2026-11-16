@@ -6,28 +6,28 @@ Members share base blueprints with a front picture; others browse, preview and i
 
 ## Using it
 
-| Action             | Where                         | Notes                                                                                           |
-| ------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------- |
-| Browse             | `/bases`                      | Newest first, 12 per page                                                                        |
-| Inspect / download | `/bases/[id]`                 | Interactive preview; download returns the portable layout JSON only (owner key removed)          |
-| Share a base       | `/bases/upload`               | Layout `.json` (max 2 MiB) plus a front picture (PNG, JPEG or WebP, max 700 KiB)                  |
-| Share an owned base | Holdings                     | Owner-verified capture of a 640 × 360 PNG; **a picture is required to publish**                  |
-| Change picture     | Your listing                  | Updates the picture without changing its rank                                                     |
-| Delete             | Your listing                  | Same `404` for "not yours" and "not there"                                                        |
+| Action              | Where           | Notes                                                                                   |
+| ------------------- | --------------- | --------------------------------------------------------------------------------------- |
+| Browse              | `/bases`        | Newest first, 12 per page                                                               |
+| Inspect / download  | `/bases/[id]`   | Interactive preview; download returns the portable layout JSON only (owner key removed) |
+| Share a base        | `/bases/upload` | Layout `.json` (max 2 MiB) plus a front picture (PNG, JPEG or WebP, max 700 KiB)        |
+| Share an owned base | Holdings        | Owner-verified capture of a 640 × 360 PNG; **a picture is required to publish**         |
+| Change picture      | Your listing    | Updates the picture without changing its rank                                           |
+| Delete              | Your listing    | Same `404` for "not yours" and "not there"                                              |
 
 Imports normalize optional fields and preserve the Console's claim, size, ownership and duplicate-delivery checks. Older listings keep
 their layouts but need a picture before import.
 
 ## Limits (enforced atomically in Redis)
 
-| Limit                      | Value                                   | Error                      |
-| -------------------------- | --------------------------------------- | -------------------------- |
-| Listings per member        | 25                                      | 409 `USER_LIMIT`           |
-| Stored bytes per member    | 24 MiB (layout + picture)               | 409 `STORAGE_LIMIT`        |
-| Listings in total          | 500                                     | 503 `MARKETPLACE_FULL`     |
-| Stored bytes in total      | 256 MiB                                 | 503 `MARKETPLACE_FULL`     |
-| Uploads                    | 10 per hour per member                  | 429 `RATE_LIMITED`         |
-| Duplicate publish of an ID | refused                                 | 409 `ALREADY_PUBLISHED`    |
+| Limit                      | Value                     | Error                   |
+| -------------------------- | ------------------------- | ----------------------- |
+| Listings per member        | 25                        | 409 `USER_LIMIT`        |
+| Stored bytes per member    | 24 MiB (layout + picture) | 409 `STORAGE_LIMIT`     |
+| Listings in total          | 500                       | 503 `MARKETPLACE_FULL`  |
+| Stored bytes in total      | 256 MiB                   | 503 `MARKETPLACE_FULL`  |
+| Uploads                    | 10 per hour per member    | 429 `RATE_LIMITED`      |
+| Duplicate publish of an ID | refused                   | 409 `ALREADY_PUBLISHED` |
 
 Per-listing sizes are recorded so deleting a listing returns exactly what publishing took.
 

@@ -2,11 +2,11 @@
 
 Two independent systems hold data. Back up both.
 
-| System                      | Holds                                                                                    | Backed up by                                               |
-| --------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Redis (dashboard)           | Sessions, accounts, guild data, marketplace, audit copy                                   | Your Redis tooling (below)                                  |
-| RedBlink Dune Docker        | Game database, `.env`, `runtime/generated/`, `runtime/secrets/`                           | Upstream database and **system backups**                    |
-| Dashboard configuration     | `.env` / panel variables                                                                  | You: keep them in a secret store, not in Git                |
+| System                  | Holds                                                           | Backed up by                                 |
+| ----------------------- | --------------------------------------------------------------- | -------------------------------------------- |
+| Redis (dashboard)       | Sessions, accounts, guild data, marketplace, audit copy         | Your Redis tooling (below)                   |
+| RedBlink Dune Docker    | Game database, `.env`, `runtime/generated/`, `runtime/secrets/` | Upstream database and **system backups**     |
+| Dashboard configuration | `.env` / panel variables                                        | You: keep them in a secret store, not in Git |
 
 The dashboard has no backup feature of its own for Redis, and it does not drive the RedBlink backups beyond the Console operations
 available in the [administrator panel](../features/administrator-panel.md) (backup create/restore/delete operations are high-risk and
@@ -37,7 +37,7 @@ Keep that file private (it holds listing data) and use `--rollback <file>` to un
 
 RedBlink documents database backups, **encrypted system backups** (database plus `.env`, `runtime/generated/`, `runtime/secrets/`; one
 GPG AES-256 archive with no recovery without its passphrase) and base backups from the in-game pick-up mechanic. Restores to a different
-Battlegroup ID require choosing *Adopt Backup ID* or *Keep Current ID*. Follow the upstream guide
+Battlegroup ID require choosing _Adopt Backup ID_ or _Keep Current ID_. Follow the upstream guide
 ([database-backups](https://github.com/Red-Blink/dune-awakening-selfhost-docker/blob/main/docs/console/database-backups.md)). After restoring
 a Console, re-create or re-check the API keys and adapter token the dashboard uses.
 

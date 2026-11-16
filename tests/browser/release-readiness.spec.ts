@@ -16,7 +16,7 @@ const routes = [
   '/bases/upload',
   '/guilds',
   '/guild',
-  '/map',
+  '/map/hagga-basin',
   '/chat',
   '/status',
   '/events',
@@ -126,7 +126,13 @@ test('representative animated areas remove motion without hiding state', async (
   const member = await fakeConsole.newMember('Reduced Motion Review');
   await context.setExtraHTTPHeaders({ Cookie: member.cookie });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  for (const route of ['/portal', '/map', '/casino', '/casino/games/emperors-hand', '/casino/games/spice-wheel']) {
+  for (const route of [
+    '/portal',
+    '/map/hagga-basin',
+    '/casino',
+    '/casino/games/emperors-hand',
+    '/casino/games/spice-wheel',
+  ]) {
     await page.goto(route);
     const moving = await page.evaluate(() =>
       [...document.querySelectorAll('body *')]

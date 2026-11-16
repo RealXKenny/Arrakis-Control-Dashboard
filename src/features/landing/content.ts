@@ -70,7 +70,7 @@ export const FEATURED: readonly Featured[] = [
       'Turn marker layers on and off, with contours and a top-down view',
       'An optional realtime layer, when the server provides realtime data',
     ],
-    href: '/map',
+    href: '/map/hagga-basin',
     linkLabel: 'Open the map',
     icon: MapIcon,
   },

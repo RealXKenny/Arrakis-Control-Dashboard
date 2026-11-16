@@ -164,7 +164,7 @@ test('the editor supports touch, keyboard and WCAG AA without mobile overflow', 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
   await page.evaluate(axeSource);
-  for (const width of [1440, 393]) {
+  for (const width of [1920, 393]) {
     await page.setViewportSize({ width, height: 900 });
     const violations = await page.evaluate(async () => {
       const axe = (

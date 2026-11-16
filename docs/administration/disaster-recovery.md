@@ -4,14 +4,14 @@ The dashboard's code is reproducible from a GitHub Release; its state is Redis p
 
 ## Scenarios
 
-| Lost                                   | Impact                                                                  | Recover                                                                                         |
-| -------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| The dashboard host / container         | Site down; no data lost                                                  | Reinstall the pinned release ([Pterodactyl](../installation/pterodactyl.md) / [production](../installation/production.md)), restore variables, start |
-| Redis, with a backup                   | Data since the snapshot lost                                             | [Restore](backups.md#restore); members created after it sign in again                            |
-| Redis, no backup                       | Sessions, accounts' passwords, guild applications/listings, marketplace, audit copy gone | Start empty Redis; members sign in with Discord and choose passwords again; leaders republish listings; marketplace restarts empty |
-| Configuration / secrets                | Server refuses to start, or members signed out                           | Recreate from your secret store. A new `AUTH_SECRET` signs everyone out. A new `OWNER_KEY_SECRET` orphans listings (use `OWNER_KEY_PREVIOUS_SECRET`) |
-| The Console / game server              | Dashboard shows "unavailable"; sign-in and guild data (Redis) still work | Restore via RedBlink backups, then re-check API keys and the adapter token                      |
-| Discord application access             | No one can sign in                                                        | Regain the application in the Developer Portal; the client ID/secret in config must match it    |
+| Lost                           | Impact                                                                                   | Recover                                                                                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The dashboard host / container | Site down; no data lost                                                                  | Reinstall the pinned release ([Pterodactyl](../installation/pterodactyl.md) / [production](../installation/production.md)), restore variables, start |
+| Redis, with a backup           | Data since the snapshot lost                                                             | [Restore](backups.md#restore); members created after it sign in again                                                                                |
+| Redis, no backup               | Sessions, accounts' passwords, guild applications/listings, marketplace, audit copy gone | Start empty Redis; members sign in with Discord and choose passwords again; leaders republish listings; marketplace restarts empty                   |
+| Configuration / secrets        | Server refuses to start, or members signed out                                           | Recreate from your secret store. A new `AUTH_SECRET` signs everyone out. A new `OWNER_KEY_SECRET` orphans listings (use `OWNER_KEY_PREVIOUS_SECRET`) |
+| The Console / game server      | Dashboard shows "unavailable"; sign-in and guild data (Redis) still work                 | Restore via RedBlink backups, then re-check API keys and the adapter token                                                                           |
+| Discord application access     | No one can sign in                                                                       | Regain the application in the Developer Portal; the client ID/secret in config must match it                                                         |
 
 ## Rebuild checklist
 

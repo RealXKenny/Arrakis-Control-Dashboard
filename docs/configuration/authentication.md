@@ -32,7 +32,7 @@ with a key derived from `AUTH_SECRET`; **changing `AUTH_SECRET` invalidates ever
 
 ### Interactive sign-in time
 
-`authenticatedAt` records the last *interactive* sign-in (Discord or password). Background re-verification never advances
+`authenticatedAt` records the last _interactive_ sign-in (Discord or password). Background re-verification never advances
 it. Administrator step-up uses it ([administrator access](administrator-access.md)).
 
 ## Password sign-in

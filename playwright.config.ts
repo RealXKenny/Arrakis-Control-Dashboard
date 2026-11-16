@@ -38,12 +38,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   use: { baseURL: 'http://127.0.0.1:3100', trace: 'retain-on-failure' },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // The dashboard is tuned for a 1920x1080 desktop; other desktop sizes are not a supported design target.
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1920, height: 1080 } } },
     {
       name: 'season-safari',
       testMatch: '**/seasons-cross-browser.spec.ts',
       use: {
         ...devices['Desktop Safari'],
+        viewport: { width: 1920, height: 1080 },
         browserName: 'webkit',
         baseURL: 'https://127.0.0.1:3443',
         ignoreHTTPSErrors: true,

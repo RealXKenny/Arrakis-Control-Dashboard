@@ -3,13 +3,15 @@ import { test, expect } from '../helpers/browser-test';
 const member = '__Host-dashboard_session=browser-member-session';
 const admin = '__Host-dashboard_session=browser-admin-session';
 
-test('members find the seeded competition under More, with known prizes and no invented dates', async ({ page }) => {
+test('members find the seeded competition under Community, with known prizes and no invented dates', async ({
+  page,
+}) => {
   await page.context().setExtraHTTPHeaders({ Cookie: member });
   await page.setViewportSize({ width: 1920, height: 900 });
   await page.goto('/portal');
   const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
   await expect(primary.getByRole('link', { name: 'Community events', exact: true })).toHaveCount(0);
-  await primary.getByRole('button', { name: 'More', exact: true }).click();
+  await primary.getByRole('button', { name: 'Community', exact: true }).click();
   await page.getByRole('menuitem', { name: /Community events/ }).click();
   await expect(page).toHaveURL(/\/events$/);
   await expect(page.getByRole('heading', { name: 'Base Building Competition', exact: true })).toBeVisible();

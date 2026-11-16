@@ -13,11 +13,11 @@ A unit test requires that the package version has a matching, non-empty changelo
 
 ## Contents of a release
 
-| Asset                                         | Used by                                                    |
-| --------------------------------------------- | ---------------------------------------------------------- |
-| `arrakis-control-dashboard-<version>.tar.gz`  | Pterodactyl installer; manual installs                      |
-| `arrakis-control-dashboard-<version>.tar.gz.sha256` | Installer and manual verification                      |
-| `egg-arrakis-control-dashboard.json`          | Pterodactyl import (built from the exact release commit)    |
+| Asset                                               | Used by                                                  |
+| --------------------------------------------------- | -------------------------------------------------------- |
+| `arrakis-control-dashboard-<version>.tar.gz`        | Pterodactyl installer; manual installs                   |
+| `arrakis-control-dashboard-<version>.tar.gz.sha256` | Installer and manual verification                        |
+| `egg-arrakis-control-dashboard.json`                | Pterodactyl import (built from the exact release commit) |
 
 There is no container image and no GHCR package.
 

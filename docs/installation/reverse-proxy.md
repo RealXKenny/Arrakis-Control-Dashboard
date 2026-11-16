@@ -16,15 +16,15 @@ headers (CSP with a per-request nonce, HSTS in production, `X-Frame-Options: DEN
 ## `TRUSTED_PROXY_COUNT`
 
 Every per-address rate limit uses the client address. Each proxy appends the address it saw to `X-Forwarded-For`; the app
-trusts only the entry appended by *its own* proxies and ignores anything the client wrote to the left. Therefore the number
+trusts only the entry appended by _its own_ proxies and ignores anything the client wrote to the left. Therefore the number
 must be exact:
 
-| Topology                                       | `TRUSTED_PROXY_COUNT` |
-| ---------------------------------------------- | --------------------- |
-| Browser → app directly (no proxy)              | `0`                   |
-| Browser → Nginx → app                          | `1` (default)         |
-| Browser → Cloudflare → Nginx → app             | `2`                   |
-| Browser → load balancer → Nginx → app          | `2`                   |
+| Topology                              | `TRUSTED_PROXY_COUNT` |
+| ------------------------------------- | --------------------- |
+| Browser → app directly (no proxy)     | `0`                   |
+| Browser → Nginx → app                 | `1` (default)         |
+| Browser → Cloudflare → Nginx → app    | `2`                   |
+| Browser → load balancer → Nginx → app | `2`                   |
 
 Too low and every visitor shares the proxy's address (they all fall in one rate-limit bucket); too high and a client can
 choose its own address with a forged header. IPv6 clients are limited per `/64` network. Allowed range: 0 to 5.
@@ -88,9 +88,9 @@ Expected: HSTS, a CSP containing `'nonce-`, `X-Frame-Options: DENY` and `X-Conte
 
 ## Troubleshooting
 
-| Symptom                                   | Cause                                                                              |
-| ----------------------------------------- | ---------------------------------------------------------------------------------- |
-| Mutations fail with `INVALID_ORIGIN` (403) | `APP_URL` is not the exact public origin, or the proxy rewrites/strips `Origin`     |
-| Everyone gets rate limited together       | `TRUSTED_PROXY_COUNT` is lower than the real proxy count                            |
-| Sign-in loops                              | `APP_URL` scheme mismatch (the `__Host-` cookie requires HTTPS)                     |
-| Admin log streams stall                    | Proxy buffering on; set `proxy_buffering off`                                        |
+| Symptom                                    | Cause                                                                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------- |
+| Mutations fail with `INVALID_ORIGIN` (403) | `APP_URL` is not the exact public origin, or the proxy rewrites/strips `Origin` |
+| Everyone gets rate limited together        | `TRUSTED_PROXY_COUNT` is lower than the real proxy count                        |
+| Sign-in loops                              | `APP_URL` scheme mismatch (the `__Host-` cookie requires HTTPS)                 |
+| Admin log streams stall                    | Proxy buffering on; set `proxy_buffering off`                                   |

@@ -6,6 +6,11 @@ export const MAP_LABELS: Record<MapName, string> = {
   DeepDesert: 'Deep Desert',
 };
 
+export const MAP_PATHS: Record<MapName, string> = {
+  HaggaBasin: '/map/hagga-basin',
+  DeepDesert: '/map/deep-desert',
+};
+
 /** `?map=` is untrusted input: anything but the Deep Desert falls back to the Hagga Basin. */
 export function resolveMapName(value: string | string[] | undefined): MapName {
   const first = Array.isArray(value) ? value[0] : value;

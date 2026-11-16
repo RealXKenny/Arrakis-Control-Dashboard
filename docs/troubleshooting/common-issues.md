@@ -31,13 +31,13 @@ Sign in again; high-risk operations need a sign-in within `ADMIN_HIGH_RISK_REAUT
 
 ## Performance
 
-| Symptom                              | Check                                                                                                        |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| Slow pages                           | Console latency (reads time out after 30 s); Redis latency; CPU on the host; software WebGL on the client      |
-| 429 for ordinary users               | `TRUSTED_PROXY_COUNT` too low (shared bucket) or genuinely high traffic; raise `API_GLOBAL_READ_LIMIT` only after load tests |
-| 503 `SERVER_BUSY`                    | `API_MAX_CONCURRENCY` reached; add capacity or raise carefully                                                  |
-| High Console load                    | Many members are cache misses; keep Redis healthy so snapshots are shared                                      |
-| 3D map/base preview slow             | Use the 2D fallback or a GPU-capable browser                                                                    |
+| Symptom                  | Check                                                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Slow pages               | Console latency (reads time out after 30 s); Redis latency; CPU on the host; software WebGL on the client                    |
+| 429 for ordinary users   | `TRUSTED_PROXY_COUNT` too low (shared bucket) or genuinely high traffic; raise `API_GLOBAL_READ_LIMIT` only after load tests |
+| 503 `SERVER_BUSY`        | `API_MAX_CONCURRENCY` reached; add capacity or raise carefully                                                               |
+| High Console load        | Many members are cache misses; keep Redis healthy so snapshots are shared                                                    |
+| 3D map/base preview slow | Use the 2D fallback or a GPU-capable browser                                                                                 |
 
 One Pterodactyl container cannot be assumed to serve a very large community. Provision and test replicas, Redis throughput and failover, network egress and
 provider quotas before a big launch (k6 script: `tests/load/dashboard.k6.js`).

@@ -10,7 +10,7 @@ test('service report requires a dashboard session', async ({ page }) => {
   await expect(page.locator('#hetrix-status-report')).toHaveCount(0);
 });
 
-test('report stays under More on wide screens and mobile and resizes through the real iframe protocol', async ({
+test('report stays under Community on wide screens and mobile and resizes through the real iframe protocol', async ({
   page,
 }) => {
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
@@ -26,12 +26,12 @@ test('report stays under More on wide screens and mobile and resizes through the
     if (width >= 1280) {
       const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
       await expect(primary.getByRole('link', { name: 'Service status', exact: true })).toHaveCount(0);
-      await primary.getByRole('button', { name: 'More', exact: true }).click();
+      await primary.getByRole('button', { name: 'Community', exact: true }).click();
       await page.getByRole('menuitem', { name: /Service status/ }).click();
     } else {
       await page.getByRole('button', { name: 'Open menu', exact: true }).click();
       const drawer = page.getByRole('dialog', { name: 'Navigation', exact: true });
-      await expect(drawer.getByRole('heading', { name: 'More', exact: true })).toBeVisible();
+      await expect(drawer.getByRole('heading', { name: 'News & status', exact: true })).toBeVisible();
       await drawer.getByRole('link', { name: 'Service status', exact: true }).click();
     }
     await expect(page).toHaveURL(/\/status$/);

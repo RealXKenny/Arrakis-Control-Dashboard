@@ -434,7 +434,7 @@ test('admin navigation groups sections, syncs the URL and honours browser histor
   ])
     await expect(sections.getByRole('link', { name, exact: true })).toBeVisible();
   await sections.getByRole('link', { name: 'World & economy', exact: true }).click();
-  await page.getByRole('link', { name: 'Market', exact: true }).click();
+  await page.getByRole('main').getByRole('link', { name: 'Market', exact: true }).click();
   await expect(page).toHaveURL(/tab=market/);
   await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText('World & economy');
   await expect(page.getByRole('group', { name: 'Market views' })).toBeVisible();

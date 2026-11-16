@@ -272,6 +272,16 @@
   }
 }
 
+/* The primary row wraps below the brand bar on narrower desktops, so it must still fit eleven categories. */
+@media (min-width: 1280px) and (max-width: 1599px) {
+  .command-nav-control {
+    gap: 0.25rem;
+    padding: 0 0.375rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+  }
+}
+
 /* Only very wide screens get larger controls; the complete menu and account block must still fit. */
 @media (min-width: 2400px) {
   .command-nav-control {

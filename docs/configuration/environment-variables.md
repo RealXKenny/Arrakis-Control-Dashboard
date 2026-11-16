@@ -105,3 +105,14 @@ Season game delivery has no feature toggle: in-game season rewards (Solaris, Hou
 ## Related
 
 [Configuration examples](../reference/configuration-examples.md) · [Secrets management](../security/secrets-management.md) · [Security settings](../security/production-hardening.md)
+
+## Migrating an existing `.env`
+
+`npm run env:migrate` (also run automatically by `npm run dev` and `npm start` before `.env` is loaded; set `ARRAKIS_ENV_MIGRATE=0` to turn that off) brings a local `.env` up to date:
+
+- `CONSOLE_URL` becomes `DUNE_API_URL`, `CONSOLE_API_KEY` and `ADMIN_CONSOLE_API_KEY` become `DUNE_API_KEY` (the administrator key wins when both exist, with a warning to check its scopes) and `ADAPTER_TOKEN` becomes `DUNE_ADAPTER_TOKEN`. A value already set under the new name is never overwritten.
+- `SEASON_AUTOMATION_ENABLED` and `SEASON_GAME_DELIVERY_ENABLED` are removed.
+- Variables that are new in `.env.example` are appended as commented placeholders, so no placeholder secret becomes live.
+- Every other line, comment and custom variable is left as it is, and line endings are preserved.
+
+A timestamped `.env.bak-…` backup is written first, the change is atomic, the command is idempotent, and only variable names are ever printed. Use `npm run env:migrate -- --dry-run` to preview. Pterodactyl deployments configure variables in the panel and have no `.env` file; rename them there by hand.

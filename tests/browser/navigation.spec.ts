@@ -95,12 +95,14 @@ test('desktop uses one active topbar with accessible dropdowns, notifications, a
   await expect(page.getByRole('menuitem', { name: 'Sign out', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
 
-  await primary.getByRole('button', { name: 'More', exact: true }).click();
-  const more = page.getByRole('menu', { name: 'More', exact: true });
-  await expect(more.getByRole('menuitem', { name: /Changelog/ })).toBeVisible();
-  await expect(more.getByRole('menuitem', { name: /Administration/ })).toHaveCount(0);
-  await page.getByRole('heading', { name: 'Bases', exact: true }).click();
-  await expect(more).toHaveCount(0);
+  await expect(primary.getByRole('button', { name: 'More', exact: true })).toHaveCount(0);
+  await primary.getByRole('button', { name: 'Community', exact: true }).click();
+  const community = page.getByRole('menu', { name: 'Community', exact: true });
+  await expect(community.getByRole('region', { name: 'News & status', exact: true })).toBeVisible();
+  await expect(community.getByRole('menuitem', { name: /Changelog/ })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: /Administration/ })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(community).toHaveCount(0);
 });
 
 test('administration stays restricted and mobile keeps every destination in a focus-managed drawer', async ({
@@ -109,7 +111,7 @@ test('administration stays restricted and mobile keeps every destination in a fo
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-admin-session' });
   await page.goto('/admin');
   const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
-  await primary.getByRole('button', { name: 'More', exact: true }).click();
+  await primary.getByRole('button', { name: 'Personal', exact: true }).click();
   await expect(page.getByRole('menuitem', { name: /Administration/ })).toBeVisible();
   await page.keyboard.press('Escape');
 
@@ -127,7 +129,7 @@ test('administration stays restricted and mobile keeps every destination in a fo
   await expect(drawer.getByRole('link', { name: 'Holdings', exact: true })).toBeVisible();
   await expect(drawer.getByRole('heading', { name: 'Operations', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Base Storage', exact: true })).toBeVisible();
-  await expect(drawer.getByRole('heading', { name: 'More', exact: true })).toBeVisible();
+  await expect(drawer.getByRole('heading', { name: 'News & status', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Changelog', exact: true })).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Administration', exact: true })).toHaveCount(0);
   await expect(drawer.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
@@ -136,17 +138,16 @@ test('administration stays restricted and mobile keeps every destination in a fo
   await expect(trigger).toBeFocused();
 });
 
-test('tablet moves lower-priority destinations into More without horizontal overflow', async ({ page }) => {
+test('desktop width keeps every category in the top row without horizontal overflow', async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/holdings');
   const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
-  await expect(primary.getByRole('link', { name: 'Character', exact: true })).toHaveCount(0);
-  await primary.getByRole('button', { name: 'More', exact: true }).click();
-  const more = page.getByRole('menu', { name: 'More', exact: true });
-  for (const label of ['Character', 'Vehicles', 'Market', 'Map']) {
-    await expect(more.getByRole('menuitem', { name: label, exact: true })).toBeVisible();
-  }
+  await expect(primary.getByRole('button', { name: 'More', exact: true })).toHaveCount(0);
+  for (const label of ['Portal', 'Character', 'Market'])
+    await expect(primary.getByRole('link', { name: label, exact: true })).toBeVisible();
+  for (const label of ['Assets', 'Bases', 'Guilds', 'Maps', 'Casino', 'Community', 'Personal'])
+    await expect(primary.getByRole('button', { name: label, exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
@@ -155,7 +156,7 @@ test('every desktop category uses the Bases-style wide menu within the viewport'
   await page.setViewportSize({ width: 1920, height: 900 });
   await page.goto('/portal');
   const primary = page.getByRole('navigation', { name: 'Primary', exact: true });
-  for (const label of ['Assets', 'Bases', 'Guilds', 'Casino', 'More']) {
+  for (const label of ['Assets', 'Bases', 'Guilds', 'Maps', 'Casino', 'Community', 'Personal']) {
     await primary.getByRole('button', { name: label, exact: true }).click();
     const menu = page.getByRole('menu', { name: label, exact: true });
     await expect(menu.getByRole('heading', { name: label, exact: true })).toBeVisible();
@@ -174,9 +175,9 @@ test('every desktop category uses the Bases-style wide menu within the viewport'
     await page.keyboard.press('Escape');
   }
   await page.setViewportSize({ width: 1280, height: 800 });
-  await primary.getByRole('button', { name: 'More', exact: true }).click();
-  const menu = page.getByRole('menu', { name: 'More', exact: true });
-  await expect(menu.getByRole('heading', { name: 'More', exact: true })).toBeVisible();
+  await primary.getByRole('button', { name: 'Casino', exact: true }).click();
+  const menu = page.getByRole('menu', { name: 'Casino', exact: true });
+  await expect(menu.getByRole('heading', { name: 'Casino', exact: true })).toBeVisible();
   await expect(menu.getByRole('menuitem', { name: /The Great Houses/ })).toBeVisible();
   await expect(menu.getByRole('menuitem', { name: /Reconcile transfers/ })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

@@ -23,13 +23,13 @@ curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/players?pag
 curl -sS -H "Authorization: Bearer $DUNE_API_KEY" "$DUNE_API_URL/api/integrations/discord/health"
 ```
 
-| Response      | Cause and fix                                                                                                                                                             |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Response      | Cause and fix                                                                                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `401`         | Key/token wrong, disabled or expired (a bad bearer never falls back to a cookie). Create a new key; for the adapter make `DUNE_ADAPTER_TOKEN` equal the Console's adapter token |
-| `403`         | The key lacks the namespace/action. Edit scopes in Console Settings → API Keys                                                                                            |
-| Adapter `404` | Adapter disabled: `DUNE_DISCORD_ADAPTER_ENABLED=true`, rebuild the Console container                                                                                      |
-| Adapter `503` | Token missing or the token file is empty/absent                                                                                                                           |
-| `429`         | Console rate limit (upstream limits mutations to roughly 20/min per session+IP); slow down                                                                                |
+| `403`         | The key lacks the namespace/action. Edit scopes in Console Settings → API Keys                                                                                                  |
+| Adapter `404` | Adapter disabled: `DUNE_DISCORD_ADAPTER_ENABLED=true`, rebuild the Console container                                                                                            |
+| Adapter `503` | Token missing or the token file is empty/absent                                                                                                                                 |
+| `429`         | Console rate limit (upstream limits mutations to roughly 20/min per session+IP); slow down                                                                                      |
 
 ## Dashboard symptoms
 

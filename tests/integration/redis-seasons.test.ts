@@ -3,6 +3,9 @@ import type { Redis } from 'ioredis';
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { configureApplication, connectDirect, integrationTarget } from './helpers/redis-target';
 import { seasonTemplate } from '../../src/features/seasons/contracts';
+// Request-scoped helpers (client address, budgets) have no request here; Redis behavior is what is under test.
+vi.mock('../../src/lib/security/rate-limit', () => ({ checkRateLimit: async () => ({ allowed: true }) }));
+vi.mock('../../src/server/read-budget', () => ({ spendReadBudget: async () => ({ allowed: true }) }));
 const deliveryMock = vi.hoisted(() => ({ grant: vi.fn().mockResolvedValue('delivered') }));
 vi.mock('../../src/features/player/server/linked-player', () => ({
   getLinkedPlayer: async () => ({ linked: true, pawnId: '42', controllerId: '43', onlineStatus: 'Offline' }),

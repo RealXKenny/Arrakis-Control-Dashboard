@@ -61,18 +61,24 @@ describe('unified navigation configuration', () => {
       expect(needsDocumentNavigation(route, '/'), route).toBe(false);
     expect(needsDocumentNavigation('/status', '/')).toBe(true);
   });
-  it('keeps Service status inside More rather than promoting it to a top-level destination', () => {
+  it('keeps Service status inside the Community category rather than a top-level destination', () => {
     const items = navigationFor();
+    const community = items.find((item) => item.id === 'community')!;
     expect(items.some((item) => item.href === '/status')).toBe(false);
-    expect(items.find((item) => item.id === 'more')?.children?.find((item) => item.href === '/status')).toMatchObject({
+    expect(items.some((item) => item.id === 'more')).toBe(false);
+    expect(navigationLinks(community.children!).find((item) => item.href === '/status')).toMatchObject({
       label: 'Service status',
     });
-    expect(
-      isNavigationActive(
-        '/status',
-        items.find((item) => item.id === 'more')!,
-      ),
-    ).toBe(true);
+    expect(isNavigationActive('/status', community)).toBe(true);
+  });
+  it('gives every dropdown the same titled-group structure', () => {
+    for (const item of navigationFor({ isAdmin: true }).filter((entry) => entry.children)) {
+      expect(item.children!.length, item.id).toBeGreaterThanOrEqual(1);
+      for (const group of item.children!) {
+        expect(group.href, `${item.id}/${group.id}`).toBeUndefined();
+        expect(group.children?.length, `${item.id}/${group.id}`).toBeGreaterThan(0);
+      }
+    }
   });
   it('keeps every real destination in one ordered, deduplicated inventory', () => {
     const links = navigationLinks(navigationFor({ isAdmin: true }));
@@ -89,32 +95,33 @@ describe('unified navigation configuration', () => {
       '/market',
       '/guilds',
       '/guild',
-      '/map',
-      '/chat',
-      '/casino',
+      '/map/hagga-basin',
+      '/map/deep-desert',
       '/casino/games/emperors-hand',
       '/casino/games/spice-wheel',
       '/casino/games/fate-of-arrakis',
       '/casino/games/spice-harvest',
       '/casino/games/ornithopter-run',
       '/casino/games/great-houses',
+      '/casino',
       '/casino/wallet',
       '/casino/history',
       '/casino/fairness',
       '/casino/admin',
       '/casino/rules',
-      '/changelog',
-      '/tasks',
-      '/personal-data',
-      '/activity-views',
-      '/privacy',
-      '/status',
       '/events',
       '/seasons',
+      '/chat',
+      '/changelog',
+      '/status',
+      '/tasks',
+      '/activity-views',
+      '/privacy',
+      '/personal-data',
       '/admin',
     ]);
     expect(new Set(links.map((item) => item.href)).size).toBe(links.length);
-    expect(NAVIGATION_ITEMS.map((item) => item.order)).toEqual([5, 10, 20, 30, 40, 50, 60, 70, 80, 85, 87, 90]);
+    expect(NAVIGATION_ITEMS.map((item) => item.order)).toEqual([5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95]);
   });
 
   it('hides administration unless the server supplies admin visibility', () => {

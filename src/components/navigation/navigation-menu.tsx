@@ -63,7 +63,7 @@ export function NavigationDirectLink({ item, pathname }: { item: NavigationItem;
         item.tabletOverflow ? 'hidden min-[1920px]:flex' : ''
       }`}
     >
-      <NavigationGlyph icon={item.icon} className="size-[18px]" />
+      <NavigationGlyph icon={item.icon} className={`size-[18px] ${item.id === 'home' ? '' : 'max-[2399px]:hidden'}`} />
       {item.label}
       {item.badge && <span className="font-mono text-xs text-spice-300">{item.badge}</span>}
     </Link>
@@ -285,7 +285,7 @@ export function NavigationDropdown({
       >
         {trigger ?? (
           <>
-            <NavigationGlyph icon={item.icon} className="size-[18px]" />
+            <NavigationGlyph icon={item.icon} className="size-[18px] max-[2399px]:hidden" />
             {item.label}
             <ChevronDownIcon className={`size-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
           </>

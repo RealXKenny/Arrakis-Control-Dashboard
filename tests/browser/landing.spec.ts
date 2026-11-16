@@ -226,7 +226,7 @@ test.describe('topbar Home control', () => {
     '/vehicles',
     '/market',
     '/guilds',
-    '/map',
+    '/map/hagga-basin',
     '/chat',
     '/casino',
     '/casino/wallet',

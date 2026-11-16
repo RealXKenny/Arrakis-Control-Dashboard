@@ -1,7 +1,7 @@
-import { MAP_LABELS, MAP_NAMES, type MapName } from '../maps';
+import { MAP_LABELS, MAP_NAMES, MAP_PATHS, type MapName } from '../maps';
 import { SegmentedNav } from '../../../components/ui/segmented-nav';
 
-/** Hagga Basin / Deep Desert switch; the chosen map lives in the URL. */
+/** Hagga Basin / Deep Desert switch; each world is its own page. */
 export function MapSwitch({ active }: { active: MapName }) {
   return (
     <SegmentedNav
@@ -10,7 +10,7 @@ export function MapSwitch({ active }: { active: MapName }) {
       items={MAP_NAMES.map((name) => ({
         id: name,
         label: MAP_LABELS[name],
-        href: name === 'HaggaBasin' ? '/map' : `/map?map=${name}`,
+        href: MAP_PATHS[name],
       }))}
     />
   );
