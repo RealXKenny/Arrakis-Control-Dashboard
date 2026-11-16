@@ -334,6 +334,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
         order: 13,
       },
       {
+        id: 'activity-views',
+        label: 'Activity views',
+        href: '/activity-views',
+        icon: 'portal',
+        description: 'Saved widgets, filters and planning context for your activities.',
+        order: 13.5,
+      },
+      {
         id: 'privacy-center',
         label: 'Privacy center',
         href: '/privacy',

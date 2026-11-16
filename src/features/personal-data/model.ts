@@ -1,11 +1,13 @@
 import { z } from 'zod';
 import { taskRecordSchema } from '../tasks/model';
 import { privacyRecordSchema } from '../privacy/model';
-export const dataScopes = ['tasks', 'sharing'] as const;
+import { activityRecordSchema } from '../activity-views/model';
+export const dataScopes = ['tasks', 'sharing', 'views'] as const;
 export type DataScope = (typeof dataScopes)[number];
 export const dataScopeLabels: Record<DataScope, string> = {
   tasks: 'Notes and plans',
   sharing: 'Sharing drafts and snapshots',
+  views: 'Saved activity views',
 };
 export const scopeSummarySchema = z
   .object({
@@ -21,8 +23,8 @@ export const dataSummarySchema = z
     checkedAt: z.iso.datetime(),
     scopes: z
       .array(scopeSummarySchema)
-      .length(2)
-      .refine((values) => new Set(values.map((v) => v.scope)).size === 2),
+      .length(3)
+      .refine((values) => new Set(values.map((v) => v.scope)).size === 3),
   })
   .strict();
 export type DataSummary = z.infer<typeof dataSummarySchema>;
@@ -32,7 +34,7 @@ export const exportInputSchema = z
     selection: z
       .array(selection)
       .min(1)
-      .max(2)
+      .max(3)
       .refine((values) => new Set(values.map((v) => v.scope)).size === values.length),
   })
   .strict();
@@ -45,6 +47,7 @@ export const dataExportSchema = z
     records: z
       .array(
         z.discriminatedUnion('scope', [
+          z.object({ scope: z.literal('views'), data: activityRecordSchema }).strict(),
           z
             .object({
               scope: z.literal('tasks'),
@@ -60,7 +63,7 @@ export const dataExportSchema = z
         ]),
       )
       .min(1)
-      .max(2),
+      .max(3),
   })
   .strict();
 export const erasureResultSchema = z.object({ checkedAt: z.iso.datetime(), erased: scopeSummarySchema }).strict();

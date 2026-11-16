@@ -12,6 +12,8 @@ import {
   type PersonalTask,
 } from '../model';
 import styles from './tasks.module.css';
+import { ActivityCapture } from '../../activity-views/components/activity-capture';
+import { defaultActivity, type ActivityView } from '../../activity-views/model';
 const blank = (target: TaskTarget | null = null): TaskDraft => ({
   id: crypto.randomUUID(),
   kind: 'task',
@@ -27,16 +29,24 @@ function newTarget(type: TaskTarget['type']): TaskTarget {
   if (type === 'item') return { type, ref: '', label: '' };
   return { type, ref: '', label: '', view: 'owned' };
 }
-export function Tasks({ seed, focus }: { seed: TaskTarget | null; focus: string | null }) {
+export function Tasks({
+  seed,
+  focus,
+  activity = null,
+}: {
+  seed: TaskTarget | null;
+  focus: string | null;
+  activity?: ActivityView | null;
+}) {
   const [record, setRecord] = useState<TaskRecord | null>(null);
   const [draft, setDraft] = useState<TaskDraft>(() => blank(seed));
   const [editing, setEditing] = useState(Boolean(seed));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [filter, setFilter] = useState('open');
-  const [kind, setKind] = useState('all');
-  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<string>(activity?.tasks.status ?? 'open');
+  const [kind, setKind] = useState<string>(activity?.tasks.kind ?? 'all');
+  const [query, setQuery] = useState(activity?.tasks.query ?? '');
   const [deleting, setDeleting] = useState<string | null>(null);
   const active = useRef<AbortController | null>(null);
   const focusedOnce = useRef(false);
@@ -122,6 +132,11 @@ export function Tasks({ seed, focus }: { seed: TaskTarget | null; focus: string 
     record?.tasks
       .filter(
         (task) =>
+          (!activity?.planning ||
+            task.id === activity.planning.id ||
+            (task.target.type === activity.planning.kind && task.target.ref === activity.planning.id)) &&
+          (!activity?.planning ||
+            record?.tasks.some((p) => p.id === activity.planning!.id && p.kind === activity.planning!.kind)) &&
           (filter === 'all' || task.status === filter) &&
           (kind === 'all' || task.kind === kind) &&
           `${task.title} ${task.notes}`.toLowerCase().includes(query.trim().toLowerCase()),
@@ -136,6 +151,24 @@ export function Tasks({ seed, focus }: { seed: TaskTarget | null; focus: string 
   const shown = focused && !tasks.some((task) => task.id === focused.id) ? [focused, ...tasks] : tasks;
   return (
     <section className={styles.root} aria-label="Personal task list">
+      <ActivityCapture
+        definition={{
+          ...(activity ?? defaultActivity()),
+          tasks: {
+            status: filter as ActivityView['tasks']['status'],
+            kind: kind as ActivityView['tasks']['kind'],
+            query,
+          },
+        }}
+      />
+      {activity?.planning &&
+        record &&
+        !record.tasks.some((p) => p.id === activity.planning!.id && p.kind === activity.planning!.kind) && (
+          <p role="alert">
+            The saved project or goal context is no longer available. Edit the activity view to choose another context.
+            No unrelated plans are shown.
+          </p>
+        )}
       <p className={styles.note}>
         Private plans for your dashboard account. Completion is your own checklist, not proof of in-game activity. Links
         open the current authorized workspace; saved references do not grant access.

@@ -5,6 +5,11 @@ import { emptyPrivacy, type PrivacyRecord } from '../../privacy/model';
 import type { TaskRecord } from '../../tasks/model';
 import { AppError } from '../../../lib/errors';
 import { dataExportSchema, dataSummarySchema, type DataScope, type ScopeSummary } from '../model';
+import { readActivityViews, eraseActivityViews } from '../../activity-views/server/store';
+import type { ActivityRecord } from '../../activity-views/model';
+function viewsSummary(record: ActivityRecord): ScopeSummary {
+  return { scope: 'views', revision: record.revision, entries: record.views.length, snapshots: 0 };
+}
 function tasksSummary(record: TaskRecord): ScopeSummary {
   return { scope: 'tasks', revision: record.revision, entries: record.tasks.length, snapshots: 0 };
 }
@@ -22,16 +27,25 @@ function sharingSummary(record: PrivacyRecord): ScopeSummary {
   };
 }
 export async function summarizePersonalData(owner: string) {
-  const [tasks, sharing] = await Promise.all([readPersonalTasks(owner), readPrivacy(owner)]);
+  const [tasks, sharing, views] = await Promise.all([
+    readPersonalTasks(owner),
+    readPrivacy(owner),
+    readActivityViews(owner),
+  ]);
   return dataSummarySchema.parse({
     checkedAt: new Date().toISOString(),
-    scopes: [tasksSummary(tasks), sharingSummary(sharing)],
+    scopes: [tasksSummary(tasks), sharingSummary(sharing), viewsSummary(views)],
   });
 }
 export async function exportPersonalData(owner: string, selections: { scope: DataScope; revision: string | null }[]) {
   const records = await Promise.all(
     selections.map(async ({ scope, revision }) => {
-      const current = scope === 'tasks' ? await readPersonalTasks(owner) : await readPrivacy(owner);
+      const current =
+        scope === 'tasks'
+          ? await readPersonalTasks(owner)
+          : scope === 'sharing'
+            ? await readPrivacy(owner)
+            : await readActivityViews(owner);
       if (current.revision !== revision)
         throw new AppError(
           'Personal data changed. Reload the summary before exporting.',
@@ -42,6 +56,10 @@ export async function exportPersonalData(owner: string, selections: { scope: Dat
       if (scope === 'tasks') {
         const record = current as TaskRecord;
         return { scope, data: { schemaVersion: record.schemaVersion, revision: record.revision, tasks: record.tasks } };
+      }
+      if (scope === 'views') {
+        const record = current as ActivityRecord;
+        return { scope, data: { schemaVersion: record.schemaVersion, revision: record.revision, views: record.views } };
       }
       const record = current as PrivacyRecord;
       return {
@@ -69,5 +87,7 @@ export async function exportPersonalData(owner: string, selections: { scope: Dat
 export async function erasePersonalData(owner: string, scope: DataScope, revision: string | null) {
   return scope === 'tasks'
     ? tasksSummary(await erasePersonalTasks(owner, revision))
-    : sharingSummary(await erasePrivacy(owner, revision));
+    : scope === 'sharing'
+      ? sharingSummary(await erasePrivacy(owner, revision))
+      : viewsSummary(await eraseActivityViews(owner, revision));
 }

@@ -1,5 +1,7 @@
 # API reference
 
+[Saved activity views (N100)](../features/activity-views.md#persistence-and-api) document private named dashboard settings at `/api/v2/activity-views` and their separate personal-data export/erasure scope.
+
 [Personal data controls (N099)](../features/personal-data.md#api-and-security) document the authenticated summary and same-origin export/deletion endpoints at `/api/v2/personal-data`, including bounds, revision checks and covered content.
 
 The dashboard's HTTP APIs exist to serve its own web UI, and are documented so operators, integrators and contributors can reason

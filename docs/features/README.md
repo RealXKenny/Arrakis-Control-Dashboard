@@ -1,5 +1,7 @@
 # Features
 
+[Saved activity views](activity-views.md) preserve named portal widgets, inbox/task filters and planning context across workspaces, with private per-account configuration at `/activity-views`.
+
 [Personal data controls](personal-data.md) export or erase private notes, plans and retained sharing snapshots at `/personal-data`, with explicit scope review and stale-save protection.
 
 [Data freshness and outages](data-freshness.md) distinguish successful source observations, attempted reads, stale/partial data and failures across the inbox and inventory/asset lookup panels.

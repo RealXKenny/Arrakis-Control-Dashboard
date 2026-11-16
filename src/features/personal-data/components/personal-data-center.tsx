@@ -164,8 +164,8 @@ export function PersonalDataCenter() {
   return (
     <section className={styles.root} aria-label="Personal data center">
       <p>
-        Export or erase dashboard-owned notes, plans and sharing snapshots for your signed-in account. No linked game
-        character or guild is required.
+        Export or erase dashboard-owned notes, plans, sharing snapshots and saved activity views for your signed-in
+        account. No linked game character or guild is required.
       </p>
       <div className={styles.actions}>
         <button className="btn btn-secondary" disabled={busy} onClick={() => void run('summary')}>
@@ -203,7 +203,9 @@ export function PersonalDataCenter() {
                 <p>
                   {scope.scope === 'tasks'
                     ? `${scope.entries} saved tasks, projects and goals. Includes notes, completed entries, dates and private planning references.`
-                    : `${scope.entries} customized private drafts and ${scope.snapshots} retained publication snapshots, including expired snapshots.`}
+                    : scope.scope === 'sharing'
+                      ? `${scope.entries} customized private drafts and ${scope.snapshots} retained publication snapshots, including expired snapshots.`
+                      : `${scope.entries} saved activity setups, including filters, widgets and planning references.`}
                 </p>
                 <label className={styles.check}>
                   <input
@@ -242,7 +244,9 @@ export function PersonalDataCenter() {
           <p>
             {review.scope === 'tasks'
               ? 'This permanently removes all tasks, projects, goals, notes and references in this list, including completed entries.'
-              : 'This permanently clears all four private sharing drafts and retained publication snapshots. Old member links stop working atomically.'}
+              : review.scope === 'sharing'
+                ? 'This permanently clears all four private sharing drafts and retained publication snapshots. Old member links stop working atomically.'
+                : 'This permanently removes all saved activity view definitions. Your task notes, normal portal layout and notification preferences are unchanged.'}
           </p>
           <p>
             A minimal empty record with a new revision remains for up to 90 days of inactivity to reject stale saves.
@@ -293,7 +297,8 @@ export function PersonalDataCenter() {
         <p>
           Notes and plans are your private task-list records. Sharing snapshots are the dashboard cards you chose to
           publish, not historical game inventory or location telemetry. Those game readings and freshness history are
-          not retained as a personal archive.
+          not retained as a personal archive. Saved activity views contain configuration and planning references, not
+          copies of game readings or task notes.
         </p>
         <p>
           Portal layouts, notification controls and pinned-item selections keep their own settings controls. Account

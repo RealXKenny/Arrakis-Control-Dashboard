@@ -9,6 +9,8 @@ import { ProfileFailure } from './profile-failure';
 import { PortalWidgets } from './portal-widgets';
 import { portalPanels } from './portal-panels';
 import { PortalQuickActions } from './quick-actions';
+import { resolveActivity } from '../../activity-views/server/resolve';
+import { ActivityBar } from '../../activity-views/components/activity-bar';
 
 export const metadata: Metadata = { title: 'Overview' };
 export default async function PortalPage({
@@ -17,7 +19,9 @@ export default async function PortalPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await requireSession();
-  const { map: requested } = await searchParams;
+  const query = await searchParams;
+  const activity = await resolveActivity(session.user.id, query.activity);
+  const requested = query.map ?? (activity.status === 'ok' ? activity.view.map : undefined);
   const map = requested === 'DeepDesert' ? 'DeepDesert' : 'HaggaBasin';
   const mapName = map === 'DeepDesert' ? 'Deep Desert' : 'Hagga Basin';
   const [result, world, preferences] = await Promise.all([
@@ -43,7 +47,7 @@ export default async function PortalPage({
           ).map(([id, name]) => (
             <Link
               key={id}
-              href={id === 'HaggaBasin' ? '/portal' : `/portal?map=${id}`}
+              href={`/portal?${new URLSearchParams({ map: id, ...(activity.status === 'ok' ? { activity: activity.view.id } : {}) })}`}
               replace
               aria-current={map === id ? 'page' : undefined}
               className={`flex min-h-10 items-center px-4 text-xs font-bold uppercase tracking-[0.14em] ${
@@ -56,14 +60,19 @@ export default async function PortalPage({
         </div>
       </PageHeader>
       {result.status !== 'ok' && <ProfileFailure result={result} />}
+      <ActivityBar state={activity} area="portal" />
       <PortalQuickActions guildState={profile ? (profile.character.guild ? 'member' : 'solo') : 'unknown'} />
-      <PortalWidgets
-        key={session.user.id}
-        panels={portalPanels(profile, world, mapName)}
-        initialRecord={preferences.record}
-        settingsAvailable={preferences.available}
-        recommended={recommendedPortalLayout(Boolean(profile?.character.guild))}
-      />
+      {(activity.status === 'none' || activity.status === 'ok') && (
+        <PortalWidgets
+          key={`${session.user.id}:${activity.status === 'ok' ? JSON.stringify(activity.view) : 'normal'}:${map}`}
+          panels={portalPanels(profile, world, mapName)}
+          initialRecord={preferences.record}
+          settingsAvailable={preferences.available}
+          recommended={recommendedPortalLayout(Boolean(profile?.character.guild))}
+          activity={activity.status === 'ok' ? activity.view : null}
+          map={map}
+        />
+      )}
     </>
   );
 }

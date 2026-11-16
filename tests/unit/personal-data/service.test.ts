@@ -1,6 +1,11 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { emptyTasks } from '../../../src/features/tasks/model';
 import { emptyPrivacy } from '../../../src/features/privacy/model';
+import { emptyActivities } from '../../../src/features/activity-views/model';
+vi.mock('../../../src/features/activity-views/server/store', () => ({
+  readActivityViews: vi.fn(async () => emptyActivities()),
+  eraseActivityViews: vi.fn(async () => emptyActivities()),
+}));
 const state = vi.hoisted(() => ({ tasks: vi.fn(), sharing: vi.fn(), eraseTasks: vi.fn(), eraseSharing: vi.fn() }));
 vi.mock('../../../src/lib/assert-server', () => ({}));
 vi.mock('../../../src/features/tasks/server/store', () => ({

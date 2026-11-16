@@ -11,6 +11,8 @@ import {
 } from '../preferences';
 import { NotificationSettings } from './notification-settings';
 import { DataFreshness } from '../../monitoring/components/data-freshness';
+import { ActivityCapture } from '../../activity-views/components/activity-capture';
+import { defaultActivity, type ActivityView } from '../../activity-views/model';
 import {
   beginCheck,
   emptyHealth,
@@ -20,17 +22,17 @@ import {
   type ScopedHealth,
 } from '../../monitoring/freshness';
 
-export function Inbox() {
+export function Inbox({ activity = null }: { activity?: ActivityView | null }) {
   const [data, setData] = useState<InboxView | null>(null);
   const [health, setHealth] = useState(emptyHealth);
   const [sourceHistory, setSourceHistory] = useState<Record<string, ScopedHealth>>({});
-  const [category, setCategory] = useState<InboxCategory | 'all'>('all');
-  const [urgent, setUrgent] = useState(false);
+  const [category, setCategory] = useState<InboxCategory | 'all'>(activity?.inbox.category ?? 'all');
+  const [urgent, setUrgent] = useState(activity?.inbox.urgent ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [preferences, setPreferences] = useState<NotificationRecord | null>(null);
   const [checkedAt, setCheckedAt] = useState(0);
-  const [showMuted, setShowMuted] = useState(false);
+  const [showMuted, setShowMuted] = useState(activity?.inbox.showMuted ?? false);
   const [controlsBusy, setControlsBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [snoozeMinutes, setSnoozeMinutes] = useState<15 | 60 | 480 | 1440>(60);
@@ -200,6 +202,7 @@ export function Inbox() {
     ) ?? [];
   return (
     <section className={styles.root} aria-label="Actionable inbox">
+      <ActivityCapture definition={{ ...(activity ?? defaultActivity()), inbox: { category, urgent, showMuted } }} />
       <div className={styles.toolbar}>
         <p>
           Review reported needs, then act in the source workspace. Checking this inbox never moves resources or changes

@@ -64,6 +64,7 @@ test('exports selected real notes/plans and snapshots, then deletes each scope w
 }) => {
   const { record, privacy } = await seed(page);
   const sharingCheck = center(page).getByRole('checkbox', { name: 'Include sharing drafts and snapshots in export' });
+  await center(page).getByRole('checkbox', { name: 'Include saved activity views in export' }).uncheck();
   await sharingCheck.uncheck();
   let event = page.waitForEvent('download');
   await center(page).getByRole('button', { name: 'Export selected data' }).click();

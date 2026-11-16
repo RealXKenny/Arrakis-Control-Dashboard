@@ -11,32 +11,38 @@ import {
   type PortalWidgetId,
 } from '../layout';
 import styles from './portal-widgets.module.css';
+import { ActivityCapture } from '../../activity-views/components/activity-capture';
+import { defaultActivity, type ActivityView } from '../../activity-views/model';
 
 export function PortalWidgets({
   panels,
   initialRecord,
   recommended,
   settingsAvailable,
+  activity = null,
+  map = 'HaggaBasin',
 }: {
   panels: Record<PortalWidgetId, ReactNode>;
   initialRecord: PortalLayoutRecord | null;
   recommended: PortalLayout;
   settingsAvailable: boolean;
+  activity?: ActivityView | null;
+  map?: 'HaggaBasin' | 'DeepDesert';
 }) {
   const [saved, setSaved] = useState<PortalLayoutRecord | null>(initialRecord);
-  const [draft, setDraft] = useState(initialRecord?.layout ?? recommended);
+  const [draft, setDraft] = useState(activity?.portal ?? initialRecord?.layout ?? recommended);
   const [editing, setEditing] = useState(false);
   const [available, setAvailable] = useState(settingsAvailable);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(
-    settingsAvailable
+    settingsAvailable || activity
       ? ''
       : 'Layout settings are unavailable. Showing the recommended view. Reload settings before saving.',
   );
   const [message, setMessage] = useState('');
   const request = useRef<AbortController | null>(null);
   useEffect(() => () => request.current?.abort(), []);
-  const changed = JSON.stringify(draft) !== JSON.stringify(saved?.layout ?? recommended);
+  const changed = JSON.stringify(draft) !== JSON.stringify(activity?.portal ?? saved?.layout ?? recommended);
   function update(layout: PortalLayout, note = 'Layout preview updated. Save to keep these changes.') {
     setDraft(layout);
     setMessage(note);
@@ -53,6 +59,7 @@ export function PortalWidgets({
     );
   }
   async function persist(reload: boolean) {
+    if (activity) return;
     if (busy) return;
     setBusy(true);
     setError('');
@@ -99,6 +106,13 @@ export function PortalWidgets({
       className={`${styles.root} ${draft.density === 'compact' ? styles.compact : ''}`}
       data-portal-density={draft.density}
     >
+      <ActivityCapture definition={{ ...(activity ?? defaultActivity()), portal: draft, map }} />
+      {activity && (
+        <p className="text-sm text-sand-300">
+          Activity widgets are shown below. Changes are local previews; capture a new view or edit the saved definition
+          in Activity views. Your normal layout is unchanged.
+        </p>
+      )}
       <section className={styles.customizer} aria-label="Portal layout">
         <div className={styles.toolbar}>
           <div>
@@ -217,7 +231,7 @@ export function PortalWidgets({
             <div className={styles.actions}>
               <button
                 className={`${styles.button} ${styles.primary}`}
-                disabled={busy || !available || !changed}
+                disabled={Boolean(activity) || busy || !available || !changed}
                 onClick={() => persist(false)}
               >
                 Save layout
@@ -225,14 +239,16 @@ export function PortalWidgets({
               <button
                 className={styles.button}
                 disabled={busy || !changed}
-                onClick={() => update(saved?.layout ?? recommended, 'Unsaved layout changes discarded.')}
+                onClick={() =>
+                  update(activity?.portal ?? saved?.layout ?? recommended, 'Unsaved layout changes discarded.')
+                }
               >
                 Discard changes
               </button>
               <button className={styles.button} disabled={busy} onClick={() => update(recommended)}>
                 Reset to recommended
               </button>
-              <button className={styles.button} disabled={busy} onClick={() => persist(true)}>
+              <button className={styles.button} disabled={busy || Boolean(activity)} onClick={() => persist(true)}>
                 Reload saved layout
               </button>
             </div>
