@@ -221,7 +221,7 @@ export default async function LandingPage() {
 
       {/* FINAL CALL TO ACTION */}
       <section aria-labelledby="cta-title" className={`${SHELL} py-16 sm:py-24`}>
-        <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+        <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:flex-wrap lg:items-center">
           <div>
             <Eyebrow>{final.eyebrow}</Eyebrow>
             <h2 id="cta-title" className="mt-4 text-2xl leading-snug sm:text-3xl">
@@ -229,7 +229,7 @@ export default async function LandingPage() {
             </h2>
             <p className="mt-3 max-w-lg text-base text-sand-300">{final.text}</p>
           </div>
-          <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center">
+          <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
             <Link href={primaryHref} prefetch={false} className="btn btn-primary shrink-0">
               {primaryLabel}
               <ArrowRightIcon className="size-4" />
