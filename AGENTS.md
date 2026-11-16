@@ -183,7 +183,7 @@ Shared assistant guidance lives in the [AI agent guide](#ai-agent-guide) at the 
 
 ## AI agent guide
 
-`AGENTS.md` is the single instruction file for every coding assistant. Claude Code reads `CLAUDE.md`, which points here; AGENTS-aware tools (Codex, Cursor, Copilot, Windsurf, Cline, Roo, Continue, Gemini CLI, Kimi, Aider with `--read AGENTS.md`) read this file directly. No per-tool rule folders are kept. Instruction discovery is version-dependent: verify the loaded instructions in your tool. Instructions do not sandbox commands or enforce permissions; review Git diffs and keep permission checks on. Run `npm run ai:check` after changing agent configuration; it validates files only, not installed assistant behavior. Never edit the Next.js-generated block at the top of this file.
+`AGENTS.md` is the single project instruction file for every coding assistant. Tool discovery is version-dependent: explicitly provide this file when a tool does not load it automatically, and verify the loaded instructions. Instructions do not sandbox commands or enforce permissions; review Git diffs and keep permission checks on. Run `npm run ai:check` after changing agent configuration; it validates files only, not installed assistant behavior. Never edit the Next.js-generated block at the top of this file.
 
 ### Rules for every agent
 
@@ -192,6 +192,8 @@ Shared assistant guidance lives in the [AI agent guide](#ai-agent-guide) at the 
 - **Security:** fresh server-side authentication and authorization for protected operations; preserve nonce CSP, same-origin mutation checks, no-store responses, bounded inputs, sanitization, audit logging and redaction. Keep `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN` and `BOT_API_TOKEN` distinct. Never print `.env`, rotate credentials, run production rekeys or deploy without explicit authorization.
 - **Testing:** `npm run format:check`, `npm run typecheck`, `npm run lint`, `npm test`; runtime and API changes also `npm run build` and `npm run test:production`; UI changes need relevant Playwright runs. Redis integration tests need a disposable `TEST_REDIS_URL` or `TEST_REDIS_CLUSTER_NODES`. Never weaken tests; never call a failure fixed without rerunning it. Unset local secrets (`REDIS_URL`, `AUTH_SECRET`, `DUNE_*`, `APP_URL` and similar) when running unit tests, or they cause false failures.
 - **Git:** inspect status first, preserve other work, stage only task files, no AI attribution trailers, and ask before pushing, merging or deploying unless authorized.
+- **Collaboration and delivery:** do not rewrite shared history, force-push, dismiss reviews, bypass branch protection, or modify production infrastructure, secrets, live Redis data, or releases without explicit authorization. Use the configured Git identity; do not impersonate contributors. Report actual verification, CI and delivery results, including unavailable checks and unresolved conflicts.
+- **Dependencies and operations:** use npm and the lockfile, prefer existing dependencies, and use isolated test infrastructure. Respect Redis Cluster hash slots, bounded retention, worker leases and retry limits; never retry uncertain non-idempotent side effects blindly. Review deployment and security implications of changes.
 
 ### Investigating browser failures
 

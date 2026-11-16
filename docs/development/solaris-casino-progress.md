@@ -10,7 +10,7 @@ The phase-by-phase entries below are historical build notes. Their old “not ye
 
 ## Decisions
 
-- **Storage is Redis, not PostgreSQL.** The original brief asked for PostgreSQL; `AGENTS.md` says "Do not add PostgreSQL or another database", and `CLAUDE.md` makes `AGENTS.md` authoritative. The ledger therefore targets Redis (standalone and Cluster, hash-tagged keys, one Lua script per operation).
+- **Storage is Redis, not PostgreSQL.** The original brief asked for PostgreSQL; `AGENTS.md` specifies Redis as the only persistent store. The ledger therefore targets Redis (standalone and Cluster, hash-tagged keys, one Lua script per operation).
 - **Real Solaris only (changed in Phase 9).** Demo credits were removed entirely at the owner's request. All wagers are real in-game Solaris held in the casino wallet, funded by deposit and returned by withdrawal. The server-side gate `CASINO_SOLARIS_ENABLED` (default false) is kept as the on/off switch: it was a requirement of the original brief and the owner still has to confirm legal, publisher-policy and age/access requirements. Nothing in the repo turns it on.
 - **Amounts** are BigInt in memory and decimal strings on the wire (`ledger/amount.ts`). Transfers are bounded by the documented Console limit of 1,000,000,000,000.
 - The reference model in `src/features/casino/ledger/ledger.ts` defines the rules; the Redis adapter must reproduce them atomically.

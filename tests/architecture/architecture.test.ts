@@ -251,7 +251,6 @@ describe('repository organization', () => {
       '.prettierrc.json',
       'AGENTS.md',
       'CHANGELOG.md',
-      'CLAUDE.md',
       'CODE_OF_CONDUCT.md',
       'CONTRIBUTING.md',
       'LICENSE',

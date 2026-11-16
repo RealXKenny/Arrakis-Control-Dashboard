@@ -185,6 +185,7 @@
 
 ### Removed
 
+- The tracked `CLAUDE.md` project guide and Claude-specific validation; shared coding-agent instructions live in `AGENTS.md`.
 - The More navigation menu, the per-tool agent rule folders (Cursor, Windsurf, Cline, Roo, Continue, Codex, Copilot), the Codex, Kimi and Gemini companion files and the retired `CONSOLE_*`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN` variables.
 
 - Root Docker build, Compose and ignore files, container entrypoint scripts and the custom application image. Releases use the standard Pterodactyl Node.js runtime, and optional chat starts through the existing Node.js launcher without an additional required process manager.
