@@ -15,9 +15,13 @@ export default async function ChangelogPage({
   const params = await searchParams;
   const showAll = params.show === 'all';
   const isBot = params.project === 'bot';
-  const all = (isBot ? await readProjectReleases('bot') : await readChangelog()).filter((release) =>
-    release.sections.some((section) => section.items.length),
-  );
+  const all = (
+    isBot
+      ? await readProjectReleases('bot')
+      : params.project === 'dashboard'
+        ? await readProjectReleases('dashboard')
+        : await readChangelog()
+  ).filter((release) => release.sections.some((section) => section.items.length));
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <nav aria-label="Changelog project" className="mb-6 flex flex-wrap gap-4">
@@ -31,7 +35,16 @@ export default async function ChangelogPage({
       {isBot && <h2 className="mb-5 text-xl">Arrakis Control Bot release history</h2>}
       <ReleaseNotes releases={showAll ? all : all.slice(0, RECENT)} />
       {!showAll && all.length > RECENT && (
-        <Link href={isBot ? '/changelog?project=bot&show=all' : '/changelog?show=all'} className="btn btn-ghost mt-8">
+        <Link
+          href={
+            isBot
+              ? '/changelog?project=bot&show=all'
+              : params.project === 'dashboard'
+                ? '/changelog?project=dashboard&show=all'
+                : '/changelog?show=all'
+          }
+          className="btn btn-ghost mt-8"
+        >
           Show all {all.length} releases
         </Link>
       )}
