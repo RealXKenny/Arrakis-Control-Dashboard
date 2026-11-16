@@ -185,6 +185,7 @@
 
 ### Upgrade Notes
 
+- `MODERATOR_DISCORD_ROLE_IDS` optionally reserves Discord roles for the forthcoming moderation workspace. The workspace and moderator operations are not yet available.
 - Set `AUTH_SECRET` to at least 32 random characters. It is required in production.
 - In the Discord developer portal, change the OAuth2 redirect URI to `<APP_URL>/api/auth/callback/discord`.
 - With the dashboard stopped, run `npm run redis:rekey` for a dry run and `npm run redis:rekey -- --apply` to rename existing Redis keys, then start version 2. Move data to a cluster only afterwards.

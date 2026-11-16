@@ -24,6 +24,7 @@ This is a continuation record, not a claim of completion. Check an item only aft
 - [x] Add `.worktrees/` to `.gitignore`; no recreation reference was found in the searched project configuration, scripts and documentation.
 - [ ] Confirm whether `.worktrees/pr8-integration/.next` is used by any other session or automation before removing it. It is not a registered worktree; process inspection was denied, so it has been left untouched. Remove the parent only after confirming safe cleanup and checking its contents.
 - [ ] Recheck worktrees, branch and PR before delivery; document any completed cleanup accurately in the changelog.
+- A registered detached `.worktrees/bot-changelog-v2` appeared during the later continuation. It may be active and must not be removed or pruned without confirming it is unused and clean. ESLint excludes `.worktrees/` so another checkout's generated files are not linted as this checkout's source.
 
 ## Features
 
@@ -39,6 +40,7 @@ This is a continuation record, not a claim of completion. Check an item only aft
 - [ ] **N077:** bounded rate-limited help requests for all requested categories, availability and matching, atomic assignment, full lifecycle, ownership, privacy, abuse/reporting, cancellation and history, identity/chat and notifications.
 - [ ] **N078:** authorized read-only backup evidence, age and available schedule, success/failure history, separate restore-rehearsal evidence and stale/missing states; sanitize output and document unavailable trusted evidence. No backup contents, credentials or admin endpoints.
 - [ ] **N079:** player report intake, least-privilege moderator authorization separate from administrators, structured cases, authorized evidence, assignment, status, decisions/reasons, audit history, filtering/search, closure, sensitive-data protection and retention.
+- N079 progress: an unconnected server-side authorization helper checks the session's Discord identity against current guild roles using the configured bot and optional `MODERATOR_DISCORD_ROLE_IDS`. It fails closed and does not cache grants. The case workspace, action audit and enforcement on each protected operation remain to be implemented.
 - [ ] **N080:** bounded cached/rate-limited read-only capability probes, support/unsupported/permission/outage distinctions, stale and last-success times, sanitized explanations and health categories, restricted infrastructure details and monitoring integration; no elevated permission requests.
 - [ ] For every feature, verify actual data sources, permissions, connected UI/API, security, concurrency, recovery, retention and focused tests before marking complete.
 

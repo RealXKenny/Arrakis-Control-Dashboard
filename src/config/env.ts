@@ -135,6 +135,12 @@ const serverEnvSchema = z.object({
   AUTH_SECRET: z.string().min(32).max(256).optional(),
   DISCORD_GUILD_ID: z.string().min(1).optional(),
   VERIFIED_MEMBER_ROLE_ID: z.string().min(1).optional(),
+  /** Optional moderator roles; these do not confer access outside moderation. */
+  MODERATOR_DISCORD_ROLE_IDS: z
+    .string()
+    .trim()
+    .regex(/^\d{15,25}(?:\s*,\s*\d{15,25}){0,19}$/)
+    .optional(),
   REDIS_URL: redisUrlSchema.optional(),
   /** Escape hatch for the one combination production refuses: plain-text Redis on a public-looking host with no password. */
   REDIS_ALLOW_INSECURE: z
