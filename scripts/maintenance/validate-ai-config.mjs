@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const errors = [];
-const required = ['AGENTS.md', 'CLAUDE.md', '.claude/settings.json'];
+const required = ['AGENTS.md'];
 for (const f of required) if (!existsSync(join(root, f))) errors.push(`Missing required file: ${f}`);
 const read = (f) => readFileSync(join(root, f), 'utf8');
 const agents = existsSync(join(root, 'AGENTS.md')) ? read('AGENTS.md') : '';
@@ -22,6 +22,7 @@ if (existsSync(join(root, '.claude/settings.json'))) {
     errors.push(`Invalid Claude JSON: ${e.message}`);
   }
 }
+// CLAUDE.md and .claude/settings.json are optional per-developer files; they are validated only when present.
 const retired = ['src/modules', 'src/infrastructure'];
 for (const path of retired) if (existsSync(join(root, path))) errors.push(`Retired directory exists: ${path}`);
 if (errors.length) {
