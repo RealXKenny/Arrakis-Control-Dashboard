@@ -17,7 +17,7 @@ test('automatic seasons publish a three-month 100-level sequence and claim verif
   browser,
 }, info) => {
   test.setTimeout(60000);
-  await seed(page);
+  await prepareSeasons(page);
   const initial = await (await page.request.get('/api/v2/admin/seasons')).json();
   const number = Math.max(...initial.seasons.map((s: Season) => s.definition.number)) + 500;
   await page.goto('/admin?tab=seasons');
@@ -215,12 +215,15 @@ async function adminAction(page: Page, data: Record<string, unknown>) {
   expect(response.ok(), await response.text()).toBe(true);
   return response.json();
 }
-async function seed(page: Page) {
+async function prepareSeasons(page: Page) {
   await authenticate(page, adminCookie);
   const initial = (await (await page.request.get('/api/v2/admin/seasons')).json()) as {
     seasons: Season[];
     template: Definition;
+    generator?: { enabled: boolean; revision: string };
   };
+  if (initial.generator?.enabled)
+    await adminAction(page, { action: 'generator-state', revision: initial.generator.revision, enabled: false });
   // Fixture accounts and isolated RESP storage only; each project closes the prior fixture season before publishing.
   for (const season of initial.seasons.filter((s) => s.phase === 'published'))
     await adminAction(page, {
@@ -230,6 +233,10 @@ async function seed(page: Page) {
       transition: 'end',
       confirmation: season.definition.name,
     });
+  return initial;
+}
+async function seed(page: Page) {
+  const initial = await prepareSeasons(page);
   const definition: Definition = {
     ...initial.template,
     slug: `browser-${randomUUID()}`,

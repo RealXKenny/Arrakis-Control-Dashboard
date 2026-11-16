@@ -214,7 +214,13 @@ export function SeasonManager() {
       )}
       <div className="season-editor-grid">
         {seasons.map((s) => (
-          <Button className="season-editor-card" key={s.id} disabled={busy} onClick={() => select(s)}>
+          <Button
+            data-season-id={s.id}
+            className="season-editor-card"
+            key={s.id}
+            disabled={busy}
+            onClick={() => select(s)}
+          >
             <span className="season-kicker">
               Season {s.definition.number} / {seasonState(s)}
             </span>
