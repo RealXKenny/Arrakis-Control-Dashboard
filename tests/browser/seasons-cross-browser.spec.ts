@@ -46,9 +46,24 @@ test('automatic seasons publish a three-month 100-level sequence and claim verif
       new Date(first.definition.startsAt).getUTCMonth();
     expect(months).toBe(3);
     await member.goto(`/seasons?season=${first.id}`);
-    await expect(
-      member.getByText('Verified progress is current. Unlocked cosmetics are claimed automatically.', { exact: true }),
-    ).toBeVisible();
+    await expect(member.getByText(/New game progress tracked since/)).toBeVisible();
+    const initialProgress = await (await member.request.get(`/api/v2/seasons?season=${first.id}`)).json();
+    expect(initialProgress.progress.xp).toBe(0);
+    expect(initialProgress.progress.ledger).toHaveLength(0);
+    await page.request.post(`${fixture}/__fixture/shared`, {
+      data: {
+        finderSources: {
+          '/api/players/4/progression': {
+            player: { actorId: '4', controllerId: '5' },
+            capabilities: { progression: true },
+            xp: 120000,
+            level: 100,
+          },
+        },
+      },
+    });
+    await member.getByRole('button', { name: 'Refresh automatic progress', exact: true }).click();
+    await expect(member.getByText(/20000 game XP/)).toBeVisible();
     const own = await (await member.request.get(`/api/v2/seasons?season=${first.id}`)).json();
     expect(own.progress.xp).toBe(250000);
     expect(own.progress.claims).toHaveLength(100);
@@ -81,6 +96,7 @@ test('automatic seasons publish a three-month 100-level sequence and claim verif
       ),
     ).toEqual([]);
   } finally {
+    await page.request.post(`${fixture}/__fixture/shared`, { data: { finderSources: {} } });
     await context.close();
     const latest = await (await page.request.get('/api/v2/admin/seasons')).json();
     if (latest.generator.enabled)
@@ -102,6 +118,21 @@ test('category catalogs configure API objectives and award once across desktop a
 }, info) => {
   test.setTimeout(60000);
   const draft = await seed(page);
+  const fixture = `http://127.0.0.1:${appOrigin().startsWith('https:') ? '3103' : '3101'}`;
+  const observations = (level: number, complete: boolean) => ({
+    '/api/players/4/progression': {
+      player: { actorId: '4', controllerId: '5' },
+      capabilities: { progression: true },
+      level,
+      xp: level * 1000,
+    },
+    '/api/players/4/journey': {
+      player: { actorId: '4', controllerId: '5' },
+      capabilities: { journey: true },
+      rows: { story: [{ id: 'fixture.story.start', complete }], contract: [], codex: [], tutorial: [] },
+    },
+  });
+  await page.request.post(`${fixture}/__fixture/shared`, { data: { finderSources: observations(10, false) } });
   const definition = structuredClone(draft.definition);
   const first = definition.challenges[0];
   first.verification = 'character-level';
@@ -149,6 +180,12 @@ test('category catalogs configure API objectives and award once across desktop a
     member = await context.newPage();
   await member.emulateMedia({ reducedMotion: 'reduce' });
   await member.goto(`/seasons?season=${draft.id}`);
+  const start = await member.request.post('/api/v2/seasons', {
+    headers: { Origin: appOrigin() },
+    data: { action: 'verify', seasonId: draft.id, challengeId: first.id },
+  });
+  expect((await start.json()).trackingEstablished).toBe(true);
+  await page.request.post(`${fixture}/__fixture/shared`, { data: { finderSources: observations(30, true) } });
   const deck = member.locator('.season-objective-deck');
   await expect(deck.getByRole('button')).toHaveCount(6);
   await deck.getByRole('button', { name: /Levels/ }).click();
@@ -183,6 +220,7 @@ test('category catalogs configure API objectives and award once across desktop a
   await member.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await member.screenshot({ path: info.outputPath('objective-categories-mobile.png'), fullPage: true });
   await context.close();
+  await page.request.post(`${fixture}/__fixture/shared`, { data: { finderSources: {} } });
   const latest = await (await page.request.get(`/api/v2/admin/seasons?season=${draft.id}`)).json();
   await adminAction(page, {
     action: 'transition',

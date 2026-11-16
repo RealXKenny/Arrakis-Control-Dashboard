@@ -50,7 +50,7 @@ export function GeneratorControls({
     <section className="season-editor-card" aria-labelledby="season-automation-title">
       <div className="season-section-heading">
         <div>
-          <span className="season-kicker">Automatic season engine · algorithm v1</span>
+          <span className="season-kicker">Automatic season engine · algorithm v{status.algorithm}</span>
           <h2 id="season-automation-title">Set it once. A new season every three months.</h2>
         </div>
         <strong>{status.enabled ? 'Automation enabled' : 'Automation paused'}</strong>
@@ -61,10 +61,10 @@ export function GeneratorControls({
         catches up when they return. Equipping cosmetics remains their choice.
       </p>
       <p>
-        Only API-observed objectives qualify. The default uses character-level milestones: existing game levels count,
-        so a level-100 character can complete it immediately. This does not prove new seasonal gameplay. Use a
-        configured 100-level API-only template with verified journey IDs for other objectives. No screenshot evidence is
-        automatically approved, and no game rewards are generated.
+        Every season starts with a fresh character-bound observation. Only later game XP increases or newly completed
+        journey objectives count; existing levels and completed objectives earn no Season XP. XP-counter decreases and
+        character swaps cannot reset tracking. Configured game rewards use separate reviewed delivery, never automatic
+        approval.
       </p>
       {status.settings && (
         <p>
@@ -134,7 +134,7 @@ export function GeneratorControls({
           <label>
             Automatic objective template
             <select value={template} onChange={(e) => setTemplate(e.target.value)}>
-              <option value="">Default: observed character levels</option>
+              <option value="">Default: new game XP or journey progress</option>
               {seasons.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.definition.name} (requires 100 levels and API-only objectives)

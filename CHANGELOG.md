@@ -4,10 +4,10 @@
 
 ### New Features
 
-- Automatic three-month Season 1, Season 2 and onward: admin-authorized deterministic generation, 100 free cosmetic levels, scheduling/publication/archiving, server-verified XP and atomic cosmetic claiming. Durable Redis cursors and pause fences protect multi-instance recovery. API-only objectives avoid approval of unverifiable evidence; the default recognizes existing character levels and never generates game-resource grants.
+- Automatic three-month Season 1, Season 2 and onward: admin-authorized deterministic generation, 100 free cosmetic levels, scheduling/publication/archiving, server-verified XP and atomic cosmetic claiming. Durable Redis cursors and pause fences protect multi-instance recovery. API-only objectives avoid approval of unverifiable evidence. Seasons start automatically by default (saved pauses are preserved) and count only NEW in-game progress after a per-season baseline, so existing high levels earn nothing on first observation. Configured Solaris/item rewards need separate review and explicit execution.
 
 - Added illustrated objective categories, completion summaries and filtering inspired by Icehunter/dune-admin, with preserved MIT attribution and original vector artwork.
-- Administrators can transfer versioned season catalogs through draft-only JSON import/export and configure one-time API-observed character-level and journey-node objectives. Canonical identity, bounded evidence, rate limits and atomic XP prevent forged or duplicate awards. Existing published seasons and default-off game delivery remain protected.
+- Administrators can transfer versioned season catalogs through draft-only JSON import/export and configure one-time API-observed character-level and journey-node objectives. Canonical identity, bounded evidence, rate limits and atomic XP prevent forged or duplicate awards. Existing published seasons remain protected; game delivery needs no feature toggle but still requires the administrator connection, review and explicit execution.
 
 - Private guild polls: leader-published single-choice questions, local closing times, current-character voting, vote changes/withdrawals, aggregate results and early closure. Immutable published choices, atomic revisions, commit-time deadlines, bounded retention and disband cleanup protect voting without exposing voter identities in member views.
 

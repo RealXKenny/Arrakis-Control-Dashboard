@@ -7,6 +7,22 @@ const deliveryMock = vi.hoisted(() => ({ grant: vi.fn().mockResolvedValue('deliv
 vi.mock('../../src/features/player/server/linked-player', () => ({
   getLinkedPlayer: async () => ({ linked: true, pawnId: '42', controllerId: '43', onlineStatus: 'Offline' }),
 }));
+const game = vi.hoisted(() => ({ xp: 9_000_000, level: 100, nodes: [{ id: 'Story.Old', complete: true }] }));
+vi.mock('../../src/server/integrations/dune', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/server/integrations/dune')>()),
+  getDuneClient: () => ({
+    request: async (_method: string, path: string) => {
+      const player = { actorId: '42', controllerId: '43' };
+      if (path.endsWith('/progression'))
+        return { capabilities: { progression: true }, player, level: game.level, xp: game.xp };
+      return {
+        capabilities: { journey: true },
+        player,
+        rows: { story: game.nodes, contract: [], codex: [], tutorial: [] },
+      };
+    },
+  }),
+}));
 vi.mock('../../src/features/seasons/server/delivery-gateway', () => ({
   deliveryAvailable: () => true,
   offline: (v: unknown) => v === 'Offline',
@@ -221,4 +237,73 @@ it('atomically fences game sends across concurrent callers and preserves interru
   );
   await expect(delivery.executeDelivery(season.id, cancelled.id, cancelled.revision!, 'reviewer')).rejects.toThrow();
   expect(deliveryMock.grant).toHaveBeenCalledTimes(1);
+});
+const member = {
+  user: { id: 'member', username: 'Member' },
+  guildId: 'guild',
+  roleIds: [],
+  expiresAt: Date.now() + 3600000,
+};
+async function automaticSeason() {
+  await generator.configureGenerator(
+    '',
+    { firstNumber: 1, firstStart: new Date(Date.now() - 60000).toISOString(), timezone: 'UTC' },
+    'admin',
+  );
+  await generator.runGenerator();
+  await generator.runGenerator();
+  return (await store.listSeasons(0, true)).find((s) => s.definition.number === 1)!;
+}
+it('gives a level-100 player zero XP at first capture, then counts only new progress exactly once through real CAS', async () => {
+  const { syncSeasonObjectives } = await import('../../src/features/seasons/server/observations');
+  game.xp = 9_000_000;
+  game.level = 100;
+  game.nodes = [{ id: 'Story.Old', complete: true }];
+  const first = await automaticSeason();
+  const signal = new AbortController().signal;
+  await Promise.allSettled([1, 2, 3].map(() => syncSeasonObjectives(member, first.id, signal)));
+  const baseline = JSON.parse((await direct.get(store.seasonKeys.baseline(first.id, 'member'))) ?? 'null');
+  expect(baseline).toMatchObject({ pawn: '42', controller: '43', xp: '9000000', highXp: '9000000', level: 100 });
+  expect((await store.loadMember(first.id, 'member')).progress.value.xp).toBe(0);
+  // A decreased counter fails closed and cannot rebase the stored baseline.
+  game.xp = 8_000_000;
+  await expect(syncSeasonObjectives(member, first.id, signal)).rejects.toThrow('decreased');
+  expect(JSON.parse((await direct.get(store.seasonKeys.baseline(first.id, 'member')))!).xp).toBe('9000000');
+  game.xp = 9_020_000;
+  game.nodes = [
+    { id: 'Story.Old', complete: false },
+    { id: 'Story.Brand.New', complete: true },
+  ];
+  await syncSeasonObjectives(member, first.id, signal);
+  const gained = (await store.loadMember(first.id, 'member')).progress.value;
+  expect(gained.xp).toBeGreaterThan(0);
+  expect(gained.ledger.length).toBe(gained.claims.length);
+  expect(new Set(gained.ledger.map((v) => v.id)).size).toBe(gained.ledger.length);
+  const again = await syncSeasonObjectives(member, first.id, signal);
+  expect(again.duplicate).toBe(true);
+  expect((await store.loadMember(first.id, 'member')).progress.value.xp).toBe(gained.xp);
+});
+it('starts the next season at zero and keeps earlier recognition permanent', async () => {
+  const { syncSeasonObjectives } = await import('../../src/features/seasons/server/observations');
+  game.xp = 5_000;
+  game.level = 100;
+  game.nodes = [];
+  const first = await automaticSeason();
+  const signal = new AbortController().signal;
+  await syncSeasonObjectives(member, first.id, signal);
+  game.xp = 5_000 + 20_000;
+  await syncSeasonObjectives(member, first.id, signal);
+  const earned = (await store.loadMember(first.id, 'member')).progress.value;
+  expect(earned.xp).toBeGreaterThan(0);
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.parse(first.definition.endsAt));
+  try {
+    await generator.runGenerator();
+    const second = (await store.listSeasons(0, true)).find((s) => s.definition.number === 2)!;
+    await syncSeasonObjectives(member, second.id, signal);
+    expect((await store.loadMember(second.id, 'member')).progress.value.xp).toBe(0);
+    expect(JSON.parse((await direct.get(store.seasonKeys.baseline(second.id, 'member')))!).xp).toBe('25000');
+  } finally {
+    clock.mockRestore();
+  }
+  expect((await store.loadMember(first.id, 'member')).progress.value).toEqual(earned);
 });

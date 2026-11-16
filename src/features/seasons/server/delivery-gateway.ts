@@ -13,9 +13,7 @@ export function offline(value: unknown) {
 }
 export function deliveryAvailable() {
   const env = getServerEnv();
-  return Boolean(
-    env.SEASON_GAME_DELIVERY_ENABLED && env.ADMIN_CONSOLE_API_KEY && isSecureConsoleOrigin(env.CONSOLE_URL),
-  );
+  return Boolean(env.ADMIN_CONSOLE_API_KEY && isSecureConsoleOrigin(env.CONSOLE_URL));
 }
 function client() {
   if (!deliveryAvailable())

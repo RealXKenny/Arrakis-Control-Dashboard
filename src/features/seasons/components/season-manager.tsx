@@ -566,14 +566,19 @@ export function SeasonManager() {
                                 verification,
                                 minimumLevel: verification === 'character-level' ? 10 : undefined,
                                 journeyNode: verification === 'journey-node' ? '' : undefined,
+                                minimumGameXp: verification === 'season-progress' ? 1000 : undefined,
+                                minimumNewJourneys: verification === 'season-progress' ? 1 : undefined,
                                 ...(verification !== 'review' ? { cadence: 'once', limit: 1 } : {}),
                               });
                             }}
                           >
                             <option value="review">Moderator-reviewed</option>
-                            <option value="linked-character">API: linked character (one-time)</option>
+                            {c.verification === 'linked-character' && (
+                              <option value="linked-character">Legacy link-only (cannot be published)</option>
+                            )}
                             <option value="character-level">API: character level (one-time)</option>
                             <option value="journey-node">API: journey node (one-time)</option>
+                            <option value="season-progress">API: new seasonal game XP or journeys</option>
                           </select>
                         </label>
                         {c.verification === 'character-level' && (
@@ -587,6 +592,30 @@ export function SeasonManager() {
                               onChange={(e) => change({ minimumLevel: Number(e.target.value) })}
                             />
                           </label>
+                        )}
+                        {c.verification === 'season-progress' && (
+                          <>
+                            <label>
+                              New game XP target
+                              <input
+                                type="number"
+                                min="1"
+                                max="10000000"
+                                value={c.minimumGameXp ?? 1000}
+                                onChange={(e) => change({ minimumGameXp: Number(e.target.value) })}
+                              />
+                            </label>
+                            <label>
+                              Alternative new journey target
+                              <input
+                                type="number"
+                                min="1"
+                                max="5000"
+                                value={c.minimumNewJourneys ?? 1}
+                                onChange={(e) => change({ minimumNewJourneys: Number(e.target.value) })}
+                              />
+                            </label>
+                          </>
                         )}
                         {c.verification === 'journey-node' && (
                           <label>

@@ -132,26 +132,35 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
     setMessage('');
     try {
       const oldLevel = levelProgress(view.season.definition, view.progress.xp).level;
-      const result = await seasonRequest<{ progress?: Progress; duplicate?: boolean }>('/api/v2/seasons', {
+      const result = await seasonRequest<{
+        progress?: Progress;
+        duplicate?: boolean;
+        trackingOnly?: boolean;
+        trackingEstablished?: boolean;
+      }>('/api/v2/seasons', {
         ...payload,
         seasonId: view.season.id,
       });
       await reload();
       const newLevel = result.progress ? levelProgress(view.season.definition, result.progress.xp).level : oldLevel;
       setMessage(
-        result.duplicate
-          ? 'Already recorded. Your progress is safe.'
-          : newLevel > oldLevel
-            ? `Level ${newLevel} reached. New rewards await.`
-            : payload.action === 'submit'
-              ? 'Evidence submitted for review.'
-              : payload.action === 'claim'
-                ? 'Cosmetic claimed. It is yours to keep.'
-                : payload.action === 'equip'
-                  ? 'Cosmetic equipped.'
-                  : payload.action === 'delivery-request'
-                    ? 'Game delivery requested for administrator review.'
-                    : 'Challenge verified. Season XP awarded.',
+        result.trackingOnly
+          ? result.trackingEstablished
+            ? 'Season tracking started. Existing game progress does not count.'
+            : 'No new qualifying game progress observed yet.'
+          : result.duplicate
+            ? 'Already recorded. Your progress is safe.'
+            : newLevel > oldLevel
+              ? `Level ${newLevel} reached. New rewards await.`
+              : payload.action === 'submit'
+                ? 'Evidence submitted for review.'
+                : payload.action === 'claim'
+                  ? 'Cosmetic claimed. It is yours to keep.'
+                  : payload.action === 'equip'
+                    ? 'Cosmetic equipped.'
+                    : payload.action === 'delivery-request'
+                      ? 'Game delivery requested for administrator review.'
+                      : 'Challenge verified. Season XP awarded.',
       );
       setChallenge(null);
       setSelection(null);

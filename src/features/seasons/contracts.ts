@@ -59,7 +59,9 @@ export const challengeSchema = z.object({
   description: text(1200),
   path: z.enum(paths),
   cadence: z.enum(['daily', 'weekly', 'seasonal', 'once', 'event']),
-  verification: z.enum(['review', 'linked-character', 'character-level', 'journey-node']),
+  verification: z.enum(['review', 'linked-character', 'character-level', 'journey-node', 'season-progress']),
+  minimumGameXp: z.number().int().min(1).max(10000000).optional(),
+  minimumNewJourneys: z.number().int().min(1).max(5000).optional(),
   category: z.enum(objectiveCategories).optional(),
   minimumLevel: z.number().int().min(1).max(1000).optional(),
   journeyNode: z
@@ -119,6 +121,16 @@ export const definitionSchema = z
       issue('Character-level objectives require a minimum level only.');
     if (value.challenges.some((v) => (v.verification === 'journey-node') !== (v.journeyNode !== undefined)))
       issue('Journey objectives require an exact node ID only.');
+    if (
+      value.challenges.some(
+        (v) =>
+          (v.verification === 'season-progress') !==
+            (v.minimumGameXp !== undefined && v.minimumNewJourneys !== undefined) ||
+          (v.verification !== 'season-progress' &&
+            (v.minimumGameXp !== undefined || v.minimumNewJourneys !== undefined)),
+      )
+    )
+      issue('Season-progress objectives require new game XP and journey targets only.');
     if (value.challenges.some((v) => ['once', 'seasonal', 'event'].includes(v.cadence) && v.limit !== 1))
       issue('Non-recurring challenges have one completion.');
   });
@@ -359,6 +371,8 @@ export function publicationProblems(definition: Definition): string[] {
   const opportunities = paths.map((path) => availableXp(definition, path, cache));
   const required = definition.thresholds.at(-1)!;
   const problems: string[] = [];
+  if (definition.challenges.some((c) => c.verification === 'linked-character'))
+    problems.push('A character link cannot prove new in-game progress; choose a gameplay objective before publishing.');
   if (opportunities.some((v) => v < required))
     problems.push('Every path, including solo, must independently reach the maximum level.');
   if (Math.max(...opportunities) > Math.min(...opportunities) * 1.1)

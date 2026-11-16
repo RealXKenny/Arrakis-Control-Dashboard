@@ -8,7 +8,7 @@ Source: [draft V2 PR #8](https://github.com/RealXKenny/Arrakis-Control-Dashboard
 
 Reuse the existing `route()` boundary, bounded bodies, same-origin mutation checks, session freshness, administrator allowlist and recent-sign-in requirement. Feature code belongs in `src/features/seasons/`; framework entries remain thin. Shared navigation retains its one inventory. Character presentation belongs to portal. Existing audio feedback owns opt-in sounds.
 
-Inventory, map positions and currencies are observations, not proof of delivery, exploration history or mentoring. Automatically verified evidence is limited to the explicitly implemented linked-character verifier. Other objectives require review; no arbitrary provider URLs or client claims grant XP. Game delivery uses the verified fixed Console contract, remains default-off and requires independent review plus explicit execution; uncertain outcomes never resend automatically. No casino activity awards XP.
+Inventory, map positions and currencies are observations, not proof of delivery, exploration history or mentoring. Automatically verified evidence is limited to the explicitly implemented linked-character verifier. Other objectives require review; no arbitrary provider URLs or client claims grant XP. Game delivery uses the verified fixed Console contract, requires independent review plus explicit execution; uncertain outcomes never resend automatically. No casino activity awards XP.
 
 ## Implementation stages
 

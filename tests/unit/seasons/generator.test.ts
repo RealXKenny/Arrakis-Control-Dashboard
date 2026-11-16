@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import content from '../../../src/features/seasons/content/season-2-template.json';
 import {
-  automaticLevelTemplate,
+  automaticProgressTemplate,
   currentWindow,
   generatorSettingsSchema,
   generateSeason,
@@ -31,6 +31,7 @@ import {
   generatorStatus,
   runGenerator,
   setGeneratorEnabled,
+  ensureDefaultGenerator,
 } from '../../../src/features/seasons/server/generator';
 import {
   claimReward,
@@ -47,7 +48,7 @@ import {
   seasonKeys,
 } from '../../../src/features/seasons/server/store';
 const settings = { firstNumber: 1, firstStart: '2026-01-31T12:00:00.000Z', timezone: 'America/New_York' };
-const base = () => automaticLevelTemplate(definitionSchema.parse(content.definition));
+const base = () => automaticProgressTemplate(definitionSchema.parse(content.definition));
 beforeEach(() => {
   mock.reply = createSeasonFixture();
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -84,7 +85,8 @@ describe('deterministic three-month generation', () => {
     expect(first.thresholds).toHaveLength(100);
     expect(first.thresholds.at(-1)).toBe(49500);
     expect(first.rewards).toHaveLength(100);
-    expect(first.rewards.every((r) => !r.gameReward && !r.artwork)).toBe(true);
+    expect(first.rewards.every((r) => !r.artwork)).toBe(true);
+    expect(first.rewards.filter((r) => r.gameReward)).toHaveLength(2);
     expect(first.rewards[0].name).not.toBe(second.rewards[0].name);
     expect(first.challenges).not.toEqual(second.challenges);
     for (const path of paths)
@@ -99,6 +101,8 @@ describe('deterministic three-month generation', () => {
       ...template.challenges[0],
       verification: 'journey-node',
       minimumLevel: undefined,
+      minimumGameXp: undefined,
+      minimumNewJourneys: undefined,
       journeyNode: 'Verified.Existing.Node',
     };
     const generated = generateSeason(template, settings, 4, 3);
@@ -109,6 +113,47 @@ describe('deterministic three-month generation', () => {
   });
 });
 describe('durable automatic lifecycle and ownership', () => {
+  it('bootstraps by default exactly once and preserves explicit pause and opt-out', async () => {
+    await Promise.allSettled([ensureDefaultGenerator(), ensureDefaultGenerator()]);
+    const enabled = await generatorStatus();
+    expect(enabled.enabled).toBe(true);
+    expect(enabled.algorithm).toBe(2);
+    await setGeneratorEnabled(enabled.revision, false, 'admin');
+    await ensureDefaultGenerator();
+    expect((await generatorStatus()).enabled).toBe(false);
+  });
+  it('preserves a paused algorithm-1 policy and upgrades its template only after an explicit resume', async () => {
+    await configureGenerator('', settings, 'admin');
+    const paused = await setGeneratorEnabled((await generatorStatus()).revision, false, 'admin');
+    const key = seasonKeys.generator;
+    const raw = String(mock.reply('GET', key, [])?.value);
+    const legacy = JSON.parse(raw);
+    legacy.algorithm = 1;
+    legacy.template.challenges = legacy.template.challenges.map((c: Record<string, unknown>) => {
+      const { minimumGameXp, minimumNewJourneys, ...rest } = c;
+      void minimumGameXp;
+      void minimumNewJourneys;
+      return { ...rest, verification: 'character-level', minimumLevel: 2 };
+    });
+    const swap = mock.reply('EVAL', 'community-seasons:commit-v1', [
+      '1',
+      key,
+      JSON.stringify({ expected: [raw], values: [JSON.stringify(legacy)] }),
+      '{}',
+    ]);
+    expect(swap?.value).toBe('ok');
+    await runGenerator();
+    expect((await generatorStatus()).algorithm).toBe(1);
+    expect((await generatorStatus()).enabled).toBe(false);
+    await setGeneratorEnabled((await generatorStatus()).revision, true, 'admin');
+    await runGenerator();
+    const upgraded = JSON.parse(String(mock.reply('GET', key, [])?.value));
+    expect(upgraded.algorithm).toBe(2);
+    expect(
+      upgraded.template.challenges.every((c: { verification: string }) => c.verification === 'season-progress'),
+    ).toBe(true);
+    expect(paused.enabled).toBe(false);
+  });
   it('is disabled until authorized, then concurrently prepares only current and next seasons', async () => {
     expect((await runGenerator()).enabled).toBe(false);
     await configureGenerator('', settings, 'admin');

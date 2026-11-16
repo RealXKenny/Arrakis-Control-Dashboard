@@ -6,7 +6,12 @@ import {
   parseCatalog,
   rewardSummary,
 } from '../../../src/features/seasons/catalog';
-import { definitionSchema, emptyProgress, seasonTemplate } from '../../../src/features/seasons/contracts';
+import {
+  definitionSchema,
+  emptyProgress,
+  publicationProblems,
+  seasonTemplate,
+} from '../../../src/features/seasons/contracts';
 
 describe('versioned objective catalogs', () => {
   it('round trips content without player state and rejects unsafe envelopes', () => {
@@ -56,5 +61,11 @@ describe('versioned objective catalogs', () => {
     expect(stat).toMatchObject({ completed: 0, percent: 0, xp: c.xp * 2 });
     expect(categoryStats(definition, progress, Date.now())).toHaveLength(6);
     expect(rewardSummary(definition, progress)).toMatchObject({ level: 1, claimed: 0, ready: 1 });
+  });
+  it('blocks publishing link-only objectives that cannot prove new gameplay', () => {
+    const definition = seasonTemplate();
+    definition.challenges[0].verification = 'linked-character';
+    definition.challenges[0].cadence = 'once';
+    expect(publicationProblems(definition).join(' ')).toContain('character link cannot prove');
   });
 });

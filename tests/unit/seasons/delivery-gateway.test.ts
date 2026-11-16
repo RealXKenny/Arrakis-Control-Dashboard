@@ -1,14 +1,12 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 const mock = vi.hoisted(() => ({
   request: vi.fn(),
-  enabled: true,
   key: 'admin-test-key',
   url: 'https://console.test',
 }));
 vi.mock('../../../src/config/env', () => ({
   getServerEnv: () => ({
     LOG_LEVEL: 'INFO',
-    SEASON_GAME_DELIVERY_ENABLED: mock.enabled,
     ADMIN_CONSOLE_API_KEY: mock.key,
     CONSOLE_URL: mock.url,
   }),
@@ -45,15 +43,11 @@ function itemReceipt() {
 }
 beforeEach(() => {
   vi.clearAllMocks();
-  mock.enabled = true;
   mock.key = 'admin-test-key';
   mock.url = 'https://console.test';
 });
-it('requires the independent activation gate, administrator key and secure transport', () => {
+it('requires the administrator key and secure transport', () => {
   expect(deliveryAvailable()).toBe(true);
-  mock.enabled = false;
-  expect(deliveryAvailable()).toBe(false);
-  mock.enabled = true;
   mock.key = '';
   expect(deliveryAvailable()).toBe(false);
   mock.key = 'admin';
@@ -139,7 +133,7 @@ it('uses only fixed item/currency endpoints and never retries a write or accepts
   expect(mock.request).toHaveBeenCalledTimes(2);
   mock.request.mockResolvedValueOnce({ task: { status: 'queued' } });
   expect(await deliveryGateway.grant('42', reward)).toBe('uncertain');
-  mock.enabled = false;
+  mock.key = '';
   expect(await deliveryGateway.grant('42', reward)).toBe('uncertain');
   expect(mock.request).toHaveBeenCalledTimes(3);
 });

@@ -165,6 +165,7 @@ export async function submitChallenge(
   challengeId: string,
   evidence: { text: string; links: string[]; requestId?: string },
   observed = false,
+  tracking?: { key: string; before: string; after: unknown },
 ) {
   const data = await loadMember(id, owner);
   const season = data.season.value;
@@ -213,6 +214,7 @@ export async function submitChallenge(
     action: observed ? 'challenge.observed' : 'challenge.submitted',
     active: activeWindow(season),
     writes: [
+      ...(tracking ? [tracking] : []),
       { key: seasonKeys.season(id), before: data.season.raw },
       { key: seasonKeys.progress(id, owner), before: data.progress.raw, after: progress },
       { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },
@@ -291,17 +293,18 @@ export async function claimReward(id: string, owner: string, rewardId: string) {
   return { progress, duplicate: false };
 }
 /** One CAS commits all server-observed completions and unlocked dashboard cosmetics, never game deliveries. */
-export async function syncAutomaticProgress(id: string, owner: string, proofs: ReadonlyMap<string, string>) {
+export async function syncAutomaticProgress(
+  id: string,
+  owner: string,
+  proofs: ReadonlyMap<string, string>,
+  tracking?: { key: string; before: string; after: unknown },
+) {
   const data = await loadMember(id, owner),
     season = data.season.value,
     progress = data.progress.value,
     totals = data.totals.value;
   ensureActive(season);
-  if (
-    !season.automatic ||
-    season.definition.challenges.some((c) => c.verification === 'review') ||
-    season.definition.rewards.some((r) => r.gameReward)
-  )
+  if (!season.automatic || season.definition.challenges.some((c) => c.verification === 'review'))
     fail('This season does not support automatic progression.');
   let changed = false,
     first = !data.progress.raw;
@@ -336,19 +339,20 @@ export async function syncAutomaticProgress(id: string, owner: string, proofs: R
     first = false;
     changed = true;
   }
-  if (!changed) return { progress, totals, duplicate: true };
+  if (!changed && !tracking) return { progress, totals, duplicate: true };
   await commit({
     id,
     actor: owner,
     action: 'progress.automated',
     active: activeWindow(season),
     writes: [
+      ...(tracking ? [tracking] : []),
       { key: seasonKeys.season(id), before: data.season.raw },
       { key: seasonKeys.progress(id, owner), before: data.progress.raw, after: progress },
       { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },
     ],
   });
-  return { progress, totals, duplicate: false };
+  return { progress, totals, duplicate: !changed };
 }
 export async function equipReward(id: string, owner: string, rewardId: string) {
   const data = await loadMember(id, owner);

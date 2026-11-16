@@ -25,19 +25,20 @@ export const generatorSettingsSchema = z
   })
   .strict();
 export type GeneratorSettings = z.infer<typeof generatorSettingsSchema>;
-export function automaticLevelTemplate(base: Definition): Definition {
+export function automaticProgressTemplate(base: Definition): Definition {
   return {
     ...base,
     challenges: paths.flatMap((path) =>
       Array.from({ length: 20 }, (_, i) => ({
         id: `${path}-${i + 1}`,
-        name: `Reach character level ${(i + 1) * 5}`,
-        description: `Have a verified game character at level ${(i + 1) * 5} or above. Existing game progress qualifies; this objective does not prove new seasonal activity.`,
+        name: `New season field milestone ${i + 1}`,
+        description: `Earn ${(i + 1) * 1000} new game XP or complete ${i + 1} new journey objectives after this season's first verified observation. Existing XP, levels and completed objectives do not count.`,
         path,
         cadence: 'once' as const,
-        verification: 'character-level' as const,
-        category: 'level' as const,
-        minimumLevel: (i + 1) * 5,
+        verification: 'season-progress' as const,
+        category: 'achievement' as const,
+        minimumGameXp: (i + 1) * 1000,
+        minimumNewJourneys: i + 1,
         xp: 2500,
         limit: 1,
       })),
@@ -87,6 +88,8 @@ export function validateGeneratorTemplate(input: Definition) {
     throw new Error(
       'Fully automatic seasons require API-observed objectives only. Text and image evidence cannot be approved automatically.',
     );
+  if (base.challenges.some((c) => c.verification === 'linked-character'))
+    throw new Error('A character link cannot prove new in-game progress.');
   return base;
 }
 /** Version 1: deterministic ordering/XP weights and curve; curated objectives, never invented API evidence. */
@@ -117,7 +120,7 @@ export function generateSeason(
   });
   const rewards = [...base.rewards]
     .sort((a, b) => a.level - b.level)
-    .map(({ gameReward: _game, artwork: _art, ...r }) => ({
+    .map(({ artwork: _art, ...r }) => ({
       ...r,
       id: `level-${r.level}`,
       name: `Season ${number} · ${r.name}`.slice(0, 100),
@@ -130,7 +133,7 @@ export function generateSeason(
     name: `Season ${number}`,
     subtitle: 'One hundred levels. Three months. Your journey.',
     description:
-      'A free community season of API-observed in-game objectives and permanent dashboard cosmetics. Each play style offers 50,000 Season XP, including a full solo path. Verified progress and unlocked cosmetic claims are automatic; no evidence submission or game-resource grants are required.',
+      'A free community season requiring new in-game progress after tracking begins. Each path offers 50,000 Season XP and can reach all 100 levels. Existing levels and completed journeys do not count. Verified XP and cosmetic claiming are automatic; configured game rewards use the separate reviewed delivery queue.',
     theme: (['dunes', 'eclipse', 'spice'] as const)[(number - 1) % 3],
     ...window,
     timezone: settings.timezone,

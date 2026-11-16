@@ -84,7 +84,7 @@ Boolean variables accept only the strings `true` and `false`.
 
 ## Tool-only variables
 
-Season game delivery uses `SEASON_GAME_DELIVERY_ENABLED` (`false` by default). Setting it to `true` enables explicit administrator execution of separately approved Solaris and item rewards through `ADMIN_CONSOLE_API_KEY`; it never enables automatic grants or casino transfers. See [season operations](../features/community-seasons.md#in-game-delivery-boundary).
+Season game delivery has no feature toggle: explicit administrator execution of separately approved Solaris and item rewards is available whenever `ADMIN_CONSOLE_API_KEY` is set and `CONSOLE_URL` is HTTPS or loopback HTTP. It never grants automatically and never touches casino transfers. Automatic seasons start by default; an administrator pause saved in Redis is preserved across restarts. See [season operations](../features/community-seasons.md#in-game-delivery-boundary).
 
 | Variable                                     | Used by                                                                                                                                                                                                           |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

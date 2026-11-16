@@ -9,16 +9,16 @@ import {
   generateSeason,
   generatorSettingsSchema,
   validateGeneratorTemplate,
-  automaticLevelTemplate,
+  automaticProgressTemplate,
   type GeneratorSettings,
 } from '../generation';
-import { commit, fail, loadSeason, readRecord, seasonKeys } from './store';
+import { commit, fail, loadSeason, readRecord, seasonKeys, listSeasons, storage } from './store';
 import { transitionSeason } from './engine';
 import { createLogger } from '../../../lib/logger';
 
 const policySchema = z
   .object({
-    algorithm: z.literal(1),
+    algorithm: z.union([z.literal(1), z.literal(2)]),
     revision: z.string().uuid(),
     series: z.string().uuid(),
     enabled: z.boolean(),
@@ -63,7 +63,7 @@ function view(policy: Policy | null) {
     : {
         revision: '',
         enabled: false,
-        algorithm: 1 as const,
+        algorithm: 2 as const,
         settings: null,
         nextNumber: null,
         nextWindow: null,
@@ -87,7 +87,7 @@ export async function configureGenerator(
   const record = await policyRecord();
   if ((record.value?.revision ?? '') !== revision) fail('Generator settings changed. Reload first.');
   if (record.value?.enabled) fail('Pause automatic seasons before changing their configuration.');
-  const defaults = automaticLevelTemplate(definitionSchema.parse(content.definition));
+  const defaults = automaticProgressTemplate(definitionSchema.parse(content.definition));
   const source = templateSeasonId ? (await loadSeason(templateSeasonId)).value.definition : defaults;
   let template: ReturnType<typeof validateGeneratorTemplate>;
   try {
@@ -99,7 +99,7 @@ export async function configureGenerator(
     );
   }
   const policy: Policy = {
-    algorithm: 1,
+    algorithm: 2,
     revision: randomUUID(),
     series: randomUUID(),
     enabled: true,
@@ -121,8 +121,8 @@ export async function configureGenerator(
       firstNumber: settings.firstNumber,
       firstStart: settings.firstStart,
       timezone: settings.timezone,
-      template: templateSeasonId ?? 'default-level-milestones',
-      algorithm: 1,
+      template: templateSeasonId ?? 'default-new-game-progress',
+      algorithm: 2,
     },
   });
   return view(policy);
@@ -151,6 +151,25 @@ async function step() {
   const record = await policyRecord(),
     policy = record.value;
   if (!policy?.enabled) return false;
+  if (policy.algorithm === 1) {
+    const next: Policy = {
+      ...policy,
+      algorithm: 2,
+      revision: randomUUID(),
+      updatedAt: new Date().toISOString(),
+      template: policy.template.challenges.every((c) => c.verification === 'character-level')
+        ? automaticProgressTemplate(policy.template)
+        : policy.template,
+    };
+    await commit({
+      id: 'automation',
+      actor,
+      action: 'generator.upgraded',
+      writes: [{ key: seasonKeys.generator, before: record.raw, after: next }],
+      detail: { algorithm: 2 },
+    });
+    return true;
+  }
   if (policy.pending) {
     const seasonRecord = await loadSeason(policy.pending.id),
       season = seasonRecord.value;
@@ -230,7 +249,7 @@ async function step() {
       { key: seasonKeys.season(id), before: '', after: season },
     ],
     index: { id, score: Date.parse(now) },
-    detail: { number: policy.nextNumber, algorithm: 1, skippedWindows: index - policy.nextWindow },
+    detail: { number: policy.nextNumber, algorithm: 2, skippedWindows: index - policy.nextWindow },
   });
   return true;
 }
@@ -267,6 +286,25 @@ export async function runGenerator() {
   }
   return generatorStatus();
 }
+/** Only an absent policy is initialized. Explicit pause/opt-out and published seasons are preserved. */
+export async function ensureDefaultGenerator() {
+  const record = await policyRecord();
+  if (record.value) return;
+  const recent = await listSeasons(0, true);
+  const ids = await storage().command(['ZRANGEBYSCORE', seasonKeys.schedules, Date.now(), '+inf', 'LIMIT', 0, 101]);
+  if (!Array.isArray(ids) || ids.length > 100) fail('Review existing schedules before automatic setup.');
+  const future = await Promise.all(ids.map((id) => loadSeason(String(id))));
+  const seasons = [...recent, ...future.map((r) => r.value)];
+  const firstNumber = Math.max(0, ...seasons.map((s) => s.definition.number)) + 1;
+  const firstStart = new Date(
+    Math.max(Date.now(), ...seasons.filter((s) => s.phase === 'published').map((s) => Date.parse(s.definition.endsAt))),
+  ).toISOString();
+  try {
+    await configureGenerator('', { firstNumber, firstStart, timezone: 'UTC' }, actor);
+  } catch (error) {
+    if (!(await policyRecord()).value) throw error;
+  }
+}
 export function startSeasonGenerator() {
   let running = false;
   const log = createLogger('SEASONS');
@@ -274,6 +312,7 @@ export function startSeasonGenerator() {
     if (running) return;
     running = true;
     try {
+      await ensureDefaultGenerator();
       await runGenerator();
     } catch {
       log.warn('Automatic seasons are temporarily unavailable.');

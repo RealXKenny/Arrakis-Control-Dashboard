@@ -37,7 +37,9 @@ export function AutomaticProgress({
         if (!response.ok) throw new Error(data.error ?? 'Progress verification unavailable.');
         if (!disposed && !document.hidden) {
           latest.current(data.progress, data.totals);
-          setState('Verified progress is current. Unlocked cosmetics are claimed automatically.');
+          setState(
+            `New game progress tracked since ${data.tracking.startedAt}: ${data.tracking.newGameXp} game XP; ${data.tracking.newJourneys} new journey objectives. Unlocked cosmetics are claimed automatically.`,
+          );
         }
         if (!disposed) timer = setTimeout(sync, 60000);
       } catch (e) {
