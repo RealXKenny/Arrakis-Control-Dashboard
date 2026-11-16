@@ -5,9 +5,10 @@ import { spendReadBudget } from '../../../server/read-budget';
 import { checkRateLimit } from '../../../lib/security/rate-limit';
 import { getLinkedPlayer } from '../../player/server/linked-player';
 import type { DashboardSession } from '../../auth/server/session-store';
-import { seasonState } from '../contracts';
+import { assignmentSchema, seasonState, type Assignment } from '../contracts';
+import { buildAssignment } from '../engine/assignment';
 import { fail, loadMember, readRecord, seasonKeys, commit } from './store';
-import { submitChallenge, syncAutomaticProgress } from './engine';
+import { submitChallenge, syncAutomaticProgress, type Tracking } from './engine';
 import { freshEvidence } from './fresh-progress';
 
 function canonicalId(value: unknown): string | null {
@@ -39,6 +40,9 @@ async function readEvidence(
   const baselineKey = seasonKeys.baseline(seasonId, session.user.id);
   // Read the CAS revision before provider reads: stale concurrent observations cannot roll back the high-water mark.
   const baseline = await readRecord(baselineKey);
+  const assignmentKey = seasonKeys.assignment(seasonId, session.user.id);
+  const stored = await readRecord<Assignment>(assignmentKey);
+  if (stored.value && !assignmentSchema.safeParse(stored.value).success) fail('Season assignment is corrupt.', 500);
   const limit = await checkRateLimit(`v2:seasons:observe:${session.user.id}`, { limit: 6, windowMs: 60000 });
   if (!limit.allowed || limit.storageUnavailable)
     fail('Objective verification is temporarily limited.', limit.storageUnavailable ? 503 : 429);
@@ -74,16 +78,34 @@ async function readEvidence(
         }),
       );
   }
-  const evidence = freshEvidence(challenges, before, snapshots, baseline.value);
+  let assignment = stored.value;
+  let evidence = freshEvidence(challenges, before, snapshots, baseline.value, assignment);
+  let createdAssignment: Assignment | null = null;
+  if (!assignment && challenges.some((c) => c.personalized)) {
+    // The plan derives only from the immutable enrollment baseline, so concurrent creators write identical bytes.
+    createdAssignment = buildAssignment({
+      definition: season.definition,
+      seasonId,
+      owner: session.user.id,
+      baseline: {
+        at: evidence.baseline.at,
+        level: evidence.baseline.level ?? null,
+        xp: evidence.baseline.xp ?? null,
+        nodes: evidence.baseline.nodes,
+      },
+    });
+    assignment = createdAssignment;
+    if (!evidence.established) evidence = freshEvidence(challenges, before, snapshots, baseline.value, assignment);
+  }
   const after = character(await getLinkedPlayer(actor, { timeout: 4000 }));
   signal.throwIfAborted();
   if (after.pawn !== before.pawn || after.controller !== before.controller)
     fail('Linked character changed. Refresh before verifying.');
-  const tracking =
-    JSON.stringify(evidence.baseline) !== baseline.raw
-      ? { key: baselineKey, before: baseline.raw, after: evidence.baseline }
-      : undefined;
-  return { member, season, evidence, tracking };
+  const writes: Tracking[] = [];
+  if (JSON.stringify(evidence.baseline) !== baseline.raw)
+    writes.push({ key: baselineKey, before: baseline.raw, after: evidence.baseline });
+  if (createdAssignment) writes.push({ key: assignmentKey, before: stored.raw, after: createdAssignment });
+  return { member, season, evidence, tracking: writes.length ? writes : undefined, assignment };
 }
 export async function verifyObjective(
   session: DashboardSession,
@@ -91,7 +113,7 @@ export async function verifyObjective(
   challengeId: string,
   signal: AbortSignal,
 ) {
-  const { member, season, evidence, tracking } = await readEvidence(session, seasonId, signal, challengeId);
+  const { member, season, evidence, tracking, assignment } = await readEvidence(session, seasonId, signal, challengeId);
   const text = evidence.proofs.get(challengeId);
   if (!text) {
     if (tracking)
@@ -100,7 +122,7 @@ export async function verifyObjective(
         actor: session.user.id,
         action: evidence.established ? 'tracking.started' : 'tracking.observed',
         active: [Date.parse(season.definition.startsAt), Date.parse(season.definition.endsAt)],
-        writes: [{ key: seasonKeys.season(seasonId), before: member.season.raw }, tracking],
+        writes: [{ key: seasonKeys.season(seasonId), before: member.season.raw }, ...tracking],
       });
     return {
       progress: member.progress.value,
@@ -109,18 +131,21 @@ export async function verifyObjective(
       trackingOnly: true,
       trackingEstablished: evidence.established,
       tracking: evidence.summary,
+      assignment,
     };
   }
   return {
     ...(await submitChallenge(seasonId, session.user.id, challengeId, { text, links: [] }, true, tracking)),
     tracking: evidence.summary,
+    assignment,
   };
 }
 export async function syncSeasonObjectives(session: DashboardSession, seasonId: string, signal: AbortSignal) {
-  const { evidence, tracking } = await readEvidence(session, seasonId, signal);
+  const { evidence, tracking, assignment } = await readEvidence(session, seasonId, signal);
   return {
     ...(await syncAutomaticProgress(seasonId, session.user.id, evidence.proofs, tracking)),
     trackingEstablished: evidence.established,
     tracking: evidence.summary,
+    assignment,
   };
 }

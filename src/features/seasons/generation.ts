@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { themeForSeason } from './engine/themes';
 import { definitionSchema, paths, publicationProblems, type Definition } from './contracts';
 
 export const generatorSettingsSchema = z
@@ -101,6 +102,7 @@ export function generateSeason(
 ): Definition {
   validateGeneratorTemplate(base);
   const window = seasonWindow(settings.firstStart, windowIndex);
+  const theme = themeForSeason(number);
   const challenges = paths.flatMap((path) => {
     const ordered = base.challenges
       .filter((c) => c.path === path)
@@ -112,6 +114,14 @@ export function generateSeason(
     let remainder = 50000 - awards.reduce((a, b) => a + b, 0);
     return ordered.map((c, i) => ({
       ...c,
+      ...(c.verification === 'season-progress'
+        ? {
+            personalized: true as const,
+            name: `${theme.title} milestone ${i + 1}`,
+            description:
+              'Your personal objective for this milestone is fixed from your first verified observation and shown in your season plan. Existing progress never counts.',
+          }
+        : {}),
       id: `${path}-${String(i + 1).padStart(2, '0')}`,
       cadence: c.verification === 'review' ? ('seasonal' as const) : ('once' as const),
       limit: 1,
@@ -131,10 +141,9 @@ export function generateSeason(
     slug: `season-${number}`,
     number,
     name: `Season ${number}`,
-    subtitle: 'One hundred levels. Three months. Your journey.',
-    description:
-      'A free community season requiring new in-game progress after tracking begins. Each path offers 50,000 Season XP and can reach all 100 levels. Existing levels and completed journeys do not count. Verified XP and cosmetic claiming are automatic; configured game rewards use the separate reviewed delivery queue.',
-    theme: (['dunes', 'eclipse', 'spice'] as const)[(number - 1) % 3],
+    subtitle: theme.subtitle,
+    description: `${theme.blurb} A free community season requiring new in-game progress after tracking begins. Each path offers 50,000 Season XP and can reach all 100 levels. Existing levels and completed journeys do not count. Verified XP and cosmetic claiming are automatic; configured game rewards use the separate reviewed delivery queue.`,
+    theme: theme.visual,
     ...window,
     timezone: settings.timezone,
     thresholds: Array.from({ length: 100 }, (_, i) => Math.round(49500 * Math.pow(i / 99, 1.12))),

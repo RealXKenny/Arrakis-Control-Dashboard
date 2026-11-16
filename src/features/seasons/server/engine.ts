@@ -15,6 +15,8 @@ import {
 import { commit, loadMember, loadSeason, readRecord, seasonKeys, fail, storage } from './store';
 import { validateArtworkReferences } from './artwork';
 
+/** Server-owned records committed atomically with progress (baselines, immutable assignments). */
+export type Tracking = { key: string; before: string; after: unknown };
 export async function saveSeason(id: string, revision: string, input: Definition, actor: string) {
   const definition = definitionSchema.parse(input);
   await validateArtworkReferences(definition);
@@ -165,7 +167,7 @@ export async function submitChallenge(
   challengeId: string,
   evidence: { text: string; links: string[]; requestId?: string },
   observed = false,
-  tracking?: { key: string; before: string; after: unknown },
+  tracking?: Tracking | Tracking[],
 ) {
   const data = await loadMember(id, owner);
   const season = data.season.value;
@@ -214,7 +216,7 @@ export async function submitChallenge(
     action: observed ? 'challenge.observed' : 'challenge.submitted',
     active: activeWindow(season),
     writes: [
-      ...(tracking ? [tracking] : []),
+      ...(tracking ? [tracking].flat() : []),
       { key: seasonKeys.season(id), before: data.season.raw },
       { key: seasonKeys.progress(id, owner), before: data.progress.raw, after: progress },
       { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },
@@ -297,7 +299,7 @@ export async function syncAutomaticProgress(
   id: string,
   owner: string,
   proofs: ReadonlyMap<string, string>,
-  tracking?: { key: string; before: string; after: unknown },
+  tracking?: Tracking | Tracking[],
 ) {
   const data = await loadMember(id, owner),
     season = data.season.value,
@@ -346,7 +348,7 @@ export async function syncAutomaticProgress(
     action: 'progress.automated',
     active: activeWindow(season),
     writes: [
-      ...(tracking ? [tracking] : []),
+      ...(tracking ? [tracking].flat() : []),
       { key: seasonKeys.season(id), before: data.season.raw },
       { key: seasonKeys.progress(id, owner), before: data.progress.raw, after: progress },
       { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },

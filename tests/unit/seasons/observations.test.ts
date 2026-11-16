@@ -73,6 +73,12 @@ async function active() {
   await runGenerator();
   return (await listSeasons(0, true)).find((s) => s.definition.number === 1)!;
 }
+/** Large, supported gains in every personalized signal; each assigned objective then qualifies. */
+const gainEverything = () => {
+  xp += 20000;
+  level += 5;
+  completed = true;
+};
 const sync = (id: string) => syncSeasonObjectives(session, id, new AbortController().signal);
 describe('new in-game progress, never historical achievements', () => {
   it('starts level-100 players with zero Season XP, then atomically awards only subsequent XP gains', async () => {
@@ -83,7 +89,11 @@ describe('new in-game progress, never historical achievements', () => {
     expect(first.progress.ledger).toHaveLength(0);
     expect(first.progress.claims).toHaveLength(1);
     expect((await sync(season.id)).progress.xp).toBe(0);
-    xp += 20000;
+    xp += 1500;
+    const partial = await sync(season.id);
+    expect(partial.progress.xp).toBeGreaterThanOrEqual(0);
+    expect(partial.progress.xp).toBeLessThan(250000);
+    gainEverything();
     const earned = await sync(season.id);
     expect(earned.progress.xp).toBe(250000);
     expect(earned.progress.ledger).toHaveLength(100);
@@ -93,8 +103,11 @@ describe('new in-game progress, never historical achievements', () => {
     expect(mock.request.mock.calls.every((c) => c[0] === 'GET')).toBe(true);
   });
   it('supports capped players through newly completed journey nodes, and never pays for resetting/replaying a node', async () => {
+    level = 200;
     const season = await active();
-    await sync(season.id);
+    const plan = (await sync(season.id)).assignment!;
+    expect(plan.tier).toBe('endgame');
+    expect(Object.values(plan.objectives).every((o) => o.type === 'journeys')).toBe(true);
     completed = true;
     const result = await sync(season.id);
     expect(result.tracking.newGameXp).toBe('0');
@@ -183,14 +196,25 @@ describe('new in-game progress, never historical achievements', () => {
     const season = await active();
     await Promise.allSettled([sync(season.id), sync(season.id)]);
     expect((await loadMember(season.id, 'member')).progress.value.xp).toBe(0);
-    xp += 20000;
+    gainEverything();
     await Promise.allSettled([sync(season.id), sync(season.id)]);
     expect((await loadMember(season.id, 'member')).progress.value.ledger).toHaveLength(100);
+  });
+  it('persists one immutable personal plan that later observations and level changes never reroll', async () => {
+    const season = await active();
+    const first = await sync(season.id);
+    const raw = (await readRecord(seasonKeys.assignment(season.id, 'member'))).raw;
+    expect(JSON.parse(raw)).toEqual(first.assignment);
+    gainEverything();
+    level = 150;
+    await sync(season.id);
+    await Promise.allSettled([sync(season.id), sync(season.id)]);
+    expect((await readRecord(seasonKeys.assignment(season.id, 'member'))).raw).toBe(raw);
   });
   it('creates an independent Season 2 baseline and preserves Season 1 history', async () => {
     const season = await active();
     await sync(season.id);
-    xp += 20000;
+    gainEverything();
     await sync(season.id);
     const second = (await listSeasons(0, true)).find((s) => s.definition.number === 2)!;
     vi.useFakeTimers({ toFake: ['Date'] });

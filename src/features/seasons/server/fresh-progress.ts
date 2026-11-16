@@ -1,7 +1,8 @@
 import '../../../lib/assert-server';
 import { z } from 'zod';
 import { record } from '../../../lib/value';
-import type { Challenge } from '../contracts';
+import { journeyGroups, type Assignment, type Challenge } from '../contracts';
+import { describeKind, progressOf, satisfied, type Measurement } from '../engine/kinds';
 import { fail } from './store';
 
 const decimal = z.string().regex(/^(0|[1-9][0-9]{0,24})$/);
@@ -17,7 +18,12 @@ export const baselineSchema = z
     nodes: z
       .array(
         z
-          .object({ id: z.string().regex(/^[A-Za-z0-9_.:/-]{1,200}$/), complete: z.boolean(), earned: z.boolean() })
+          .object({
+            id: z.string().regex(/^[A-Za-z0-9_.:/-]{1,200}$/),
+            complete: z.boolean(),
+            earned: z.boolean(),
+            group: z.enum(journeyGroups).optional(),
+          })
           .strict(),
       )
       .max(5000),
@@ -48,6 +54,7 @@ export function freshEvidence(
   character: Character,
   snapshots: ReadonlyMap<string, unknown>,
   stored: unknown,
+  assignment: Assignment | null = null,
 ) {
   let xp: string | null = null,
     level: number | null = null;
@@ -67,12 +74,13 @@ export function freshEvidence(
     level = data.level;
   }
   const nodes = new Map<string, boolean>();
+  const groupOf = new Map<string, (typeof journeyGroups)[number]>();
   if (snapshots.has('journey')) {
-    const groups = record(source(snapshots.get('journey'), character, 'journey').rows);
+    const rows = record(source(snapshots.get('journey'), character, 'journey').rows);
     for (const group of ['story', 'contract', 'codex', 'tutorial']) {
-      if (!Array.isArray(groups[group]) || groups[group].length > 5000)
+      if (!Array.isArray(rows[group]) || rows[group].length > 5000)
         fail('Journey data is incomplete or oversized.', 502);
-      for (const raw of groups[group]) {
+      for (const raw of rows[group]) {
         const node = record(raw);
         if (
           typeof node.id !== 'string' ||
@@ -82,6 +90,7 @@ export function freshEvidence(
         )
           fail('Journey data contains ambiguous objectives.', 502);
         nodes.set(node.id, node.complete);
+        groupOf.set(node.id, group as (typeof journeyGroups)[number]);
       }
     }
     if (nodes.size > 5000) fail('Journey data exceeds the safe limit.', 502);
@@ -112,8 +121,9 @@ export function freshEvidence(
     const previous = known.get(id);
     if (previous) {
       if (!previous.complete && complete) previous.earned = true;
+      if (!previous.group) previous.group = groupOf.get(id);
     } else {
-      const node = { id, complete, earned: false };
+      const node = { id, complete, earned: false, group: groupOf.get(id) };
       baseline.nodes.push(node);
       known.set(id, node);
     }
@@ -124,8 +134,23 @@ export function freshEvidence(
   const proofs = new Map<string, string>();
   const gained = xp !== null && old?.xp !== null && old?.xp !== undefined ? BigInt(xp) - BigInt(old.xp) : 0n;
   const completed = baseline.nodes.filter((n) => n.earned).length;
+  const earned = { any: completed, story: 0, contract: 0, codex: 0, tutorial: 0 };
+  for (const n of baseline.nodes) if (n.earned && n.group) earned[n.group]++;
+  const measurement: Measurement = {
+    gainedXp: gained,
+    levelsGained: old && old.level !== null && level !== null ? Math.max(0, level - old.level) : 0,
+    earned,
+  };
+  const objectives: Record<string, number> = {};
   if (old)
     for (const c of challenges) {
+      if (c.personalized) {
+        const kind = assignment?.objectives[c.id];
+        if (!kind) continue;
+        objectives[c.id] = progressOf(kind, measurement);
+        if (satisfied(kind, measurement)) proofs.set(c.id, `New verified progress: ${describeKind(kind)}`);
+        continue;
+      }
       if (
         c.verification === 'season-progress' &&
         (gained >= BigInt(c.minimumGameXp!) || completed >= c.minimumNewJourneys!)
@@ -146,6 +171,6 @@ export function freshEvidence(
     baseline,
     proofs,
     established: !old,
-    summary: { startedAt: baseline.at, newGameXp: gained.toString(), newJourneys: completed },
+    summary: { startedAt: baseline.at, newGameXp: gained.toString(), newJourneys: completed, objectives },
   };
 }

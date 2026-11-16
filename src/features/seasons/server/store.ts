@@ -13,6 +13,7 @@ import {
   seasonRecordSchema,
   progressRecordSchema,
   totalsRecordSchema,
+  assignmentSchema,
 } from '../contracts';
 
 const root = 'arrakis:{seasons}:v1';
@@ -25,6 +26,7 @@ export const seasonKeys = {
   schedules: `${root}:schedules`,
   scheduleRevision: `${root}:schedule-revision`,
   generator: `${root}:generator`,
+  assignment: (id: string, owner: string) => `${root}:assignment:${identifier.parse(id)}:${identifier.parse(owner)}`,
   baseline: (id: string, owner: string) => `${root}:baseline:${identifier.parse(id)}:${identifier.parse(owner)}`,
   season: (id: string) => `${root}:season:${identifier.parse(id)}`,
   progress: (id: string, owner: string) => `${root}:progress:${identifier.parse(id)}:${identifier.parse(owner)}`,
@@ -127,6 +129,13 @@ export async function loadMember(id: string, owner: string) {
     progress: { ...progress, value: progress.value ?? emptyProgress() },
     totals: { ...totals, value: totals.value ?? emptyTotals() },
   };
+}
+export async function loadAssignment(id: string, owner: string) {
+  const record = await readRecord<unknown>(seasonKeys.assignment(id, owner));
+  if (!record.value) return null;
+  const parsed = assignmentSchema.safeParse(record.value);
+  if (!parsed.success) throw new Error('Invalid season assignment.');
+  return parsed.data;
 }
 type Write = { key: string; before: string; after?: unknown };
 export async function commit(options: {

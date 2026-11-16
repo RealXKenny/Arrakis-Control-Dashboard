@@ -22,7 +22,16 @@ import {
   recoverDelivery,
   resolveDelivery,
 } from './deliveries';
-import { adminRecords, fail, listSeasons, loadMember, loadSeason, seasonKeys, readRecord } from './store';
+import {
+  adminRecords,
+  fail,
+  listSeasons,
+  loadAssignment,
+  loadMember,
+  loadSeason,
+  seasonKeys,
+  readRecord,
+} from './store';
 import {
   saveSeason,
   transitionSeason,
@@ -181,6 +190,7 @@ export async function getSeasons(request: Request) {
       season: data.season.value,
       progress: data.progress.value,
       totals: data.totals.value,
+      assignment: await loadAssignment(id, session.user.id),
       deliveries: await ownDeliveryStatuses(id, session.user.id),
     });
   }

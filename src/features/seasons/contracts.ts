@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const paths = ['solo', 'builder', 'explorer', 'supplier', 'mentor'] as const;
 export const objectiveCategories = ['level', 'story', 'side_quest', 'faction', 'exploration', 'achievement'] as const;
 export const cosmeticKinds = ['badge', 'banner', 'title', 'decoration', 'achievement'] as const;
+export const journeyGroups = ['story', 'contract', 'codex', 'tutorial'] as const;
+export const tiers = ['beginner', 'intermediate', 'advanced', 'veteran', 'endgame'] as const;
 export const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
 const text = (max: number) => z.string().trim().min(1).max(max);
 export const artworkSchema = z.object({ id: z.string().regex(/^[a-f0-9]{64}$/), alt: text(200) }).strict();
@@ -62,6 +64,8 @@ export const challengeSchema = z.object({
   verification: z.enum(['review', 'linked-character', 'character-level', 'journey-node', 'season-progress']),
   minimumGameXp: z.number().int().min(1).max(10000000).optional(),
   minimumNewJourneys: z.number().int().min(1).max(5000).optional(),
+  /** Targets are replaced by the member's durable, baseline-derived assignment; the base values set relative difficulty. */
+  personalized: z.literal(true).optional(),
   category: z.enum(objectiveCategories).optional(),
   minimumLevel: z.number().int().min(1).max(1000).optional(),
   journeyNode: z
@@ -131,6 +135,8 @@ export const definitionSchema = z
       )
     )
       issue('Season-progress objectives require new game XP and journey targets only.');
+    if (value.challenges.some((v) => v.personalized && v.verification !== 'season-progress'))
+      issue('Only season-progress objectives can be personalized.');
     if (value.challenges.some((v) => ['once', 'seasonal', 'event'].includes(v.cadence) && v.limit !== 1))
       issue('Non-recurring challenges have one completion.');
   });
@@ -216,6 +222,34 @@ export type Delivery = {
   resolvedBy?: string;
   resolutionNote?: string;
 };
+export const objectiveKindSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('game-xp'), target: z.number().int().min(1).max(10000000) }).strict(),
+  z.object({ type: z.literal('levels'), target: z.number().int().min(1).max(199) }).strict(),
+  z
+    .object({
+      type: z.literal('journeys'),
+      group: z.enum(['any', ...journeyGroups]),
+      target: z.number().int().min(1).max(5000),
+    })
+    .strict(),
+]);
+export type ObjectiveKind = z.infer<typeof objectiveKindSchema>;
+/** Durable, create-only personal plan. Never rerolled; derived from the immutable enrollment baseline. */
+export const assignmentSchema = z
+  .object({
+    version: z.literal(1),
+    algorithm: z.number().int().min(1).max(1000),
+    seasonId: identifier,
+    owner: identifier,
+    at: z.iso.datetime(),
+    tier: z.enum(tiers),
+    level: z.number().int().min(1).max(1000).nullable(),
+    objectives: z.record(identifier, objectiveKindSchema).refine((v) => Object.keys(v).length <= 100),
+    unsupported: z.array(identifier).max(100),
+    limitations: z.array(z.string().max(400)).max(20),
+  })
+  .strict();
+export type Assignment = z.infer<typeof assignmentSchema>;
 export const seasonRecordSchema = z.object({
   id: identifier,
   revision: z.string().uuid(),
