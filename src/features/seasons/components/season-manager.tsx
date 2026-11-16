@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 import { useEffect, useState } from 'react';
 import {
@@ -149,7 +151,7 @@ export function SeasonManager() {
         </p>
       )}
       <div className="season-actions">
-        <button
+        <Button
           className={button}
           disabled={!template || busy}
           onClick={() => {
@@ -171,8 +173,8 @@ export function SeasonManager() {
           }}
         >
           Create season
-        </button>
-        <button
+        </Button>
+        <Button
           className={button}
           disabled={busy}
           onClick={async () => {
@@ -191,11 +193,11 @@ export function SeasonManager() {
           }}
         >
           Load older season definitions
-        </button>
+        </Button>
       </div>
       <div className="season-editor-grid">
         {seasons.map((s) => (
-          <button className="season-editor-card" key={s.id} disabled={busy} onClick={() => select(s)}>
+          <Button className="season-editor-card" key={s.id} disabled={busy} onClick={() => select(s)}>
             <span className="season-kicker">
               Season {s.definition.number} / {seasonState(s)}
             </span>
@@ -203,7 +205,7 @@ export function SeasonManager() {
             <span>
               {s.definition.startsAt.slice(0, 10)} → {s.definition.endsAt.slice(0, 10)}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
       {season && definition && (
@@ -231,17 +233,17 @@ export function SeasonManager() {
               <h2>{definition.name}</h2>
             </div>
             <div className="season-actions">
-              <button className={button} onClick={() => setPreview((v) => !v)}>
+              <Button className={button} onClick={() => setPreview((v) => !v)}>
                 {preview ? 'Return to editor' : 'Preview season'}
-              </button>
+              </Button>
               {season.revision && (
-                <button
+                <Button
                   className={button}
                   disabled={busy}
                   onClick={() => mutate({ action: 'duplicate', seasonId: season.id })}
                 >
                   Use as template
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -340,7 +342,7 @@ export function SeasonManager() {
                         definition.rewards.map((v, index) => (index === i ? { ...v, ...patch } : v)),
                       );
                     return (
-                      <article className="season-editor-card" key={r.id}>
+                      <Card className="season-editor-card" key={r.id}>
                         <RewardArt reward={r} seasonId={season.id} />
                         <ArtworkUpload
                           key={`${season.id}:${season.revision}:${r.id}`}
@@ -404,7 +406,7 @@ export function SeasonManager() {
                         </label>
                         <GameRewardFields value={r.gameReward} onChange={(gameReward) => change({ gameReward })} />
                         <div className="season-actions">
-                          <button
+                          <Button
                             className={button}
                             disabled={i === 0}
                             onClick={() => {
@@ -414,8 +416,8 @@ export function SeasonManager() {
                             }}
                           >
                             Move earlier
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             className={button}
                             onClick={() =>
                               update(
@@ -425,13 +427,13 @@ export function SeasonManager() {
                             }
                           >
                             Remove
-                          </button>
+                          </Button>
                         </div>
-                      </article>
+                      </Card>
                     );
                   })}
                 </div>
-                <button
+                <Button
                   className={button}
                   onClick={() =>
                     update('rewards', [
@@ -449,7 +451,7 @@ export function SeasonManager() {
                   }
                 >
                   Add reward
-                </button>
+                </Button>
               </fieldset>
               <fieldset disabled={!editable || busy}>
                 <legend>
@@ -467,7 +469,7 @@ export function SeasonManager() {
                         definition.challenges.map((v, index) => (index === i ? { ...v, ...patch } : v)),
                       );
                     return (
-                      <article key={c.id} className="season-editor-card">
+                      <Card key={c.id} className="season-editor-card">
                         <label>
                           Name
                           <input value={c.name} maxLength={100} onChange={(e) => change({ name: e.target.value })} />
@@ -532,7 +534,7 @@ export function SeasonManager() {
                             onChange={(e) => change({ limit: Number(e.target.value) })}
                           />
                         </label>
-                        <button
+                        <Button
                           className={button}
                           onClick={() =>
                             update(
@@ -542,12 +544,12 @@ export function SeasonManager() {
                           }
                         >
                           Remove challenge
-                        </button>
-                      </article>
+                        </Button>
+                      </Card>
                     );
                   })}
                 </div>
-                <button
+                <Button
                   className={button}
                   onClick={() =>
                     update('challenges', [
@@ -566,7 +568,7 @@ export function SeasonManager() {
                   }
                 >
                   Add challenge
-                </button>
+                </Button>
               </fieldset>
               <fieldset disabled={!editable || busy}>
                 <legend>
@@ -574,7 +576,7 @@ export function SeasonManager() {
                 </legend>
                 <div className="season-editor-grid">
                   {definition.milestones.map((m, i) => (
-                    <article key={m.id} className="season-editor-card">
+                    <Card key={m.id} className="season-editor-card">
                       <label>
                         Name
                         <input
@@ -620,7 +622,7 @@ export function SeasonManager() {
                           }
                         />
                       </label>
-                      <button
+                      <Button
                         className={button}
                         onClick={() =>
                           update(
@@ -630,11 +632,11 @@ export function SeasonManager() {
                         }
                       >
                         Remove milestone
-                      </button>
-                    </article>
+                      </Button>
+                    </Card>
                   ))}
                 </div>
-                <button
+                <Button
                   className={button}
                   onClick={() =>
                     update('milestones', [
@@ -649,12 +651,12 @@ export function SeasonManager() {
                   }
                 >
                   Add milestone
-                </button>
+                </Button>
               </fieldset>
               <div className="season-actions">
                 {editable && (
                   <>
-                    <button
+                    <Button
                       className={`${button} season-primary`}
                       disabled={busy}
                       onClick={() =>
@@ -662,38 +664,38 @@ export function SeasonManager() {
                       }
                     >
                       Save draft
-                    </button>
-                    <button className={button} onClick={() => open(season)}>
+                    </Button>
+                    <Button className={button} onClick={() => open(season)}>
                       Discard unsaved edits
-                    </button>
+                    </Button>
                   </>
                 )}
                 {season.revision && (
                   <>
                     {season.phase === 'draft' && (
-                      <button className={button} disabled={busy} onClick={() => transition('preview')}>
+                      <Button className={button} disabled={busy} onClick={() => transition('preview')}>
                         Move to preview
-                      </button>
+                      </Button>
                     )}
                     {season.phase === 'preview' && (
-                      <button className={button} disabled={busy} onClick={() => transition('draft')}>
+                      <Button className={button} disabled={busy} onClick={() => transition('draft')}>
                         Return to draft
-                      </button>
+                      </Button>
                     )}
                     {editable && (
-                      <button className={button} disabled={busy} onClick={() => transition('publish')}>
+                      <Button className={button} disabled={busy} onClick={() => transition('publish')}>
                         Publish saved season
-                      </button>
+                      </Button>
                     )}
                     {['active', 'scheduled'].includes(seasonState(season)) && (
-                      <button className={button} disabled={busy} onClick={() => transition('end')}>
+                      <Button className={button} disabled={busy} onClick={() => transition('end')}>
                         End season
-                      </button>
+                      </Button>
                     )}
                     {seasonState(season) === 'ended' && (
-                      <button className={button} disabled={busy} onClick={() => transition('archive')}>
+                      <Button className={button} disabled={busy} onClick={() => transition('archive')}>
                         Archive season
-                      </button>
+                      </Button>
                     )}
                   </>
                 )}
@@ -705,7 +707,7 @@ export function SeasonManager() {
                     Every path must independently reach the cap, with XP opportunities within 10%. IDs, dates, reward
                     levels and recurrence limits are validated on the server.
                   </p>
-                  <button
+                  <Button
                     className={button}
                     onClick={() => {
                       try {
@@ -721,7 +723,7 @@ export function SeasonManager() {
                     }}
                   >
                     Check path fairness
-                  </button>
+                  </Button>
                 </details>
               )}
             </>
@@ -735,30 +737,30 @@ export function SeasonManager() {
                   {totals?.xp ?? 0} total XP · {totals?.claims ?? 0} claims
                 </p>
                 <div className="season-editor-grid">
-                  <article className="season-editor-card">
+                  <Card className="season-editor-card">
                     <h3>Level distribution</h3>
                     {definition.thresholds.map((_, i) => (
                       <p key={i}>
                         Level {i + 1}: {totals?.levels?.[String(i + 1)] ?? 0} members
                       </p>
                     ))}
-                  </article>
-                  <article className="season-editor-card">
+                  </Card>
+                  <Card className="season-editor-card">
                     <h3>Challenge completion</h3>
                     {definition.challenges.map((c) => (
                       <p key={c.id}>
                         {c.name}: {totals?.challenges?.[c.id] ?? 0}
                       </p>
                     ))}
-                  </article>
-                  <article className="season-editor-card">
+                  </Card>
+                  <Card className="season-editor-card">
                     <h3>Reward claims</h3>
                     {definition.rewards.map((r) => (
                       <p key={r.id}>
                         {r.name}: {totals?.rewards?.[r.id] ?? 0}
                       </p>
                     ))}
-                  </article>
+                  </Card>
                 </div>
                 <form
                   className="season-actions"
@@ -776,7 +778,7 @@ export function SeasonManager() {
                     Inspect account progression and claims
                     <input name="owner" required pattern="[a-zA-Z0-9_-]{1,80}" />
                   </label>
-                  <button className={button}>Inspect account</button>
+                  <Button className={button}>Inspect account</Button>
                 </form>
                 {inspected && (
                   <details open>
@@ -796,19 +798,19 @@ export function SeasonManager() {
               </section>
               <section>
                 <h2>Evidence review</h2>
-                <button className={button} onClick={() => records(season.id).catch((e) => setError(e.message))}>
+                <Button className={button} onClick={() => records(season.id).catch((e) => setError(e.message))}>
                   Refresh review queue
-                </button>
-                <button
+                </Button>
+                <Button
                   className={button}
                   disabled={busy}
                   onClick={() => records(season.id, reviewOffset + 50).catch((e) => setError(e.message))}
                 >
                   Next review page
-                </button>
+                </Button>
                 <div className="season-challenges">
                   {submissions.map((s) => (
-                    <article key={s.id} className="season-editor-card">
+                    <Card key={s.id} className="season-editor-card">
                       <span className="season-kicker">
                         {s.owner} / {s.submittedAt.slice(0, 10)}
                       </span>
@@ -830,7 +832,7 @@ export function SeasonManager() {
                       </label>
                       <div className="season-actions">
                         {[true, false].map((approve) => (
-                          <button
+                          <Button
                             className={button}
                             key={String(approve)}
                             disabled={busy || (notes[s.id]?.trim().length ?? 0) < 3}
@@ -846,10 +848,10 @@ export function SeasonManager() {
                             }
                           >
                             {approve ? 'Approve & award XP' : 'Reject'}
-                          </button>
+                          </Button>
                         ))}
                       </div>
-                    </article>
+                    </Card>
                   ))}
                 </div>
                 {!submissions.length && <p>No pending submissions on this page.</p>}
@@ -885,9 +887,9 @@ export function SeasonManager() {
                     Reason
                     <input name="reason" required minLength={10} maxLength={500} />
                   </label>
-                  <button className={button} disabled={busy}>
+                  <Button className={button} disabled={busy}>
                     Append correction
-                  </button>
+                  </Button>
                 </form>
               </section>
               <DeliveryManager
@@ -906,7 +908,7 @@ export function SeasonManager() {
                       {String(event.at)} · {String(event.action)} · {String(event.actor)}
                       {event.reason ? ` · ${String(event.reason)}` : ''}
                       {typeof event.snapshotId === 'string' && (
-                        <button
+                        <Button
                           type="button"
                           className="season-button"
                           onClick={() =>
@@ -918,7 +920,7 @@ export function SeasonManager() {
                           }
                         >
                           Inspect presentation change
-                        </button>
+                        </Button>
                       )}
                     </li>
                   ))}

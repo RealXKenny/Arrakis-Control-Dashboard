@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -82,13 +83,13 @@ export function UploadForm() {
       )}
 
       <div className="flex flex-wrap items-center gap-4">
-        <button
+        <Button
           type="submit"
           disabled={busy}
           className="btn btn-primary mr-1 max-w-full whitespace-normal disabled:opacity-60"
         >
           {busy ? 'Publishing…' : 'Publish to marketplace'}
-        </button>
+        </Button>
         <p className="text-xs text-sand-500">Everyone signed in can view and download what you publish.</p>
       </div>
     </form>

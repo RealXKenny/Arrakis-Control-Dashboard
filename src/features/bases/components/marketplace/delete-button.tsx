@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../../components/ui/button';
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -31,22 +32,22 @@ export function DeleteButton({ id }: { id: string }) {
     <div className="flex flex-col items-start gap-2">
       {armed ? (
         <div className="flex gap-3">
-          <button
+          <Button
             type="button"
             onClick={remove}
             disabled={busy}
             className="btn border border-status-danger bg-status-danger/15 text-sand-50"
           >
             {busy ? 'Removing…' : 'Confirm remove'}
-          </button>
-          <button type="button" onClick={() => setArmed(false)} disabled={busy} className="btn btn-ghost">
+          </Button>
+          <Button type="button" onClick={() => setArmed(false)} disabled={busy} className="btn btn-ghost">
             Cancel
-          </button>
+          </Button>
         </div>
       ) : (
-        <button type="button" onClick={() => setArmed(true)} className="btn btn-ghost">
+        <Button type="button" onClick={() => setArmed(true)} className="btn btn-ghost">
           Remove listing
-        </button>
+        </Button>
       )}
       {error && (
         <p role="alert" className="text-xs text-status-danger">

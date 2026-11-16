@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { useState, type FormEvent } from 'react';
@@ -91,9 +92,9 @@ export function SettingsForm({ guildId, initial }: { guildId: string; initial: G
         questions={form.applicationQuestions ?? []}
         onChange={(applicationQuestions) => setForm({ ...form, applicationQuestions })}
       />
-      <button type="submit" disabled={saving} className="btn btn-primary self-start disabled:opacity-50">
+      <Button type="submit" disabled={saving} className="btn btn-primary self-start disabled:opacity-50">
         {saving ? 'Saving…' : 'Save guild settings'}
-      </button>
+      </Button>
     </form>
   );
 }

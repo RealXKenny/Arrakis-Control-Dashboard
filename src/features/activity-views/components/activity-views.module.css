@@ -1,0 +1,111 @@
+.root {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+.card h2 {
+  font-size: 1.125rem;
+  color: var(--color-sand-100);
+}
+.root p,
+.card p {
+  color: var(--color-sand-300);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+.actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--color-spice-300);
+  text-decoration: underline;
+}
+.root :is(button, input, select),
+.card button {
+  min-height: 48px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.root label {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  color: var(--color-sand-200);
+}
+.root :is(input, select) {
+  border: 1px solid var(--color-sand-500);
+  background: var(--color-obsidian-950);
+  color: var(--color-sand-100);
+  padding: 0.75rem;
+  min-width: 0;
+  width: 100%;
+}
+.root .check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 48px;
+}
+.check input {
+  width: 22px;
+  height: 22px;
+  min-height: 22px;
+  flex-shrink: 0;
+  accent-color: var(--color-spice-500);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.root fieldset {
+  min-width: 0;
+  display: grid;
+  gap: 1rem;
+}
+.root legend {
+  font-weight: bold;
+  padding-bottom: 1rem;
+  color: var(--color-sand-100);
+}
+.root :is(button, input, select, a):focus-visible,
+.card a:focus-visible {
+  outline: 2px solid var(--color-spice-300);
+  outline-offset: 3px;
+}
+.notice {
+  border-left: 3px solid var(--color-spice-400);
+  padding: 1rem;
+  overflow-wrap: anywhere;
+}
+.widgets {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.widgets li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--color-sand-500);
+  padding-bottom: 0.5rem;
+}
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

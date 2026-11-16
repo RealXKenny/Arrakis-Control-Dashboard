@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../../components/ui/button';
 
 import { useMemo, useState } from 'react';
 import {
@@ -196,23 +197,23 @@ export function Composer({
                 onChange={(event) => updateButton(index, { url: event.target.value })}
                 className={FIELD}
               />
-              <button
+              <Button
                 type="button"
                 className="btn btn-ghost"
                 onClick={() => setButtons((c) => c.filter((_, i) => i !== index))}
               >
                 Remove
-              </button>
+              </Button>
             </div>
           ))}
           {buttons.length < 3 && (
-            <button
+            <Button
               type="button"
               className="btn btn-ghost justify-self-start"
               onClick={() => setButtons((c) => [...c, { label: '', url: '' }])}
             >
               Add button
-            </button>
+            </Button>
           )}
         </div>
       </form>
@@ -240,22 +241,22 @@ export function Composer({
         <div className="flex flex-wrap items-center gap-3">
           {armed ? (
             <>
-              <button type="button" className="btn btn-primary" disabled={busy} onClick={send}>
+              <Button type="button" className="btn btn-primary" disabled={busy} onClick={send}>
                 {busy ? 'Sending…' : 'Confirm and send'}
-              </button>
-              <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setArmed(false)}>
+              </Button>
+              <Button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setArmed(false)}>
                 Cancel
-              </button>
+              </Button>
             </>
           ) : (
-            <button
+            <Button
               type="button"
               className="btn btn-primary"
               disabled={!canSend || !preview.payload}
               onClick={() => setArmed(true)}
             >
               Send to Discord
-            </button>
+            </Button>
           )}
           {!canSend && (
             <p className="text-xs text-status-warn">

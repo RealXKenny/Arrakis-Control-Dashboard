@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState } from 'react';
 import { findOperation } from '../../client';
 import ConsoleHandoff from '../console-handoff';
@@ -32,7 +34,7 @@ function Content({ operations, id }: { operations: AdminOperation[]; id: string 
   const safe = path.trim().replace(/^\/+/, '');
   const valid = Boolean(safe) && !safe.split('/').some((part) => part === '..' || part === '');
   return (
-    <section className={ui.panel} aria-label="Addon content">
+    <Card as="section" className={ui.panel} aria-label="Addon content">
       <h3>Inspect a file in {id}</h3>
       <form
         onSubmit={(event) => {
@@ -44,9 +46,9 @@ function Content({ operations, id }: { operations: AdminOperation[]; id: string 
           File path inside the addon
           <input value={path} placeholder="README.md" onChange={(event) => setPath(event.target.value)} />
         </label>
-        <button type="submit" disabled={!valid}>
+        <Button type="submit" disabled={!valid}>
           Read file
-        </button>
+        </Button>
         {path && !valid && <p className={ui.stateLine}>Use a relative path without “..” or empty segments.</p>}
       </form>
       {open && (
@@ -58,7 +60,7 @@ function Content({ operations, id }: { operations: AdminOperation[]; id: string 
           )}
         </QueryState>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -78,18 +80,18 @@ export default function AddonsScreen({
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Addon views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'installed' ? null : id, addon: null })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'installed' && (
-        <section className={ui.panel} aria-label="Installed addons">
+        <Card as="section" className={ui.panel} aria-label="Installed addons">
           <h3>Installed addons</h3>
           <QueryState loading={installed.loading} error={installed.error} onRetry={installed.refresh}>
             <Table
@@ -99,23 +101,23 @@ export default function AddonsScreen({
               action={(row: Row) => {
                 const id = text(row, ['id', 'addon_id', 'name']);
                 return id ? (
-                  <button aria-label={`Inspect ${id}`} type="button" onClick={() => url.update({ addon: id })}>
+                  <Button aria-label={`Inspect ${id}`} type="button" onClick={() => url.update({ addon: id })}>
                     Inspect
-                  </button>
+                  </Button>
                 ) : null;
               }}
             />
           </QueryState>
-        </section>
+        </Card>
       )}
       {view === 'installed' && addon && <Content key={addon} operations={operations} id={addon} />}
       {view === 'community' && (
-        <section className={ui.panel} aria-label="Community addons">
+        <Card as="section" className={ui.panel} aria-label="Community addons">
           <h3>Community catalog</h3>
           <QueryState loading={community.loading} error={community.error} onRetry={community.refresh}>
             <Table value={community.data} caption="Community addons" empty="The catalog is empty." />
           </QueryState>
-        </section>
+        </Card>
       )}
       <ConsoleHandoff
         operations={operations}

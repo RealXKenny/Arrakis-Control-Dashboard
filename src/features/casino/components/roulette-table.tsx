@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useMemo, useState } from 'react';
 import { formatCredits } from '../contracts';
@@ -80,7 +81,7 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
   const cell = (bet: Bet, text: string, className: string, aria?: string) => {
     const amount = placed.get(bet.key)?.amount;
     return (
-      <button
+      <Button
         key={bet.key}
         type="button"
         disabled={locked}
@@ -91,7 +92,7 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
       >
         {text}
         {amount ? <span className={styles.placedChip}>{amount}</span> : null}
-      </button>
+      </Button>
     );
   };
 
@@ -154,7 +155,7 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
                   <span>
                     {bet.label}: {formatCredits(amount)}
                   </span>
-                  <button
+                  <Button
                     type="button"
                     disabled={locked}
                     onClick={() => remove(bet.key)}
@@ -162,7 +163,7 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
                     aria-label={`Remove bet on ${bet.label}`}
                   >
                     Remove
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -176,29 +177,29 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
         </div>
         <ErrorBanner message={error} />
         <div className="flex flex-wrap gap-2">
-          <button
+          <Button
             type="button"
             className="btn btn-primary disabled:opacity-50"
             disabled={locked || paused || placed.size === 0 || tooMuch || tooLittle}
             onClick={() => void spin()}
           >
             {busy ? 'Spinning...' : 'Spin'}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="btn btn-ghost disabled:opacity-50"
             disabled={locked || placed.size === 0}
             onClick={() => setPlaced(new Map())}
           >
             Clear
-          </button>
+          </Button>
           {finished && (
             <>
-              <button type="button" className="btn btn-ghost" onClick={again}>
+              <Button type="button" className="btn btn-ghost" onClick={again}>
                 New spin
-              </button>
+              </Button>
               {last && (
-                <button
+                <Button
                   type="button"
                   className="btn btn-ghost"
                   onClick={() => {
@@ -207,7 +208,7 @@ export function RouletteTable({ game, paused, maxWager, onSettled }: TableProps)
                   }}
                 >
                   Repeat bets
-                </button>
+                </Button>
               )}
             </>
           )}

@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useState } from 'react';
 import { ErrorBanner } from './parts';
@@ -39,7 +41,7 @@ export function FairnessPanel({ initial, initialRound }: { initial: Fairness; in
 
   return (
     <div className="flex flex-col gap-8">
-      <section aria-labelledby="seed-title" className="panel p-6">
+      <Card as="section" aria-labelledby="seed-title" className="panel p-6">
         <h2 id="seed-title" className="eyebrow">
           Your current seed
         </h2>
@@ -79,14 +81,14 @@ export function FairnessPanel({ initial, initialRound }: { initial: Fairness; in
               className="w-full max-w-64 border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 text-sm text-sand-50 focus:border-spice-400"
             />
           </label>
-          <button
+          <Button
             type="submit"
             className="btn btn-ghost disabled:opacity-50"
             disabled={busy || clientSeed.length === 0}
           >
             Set client seed
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="btn btn-primary whitespace-normal py-2 text-center disabled:opacity-50"
             disabled={busy}
@@ -98,15 +100,15 @@ export function FairnessPanel({ initial, initialRound }: { initial: Fairness; in
             }
           >
             Rotate seed and reveal the old one
-          </button>
+          </Button>
         </form>
         <p className="mt-3 text-xs text-sand-500">
           Rotation is refused while you have an unfinished round, so a seed can never be revealed while it still
           protects hidden game state.
         </p>
-      </section>
+      </Card>
 
-      <section aria-labelledby="retired-title" className="panel p-6">
+      <Card as="section" aria-labelledby="retired-title" className="panel p-6">
         <h2 id="retired-title" className="eyebrow">
           Retired seeds
         </h2>
@@ -124,9 +126,9 @@ export function FairnessPanel({ initial, initialRound }: { initial: Fairness; in
             ))}
           </ul>
         )}
-      </section>
+      </Card>
 
-      <section aria-labelledby="verify-title" className="panel p-6">
+      <Card as="section" aria-labelledby="verify-title" className="panel p-6">
         <h2 id="verify-title" className="eyebrow">
           Verify a round
         </h2>
@@ -145,13 +147,13 @@ export function FairnessPanel({ initial, initialRound }: { initial: Fairness; in
               className="w-full max-w-80 border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 font-mono text-sm text-sand-50 focus:border-spice-400"
             />
           </label>
-          <button
+          <Button
             type="submit"
             className="btn btn-primary disabled:opacity-50"
             disabled={busy || roundId.trim().length === 0}
           >
             Verify
-          </button>
+          </Button>
         </form>
         {verification && (
           <div role="status" className="mt-4 text-sm text-sand-200">
@@ -172,7 +174,7 @@ export function FairnessPanel({ initial, initialRound }: { initial: Fairness; in
             )}
           </div>
         )}
-      </section>
+      </Card>
       <ErrorBanner message={error} />
     </div>
   );

@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useState } from 'react';
 import { ErrorBanner, Outcome, WagerField, netText, type TableProps } from './parts';
@@ -74,18 +75,18 @@ export function CoinFlipTable({ game, paused, maxWager, onSettled }: TableProps)
         <WagerField value={wager} onChange={setWager} min={game.min} max={maxWager} disabled={busy} />
         <ErrorBanner message={error} />
         <div className="flex flex-wrap gap-3">
-          <button
+          <Button
             type="button"
             className="btn btn-primary disabled:opacity-50"
             disabled={busy || paused || !/^[1-9][0-9]*$/.test(wager)}
             onClick={() => void start(wager, { side })}
           >
             {busy ? 'Flipping...' : 'Flip the coin'}
-          </button>
+          </Button>
           {finished && (
-            <button type="button" className="btn btn-ghost" onClick={reset}>
+            <Button type="button" className="btn btn-ghost" onClick={reset}>
               Play again
-            </button>
+            </Button>
           )}
         </div>
       </div>

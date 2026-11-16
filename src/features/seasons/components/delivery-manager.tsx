@@ -1,4 +1,7 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
+
 import { useState } from 'react';
 import { gameRewardLabel, type Delivery, type Season } from '../contracts';
 
@@ -67,9 +70,9 @@ export function DeliveryManager({
           Authorization basis
           <textarea name="description" required minLength={10} maxLength={1000} />
         </label>
-        <button className={button} disabled={busy}>
+        <Button className={button} disabled={busy}>
           Request delivery review
-        </button>
+        </Button>
       </form>
       <div className="season-challenges">
         {deliveries.map((delivery) => {
@@ -83,7 +86,7 @@ export function DeliveryManager({
             });
           const confirmation = `DELIVER ${delivery.id}`;
           return (
-            <article key={delivery.id} className="season-editor-card">
+            <Card key={delivery.id} className="season-editor-card">
               <strong>
                 {delivery.owner} · {delivery.status}
               </strong>
@@ -112,14 +115,14 @@ export function DeliveryManager({
               {delivery.status === 'pending' && (
                 <div className="season-actions">
                   {[true, false].map((approve) => (
-                    <button
+                    <Button
                       key={String(approve)}
                       className={button}
                       disabled={busy || (notes[delivery.id]?.trim().length ?? 0) < 3}
                       onClick={() => act('delivery-review', { approve, note: notes[delivery.id] })}
                     >
                       {approve ? 'Approve delivery' : 'Reject delivery'}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -135,7 +138,7 @@ export function DeliveryManager({
                     />
                   </label>
                   {delivery.status === 'approved' ? (
-                    <button
+                    <Button
                       className={button}
                       disabled={busy || !enabled || confirmations[delivery.id] !== confirmation}
                       onClick={() => {
@@ -148,7 +151,7 @@ export function DeliveryManager({
                       }}
                     >
                       Execute approved delivery
-                    </button>
+                    </Button>
                   ) : (
                     <>
                       <p>
@@ -156,7 +159,7 @@ export function DeliveryManager({
                         prove whether this grant happened. Cancelled outcomes cannot be retried.
                       </p>
                       {[true, false].map((applied) => (
-                        <button
+                        <Button
                           key={String(applied)}
                           className={button}
                           disabled={
@@ -172,7 +175,7 @@ export function DeliveryManager({
                           }}
                         >
                           {applied ? 'Record verified delivery' : 'Record not applied and cancel'}
-                        </button>
+                        </Button>
                       ))}
                     </>
                   )}
@@ -183,12 +186,12 @@ export function DeliveryManager({
                   <p>
                     In flight. After two minutes, recover an interrupted send to reconciliation; recovery never resends.
                   </p>
-                  <button className={button} disabled={busy} onClick={() => act('delivery-recover')}>
+                  <Button className={button} disabled={busy} onClick={() => act('delivery-recover')}>
                     Recover interrupted send
-                  </button>
+                  </Button>
                 </>
               )}
-            </article>
+            </Card>
           );
         })}
       </div>

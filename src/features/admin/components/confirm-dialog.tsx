@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/button';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { audio } from '../../../lib/audio/manager';
 import { ui } from './ui';
@@ -91,17 +92,17 @@ export default function ConfirmDialog({
         </p>
       )}
       <div className={ui.actions}>
-        <button type="button" onClick={onCancel} disabled={busy}>
+        <Button type="button" onClick={onCancel} disabled={busy}>
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className={danger ? ui.danger : undefined}
           disabled={busy || disabled || (phrase !== undefined && typed !== phrase)}
           onClick={() => void submit()}
         >
           {busy ? 'Working…' : confirmLabel}
-        </button>
+        </Button>
       </div>
     </dialog>
   );

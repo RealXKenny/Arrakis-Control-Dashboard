@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useState, type FormEvent } from 'react';
 import { Field, FormMessage, inputClass } from '../../../components/ui/form-controls';
@@ -149,12 +150,12 @@ export function OperationForm({
         Occupied slots cannot be removed until members are reassigned or removed.
       </p>
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={busy} className="btn btn-primary">
+        <Button type="submit" disabled={busy} className="btn btn-primary">
           {busy ? 'Saving…' : 'Save operation'}
-        </button>
-        <button type="button" disabled={busy} onClick={onCancel} className="btn btn-secondary">
+        </Button>
+        <Button type="button" disabled={busy} onClick={onCancel} className="btn btn-secondary">
           Cancel editing
-        </button>
+        </Button>
       </div>
     </form>
   );

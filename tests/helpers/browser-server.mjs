@@ -12,6 +12,11 @@ import { onboardingReply } from './guild-onboarding-redis.mjs';
 import { itemPinsReply } from './item-pins-redis.mjs';
 import { pollsReply } from './guild-polls-redis.mjs';
 import { createSeasonFixture } from './seasons-redis.mjs';
+import { createPortalLayoutFixture } from './portal-layout-redis.mjs';
+import { createNotificationPreferencesFixture } from './notification-preferences-redis.mjs';
+import { createPersonalTasksFixture } from './personal-tasks-redis.mjs';
+import { createActivityViewsFixture } from './activity-views-redis.mjs';
+import { createPrivacyFixture } from './privacy-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
 import { startBrowserTls } from './browser-tls.mjs';
@@ -36,9 +41,25 @@ const listing = {
   ],
 };
 const seasonReply = createSeasonFixture();
+const portalLayoutReply = createPortalLayoutFixture();
+const notificationReply = createNotificationPreferencesFixture();
+const personalTasksReply = createPersonalTasksFixture();
+const activityViewsReply = createActivityViewsFixture();
+const privacyReply = createPrivacyFixture();
 const storage = createRedisFixture(([operation, key, ...args]) => {
   const seasons = seasonReply(operation, key, args);
   if (seasons !== undefined) return seasons.value;
+  const activities = activityViewsReply(operation, key, args);
+  if (activities !== undefined) return activities.value;
+  // Redis EVAL includes the key count; this feature uses three same-slot keys for atomic link rotation.
+  const privacy = privacyReply(operation, key, args.slice(1));
+  if (privacy !== undefined) return privacy.value;
+  const tasks = personalTasksReply(operation, key, args);
+  if (tasks !== undefined) return tasks.value;
+  const notification = notificationReply(operation, key, args);
+  if (notification !== undefined) return notification.value;
+  const portalLayout = portalLayoutReply(operation, key, args);
+  if (portalLayout !== undefined) return portalLayout.value;
   const itemPins = itemPinsReply(operation, key, args);
   if (itemPins !== undefined) return itemPins.value;
   const polls = pollsReply(operation, key, args);

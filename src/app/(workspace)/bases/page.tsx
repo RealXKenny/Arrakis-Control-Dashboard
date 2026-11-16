@@ -1,3 +1,5 @@
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BASE_SORTS, baseBrowseHref, parseBaseQuery } from '../../../features/bases/browse';
@@ -78,13 +80,13 @@ export default async function BaseMarketplacePage({
                 ))}
               </select>
             </label>
-            <button type="submit" className="btn btn-primary self-end">
+            <Button type="submit" className="btn btn-primary self-end">
               Apply
-            </button>
+            </Button>
           </form>
 
           {result.data.listings.length === 0 ? (
-            <div className="panel flex flex-col items-start gap-4 p-8">
+            <Card as="div" className="panel flex flex-col items-start gap-4 p-8">
               <p className="eyebrow">{query.q || query.map ? 'No matches' : 'Nothing shared yet'}</p>
               <p className="max-w-prose text-sm text-sand-300">
                 {query.q || query.map
@@ -94,7 +96,7 @@ export default async function BaseMarketplacePage({
               <Link href="/bases/upload" className="btn btn-primary">
                 Share a base <ArrowRightIcon className="size-4" />
               </Link>
-            </div>
+            </Card>
           ) : (
             <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {result.data.listings.map((summary) => (

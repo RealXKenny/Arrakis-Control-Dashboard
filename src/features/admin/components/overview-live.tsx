@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useTransition } from 'react';
@@ -21,9 +22,9 @@ export function OverviewRefresh() {
     return () => clearInterval(timer);
   }, [router]);
   return (
-    <button type="button" disabled={pending} onClick={() => start(() => router.refresh())}>
+    <Button type="button" disabled={pending} onClick={() => start(() => router.refresh())}>
       {pending ? 'Refreshing…' : 'Refresh statistics'}
-    </button>
+    </Button>
   );
 }
 

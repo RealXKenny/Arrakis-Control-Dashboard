@@ -1,3 +1,5 @@
+import { Button } from '../../../../components/ui/button';
+import { Card } from '../../../../components/ui/card';
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { findOperation } from '../../client';
@@ -58,9 +60,9 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
   return (
     <div className={ui.screen}>
       <div className={ui.toolbar}>
-        <button type="button" onClick={() => url.update({ guild: null })}>
+        <Button type="button" onClick={() => url.update({ guild: null })}>
           ← All guilds
-        </button>
+        </Button>
         <h3 style={{ margin: 0 }}>{name}</h3>
         <span className={ui.stateLine}>ID {guildId}</span>
       </div>
@@ -69,7 +71,7 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Guild roster">
+      <Card as="section" className={ui.panel} aria-label="Guild roster">
         <h3>Members</h3>
         <QueryState loading={members.loading} error={members.error} onRetry={members.refresh}>
           {rows.length === 0 ? (
@@ -103,7 +105,7 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
                             <span className={ui.actions}>
                               {role !== null && role >= OFFICER ? (
                                 <>
-                                  <button
+                                  <Button
                                     type="button"
                                     onClick={() =>
                                       act(
@@ -125,8 +127,8 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
                                     }
                                   >
                                     Make leader…
-                                  </button>
-                                  <button
+                                  </Button>
+                                  <Button
                                     type="button"
                                     onClick={() =>
                                       act(
@@ -143,10 +145,10 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
                                     }
                                   >
                                     Demote…
-                                  </button>
+                                  </Button>
                                 </>
                               ) : (
-                                <button
+                                <Button
                                   type="button"
                                   onClick={() =>
                                     act(
@@ -164,9 +166,9 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
                                   }
                                 >
                                   Promote…
-                                </button>
+                                </Button>
                               )}
-                              <button
+                              <Button
                                 type="button"
                                 className={ui.danger}
                                 onClick={() =>
@@ -187,7 +189,7 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
                                 }
                               >
                                 Remove…
-                              </button>
+                              </Button>
                             </span>
                           )}
                         </td>
@@ -199,8 +201,8 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
             </div>
           )}
         </QueryState>
-      </section>
-      <section className={ui.panel} aria-label="Add member">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Add member">
         <h3>Add a member</h3>
         <form onSubmit={add}>
           <label className={ui.field}>
@@ -214,21 +216,21 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
               <option value="50">Officer</option>
             </select>
           </label>
-          <button type="submit">Review…</button>
+          <Button type="submit">Review…</Button>
         </form>
         <p className={ui.stateLine}>
           Applications, conversations and private leader support chats are under{' '}
           <Link href={adminHref('guild-oversight')}>Guilds</Link>.
         </p>
-      </section>
-      <section className={ui.panel} aria-label="Disband guild">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Disband guild">
         <h3>Disband</h3>
         <p className={ui.notice}>
           Disbanding removes the guild in the Console, then clears its recruitment listing, applications, logo and chats
           here. If the cleanup fails you are told; do not repeat the disband.
         </p>
         <div className={ui.actions}>
-          <button
+          <Button
             type="button"
             className={ui.danger}
             onClick={() =>
@@ -251,9 +253,9 @@ function Roster({ operations, guildId, name }: { operations: AdminOperation[]; g
             }
           >
             Disband guild…
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
       {dialog}
     </div>
   );
@@ -294,7 +296,7 @@ export default function GuildToolsScreen({ operations }: { operations: AdminOper
           Search guilds
           <input type="search" value={draft ?? search} onChange={(event) => setDraft(event.target.value)} />
         </label>
-        <button type="submit">Search</button>
+        <Button type="submit">Search</Button>
       </form>
       <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
         <Table
@@ -304,28 +306,28 @@ export default function GuildToolsScreen({ operations }: { operations: AdminOper
           action={(row: Row) => {
             const id = idFrom(row, 'guild');
             return id ? (
-              <button
+              <Button
                 aria-label={`Manage ${nameFrom(row, 'guild')}`}
                 type="button"
                 onClick={() => url.update({ guild: id })}
               >
                 Manage
-              </button>
+              </Button>
             ) : null;
           }}
         />
         <nav className={ui.pager} aria-label="Guild pages">
-          <button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
+          <Button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
             Previous page
-          </button>
+          </Button>
           <span>Page {page + 1}</span>
-          <button
+          <Button
             type="button"
             disabled={!hasMore(list.data, page, PAGE_SIZE)}
             onClick={() => url.update({ page: page + 1 })}
           >
             Next page
-          </button>
+          </Button>
         </nav>
       </QueryState>
     </div>

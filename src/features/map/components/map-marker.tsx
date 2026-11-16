@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 function friendlyMarkerType(type) {
   return (
@@ -77,7 +78,7 @@ export default function MapMarker({ marker, index, point, zoom, onSelect, marker
   const markerClass = getMarkerClass(marker);
 
   return (
-    <button
+    <Button
       type="button"
       className={`${markerClass} hag-map-marker`}
       data-marker-id={markerId}
@@ -137,6 +138,6 @@ export default function MapMarker({ marker, index, point, zoom, onSelect, marker
       >
         {name}
       </span>
-    </button>
+    </Button>
   );
 }

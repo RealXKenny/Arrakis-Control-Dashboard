@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useState } from 'react';
 import { formatCredits, type TransferRow } from '../contracts';
@@ -38,7 +40,7 @@ export function ReconciliationPanel({ initial }: { initial: Row[] }) {
     <div className="flex flex-col gap-6">
       <ErrorBanner message={error} />
       {rows.map((row) => (
-        <section key={row.id} aria-labelledby={`t-${row.id}`} className="panel p-6">
+        <Card as="section" key={row.id} aria-labelledby={`t-${row.id}`} className="panel p-6">
           <h2 id={`t-${row.id}`} className="text-lg">
             {row.kind === 'deposit' ? 'Deposit' : 'Withdrawal'} of {formatCredits(row.amount)} Solaris
           </h2>
@@ -77,24 +79,24 @@ export function ReconciliationPanel({ initial }: { initial: Row[] }) {
             />
           </label>
           <div className="mt-4 flex gap-3">
-            <button
+            <Button
               type="button"
               className="btn btn-primary disabled:opacity-50"
               disabled={busy !== null}
               onClick={() => void resolve(row, 'applied')}
             >
               Mark applied
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               className="btn btn-ghost disabled:opacity-50"
               disabled={busy !== null}
               onClick={() => void resolve(row, 'not_applied')}
             >
               Mark not applied
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
       ))}
     </div>
   );

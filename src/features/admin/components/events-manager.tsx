@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
@@ -195,12 +197,12 @@ export function EventsManager() {
         </p>
       )}
       <div className="grid items-start gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
-        <aside className="panel p-4">
+        <Card as="aside" className="panel p-4">
           <div className="mb-4 flex items-center justify-between gap-2">
             <h2 className="text-sm">Events</h2>
-            <button type="button" className="btn btn-ghost min-h-10 text-xs" onClick={reset} disabled={busy}>
+            <Button type="button" className="btn btn-ghost min-h-10 text-xs" onClick={reset} disabled={busy}>
               New event
-            </button>
+            </Button>
           </div>
           {loading && (
             <p role="status" className="text-sm text-sand-500">
@@ -209,7 +211,7 @@ export function EventsManager() {
           )}
           <div className="space-y-2">
             {events.map((event) => (
-              <button
+              <Button
                 key={event.id}
                 type="button"
                 aria-pressed={selected?.id === event.id}
@@ -221,25 +223,25 @@ export function EventsManager() {
                 <span className="mt-2 block font-mono text-[0.625rem] uppercase text-sand-500">
                   {event.visibility} / {EVENT_STATUS_LABELS[event.status]}
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
           {!loading && events.length === 0 && (
             <p className="text-sm text-sand-500">No events yet. Create your first event.</p>
           )}
-        </aside>
+        </Card>
         <form className="panel space-y-5 p-5 sm:p-7" onSubmit={(event) => void save(event)} aria-label="Event editor">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base">{selected ? 'Edit event' : 'Create event'}</h2>
             {selected && (
-              <button
+              <Button
                 type="button"
                 className="text-xs font-bold text-status-warn underline underline-offset-4"
                 disabled={busy}
                 onClick={() => setDeleting(selected)}
               >
                 Delete event
-              </button>
+              </Button>
             )}
           </div>
           <fieldset disabled={busy || loading} className="space-y-5">
@@ -390,9 +392,9 @@ export function EventsManager() {
               Feature this event
             </label>
             <div className="flex flex-wrap items-center gap-4 border-t border-sand-200/10 pt-5">
-              <button type="submit" className="btn btn-primary" disabled={busy}>
+              <Button type="submit" className="btn btn-primary" disabled={busy}>
                 {busy ? 'Saving…' : 'Save event'}
-              </button>
+              </Button>
               <p className="text-xs text-sand-500">
                 Prize listings are announcements; awards are arranged by the organizers.
               </p>

@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import Link from 'next/link';
 import { LocalTime } from '../../../components/ui/local-time';
 import type { AdminOverview } from '../overview';
@@ -105,7 +106,7 @@ export function OverviewView({
                   </Link>
                 ))}
               </div>
-              <section className={ui.panel}>
+              <Card as="section" className={ui.panel}>
                 <h3>Service status</h3>
                 {data.services.length ? (
                   <div className={ui.serviceList}>
@@ -120,11 +121,11 @@ export function OverviewView({
                   <p>Service details were not reported. Inspect the services API for more information.</p>
                 )}
                 <Link href={href('get-server-services')}>Inspect services</Link>
-              </section>
+              </Card>
             </>
           )}
           {setupOnly && (
-            <section className={ui.panel}>
+            <Card as="section" className={ui.panel}>
               <h3>Setup checklist</h3>
               <p>
                 Credentials stay in the server environment. After changing deployment settings, restart the dashboard
@@ -132,7 +133,7 @@ export function OverviewView({
               </p>
               <div className={ui.setupList}>
                 {data.setup.map((check) => (
-                  <article key={check.id}>
+                  <Card key={check.id}>
                     <header>
                       <strong>{check.label}</strong>
                       <span className={check.ready ? ui.ready : ui.needsAttention}>
@@ -140,16 +141,16 @@ export function OverviewView({
                       </span>
                     </header>
                     <p>{check.instruction}</p>
-                  </article>
+                  </Card>
                 ))}
               </div>
               <p>
                 Read access is required for the statistics below. Grant write scopes only for tools you intend to use.
                 Console-only operations remain available through the Console.
               </p>
-            </section>
+            </Card>
           )}
-          <section className={ui.panel}>
+          <Card as="section" className={ui.panel}>
             <h3>API connection checks</h3>
             <p>
               Each check is a read-only request. A configured credential can still be refused if its scopes are missing.
@@ -188,7 +189,7 @@ export function OverviewView({
                 </tbody>
               </table>
             </div>
-          </section>
+          </Card>
         </>
       )}
     </section>

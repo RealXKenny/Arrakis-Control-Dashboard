@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -18,7 +20,7 @@ export default function ApiReference({ operations }: { operations: AdminOperatio
       `${entry.title} ${entry.route} ${entry.parameters}`.toLowerCase().includes(search.toLowerCase()),
   );
   return (
-    <section className={ui.panel} aria-label="Administration API reference">
+    <Card as="section" className={ui.panel} aria-label="Administration API reference">
       <p className={ui.eyebrow}>API REFERENCE</p>
       <h2>Every operation, explained</h2>
       <p>
@@ -113,16 +115,16 @@ export default function ApiReference({ operations }: { operations: AdminOperatio
       </div>
       {!filtered.length && <p>No matching operations.</p>}
       <nav className={ui.actions} aria-label="API reference pages">
-        <button disabled={!page} onClick={() => setPage(page - 1)}>
+        <Button disabled={!page} onClick={() => setPage(page - 1)}>
           Previous APIs
-        </button>
+        </Button>
         <span>
           Page {page + 1} of {Math.max(1, Math.ceil(filtered.length / 20))}
         </span>
-        <button disabled={(page + 1) * 20 >= filtered.length} onClick={() => setPage(page + 1)}>
+        <Button disabled={(page + 1) * 20 >= filtered.length} onClick={() => setPage(page + 1)}>
           Next APIs
-        </button>
+        </Button>
       </nav>
-    </section>
+    </Card>
   );
 }

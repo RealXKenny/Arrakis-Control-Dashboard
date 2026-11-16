@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/button';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MARKET_OWNERS, MARKET_SORTS, marketHref, parseMarketQuery } from '../../../features/market/normalize';
@@ -72,9 +73,9 @@ export default async function MarketPage({
             ))}
           </select>
         </label>
-        <button type="submit" className="btn btn-primary self-end">
+        <Button type="submit" className="btn btn-primary self-end">
           Apply
-        </button>
+        </Button>
       </form>
 
       {result.status === 'limited' && (

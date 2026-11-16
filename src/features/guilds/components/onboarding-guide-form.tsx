@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useState, type FormEvent } from 'react';
 import { Field, FormMessage, inputClass } from '../../../components/ui/form-controls';
@@ -85,32 +86,32 @@ export function OnboardingGuideForm({
                 className={inputClass}
               />
             </Field>
-            <button
+            <Button
               type="button"
               disabled={busy}
               onClick={() => setDraft({ ...draft, steps: draft.steps.filter((value) => value.id !== step.id) })}
               className="btn btn-secondary mt-3"
             >
               Remove checklist item {index + 1}
-            </button>
+            </Button>
           </li>
         ))}
       </ol>
-      <button
+      <Button
         type="button"
         disabled={busy || draft.steps.length >= 20}
         className="btn btn-secondary justify-self-start"
         onClick={() => setDraft({ ...draft, steps: [...draft.steps, { id: crypto.randomUUID(), text: '' }] })}
       >
         Add checklist item
-      </button>
+      </Button>
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={busy} className="btn btn-primary">
+        <Button type="submit" disabled={busy} className="btn btn-primary">
           Save onboarding guide
-        </button>
-        <button type="button" disabled={busy} className="btn btn-secondary" onClick={onCancel}>
+        </Button>
+        <Button type="button" disabled={busy} className="btn btn-secondary" onClick={onCancel}>
           Cancel editing
-        </button>
+        </Button>
       </div>
     </form>
   );

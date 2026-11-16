@@ -1,3 +1,4 @@
+import { Card } from '../../components/ui/card';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { safeNextPath } from '../../features/auth/schemas';
@@ -21,7 +22,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
 
   return (
     <div className="mx-auto grid w-full max-w-shell gap-6 px-4 py-12 sm:px-6 lg:grid-cols-5 lg:py-20">
-      <section className="panel flex flex-col justify-between gap-8 p-6 sm:p-8 lg:col-span-2">
+      <Card as="section" className="panel flex flex-col justify-between gap-8 p-6 sm:p-8 lg:col-span-2">
         <div className="flex flex-col gap-4">
           <p className="eyebrow">Arrakis Control</p>
           <h1 className="text-3xl tracking-monolith">Enter the sietch</h1>
@@ -38,7 +39,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
             Add a password afterwards to sign in with your email.
           </li>
         </ul>
-      </section>
+      </Card>
       <LoginPanel next={next} initialTab={first(params.tab) === 'register' ? 'register' : 'login'} notice={notice} />
     </div>
   );

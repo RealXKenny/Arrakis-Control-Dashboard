@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { artworkUrl, type Definition } from '../contracts';
@@ -91,14 +93,14 @@ export function ArtworkUpload({
               onChange={(event) => onChange({ ...value, alt: event.target.value })}
             />
           </label>
-          <button
+          <Button
             type="button"
             className="season-button"
             disabled={disabled || busy}
             onClick={() => onChange(undefined)}
           >
             Remove {label.toLowerCase()}
-          </button>
+          </Button>
         </>
       )}
     </div>

@@ -1,3 +1,5 @@
+import { Button } from '../../../../components/ui/button';
+import { Card } from '../../../../components/ui/card';
 import { useState } from 'react';
 import { findOperation } from '../../client';
 import { useConfirmedAction as useVehicleActions } from '../../hooks/use-confirmed-action';
@@ -48,22 +50,22 @@ function VehicleDetail({
   return (
     <div className={ui.screen}>
       <div className={ui.toolbar}>
-        <button type="button" onClick={() => url.update({ vehicle: null, section: null })}>
+        <Button type="button" onClick={() => url.update({ vehicle: null, section: null })}>
           ← All vehicles
-        </button>
+        </Button>
         <h3 style={{ margin: 0 }}>{name}</h3>
         <span className={ui.stateLine}>ID {vehicleId}</span>
       </div>
       <div className={ui.subTabs} role="group" aria-label="Vehicle sections">
         {SECTIONS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === section}
             onClick={() => url.update({ section: id }, 'replace')}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {notice && (
@@ -72,7 +74,7 @@ function VehicleDetail({
         </p>
       )}
       {section === 'overview' && (
-        <section className={ui.panel} aria-label="Vehicle details">
+        <Card as="section" className={ui.panel} aria-label="Vehicle details">
           <h3>Details</h3>
           {summary ? (
             <Facts value={summary} />
@@ -81,16 +83,16 @@ function VehicleDetail({
               This vehicle is not on the current list page. Return to the list to search for it.
             </p>
           )}
-        </section>
+        </Card>
       )}
       {section === 'access' && (
-        <section className={ui.panel} aria-label="Ownership and access">
+        <Card as="section" className={ui.panel} aria-label="Ownership and access">
           <h3>Ownership & shared access</h3>
           <QueryState loading={permissions.loading} error={permissions.error} onRetry={permissions.refresh}>
             <Table value={permissions.data} caption="Vehicle permissions" empty="No players have access entries." />
           </QueryState>
           <div className={ui.actions}>
-            <button
+            <Button
               type="button"
               onClick={() =>
                 act(
@@ -110,12 +112,12 @@ function VehicleDetail({
               }
             >
               Hand to system custody…
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
       )}
       {section === 'cargo' && (
-        <section className={ui.panel} aria-label="Vehicle cargo">
+        <Card as="section" className={ui.panel} aria-label="Vehicle cargo">
           <h3>Cargo</h3>
           <QueryState loading={storage.loading} error={storage.error} onRetry={storage.refresh}>
             <Table
@@ -125,7 +127,7 @@ function VehicleDetail({
               action={(row) => {
                 const itemId = idFrom(row, 'item');
                 return itemId ? (
-                  <button
+                  <Button
                     type="button"
                     onClick={() =>
                       act(
@@ -146,13 +148,13 @@ function VehicleDetail({
                     }
                   >
                     Remove
-                  </button>
+                  </Button>
                 ) : null;
               }}
             />
           </QueryState>
           <div className={ui.actions}>
-            <button
+            <Button
               type="button"
               className={ui.danger}
               onClick={() =>
@@ -171,19 +173,19 @@ function VehicleDetail({
               }
             >
               Empty all cargo…
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
       )}
       {section === 'remove' && (
-        <section className={ui.panel} aria-label="Vehicle removal">
+        <Card as="section" className={ui.panel} aria-label="Vehicle removal">
           <h3>Removal</h3>
           <p className={ui.notice}>
             Removal is permanent. The Console may queue deletion until the vehicle’s map is safe to change; queued
             deletions appear under Pending deletions and can be cancelled there.
           </p>
           <div className={ui.actions}>
-            <button
+            <Button
               type="button"
               className={ui.danger}
               onClick={() =>
@@ -205,8 +207,8 @@ function VehicleDetail({
               }
             >
               Delete vehicle…
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               className={ui.danger}
               onClick={() =>
@@ -228,9 +230,9 @@ function VehicleDetail({
               }
             >
               Delete stored vehicle…
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
       )}
       {dialog}
     </div>
@@ -245,7 +247,7 @@ function PendingDeletes({ operations }: { operations: AdminOperation[] }) {
     pendingList.refresh();
   });
   return (
-    <section className={ui.panel} aria-label="Pending vehicle deletions">
+    <Card as="section" className={ui.panel} aria-label="Pending vehicle deletions">
       <h3>Pending deletions</h3>
       <p className={ui.stateLine}>These deletions are queued, not completed. Cancelling keeps the vehicle.</p>
       {notice && (
@@ -261,7 +263,7 @@ function PendingDeletes({ operations }: { operations: AdminOperation[] }) {
           action={(row) => {
             const vehicleId = idFrom(row, 'vehicle');
             return vehicleId ? (
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   act(
@@ -279,13 +281,13 @@ function PendingDeletes({ operations }: { operations: AdminOperation[] }) {
                 }
               >
                 Cancel deletion
-              </button>
+              </Button>
             ) : null;
           }}
         />
       </QueryState>
       {dialog}
-    </section>
+    </Card>
   );
 }
 
@@ -306,12 +308,12 @@ export default function VehiclesScreen({ operations }: { operations: AdminOperat
   return (
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Vehicle views">
-        <button type="button" aria-pressed={view === 'list'} onClick={() => url.update({ view: null })}>
+        <Button type="button" aria-pressed={view === 'list'} onClick={() => url.update({ view: null })}>
           All vehicles
-        </button>
-        <button type="button" aria-pressed={view === 'pending'} onClick={() => url.update({ view: 'pending' })}>
+        </Button>
+        <Button type="button" aria-pressed={view === 'pending'} onClick={() => url.update({ view: 'pending' })}>
           Pending deletions
-        </button>
+        </Button>
       </div>
       {view === 'pending' ? (
         <PendingDeletes operations={operations} />
@@ -330,10 +332,10 @@ export default function VehiclesScreen({ operations }: { operations: AdminOperat
               Search vehicles
               <input type="search" value={draft ?? search} onChange={(event) => setDraft(event.target.value)} />
             </label>
-            <button type="submit">Search</button>
-            <button type="button" onClick={list.refresh} disabled={list.loading}>
+            <Button type="submit">Search</Button>
+            <Button type="button" onClick={list.refresh} disabled={list.loading}>
               Refresh
-            </button>
+            </Button>
           </form>
           <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
             <Table
@@ -343,28 +345,28 @@ export default function VehiclesScreen({ operations }: { operations: AdminOperat
               action={(row) => {
                 const id = idFrom(row, 'vehicle');
                 return id ? (
-                  <button
+                  <Button
                     aria-label={`Open ${nameFrom(row, 'vehicle')}`}
                     type="button"
                     onClick={() => url.update({ vehicle: id, section: null })}
                   >
                     Open
-                  </button>
+                  </Button>
                 ) : null;
               }}
             />
             <nav className={ui.pager} aria-label="Vehicle pages">
-              <button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
+              <Button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
                 Previous page
-              </button>
+              </Button>
               <span>Page {page + 1}</span>
-              <button
+              <Button
                 type="button"
                 disabled={!hasMore(list.data, page, PAGE_SIZE)}
                 onClick={() => url.update({ page: page + 1 })}
               >
                 Next page
-              </button>
+              </Button>
             </nav>
           </QueryState>
         </>

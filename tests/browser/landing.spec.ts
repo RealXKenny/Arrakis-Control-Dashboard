@@ -79,7 +79,22 @@ test.describe('landing page, signed out', () => {
     await page.goto('/');
     for (const width of WIDTHS) {
       await page.setViewportSize({ width, height: 900 });
-      expect(await noSideScroll(page), `${width}px`).toBe(true);
+      const overflow = await page.evaluate(() =>
+        [...document.querySelectorAll('body *')]
+          .filter(
+            (element) =>
+              element.getBoundingClientRect().right > innerWidth + 1 &&
+              getComputedStyle(element).position !== 'absolute',
+          )
+          .slice(0, 12)
+          .map((element) => ({
+            tag: element.tagName,
+            text: element.textContent?.slice(0, 50),
+            width: element.getBoundingClientRect().width,
+            right: element.getBoundingClientRect().right,
+          })),
+      );
+      expect(await noSideScroll(page), `${width}px: ${JSON.stringify(overflow)}`).toBe(true);
       const clipped = await page.evaluate(() =>
         [...document.querySelectorAll('main h1, main h2, main h3, main p, main a')]
           .filter((el) => el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflow !== 'visible')

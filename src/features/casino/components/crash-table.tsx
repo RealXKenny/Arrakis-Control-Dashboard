@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { formatCredits } from '../contracts';
@@ -93,29 +94,29 @@ export function CrashTable({ game, paused, maxWager, onSettled }: TableProps) {
           </Outcome>
         )}
         {!round && (
-          <button
+          <Button
             type="button"
             className="btn btn-primary disabled:opacity-50"
             disabled={busy || paused || !/^[1-9][0-9]*$/.test(wager)}
             onClick={() => void start(wager, {})}
           >
             {busy ? 'Launching...' : 'Launch'}
-          </button>
+          </Button>
         )}
         {open && (
-          <button
+          <Button
             type="button"
             className="btn btn-primary !min-h-16 disabled:opacity-50"
             disabled={busy}
             onClick={() => void act({ type: 'cashout' })}
           >
             Cash out · {formatCredits((BigInt(round?.wager ?? '0') * BigInt(shown)) / 10_000n)}
-          </button>
+          </Button>
         )}
         {finished && (
-          <button type="button" className="btn btn-ghost" onClick={reset}>
+          <Button type="button" className="btn btn-ghost" onClick={reset}>
             New flight
-          </button>
+          </Button>
         )}
         <p className="text-xs text-sand-500">
           The server clock decides every outcome. If your connection lags you may cash out later than you pressed. About

@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 import { Fragment, useState } from 'react';
 import type { ChangelogRelease } from '../schema';
@@ -177,7 +179,7 @@ export function ReleaseNotes({ releases }: { releases: ChangelogRelease[] }) {
                       0,
                     );
               return (
-                <button
+                <Button
                   type="button"
                   key={title}
                   aria-pressed={category === title}
@@ -189,7 +191,7 @@ export function ReleaseNotes({ releases }: { releases: ChangelogRelease[] }) {
                   <span aria-hidden="true" className="font-mono text-[0.625rem] opacity-60">
                     {count}
                   </span>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -201,7 +203,7 @@ export function ReleaseNotes({ releases }: { releases: ChangelogRelease[] }) {
         </aside>
         <div className="min-w-0 space-y-9">
           {visible.map((release) => (
-            <article key={release.version} id={`v${release.version}`} className="scroll-mt-28">
+            <Card key={release.version} id={`v${release.version}`} className="scroll-mt-28">
               <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-sand-200/10 pb-4">
                 <div className="flex items-center gap-3">
                   <h2 className="text-xl text-sand-50">
@@ -257,7 +259,7 @@ export function ReleaseNotes({ releases }: { releases: ChangelogRelease[] }) {
                         ))}
                       </ul>
                       {!search && category === 'All updates' && section.items.length > PREVIEW_COUNT && (
-                        <button
+                        <Button
                           type="button"
                           aria-expanded={Boolean(expanded[key])}
                           onClick={() => setExpanded((current) => ({ ...current, [key]: !current[key] }))}
@@ -267,13 +269,13 @@ export function ReleaseNotes({ releases }: { releases: ChangelogRelease[] }) {
                             ? `Show fewer ${section.title.toLowerCase()}`
                             : `View all ${section.items.length} ${section.title.toLowerCase()}`}
                           <span aria-hidden="true">{expanded[key] ? '−' : '+'}</span>
-                        </button>
+                        </Button>
                       )}
                     </section>
                   );
                 })}
               </div>
-            </article>
+            </Card>
           ))}
           {!visible.length && (
             <div className="border border-sand-200/10 bg-obsidian-900/40 px-6 py-14 text-center">
@@ -284,7 +286,7 @@ export function ReleaseNotes({ releases }: { releases: ChangelogRelease[] }) {
                   : 'Release notes will appear here when they are ready.'}
               </p>
               {releases.length > 0 && (
-                <button
+                <Button
                   type="button"
                   className="btn btn-ghost mt-5"
                   onClick={() => {
@@ -293,7 +295,7 @@ export function ReleaseNotes({ releases }: { releases: ChangelogRelease[] }) {
                   }}
                 >
                   Reset filters
-                </button>
+                </Button>
               )}
             </div>
           )}

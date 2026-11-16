@@ -1,4 +1,7 @@
+import { Card } from '../../../components/ui/card';
 import Image from 'next/image';
+import Link from 'next/link';
+import { taskDraftHref } from '../../tasks/model';
 import { formatCount } from '../../../lib/format';
 import type { Vehicle, VehicleStorage } from '../normalize';
 import { Meter } from '../../../components/ui/meter';
@@ -22,7 +25,7 @@ function fuelText(fuel: NonNullable<Vehicle['fuel']>): string {
 export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
   const owned = vehicle.access === 'owned';
   return (
-    <article
+    <Card
       id={`vehicle-${vehicle.id}`}
       className={`panel flex flex-col gap-5 p-5 ${owned ? 'border-spice-500/30' : ''}`}
     >
@@ -74,6 +77,19 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
           <Meter label="Fuel" percent={vehicle.fuel.percent} value={fuelText(vehicle.fuel)} />
         ) : null}
       </div>
-    </article>
+      {taskDraftHref({ type: 'vehicle', ref: vehicle.id, label: vehicle.name.slice(0, 160), view: vehicle.access }) && (
+        <Link
+          className="inline-flex min-h-11 items-center text-sm text-spice-300 underline"
+          href={taskDraftHref({
+            type: 'vehicle',
+            ref: vehicle.id,
+            label: vehicle.name.slice(0, 160),
+            view: vehicle.access,
+          })!}
+        >
+          Plan a task for {vehicle.name}
+        </Link>
+      )}
+    </Card>
   );
 }

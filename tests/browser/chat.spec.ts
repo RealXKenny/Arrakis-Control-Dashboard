@@ -482,7 +482,7 @@ test('chat presentation uses readable source cards and public send status on des
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toHaveCSS(
     'background-color',
-    'rgb(238, 130, 9)',
+    'rgb(198, 139, 74)',
   );
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.getByRole('heading', { name: 'Live chat', exact: true })).toBeInViewport();

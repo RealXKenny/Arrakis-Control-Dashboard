@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useEffect, useRef, useState } from 'react';
 import { downloadAdmin, findOperation } from '../../client';
 import { QueryState } from '../data-panel';
@@ -113,7 +115,7 @@ export default function LogsScreen({ operations }: { operations: AdminOperation[
   const bounded = logText(logs.data);
   return (
     <div className={ui.screen}>
-      <section className={ui.panel} aria-label="Log service">
+      <Card as="section" className={ui.panel} aria-label="Log service">
         <h3>Service logs</h3>
         <p className={ui.stateLine}>
           Output is sanitized by the dashboard before it is shown. Views are bounded; download the full log for anything
@@ -133,16 +135,16 @@ export default function LogsScreen({ operations }: { operations: AdminOperation[
           </label>
           {!names.length && <p className={ui.stateLine}>The Console reported no log services.</p>}
         </QueryState>
-      </section>
+      </Card>
       {service && (
         <>
-          <section className={ui.panel} aria-label="Recent log output">
+          <Card as="section" className={ui.panel} aria-label="Recent log output">
             <h3>Recent output</h3>
             <div className={ui.actions}>
-              <button type="button" onClick={logs.refresh} disabled={logs.loading}>
+              <Button type="button" onClick={logs.refresh} disabled={logs.loading}>
                 Refresh
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => {
                   const operation = findOperation(operations, 'get-logs-service-download');
@@ -150,7 +152,7 @@ export default function LogsScreen({ operations }: { operations: AdminOperation[
                 }}
               >
                 Download full log
-              </button>
+              </Button>
             </div>
             <QueryState loading={logs.loading} error={logs.error} onRetry={logs.refresh}>
               {bounded ? (
@@ -159,8 +161,8 @@ export default function LogsScreen({ operations }: { operations: AdminOperation[
                 <p className={ui.stateLine}>No output was returned.</p>
               )}
             </QueryState>
-          </section>
-          <section className={ui.panel} aria-label="Live stream">
+          </Card>
+          <Card as="section" className={ui.panel} aria-label="Live stream">
             <h3>Live stream</h3>
             <p role="status" className={ui.status}>
               {state === 'idle' && 'Not connected.'}
@@ -169,23 +171,23 @@ export default function LogsScreen({ operations }: { operations: AdminOperation[
               {(state === 'ended' || state === 'error') && message}
             </p>
             <div className={ui.actions}>
-              <button type="button" onClick={() => void start()} disabled={state === 'connecting' || state === 'live'}>
+              <Button type="button" onClick={() => void start()} disabled={state === 'connecting' || state === 'live'}>
                 {state === 'ended' || state === 'error' ? 'Reconnect' : 'Start live stream'}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => controller.current?.abort()}
                 disabled={state !== 'live' && state !== 'connecting'}
               >
                 Stop
-              </button>
+              </Button>
             </div>
             {live && (
               <pre className={ui.logView} aria-label="Live log output">
                 {live}
               </pre>
             )}
-          </section>
+          </Card>
         </>
       )}
     </div>

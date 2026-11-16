@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import { readRecord, seasonKeys } from '../server/store';
 import type { Reward } from '../contracts';
 import { RewardArt } from './reward-art';
@@ -9,7 +10,7 @@ export async function ProfileCosmetics({ owner }: { owner: string }) {
   const equipped = Object.values(records);
   if (!equipped.length) return null;
   return (
-    <section className="panel p-6 season-root">
+    <Card as="section" className="panel p-6 season-root">
       <div>
         <span className="season-kicker">Your earned recognition</span>
         <h2>Season showcase</h2>
@@ -23,7 +24,7 @@ export async function ProfileCosmetics({ owner }: { owner: string }) {
           </div>
         ))}
       </div>
-    </section>
+    </Card>
   );
 }
 

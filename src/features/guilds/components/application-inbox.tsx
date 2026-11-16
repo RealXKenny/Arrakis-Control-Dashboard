@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { LocalTime } from '../../../components/ui/local-time';
 import { useEffect, useState } from 'react';
@@ -94,7 +96,7 @@ export function ApplicationInbox({ guildId }: { guildId: string }) {
   }
 
   return (
-    <section aria-label="Guild applications" className="panel flex flex-col gap-5 p-6">
+    <Card as="section" aria-label="Guild applications" className="panel flex flex-col gap-5 p-6">
       <div>
         <h2 className="text-sm uppercase tracking-[0.2em]">Applications</h2>
         <p className="mt-2 max-w-prose text-sm text-sand-400">
@@ -103,14 +105,14 @@ export function ApplicationInbox({ guildId }: { guildId: string }) {
           applications to free space in the inbox.
         </p>
       </div>
-      <button
+      <Button
         type="button"
         className="btn btn-ghost self-start disabled:opacity-50"
         onClick={() => setReload(reload + 1)}
         disabled={busy || loading}
       >
         Refresh applications
-      </button>
+      </Button>
       {loading && (
         <p role="status" className="text-sm text-sand-400">
           Loading applications…
@@ -122,7 +124,7 @@ export function ApplicationInbox({ guildId }: { guildId: string }) {
           {entries.length === 0 && <p className="text-sm text-sand-500">No applications on this page.</p>}
           <div className="grid gap-5 lg:grid-cols-2">
             {entries.map((entry) => (
-              <article key={entry.id} className="flex flex-col gap-4 border border-sand-200/15 bg-obsidian-900/60 p-5">
+              <Card key={entry.id} className="flex flex-col gap-4 border border-sand-200/15 bg-obsidian-900/60 p-5">
                 <header>
                   <h3 className="text-base tracking-wide">{entry.characterName}</h3>
                   <p className="mt-1 font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500">
@@ -135,38 +137,38 @@ export function ApplicationInbox({ guildId }: { guildId: string }) {
                 <LegacyAnswers entry={entry} />
                 {entry.customAnswers?.length ? <AnswerList answers={entry.customAnswers} /> : null}
                 <div className="flex flex-wrap gap-3">
-                  <button
+                  <Button
                     type="button"
                     className="btn btn-primary disabled:opacity-50"
                     disabled={busy || entry.status === 'accepted'}
                     onClick={() => void review(entry.id, 'accepted')}
                   >
                     Accept application
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     className="btn btn-ghost disabled:opacity-50"
                     disabled={busy || entry.status === 'declined' || entry.status === 'accepted'}
                     onClick={() => void review(entry.id, 'declined')}
                   >
                     Decline application
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     className="btn btn-ghost disabled:opacity-50"
                     disabled={busy}
                     onClick={() => void review(entry.id, 'remove')}
                   >
                     Remove application
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     className="btn btn-ghost"
                     aria-expanded={chat === entry.id}
                     onClick={() => setChat(chat === entry.id ? null : entry.id)}
                   >
                     {chat === entry.id ? 'Close chat' : 'Chat with applicant'}
-                  </button>
+                  </Button>
                 </div>
                 {chat === entry.id && (
                   <GuildChat
@@ -176,30 +178,30 @@ export function ApplicationInbox({ guildId }: { guildId: string }) {
                     roleLabels={{ applicant: 'Applicant', reviewer: 'Reviewer' }}
                   />
                 )}
-              </article>
+              </Card>
             ))}
           </div>
           <nav aria-label="Application pages" className="flex items-center justify-center gap-4">
-            <button
+            <Button
               type="button"
               className="btn btn-ghost disabled:opacity-40"
               disabled={page === 0 || busy}
               onClick={() => setPage(page - 1)}
             >
               Previous
-            </button>
+            </Button>
             <span className="font-mono text-xs uppercase tracking-widest text-sand-400">Page {page + 1}</span>
-            <button
+            <Button
               type="button"
               className="btn btn-ghost disabled:opacity-40"
               disabled={!hasMore || busy}
               onClick={() => setPage(page + 1)}
             >
               Next
-            </button>
+            </Button>
           </nav>
         </>
       )}
-    </section>
+    </Card>
   );
 }

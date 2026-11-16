@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 import { useEffect, useState } from 'react';
 import { formatCredits } from '../contracts';
@@ -41,7 +43,7 @@ export function DiceTable({ game, paused, maxWager, onSettled }: TableProps) {
       <div className="flex flex-col gap-5">
         <div role="radiogroup" aria-label="Direction" className="grid grid-cols-2 gap-3">
           {(['under', 'over'] as const).map((value) => (
-            <button
+            <Button
               key={value}
               type="button"
               role="radio"
@@ -51,7 +53,7 @@ export function DiceTable({ game, paused, maxWager, onSettled }: TableProps) {
               className={`btn ${direction === value ? 'btn-primary' : 'btn-ghost'}`}
             >
               Roll {value}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="flex flex-col gap-2">
@@ -72,35 +74,35 @@ export function DiceTable({ game, paused, maxWager, onSettled }: TableProps) {
           />
         </div>
         <dl id="dice-odds" className="grid grid-cols-3 gap-3 text-sm">
-          <div className="panel p-3">
+          <Card as="div" className="panel p-3">
             <dt className="text-xs text-sand-500">Win chance</dt>
             <dd className="font-bold text-sand-50">{chance}%</dd>
-          </div>
-          <div className="panel p-3">
+          </Card>
+          <Card as="div" className="panel p-3">
             <dt className="text-xs text-sand-500">Multiplier</dt>
             <dd className="font-bold text-sand-50">{multiplier}x</dd>
-          </div>
-          <div className="panel p-3">
+          </Card>
+          <Card as="div" className="panel p-3">
             <dt className="text-xs text-sand-500">Payout on win</dt>
             <dd className="font-bold text-sand-50">{formatCredits(onWin)}</dd>
-          </div>
+          </Card>
         </dl>
         {!valid && <p className="text-xs text-status-warn">Choose a target giving a chance between 1% and 98%.</p>}
         <WagerField value={wager} onChange={setWager} min={game.min} max={maxWager} disabled={busy} />
         <ErrorBanner message={error} />
         <div className="flex flex-wrap gap-3">
-          <button
+          <Button
             type="button"
             className="btn btn-primary disabled:opacity-50"
             disabled={busy || paused || !valid || wagerAmount === 0n}
             onClick={() => void start(wager, params)}
           >
             {busy ? 'Rolling...' : 'Roll'}
-          </button>
+          </Button>
           {finished && (
-            <button type="button" className="btn btn-ghost" onClick={reset}>
+            <Button type="button" className="btn btn-ghost" onClick={reset}>
               Roll again
-            </button>
+            </Button>
           )}
         </div>
       </div>

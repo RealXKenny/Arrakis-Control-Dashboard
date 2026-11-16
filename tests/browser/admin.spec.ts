@@ -349,6 +349,10 @@ test('admin reply badges persist and clear only when leader support replies are 
   ];
   const seen = new Set<string>();
   let receipts = 0;
+  let allowFollowupRead: () => void;
+  const followupRead = new Promise<void>((resolve) => {
+    allowFollowupRead = resolve;
+  });
   const unread = () => messages.filter((message) => message.role === 'applicant' && !seen.has(message.id)).length;
   await page.route('**/api/admin/guild-support-status*', (route) => {
     const ids = new URL(route.request().url()).searchParams.get('guildIds')?.split(',') ?? [];
@@ -362,7 +366,9 @@ test('admin reply badges persist and clear only when leader support replies are 
   await page.route('**/api/admin/guilds/2/messages', (route) =>
     route.fulfill({ json: { ok: true, data: { messages } } }),
   );
-  await page.route('**/api/admin/guilds/2/messages/read', (route) => {
+  await page.route('**/api/admin/guilds/2/messages/read', async (route) => {
+    // Hold the second receipt until the test observes the intermediate unread state.
+    if (receipts > 0) await followupRead;
     const batch = route.request().postDataJSON().messages;
     expect(batch.some((message: { senderId: string }) => message.senderId === 'admin')).toBe(false);
     batch.forEach((message: { id: string }) => seen.add(message.id));
@@ -390,10 +396,18 @@ test('admin reply badges persist and clear only when leader support replies are 
   // Opening a conversation alone never marks anything read.
   expect(receipts).toBe(0);
   await page.getByRole('button', { name: /^Message guild leader/ }).click();
-  await expect(unreadBadge(1)).toBeVisible();
-  await expect(
-    page.getByRole('region', { name: 'Private chat with guild leader', exact: true }).getByRole('log'),
-  ).toContainText('Another reply during acknowledgement.');
+  await page
+    .getByRole('region', { name: 'Private chat with guild leader', exact: true })
+    .getByRole('log')
+    .scrollIntoViewIfNeeded();
+  try {
+    await expect(unreadBadge(1)).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Private chat with guild leader', exact: true }).getByRole('log'),
+    ).toContainText('Another reply during acknowledgement.');
+  } finally {
+    allowFollowupRead();
+  }
   await expect.poll(unread).toBe(0);
   await expect(tab.getByLabel(/\d+ unread/)).toHaveCount(0);
   await page.reload();

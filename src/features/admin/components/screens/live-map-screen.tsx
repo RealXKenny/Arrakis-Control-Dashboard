@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { findOperation } from '../../client';
@@ -65,7 +67,7 @@ function Teleport({ operations, map, partition }: { operations: AdminOperation[]
     );
   }
   return (
-    <section className={ui.panel} aria-label="Teleport">
+    <Card as="section" className={ui.panel} aria-label="Teleport">
       <h3>Teleport a player</h3>
       {notice && (
         <p role="status" className={ui.status}>
@@ -96,10 +98,10 @@ function Teleport({ operations, map, partition }: { operations: AdminOperation[]
             is online now
           </span>
         </label>
-        <button type="submit">Review…</button>
+        <Button type="submit">Review…</Button>
       </form>
       {dialog}
-    </section>
+    </Card>
   );
 }
 
@@ -144,7 +146,7 @@ export default function LiveMapScreen({ operations }: { operations: AdminOperati
   return (
     <div className={ui.screen}>
       <ReadPanel operations={operations} id="get-map-capabilities" title="What the live map supports" />
-      <section className={ui.panel} aria-label="Map selection">
+      <Card as="section" className={ui.panel} aria-label="Map selection">
         <h3>Choose a map and partition</h3>
         <QueryState loading={partitions.loading} error={partitions.error} onRetry={partitions.refresh}>
           {maps.length === 0 ? (
@@ -187,23 +189,23 @@ export default function LiveMapScreen({ operations }: { operations: AdminOperati
             </div>
           )}
         </QueryState>
-      </section>
+      </Card>
       {map && (
-        <section className={ui.panel} aria-label="Map layers">
+        <Card as="section" className={ui.panel} aria-label="Map layers">
           <h3>
             {layer[1]} on {map}
             {partition && supportsPartition ? `, partition ${partition}` : ''}
           </h3>
           <div className={ui.subTabs} role="group" aria-label="Map layers">
             {LAYERS.map(([id, label]) => (
-              <button
+              <Button
                 key={id}
                 type="button"
                 aria-pressed={id === layer[0]}
                 onClick={() => url.update({ layer: id === 'players' ? null : id }, 'replace')}
               >
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
           {!supportsPartition && partition && (
@@ -224,11 +226,11 @@ export default function LiveMapScreen({ operations }: { operations: AdminOperati
             )}
           </QueryState>
           <div className={ui.actions}>
-            <button type="button" onClick={data.refresh} disabled={data.loading}>
+            <Button type="button" onClick={data.refresh} disabled={data.loading}>
               Refresh
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
       )}
       <Teleport operations={operations} map={map} partition={partition} />
     </div>

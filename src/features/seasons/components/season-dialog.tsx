@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, type ReactNode, type RefObject } from 'react';
+import { containTabFocus, restoreFocus } from '../../../lib/ui/focus';
+import { lockPageScroll } from '../../../lib/ui/scroll-lock';
 
 export function SeasonDialog({
   labelledBy,
@@ -16,10 +18,12 @@ export function SeasonDialog({
   useEffect(() => {
     const dialog = ref.current;
     const opener = returnFocus?.current ?? (document.activeElement as HTMLElement | null);
+    const unlockScroll = lockPageScroll(document.body);
     dialog?.showModal();
     return () => {
       dialog?.close();
-      if (opener?.isConnected) opener.focus();
+      unlockScroll();
+      restoreFocus(opener);
     };
   }, [returnFocus]);
   return (
@@ -28,32 +32,7 @@ export function SeasonDialog({
       aria-labelledby={labelledBy}
       className="season-modal season-root"
       tabIndex={-1}
-      onKeyDown={(event) => {
-        if (event.key !== 'Tab') return;
-        const elements = [
-          ...event.currentTarget.querySelectorAll<HTMLElement>(
-            'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
-          ),
-        ].filter((element) => element.getClientRects().length && getComputedStyle(element).visibility !== 'hidden');
-        const first = elements[0];
-        const last = elements.at(-1);
-        if (!first) {
-          event.preventDefault();
-          event.currentTarget.focus();
-        } else if (
-          event.shiftKey &&
-          (document.activeElement === first || !event.currentTarget.contains(document.activeElement))
-        ) {
-          event.preventDefault();
-          last.focus();
-        } else if (
-          !event.shiftKey &&
-          (document.activeElement === last || !event.currentTarget.contains(document.activeElement))
-        ) {
-          event.preventDefault();
-          first.focus();
-        }
-      }}
+      onKeyDown={(event) => containTabFocus(event, event.currentTarget)}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
