@@ -141,6 +141,12 @@ const serverEnvSchema = z.object({
     .trim()
     .regex(/^\d{15,25}(?:\s*,\s*\d{15,25}){0,19}$/)
     .optional(),
+  /** Separate roles for operational backup evidence; moderator roles do not imply this access. */
+  BACKUP_VIEWER_DISCORD_ROLE_IDS: z
+    .string()
+    .trim()
+    .regex(/^\d{15,25}(?:\s*,\s*\d{15,25}){0,19}$/)
+    .optional(),
   REDIS_URL: redisUrlSchema.optional(),
   /** Escape hatch for the one combination production refuses: plain-text Redis on a public-looking host with no password. */
   REDIS_ALLOW_INSECURE: z

@@ -4,11 +4,12 @@ import { PageHeader } from '../../../components/ui/page-header';
 import { UptimeReport } from '../../../features/server-status/components/uptime-report';
 import { RestartQueue } from '../../../features/monitoring/components/restart-queue';
 import { RestartHistory } from '../../../features/monitoring/components/restart-history';
+import { BackupConfidence } from '../../../features/monitoring/components/backup-confidence';
 
 export const metadata: Metadata = { title: 'Service status' };
 
 export default async function ServiceStatusPage() {
-  await requireSession();
+  const session = await requireSession();
   return (
     <>
       <PageHeader eyebrow="Service availability" title="Service status">
@@ -18,6 +19,7 @@ export default async function ServiceStatusPage() {
       </PageHeader>
       <RestartQueue />
       <RestartHistory />
+      <BackupConfidence session={session} />
       <UptimeReport />
     </>
   );

@@ -236,6 +236,24 @@ function buildEgg() {
         },
       ),
       variable('Verified Member Role ID', 'Discord role required for dashboard access.', 'VERIFIED_MEMBER_ROLE_ID'),
+      variable(
+        'Moderator Role IDs',
+        'Optional comma-separated Discord roles for moderation.',
+        'MODERATOR_DISCORD_ROLE_IDS',
+        '',
+        {
+          rules: 'nullable|string|max:520',
+        },
+      ),
+      variable(
+        'Backup Viewer Role IDs',
+        'Optional separate comma-separated Discord roles for backup status.',
+        'BACKUP_VIEWER_DISCORD_ROLE_IDS',
+        '',
+        {
+          rules: 'nullable|string|max:520',
+        },
+      ),
       variable('Redis URL', 'Redis TCP URL with credentials; use rediss:// for TLS.', 'REDIS_URL'),
       variable(
         'Require Redis TLS',

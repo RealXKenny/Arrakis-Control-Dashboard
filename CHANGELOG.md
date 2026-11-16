@@ -7,6 +7,7 @@
 - The portal's server rhythm panel can show seven days of observed aggregate population by local weekday and hour, including sample counts and missing-data states.
 - Service status shows the active Console restart queue with server-adjusted countdowns and an explicit unavailable state. Daily and IP-change restart schedules are not included in that queue.
 - Service status shows recent Console restart records when available, without treating restarts as confirmed incidents or inventing causes.
+- Members with a separately configured backup-viewer role can see sanitized scheduled-system-backup status. Restore-rehearsal evidence is not currently available.
 - Navigation reorganized: the More menu is gone. Everything now sits in the top row as categories (Assets, Bases, Guilds, Casino, Community and Personal), and every dropdown uses the same Bases-style panel with an introduction card and titled groups. Narrower desktop widths place the row on its own line instead of hiding destinations.
 - Universal item finder searches your authorized backpack, base containers and vehicle cargo with permission checks, and private pinned item counters track the stacks you care about.
 - Customizable portal widgets with a compact personal view, saved activity views for different activities, and a Console-default theme with 66 additional themes and a custom color studio.
@@ -186,6 +187,7 @@
 ### Upgrade Notes
 
 - `MODERATOR_DISCORD_ROLE_IDS` optionally reserves Discord roles for the forthcoming moderation workspace. The workspace and moderator operations are not yet available.
+- Set `BACKUP_VIEWER_DISCORD_ROLE_IDS` to the separate Discord roles permitted to view backup status, and grant the Console key the `backups:read` scope. The configured Discord bot must be able to read guild members.
 - Set `AUTH_SECRET` to at least 32 random characters. It is required in production.
 - In the Discord developer portal, change the OAuth2 redirect URI to `<APP_URL>/api/auth/callback/discord`.
 - With the dashboard stopped, run `npm run redis:rekey` for a dry run and `npm run redis:rekey -- --apply` to rename existing Redis keys, then start version 2. Move data to a cluster only afterwards.

@@ -38,6 +38,7 @@ it.each([
   ['API_GLOBAL_READ_LIMIT', '-1'],
   ['BOT_API_TOKEN', 'too-short'],
   ['MODERATOR_DISCORD_ROLE_IDS', 'not-a-discord-role'],
+  ['BACKUP_VIEWER_DISCORD_ROLE_IDS', 'not-a-discord-role'],
 ])('rejects an invalid server binding in %s', async (name, value) => {
   vi.stubEnv(name, value);
   const { getServerEnv } = await import('../../../src/config/env');
