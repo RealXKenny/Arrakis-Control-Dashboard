@@ -191,6 +191,29 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
       const scenario = byPawn().get(decodeURIComponent(match[1]));
       if (!scenario) return json(response, 404, { ok: false });
       if (scenario.failures[match[2]]) return json(response, scenario.failures[match[2]], { ok: false });
+      if (match[2] === 'give-item-id' && request.method === 'POST') {
+        const item = JSON.parse(bodyText || '{}');
+        return json(response, 200, {
+          ok: true,
+          operation: 'dbGiveItemToPlayer',
+          item,
+          result: {
+            ok: true,
+            playerId: String(scenario.linked.pawnId),
+            requiresRelog: false,
+            clamped: false,
+            given: item.quantity,
+            insertedStacks: [
+              {
+                id: 'fixture-item-row',
+                template_id: item.itemId,
+                stack_size: item.quantity,
+                quality_level: item.quality,
+              },
+            ],
+          },
+        });
+      }
       if (match[2] === 'add-currency' && request.method === 'POST') {
         // Mirrors the documented Console behaviour: Solaris only, a nonzero whole amount, the exact confirmation phrase,
         // and an overdraft is refused. Nothing here is a guarantee about the real Console.

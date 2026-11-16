@@ -1,5 +1,7 @@
 # GitHub Actions
 
+The browser matrix installs Chromium and WebKit. In addition to the full Chromium suite, focused season cases run with desktop Safari/WebKit, iPhone/WebKit and Android touch-emulation projects across the existing four shards. WebKit uses an isolated HTTPS fixture with the production CSP intact. All matrix results remain covered by `CI / Required Checks`; no workflow permissions or protected-branch requirements are widened.
+
 ## Workflows
 
 | Workflow                                                               | Purpose and triggers                                                                                                                                                                                                                                                                                                   | Required for merging                                                             |

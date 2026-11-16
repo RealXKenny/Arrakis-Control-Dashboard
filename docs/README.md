@@ -42,6 +42,8 @@ the upstream source.
 
 ## Existing project documents
 
+- [Community seasons and the free season pass](features/community-seasons.md): reusable season builder, progression, reviewed evidence, cosmetics, archives and verification status.
+
 These pre-date this documentation set and stay where they are:
 
 - [Architecture: file organization](architecture/file-organization.md) and [repository inventory](architecture/repository-inventory.md): placement rules and the full directory map.
