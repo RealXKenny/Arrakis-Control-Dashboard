@@ -336,7 +336,7 @@ export async function syncAutomaticProgress(id: string, owner: string, proofs: R
     first = false;
     changed = true;
   }
-  if (!changed) return { progress, duplicate: true };
+  if (!changed) return { progress, totals, duplicate: true };
   await commit({
     id,
     actor: owner,
@@ -348,7 +348,7 @@ export async function syncAutomaticProgress(id: string, owner: string, proofs: R
       { key: seasonKeys.totals(id), before: data.totals.raw, after: totals },
     ],
   });
-  return { progress, duplicate: false };
+  return { progress, totals, duplicate: false };
 }
 export async function equipReward(id: string, owner: string, rewardId: string) {
   const data = await loadMember(id, owner);

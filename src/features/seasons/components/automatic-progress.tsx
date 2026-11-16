@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../../components/ui/button';
-import type { Progress } from '../contracts';
+import type { Progress, Totals } from '../contracts';
 
 export function AutomaticProgress({
   seasonId,
   onProgress,
 }: {
   seasonId: string;
-  onProgress: (progress: Progress) => void;
+  onProgress: (progress: Progress, totals: Totals) => void;
 }) {
   const latest = useRef(onProgress),
     [state, setState] = useState('Checking verified game progress…'),
@@ -36,7 +36,7 @@ export function AutomaticProgress({
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? 'Progress verification unavailable.');
         if (!disposed && !document.hidden) {
-          latest.current(data.progress);
+          latest.current(data.progress, data.totals);
           setState('Verified progress is current. Unlocked cosmetics are claimed automatically.');
         }
         if (!disposed) timer = setTimeout(sync, 60000);

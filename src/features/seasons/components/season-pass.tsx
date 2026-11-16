@@ -449,9 +449,18 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             <AutomaticProgress
               key={season.id}
               seasonId={season.id}
-              onProgress={(next) => {
+              onProgress={(next, updatedTotals) => {
                 setViews((previous) =>
-                  previous.map((entry) => (entry.season.id === season.id ? { ...entry, progress: next } : entry)),
+                  previous.map((entry) =>
+                    entry.season.id === season.id
+                      ? {
+                          ...entry,
+                          progress: next,
+                          totals:
+                            (updatedTotals.version ?? 0) >= (entry.totals.version ?? 0) ? updatedTotals : entry.totals,
+                        }
+                      : entry,
+                  ),
                 );
                 if (next.xp > progress.xp)
                   setMessage(
@@ -484,8 +493,9 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             </div>
             <p>Every path can reach the level cap. Solo challenges require no guild or group attendance.</p>
             <p>
-              Complete objectives in game, then submit a description and optional HTTPS screenshots or clips. Moderators
-              review gameplay evidence before awarding XP.
+              {season.automatic
+                ? 'Game progress is verified automatically while you view this season. Unlocked dashboard cosmetics are claimed for you; no evidence submission is required.'
+                : 'Complete objectives in game, then submit a description and optional HTTPS screenshots or clips. Moderators review gameplay evidence before awarding XP.'}
             </p>
             <div className="season-filters">
               <label>

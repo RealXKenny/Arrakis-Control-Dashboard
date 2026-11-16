@@ -121,7 +121,7 @@ export async function syncSeasonObjectives(session: DashboardSession, seasonId: 
     ) &&
     season.definition.rewards.every((r) => member.progress.value.claims.some((c) => c.reward.id === r.id))
   )
-    return { progress: member.progress.value, duplicate: true };
+    return { progress: member.progress.value, totals: member.totals.value, duplicate: true };
   const limit = await checkRateLimit(`v2:seasons:observe:${session.user.id}`, { limit: 6, windowMs: 60000 });
   if (!limit.allowed || limit.storageUnavailable)
     fail('Objective verification is temporarily limited.', limit.storageUnavailable ? 503 : 429);

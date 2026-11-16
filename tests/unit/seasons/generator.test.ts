@@ -4,6 +4,7 @@ import content from '../../../src/features/seasons/content/season-2-template.jso
 import {
   automaticLevelTemplate,
   currentWindow,
+  generatorSettingsSchema,
   generateSeason,
   seasonWindow,
   validateGeneratorTemplate,
@@ -54,6 +55,14 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 describe('deterministic three-month generation', () => {
+  it('bounds automatic settings before storage', () => {
+    expect(
+      generatorSettingsSchema.safeParse({ ...settings, firstStart: '2026-01-31T12:00:00.' + '0'.repeat(100) + 'Z' })
+        .success,
+    ).toBe(false);
+    expect(generatorSettingsSchema.safeParse({ ...settings, firstNumber: 100000 }).success).toBe(false);
+    expect(() => seasonWindow(settings.firstStart, 10001)).toThrow('supported range');
+  });
   it('uses anchor-based calendar months without month-end drift or local DST shifts', () => {
     expect(seasonWindow(settings.firstStart, 0)).toEqual({
       startsAt: settings.firstStart,

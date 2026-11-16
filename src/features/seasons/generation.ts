@@ -6,6 +6,7 @@ export const generatorSettingsSchema = z
     firstNumber: z.number().int().min(1).max(99999),
     firstStart: z.iso
       .datetime()
+      .max(35)
       .refine(
         (v) => Date.parse(v) >= Date.UTC(2020, 0, 1) && Date.parse(v) < Date.UTC(2100, 0, 1),
         'Choose a start between 2020 and 2099.',
@@ -129,7 +130,7 @@ export function generateSeason(
     name: `Season ${number}`,
     subtitle: 'One hundred levels. Three months. Your journey.',
     description:
-      'A free community season of in-game objectives and permanent dashboard cosmetics. Each play style offers 50,000 Season XP, including a full solo path. API-observed objectives use verified game data; other gameplay evidence is reviewed by moderators.',
+      'A free community season of API-observed in-game objectives and permanent dashboard cosmetics. Each play style offers 50,000 Season XP, including a full solo path. Verified progress and unlocked cosmetic claims are automatic; no evidence submission or game-resource grants are required.',
     theme: (['dunes', 'eclipse', 'spice'] as const)[(number - 1) % 3],
     ...window,
     timezone: settings.timezone,

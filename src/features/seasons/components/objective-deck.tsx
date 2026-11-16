@@ -36,7 +36,11 @@ export function ObjectiveDeck({
         </div>
         <p>
           {summary.claimed}/{summary.total} rewards claimed ·{' '}
-          {summary.ready > 0 ? `${summary.ready} level requirements met` : 'Your next reward awaits'}
+          {summary.claimed === summary.total
+            ? 'Track complete'
+            : summary.ready > 0
+              ? `${summary.ready} level requirements met`
+              : 'Your next reward awaits'}
         </p>
       </div>
       <p>

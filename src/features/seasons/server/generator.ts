@@ -176,6 +176,7 @@ async function step() {
         return true;
       }
     }
+    if (policy.pending.index >= 10000) fail('Automatic season window safety bound reached.');
     const next: Policy = {
       ...policy,
       revision: randomUUID(),

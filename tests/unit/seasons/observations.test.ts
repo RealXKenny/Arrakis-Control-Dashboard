@@ -68,6 +68,7 @@ describe('Console objective evidence', () => {
     expect(mock.request).toHaveBeenCalledTimes(1);
     expect(result.progress.xp).toBe(250000);
     expect(result.progress.claims).toHaveLength(100);
+    expect(result.totals).toMatchObject({ participants: 1, completions: 100, claims: 100, xp: 250000 });
     expect(result.progress.ledger).toHaveLength(100);
     expect((await syncSeasonObjectives(session, season.id, new AbortController().signal)).duplicate).toBe(true);
     expect(mock.request.mock.calls.every((call) => call[0] === 'GET')).toBe(true);

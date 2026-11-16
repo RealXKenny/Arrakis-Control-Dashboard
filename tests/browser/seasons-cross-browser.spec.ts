@@ -53,6 +53,7 @@ test('automatic seasons publish a three-month 100-level sequence and claim verif
     expect(own.progress.xp).toBe(250000);
     expect(own.progress.claims).toHaveLength(100);
     expect(own.progress.ledger).toHaveLength(100);
+    await expect(member.getByText('1 participants', { exact: true })).toBeVisible();
     const replay = await member.request.post('/api/v2/seasons', {
       headers: { Origin: appOrigin() },
       data: { action: 'sync', seasonId: first.id },
