@@ -19,7 +19,7 @@ test('automatic seasons publish a three-month 100-level sequence and claim verif
   test.setTimeout(60000);
   await prepareSeasons(page);
   const initial = await (await page.request.get('/api/v2/admin/seasons')).json();
-  const number = Math.max(...initial.seasons.map((s: Season) => s.definition.number)) + 500;
+  const number = Math.max(0, ...initial.seasons.map((s: Season) => s.definition.number)) + 500;
   await page.goto('/admin?tab=seasons');
   await page.getByLabel('First season number', { exact: true }).fill(String(number));
   await page
