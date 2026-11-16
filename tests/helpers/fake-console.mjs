@@ -198,6 +198,21 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
     }
 
     if (path === '/api/health') return json(response, 200, { ok: true });
+    if (path === '/api/server/restart-history')
+      return json(response, 200, {
+        rows: [
+          {
+            id: 'fixture-restart',
+            startedAt: '2026-11-16T00:00:00Z',
+            finishedAt: '2026-11-16T00:01:00Z',
+            durationSeconds: 60,
+            scope: 'map',
+            map: 'Hagga Basin',
+            result: 'Succeeded',
+            reason: 'private-operator-reason',
+          },
+        ],
+      });
     if (path === '/api/admin/items/catalog')
       // A small, realistic slice: valid categories plus entries the reward policy must exclude.
       return json(response, 200, {

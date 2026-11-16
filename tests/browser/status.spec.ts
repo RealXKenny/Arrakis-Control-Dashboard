@@ -26,6 +26,10 @@ test('shows the confirmed queue and clears it when the provider becomes unavaila
   await page.clock.install();
   await page.goto('/status');
   const queue = page.getByRole('region', { name: 'Active restart queue' });
+  const history = page.getByRole('region', { name: 'Recent verified restarts' });
+  await expect(history).toContainText('Hagga Basin');
+  await expect(history).toContainText('duration 60 seconds');
+  await expect(history).not.toContainText('private-operator-reason');
   await expect(queue).toContainText('Hagga Basin');
   await expect(queue).toContainText('may restart in 10 min');
   await expect(queue).toContainText('Daily and IP-change restarts may not appear');

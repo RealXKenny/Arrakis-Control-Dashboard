@@ -3,6 +3,7 @@ import { requireSession } from '../../../features/auth/server/session';
 import { PageHeader } from '../../../components/ui/page-header';
 import { UptimeReport } from '../../../features/server-status/components/uptime-report';
 import { RestartQueue } from '../../../features/monitoring/components/restart-queue';
+import { RestartHistory } from '../../../features/monitoring/components/restart-history';
 
 export const metadata: Metadata = { title: 'Service status' };
 
@@ -16,6 +17,7 @@ export default async function ServiceStatusPage() {
         </p>
       </PageHeader>
       <RestartQueue />
+      <RestartHistory />
       <UptimeReport />
     </>
   );
