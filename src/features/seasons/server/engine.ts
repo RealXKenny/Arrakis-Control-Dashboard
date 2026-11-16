@@ -115,6 +115,10 @@ export async function transitionSeason(
   return season;
 }
 
+/** A member counts as a participant at their first recorded activity, not when tracking merely creates a record. */
+function isFirstActivity(progress: Progress) {
+  return progress.ledger.length === 0 && progress.submissions.length === 0 && progress.claims.length === 0;
+}
 function ensureActive(season: Season) {
   if (seasonState(season) !== 'active') fail('This season is not active.');
 }
@@ -180,6 +184,7 @@ export async function submitChallenge(
   const period = periodFor(challenge, season.definition, Date.now());
   const progress = data.progress.value;
   const previousXp = progress.xp;
+  const firstActivity = isFirstActivity(progress);
   const previous = progress.submissions.filter(
     (v) => v.challengeId === challengeId && v.period === period && v.status !== 'rejected',
   );
@@ -208,7 +213,7 @@ export async function submitChallenge(
     award(progress, challenge.xp, challenge.name, submission.reviewer, submission.id);
   }
   const totals = data.totals.value;
-  updateTotals(totals, season, previousXp, progress, !data.progress.raw, observed ? challengeId : undefined);
+  updateTotals(totals, season, previousXp, progress, firstActivity, observed ? challengeId : undefined);
   progress.submissions.push(submission);
   await commit({
     id,
@@ -274,13 +279,14 @@ export async function claimReward(id: string, owner: string, rewardId: string) {
   const state = seasonState(data.season.value);
   if (['draft', 'preview', 'scheduled'].includes(state)) fail('This reward track has not started.');
   const progress = data.progress.value;
+  const firstActivity = isFirstActivity(progress);
   if (progress.claims.some((v) => v.reward.id === rewardId)) return { progress, duplicate: true };
   const reward = data.season.value.definition.rewards.find((v) => v.id === rewardId);
   if (!reward || levelProgress(data.season.value.definition, progress.xp).level < reward.level)
     fail('This reward is locked.', 403);
   progress.claims.push({ reward: structuredClone(reward), at: new Date().toISOString() });
   const totals = data.totals.value;
-  updateTotals(totals, data.season.value, progress.xp, progress, !data.progress.raw, undefined, rewardId);
+  updateTotals(totals, data.season.value, progress.xp, progress, firstActivity, undefined, rewardId);
   await commit({
     id,
     actor: owner,
@@ -309,7 +315,7 @@ export async function syncAutomaticProgress(
   if (!season.automatic || season.definition.challenges.some((c) => c.verification === 'review'))
     fail('This season does not support automatic progression.');
   let changed = false,
-    first = !data.progress.raw;
+    first = isFirstActivity(data.progress.value);
   for (const challenge of season.definition.challenges) {
     const text = proofs.get(challenge.id);
     if (!text || progress.submissions.some((s) => s.challengeId === challenge.id && s.status === 'approved')) continue;

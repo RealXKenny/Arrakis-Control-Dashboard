@@ -12,7 +12,7 @@ const adminCookie = '__Host-dashboard_session=browser-admin-session';
 const memberCookie = '__Host-dashboard_session=browser-member-session';
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 
-test('automatic seasons publish a three-month 100-level sequence and claim verified cosmetics without game writes', async ({
+test('automatic seasons publish a three-month 100-level sequence, award verified progress and wait for manual claims', async ({
   page,
   browser,
 }, info) => {
@@ -65,10 +65,19 @@ test('automatic seasons publish a three-month 100-level sequence and claim verif
     await member.getByRole('button', { name: 'Refresh automatic progress', exact: true }).click();
     await expect(member.getByText(/20000 game XP/)).toBeVisible();
     const own = await (await member.request.get(`/api/v2/seasons?season=${first.id}`)).json();
-    expect(own.progress.xp).toBe(250000);
-    expect(own.progress.claims).toHaveLength(100);
-    expect(own.progress.ledger).toHaveLength(100);
-    await expect(member.getByText('1 participants', { exact: true })).toBeVisible();
+    // Personal plans mix XP, level and journey objectives, so only the supported signals that changed qualify.
+    expect(own.progress.xp).toBeGreaterThan(0);
+    expect(own.progress.xp).toBeLessThanOrEqual(250000);
+    // Seasons with a reward economy never claim anything for the player: every reward needs an explicit click.
+    expect(first.definition.economy).toBeTruthy();
+    expect(first.definition.rewards.every((r: { bundle?: unknown[] }) => (r.bundle?.length ?? 0) >= 1)).toBe(true);
+    expect(own.progress.claims).toHaveLength(0);
+    expect(own.progress.ledger.length).toBeGreaterThan(0);
+    expect(own.progress.ledger.length).toBe(own.progress.submissions.length);
+    expect(own.totals.participants).toBeGreaterThanOrEqual(1);
+    await member.reload();
+    await expect(member.getByRole('button', { name: 'Claim All Available', exact: true })).toBeVisible();
+    await expect(member.getByText(/\d+ rewards? ready to claim/)).toBeVisible();
     const replay = await member.request.post('/api/v2/seasons', {
       headers: { Origin: appOrigin() },
       data: { action: 'sync', seasonId: first.id },

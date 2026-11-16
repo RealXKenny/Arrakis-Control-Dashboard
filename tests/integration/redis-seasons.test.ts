@@ -25,6 +25,7 @@ vi.mock('../../src/server/integrations/dune', async (importOriginal) => ({
 }));
 vi.mock('../../src/features/seasons/server/delivery-gateway', () => ({
   deliveryAvailable: () => true,
+  currencyOf: (r: { type: string }) => (r.type === 'solaris' || r.type === 'house-credits' ? r.type : null),
   offline: (v: unknown) => v === 'Offline',
   deliveryGateway: { balance: async () => 1000n, grant: deliveryMock.grant },
 }));
@@ -306,4 +307,30 @@ it('starts the next season at zero and keeps earlier recognition permanent', asy
     clock.mockRestore();
   }
   expect((await store.loadMember(first.id, 'member')).progress.value).toEqual(earned);
+});
+it('delivers a claimed bundle exactly once under concurrent clicks, parks uncertainty and never resends', async () => {
+  const claims = await import('../../src/features/seasons/server/claims');
+  const definition = seasonTemplate();
+  definition.startsAt = new Date(Date.now() - 3600000).toISOString();
+  definition.rewards[0].bundle = [
+    { type: 'solaris', amount: '100' },
+    { type: 'item', itemId: 'IronOre', quantity: 12, quality: 0 },
+  ];
+  const draft = await engine.saveSeason(randomUUID(), '', definition, 'admin');
+  const season = await engine.transitionSeason(draft.id, draft.revision, 'publish', 'admin');
+  await engine.submitChallenge(season.id, 'member', 'solo-contribution', {
+    text: 'Verified disposable test evidence.',
+    links: [],
+    requestId: randomUUID(),
+  });
+  const submissionId = (await store.loadMember(season.id, 'member')).progress.value.submissions[0].id;
+  await engine.reviewSubmission(season.id, 'member', submissionId, true, 'Approved evidence.', 'admin');
+  deliveryMock.grant.mockClear();
+  await Promise.allSettled(Array.from({ length: 8 }, () => claims.claimGameReward(season.id, 'member', 'wayfarer')));
+  expect(deliveryMock.grant).toHaveBeenCalledTimes(2);
+  const record = (await claims.loadGameClaims(season.id, 'member')).value.wayfarer;
+  expect(record.components.map((c) => c.status)).toEqual(['delivered', 'delivered']);
+  expect(await direct.ttl(store.seasonKeys.gameClaims(season.id, 'member'))).toBe(-1);
+  expect((await claims.claimGameReward(season.id, 'member', 'wayfarer')).state).toBe('claimed');
+  expect(deliveryMock.grant).toHaveBeenCalledTimes(2);
 });

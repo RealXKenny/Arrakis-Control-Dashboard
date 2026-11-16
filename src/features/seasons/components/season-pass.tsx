@@ -19,6 +19,8 @@ import {
   seasonPresentation,
   artworkUrl,
   gameRewardLabel,
+  rewardComponents,
+  type Assignment,
   type Delivery,
 } from '../contracts';
 import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
@@ -26,6 +28,8 @@ import { RewardArt } from './reward-art';
 import { SeasonDialog } from './season-dialog';
 import { useCommunityProgress } from '../hooks/use-community-progress';
 import { categoryLabels, categoryOf, objectiveStatus } from '../catalog';
+import { describeKind } from '../engine/kinds';
+import { CLAIM_STATE_LABELS, claimStateOf, claimSummary } from '../claim-view';
 import { objectiveCategories } from '../contracts';
 import { ObjectiveDeck } from './objective-deck';
 import { AutomaticProgress } from './automatic-progress';
@@ -36,6 +40,8 @@ export type SeasonView = {
   progress: Progress;
   totals: Totals;
   deliveries?: Pick<Delivery, 'rewardId' | 'status'>[];
+  assignment?: Assignment | null;
+  gameClaims?: Record<string, { status: string }[]>;
 };
 export async function seasonRequest<T>(url: string, payload?: unknown): Promise<T> {
   const response = await fetch(url, {
@@ -64,6 +70,8 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
   const [cadence, setCadence] = useState('all');
   const [category, setCategory] = useState('all');
   const [selection, setSelection] = useState<Reward | null>(null);
+  const [objectiveValues, setObjectiveValues] = useState<Record<string, number>>({});
+  const [claimAll, setClaimAll] = useState<{ total: number; done: number; running: boolean } | null>(null);
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [text, setText] = useState('');
   const [links, setLinks] = useState('');
@@ -154,13 +162,15 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               ? `Level ${newLevel} reached. New rewards await.`
               : payload.action === 'submit'
                 ? 'Evidence submitted for review.'
-                : payload.action === 'claim'
-                  ? 'Cosmetic claimed. It is yours to keep.'
-                  : payload.action === 'equip'
-                    ? 'Cosmetic equipped.'
-                    : payload.action === 'delivery-request'
-                      ? 'Game delivery requested for administrator review.'
-                      : 'Challenge verified. Season XP awarded.',
+                : payload.action === 'claim-rewards'
+                  ? 'Reward claimed. Check its delivery state below.'
+                  : payload.action === 'claim'
+                    ? 'Cosmetic claimed. It is yours to keep.'
+                    : payload.action === 'equip'
+                      ? 'Cosmetic equipped.'
+                      : payload.action === 'delivery-request'
+                        ? 'Game delivery requested for administrator review.'
+                        : 'Challenge verified. Season XP awarded.',
       );
       setChallenge(null);
       setSelection(null);
@@ -454,16 +464,103 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               </div>
             </section>
           )}
+          {view.assignment && (
+            <section className="season-editor-card" aria-label="Your season plan">
+              <span className="season-kicker">Your personal plan · {view.assignment.tier}</span>
+              <p>
+                Your objectives were fixed when tracking began and never change. They are based only on verified game
+                data for your linked character.
+              </p>
+              {view.assignment.limitations.length > 0 && (
+                <ul>
+                  {view.assignment.limitations.map((text) => (
+                    <li key={text}>{text}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+          {definition.economy && !preview && (
+            <section className="season-editor-card" aria-label="Claim rewards">
+              {(() => {
+                const summary = claimSummary(definition, progress.xp, view.gameClaims);
+                return (
+                  <>
+                    <span className="season-kicker">Rewards</span>
+                    <p role="status">
+                      {summary.available} reward{summary.available === 1 ? '' : 's'} ready to claim
+                      {summary.uncertain > 0 && ` · ${summary.uncertain} awaiting administrator verification`}.
+                    </p>
+                    {claimAll ? (
+                      <div role="group" aria-label="Confirm Claim All">
+                        <p>
+                          Claim {claimAll.total} reward{claimAll.total === 1 ? '' : 's'} in level order? Each item,
+                          Solaris and House Credits payment is sent to your linked character once. Log out of the game
+                          first.
+                        </p>
+                        <p role="status">
+                          {claimAll.running ? `Claiming… ${claimAll.done} of ${claimAll.total} processed` : ''}
+                        </p>
+                        <Button
+                          className="season-button season-primary"
+                          disabled={busy || claimAll.running}
+                          onClick={async () => {
+                            setClaimAll({ ...claimAll, running: true });
+                            let done = 0;
+                            try {
+                              for (let guard = 0; guard < 12; guard++) {
+                                const batch = await seasonRequest<{
+                                  results: { state: string }[];
+                                  remaining: number;
+                                  blocked?: string | null;
+                                }>('/api/v2/seasons', { action: 'claim-all', seasonId: season.id });
+                                done += batch.results.length;
+                                setClaimAll((current) => current && { ...current, done });
+                                if (batch.blocked) throw new Error(batch.blocked);
+                                if (batch.remaining === 0 || batch.results.some((r) => r.state !== 'claimed')) break;
+                              }
+                              setMessage('Claim All finished. Check each reward for its delivery state.');
+                            } catch (e) {
+                              setError(e instanceof Error ? e.message : 'Claim All stopped.');
+                            } finally {
+                              await reload();
+                              setClaimAll(null);
+                            }
+                          }}
+                        >
+                          Confirm Claim All
+                        </Button>
+                        <Button className="season-button" disabled={claimAll.running} onClick={() => setClaimAll(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        className="season-button season-primary"
+                        disabled={busy || summary.available === 0}
+                        onClick={() => setClaimAll({ total: summary.available, done: 0, running: false })}
+                      >
+                        Claim All Available
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
+            </section>
+          )}
           {!preview && season.automatic && seasonState(season, now) === 'active' && (
             <AutomaticProgress
               key={season.id}
               seasonId={season.id}
-              onProgress={(next, updatedTotals) => {
+              manualClaims={!!definition.economy}
+              onProgress={(next, updatedTotals, plan) => {
+                setObjectiveValues(plan.objectives);
                 setViews((previous) =>
                   previous.map((entry) =>
                     entry.season.id === season.id
                       ? {
                           ...entry,
+                          assignment: plan.assignment ?? entry.assignment,
                           progress: next,
                           totals:
                             (updatedTotals.version ?? 0) >= (entry.totals.version ?? 0) ? updatedTotals : entry.totals,
@@ -473,7 +570,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 );
                 if (next.xp > progress.xp)
                   setMessage(
-                    `Automatic progress recorded. Level ${levelProgress(definition, next.xp).level}; unlocked cosmetics claimed.`,
+                    `Automatic progress recorded. Level ${levelProgress(definition, next.xp).level}.${definition.economy ? ' Claim your unlocked rewards.' : ' Unlocked cosmetics claimed.'}`,
                   );
               }}
             />
@@ -565,7 +662,22 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     <strong>+{c.xp.toLocaleString()} XP</strong>
                   </div>
                   <h3>{c.name}</h3>
-                  <p>{c.description}</p>
+                  {view.assignment && c.personalized ? (
+                    view.assignment.objectives[c.id] ? (
+                      <>
+                        <p>{describeKind(view.assignment.objectives[c.id])}</p>
+                        <p className="season-kicker" role="status">
+                          Progress {objectiveValues[c.id] ?? 0} / {view.assignment.objectives[c.id].target}
+                        </p>
+                      </>
+                    ) : (
+                      <p>
+                        No verifiable game evidence supports this objective for your character, so it cannot be earned.
+                      </p>
+                    )
+                  ) : (
+                    <p>{c.description}</p>
+                  )}
                   <div className="season-challenge-bottom">
                     <span>
                       {c.verification === 'review' ? 'Moderator-reviewed' : 'API-observed'} · {statusOf(c, view)}
@@ -673,15 +785,38 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
             </span>
             <h2 id="reward-preview-title">{selection.name}</h2>
             <p>{selection.description}</p>
-            {selection.gameReward && (
+            {definition.economy && (
+              <div role="group" aria-label="Reward contents">
+                <span className="season-kicker">You will receive</span>
+                <ul>
+                  <li>Dashboard cosmetic: {selection.name}</li>
+                  {rewardComponents(selection).map((part, index) => (
+                    <li key={index}>
+                      {gameRewardLabel(part)}
+                      {view.gameClaims?.[selection.id]?.[index] && ` — ${view.gameClaims[selection.id][index].status}`}
+                    </li>
+                  ))}
+                </ul>
+                <p role="status">
+                  {CLAIM_STATE_LABELS[claimStateOf(definition, progress.xp, selection, view.gameClaims)]}
+                </p>
+                <p>
+                  Delivery goes to your linked character and needs you logged out of the game. An unconfirmed delivery
+                  is never resent automatically.
+                </p>
+              </div>
+            )}
+            {!definition.economy && selection.gameReward && (
               <p>
                 Includes {gameRewardLabel(selection.gameReward)}. Claiming records eligibility; an administrator must
                 separately review and execute delivery while your linked character is offline.
               </p>
             )}
-            {selection.gameReward && view.deliveries?.find((v) => v.rewardId === selection.id) && (
-              <p role="status">Game delivery: {view.deliveries.find((v) => v.rewardId === selection.id)?.status}</p>
-            )}
+            {!definition.economy &&
+              selection.gameReward &&
+              view.deliveries?.find((v) => v.rewardId === selection.id) && (
+                <p role="status">Game delivery: {view.deliveries.find((v) => v.rewardId === selection.id)?.status}</p>
+              )}
             <div className="season-profile-preview">
               <span className="season-kicker">Profile preview</span>
               <strong>{selection.kind === 'title' ? selection.name : 'Desert Traveller'}</strong>
@@ -693,7 +828,8 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
               <Button autoFocus className="season-button" onClick={() => setSelection(null)}>
                 Close preview
               </Button>
-              {selection.gameReward &&
+              {!definition.economy &&
+                selection.gameReward &&
                 progress.claims.some((v) => v.reward.id === selection.id) &&
                 !view.deliveries?.some((v) => v.rewardId === selection.id) && (
                   <Button
@@ -704,6 +840,20 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                     Request game delivery
                   </Button>
                 )}
+              {definition.economy &&
+                ['available', 'pending'].includes(
+                  claimStateOf(definition, progress.xp, selection, view.gameClaims),
+                ) && (
+                  <Button
+                    className="season-button season-primary"
+                    disabled={busy || !!preview || ['draft', 'preview', 'scheduled'].includes(seasonState(season, now))}
+                    onClick={() => act({ action: 'claim-rewards', rewardId: selection.id })}
+                  >
+                    {claimStateOf(definition, progress.xp, selection, view.gameClaims) === 'pending'
+                      ? 'Retry Claim'
+                      : 'Claim Reward'}
+                  </Button>
+                )}
               {progress.claims.some((v) => v.reward.id === selection.id) ? (
                 <Button
                   className="season-button"
@@ -712,7 +862,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 >
                   Equip cosmetic
                 </Button>
-              ) : (
+              ) : definition.economy ? null : (
                 <Button
                   className="season-button season-primary"
                   disabled={

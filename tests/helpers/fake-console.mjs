@@ -198,6 +198,21 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
     }
 
     if (path === '/api/health') return json(response, 200, { ok: true });
+    if (path === '/api/admin/items/catalog')
+      // A small, realistic slice: valid categories plus entries the reward policy must exclude.
+      return json(response, 200, {
+        rows: [
+          ...Array.from({ length: 60 }, (_, i) => ({
+            id: `FixtureItem_${String(i).padStart(2, '0')}`,
+            itemId: `FixtureItem_${String(i).padStart(2, '0')}`,
+            name: `Fixture item ${i}`,
+            category: ['resources', 'consumables', 'components', 'tools', 'weapons'][i % 5],
+            source: 'fixture',
+          })),
+          { id: 'Developer_Storage_Container_Patent', name: 'Developer box', category: 'tools', source: 'fixture' },
+          { id: 'MTX_Fixture_Skin', name: 'Premium skin', category: 'wearables', entitlementControlled: true },
+        ],
+      });
     if (path === '/api/integrations/discord/players/me') {
       const actor = JSON.parse(bodyText || '{}').actor ?? {};
       const scenario = byDiscord.get(String(actor.userId));
@@ -235,10 +250,13 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
         // Mirrors the documented Console behaviour: Solaris only, a nonzero whole amount, the exact confirmation phrase,
         // and an overdraft is refused. Nothing here is a guarantee about the real Console.
         const change = JSON.parse(bodyText || '{}');
-        const coin = (scenario.details['solaris-coin'] ??= {});
+        const credits = change.currencyId === 1;
+        const coin = credits
+          ? (scenario.details['house-credit'] ??= { total: 10000 })
+          : (scenario.details['solaris-coin'] ??= {});
         const next = Number(coin.total ?? 0) + Number(change.amount);
         if (
-          change.currencyId !== 0 ||
+          (change.currencyId !== 0 && change.currencyId !== 1) ||
           change.confirmation !== 'ADD CURRENCY' ||
           !Number.isInteger(change.amount) ||
           change.amount === 0
@@ -260,9 +278,9 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
               playerStateId: 2,
               onlineStatus: scenario.linked.online ? 'Online' : 'Offline',
             },
-            currencyId: 0,
+            currencyId: credits ? 1 : 0,
             amount: change.amount,
-            balance: { currency_id: 'Solaris', balance: String(next) },
+            balance: { currency_id: credits ? 'HouseCredit' : 'Solaris', balance: String(next) },
             message: 'Solari Credit was updated in the database and will be loaded when the player next joins.',
           },
         });
@@ -273,7 +291,11 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
           capabilities: { currency: true },
           rows: [
             { currency_id: 0, balance: String(scenario.details['solaris-coin'].total), label: 'Solari Credit' },
-            { currency_id: 1, balance: '10000', label: 'House Credit' },
+            {
+              currency_id: 1,
+              balance: String(scenario.details['house-credit']?.total ?? 10000),
+              label: 'House Credit',
+            },
           ],
         });
       }

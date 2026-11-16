@@ -68,6 +68,10 @@ Coverage includes real Lua for casino wallets, transfer intents and orchestratio
 `curl`, `npm`, `apt-get` and `chown` are shims serving local fixtures. They cover checksum success/failure, missing and malformed checksums,
 version pinning, hostile archives (parent paths, absolute paths, symlinks, hard links) and unverified-release handling.
 
+## Intelligent seasons
+
+`tests/unit/seasons/personalization.test.ts` covers capability tiers, deterministic personal plans, level-200 plans, limitations and the theme sequence; `rewards.test.ts` covers item eligibility, the 100-level economy and rejection of unsafe plans; `claims.test.ts` covers concurrent claims, uncertain and interrupted sends, character binding and Claim All with a mocked gateway. `tests/integration/redis-seasons.test.ts` adds real Redis and Cluster coverage of the claim record and the baseline path (CI only). No automated test sends anything to a live game; the fake Console in `tests/helpers/fake-console.mjs` serves a synthetic item catalog and receipts. `simulateSeason` (also shown to administrators) runs the real algorithm against synthetic characters.
+
 ## What is not covered by automated tests
 
 Real GitHub Actions runs, a real Pterodactyl panel, the real Discord round trip and Redis TLS/auth are verified manually ([staging](../deployment/staging.md)).

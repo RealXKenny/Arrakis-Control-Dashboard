@@ -13,8 +13,7 @@ const required = [
   '.claude/settings.json',
   '.codex/config.toml',
   '.github/copilot-instructions.md',
-  'docs/ai/README.md',
-  'docs/ai/installation.md',
+  'docs/AI.md',
   '.cursor/rules/arrakis.mdc',
   '.continue/rules/arrakis.md',
   '.windsurf/rules/arrakis.md',
@@ -57,10 +56,6 @@ if (existsSync(join(root, '.claude/settings.json'))) {
     errors.push(`Invalid Claude JSON: ${e.message}`);
   }
 }
-const docs = join(root, 'docs/ai');
-if (existsSync(docs))
-  for (const name of readdirSync(docs))
-    if (name.endsWith('.md') && read(`docs/ai/${name}`).trim().length === 0) errors.push(`Empty guide: ${name}`);
 const retired = ['src/modules', 'src/infrastructure'];
 for (const path of retired) if (existsSync(join(root, path))) errors.push(`Retired directory exists: ${path}`);
 if (errors.length) {

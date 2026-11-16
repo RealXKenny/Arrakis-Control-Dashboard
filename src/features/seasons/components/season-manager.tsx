@@ -29,6 +29,7 @@ import { ArtworkUpload } from './artwork-upload';
 import { LivePresentationEditor } from './live-presentation-editor';
 import { GameRewardFields } from './game-reward-fields';
 import { DeliveryManager } from './delivery-manager';
+import { AlgorithmMonitor, type ClaimAttention } from './algorithm-monitor';
 
 export function SeasonManager() {
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -46,6 +47,7 @@ export function SeasonManager() {
   const [thresholds, setThresholds] = useState('');
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+  const [attention, setAttention] = useState<ClaimAttention[]>([]);
   const [deliveryEnabled, setDeliveryEnabled] = useState(false);
   const [seasonOffset, setSeasonOffset] = useState(0);
   const [reviewOffset, setReviewOffset] = useState(0);
@@ -85,11 +87,13 @@ export function SeasonManager() {
       totals: Totals | null;
       deliveries: Delivery[];
       deliveryEnabled: boolean;
+      claimAttention: ClaimAttention[];
     }>(`/api/v2/admin/seasons?season=${id}&offset=${offset}`);
     setSubmissions(data.submissions);
     setAudit(data.audit);
     setTotals(data.totals);
     setDeliveries(data.deliveries);
+    setAttention(data.claimAttention ?? []);
     setDeliveryEnabled(data.deliveryEnabled);
     setReviewOffset(offset);
   }
@@ -1009,6 +1013,13 @@ export function SeasonManager() {
                   </Button>
                 </form>
               </section>
+              <AlgorithmMonitor
+                key={`monitor-${season.id}`}
+                season={season}
+                attention={attention}
+                busy={busy}
+                mutate={mutate}
+              />
               <DeliveryManager
                 key={season.id}
                 season={season}

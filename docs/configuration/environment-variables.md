@@ -83,7 +83,7 @@ Boolean variables accept only the strings `true` and `false`.
 
 ## Tool-only variables
 
-Season game delivery has no feature toggle: explicit administrator execution of separately approved Solaris and item rewards is available whenever `DUNE_API_KEY` is set and `DUNE_API_URL` is HTTPS or loopback HTTP. It never grants automatically and never touches casino transfers. Automatic seasons start by default; an administrator pause saved in Redis is preserved across restarts. See [season operations](../features/community-seasons.md#in-game-delivery-boundary).
+Season game delivery has no feature toggle: in-game season rewards (Solaris, House Credits and items) are delivered on explicit player claims for generated seasons, and by independently reviewed administrator execution for legacy seasons, whenever `DUNE_API_KEY` is set and `DUNE_API_URL` is HTTPS or loopback HTTP. It never grants automatically and never touches casino transfers. Automatic seasons start by default; an administrator pause saved in Redis is preserved across restarts. See [season operations](../features/community-seasons.md#in-game-delivery-boundary).
 
 | Variable                                     | Used by                                                                                                                                                                                                           |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

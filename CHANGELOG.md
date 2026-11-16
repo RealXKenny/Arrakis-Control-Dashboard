@@ -4,6 +4,8 @@
 
 ### New Features
 
+- Intelligent automatic seasons: deterministic personal objective plans built from an immutable enrollment baseline, level-200-aware eligibility, eight rotating seasonal themes, catalog-backed reward bundles at all 100 levels within an explainable economy, and manual **Claim Reward** and **Claim All Available** with durable component-level delivery. Uncertain deliveries are never resent and appear in an administrator reconciliation queue; an algorithm monitor shows simulations and economy budgets. Generated seasons no longer claim cosmetics automatically.
+
 - Simplified Console configuration: `DUNE_API_URL` and `DUNE_API_KEY` replace `CONSOLE_URL`, `CONSOLE_API_KEY` and `ADMIN_CONSOLE_API_KEY`, and `ADAPTER_TOKEN` is renamed `DUNE_ADAPTER_TOKEN` for the Console's Discord adapter, which accepts only its own token. Dashboard authorization, privileged HTTPS/loopback transport and the retired-setting startup error are unchanged in intent. Season automation and delivery toggles were removed.
 
 - Automatic three-month Season 1, Season 2 and onward: admin-authorized deterministic generation, 100 free cosmetic levels, scheduling/publication/archiving, server-verified XP and atomic cosmetic claiming. Durable Redis cursors and pause fences protect multi-instance recovery. API-only objectives avoid approval of unverifiable evidence. Seasons start automatically by default (saved pauses are preserved) and count only NEW in-game progress after a per-season baseline, so existing high levels earn nothing on first observation. Configured Solaris/item rewards need separate review and explicit execution.

@@ -1,20 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../../components/ui/button';
-import type { Progress, Totals } from '../contracts';
+import type { Assignment, Progress, Totals } from '../contracts';
 
 export function AutomaticProgress({
   seasonId,
+  manualClaims = false,
   onProgress,
 }: {
   seasonId: string;
-  onProgress: (progress: Progress, totals: Totals) => void;
+  manualClaims?: boolean;
+  onProgress: (
+    progress: Progress,
+    totals: Totals,
+    plan: { assignment: Assignment | null; objectives: Record<string, number> },
+  ) => void;
 }) {
-  const latest = useRef(onProgress),
+  const manual = useRef(manualClaims),
+    latest = useRef(onProgress),
     [state, setState] = useState('Checking verified game progress…'),
     [retry, setRetry] = useState(0);
   useEffect(() => {
     latest.current = onProgress;
-  }, [onProgress]);
+    manual.current = manualClaims;
+  }, [onProgress, manualClaims]);
   useEffect(() => {
     let disposed = false,
       running = false,
@@ -36,9 +44,12 @@ export function AutomaticProgress({
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? 'Progress verification unavailable.');
         if (!disposed && !document.hidden) {
-          latest.current(data.progress, data.totals);
+          latest.current(data.progress, data.totals, {
+            assignment: data.assignment ?? null,
+            objectives: data.tracking.objectives ?? {},
+          });
           setState(
-            `New game progress tracked since ${data.tracking.startedAt}: ${data.tracking.newGameXp} game XP; ${data.tracking.newJourneys} new journey objectives. Unlocked cosmetics are claimed automatically.`,
+            `New game progress tracked since ${data.tracking.startedAt}: ${data.tracking.newGameXp} game XP; ${data.tracking.newJourneys} new journey objectives. ${manual.current ? 'Claim unlocked rewards yourself with Claim Reward.' : 'Unlocked cosmetics are claimed automatically.'}`,
           );
         }
         if (!disposed) timer = setTimeout(sync, 60000);

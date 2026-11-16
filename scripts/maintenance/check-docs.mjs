@@ -81,12 +81,7 @@ export function checkDocs(rootDirectory = root) {
   for (const file of files) {
     const shown = relative(rootDirectory, file).replaceAll('\\', '/');
     const text = readFileSync(file, 'utf8');
-    if (
-      shown.startsWith('docs/') &&
-      !shown.startsWith('docs/ai/') &&
-      !shown.startsWith('docs/legal/') &&
-      text.trim().length < MIN_PAGE_CHARACTERS
-    )
+    if (shown.startsWith('docs/') && !shown.startsWith('docs/legal/') && text.trim().length < MIN_PAGE_CHARACTERS)
       problems.push(`${shown}: page is empty or a stub`);
     for (const [number, line] of proseLines(text)) {
       for (const match of line.matchAll(/(?<!!)\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
