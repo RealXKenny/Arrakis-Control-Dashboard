@@ -19,12 +19,23 @@ async function render(member: unknown = null) {
   return renderToStaticMarkup(await LandingPage());
 }
 
+/** Removes tags until none remain, so nested fragments such as `<<b>script>` cannot survive a single pass. */
+function stripTags(html: string, replacement: string) {
+  let previous: string;
+  let current = html;
+  do {
+    previous = current;
+    current = current.replace(/<[^<>]*>/g, replacement);
+  } while (current !== previous);
+  return current;
+}
+
 const links = (html: string) =>
   [...html.matchAll(/<a [^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gs)].map((m) => ({
     href: m[1]!,
-    text: m[2]!.replace(/<[^>]+>/g, '').trim(),
+    text: stripTags(m[2]!, '').trim(),
   }));
-const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+const text = (html: string) => stripTags(html, ' ').replace(/\s+/g, ' ');
 
 /** A route exists when the App Router has a page for it. */
 function routeExists(href: string) {

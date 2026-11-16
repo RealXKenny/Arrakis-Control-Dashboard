@@ -44,7 +44,8 @@ describe('documentation', () => {
   it('documents every npm script in the command reference', () => {
     const scripts = Object.keys(JSON.parse(read('package.json')).scripts as Record<string, string>);
     const page = read('docs/reference/commands.md');
-    for (const name of scripts) expect(page, name).toMatch(new RegExp(`npm (run )?${name.replace(':', ':')}`));
+    for (const name of scripts)
+      expect(page.includes(`npm run ${name}`) || page.includes(`npm ${name}`), name).toBe(true);
   });
 
   it('keeps the high-risk operation list in the administrator guide in step with the code', async () => {

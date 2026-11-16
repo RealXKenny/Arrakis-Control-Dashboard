@@ -3,7 +3,8 @@ import { test, expect } from '../helpers/browser-test';
 test('local interface fonts load successfully and Archivo retains its width axis', async ({ page }) => {
   const externalFonts: string[] = [];
   page.on('request', (request) => {
-    if (/fonts\.(googleapis|gstatic)\.com/.test(request.url())) externalFonts.push(request.url());
+    if (['fonts.googleapis.com', 'fonts.gstatic.com'].includes(new URL(request.url()).hostname))
+      externalFonts.push(request.url());
   });
   await page.goto('/');
   const fonts = await page.evaluate(async () => {
