@@ -11,8 +11,13 @@ import { baseDirectoryReply } from './guild-base-directory-redis.mjs';
 import { onboardingReply } from './guild-onboarding-redis.mjs';
 import { itemPinsReply } from './item-pins-redis.mjs';
 import { pollsReply } from './guild-polls-redis.mjs';
+import { createSeasonFixture } from './seasons-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
 import { startFakeConsole } from './fake-console.mjs';
+import { startBrowserTls } from './browser-tls.mjs';
+
+const useTls = process.argv.includes('--tls');
+const port = useTls ? 3102 : 3100;
 
 // Isolated browser fixture only; never used by the production runtime.
 const sessionKey = (id) => `arrakis:session:${createHash('sha256').update(id).digest('hex')}`;
@@ -30,7 +35,10 @@ const listing = {
     { id: '7b1f5a56-8c9d-4a4e-9b0d-1f3a2c4d5e6f', label: 'Why do you want to join?', required: true },
   ],
 };
+const seasonReply = createSeasonFixture();
 const storage = createRedisFixture(([operation, key, ...args]) => {
+  const seasons = seasonReply(operation, key, args);
+  if (seasons !== undefined) return seasons.value;
   const itemPins = itemPinsReply(operation, key, args);
   if (itemPins !== undefined) return itemPins.value;
   const polls = pollsReply(operation, key, args);
@@ -60,12 +68,19 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
   }
   if (operation.toUpperCase() === 'GET') {
     const admin = key === sessionKey('browser-admin-session');
+    const reviewer = key === sessionKey('browser-reviewer-session');
     const member = key === sessionKey('browser-member-session');
     const slot = poolSlots.get(key);
-    return admin || member || slot
+    return admin || reviewer || member || slot
       ? JSON.stringify({
           user: {
-            id: admin ? '456084885220884480' : slot ? poolDiscordId(slot) : '123456789000000000',
+            id: admin
+              ? '456084885220884480'
+              : reviewer
+                ? '456084885220884481'
+                : slot
+                  ? poolDiscordId(slot)
+                  : '123456789000000000',
             username: admin ? 'Test administrator' : slot ? `Pool member ${slot}` : 'Test member',
             ...(member ? { avatar: '0123456789abcdef0123456789abcdef' } : {}),
             ...(member ? { guild_nickname: 'Server Alias' } : {}),
@@ -83,12 +98,12 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
 storage.server.listen(0, '127.0.0.1');
 await once(storage.server, 'listening');
 // The server renders from this fake Console and adapter; tests shape it through /__fixture/* (fake-console-client.ts).
-const fakeConsole = startFakeConsole();
+const fakeConsole = startFakeConsole(useTls ? 3103 : 3101);
 await fakeConsole.listen();
 const require = createRequire(import.meta.url);
 const child = spawn(
   process.execPath,
-  [require.resolve('next/dist/bin/next'), 'start', '--hostname', '127.0.0.1', '--port', '3100'],
+  [require.resolve('next/dist/bin/next'), 'start', '--hostname', '127.0.0.1', '--port', String(port)],
   {
     windowsHide: true,
     stdio: 'inherit',
@@ -99,6 +114,7 @@ const child = spawn(
       COMMUNITY_EVENTS_CHANNEL_ID: '',
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
       CONSOLE_URL: fakeConsole.url,
+      ADMIN_DISCORD_IDS: '456084885220884480,456084885220884481',
       REDIS_CLUSTER_NODES: '',
       RABBITMQ_CA_FILE: '',
       RABBITMQ_TLS_CA: '',
@@ -113,15 +129,18 @@ const child = spawn(
     },
   },
 );
+const tls = useTls ? startBrowserTls(port) : null;
 const stop = () => child.kill();
 process.once('SIGTERM', stop);
 process.once('SIGINT', stop);
 child.once('error', async () => {
+  tls?.close();
   process.exitCode = 1;
   await storage.close();
   await fakeConsole.close();
 });
 child.once('exit', async (code) => {
+  tls?.close();
   process.exitCode = code ?? 1;
   await storage.close();
   await fakeConsole.close();

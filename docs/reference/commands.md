@@ -24,6 +24,7 @@
 | `npm run workflows:check`                 | Validate workflow and Dependabot YAML, pins, and the required CI gate            |
 | `npm run redis:rekey`                     | Rename legacy keys to hash-tagged names (`--apply` to write)                     |
 | `npm run marketplace:rekey`               | Marketplace owner-key migration (`--apply --backup <file>`, `--rollback <file>`) |
+| `npm run seasons:import`                  | Validate/import a season draft (dry run; `--apply --target <target>` to write)   |
 
 ## Scripts that are not npm scripts
 

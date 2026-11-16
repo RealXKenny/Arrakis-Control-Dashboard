@@ -13,6 +13,7 @@ import ApiReference from '../../../features/admin/components/api-reference';
 import AdminWorkspace from '../../../features/admin/components/admin-workspace';
 import { OverviewView } from '../../../features/admin/components/overview-view';
 import { EventsManager } from '../../../features/admin/components/events-manager';
+import { SeasonManager } from '../../../features/seasons/components/season-manager';
 
 export const metadata: Metadata = { title: 'Administration' };
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     body = <OverviewView data={data} error={error} operations={operations} setupOnly={current.kind === 'setup'} />;
   } else if (current.kind === 'events') {
     body = <EventsManager />;
+  } else if (current.kind === 'seasons') {
+    body = <SeasonManager />;
   } else if (current.kind === 'reference') {
     body = <ApiReference operations={operations} />;
   } else {

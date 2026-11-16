@@ -97,6 +97,7 @@ describe('unified navigation configuration', () => {
       '/changelog',
       '/status',
       '/events',
+      '/seasons',
       '/admin',
     ]);
     expect(new Set(links.map((item) => item.href)).size).toBe(links.length);

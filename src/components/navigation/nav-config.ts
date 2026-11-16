@@ -335,6 +335,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
         order: 18,
       },
       {
+        id: 'community-seasons',
+        label: 'Community season',
+        href: '/seasons',
+        icon: 'preview',
+        description: 'Free challenges, seasonal recognition and your reward track.',
+        order: 19,
+      },
+      {
         id: 'administration',
         label: 'Administration',
         href: '/admin',

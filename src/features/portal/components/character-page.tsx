@@ -8,6 +8,7 @@ import { loadPortalProfile } from '../server/load';
 import { requireSession } from '../../auth/server/session';
 import { ProfileFailure } from './profile-failure';
 import { PageHeader } from '../../../components/ui/page-header';
+import { ProfileCosmetics } from '../../seasons/components/profile-cosmetics';
 
 export const metadata: Metadata = { title: 'Character' };
 
@@ -76,6 +77,8 @@ export default async function CharacterPage() {
           Level {formatNumber(character.level, 0)} · {character.guild?.name ?? 'Unaffiliated'} · {character.status}
         </p>
       </PageHeader>
+
+      <ProfileCosmetics owner={session.user.id} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="grid content-start gap-6">

@@ -28,6 +28,7 @@ it('accepts the portal environment template', async () => {
   expect(env.API_GLOBAL_READ_LIMIT).toBe(2400);
   expect(env.BOT_API_TOKEN).toBeUndefined();
   expect(env.ADMIN_CONSOLE_API_KEY).toBeUndefined();
+  expect(env.SEASON_GAME_DELIVERY_ENABLED).toBe(false);
 });
 
 it.each([
@@ -38,6 +39,7 @@ it.each([
   ['API_MAX_CONCURRENCY', '0'],
   ['API_GLOBAL_READ_LIMIT', '-1'],
   ['BOT_API_TOKEN', 'too-short'],
+  ['SEASON_GAME_DELIVERY_ENABLED', 'yes'],
 ])('rejects an invalid server binding in %s', async (name, value) => {
   vi.stubEnv(name, value);
   const { getServerEnv } = await import('../../../src/config/env');

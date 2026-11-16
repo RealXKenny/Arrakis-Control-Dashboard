@@ -73,6 +73,11 @@ const serverEnvSchema = z.object({
   CONSOLE_URL: z.string().url().optional(),
   CONSOLE_API_KEY: z.string().min(1).optional(),
   ADMIN_CONSOLE_API_KEY: z.string().min(1).optional(),
+  /** Reviewed season game rewards. Independent from casino; never enables automatic execution. */
+  SEASON_GAME_DELIVERY_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   ADAPTER_TOKEN: z.string().min(1).optional(),
   /**
    * Solaris Exchange: real Solaris deposits, withdrawals and play. Off unless explicitly set to `true`; the server
