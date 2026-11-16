@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
@@ -13,10 +14,10 @@ export const metadata: Metadata = { title: 'Character' };
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="panel p-6">
+    <Card as="section" className="panel p-6">
       <h2 className="text-base">{title}</h2>
       <div className="mt-5">{children}</div>
-    </section>
+    </Card>
   );
 }
 

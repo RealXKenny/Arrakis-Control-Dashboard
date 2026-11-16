@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   portalWidgetIds,
@@ -123,7 +125,7 @@ export function PortalWidgets({
             </p>
           </div>
           <div className={styles.actions}>
-            <button
+            <Button
               className={styles.button}
               disabled={busy}
               onClick={() => {
@@ -132,8 +134,8 @@ export function PortalWidgets({
               }}
             >
               Personal view
-            </button>
-            <button
+            </Button>
+            <Button
               className={styles.button}
               disabled={busy}
               onClick={() => {
@@ -142,15 +144,15 @@ export function PortalWidgets({
               }}
             >
               Full overview
-            </button>
-            <button
+            </Button>
+            <Button
               className={styles.button}
               aria-expanded={editing}
               aria-controls={editing ? 'portal-layout-editor' : undefined}
               onClick={() => setEditing((v) => !v)}
             >
               Customize widgets
-            </button>
+            </Button>
           </div>
         </div>
         {error && (
@@ -206,22 +208,22 @@ export function PortalWidgets({
                     </label>
                     {selected && (
                       <div className={styles.actions}>
-                        <button
+                        <Button
                           className={styles.button}
                           disabled={busy || index === 0}
                           aria-label={`Move ${portalWidgetCatalog[id].name} up`}
                           onClick={() => move(id, -1)}
                         >
                           ↑ Move up
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           className={styles.button}
                           disabled={busy || index === draft.widgets.length - 1}
                           aria-label={`Move ${portalWidgetCatalog[id].name} down`}
                           onClick={() => move(id, 1)}
                         >
                           ↓ Move down
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </li>
@@ -229,14 +231,14 @@ export function PortalWidgets({
               })}
             </ul>
             <div className={styles.actions}>
-              <button
+              <Button
                 className={`${styles.button} ${styles.primary}`}
                 disabled={Boolean(activity) || busy || !available || !changed}
                 onClick={() => persist(false)}
               >
                 Save layout
-              </button>
-              <button
+              </Button>
+              <Button
                 className={styles.button}
                 disabled={busy || !changed}
                 onClick={() =>
@@ -244,13 +246,13 @@ export function PortalWidgets({
                 }
               >
                 Discard changes
-              </button>
-              <button className={styles.button} disabled={busy} onClick={() => update(recommended)}>
+              </Button>
+              <Button className={styles.button} disabled={busy} onClick={() => update(recommended)}>
                 Reset to recommended
-              </button>
-              <button className={styles.button} disabled={busy || Boolean(activity)} onClick={() => persist(true)}>
+              </Button>
+              <Button className={styles.button} disabled={busy || Boolean(activity)} onClick={() => persist(true)}>
                 Reload saved layout
-              </button>
+              </Button>
             </div>
           </div>
         )}

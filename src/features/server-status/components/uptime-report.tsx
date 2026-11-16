@@ -1,4 +1,5 @@
 'use client';
+import { Card } from '../../../components/ui/card';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -59,7 +60,11 @@ export function UptimeReport() {
   }, []);
 
   return (
-    <section className="panel overflow-hidden border-t-2 border-t-spice-500" aria-label="Hosting availability report">
+    <Card
+      as="section"
+      className="panel overflow-hidden border-t-2 border-t-spice-500"
+      aria-label="Hosting availability report"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sand-200/10 bg-obsidian-900/60 px-4 py-4 sm:px-6">
         <div>
           <p className="text-sm font-semibold text-sand-100">Hosting status report</p>
@@ -92,6 +97,6 @@ export function UptimeReport() {
         This external report reflects hosting availability. The dashboard’s in-game population and server readings are
         shown separately on the Portal.
       </p>
-    </section>
+    </Card>
   );
 }

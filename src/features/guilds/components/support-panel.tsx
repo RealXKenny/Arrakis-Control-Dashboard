@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useState } from 'react';
 import useSupportUnread from '../hooks/use-support-unread';
@@ -11,14 +13,14 @@ export function SupportPanel({ guildId }: { guildId: string }) {
   const unread = useSupportUnread({ guildId });
 
   return (
-    <section aria-label="Administrator support" className="panel flex flex-col gap-4 p-6">
+    <Card as="section" aria-label="Administrator support" className="panel flex flex-col gap-4 p-6">
       <div>
         <h2 className="text-sm uppercase tracking-[0.2em]">Support</h2>
         <p className="mt-2 text-sm text-sand-400">Talk privately with dashboard administrators about your guild.</p>
       </div>
-      <button type="button" className="btn btn-primary self-start" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <Button type="button" className="btn btn-primary self-start" aria-expanded={open} onClick={() => setOpen(!open)}>
         Chat with administrators <UnreadPill count={unread.total} />
-      </button>
+      </Button>
       {open && (
         <GuildChat
           url={`/api/guilds/${encodeURIComponent(guildId)}/support`}
@@ -29,6 +31,6 @@ export function SupportPanel({ guildId }: { guildId: string }) {
           support={{ guildId }}
         />
       )}
-    </section>
+    </Card>
   );
 }

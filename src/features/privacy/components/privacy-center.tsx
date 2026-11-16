@@ -1,4 +1,7 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
+
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -126,16 +129,16 @@ export function PrivacyCenter() {
         position, inventory, crafting unlocks, account email or linked-character data.
       </p>
       <div className={styles.actions}>
-        <button className="btn btn-secondary" disabled={busy} onClick={() => void send()}>
+        <Button className="btn btn-secondary" disabled={busy} onClick={() => void send()}>
           Reload saved privacy settings
-        </button>
-        <button
+        </Button>
+        <Button
           className="btn btn-primary"
           disabled={busy || !record}
           onClick={() => void send({ action: 'revoke-all', revision: record!.revision })}
         >
           Revoke all sharing
-        </button>
+        </Button>
       </div>
       <p className={styles.note}>
         Revoking all unpublishes every card and replaces the link, preserving saved private drafts. Reloading discards
@@ -173,7 +176,7 @@ export function PrivacyCenter() {
                 <Link href={`/sharing/${record.shareId}`} prefetch={false} className={styles.link}>
                   Open member view
                 </Link>
-                <button
+                <Button
                   className="btn btn-secondary"
                   disabled={busy}
                   onClick={async () => {
@@ -188,28 +191,28 @@ export function PrivacyCenter() {
                   }}
                 >
                   Copy member link
-                </button>
-                <button
+                </Button>
+                <Button
                   className="btn btn-secondary"
                   disabled={busy || Boolean(editing)}
                   onClick={() => setRotating(true)}
                 >
                   Replace member link
-                </button>
+                </Button>
               </div>
               {rotating && (
                 <div role="group" aria-label="Confirm member link replacement">
                   <p>Old links will stop working. Current publications and their expiry times stay the same.</p>
-                  <button
+                  <Button
                     className="btn btn-secondary"
                     disabled={busy}
                     onClick={() => void send({ action: 'rotate-link', revision: record.revision })}
                   >
                     Confirm replace link
-                  </button>
-                  <button className="btn btn-secondary" disabled={busy} onClick={() => setRotating(false)}>
+                  </Button>
+                  <Button className="btn btn-secondary" disabled={busy} onClick={() => setRotating(false)}>
                     Keep current link
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -219,7 +222,7 @@ export function PrivacyCenter() {
               const publication = record.publications[category];
               const shared = publication && Date.parse(publication.expiresAt) > checkedAt;
               return (
-                <article className={styles.card} key={category} aria-label={`${privacyNames[category]} privacy`}>
+                <Card className={styles.card} key={category} aria-label={`${privacyNames[category]} privacy`}>
                   <p className={styles.eyebrow}>
                     {shared ? 'Shared with members by link' : publication ? 'Publication expired' : 'Private'}
                   </p>
@@ -231,7 +234,7 @@ export function PrivacyCenter() {
                   </p>
                   {shared && <CardContent card={{ category, data: publication.data } as PrivacyCard} />}
                   <div className={styles.actions}>
-                    <button
+                    <Button
                       className="btn btn-secondary"
                       disabled={busy || Boolean(editing)}
                       onClick={() => {
@@ -243,18 +246,18 @@ export function PrivacyCenter() {
                       }}
                     >
                       {shared ? 'Edit saved draft' : 'Create or edit private draft'}
-                    </button>
+                    </Button>
                     {publication && (
-                      <button
+                      <Button
                         className="btn btn-secondary"
                         disabled={busy || Boolean(editing)}
                         onClick={() => void send({ action: 'unpublish', revision: record.revision, category })}
                       >
                         Unpublish {privacyNames[category].toLowerCase()}
-                      </button>
+                      </Button>
                     )}
                   </div>
-                </article>
+                </Card>
               );
             })}
           </div>
@@ -274,7 +277,7 @@ export function PrivacyCenter() {
                     <CardContent card={preview.card} />
                   </div>
                   <div className={styles.actions}>
-                    <button
+                    <Button
                       className="btn btn-primary"
                       disabled={busy}
                       onClick={() =>
@@ -288,10 +291,10 @@ export function PrivacyCenter() {
                       }
                     >
                       Publish reviewed {privacyNames[preview.card.category].toLowerCase()}
-                    </button>
-                    <button className="btn btn-secondary" disabled={busy} onClick={() => setPreview(null)}>
+                    </Button>
+                    <Button className="btn btn-secondary" disabled={busy} onClick={() => setPreview(null)}>
                       Back to private draft
-                    </button>
+                    </Button>
                   </div>
                 </>
               ) : (
@@ -321,7 +324,7 @@ export function PrivacyCenter() {
                       to stop sharing. Review and confirm to publish a new version.
                     </p>
                     <div className={styles.actions}>
-                      <button
+                      <Button
                         type="button"
                         className="btn btn-secondary"
                         onClick={() => {
@@ -334,13 +337,13 @@ export function PrivacyCenter() {
                         }}
                       >
                         Save private draft
-                      </button>
-                      <button className="btn btn-primary" type="submit">
+                      </Button>
+                      <Button className="btn btn-primary" type="submit">
                         Review publication
-                      </button>
-                      <button type="button" className="btn btn-secondary" onClick={() => setEditing(null)}>
+                      </Button>
+                      <Button type="button" className="btn btn-secondary" onClick={() => setEditing(null)}>
                         Cancel editing
-                      </button>
+                      </Button>
                     </div>
                   </fieldset>
                 </form>
@@ -349,7 +352,7 @@ export function PrivacyCenter() {
           )}
         </>
       )}
-      <section className={styles.card} aria-label="Other sharing surfaces">
+      <Card as="section" className={styles.card} aria-label="Other sharing surfaces">
         <h2>Other sharing surfaces</h2>
         <p>
           These controls manage the four voluntary cards above. They do not hide game rosters, chat messages, guild
@@ -366,7 +369,7 @@ export function PrivacyCenter() {
             Live chat
           </Link>
         </div>
-      </section>
+      </Card>
     </section>
   );
 }

@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
@@ -145,7 +147,8 @@ export function GuildResourceRequests({ guildId }: { guildId: string }) {
   const edited = view?.requests.find((request) => request.id === editor?.draft.id);
   const canEditDraft = verified && (!editor?.revision || edited?.isRequester || view?.canEdit);
   return (
-    <section
+    <Card
+      as="section"
       aria-label="Guild resource requests"
       className="panel min-w-0 p-5 sm:p-6 [&_button]:max-w-full [&_button]:whitespace-normal [&_button:disabled]:opacity-50"
     >
@@ -157,18 +160,18 @@ export function GuildResourceRequests({ guildId }: { guildId: string }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button type="button" className="btn btn-secondary" disabled={loading || saving} onClick={refresh}>
+          <Button type="button" className="btn btn-secondary" disabled={loading || saving} onClick={refresh}>
             Refresh requests
-          </button>
+          </Button>
           {view && verified && (
-            <button
+            <Button
               type="button"
               className="btn btn-primary"
               disabled={loading || saving || Boolean(editor)}
               onClick={create}
             >
               New resource request
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -196,7 +199,7 @@ export function GuildResourceRequests({ guildId }: { guildId: string }) {
         <div hidden={!verified}>
           <div role="group" aria-label="Resource request status" className="mt-6 flex flex-wrap gap-3">
             {(['open', 'closed'] as const).map((value) => (
-              <button
+              <Button
                 type="button"
                 key={value}
                 aria-pressed={filter === value}
@@ -204,7 +207,7 @@ export function GuildResourceRequests({ guildId }: { guildId: string }) {
                 onClick={() => setFilter(value)}
               >
                 {value === 'open' ? 'Open requests' : 'Completed and cancelled'}
-              </button>
+              </Button>
             ))}
           </div>
           <p className="mt-4 text-xs text-sand-500">
@@ -215,22 +218,22 @@ export function GuildResourceRequests({ guildId }: { guildId: string }) {
             <div role="region" aria-label="Confirm resource change" className="mt-5 border-l-2 border-spice-400 p-4">
               <p className="break-words text-sm text-sand-200">{confirmation.message}</p>
               <div className="mt-3 flex flex-wrap gap-3">
-                <button
+                <Button
                   type="button"
                   className="btn btn-primary"
                   disabled={loading || saving}
                   onClick={() => mutate(confirmation.input)}
                 >
                   Confirm change
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   className="btn btn-secondary"
                   disabled={saving}
                   onClick={() => setConfirmation(null)}
                 >
                   Keep current request
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -256,6 +259,6 @@ export function GuildResourceRequests({ guildId }: { guildId: string }) {
           </ul>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

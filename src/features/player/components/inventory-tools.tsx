@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { ItemFinder } from './item-finder';
@@ -196,7 +198,7 @@ export function InventoryTools({ initialFind = '' }: { initialFind?: string }) {
   }
   return (
     <>
-      <section className="panel mb-6 min-w-0 p-6" aria-labelledby="pins-title">
+      <Card as="section" className="panel mb-6 min-w-0 p-6" aria-labelledby="pins-title">
         <h2 id="pins-title" className="text-base">
           Pinned item counters
         </h2>
@@ -205,19 +207,19 @@ export function InventoryTools({ initialFind = '' }: { initialFind?: string }) {
           Counts observe current authorized storage; they never reserve or move items.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <button type="button" className="btn btn-ghost" disabled={saving || busy} onClick={() => void loadPins()}>
+          <Button type="button" className="btn btn-ghost" disabled={saving || busy} onClick={() => void loadPins()}>
             Refresh pin settings
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="btn btn-primary"
             disabled={saving || busy || !record?.pins.length}
             onClick={() => void refreshCounts()}
           >
             Refresh counts
-          </button>
+          </Button>
           {busy && (
-            <button
+            <Button
               type="button"
               className="btn btn-ghost"
               onClick={() => {
@@ -229,7 +231,7 @@ export function InventoryTools({ initialFind = '' }: { initialFind?: string }) {
               }}
             >
               Cancel count refresh
-            </button>
+            </Button>
           )}
         </div>
         <p role="status" className="mt-4 break-words text-sm text-sand-400">
@@ -258,7 +260,7 @@ export function InventoryTools({ initialFind = '' }: { initialFind?: string }) {
                   {item.templateId}
                   {counter && !counter.complete ? ' · incomplete coverage' : ''}
                 </p>
-                <button
+                <Button
                   type="button"
                   className="btn btn-ghost mt-3"
                   disabled={saving || busy}
@@ -266,7 +268,7 @@ export function InventoryTools({ initialFind = '' }: { initialFind?: string }) {
                   onClick={() => void savePins(record.pins.filter((entry) => entry.templateId !== item.templateId))}
                 >
                   Unpin
-                </button>
+                </Button>
               </li>
             );
           })}
@@ -289,7 +291,7 @@ export function InventoryTools({ initialFind = '' }: { initialFind?: string }) {
             </ul>
           </details>
         )}
-      </section>
+      </Card>
       <ItemFinder onPin={pin} initialQuery={initialFind} />
     </>
   );

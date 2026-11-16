@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Field, FormMessage, inputClass } from '../../../components/ui/form-controls';
@@ -101,7 +103,8 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
   }
 
   return (
-    <section
+    <Card
+      as="section"
       aria-label="Guild noticeboard"
       className="panel min-w-0 p-5 sm:p-6 [&_button]:max-w-full [&_button]:whitespace-normal"
     >
@@ -110,9 +113,9 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
           <h2 className="text-lg">Guild noticeboard</h2>
           <p className="mt-2 text-sm text-sand-400">Announcements and priorities for current guild members.</p>
         </div>
-        <button type="button" onClick={refresh} disabled={loading || saving} className="btn btn-secondary">
+        <Button type="button" onClick={refresh} disabled={loading || saving} className="btn btn-secondary">
           Refresh noticeboard
-        </button>
+        </Button>
       </div>
       <div className="mt-4">
         <FormMessage error={error} status={status} />
@@ -140,22 +143,22 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
           </div>
           {view.canEdit && (
             <div className="mt-5 flex flex-wrap gap-3">
-              <button
+              <Button
                 type="button"
                 className="btn btn-secondary"
                 disabled={saving || loading}
                 onClick={() => setSettingsOpen(!settingsOpen)}
               >
                 Edit message and priorities
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 className="btn btn-primary"
                 disabled={saving || loading}
                 onClick={() => setDraft({ id: crypto.randomUUID(), title: '', body: '', pinned: false })}
               >
                 New announcement
-              </button>
+              </Button>
             </div>
           )}
           {view.canEdit && settingsOpen && (
@@ -178,9 +181,9 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
                   onChange={(event) => setPriorities(event.target.value)}
                 />
               </Field>
-              <button className="btn btn-primary justify-self-start" disabled={saving || loading}>
+              <Button className="btn btn-primary justify-self-start" disabled={saving || loading}>
                 {saving ? 'Saving…' : 'Save message and priorities'}
-              </button>
+              </Button>
             </form>
           )}
           {view.canEdit && draft && (
@@ -217,12 +220,12 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
                 Pin announcement
               </label>
               <div className="flex flex-wrap gap-3">
-                <button className="btn btn-primary" disabled={saving || loading}>
+                <Button className="btn btn-primary" disabled={saving || loading}>
                   {saving ? 'Saving…' : 'Save announcement'}
-                </button>
-                <button type="button" className="btn btn-secondary" disabled={saving} onClick={() => setDraft(null)}>
+                </Button>
+                <Button type="button" className="btn btn-secondary" disabled={saving} onClick={() => setDraft(null)}>
                   Cancel announcement
-                </button>
+                </Button>
               </div>
             </form>
           )}
@@ -243,7 +246,7 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
                 </p>
                 {view.canEdit && (
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <button
+                    <Button
                       type="button"
                       className="btn btn-secondary"
                       disabled={saving || loading}
@@ -251,28 +254,28 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
                       aria-label={`Edit ${post.title}`}
                     >
                       Edit announcement
-                    </button>
+                    </Button>
                     {deleting === post.id ? (
                       <>
-                        <button
+                        <Button
                           type="button"
                           className="btn btn-secondary"
                           disabled={saving || loading}
                           onClick={() => save({ action: 'delete-post', revision: view.board.revision, id: post.id })}
                         >
                           Confirm removal
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
                           className="btn btn-secondary"
                           disabled={saving}
                           onClick={() => setDeleting(null)}
                         >
                           Keep announcement
-                        </button>
+                        </Button>
                       </>
                     ) : (
-                      <button
+                      <Button
                         type="button"
                         className="btn btn-secondary"
                         disabled={saving || loading}
@@ -280,7 +283,7 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
                         aria-label={`Remove ${post.title}`}
                       >
                         Remove announcement
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}
@@ -289,6 +292,6 @@ export function GuildNoticeboard({ guildId }: { guildId: string }) {
           </ul>
         </>
       )}
-    </section>
+    </Card>
   );
 }

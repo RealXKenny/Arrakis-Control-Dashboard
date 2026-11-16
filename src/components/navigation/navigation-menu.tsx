@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../ui/button';
 
 import { NavigationLink as Link } from './navigation-link';
 import { type KeyboardEvent, type ReactNode, type SVGProps, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -21,6 +22,7 @@ import {
   VehicleIcon,
 } from '../icons';
 import { isNavigationActive, type NavigationIcon, type NavigationItem } from './nav-config';
+import { menuItemClass } from '../ui/control-styles';
 
 const ICONS: Record<NavigationIcon, (props: SVGProps<SVGSVGElement>) => ReactNode> = {
   assets: AssetsIcon,
@@ -91,11 +93,7 @@ export function NavigationMenuItems({
                 role="menuitem"
                 aria-current={active ? 'page' : undefined}
                 onClick={onNavigate}
-                className={`flex items-start gap-3.5 border-l-2 px-3.5 py-3 outline-none transition-all duration-150 focus-visible:border-spice-300 focus-visible:bg-spice-500/14 focus-visible:text-sand-50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-spice-400/60 ${
-                  active
-                    ? 'border-spice-400 bg-spice-500/12 text-spice-300'
-                    : 'border-transparent text-sand-200 hover:translate-x-0.5 hover:border-spice-500/40 hover:bg-spice-500/6 hover:text-sand-50'
-                }`}
+                className={menuItemClass({ active })}
               >
                 <NavigationGlyph icon={item.icon} className="mt-0.5 size-[18px] text-spice-400" />
                 <span className="min-w-0 flex-1">
@@ -265,7 +263,7 @@ export function NavigationDropdown({
 
   return (
     <div ref={root} className={`relative ${item.tabletOverflow ? 'hidden min-[1920px]:block' : ''}`}>
-      <button
+      <Button
         ref={button}
         type="button"
         aria-label={triggerLabel}
@@ -292,7 +290,7 @@ export function NavigationDropdown({
             <ChevronDownIcon className={`size-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
           </>
         )}
-      </button>
+      </Button>
       {(open || rendered) && (
         <div
           ref={menu}

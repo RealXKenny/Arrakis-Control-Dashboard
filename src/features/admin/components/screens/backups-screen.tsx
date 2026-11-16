@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState, type FormEvent } from 'react';
 import { adminCall, downloadAdmin, findOperation } from '../../client';
 import ConfirmDialog from '../confirm-dialog';
@@ -31,7 +33,7 @@ function GameBackups({ operations }: { operations: AdminOperation[] }) {
     list.refresh();
   });
   return (
-    <section className={ui.panel} aria-label="Game backups">
+    <Card as="section" className={ui.panel} aria-label="Game backups">
       <h3>Game backups</h3>
       <p className={ui.stateLine}>
         Game backups capture the world data. Restoring one replaces current game data, so create a fresh backup first.
@@ -43,7 +45,7 @@ function GameBackups({ operations }: { operations: AdminOperation[] }) {
         </p>
       )}
       <div className={ui.actions}>
-        <button
+        <Button
           type="button"
           onClick={() =>
             act(
@@ -61,10 +63,10 @@ function GameBackups({ operations }: { operations: AdminOperation[] }) {
           }
         >
           Create backup…
-        </button>
-        <button type="button" onClick={list.refresh} disabled={list.loading}>
+        </Button>
+        <Button type="button" onClick={list.refresh} disabled={list.loading}>
           Refresh
-        </button>
+        </Button>
       </div>
       <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
         <Table
@@ -76,7 +78,7 @@ function GameBackups({ operations }: { operations: AdminOperation[] }) {
             if (!backup) return null;
             return (
               <span className={ui.actions}>
-                <button
+                <Button
                   type="button"
                   onClick={() => {
                     const operation = findOperation(operations, 'get-backups-backup-download');
@@ -87,8 +89,8 @@ function GameBackups({ operations }: { operations: AdminOperation[] }) {
                   }}
                 >
                   Download
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   className={ui.danger}
                   onClick={() =>
@@ -111,8 +113,8 @@ function GameBackups({ operations }: { operations: AdminOperation[] }) {
                   }
                 >
                   Restore…
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   className={ui.danger}
                   onClick={() =>
@@ -130,14 +132,14 @@ function GameBackups({ operations }: { operations: AdminOperation[] }) {
                   }
                 >
                   Delete…
-                </button>
+                </Button>
               </span>
             );
           }}
         />
       </QueryState>
       <div className={ui.actions}>
-        <button
+        <Button
           type="button"
           className={ui.danger}
           onClick={() =>
@@ -156,10 +158,10 @@ function GameBackups({ operations }: { operations: AdminOperation[] }) {
           }
         >
           Delete all backups…
-        </button>
+        </Button>
       </div>
       {dialog}
-    </section>
+    </Card>
   );
 }
 
@@ -186,7 +188,7 @@ function SystemBackups({ operations }: { operations: AdminOperation[] }) {
     setAgain('');
   }
   return (
-    <section className={ui.panel} aria-label="System backups">
+    <Card as="section" className={ui.panel} aria-label="System backups">
       <h3>Encrypted system backups</h3>
       <p className={ui.stateLine}>
         System archives are encrypted with a passphrase you choose. The dashboard never stores the passphrase or shows
@@ -198,12 +200,12 @@ function SystemBackups({ operations }: { operations: AdminOperation[] }) {
         </p>
       )}
       <div className={ui.actions}>
-        <button type="button" onClick={() => setCreating(true)}>
+        <Button type="button" onClick={() => setCreating(true)}>
           Create encrypted backup…
-        </button>
-        <button type="button" onClick={list.refresh} disabled={list.loading}>
+        </Button>
+        <Button type="button" onClick={list.refresh} disabled={list.loading}>
           Refresh
-        </button>
+        </Button>
       </div>
       <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
         <Table
@@ -215,7 +217,7 @@ function SystemBackups({ operations }: { operations: AdminOperation[] }) {
             if (!name) return null;
             return (
               <span className={ui.actions}>
-                <button
+                <Button
                   type="button"
                   onClick={() => {
                     const operation = findOperation(operations, 'get-backups-system-name-download');
@@ -226,8 +228,8 @@ function SystemBackups({ operations }: { operations: AdminOperation[] }) {
                   }}
                 >
                   Download
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => {
                     setPassphrase('');
@@ -235,8 +237,8 @@ function SystemBackups({ operations }: { operations: AdminOperation[] }) {
                   }}
                 >
                   Preview restore…
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   className={ui.danger}
                   onClick={() =>
@@ -254,14 +256,14 @@ function SystemBackups({ operations }: { operations: AdminOperation[] }) {
                   }
                 >
                   Delete…
-                </button>
+                </Button>
               </span>
             );
           }}
         />
       </QueryState>
       {restore && (
-        <section className={ui.panel} aria-label="Restore preview">
+        <Card as="section" className={ui.panel} aria-label="Restore preview">
           <h3>Restore preview: {restore.name}</h3>
           <p className={ui.notice}>
             This is only a preview; nothing has changed. Review it, choose how identity and audit-log data are handled,
@@ -291,14 +293,14 @@ function SystemBackups({ operations }: { operations: AdminOperation[] }) {
             </label>
           </div>
           <div className={ui.actions}>
-            <button type="button" className={ui.danger} onClick={() => setApplying(true)}>
+            <Button type="button" className={ui.danger} onClick={() => setApplying(true)}>
               Apply restore…
-            </button>
-            <button type="button" onClick={() => setRestore(null)}>
+            </Button>
+            <Button type="button" onClick={() => setRestore(null)}>
               Discard preview
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
       )}
       {creating && (
         <ConfirmDialog
@@ -432,7 +434,7 @@ function SystemBackups({ operations }: { operations: AdminOperation[] }) {
         />
       )}
       {dialog}
-    </section>
+    </Card>
   );
 }
 
@@ -473,7 +475,7 @@ function Schedule({ operations }: { operations: AdminOperation[] }) {
     );
   }
   return (
-    <section className={ui.panel} aria-label="Automatic backup schedule">
+    <Card as="section" className={ui.panel} aria-label="Automatic backup schedule">
       <h3>Automatic schedule</h3>
       {notice && (
         <p role="status" className={ui.status}>
@@ -504,10 +506,10 @@ function Schedule({ operations }: { operations: AdminOperation[] }) {
             <input inputMode="numeric" value={retention} onChange={(event) => setRetention(event.target.value)} />
           </label>
         </div>
-        <button type="submit">Review schedule…</button>
+        <Button type="submit">Review schedule…</Button>
       </form>
       {dialog}
-    </section>
+    </Card>
   );
 }
 
@@ -518,14 +520,14 @@ export default function BackupsScreen({ operations }: { operations: AdminOperati
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Backup views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'game' ? null : id })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'game' && <GameBackups operations={operations} />}

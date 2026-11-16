@@ -1,3 +1,4 @@
+import { Card } from '../../../../components/ui/card';
 import type { Metadata } from 'next';
 import { PageHeader } from '../../../../components/ui/page-header';
 import { requireSession } from '../../../../features/auth/server/session';
@@ -16,7 +17,7 @@ export default async function CasinoFairnessPage({ searchParams }: { searchParam
         <p className="max-w-md text-sm leading-relaxed text-sand-400">Nothing here asks you to trust us. Check it.</p>
       </PageHeader>
 
-      <section aria-labelledby="how" className="panel mb-8 p-6 text-sm leading-relaxed text-sand-300">
+      <Card as="section" aria-labelledby="how" className="panel mb-8 p-6 text-sm leading-relaxed text-sand-300">
         <h2 id="how" className="eyebrow">
           How it works
         </h2>
@@ -40,7 +41,7 @@ export default async function CasinoFairnessPage({ searchParams }: { searchParam
             while a round is open, so a live round&apos;s seed is never revealed.
           </li>
         </ol>
-      </section>
+      </Card>
 
       <FairnessPanel initial={fairness} initialRound={query.round ?? ''} />
     </>

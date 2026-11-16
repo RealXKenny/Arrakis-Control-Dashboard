@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState, type FormEvent } from 'react';
 import { formatTimestamp } from '../../../../lib/time';
 import Link from 'next/link';
@@ -43,7 +45,7 @@ function Read({
 }) {
   const result = useAdminQuery(findOperation(operations, id));
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <QueryState loading={result.loading} error={result.error} onRetry={result.refresh}>
         {kind === 'table' ? (
@@ -52,7 +54,7 @@ function Read({
           <Facts value={result.data} />
         )}
       </QueryState>
-    </section>
+    </Card>
   );
 }
 
@@ -65,7 +67,7 @@ function Listings({ operations }: { operations: AdminOperation[] }) {
     query: { page, pageSize: PAGE_SIZE, ...(search ? { q: search } : {}) },
   });
   return (
-    <section className={ui.panel} aria-label="Market items">
+    <Card as="section" className={ui.panel} aria-label="Market items">
       <h3>Items on the market</h3>
       <form
         className={ui.toolbar}
@@ -80,29 +82,29 @@ function Listings({ operations }: { operations: AdminOperation[] }) {
           Search items
           <input type="search" value={draft ?? search} onChange={(event) => setDraft(event.target.value)} />
         </label>
-        <button type="submit">Search</button>
+        <Button type="submit">Search</Button>
       </form>
       <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
         <Table value={list.data} caption="Market items" empty="No items match this search." />
         <nav className={ui.pager} aria-label="Market item pages">
-          <button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
+          <Button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
             Previous page
-          </button>
+          </Button>
           <span>Page {page + 1}</span>
-          <button
+          <Button
             type="button"
             disabled={!hasMore(list.data, page, PAGE_SIZE)}
             onClick={() => url.update({ page: page + 1 })}
           >
             Next page
-          </button>
+          </Button>
         </nav>
       </QueryState>
       <p className={ui.stateLine}>
         Individual sell orders for one item:{' '}
         <Link href={adminHref('market', 'get-exchange-listings')}>open the order lookup</Link>.
       </p>
-    </section>
+    </Card>
   );
 }
 
@@ -115,7 +117,7 @@ function Transactions({ operations }: { operations: AdminOperation[] }) {
     query: { page, pageSize: PAGE_SIZE, hours: Number(hours), party },
   });
   return (
-    <section className={ui.panel} aria-label="Market transactions">
+    <Card as="section" className={ui.panel} aria-label="Market transactions">
       <h3>Transactions</h3>
       <div className={ui.toolbar}>
         <label className={ui.field}>
@@ -137,27 +139,27 @@ function Transactions({ operations }: { operations: AdminOperation[] }) {
             <option value="npc">NPC broker</option>
           </select>
         </label>
-        <button type="button" onClick={list.refresh} disabled={list.loading}>
+        <Button type="button" onClick={list.refresh} disabled={list.loading}>
           Refresh
-        </button>
+        </Button>
       </div>
       <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
         <Table value={list.data} caption="Market transactions" empty="No transactions in this range." />
         <nav className={ui.pager} aria-label="Transaction pages">
-          <button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
+          <Button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
             Previous page
-          </button>
+          </Button>
           <span>Page {page + 1}</span>
-          <button
+          <Button
             type="button"
             disabled={!hasMore(list.data, page, PAGE_SIZE)}
             onClick={() => url.update({ page: page + 1 })}
           >
             Next page
-          </button>
+          </Button>
         </nav>
       </QueryState>
-    </section>
+    </Card>
   );
 }
 
@@ -194,21 +196,21 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Market automation state">
+      <Card as="section" className={ui.panel} aria-label="Market automation state">
         <h3>Current automation</h3>
         <QueryState loading={market.loading} error={market.error} onRetry={market.refresh}>
           <Facts value={market.data} />
         </QueryState>
-      </section>
-      <section className={ui.panel} aria-label="Buyback probe">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Buyback probe">
         <h3>Probe a buyback</h3>
         <p className={ui.stateLine}>
           A probe previews what a buyback sweep would do with the saved settings. It changes nothing and is not a run.
         </p>
         <div className={ui.actions}>
-          <button type="button" onClick={() => void runProbe()} disabled={probing}>
+          <Button type="button" onClick={() => void runProbe()} disabled={probing}>
             {probing ? 'Probing…' : 'Run probe'}
-          </button>
+          </Button>
         </div>
         {failure && (
           <p role="alert" className={ui.error}>
@@ -223,14 +225,14 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             <Facts value={probe.data} />
           </>
         )}
-      </section>
-      <section className={ui.panel} aria-label="Manual runs">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Manual runs">
         <h3>Run now</h3>
         <p className={ui.stateLine}>
           These run immediately outside the schedule. The Console may queue a run; a queued run has not completed.
         </p>
         <div className={ui.actions}>
-          <button
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -250,8 +252,8 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Run buyback…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -269,8 +271,8 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Run seeding…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={ui.danger}
             onClick={() =>
@@ -292,16 +294,16 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Clear seeded listings…
-          </button>
+          </Button>
         </div>
-      </section>
-      <section className={ui.panel} aria-label="Buyback log">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Buyback log">
         <h3>Sweep log</h3>
         <QueryState loading={log.loading} error={log.error} onRetry={log.refresh}>
           <Table value={log.data} caption="Buyback sweep log" empty="The sweep log is empty." />
         </QueryState>
         <div className={ui.actions}>
-          <button
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -318,16 +320,16 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Clear log…
-          </button>
+          </Button>
         </div>
-      </section>
-      <section className={ui.panel} aria-label="Safety backups">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Safety backups">
         <h3>Safety backups</h3>
         <p className={ui.stateLine}>
           Before market bot changes the Console can take a safety backup. Turning it off needs the Console’s phrase.
         </p>
         <div className={ui.actions}>
-          <button
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -345,8 +347,8 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Turn on…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={ui.danger}
             onClick={() =>
@@ -368,9 +370,9 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Turn off…
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
       <p className={ui.stateLine}>
         Buyback and seeding schedules, prices and item overrides have many linked fields:{' '}
         <Link href={adminHref('market', 'post-exchange-market-buyback-schedule')}>buyback schedule</Link>
@@ -421,7 +423,7 @@ function Plans({ operations }: { operations: AdminOperation[] }) {
     );
   }
   return (
-    <section className={ui.panel} aria-label="Seed plans">
+    <Card as="section" className={ui.panel} aria-label="Seed plans">
       <h3>Seed plans</h3>
       {notice && (
         <p role="status" className={ui.status}>
@@ -439,11 +441,11 @@ function Plans({ operations }: { operations: AdminOperation[] }) {
           <input value={name} maxLength={80} onChange={(event) => setName(event.target.value)} />
         </label>
         <div className={ui.actions}>
-          <button type="submit">Activate…</button>
-          <button type="button" onClick={rename}>
+          <Button type="submit">Activate…</Button>
+          <Button type="button" onClick={rename}>
             Rename…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => {
               const operation = findOperation(operations, 'get-exchange-market-plans-csv');
@@ -454,7 +456,7 @@ function Plans({ operations }: { operations: AdminOperation[] }) {
             }}
           >
             Export CSV
-          </button>
+          </Button>
         </div>
       </form>
       <p className={ui.stateLine}>
@@ -462,7 +464,7 @@ function Plans({ operations }: { operations: AdminOperation[] }) {
         <Link href={adminHref('market', 'post-exchange-market-plans-csv')}>import a plan</Link>.
       </p>
       {dialog}
-    </section>
+    </Card>
   );
 }
 
@@ -505,7 +507,7 @@ function Sellers({ operations }: { operations: AdminOperation[] }) {
     );
   }
   return (
-    <section className={ui.panel} aria-label="Seller configuration">
+    <Card as="section" className={ui.panel} aria-label="Seller configuration">
       <h3>Sellers and blacklist</h3>
       {notice && (
         <p role="status" className={ui.status}>
@@ -533,10 +535,10 @@ function Sellers({ operations }: { operations: AdminOperation[] }) {
           Blacklisted owner IDs
           <textarea rows={3} value={blocked} onChange={(event) => setBlocked(event.target.value)} />
         </label>
-        <button type="submit">Review…</button>
+        <Button type="submit">Review…</Button>
       </form>
       {dialog}
-    </section>
+    </Card>
   );
 }
 
@@ -547,14 +549,14 @@ export default function MarketScreen({ operations }: { operations: AdminOperatio
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Market views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'overview' ? null : id, q: null, page: null })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'overview' && <Read operations={operations} id="get-exchange-stats" title="Market statistics" />}

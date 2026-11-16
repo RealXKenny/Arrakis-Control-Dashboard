@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { guildRequest } from '../client-api';
@@ -119,9 +120,9 @@ export function ApplicationPanel({
       )}
       <FormMessage error={error} />
       {!loaded && error && (
-        <button type="button" className="btn btn-ghost self-start" onClick={() => setReload((value) => value + 1)}>
+        <Button type="button" className="btn btn-ghost self-start" onClick={() => setReload((value) => value + 1)}>
           Retry
-        </button>
+        </Button>
       )}
       {!loading && application && (
         <div className="flex flex-col gap-4">
@@ -161,9 +162,9 @@ export function ApplicationPanel({
               onChange={(value) => setAnswers((current) => ({ ...current, [question.id]: value }))}
             />
           ))}
-          <button type="submit" disabled={saving} className="btn btn-primary self-start disabled:opacity-50">
+          <Button type="submit" disabled={saving} className="btn btn-primary self-start disabled:opacity-50">
             {saving ? 'Submitting…' : 'Submit application'}
-          </button>
+          </Button>
         </form>
       )}
     </section>

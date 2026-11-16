@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import Link from 'next/link';
 import type { AdminOperation } from '../types';
 import { adminHref, tabForOperation } from '../navigation';
@@ -14,7 +15,7 @@ export default function ConsoleOnly({
   const restricted = operations.filter((entry) => entry.restriction);
   const groups = [...new Set(restricted.map((entry) => entry.group))];
   return (
-    <section className={ui.panel} aria-label="Console-only administration">
+    <Card as="section" className={ui.panel} aria-label="Console-only administration">
       <p className={ui.eyebrow}>CONSOLE-ONLY</p>
       <h2>Managed in the Console</h2>
       <p>
@@ -61,6 +62,6 @@ export default function ConsoleOnly({
           </tbody>
         </table>
       </div>
-    </section>
+    </Card>
   );
 }

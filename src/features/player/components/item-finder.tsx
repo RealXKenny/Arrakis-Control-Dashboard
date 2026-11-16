@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -72,7 +74,7 @@ export function ItemFinder({
   }
 
   return (
-    <section className="panel mb-6 min-w-0 p-6" aria-labelledby="finder-title">
+    <Card as="section" className="panel mb-6 min-w-0 p-6" aria-labelledby="finder-title">
       <h2 id="finder-title" className="text-base">
         Universal item finder
       </h2>
@@ -103,11 +105,11 @@ export function ItemFinder({
           placeholder="Item name or template"
           className="h-11 min-w-0 flex-1 basis-40 border border-sand-200/20 bg-obsidian-900 px-3 text-sm"
         />
-        <button className="btn btn-primary" disabled={loading || !query.trim()} type="submit">
+        <Button className="btn btn-primary" disabled={loading || !query.trim()} type="submit">
           Find items
-        </button>
+        </Button>
         {loading && (
-          <button
+          <Button
             className="btn"
             type="button"
             onClick={() => {
@@ -118,7 +120,7 @@ export function ItemFinder({
             }}
           >
             Cancel search
-          </button>
+          </Button>
         )}
       </form>
       <div role="status" className="mt-4 text-sm text-sand-400">
@@ -150,14 +152,14 @@ export function ItemFinder({
                 {item.augments.length > 0 && <p className="mt-1 text-xs">Augments: {item.augments.join(', ')}</p>}
                 <p className="mt-3 text-xs text-sand-300">{item.location}</p>
                 {onPin && item.templateId && (
-                  <button
+                  <Button
                     type="button"
                     className="btn btn-ghost mt-3"
                     aria-label={`Pin ${item.name}`}
                     onClick={() => onPin({ templateId: item.templateId, name: item.name })}
                   >
                     Pin counter
-                  </button>
+                  </Button>
                 )}
                 <Link className="mt-3 inline-block text-sm text-spice-400 underline" href={item.href}>
                   Open source workspace
@@ -196,6 +198,6 @@ export function ItemFinder({
           </details>
         </>
       )}
-    </section>
+    </Card>
   );
 }

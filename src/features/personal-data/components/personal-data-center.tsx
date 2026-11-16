@@ -1,5 +1,10 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
+
+import { buttonClass, cardClass } from '../../../components/ui/control-styles';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { downloadBlob } from '../../../lib/ui/download';
 import {
   dataExportSchema,
   dataScopeLabels,
@@ -97,14 +102,7 @@ export function PersonalDataCenter() {
       } else if (action === 'export') {
         const exported = dataExportSchema.parse(raw);
         const blob = new Blob([JSON.stringify(exported)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'arrakis-personal-data.json';
-        document.body.append(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        downloadBlob(blob, 'arrakis-personal-data.json');
         setMessage(
           'Export file prepared. Your browser controls where it is saved. Keep this private JSON file secure.',
         );
@@ -168,16 +166,16 @@ export function PersonalDataCenter() {
         account. No linked game character or guild is required.
       </p>
       <div className={styles.actions}>
-        <button className="btn btn-secondary" disabled={busy} onClick={() => void run('summary')}>
+        <Button className={buttonClass()} disabled={busy} onClick={() => void run('summary')}>
           Reload data summary
-        </button>
-        <button
-          className="btn btn-primary"
+        </Button>
+        <Button
+          className={buttonClass({ variant: 'primary' })}
           disabled={busy || blocked || !summary || !selected.length || Boolean(review)}
           onClick={() => void run('export')}
         >
           Export selected data
-        </button>
+        </Button>
       </div>
       <p className={styles.note}>
         Exports contain private text and may include chosen locations or contact details. Save the JSON securely.
@@ -198,7 +196,11 @@ export function PersonalDataCenter() {
           </p>
           <div className={styles.grid}>
             {summary.scopes.map((scope) => (
-              <article key={scope.scope} className={styles.card} aria-label={dataScopeLabels[scope.scope]}>
+              <Card
+                key={scope.scope}
+                className={cardClass({ className: styles.card })}
+                aria-label={dataScopeLabels[scope.scope]}
+              >
                 <h2>{dataScopeLabels[scope.scope]}</h2>
                 <p>
                   {scope.scope === 'tasks'
@@ -220,8 +222,8 @@ export function PersonalDataCenter() {
                   />
                   Include {dataScopeLabels[scope.scope].toLowerCase()} in export
                 </label>
-                <button
-                  className="btn btn-secondary"
+                <Button
+                  className={buttonClass()}
                   disabled={busy || blocked || Boolean(review)}
                   onClick={(event) => {
                     reviewButton.current = event.currentTarget;
@@ -230,14 +232,14 @@ export function PersonalDataCenter() {
                   }}
                 >
                   Review deletion of {dataScopeLabels[scope.scope].toLowerCase()}
-                </button>
-              </article>
+                </Button>
+              </Card>
             ))}
           </div>
         </>
       )}
       {review && (
-        <section className={styles.review} aria-label="Review personal data deletion">
+        <section className={cardClass({ className: styles.review })} aria-label="Review personal data deletion">
           <h2 ref={heading} tabIndex={-1}>
             Erase {dataScopeLabels[review.scope].toLowerCase()}?
           </h2>
@@ -270,16 +272,16 @@ export function PersonalDataCenter() {
               />
             </label>
             <div className={styles.actions}>
-              <button
+              <Button
                 type="submit"
-                className="btn btn-primary"
+                className={buttonClass({ variant: 'primary' })}
                 disabled={busy || blocked || phrase !== 'DELETE MY DATA'}
               >
                 Permanently erase this scope
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="btn btn-secondary"
+                className={buttonClass()}
                 disabled={busy}
                 onClick={() => {
                   setReview(null);
@@ -287,12 +289,12 @@ export function PersonalDataCenter() {
                 }}
               >
                 Keep my data
-              </button>
+              </Button>
             </div>
           </form>
         </section>
       )}
-      <section className={styles.card} aria-label="Data retention boundaries">
+      <Card as="section" className={cardClass({ className: styles.card })} aria-label="Data retention boundaries">
         <h2>What these controls cover</h2>
         <p>
           Notes and plans are your private task-list records. Sharing snapshots are the dashboard cards you chose to
@@ -311,7 +313,7 @@ export function PersonalDataCenter() {
           inactivity retention. Previously opened tabs or downloaded exports can contain copies, but old revisions
           cannot restore erased content through a stale save during the revision fence&apos;s lifetime.
         </p>
-      </section>
+      </Card>
     </section>
   );
 }

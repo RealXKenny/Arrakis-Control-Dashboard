@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 import Link from 'next/link';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -41,7 +43,7 @@ export function WagerField({
       />
       <div className="flex flex-wrap gap-2" role="group" aria-label="Quick wager amounts">
         {quick.map((amount) => (
-          <button
+          <Button
             key={amount}
             type="button"
             disabled={disabled}
@@ -49,7 +51,7 @@ export function WagerField({
             className="btn btn-ghost !min-h-9 !px-3 !text-[0.6875rem] disabled:opacity-50"
           >
             {formatCredits(amount)}
-          </button>
+          </Button>
         ))}
       </div>
       <p id="casino-wager-hint" className="text-xs text-sand-500">
@@ -139,9 +141,9 @@ export function PlayReminder() {
           <Link href="/casino/wallet#limits" className="underline">
             Pause play
           </Link>{' '}
-          <button type="button" onClick={() => setDue(false)} className="ml-2 underline">
+          <Button type="button" onClick={() => setDue(false)} className="ml-2 underline">
             Dismiss
-          </button>
+          </Button>
         </p>
       )}
     </div>
@@ -169,13 +171,13 @@ export function GameFrame({
           </h2>
           <p className="mt-1 max-w-prose text-sm text-sand-400">{game.tagline}</p>
         </div>
-        <div className="panel px-4 py-3 text-right" aria-live="polite">
+        <Card as="div" className="panel px-4 py-3 text-right" aria-live="polite">
           <p className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">Casino wallet · Solaris</p>
           <p className="text-xl font-bold text-sand-50">{wallet ? formatCredits(wallet.solaris.available) : '...'}</p>
           {wallet && wallet.solaris.reserved !== '0' && (
             <p className="text-xs text-sand-500">{formatCredits(wallet.solaris.reserved)} in play</p>
           )}
-        </div>
+        </Card>
       </header>
       <p className="text-xs text-sand-300">{STAKES_NOTICE}</p>
       {paused && (

@@ -1,5 +1,7 @@
 # Repository inventory
 
+Shared primitives in `src/components/ui/button.tsx`, `card.tsx` and `control-styles.ts` own native buttons, semantic cards and menu/control styles across features. `src/lib/ui/` owns browser-safe focus, reference-counted scroll locks and Blob downloads. Features retain content and security ownership. Architecture tests prevent new raw buttons/articles outside the primitives. See [shared UI helpers](../development/shared-ui.md).
+
 Appearance adds `src/features/appearance/` for the 66-choice catalog, custom color schemas, shared contrast/token helpers, browser storage, nonce bootstrap and lazy native-dialog picker. Root layout composes its controller; navigation consumes callbacks. Tailwind utilities and feature CSS share color properties with Console-style defaults. Unit/browser tests cover palettes, custom light roles, cache/storage and accessibility. No API routes, Redis records, dependencies or migrations are added.
 
 N100 adds `src/features/activity-views/` for named, bounded saved dashboard configurations and single-key Redis CAS. Thin entries are `/activity-views` and `/api/v2/activity-views`; portal/inbox/task pages resolve session-owned UUID selections, with capture controls and a shared activity banner. N099 adds a separate `views` export/erasure scope. Unit/API/browser and real Redis suites cover persistence, restoration, isolation, planning references, limits and erasure. No dependencies or database migrations are added.

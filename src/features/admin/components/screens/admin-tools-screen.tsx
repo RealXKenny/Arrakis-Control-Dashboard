@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { QueryState, ReadPanel, Table } from '../data-panel';
@@ -76,7 +78,7 @@ function Communications({ operations }: { operations: AdminOperation[] }) {
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Server broadcast">
+      <Card as="section" className={ui.panel} aria-label="Server broadcast">
         <h3>Server broadcast</h3>
         <p className={ui.stateLine}>
           These are Console messages shown in the game. Private guild support chats are separate and live under Players
@@ -95,10 +97,10 @@ function Communications({ operations }: { operations: AdminOperation[] }) {
             Show for (seconds)
             <input inputMode="numeric" value={duration} onChange={(event) => setDuration(event.target.value)} />
           </label>
-          <button type="submit">Review…</button>
+          <Button type="submit">Review…</Button>
         </form>
-      </section>
-      <section className={ui.panel} aria-label="Map chat">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Map chat">
         <h3>Map chat</h3>
         <form onSubmit={mapChat}>
           <div className={ui.facts}>
@@ -115,9 +117,9 @@ function Communications({ operations }: { operations: AdminOperation[] }) {
             Message
             <textarea rows={2} maxLength={300} value={chat} onChange={(event) => setChat(event.target.value)} />
           </label>
-          <button type="submit">Review…</button>
+          <Button type="submit">Review…</Button>
         </form>
-      </section>
+      </Card>
       <p className={ui.stateLine}>
         Shutdown notices need their own type and confirmation:{' '}
         <Link href={adminHref('tools', 'post-admin-broadcast-shutdown')}>send a shutdown notice</Link>.
@@ -147,7 +149,7 @@ function Catalog({
     query: { ...(search ? { q: search } : {}), ...(limited ? { limit: 50 } : {}) },
   });
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <form
         className={ui.toolbar}
@@ -162,12 +164,12 @@ function Catalog({
           {searchLabel}
           <input type="search" value={draft ?? search} onChange={(event) => setDraft(event.target.value)} />
         </label>
-        <button type="submit">Search</button>
+        <Button type="submit">Search</Button>
       </form>
       <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
         <Table value={list.data} caption={title} empty="Nothing matches this search." />
       </QueryState>
-    </section>
+    </Card>
   );
 }
 
@@ -182,14 +184,14 @@ function Catalogs({ operations }: { operations: AdminOperation[] }) {
           ['vehicles', 'Vehicles'],
           ['skills', 'Skill modules'],
         ].map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === kind}
             onClick={() => url.update({ catalog: id === 'items' ? null : id, q: null })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       <p className={ui.stateLine}>Use these to look up exact names and IDs before granting or editing.</p>
@@ -260,7 +262,7 @@ function Landsraad({ operations }: { operations: AdminOperation[] }) {
         empty="The Console reported no Landsraad tasks."
       />
       <ReadPanel operations={operations} id="get-admin-landsraad-milestone-preset" title="Milestone preset" />
-      <section className={ui.panel} aria-label="Task goal">
+      <Card as="section" className={ui.panel} aria-label="Task goal">
         <h3>Change a task goal</h3>
         <form onSubmit={submit}>
           <div className={ui.facts}>
@@ -273,7 +275,7 @@ function Landsraad({ operations }: { operations: AdminOperation[] }) {
               <input inputMode="numeric" value={goal} onChange={(event) => setGoal(event.target.value)} />
             </label>
           </div>
-          <button type="submit">Review…</button>
+          <Button type="submit">Review…</Button>
         </form>
         <p className={ui.stateLine}>
           Milestone thresholds, whole-term goals, reward tiers and player contributions have more linked fields:{' '}
@@ -285,7 +287,7 @@ function Landsraad({ operations }: { operations: AdminOperation[] }) {
           {' · '}
           <Link href={adminHref('tools', 'post-admin-landsraad-player-contribution')}>player contribution</Link>.
         </p>
-      </section>
+      </Card>
       {dialog}
     </>
   );
@@ -308,10 +310,10 @@ function Messages({ operations }: { operations: AdminOperation[] }) {
         </p>
       )}
       {SETTINGS.map(([read, write, label]) => (
-        <section key={read} className={ui.panel} aria-label={label}>
+        <Card as="section" key={read} className={ui.panel} aria-label={label}>
           <ReadPanel operations={operations} id={read} title={label} />
           <div className={ui.actions}>
-            <button
+            <Button
               type="button"
               className={ui.danger}
               onClick={() =>
@@ -332,10 +334,10 @@ function Messages({ operations }: { operations: AdminOperation[] }) {
               }
             >
               Restore defaults…
-            </button>
+            </Button>
             <Link href={adminHref('tools', write)}>Edit settings</Link>
           </div>
-        </section>
+        </Card>
       ))}
       {dialog}
     </>
@@ -363,7 +365,7 @@ function History({ operations }: { operations: AdminOperation[] }) {
         This is only what the Console chooses to record. It is not a full audit of everything administrators did.
       </p>
       <div className={ui.actions}>
-        <button
+        <Button
           type="button"
           className={ui.danger}
           onClick={() =>
@@ -382,7 +384,7 @@ function History({ operations }: { operations: AdminOperation[] }) {
           }
         >
           Clear tool history…
-        </button>
+        </Button>
       </div>
       {dialog}
     </>
@@ -396,14 +398,14 @@ export default function AdminToolsScreen({ operations }: { operations: AdminOper
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Administrator tool views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'communications' ? null : id, q: null, catalog: null })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'communications' && <Communications operations={operations} />}

@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
+import { buttonClass } from './control-styles';
 
 /** Shared V2 form styling: sharp corners, sand text on obsidian, Spice focus. */
 export const inputClass =
   'w-full border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 text-sm text-sand-50 placeholder:text-sand-600 focus:border-spice-400 disabled:opacity-50';
 
-export const dangerButton = 'btn border border-status-danger bg-status-danger/15 text-sand-50 disabled:opacity-50';
+export const dangerButton = buttonClass({ variant: 'danger' });
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (

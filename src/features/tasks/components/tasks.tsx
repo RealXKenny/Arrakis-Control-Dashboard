@@ -1,4 +1,7 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
+
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -174,7 +177,7 @@ export function Tasks({
         open the current authorized workspace; saved references do not grant access.
       </p>
       <div className={styles.actions}>
-        <button
+        <Button
           className="btn btn-primary"
           disabled={busy || !record || editing}
           onClick={() => {
@@ -184,10 +187,10 @@ export function Tasks({
           }}
         >
           New entry
-        </button>
-        <button className="btn btn-secondary" disabled={busy} onClick={() => void request(undefined, true)}>
+        </Button>
+        <Button className="btn btn-secondary" disabled={busy} onClick={() => void request(undefined, true)}>
           Reload saved list
-        </button>
+        </Button>
       </div>
       <p role="status" className={styles.note}>
         {busy ? 'Saving or loading your tasks…' : message}
@@ -367,12 +370,12 @@ export function Tasks({
                     links prepare a finder search; you choose when to run it.
                   </p>
                   <div className={styles.actions}>
-                    <button type="submit" className="btn btn-primary">
+                    <Button type="submit" className="btn btn-primary">
                       Save entry
-                    </button>
-                    <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)}>
+                    </Button>
+                    <Button type="button" className="btn btn-secondary" onClick={() => setEditing(false)}>
                       Cancel editing
-                    </button>
+                    </Button>
                   </div>
                 </fieldset>
               </form>
@@ -413,7 +416,7 @@ export function Tasks({
               const targetRef = 'ref' in task.target ? task.target.ref : null;
               const parent = record.tasks.find((t) => t.id === targetRef);
               return (
-                <article
+                <Card
                   id={`task-${task.id}`}
                   key={task.id}
                   className={styles.card}
@@ -432,7 +435,7 @@ export function Tasks({
                     </Link>
                   )}
                   <div className={styles.actions}>
-                    <button
+                    <Button
                       className="btn btn-secondary"
                       disabled={busy}
                       onClick={() =>
@@ -445,34 +448,34 @@ export function Tasks({
                       }
                     >
                       {task.status === 'open' ? 'Mark complete' : 'Reopen entry'}
-                    </button>
-                    <button className="btn btn-secondary" disabled={busy || editing} onClick={() => edit(task)}>
+                    </Button>
+                    <Button className="btn btn-secondary" disabled={busy || editing} onClick={() => edit(task)}>
                       Edit entry
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       className="btn btn-secondary"
                       disabled={busy || editing}
                       onClick={() => setDeleting(task.id)}
                     >
                       Delete entry
-                    </button>
+                    </Button>
                   </div>
                   {deleting === task.id && (
                     <div className={styles.confirm} role="group" aria-label="Confirm entry deletion">
                       <p>Delete this private entry? This cannot be undone.</p>
-                      <button
+                      <Button
                         className="btn btn-secondary"
                         disabled={busy}
                         onClick={() => void request({ action: 'delete', revision: record.revision!, id: task.id })}
                       >
                         Confirm delete
-                      </button>
-                      <button className="btn btn-secondary" disabled={busy} onClick={() => setDeleting(null)}>
+                      </Button>
+                      <Button className="btn btn-secondary" disabled={busy} onClick={() => setDeleting(null)}>
                         Keep entry
-                      </button>
+                      </Button>
                     </div>
                   )}
-                </article>
+                </Card>
               );
             })}
           </div>

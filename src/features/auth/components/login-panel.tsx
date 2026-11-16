@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 import { useActionState, useState } from 'react';
 import { credentialsSignInAction, discordSignInAction, type LoginState } from '../actions';
@@ -11,10 +13,10 @@ function DiscordButton({ next, label }: { next: string; label: string }) {
   return (
     <form action={discordSignInAction}>
       <input type="hidden" name="next" value={next} />
-      <button type="submit" className="btn btn-primary w-full">
+      <Button type="submit" className="btn btn-primary w-full">
         <DiscordIcon className="size-5" />
         {label}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -31,9 +33,9 @@ function CredentialsForm({ next }: { next: string }) {
           {state.error}
         </p>
       )}
-      <button type="submit" disabled={pending} className="btn btn-ghost w-full disabled:opacity-60">
+      <Button type="submit" disabled={pending} className="btn btn-ghost w-full disabled:opacity-60">
         {pending ? 'Signing in…' : 'Sign in with email'}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -46,12 +48,12 @@ export function LoginPanel({ next, initialTab, notice }: { next: string; initial
     }`;
 
   return (
-    <section aria-labelledby="auth-title" className="panel flex flex-col gap-6 p-6 sm:p-8 lg:col-span-3">
+    <Card as="section" aria-labelledby="auth-title" className="panel flex flex-col gap-6 p-6 sm:p-8 lg:col-span-3">
       <h2 id="auth-title" className="sr-only">
         Account access
       </h2>
       <div role="tablist" aria-label="Account access" className="flex border-b border-sand-200/10">
-        <button
+        <Button
           type="button"
           role="tab"
           id="tab-login"
@@ -61,8 +63,8 @@ export function LoginPanel({ next, initialTab, notice }: { next: string; initial
           onClick={() => setTab('login')}
         >
           Sign in
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           role="tab"
           id="tab-register"
@@ -72,7 +74,7 @@ export function LoginPanel({ next, initialTab, notice }: { next: string; initial
           onClick={() => setTab('register')}
         >
           Sign up
-        </button>
+        </Button>
       </div>
 
       {notice && (
@@ -110,6 +112,6 @@ export function LoginPanel({ next, initialTab, notice }: { next: string; initial
           </ol>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

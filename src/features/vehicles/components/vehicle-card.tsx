@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
 import { taskDraftHref } from '../../tasks/model';
@@ -24,7 +25,7 @@ function fuelText(fuel: NonNullable<Vehicle['fuel']>): string {
 export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
   const owned = vehicle.access === 'owned';
   return (
-    <article
+    <Card
       id={`vehicle-${vehicle.id}`}
       className={`panel flex flex-col gap-5 p-5 ${owned ? 'border-spice-500/30' : ''}`}
     >
@@ -89,6 +90,6 @@ export function VehicleCard({ vehicle }: { vehicle: Vehicle }) {
           Plan a task for {vehicle.name}
         </Link>
       )}
-    </article>
+    </Card>
   );
 }

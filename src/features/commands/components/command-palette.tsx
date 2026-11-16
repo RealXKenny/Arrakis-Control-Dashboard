@@ -1,6 +1,10 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { containTabFocus, restoreFocus } from '../../../lib/ui/focus';
+import { lockPageScroll } from '../../../lib/ui/scroll-lock';
 import { navigationFor, navigationItemFor } from '../../../components/navigation/nav-config';
 import { NavigationLink } from '../../../components/navigation/navigation-link';
 import { assetLookupSchema, navigationCommands, type AssetLookup } from '../model';
@@ -64,8 +68,7 @@ export function CommandPalette({
   useEffect(() => {
     const element = dialog.current;
     const opener = returnFocus;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlockScroll = lockPageScroll(document.body);
     element?.showModal();
     input.current?.focus();
     const hide = () => {
@@ -76,8 +79,8 @@ export function CommandPalette({
       request.current?.abort();
       element?.close();
       document.removeEventListener('visibilitychange', hide);
-      document.body.style.overflow = overflow;
-      if (opener?.isConnected) opener.focus();
+      unlockScroll();
+      restoreFocus(opener);
     };
   }, [onClose, returnFocus]);
   useEffect(() => {
@@ -148,19 +151,7 @@ export function CommandPalette({
           onClose();
           return;
         }
-        if (event.key !== 'Tab') return;
-        const controls = Array.from(
-          dialog.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]') ?? [],
-        ).filter((el) => el.getClientRects().length > 0);
-        const first = controls[0];
-        const last = controls.at(-1);
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
+        containTabFocus(event, dialog.current);
       }}
       onCancel={(e) => {
         e.preventDefault();
@@ -178,9 +169,9 @@ export function CommandPalette({
           <p className={styles.eyebrow}>Arrakis Control</p>
           <h2 id="command-title">Command palette</h2>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close command palette">
+        <Button type="button" onClick={onClose} aria-label="Close command palette">
           Esc ×
-        </button>
+        </Button>
       </div>
       <p id="command-help">
         Ctrl/Command + K opens commands outside editors. Use ↑/↓ to select, Enter to open and Escape to close. No game
@@ -188,7 +179,7 @@ export function CommandPalette({
       </p>
       <div role="group" aria-label="Command mode" className={styles.modes}>
         {(['navigation', 'assets'] as const).map((value) => (
-          <button
+          <Button
             key={value}
             type="button"
             aria-pressed={mode === value}
@@ -199,7 +190,7 @@ export function CommandPalette({
             }}
           >
             {value === 'navigation' ? 'Navigation' : 'Asset lookup'}
-          </button>
+          </Button>
         ))}
       </div>
       <form
@@ -239,12 +230,12 @@ export function CommandPalette({
           }}
         />
         {mode === 'assets' && (
-          <button type="submit" disabled={busy || !query.trim()}>
+          <Button type="submit" disabled={busy || !query.trim()}>
             Search bases and vehicles
-          </button>
+          </Button>
         )}
         {busy && (
-          <button
+          <Button
             type="button"
             onClick={() => {
               invalidate();
@@ -252,7 +243,7 @@ export function CommandPalette({
             }}
           >
             Cancel lookup
-          </button>
+          </Button>
         )}
       </form>
       {error && <p role="alert">{error}</p>}

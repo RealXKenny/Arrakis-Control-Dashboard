@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useState, type FormEvent } from 'react';
 import { Field, FormMessage, inputClass } from '../../../components/ui/form-controls';
@@ -95,33 +96,33 @@ export function PollForm({
               />
             </Field>
             {draft.options.length > 2 && (
-              <button
+              <Button
                 type="button"
                 disabled={busy}
                 className="btn btn-secondary mt-3"
                 onClick={() => setDraft({ ...draft, options: draft.options.filter((value) => value.id !== option.id) })}
               >
                 Remove choice {index + 1}
-              </button>
+              </Button>
             )}
           </li>
         ))}
       </ol>
-      <button
+      <Button
         type="button"
         disabled={busy || draft.options.length >= 10}
         className="btn btn-secondary justify-self-start"
         onClick={() => setDraft({ ...draft, options: [...draft.options, { id: crypto.randomUUID(), text: '' }] })}
       >
         Add poll choice
-      </button>
+      </Button>
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={busy} className="btn btn-primary">
+        <Button type="submit" disabled={busy} className="btn btn-primary">
           Publish poll
-        </button>
-        <button type="button" disabled={busy} className="btn btn-secondary" onClick={onCancel}>
+        </Button>
+        <Button type="button" disabled={busy} className="btn btn-secondary" onClick={onCancel}>
           Cancel poll draft
-        </button>
+        </Button>
       </div>
     </form>
   );

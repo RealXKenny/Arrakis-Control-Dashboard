@@ -1,7 +1,11 @@
 'use client';
+import { Button } from '../ui/button';
 
 import { NavigationLink as Link } from './navigation-link';
 import { type RefObject, useEffect, useRef, useState } from 'react';
+import { containTabFocus, restoreFocus } from '../../lib/ui/focus';
+import { lockPageScroll } from '../../lib/ui/scroll-lock';
+import { menuItemClass } from '../ui/control-styles';
 import type { NavIdentity } from '../../features/auth/identity';
 import { Avatar } from './avatar';
 import { signOutAction } from '../../features/auth/actions';
@@ -25,9 +29,7 @@ function MobileLink({
       href={item.href}
       aria-current={active ? 'page' : undefined}
       onClick={onNavigate}
-      className={`flex min-h-12 items-center gap-3 border-l-2 px-3 py-2 text-sm font-semibold ${
-        active ? 'border-spice-400 bg-spice-500/10 text-spice-300' : 'border-transparent text-sand-200'
-      }`}
+      className={menuItemClass({ active, layout: 'drawer' })}
     >
       <NavigationGlyph icon={item.icon} className="size-4 text-spice-400" />
       <span className="flex-1">{item.label}</span>
@@ -54,7 +56,7 @@ function MobileItem({
   const active = isNavigationActive(pathname, item);
   return (
     <div>
-      <button
+      <Button
         type="button"
         aria-expanded={isOpen}
         aria-controls={`mobile-navigation-${item.id}`}
@@ -66,7 +68,7 @@ function MobileItem({
         <NavigationGlyph icon={item.icon} className="size-4 text-spice-400" />
         <span className="flex-1">{item.label}</span>
         <ChevronDownIcon className={`size-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+      </Button>
       {isOpen && (
         <div
           id={`mobile-navigation-${item.id}`}
@@ -117,41 +119,27 @@ export function MobileNavigation({
     setExpanded((current) => (current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]));
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
+    const unlockScroll = lockPageScroll(document.body);
     const trigger = triggerRef.current;
-    document.body.style.overflow = 'hidden';
     close.current?.focus();
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();
         return;
       }
-      if (event.key !== 'Tab') return;
-      const controls = Array.from(
-        drawer.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, select, textarea') ?? [],
-      ).filter((control) => control.offsetParent !== null);
-      if (!controls.length) return;
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      containTabFocus(event, drawer.current);
     };
     document.addEventListener('keydown', keydown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
       document.removeEventListener('keydown', keydown);
-      trigger?.focus();
+      restoreFocus(trigger);
     };
   }, [onClose, triggerRef]);
 
   return (
     <div className="fixed inset-0 z-[80] xl:hidden">
-      <button
+      <Button
         type="button"
         aria-label="Close navigation"
         onClick={onClose}
@@ -159,6 +147,7 @@ export function MobileNavigation({
       />
       <div
         ref={drawer}
+        tabIndex={-1}
         id="mobile-nav"
         role="dialog"
         aria-modal="true"
@@ -169,7 +158,7 @@ export function MobileNavigation({
           <span className="font-mono text-[0.625rem] font-bold uppercase tracking-[0.24em] text-[#C8A46A]">
             Command navigation
           </span>
-          <button
+          <Button
             ref={close}
             type="button"
             aria-label="Close menu"
@@ -177,29 +166,29 @@ export function MobileNavigation({
             className="inline-flex size-10 items-center justify-center border border-sand-200/15 text-sand-100 hover:border-spice-400"
           >
             <CloseIcon className="size-5" />
-          </button>
+          </Button>
         </div>
         <div className="flex-1 overflow-y-auto pb-6">
           {onOpenAppearance && (
             <div className="p-3">
-              <button
+              <Button
                 type="button"
                 onClick={onOpenAppearance}
                 className="min-h-12 w-full border border-sand-200/30 px-3 py-2 text-left text-sm font-bold text-spice-300"
               >
                 Themes and custom colors
-              </button>
+              </Button>
             </div>
           )}
           {onOpenCommands && (
             <div className="p-3">
-              <button
+              <Button
                 type="button"
                 onClick={onOpenCommands}
                 className="min-h-12 w-full border border-sand-200/30 px-3 py-2 text-left text-sm font-bold text-spice-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-spice-300"
               >
                 Search navigation and assets
-              </button>
+              </Button>
             </div>
           )}
           <nav aria-label="Mobile" className="p-3">
@@ -255,13 +244,13 @@ export function MobileNavigation({
                   />
                 )}
                 <form action={signOutAction} className="pt-2">
-                  <button
+                  <Button
                     type="submit"
                     className="flex min-h-12 w-full items-center gap-3 border border-sand-200/15 px-3 text-sm font-bold text-sand-100 hover:border-spice-400 hover:text-spice-300"
                   >
                     <SignOutIcon className="size-4" />
                     Sign out
-                  </button>
+                  </Button>
                 </form>
               </div>
             ) : (

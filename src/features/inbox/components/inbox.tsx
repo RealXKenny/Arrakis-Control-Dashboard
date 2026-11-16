@@ -1,4 +1,7 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
+
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { categoryNames, inboxCategories, inboxViewSchema, type InboxCategory, type InboxView } from '../model';
@@ -208,9 +211,9 @@ export function Inbox({ activity = null }: { activity?: ActivityView | null }) {
           Review reported needs, then act in the source workspace. Checking this inbox never moves resources or changes
           a sign-up.
         </p>
-        <button className="btn btn-secondary min-h-11" disabled={busy || controlsBusy} onClick={() => void refresh()}>
+        <Button className="btn btn-secondary min-h-11" disabled={busy || controlsBusy} onClick={() => void refresh()}>
           {busy ? 'Checking sources…' : 'Refresh inbox'}
-        </button>
+        </Button>
       </div>
       <div className={styles.filters}>
         <label>
@@ -273,7 +276,7 @@ export function Inbox({ activity = null }: { activity?: ActivityView | null }) {
           )}
           <div className={styles.alerts}>
             {alerts.map((alert) => (
-              <article className={styles.card} key={alert.id} aria-label={alert.title}>
+              <Card className={styles.card} key={alert.id} aria-label={alert.title}>
                 <p className={styles.eyebrow}>
                   {categoryNames[alert.category]} · {alert.priority === 'urgent' ? 'Urgent' : 'Needs attention'}
                 </p>
@@ -284,14 +287,14 @@ export function Inbox({ activity = null }: { activity?: ActivityView | null }) {
                   {alert.action} →
                 </Link>
                 <div className={styles.filters}>
-                  <button
+                  <Button
                     className="btn btn-secondary min-h-11"
                     disabled={controlsBusy}
                     onClick={() => void control({ action: 'review', revision: preferences.revision, id: alert.id })}
                   >
                     Reviewed
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     className="btn btn-secondary min-h-11"
                     disabled={controlsBusy}
                     onClick={() =>
@@ -304,8 +307,8 @@ export function Inbox({ activity = null }: { activity?: ActivityView | null }) {
                     }
                   >
                     Snooze
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     className="btn btn-secondary min-h-11"
                     disabled={controlsBusy || !alert.fingerprint}
                     onClick={() =>
@@ -318,18 +321,18 @@ export function Inbox({ activity = null }: { activity?: ActivityView | null }) {
                     }
                   >
                     Dismiss
-                  </button>
+                  </Button>
                   {preferences.states.some((s) => s.id === alert.id) && (
-                    <button
+                    <Button
                       className="btn btn-secondary min-h-11"
                       disabled={controlsBusy}
                       onClick={() => void control({ action: 'restore', revision: preferences.revision, id: alert.id })}
                     >
                       Restore alert
-                    </button>
+                    </Button>
                   )}
                 </div>
-              </article>
+              </Card>
             ))}
           </div>
           <NotificationSettings

@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import Image from 'next/image';
 import { useId, useState } from 'react';
@@ -30,7 +32,7 @@ export function ListingCard({
   const open = mode !== null;
 
   return (
-    <article aria-labelledby={titleId} className="panel flex h-full flex-col gap-5 p-5">
+    <Card aria-labelledby={titleId} className="panel flex h-full flex-col gap-5 p-5">
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 border border-status-ok/50 px-2 py-1 font-mono text-[0.625rem] font-semibold uppercase tracking-widest text-status-ok">
           <span aria-hidden="true" className="size-1.5 rounded-full bg-status-ok" />
@@ -93,7 +95,7 @@ export function ListingCard({
         <div className="flex flex-wrap gap-3">
           {summary ? (
             <>
-              <button
+              <Button
                 type="button"
                 className="btn btn-ghost"
                 aria-expanded={mode === 'status'}
@@ -104,8 +106,8 @@ export function ListingCard({
                 }}
               >
                 Check status
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 className="btn btn-primary"
                 aria-expanded={mode === 'chat'}
@@ -114,11 +116,11 @@ export function ListingCard({
               >
                 Chat with reviewer
                 <UnreadPill count={summary.unreadCount} />
-              </button>
+              </Button>
             </>
           ) : (
             <>
-              <button
+              <Button
                 type="button"
                 className="btn btn-ghost"
                 aria-expanded={detailsOpen}
@@ -126,8 +128,8 @@ export function ListingCard({
                 onClick={() => setDetailsOpen(!detailsOpen)}
               >
                 {detailsOpen ? 'Less detail' : 'View details'}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 className="btn btn-primary"
                 aria-expanded={open}
@@ -135,7 +137,7 @@ export function ListingCard({
                 onClick={() => setMode(open ? null : 'application')}
               >
                 {open ? 'Close application' : 'Apply to guild'}
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -144,9 +146,9 @@ export function ListingCard({
       {open && (
         <div id={panelId}>
           {summary && (
-            <button type="button" className="mb-2 text-xs text-spice-300 underline" onClick={() => setMode(null)}>
+            <Button type="button" className="mb-2 text-xs text-spice-300 underline" onClick={() => setMode(null)}>
               Close panel
-            </button>
+            </Button>
           )}
           <ApplicationPanel
             guildId={entry.guildId}
@@ -172,6 +174,6 @@ export function ListingCard({
           />
         </div>
       )}
-    </article>
+    </Card>
   );
 }

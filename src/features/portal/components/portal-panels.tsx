@@ -1,6 +1,8 @@
+import { Card } from '../../../components/ui/card';
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { cardClass } from '../../../components/ui/control-styles';
 import { LocalTime } from '../../../components/ui/local-time';
 import { AvatarImage } from '../../../components/ui/avatar-image';
 import { ArrowRightIcon } from '../../../components/icons';
@@ -12,7 +14,11 @@ import { PopulationChart } from './population-chart';
 
 function Stat({ label, value, hint, href }: { label: string; value: string; hint: string; href: string }) {
   return (
-    <Link data-portal-panel href={href} className="panel panel-interactive flex h-full flex-col gap-2 p-5">
+    <Link
+      data-portal-panel
+      href={href}
+      className={cardClass({ surface: 'glass', interactive: true, className: 'flex h-full flex-col gap-2 p-5' })}
+    >
       <span className="eyebrow">{label}</span>
       <strong className="figure text-3xl font-extrabold text-sand-50">{value}</strong>
       <span className="text-sm text-sand-400">{hint}</span>
@@ -40,7 +46,12 @@ export function portalPanels(
 
   return {
     conditions: (
-      <section data-portal-panel className="panel flex flex-col p-6 sm:p-8 xl:col-span-8" aria-labelledby="conditions">
+      <Card
+        as="section"
+        data-portal-panel
+        className="panel flex flex-col p-6 sm:p-8 xl:col-span-8"
+        aria-labelledby="conditions"
+      >
         <p className="eyebrow">Field conditions · {mapName}</p>
         <h2 id="conditions" className="mt-4 text-xl sm:text-[1.75rem]">
           {headline}
@@ -64,10 +75,10 @@ export function portalPanels(
             </dd>
           </div>
         </dl>
-      </section>
+      </Card>
     ),
     character: character ? (
-      <aside data-portal-panel className="panel p-6 xl:col-span-4" aria-label="Your character">
+      <Card as="aside" data-portal-panel className="panel p-6 xl:col-span-4" aria-label="Your character">
         <div className="flex items-center gap-4">
           <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden bg-obsidian-900 text-xl font-extrabold text-spice-400">
             <AvatarImage
@@ -106,12 +117,12 @@ export function portalPanels(
         >
           Open character <ArrowRightIcon className="size-4" />
         </Link>
-      </aside>
+      </Card>
     ) : (
-      <aside data-portal-panel className="panel p-6" aria-label="Your character">
+      <Card as="aside" data-portal-panel className="panel p-6" aria-label="Your character">
         <h2>Your character</h2>
         <p className="mt-3 text-sand-400">Character details are unavailable.</p>
-      </aside>
+      </Card>
     ),
     solaris: (
       <Stat
@@ -146,7 +157,12 @@ export function portalPanels(
       />
     ),
     population: (
-      <section data-portal-panel className="panel p-6 sm:p-8 xl:col-span-7 md:col-span-2" aria-labelledby="rhythm">
+      <Card
+        as="section"
+        data-portal-panel
+        className="panel p-6 sm:p-8 xl:col-span-7 md:col-span-2"
+        aria-labelledby="rhythm"
+      >
         <h2 id="rhythm" className="text-lg">
           Server rhythm{' '}
           <span className="ml-2 font-mono text-xs font-normal tracking-widest text-sand-500">LAST 24 HOURS</span>
@@ -154,10 +170,15 @@ export function portalPanels(
         <div className="mt-6">
           <PopulationChart history={world?.population} />
         </div>
-      </section>
+      </Card>
     ),
     landsraad: (
-      <section data-portal-panel className="panel p-6 sm:p-8 xl:col-span-5 md:col-span-2" aria-labelledby="landsraad">
+      <Card
+        as="section"
+        data-portal-panel
+        className="panel p-6 sm:p-8 xl:col-span-5 md:col-span-2"
+        aria-labelledby="landsraad"
+      >
         <h2 id="landsraad" className="text-lg">
           Landsraad{' '}
           {council ? (
@@ -205,7 +226,7 @@ export function portalPanels(
         ) : (
           <p className="mt-4 text-sm text-sand-500">The current Landsraad term is not available.</p>
         )}
-      </section>
+      </Card>
     ),
   };
 }

@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -35,7 +37,7 @@ export function WalletControls({ pausedUntil }: { pausedUntil: number | null }) 
 
   return (
     <div className="flex flex-col gap-8">
-      <section id="limits" aria-labelledby="limits-title" className="panel p-6">
+      <Card as="section" id="limits" aria-labelledby="limits-title" className="panel p-6">
         <h2 id="limits-title" className="eyebrow">
           Take a break
         </h2>
@@ -50,7 +52,7 @@ export function WalletControls({ pausedUntil }: { pausedUntil: number | null }) 
         )}
         <div className="mt-4 flex flex-wrap gap-3" role="group" aria-label="Break length">
           {BREAKS.map((option) => (
-            <button
+            <Button
               key={option.hours}
               type="button"
               disabled={busy}
@@ -58,7 +60,7 @@ export function WalletControls({ pausedUntil }: { pausedUntil: number | null }) 
               className="btn btn-ghost disabled:opacity-50"
             >
               {option.label}
-            </button>
+            </Button>
           ))}
         </div>
         {confirming !== null && (
@@ -72,21 +74,21 @@ export function WalletControls({ pausedUntil }: { pausedUntil: number | null }) 
               this.
             </p>
             <div className="mt-3 flex gap-3">
-              <button
+              <Button
                 type="button"
                 className="btn btn-primary disabled:opacity-50"
                 disabled={busy}
                 onClick={() => void run(() => casinoApi.pause(confirming))}
               >
                 Confirm break
-              </button>
-              <button type="button" className="btn btn-ghost" onClick={() => setConfirming(null)}>
+              </Button>
+              <Button type="button" className="btn btn-ghost" onClick={() => setConfirming(null)}>
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}
-      </section>
+      </Card>
       <ErrorBanner message={error} />
     </div>
   );

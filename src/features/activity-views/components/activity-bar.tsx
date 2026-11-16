@@ -1,10 +1,11 @@
+import { Card } from '../../../components/ui/card';
 import Link from 'next/link';
 import type { ResolvedActivity } from '../server/resolve';
 import { activityHref } from '../model';
 import styles from './activity-views.module.css';
 export function ActivityBar({ state, area }: { state: ResolvedActivity; area: 'portal' | 'inbox' | 'tasks' }) {
   return (
-    <section className={styles.card} aria-label="Activity view">
+    <Card as="section" className={styles.card} aria-label="Activity view">
       {state.status === 'ok' ? (
         <>
           <h2>{state.view.name}</h2>
@@ -45,6 +46,6 @@ export function ActivityBar({ state, area }: { state: ResolvedActivity; area: 'p
           </Link>
         )}
       </div>
-    </section>
+    </Card>
   );
 }

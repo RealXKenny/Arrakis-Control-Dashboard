@@ -1,3 +1,4 @@
+import { Card } from '../../../../components/ui/card';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageHeader } from '../../../../components/ui/page-header';
@@ -27,7 +28,7 @@ export default async function CasinoHistoryPage() {
           </Link>
         </p>
       ) : (
-        <div className="panel overflow-x-auto p-4">
+        <Card as="div" className="panel overflow-x-auto p-4">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Your most recent rounds, newest first</caption>
             <thead className="text-xs text-sand-500">
@@ -83,7 +84,7 @@ export default async function CasinoHistoryPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
     </>
   );

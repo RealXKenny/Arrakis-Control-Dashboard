@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { IMPORT_UNCONFIRMED, importBlueprint } from '../../utils/import-blueprint';
@@ -65,9 +66,9 @@ export function ImportButton({ id, title }: { id: string; title: string }) {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      <button type="button" className="btn btn-ghost" disabled={busy || submitted} onClick={() => void deliver()}>
+      <Button type="button" className="btn btn-ghost" disabled={busy || submitted} onClick={() => void deliver()}>
         {busy ? 'Importing…' : submitted ? 'Import submitted' : 'Import to my character'}
-      </button>
+      </Button>
       {message && (
         <p role="status" className="max-w-xs text-xs leading-5 text-sand-400">
           {message}

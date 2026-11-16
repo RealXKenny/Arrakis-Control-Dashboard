@@ -1,3 +1,5 @@
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 import type { ReactNode } from 'react';
 import { findOperation } from '../client';
 import useAdminQuery from '../hooks/use-admin-query';
@@ -31,9 +33,9 @@ export function QueryState({
         {onRetry && (
           <>
             {' '}
-            <button type="button" onClick={onRetry}>
+            <Button type="button" onClick={onRetry}>
               Try again
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -115,7 +117,7 @@ export function ReadPanel({
 }) {
   const result = useAdminQuery(findOperation(operations, id), { query });
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <QueryState loading={result.loading} error={result.error} onRetry={result.refresh}>
         {kind === 'table' ? (
@@ -124,6 +126,6 @@ export function ReadPanel({
           <Facts value={result.data} />
         )}
       </QueryState>
-    </section>
+    </Card>
   );
 }

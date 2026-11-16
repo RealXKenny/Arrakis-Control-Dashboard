@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../../components/ui/button';
+
 import styles from '../../styles/map.module.css';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -57,15 +59,15 @@ export default function MapHud(props: Props) {
             <option value="high">High</option>
           </select>
         </label>
-        <button type="button" aria-pressed={props.contours} onClick={props.onContours}>
+        <Button type="button" aria-pressed={props.contours} onClick={props.onContours}>
           Contours
-        </button>
-        <button type="button" onClick={props.onTop}>
+        </Button>
+        <Button type="button" onClick={props.onTop}>
           Top down
-        </button>
-        <button type="button" onClick={props.onFullscreen}>
+        </Button>
+        <Button type="button" onClick={props.onFullscreen}>
           Fullscreen
-        </button>
+        </Button>
       </div>
       <div className={styles.sceneSearch}>
         <input
@@ -79,7 +81,7 @@ export default function MapHud(props: Props) {
             {matches.length ? (
               matches.map((marker, i) => (
                 <li key={markerKey(marker, i)}>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => {
                       props.onLocate(marker);
@@ -88,7 +90,7 @@ export default function MapHud(props: Props) {
                   >
                     <span>{String(marker.name ?? marker.label ?? marker.subtype ?? 'Location')}</span>
                     <small>{String(marker.type)}</small>
-                  </button>
+                  </Button>
                 </li>
               ))
             ) : (
@@ -103,7 +105,7 @@ export default function MapHud(props: Props) {
     <div data-map-hud className={styles.sceneHud}>
       {props.toolbarTarget && createPortal(controls, props.toolbarTarget)}
       <span data-terrain-coverage role="status" hidden className={styles.sceneCoverage} />
-      <button
+      <Button
         type="button"
         className={styles.sceneCompass}
         aria-label="Face north"
@@ -112,7 +114,7 @@ export default function MapHud(props: Props) {
       >
         <span data-compass-arrow>↑</span>
         <b>N</b>
-      </button>
+      </Button>
       <div className={styles.sceneScale}>
         <span data-scale-label>1 km</span>
         <i data-scale-line />

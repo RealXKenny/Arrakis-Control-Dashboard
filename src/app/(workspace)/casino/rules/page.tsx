@@ -1,3 +1,4 @@
+import { Card } from '../../../../components/ui/card';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageHeader } from '../../../../components/ui/page-header';
@@ -16,7 +17,7 @@ export default async function CasinoRulesPage() {
         </p>
       </PageHeader>
 
-      <section aria-labelledby="basics" className="panel mb-8 p-6 text-sm leading-relaxed text-sand-300">
+      <Card as="section" aria-labelledby="basics" className="panel mb-8 p-6 text-sm leading-relaxed text-sand-300">
         <h2 id="basics" className="eyebrow">
           The basics
         </h2>
@@ -45,11 +46,11 @@ export default async function CasinoRulesPage() {
             rounds are refunded after 24 hours.
           </li>
         </ul>
-      </section>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {GAMES.map((game) => (
-          <section key={game.id} aria-labelledby={`rules-${game.id}`} className="panel p-6">
+          <Card as="section" key={game.id} aria-labelledby={`rules-${game.id}`} className="panel p-6">
             <p className="font-mono text-[0.6875rem] uppercase tracking-widest text-spice-400">{game.genre}</p>
             <h2 id={`rules-${game.id}`} className="mt-1 text-lg">
               <Link href={`/casino/games/${game.id}`} className="hover:text-spice-300">
@@ -65,7 +66,7 @@ export default async function CasinoRulesPage() {
             <p className="mt-3 text-xs text-sand-500">
               Wager {formatCredits(game.min)} to {formatCredits(game.max)} Solaris (or the server limit, if lower).
             </p>
-          </section>
+          </Card>
         ))}
       </div>
     </>

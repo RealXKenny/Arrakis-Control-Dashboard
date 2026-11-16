@@ -1,3 +1,5 @@
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 import type { Metadata } from 'next';
 import { InventoryTools } from '../../player/components/inventory-tools';
 import Image from 'next/image';
@@ -63,7 +65,7 @@ export default async function StoragePage({
       <InventoryTools key={inventoryKey} initialFind={initialFind} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="grid min-w-0 grid-cols-1 content-start gap-6 lg:col-span-4">
-          <section className="panel p-6" aria-labelledby="assets">
+          <Card as="section" className="panel p-6" aria-labelledby="assets">
             <h2 id="assets" className="text-base">
               Personal assets
             </h2>
@@ -82,7 +84,7 @@ export default async function StoragePage({
             <p className="mt-5 text-xs text-sand-500">
               Inventory readings are read-only. Manage items and currency in game.
             </p>
-          </section>
+          </Card>
 
           {view && (
             <nav className="panel p-6" aria-label="Inventory containers">
@@ -110,7 +112,7 @@ export default async function StoragePage({
           )}
         </aside>
 
-        <section className="panel min-w-0 p-6 lg:col-span-8" aria-labelledby="items-heading">
+        <Card as="section" className="panel min-w-0 p-6 lg:col-span-8" aria-labelledby="items-heading">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h2 id="items-heading" className="text-base">
               {view?.active ?? 'Inventory'}
@@ -151,9 +153,9 @@ export default async function StoragePage({
                   placeholder="Find an item in your containers"
                   className="h-11 min-w-0 flex-1 border border-sand-200/20 bg-obsidian-900 px-3 text-sm text-sand-50 placeholder:text-sand-600"
                 />
-                <button type="submit" className="btn btn-primary">
+                <Button type="submit" className="btn btn-primary">
                   Search
-                </button>
+                </Button>
               </form>
               <p className="mt-4 font-mono text-[0.6875rem] uppercase tracking-widest text-sand-500" aria-live="polite">
                 {view.items.length} item stacks
@@ -205,7 +207,7 @@ export default async function StoragePage({
               )}
             </>
           )}
-        </section>
+        </Card>
       </div>
     </>
   );

@@ -1,4 +1,5 @@
 'use client';
+import { Button } from './button';
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
@@ -192,7 +193,7 @@ export function AudioControls() {
               <p className="font-mono text-[0.625rem] uppercase tracking-[0.22em] text-spice-300">Audio preferences</p>
               <h2 className="mt-1 text-lg font-semibold tracking-tight">Sound settings</h2>
             </div>
-            <button
+            <Button
               type="button"
               aria-label="Close sound settings"
               className="-mr-2 -mt-1 grid size-11 shrink-0 place-items-center text-sand-400 hover:bg-sand-100/5 hover:text-sand-100 focus-visible:outline-2 focus-visible:outline-spice-300"
@@ -202,7 +203,7 @@ export function AudioControls() {
               }}
             >
               <CloseIcon className="size-4" />
-            </button>
+            </Button>
           </div>
           <div className="border-b border-sand-800 bg-sand-100/[0.025] px-5 py-2">
             <AudioToggle
@@ -280,7 +281,7 @@ export function AudioControls() {
             </div>
           </fieldset>
           <div className="grid grid-cols-2 gap-2 px-5 pt-4">
-            <button
+            <Button
               type="button"
               className="min-h-11 min-w-0 border border-sand-700 bg-obsidian-900 px-2 py-2 font-mono text-[0.625rem] font-bold uppercase tracking-widest text-sand-100 hover:border-spice-400 hover:text-spice-300 focus-visible:outline-2 focus-visible:outline-spice-300"
               onClick={async () => {
@@ -296,8 +297,8 @@ export function AudioControls() {
               }}
             >
               Preview voice
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               className="min-h-11 min-w-0 border border-sand-700 bg-obsidian-900 px-2 py-2 font-mono text-[0.625rem] font-bold uppercase tracking-widest text-sand-100 hover:border-spice-400 hover:text-spice-300 focus-visible:outline-2 focus-visible:outline-spice-300"
               onClick={() => {
@@ -306,7 +307,7 @@ export function AudioControls() {
               }}
             >
               Preview sound
-            </button>
+            </Button>
           </div>
           <p className="px-5 pt-3 pb-4 text-[0.6875rem] leading-relaxed text-sand-400">
             The local voice pack sounds the same on every device. Device voices are optional fallbacks.

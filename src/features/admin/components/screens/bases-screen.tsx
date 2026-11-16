@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState, type FormEvent } from 'react';
 import { downloadAdmin, findOperation } from '../../client';
 import { Facts, QueryState, Table } from '../data-panel';
@@ -39,7 +41,7 @@ function Panel({
 }) {
   const query = useAdminQuery(findOperation(operations, id), { path });
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <QueryState loading={query.loading} error={query.error} onRetry={query.refresh}>
         {kind === 'table' ? (
@@ -48,7 +50,7 @@ function Panel({
           <Facts value={query.data} />
         )}
       </QueryState>
-    </section>
+    </Card>
   );
 }
 
@@ -89,22 +91,22 @@ function BaseDetail({
   return (
     <div className={ui.screen}>
       <div className={ui.toolbar}>
-        <button type="button" onClick={() => url.update({ base: null, section: null })}>
+        <Button type="button" onClick={() => url.update({ base: null, section: null })}>
           ← All bases
-        </button>
+        </Button>
         <h3 style={{ margin: 0 }}>{name}</h3>
         <span className={ui.stateLine}>ID {baseId}</span>
       </div>
       <div className={ui.subTabs} role="group" aria-label="Base sections">
         {SECTIONS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === section}
             onClick={() => url.update({ section: id }, 'replace')}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {notice && (
@@ -115,10 +117,10 @@ function BaseDetail({
       {section === 'overview' && (
         <>
           {summary && (
-            <section className={ui.panel} aria-label="Base details">
+            <Card as="section" className={ui.panel} aria-label="Base details">
               <h3>Details</h3>
               <Facts value={summary} />
-            </section>
+            </Card>
           )}
           <Panel
             operations={operations}
@@ -133,14 +135,14 @@ function BaseDetail({
       {section === 'maintenance' && (
         <>
           <Panel operations={operations} id="get-bases-baseid-water" path={path} title="Water" />
-          <section className={ui.panel} aria-label="Maintenance actions">
+          <Card as="section" className={ui.panel} aria-label="Maintenance actions">
             <h3>Maintenance</h3>
             <p className={ui.stateLine}>
               Refills may be queued until the base’s map can be changed safely. A queued refill has not happened yet;
               see Pending queues.
             </p>
             <div className={ui.actions}>
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   act(
@@ -158,8 +160,8 @@ function BaseDetail({
                 }
               >
                 Refill generators…
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() =>
                   act(
@@ -177,10 +179,10 @@ function BaseDetail({
                 }
               >
                 Refill water…
-              </button>
+              </Button>
             </div>
-          </section>
-          <section className={ui.panel} aria-label="Automatic refill enrollment">
+          </Card>
+          <Card as="section" className={ui.panel} aria-label="Automatic refill enrollment">
             <h3>Automatic refills</h3>
             <QueryState
               loading={autoRefill.loading || autoWater.loading}
@@ -203,7 +205,7 @@ function BaseDetail({
                     ['post-bases-baseid-auto-refill-water', 'water', waterEnrolled],
                   ] as const
                 ).map(([id, label, state]) => (
-                  <button
+                  <Button
                     key={id}
                     type="button"
                     disabled={state === null}
@@ -227,11 +229,11 @@ function BaseDetail({
                     }
                   >
                     {state ? `Stop automatic ${label} refills…` : `Enroll in automatic ${label} refills…`}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </QueryState>
-          </section>
+          </Card>
         </>
       )}
       {section === 'access' && (
@@ -252,10 +254,10 @@ function BaseDetail({
             kind="table"
             empty="No child-piece access settings were reported."
           />
-          <section className={ui.panel} aria-label="System custody">
+          <Card as="section" className={ui.panel} aria-label="System custody">
             <h3>System custody</h3>
             <div className={ui.actions}>
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   act(
@@ -275,19 +277,19 @@ function BaseDetail({
                 }
               >
                 Hand to system custody…
-              </button>
+              </Button>
             </div>
-          </section>
+          </Card>
         </>
       )}
       {section === 'manage' && (
-        <section className={ui.panel} aria-label="Export and removal">
+        <Card as="section" className={ui.panel} aria-label="Export and removal">
           <h3>Export</h3>
           <p className={ui.stateLine}>
             Downloads the base layout as a file in a new tab. Nothing changes on the server.
           </p>
           <div className={ui.actions}>
-            <button
+            <Button
               type="button"
               onClick={() => {
                 const operation = findOperation(operations, 'get-bases-baseid-export');
@@ -298,7 +300,7 @@ function BaseDetail({
               }}
             >
               Download export
-            </button>
+            </Button>
           </div>
           <h3>Removal</h3>
           <p className={ui.notice}>
@@ -306,7 +308,7 @@ function BaseDetail({
             cancelled under Pending queues.
           </p>
           <div className={ui.actions}>
-            <button
+            <Button
               type="button"
               className={ui.danger}
               onClick={() =>
@@ -328,9 +330,9 @@ function BaseDetail({
               }
             >
               Delete base…
-            </button>
+            </Button>
           </div>
-        </section>
+        </Card>
       )}
       {dialog}
     </div>
@@ -357,7 +359,7 @@ function Queue({
     list.refresh();
   });
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       {notice && (
         <p role="status" className={ui.status}>
@@ -372,7 +374,7 @@ function Queue({
           action={(row) => {
             const baseId = idFrom(row, 'base');
             return baseId ? (
-              <button
+              <Button
                 type="button"
                 onClick={() =>
                   act(
@@ -390,13 +392,13 @@ function Queue({
                 }
               >
                 Cancel
-              </button>
+              </Button>
             ) : null;
           }}
         />
       </QueryState>
       {dialog}
-    </section>
+    </Card>
   );
 }
 
@@ -488,7 +490,7 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Current refill settings">
+      <Card as="section" className={ui.panel} aria-label="Current refill settings">
         <h3>Current settings</h3>
         <QueryState loading={settings.loading} error={settings.error} onRetry={settings.refresh}>
           <Facts value={settings.data} />
@@ -506,10 +508,10 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
               </label>
             ))}
           </div>
-          <button type="submit">Review changes…</button>
+          <Button type="submit">Review changes…</Button>
         </form>
-      </section>
-      <section className={ui.panel} aria-label="Enrolled bases">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Enrolled bases">
         <h3>Enrolled for generators</h3>
         <QueryState loading={fuel.loading} error={fuel.error} onRetry={fuel.refresh}>
           <Table
@@ -526,7 +528,7 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             empty="No bases are enrolled."
           />
         </QueryState>
-      </section>
+      </Card>
       {dialog}
     </div>
   );
@@ -555,7 +557,7 @@ function StorageScreen({ operations }: { operations: AdminOperation[] }) {
   });
   if (!storageId)
     return (
-      <section className={ui.panel} aria-label="Storage containers">
+      <Card as="section" className={ui.panel} aria-label="Storage containers">
         <h3>Storage containers</h3>
         <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
           <Table
@@ -565,18 +567,18 @@ function StorageScreen({ operations }: { operations: AdminOperation[] }) {
             action={(row) => {
               const id = text(row, ['storage_id', 'storageId', 'id']);
               return id ? (
-                <button
+                <Button
                   aria-label={`Open ${nameFrom(row, 'container')}`}
                   type="button"
                   onClick={() => url.update({ storage: id })}
                 >
                   Open
-                </button>
+                </Button>
               ) : null;
             }}
           />
         </QueryState>
-      </section>
+      </Card>
     );
   const target = `Storage container ${storageId}`;
   function submit(event: FormEvent) {
@@ -607,11 +609,11 @@ function StorageScreen({ operations }: { operations: AdminOperation[] }) {
   return (
     <div className={ui.screen}>
       <div className={ui.toolbar}>
-        <button type="button" onClick={() => url.update({ storage: null })}>
+        <Button type="button" onClick={() => url.update({ storage: null })}>
           ← All containers
-        </button>
+        </Button>
         <h3 style={{ margin: 0 }}>{target}</h3>
-        <button
+        <Button
           type="button"
           onClick={() => {
             const operation = findOperation(operations, 'get-storage-storageid-export');
@@ -622,26 +624,26 @@ function StorageScreen({ operations }: { operations: AdminOperation[] }) {
           }}
         >
           Download export
-        </button>
+        </Button>
       </div>
       {notice && (
         <p role="status" className={ui.status}>
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Container details">
+      <Card as="section" className={ui.panel} aria-label="Container details">
         <h3>Details</h3>
         <QueryState loading={detail.loading} error={detail.error} onRetry={detail.refresh}>
           <Facts value={detail.data} />
         </QueryState>
-      </section>
-      <section className={ui.panel} aria-label="Container items">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Container items">
         <h3>Items</h3>
         <QueryState loading={items.loading} error={items.error} onRetry={items.refresh}>
           <Table value={items.data} caption="Container items" empty="This container is empty." />
         </QueryState>
-      </section>
-      <section className={ui.panel} aria-label="Add item">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Add item">
         <h3>Add an item</h3>
         <form onSubmit={submit}>
           <label className={ui.field}>
@@ -652,9 +654,9 @@ function StorageScreen({ operations }: { operations: AdminOperation[] }) {
             Quantity
             <input inputMode="numeric" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
           </label>
-          <button type="submit">Review…</button>
+          <Button type="submit">Review…</Button>
         </form>
-      </section>
+      </Card>
       {dialog}
     </div>
   );
@@ -678,14 +680,14 @@ export default function BasesScreen({ operations }: { operations: AdminOperation
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Base views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'bases' ? null : id, base: null, storage: null })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'storage' && <StorageScreen operations={operations} />}
@@ -706,10 +708,10 @@ export default function BasesScreen({ operations }: { operations: AdminOperation
               Search bases
               <input type="search" value={draft ?? search} onChange={(event) => setDraft(event.target.value)} />
             </label>
-            <button type="submit">Search</button>
-            <button type="button" onClick={list.refresh} disabled={list.loading}>
+            <Button type="submit">Search</Button>
+            <Button type="button" onClick={list.refresh} disabled={list.loading}>
               Refresh
-            </button>
+            </Button>
           </form>
           <QueryState loading={list.loading} error={list.error} onRetry={list.refresh}>
             <Table
@@ -719,28 +721,28 @@ export default function BasesScreen({ operations }: { operations: AdminOperation
               action={(row) => {
                 const id = idFrom(row, 'base');
                 return id ? (
-                  <button
+                  <Button
                     aria-label={`Open ${nameFrom(row, 'base')}`}
                     type="button"
                     onClick={() => url.update({ base: id, section: null })}
                   >
                     Open
-                  </button>
+                  </Button>
                 ) : null;
               }}
             />
             <nav className={ui.pager} aria-label="Base pages">
-              <button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
+              <Button type="button" disabled={page === 0} onClick={() => url.update({ page: page - 1 || null })}>
                 Previous page
-              </button>
+              </Button>
               <span>Page {page + 1}</span>
-              <button
+              <Button
                 type="button"
                 disabled={!hasMore(list.data, page, PAGE_SIZE)}
                 onClick={() => url.update({ page: page + 1 })}
               >
                 Next page
-              </button>
+              </Button>
             </nav>
           </QueryState>
         </>

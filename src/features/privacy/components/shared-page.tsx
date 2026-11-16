@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import type { Metadata } from 'next';
 import { requireSession } from '../../auth/server/session';
 import { PageHeader, Notice } from '../../../components/ui/page-header';
@@ -29,7 +30,7 @@ export default async function SharedPrivacyPage({ params }: { params: Promise<{ 
         {share ? (
           <div className={styles.grid}>
             {share.cards.map((card) => (
-              <article
+              <Card
                 key={card.category}
                 className={styles.card}
                 aria-label={`Shared ${privacyNames[card.category].toLowerCase()}`}
@@ -39,7 +40,7 @@ export default async function SharedPrivacyPage({ params }: { params: Promise<{ 
                 <p>
                   Published {card.publishedAt}. Expires {card.expiresAt}.
                 </p>
-              </article>
+              </Card>
             ))}
           </div>
         ) : (

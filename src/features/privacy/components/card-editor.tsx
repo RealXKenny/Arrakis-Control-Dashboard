@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import type { PrivacyCategory, PrivacyDrafts } from '../model';
 import styles from './privacy.module.css';
 export function CardEditor({
@@ -170,7 +172,7 @@ export function CardEditor({
               }
             />
           </label>
-          <button
+          <Button
             type="button"
             className="btn btn-secondary"
             onClick={() =>
@@ -181,10 +183,10 @@ export function CardEditor({
             }
           >
             Remove supply {index + 1}
-          </button>
+          </Button>
         </fieldset>
       ))}
-      <button
+      <Button
         type="button"
         className="btn btn-secondary"
         disabled={drafts.supply.offers.length >= 8}
@@ -196,7 +198,7 @@ export function CardEditor({
         }
       >
         Add supply
-      </button>
+      </Button>
       <label>
         Supply details
         <textarea

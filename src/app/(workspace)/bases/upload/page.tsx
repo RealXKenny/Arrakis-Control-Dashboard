@@ -1,3 +1,4 @@
+import { Card } from '../../../../components/ui/card';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { requireSession } from '../../../../features/auth/server/session';
@@ -20,7 +21,7 @@ export default async function UploadBasePage() {
           <UploadForm />
         </div>
         <aside className="min-w-0 lg:col-span-5">
-          <div className="panel p-6 sm:p-8">
+          <Card as="div" className="panel p-6 sm:p-8">
             <h2 className="text-base">Before you publish</h2>
             <ul className="mt-5 grid gap-3 text-sm leading-relaxed text-sand-300">
               <li>Upload a base layout exported as JSON, up to 2 MiB and 10,000 pieces.</li>
@@ -28,7 +29,7 @@ export default async function UploadBasePage() {
               <li>A picture helps your base stand out. Keep it under 700 KiB.</li>
               <li>You can share up to 25 bases and remove any of your own at any time.</li>
             </ul>
-          </div>
+          </Card>
         </aside>
       </div>
     </>

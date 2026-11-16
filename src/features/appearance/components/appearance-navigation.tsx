@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import { Component, useCallback, useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import type { NavIdentity } from '../../auth/identity';
 import { CommandNavigation } from '../../commands/components/command-navigation';
@@ -17,9 +19,9 @@ class AppearanceBoundary extends Component<{ children: ReactNode; onReset: () =>
         className="fixed inset-x-4 top-24 z-[100] border border-sand-500 bg-obsidian-900 p-6 text-sand-100"
       >
         Appearance controls could not open. Your dashboard remains available.{' '}
-        <button className="btn btn-secondary" onClick={this.props.onReset}>
+        <Button className="btn btn-secondary" onClick={this.props.onReset}>
           Reset appearance and close
-        </button>
+        </Button>
       </div>
     ) : (
       this.props.children
@@ -101,15 +103,15 @@ export function AppearanceNavigation({ identity, isAdmin }: { identity: NavIdent
           className="fixed inset-x-4 top-24 z-[100] border border-sand-500 bg-obsidian-900 p-6 text-sand-100"
         >
           <p>{error}</p>
-          <button className="btn btn-secondary" onClick={() => openAppearance(opener ?? undefined)}>
+          <Button className="btn btn-secondary" onClick={() => openAppearance(opener ?? undefined)}>
             Retry appearance controls
-          </button>
-          <button className="btn btn-secondary" onClick={reset}>
+          </Button>
+          <Button className="btn btn-secondary" onClick={reset}>
             Reset appearance and close
-          </button>
-          <button className="btn btn-secondary" onClick={close}>
+          </Button>
+          <Button className="btn btn-secondary" onClick={close}>
             Close appearance notice
-          </button>
+          </Button>
         </div>
       )}
       {open && !error && !Panel && (

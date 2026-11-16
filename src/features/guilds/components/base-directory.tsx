@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
@@ -151,7 +153,8 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
   }
   const entries = filterGuildBases(view?.entries ?? [], query, map, purpose, status);
   return (
-    <section
+    <Card
+      as="section"
       aria-label="Guild base directory"
       className="panel min-w-0 p-5 sm:p-6 [&_button]:max-w-full [&_button]:whitespace-normal [&_button:disabled]:opacity-50"
     >
@@ -164,18 +167,18 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={loading || saving} className="btn btn-secondary" onClick={refresh}>
+          <Button type="button" disabled={loading || saving} className="btn btn-secondary" onClick={refresh}>
             Refresh directory
-          </button>
+          </Button>
           {view?.canEdit && verified && (
-            <button
+            <Button
               type="button"
               disabled={loading || saving || Boolean(editor)}
               className="btn btn-primary"
               onClick={create}
             >
               New base listing
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -202,7 +205,7 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
         <div hidden={!verified}>
           <div role="group" aria-label="Directory listing status" className="mt-6 flex flex-wrap gap-3">
             {(['active', 'archived'] as const).map((value) => (
-              <button
+              <Button
                 type="button"
                 key={value}
                 aria-pressed={status === value}
@@ -210,7 +213,7 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
                 className={`btn ${status === value ? 'btn-primary' : 'btn-secondary'}`}
               >
                 {value === 'active' ? 'Active listings' : 'Archived listings'}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="mt-5 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-3">
@@ -252,22 +255,22 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
             <div role="region" aria-label="Confirm directory change" className="mt-5 border-l-2 border-spice-400 p-4">
               <p className="text-sm text-sand-200">{confirmation.message}</p>
               <div className="mt-3 flex flex-wrap gap-3">
-                <button
+                <Button
                   type="button"
                   disabled={loading || saving}
                   className="btn btn-primary"
                   onClick={() => mutate(confirmation.input)}
                 >
                   Confirm change
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   disabled={saving}
                   className="btn btn-secondary"
                   onClick={() => setConfirmation(null)}
                 >
                   Keep listing
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -278,7 +281,7 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
           <ul aria-label="Guild base listings" className="mt-5 grid min-w-0 grid-cols-1 gap-5">
             {entries.map((entry) => (
               <li key={entry.id} className="min-w-0">
-                <article aria-label={entry.name} className="min-w-0 border border-sand-200/20 p-4 sm:p-5">
+                <Card aria-label={entry.name} className="min-w-0 border border-sand-200/20 p-4 sm:p-5">
                   <p className="font-mono text-xs uppercase tracking-wider text-spice-300">
                     {guildBaseMapLabel[entry.map]} · {guildBasePurposeLabel[entry.purpose]} · {entry.status}
                   </p>
@@ -310,15 +313,15 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
                   </p>
                   {view.canEdit && (
                     <div className="mt-5 flex flex-wrap gap-3">
-                      <button
+                      <Button
                         type="button"
                         disabled={loading || saving || Boolean(editor)}
                         className="btn btn-secondary"
                         onClick={() => edit(entry)}
                       >
                         Edit listing
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         disabled={loading || saving}
                         className="btn btn-secondary"
@@ -338,8 +341,8 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
                         }
                       >
                         {entry.status === 'active' ? 'Archive listing' : 'Restore listing'}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         disabled={loading || saving}
                         className="btn btn-secondary"
@@ -351,15 +354,15 @@ export function GuildBaseDirectory({ guildId }: { guildId: string }) {
                         }
                       >
                         Remove listing
-                      </button>
+                      </Button>
                     </div>
                   )}
-                </article>
+                </Card>
               </li>
             ))}
           </ul>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

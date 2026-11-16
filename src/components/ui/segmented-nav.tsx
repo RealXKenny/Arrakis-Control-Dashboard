@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { menuItemClass } from './control-styles';
 
 export interface SegmentedItem {
   id: string;
@@ -22,9 +23,7 @@ export function SegmentedNav({ label, items, active }: { label: string; items: S
           href={item.href}
           replace
           aria-current={active === item.id ? 'page' : undefined}
-          className={`flex min-h-11 items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.2em] ${
-            active === item.id ? 'bg-spice-500 text-obsidian-950' : 'text-sand-300 hover:text-spice-300'
-          }`}
+          className={menuItemClass({ active: active === item.id, layout: 'segment' })}
         >
           {item.label}
           {item.count !== undefined && <span className="font-mono opacity-70">{item.count}</span>}

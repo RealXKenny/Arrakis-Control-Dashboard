@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { adminCall, findOperation } from '../../client';
@@ -33,7 +35,7 @@ function Read({
 }) {
   const result = useAdminQuery(findOperation(operations, id));
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <QueryState loading={result.loading} error={result.error} onRetry={result.refresh}>
         {kind === 'table' ? (
@@ -42,7 +44,7 @@ function Read({
           <Facts value={result.data} />
         )}
       </QueryState>
-    </section>
+    </Card>
   );
 }
 
@@ -64,13 +66,13 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Server status">
+      <Card as="section" className={ui.panel} aria-label="Server status">
         <h3>Server status</h3>
         <QueryState loading={status.loading} error={status.error} onRetry={status.refresh}>
           <Facts value={status.data} />
         </QueryState>
         <div className={ui.actions}>
-          <button
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -91,8 +93,8 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Start…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={ui.danger}
             onClick={() =>
@@ -115,8 +117,8 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Restart…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={ui.danger}
             onClick={() =>
@@ -138,10 +140,10 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Stop…
-          </button>
+          </Button>
         </div>
-      </section>
-      <section className={ui.panel} aria-label="Services">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Services">
         <h3>Services</h3>
         <QueryState loading={services.loading} error={services.error} onRetry={services.refresh}>
           <Table
@@ -151,7 +153,7 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
             action={(row: Row) => {
               const service = text(row, ['service', 'name', 'id']);
               return service ? (
-                <button
+                <Button
                   aria-label={`Restart ${service}…`}
                   type="button"
                   className={ui.danger}
@@ -173,20 +175,20 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
                   }
                 >
                   Restart…
-                </button>
+                </Button>
               ) : null;
             }}
           />
         </QueryState>
-      </section>
-      <section className={ui.panel} aria-label="Shutdown protection">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Shutdown protection">
         <h3>Shutdown protection</h3>
         <QueryState loading={protection.loading} error={protection.error} onRetry={protection.refresh}>
           <Facts value={protection.data} />
         </QueryState>
         <div className={ui.actions}>
           {[true, false].map((enabled) => (
-            <button
+            <Button
               key={String(enabled)}
               type="button"
               onClick={() =>
@@ -209,10 +211,10 @@ function Controls({ operations }: { operations: AdminOperation[] }) {
               }
             >
               Turn {enabled ? 'on' : 'off'}…
-            </button>
+            </Button>
           ))}
         </div>
-      </section>
+      </Card>
       {dialog}
     </>
   );
@@ -231,10 +233,10 @@ function Health({ operations }: { operations: AdminOperation[] }) {
       <Read operations={operations} id="get-server-readiness" title="Readiness" />
       <Read operations={operations} id="get-server-ports" title="Ports" kind="table" />
       <Read operations={operations} id="get-server-doctor" title="Server doctor" />
-      <section className={ui.panel} aria-label="Repairs and cleanup">
+      <Card as="section" className={ui.panel} aria-label="Repairs and cleanup">
         <h3>Repairs and cleanup</h3>
         <div className={ui.actions}>
-          <button
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -254,8 +256,8 @@ function Health({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Repair network binding…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={ui.danger}
             onClick={() =>
@@ -277,8 +279,8 @@ function Health({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Clean obsolete images…
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={ui.danger}
             onClick={() =>
@@ -300,9 +302,9 @@ function Health({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Clear build cache…
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
       {dialog}
     </>
   );
@@ -352,7 +354,7 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Restart schedule">
+      <Card as="section" className={ui.panel} aria-label="Restart schedule">
         <h3>Restart schedule</h3>
         <QueryState loading={schedule.loading} error={schedule.error} onRetry={schedule.refresh}>
           <Facts value={schedule.data} />
@@ -374,10 +376,10 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
               <input inputMode="numeric" value={notify} onChange={(event) => setNotify(event.target.value)} />
             </label>
           </div>
-          <button type="submit">Review schedule…</button>
+          <Button type="submit">Review schedule…</Button>
         </form>
-      </section>
-      <section className={ui.panel} aria-label="Restart countdowns">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Restart countdowns">
         <h3>Active countdowns</h3>
         <p className={ui.stateLine}>A countdown is pending, not completed. Cancelling keeps the server running.</p>
         <QueryState loading={queue.loading} error={queue.error} onRetry={queue.refresh}>
@@ -389,7 +391,7 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
               const id = text(row, ['id', 'queue_id', 'queueId']);
               return id ? (
                 <span className={ui.actions}>
-                  <button
+                  <Button
                     type="button"
                     onClick={() =>
                       act(
@@ -407,8 +409,8 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
                     }
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     className={ui.danger}
                     onClick={() =>
@@ -430,20 +432,20 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
                     }
                   >
                     Restart now…
-                  </button>
+                  </Button>
                 </span>
               ) : null;
             }}
           />
         </QueryState>
-      </section>
-      <section className={ui.panel} aria-label="IP-change restart">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="IP-change restart">
         <h3>Restart when the public IP changes</h3>
         <QueryState loading={ipRestart.loading} error={ipRestart.error} onRetry={ipRestart.refresh}>
           <Facts value={ipRestart.data} />
         </QueryState>
         <div className={ui.actions}>
-          <button
+          <Button
             type="button"
             onClick={() =>
               act(
@@ -464,9 +466,9 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
             }
           >
             Run IP check…
-          </button>
+          </Button>
           {[true, false].map((on) => (
-            <button
+            <Button
               key={String(on)}
               type="button"
               onClick={() =>
@@ -489,10 +491,10 @@ function Automation({ operations }: { operations: AdminOperation[] }) {
               }
             >
               Turn {on ? 'on' : 'off'}…
-            </button>
+            </Button>
           ))}
         </div>
-      </section>
+      </Card>
       <p className={ui.stateLine}>
         Countdown messages and checkpoints:{' '}
         <Link href={adminHref('server', 'post-server-restart-queue')}>restart-queue settings</Link>. Automatic backups
@@ -535,17 +537,17 @@ function Access({ operations }: { operations: AdminOperation[] }) {
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Server title">
+      <Card as="section" className={ui.panel} aria-label="Server title">
         <h3>Server title</h3>
         <form onSubmit={saveTitle}>
           <label className={ui.field}>
             New title
             <input value={title} maxLength={80} onChange={(event) => setTitle(event.target.value)} />
           </label>
-          <button type="submit">Review…</button>
+          <Button type="submit">Review…</Button>
         </form>
-      </section>
-      <section className={ui.panel} aria-label="Funcom token">
+      </Card>
+      <Card as="section" className={ui.panel} aria-label="Funcom token">
         <h3>Funcom token</h3>
         <p className={ui.stateLine}>
           The token is sent once to the Console and is never stored or shown by the dashboard. The field is cleared
@@ -556,10 +558,10 @@ function Access({ operations }: { operations: AdminOperation[] }) {
           Token
           <input type="password" autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} />
         </label>
-        <button type="button" disabled={!token.trim() || submitting} onClick={() => setSubmitting(true)}>
+        <Button type="button" disabled={!token.trim() || submitting} onClick={() => setSubmitting(true)}>
           Submit token…
-        </button>
-      </section>
+        </Button>
+      </Card>
       {submitting && (
         <ConfirmDialog
           title="Submit Funcom token"
@@ -596,14 +598,14 @@ export default function ServerScreen({ operations }: { operations: AdminOperatio
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Server views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'controls' ? null : id })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'controls' && <Controls operations={operations} />}

@@ -1,5 +1,10 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import { useEffect, useRef, useState } from 'react';
+import { containTabFocus, restoreFocus } from '../../../lib/ui/focus';
+import { lockPageScroll } from '../../../lib/ui/scroll-lock';
+import { downloadBlob } from '../../../lib/ui/download';
 import { appearancePalettes } from '../catalog';
 import { applyAppearance, colorsForPreference, deriveAppearance } from '../engine';
 import { readAppearance, restoreAppearance, saveAppearance } from '../storage';
@@ -28,6 +33,7 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
   const effective = parsed.success ? deriveAppearance(parsed.data) : null;
   useEffect(() => {
     const modal = dialog.current;
+    const unlockScroll = lockPageScroll(document.body);
     modal?.showModal();
     search.current?.focus();
     const sync = (event: StorageEvent) => {
@@ -43,7 +49,8 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
       window.removeEventListener('storage', sync);
       applyAppearance(committed.current);
       modal?.close();
-      opener?.focus();
+      unlockScroll();
+      restoreFocus(opener);
     };
   }, [opener]);
   function choose(id: string) {
@@ -95,22 +102,7 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
       event.preventDefault();
       options[next]?.focus();
     }
-    if (event.key === 'Tab') {
-      const controls = [
-        ...dialog.current!.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), select, a[href]',
-        ),
-      ].filter((el) => el.getClientRects().length);
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    }
+    containTabFocus(event, dialog.current);
   }
   return (
     <dialog
@@ -136,9 +128,9 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
           <h2 id="appearance-title">Appearance studio</h2>
           <p>Browser-local themes and full color controls. Other devices and server settings stay independent.</p>
         </div>
-        <button type="button" className={styles.close} aria-label="Close appearance studio" onClick={onClose}>
+        <Button type="button" className={styles.close} aria-label="Close appearance studio" onClick={onClose}>
           ×
-        </button>
+        </Button>
       </div>
       <div className={styles.body} data-appearance-body>
         <div className={styles.current}>
@@ -147,12 +139,12 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
           <span>{preview ? 'Unsaved preview · close to discard' : 'Current browser'}</span>
         </div>
         <div className={styles.tabs} role="group" aria-label="Appearance editor">
-          <button aria-pressed={tab === 'palettes'} onClick={() => setTab('palettes')}>
+          <Button aria-pressed={tab === 'palettes'} onClick={() => setTab('palettes')}>
             Theme library <span>66</span>
-          </button>
-          <button aria-pressed={tab === 'custom'} onClick={() => setTab('custom')}>
+          </Button>
+          <Button aria-pressed={tab === 'custom'} onClick={() => setTab('custom')}>
             Custom colors
-          </button>
+          </Button>
         </div>
         <p role="status" className={styles.status}>
           {message}
@@ -198,7 +190,7 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
                   <section key={g} aria-label={g}>
                     <h3>{g}</h3>
                     {rows.map((p) => (
-                      <button
+                      <Button
                         key={p.id}
                         data-palette-option={p.id}
                         aria-pressed={saved.selected === p.id}
@@ -216,7 +208,7 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
                         <span className={styles.check} aria-hidden="true">
                           {saved.selected === p.id ? '✓' : '↗'}
                         </span>
-                      </button>
+                      </Button>
                     ))}
                   </section>
                 ) : null;
@@ -227,22 +219,22 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
         ) : (
           <>
             <div className={styles.actions}>
-              <button
+              <Button
                 onClick={() => {
                   setCustom({ ...colorsForPreference(saved) });
                   setError('');
                 }}
               >
                 Start from applied colors
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => {
                   setCustom({ ...defaultColors });
                   setError('');
                 }}
               >
                 Reset color draft
-              </button>
+              </Button>
             </div>
             <p className={styles.hint}>
               Every surface, text, accent, border and status role is customizable. The shared engine fits surfaces and
@@ -294,7 +286,7 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
               <p className={styles.eyebrow}>Live color sample</p>
               <h3 style={{ color: effective?.colors.text }}>Field briefing</h3>
               <p style={{ color: effective?.colors.muted }}>A calm canvas. Clear priorities. Your own palette.</p>
-              <button
+              <Button
                 type="button"
                 style={
                   effective
@@ -303,10 +295,10 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
                 }
               >
                 Ready for the desert
-              </button>
+              </Button>
             </div>
             <div className={styles.actions}>
-              <button
+              <Button
                 disabled={!parsed.success}
                 onClick={() => {
                   if (parsed.success) {
@@ -319,26 +311,21 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
                 }}
               >
                 Preview on dashboard
-              </button>
-              <button disabled={!parsed.success} className={styles.primary} onClick={() => choose('custom')}>
+              </Button>
+              <Button disabled={!parsed.success} className={styles.primary} onClick={() => choose('custom')}>
                 Apply custom colors
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => {
                   const blob = new Blob(
                     [JSON.stringify({ version: 1, colors: parsed.success ? parsed.data : saved.custom })],
                     { type: 'application/json' },
                   );
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = 'arrakis-colors.json';
-                  link.click();
-                  setTimeout(() => URL.revokeObjectURL(url), 1000);
+                  downloadBlob(blob, 'arrakis-colors.json');
                 }}
               >
                 Export colors
-              </button>
+              </Button>
             </div>
             <label className={styles.import}>
               Import color JSON
@@ -371,10 +358,10 @@ export function ThemePanel({ onClose, opener }: { onClose: () => void; opener: H
       </div>
       <footer className={styles.footer}>
         <p>Default clears saved overrides in this browser.</p>
-        <button onClick={reset}>Restore Default</button>
-        <button className={styles.primary} onClick={onClose}>
+        <Button onClick={reset}>Restore Default</Button>
+        <Button className={styles.primary} onClick={onClose}>
           Done
-        </button>
+        </Button>
       </footer>
     </dialog>
   );

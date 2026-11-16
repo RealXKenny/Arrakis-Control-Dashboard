@@ -1,4 +1,5 @@
 'use client';
+import { Card } from '../../../components/ui/card';
 
 import { useState } from 'react';
 import type { RankGroup } from '../members';
@@ -28,7 +29,12 @@ export function Roster({
       <FormMessage status={message} />
       <div className="grid gap-5 md:grid-cols-3">
         {groups.map((group) => (
-          <section key={group.key} aria-labelledby={`rank-${group.key}`} className="panel flex flex-col gap-3 p-5">
+          <Card
+            as="section"
+            key={group.key}
+            aria-labelledby={`rank-${group.key}`}
+            className="panel flex flex-col gap-3 p-5"
+          >
             <div className="flex items-baseline justify-between gap-3 border-b border-sand-200/10 pb-3">
               <h3 id={`rank-${group.key}`} className="text-sm uppercase tracking-[0.2em]">
                 {group.label}
@@ -52,7 +58,7 @@ export function Roster({
             ) : (
               <p className="text-sm text-sand-500">No members reported</p>
             )}
-          </section>
+          </Card>
         ))}
       </div>
       <p className="text-xs text-sand-500">Online players may need to relog after rank changes.</p>

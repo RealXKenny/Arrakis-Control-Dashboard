@@ -32,6 +32,8 @@ Assistant discovery paths stay native; shared guidance belongs here and in `docs
 
 **## Map**
 
+- Shared UI uses `components/ui/button.tsx`, `card.tsx` and `control-styles.ts` for native buttons, semantic card surfaces and menu/control styling. Use these in new features; preserve native type/ARIA/ref behavior and feature-specific content. `lib/ui/` owns browser-safe focus, nested scroll locks and Blob downloads. Never move authentication, game actions or server imports into UI helpers. See `docs/development/shared-ui.md`; architecture tests reject raw buttons/articles outside the primitives.
+
 - `src/proxy.ts` issues a per-request `'nonce-…'` CSP. Keep pages dynamically rendered because `APP_URL` is a runtime variable. The V2 shell dropped the old Announcify widget and seasonal themes; `proxy.ts` allows no third-party script, connect, or image origins. Discord avatars are served through authenticated same-origin URLs from a bounded Redis image cache (`features/auth/server/avatar.ts`). Only `/status` additionally allows the HetrixTools report frame; its resizer is bundled locally and the link stays under More.
 
 - `src/app/` contains only routing and framework entry points. `/` and `/changelog` are public; signed-in routes live in `(workspace)/` (`portal`, `character`, `holdings` (+ `preview`), `storage`, `vehicles`, `market`, `bases` (marketplace, upload, detail), `guilds`, `guild`, `map`, `chat`, `status`, `events`, `casino` (+ `games/[game]`, `wallet`, `history`, `fairness`, `rules`), `admin`). Every workspace page calls `requireSession()` itself. `src/app/api/v2/**` uses `src/server/http.ts`; `src/pages/api/**` remains the thin legacy API layer behind `runPagesApiHandler`.

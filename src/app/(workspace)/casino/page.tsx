@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Notice, PageHeader } from '../../../components/ui/page-header';
@@ -38,7 +39,11 @@ export default async function CasinoPage() {
       )}
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
-        <section aria-labelledby="featured" className="panel flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
+        <Card
+          as="section"
+          aria-labelledby="featured"
+          className="panel flex flex-col gap-4 p-6 sm:flex-row sm:items-center"
+        >
           <GameArt id={featured.id} className="size-28 shrink-0" />
           <div>
             <p className="eyebrow">Featured table</p>
@@ -51,9 +56,9 @@ export default async function CasinoPage() {
               Take a seat
             </Link>
           </div>
-        </section>
+        </Card>
 
-        <section aria-labelledby="balance" className="panel p-6">
+        <Card as="section" aria-labelledby="balance" className="panel p-6">
           <p className="eyebrow">Your wallet</p>
           <h2 id="balance" className="sr-only">
             Wallet summary
@@ -70,7 +75,7 @@ export default async function CasinoPage() {
           <Link href="/casino/wallet" className="btn btn-ghost mt-4">
             Open wallet
           </Link>
-        </section>
+        </Card>
       </div>
 
       <section aria-labelledby="games" className="mt-10">
@@ -100,7 +105,7 @@ export default async function CasinoPage() {
       </section>
 
       <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section aria-labelledby="recent" className="panel p-6">
+        <Card as="section" aria-labelledby="recent" className="panel p-6">
           <h2 id="recent" className="eyebrow">
             Your recent rounds
           </h2>
@@ -125,8 +130,8 @@ export default async function CasinoPage() {
           <Link href="/casino/history" className="mt-3 inline-block text-sm underline">
             All history
           </Link>
-        </section>
-        <section aria-labelledby="trust" className="panel p-6">
+        </Card>
+        <Card as="section" aria-labelledby="trust" className="panel p-6">
           <h2 id="trust" className="eyebrow">
             Fairness and help
           </h2>
@@ -142,7 +147,7 @@ export default async function CasinoPage() {
               Rules and help
             </Link>
           </div>
-        </section>
+        </Card>
       </div>
     </>
   );

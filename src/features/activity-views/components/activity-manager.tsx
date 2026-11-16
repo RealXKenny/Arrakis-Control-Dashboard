@@ -1,4 +1,8 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
+
+import { buttonClass, cardClass } from '../../../components/ui/control-styles';
 import Link from 'next/link';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
@@ -120,11 +124,11 @@ export function ActivityManager() {
         not change notification preferences or your normal portal layout.
       </p>
       <div className={styles.actions}>
-        <button className="btn btn-secondary" disabled={busy} onClick={() => void send()}>
+        <Button className={buttonClass()} disabled={busy} onClick={() => void send()}>
           Reload views and discard draft
-        </button>
-        <button
-          className="btn btn-secondary"
+        </Button>
+        <Button
+          className={buttonClass()}
           disabled={busy}
           onClick={() => {
             setDraft(blank());
@@ -133,7 +137,7 @@ export function ActivityManager() {
           }}
         >
           Discard draft and start new
-        </button>
+        </Button>
       </div>
       <p role="status">{busy ? 'Reading or saving activity settings…' : message}</p>
       {error && (
@@ -147,7 +151,7 @@ export function ActivityManager() {
           and goals again.
         </p>
       )}
-      <div className={styles.card}>
+      <Card as="div" className={cardClass({ className: styles.card })}>
         <h2 ref={editorHeading} tabIndex={-1}>
           {record?.views.some((v) => v.id === draft.id) ? 'Edit activity view' : 'Create activity view'}
         </h2>
@@ -203,20 +207,20 @@ export function ActivityManager() {
             <fieldset>
               <legend>Portal widgets and order</legend>
               <div className={styles.actions}>
-                <button
+                <Button
                   type="button"
-                  className="btn btn-secondary"
+                  className={buttonClass()}
                   onClick={() => setDraft({ ...draft, portal: personalPortalLayout() })}
                 >
                   Use personal widgets
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn btn-secondary"
+                  className={buttonClass()}
                   onClick={() => setDraft({ ...draft, portal: recommendedPortalLayout(true) })}
                 >
                   Use all widgets
-                </button>
+                </Button>
               </div>
               <ul className={styles.widgets}>
                 {[...draft.portal.widgets, ...portalWidgetIds.filter((id) => !draft.portal.widgets.includes(id))].map(
@@ -243,24 +247,24 @@ export function ActivityManager() {
                           {portalWidgetCatalog[id].name}
                         </label>
                         <div className={styles.actions}>
-                          <button
+                          <Button
                             type="button"
-                            className="btn btn-secondary"
+                            className={buttonClass()}
                             aria-label={`Move ${portalWidgetCatalog[id].name} up`}
                             disabled={at <= 0}
                             onClick={() => move(id, -1)}
                           >
                             Up
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
-                            className="btn btn-secondary"
+                            className={buttonClass()}
                             aria-label={`Move ${portalWidgetCatalog[id].name} down`}
                             disabled={at < 0 || at === draft.portal.widgets.length - 1}
                             onClick={() => move(id, 1)}
                           >
                             Down
-                          </button>
+                          </Button>
                         </div>
                       </li>
                     );
@@ -380,12 +384,15 @@ export function ActivityManager() {
                 opening tasks.
               </p>
             </fieldset>
-            <button className="btn btn-primary" disabled={blocked || !record || Boolean(missingPlan)}>
+            <Button
+              className={buttonClass({ variant: 'primary' })}
+              disabled={blocked || !record || Boolean(missingPlan)}
+            >
               Save activity view
-            </button>
+            </Button>
           </fieldset>
         </form>
-      </div>
+      </Card>
       <h2 ref={savedHeading} tabIndex={-1}>
         Saved setups ({record?.views.length ?? 'unknown'} / 12)
       </h2>
@@ -394,7 +401,7 @@ export function ActivityManager() {
       )}
       <div className={styles.grid}>
         {record?.views.map((view) => (
-          <article className={styles.card} aria-label={view.name} key={view.id}>
+          <Card className={cardClass({ className: styles.card })} aria-label={view.name} key={view.id}>
             <h3>{view.name}</h3>
             <p>
               {view.portal.widgets.length} widgets · {view.portal.density} ·{' '}
@@ -409,36 +416,36 @@ export function ActivityManager() {
               ))}
             </div>
             <div className={styles.actions}>
-              <button className="btn btn-secondary" disabled={busy || blocked} onClick={() => edit(view)}>
+              <Button className={buttonClass()} disabled={busy || blocked} onClick={() => edit(view)}>
                 Edit view
-              </button>
-              <button className="btn btn-secondary" disabled={busy || blocked} onClick={() => edit(view, true)}>
+              </Button>
+              <Button className={buttonClass()} disabled={busy || blocked} onClick={() => edit(view, true)}>
                 Duplicate view
-              </button>
-              <button className="btn btn-secondary" disabled={busy || blocked} onClick={() => setDeleting(view)}>
+              </Button>
+              <Button className={buttonClass()} disabled={busy || blocked} onClick={() => setDeleting(view)}>
                 Review view deletion
-              </button>
+              </Button>
             </div>
             {deleting?.id === view.id && (
               <div className={styles.notice}>
                 <p>Delete {view.name}? This removes this saved setup, not its tasks or game data. There is no undo.</p>
                 <div className={styles.actions}>
-                  <button
-                    className="btn btn-primary"
+                  <Button
+                    className={buttonClass({ variant: 'primary' })}
                     disabled={busy || blocked || !record.revision}
                     onClick={() =>
                       void send({ action: 'delete', revision: record.revision!, id: view.id, confirmed: true })
                     }
                   >
                     Confirm delete view
-                  </button>
-                  <button className="btn btn-secondary" disabled={busy} onClick={() => setDeleting(null)}>
+                  </Button>
+                  <Button className={buttonClass()} disabled={busy} onClick={() => setDeleting(null)}>
                     Keep view
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
-          </article>
+          </Card>
         ))}
       </div>
       <p>

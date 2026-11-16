@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
 import { useState } from 'react';
 import { categoryNames, inboxCategories } from '../model';
 import { notificationConfigSchema, type NotificationConfig, type NotificationRecord } from '../preferences';
@@ -116,7 +118,7 @@ export function NotificationSettings({
                 onChange={(e) => setDraft({ ...draft, quiet: { ...draft.quiet, timeZone: e.target.value } })}
               />
             </label>
-            <button
+            <Button
               type="button"
               className="btn btn-secondary min-h-11"
               onClick={() =>
@@ -127,7 +129,7 @@ export function NotificationSettings({
               }
             >
               Use device timezone
-            </button>
+            </Button>
           </div>
           <p className={styles.notice}>
             Use an IANA timezone such as America/New_York or UTC. Overnight windows and daylight-saving changes follow
@@ -135,10 +137,10 @@ export function NotificationSettings({
           </p>
           {invalid && <p role="alert">{invalid}</p>}
           <div className={styles.filters}>
-            <button type="submit" className="btn btn-primary min-h-11" disabled={!changed}>
+            <Button type="submit" className="btn btn-primary min-h-11" disabled={!changed}>
               Save notification preferences
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               className="btn btn-secondary min-h-11"
               disabled={!changed}
@@ -148,10 +150,10 @@ export function NotificationSettings({
               }}
             >
               Discard preference changes
-            </button>
-            <button type="button" className="btn btn-secondary min-h-11" onClick={onReload}>
+            </Button>
+            <Button type="button" className="btn btn-secondary min-h-11" onClick={onReload}>
               Reload saved settings
-            </button>
+            </Button>
           </div>
         </fieldset>
       </form>

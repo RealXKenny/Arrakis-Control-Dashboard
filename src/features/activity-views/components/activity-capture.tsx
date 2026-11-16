@@ -1,4 +1,7 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+
+import { buttonClass, cardClass } from '../../../components/ui/control-styles';
 import { useEffect, useRef, useState } from 'react';
 import { activityEnvelopeSchema, activityRecordSchema, type ActivityDefinition, type ActivityRecord } from '../model';
 import styles from './activity-views.module.css';
@@ -63,8 +66,8 @@ export function ActivityCapture({ definition }: { definition: ActivityDefinition
   }
   return (
     <div className={styles.root} role="region" aria-label="Capture activity settings">
-      <button
-        className="btn btn-secondary"
+      <Button
+        className={buttonClass()}
         disabled={busy}
         onClick={() => {
           setOpen((v) => !v);
@@ -72,12 +75,12 @@ export function ActivityCapture({ definition }: { definition: ActivityDefinition
         }}
       >
         Save current settings as activity
-      </button>
+      </Button>
       {message && <p role="status">{message}</p>}
       {error && <p role="alert">{error}</p>}
       {open && (
         <form
-          className={styles.card}
+          className={cardClass({ className: styles.card })}
           onSubmit={(e) => {
             e.preventDefault();
             if (record && !busy) void run(true);
@@ -93,15 +96,15 @@ export function ActivityCapture({ definition }: { definition: ActivityDefinition
             <input maxLength={60} required value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <div className={styles.actions}>
-            <button className="btn btn-primary" disabled={busy || !record || !name.trim()}>
+            <Button className={buttonClass({ variant: 'primary' })} disabled={busy || !record || !name.trim()}>
               Create from current settings
-            </button>
-            <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void run(false)}>
+            </Button>
+            <Button type="button" className={buttonClass()} disabled={busy} onClick={() => void run(false)}>
               Reload saved views
-            </button>
-            <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => setOpen(false)}>
+            </Button>
+            <Button type="button" className={buttonClass()} disabled={busy} onClick={() => setOpen(false)}>
               Cancel capture
-            </button>
+            </Button>
           </div>
         </form>
       )}

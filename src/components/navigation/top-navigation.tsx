@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../ui/button';
 
 import { NavigationLink as Link } from './navigation-link';
 import { usePathname } from 'next/navigation';
@@ -94,7 +95,7 @@ export function TopNavigation({
         <div className="flex shrink-0 items-center gap-2 xl:gap-3 min-[1840px]:gap-2 min-[2400px]:gap-3">
           <AudioControls />
           {onOpenAppearance && (
-            <button
+            <Button
               type="button"
               aria-label="Open appearance studio"
               title="Themes and custom colors"
@@ -115,12 +116,12 @@ export function TopNavigation({
                 <circle cx="11" cy="6.5" r=".8" />
                 <circle cx="16" cy="8" r=".8" />
               </svg>
-            </button>
+            </Button>
           )}
           {identity ? (
             <>
               {onOpenCommands && (
-                <button
+                <Button
                   type="button"
                   aria-label="Open command palette"
                   title="Commands (Ctrl or Command + K)"
@@ -128,7 +129,7 @@ export function TopNavigation({
                   className="hidden size-11 items-center justify-center border border-[var(--theme-header-border)]/50 font-mono text-sm text-sand-100 hover:text-spice-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-spice-300 xl:inline-flex"
                 >
                   ⌘K
-                </button>
+                </Button>
               )}
               {/* Below the desktop bar the primary navigation is hidden, so Home stays one tap away. */}
               <Link
@@ -177,14 +178,14 @@ export function TopNavigation({
                   variant="account"
                   footer={
                     <form action={signOutAction}>
-                      <button
+                      <Button
                         type="submit"
                         role="menuitem"
                         className="flex w-full items-center gap-3 border-l-2 border-transparent px-3 py-3 text-left text-sm font-bold text-sand-200 hover:border-spice-400 hover:bg-spice-500/6 hover:text-spice-300"
                       >
                         <SignOutIcon className="size-[18px]" />
                         Sign out
-                      </button>
+                      </Button>
                     </form>
                   }
                 />
@@ -196,7 +197,7 @@ export function TopNavigation({
             </Link>
           )}
           {identity && (
-            <button
+            <Button
               ref={mobileTriggerRef}
               type="button"
               className="inline-flex size-11 items-center justify-center border border-[var(--theme-header-border)]/50 text-sand-100 hover:border-spice-400 hover:text-spice-300 xl:hidden"
@@ -206,7 +207,7 @@ export function TopNavigation({
               onClick={() => setMobileFor(mobileOpen ? null : pathname)}
             >
               <MenuIcon className="size-6" />
-            </button>
+            </Button>
           )}
         </div>
       </div>

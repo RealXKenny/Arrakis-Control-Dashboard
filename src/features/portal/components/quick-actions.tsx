@@ -1,3 +1,5 @@
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 import Link from 'next/link';
 import { navigationItemFor } from '../../../components/navigation/nav-config';
 import styles from './quick-actions.module.css';
@@ -15,7 +17,7 @@ export function PortalQuickActions({ guildState }: { guildState: 'member' | 'sol
       </div>
       <div className={styles.grid}>
         {storage && (
-          <article className={styles.card} aria-label="Find supplies">
+          <Card className={styles.card} aria-label="Find supplies">
             <span aria-hidden="true" className={styles.number}>
               01
             </span>
@@ -31,17 +33,17 @@ export function PortalQuickActions({ guildState }: { guildState: 'member' | 'sol
                 required
                 placeholder="e.g. Spice"
               />
-              <button type="submit" className="btn btn-primary">
+              <Button type="submit" className="btn btn-primary">
                 Prepare supply search
-              </button>
+              </Button>
             </form>
             <p className={styles.note}>
               Opens a prefilled finder. Choose Find items there to start the read-only search.
             </p>
-          </article>
+          </Card>
         )}
         {holdings && (
-          <article className={styles.card} aria-label="Check bases">
+          <Card className={styles.card} aria-label="Check bases">
             <span aria-hidden="true" className={styles.number}>
               02
             </span>
@@ -58,10 +60,10 @@ export function PortalQuickActions({ guildState }: { guildState: 'member' | 'sol
             <p className={styles.note}>
               Only bases available to your linked character appear. Missing readings stay unknown.
             </p>
-          </article>
+          </Card>
         )}
         {guild && (
-          <article className={styles.card} aria-label="Operation briefings">
+          <Card className={styles.card} aria-label="Operation briefings">
             <span aria-hidden="true" className={styles.number}>
               03
             </span>
@@ -79,7 +81,7 @@ export function PortalQuickActions({ guildState }: { guildState: 'member' | 'sol
                   ? 'Guild access is not confirmed here. The destination verifies your linked character and current membership.'
                   : 'Your current guild membership is verified again before private operations are shown. Opening a briefing never signs you up.'}
             </p>
-          </article>
+          </Card>
         )}
       </div>
     </section>

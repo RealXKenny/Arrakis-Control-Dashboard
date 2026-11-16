@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
@@ -117,7 +119,8 @@ export function GuildPolls({ guildId }: { guildId: string }) {
   const busy = loading || saving || !verified;
   const polls = (view?.polls ?? []).filter((poll) => (poll.closed || Date.parse(poll.closesAt) <= now) === closedOnly);
   return (
-    <section
+    <Card
+      as="section"
       aria-label="Private guild polls"
       className="panel min-w-0 p-5 sm:p-6 [&_button]:max-w-full [&_button]:whitespace-normal [&_button]:[overflow-wrap:anywhere] [&_button:disabled]:opacity-50"
     >
@@ -129,13 +132,13 @@ export function GuildPolls({ guildId }: { guildId: string }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={loading || saving} className="btn btn-secondary" onClick={refresh}>
+          <Button type="button" disabled={loading || saving} className="btn btn-secondary" onClick={refresh}>
             Refresh polls
-          </button>
+          </Button>
           {view?.canEdit && verified && (
-            <button type="button" disabled={busy || Boolean(draft)} className="btn btn-primary" onClick={create}>
+            <Button type="button" disabled={busy || Boolean(draft)} className="btn btn-primary" onClick={create}>
               New guild poll
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -160,22 +163,22 @@ export function GuildPolls({ guildId }: { guildId: string }) {
       {view && (
         <div hidden={!verified}>
           <div role="group" aria-label="Poll status" className="mt-6 flex flex-wrap gap-3">
-            <button
+            <Button
               type="button"
               aria-pressed={!closedOnly}
               className={`btn ${closedOnly ? 'btn-secondary' : 'btn-primary'}`}
               onClick={() => setClosedOnly(false)}
             >
               Open polls
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               aria-pressed={closedOnly}
               className={`btn ${closedOnly ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setClosedOnly(true)}
             >
               Closed polls
-            </button>
+            </Button>
           </div>
           <p className="mt-4 text-xs text-sand-500">
             Live totals show choices, not voter identities. Your choice is stored privately on the server and is not a
@@ -189,17 +192,17 @@ export function GuildPolls({ guildId }: { guildId: string }) {
                   : 'Close voting now? This poll cannot be reopened.'}
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
-                <button type="button" disabled={busy} className="btn btn-primary" onClick={() => mutate(confirmation)}>
+                <Button type="button" disabled={busy} className="btn btn-primary" onClick={() => mutate(confirmation)}>
                   Confirm change
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   disabled={saving}
                   className="btn btn-secondary"
                   onClick={() => setConfirmation(null)}
                 >
                   Keep poll unchanged
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -207,7 +210,7 @@ export function GuildPolls({ guildId }: { guildId: string }) {
           <ul aria-label="Guild poll list" className="mt-5 grid min-w-0 gap-5">
             {polls.map((poll) => (
               <li key={poll.id} className="min-w-0">
-                <article aria-label={poll.question} className="min-w-0 border border-sand-200/20 p-4">
+                <Card aria-label={poll.question} className="min-w-0 border border-sand-200/20 p-4">
                   <p className="font-mono text-xs uppercase text-spice-300">
                     {closedOnly ? 'Closed' : 'Open'} · Single choice
                   </p>
@@ -234,7 +237,7 @@ export function GuildPolls({ guildId }: { guildId: string }) {
                             {poll.ownOptionId === option.id ? ' · Your vote' : ''}
                           </p>
                           {!closedOnly && (
-                            <button
+                            <Button
                               type="button"
                               disabled={busy || poll.ownOptionId === option.id}
                               aria-pressed={poll.ownOptionId === option.id}
@@ -244,45 +247,45 @@ export function GuildPolls({ guildId }: { guildId: string }) {
                               }
                             >
                               Vote: {option.text}
-                            </button>
+                            </Button>
                           )}
                         </li>
                       );
                     })}
                   </ul>
                   {!closedOnly && poll.ownOptionId && (
-                    <button
+                    <Button
                       type="button"
                       disabled={busy}
                       className="btn btn-secondary mt-4"
                       onClick={() => mutate({ action: 'withdraw', id: poll.id, revision: poll.revision })}
                     >
                       Withdraw my vote
-                    </button>
+                    </Button>
                   )}
                   {view.canEdit && (
                     <div className="mt-5 flex flex-wrap gap-3">
                       {!closedOnly && (
-                        <button
+                        <Button
                           type="button"
                           disabled={busy}
                           className="btn btn-secondary"
                           onClick={() => setConfirmation({ action: 'close', id: poll.id, revision: poll.revision })}
                         >
                           Close poll early
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
                         type="button"
                         disabled={busy}
                         className="btn btn-secondary"
                         onClick={() => setConfirmation({ action: 'delete', id: poll.id, revision: poll.revision })}
                       >
                         Remove poll
-                      </button>
+                      </Button>
                     </div>
                   )}
-                </article>
+                </Card>
               </li>
             ))}
           </ul>
@@ -292,6 +295,6 @@ export function GuildPolls({ guildId }: { guildId: string }) {
           </p>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

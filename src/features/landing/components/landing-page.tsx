@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ArrowRightIcon } from '../../../components/icons';
@@ -27,7 +28,7 @@ function FeatureRow({ feature, flip }: { feature: Featured; flip: boolean }) {
   const Icon = feature.icon;
   const Illustration = ILLUSTRATION[feature.id];
   return (
-    <article
+    <Card
       aria-labelledby={`feature-${feature.id}`}
       className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-14"
     >
@@ -53,7 +54,7 @@ function FeatureRow({ feature, flip }: { feature: Featured; flip: boolean }) {
       <div className={`min-w-0 lg:col-span-7 ${flip ? 'lg:order-1' : ''}`}>
         <Illustration />
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -177,7 +178,7 @@ export default async function LandingPage() {
             const Icon = capability.icon;
             return (
               <li key={capability.id} className="flex">
-                <article className="panel panel-interactive relative flex w-full flex-col gap-4 p-6 focus-within:border-spice-400">
+                <Card className="panel panel-interactive relative flex w-full flex-col gap-4 p-6 focus-within:border-spice-400">
                   <Icon className="size-7 text-spice-400" />
                   <h3 className="text-base leading-snug tracking-monolith">
                     <Link
@@ -193,7 +194,7 @@ export default async function LandingPage() {
                       {capability.note}
                     </p>
                   )}
-                </article>
+                </Card>
               </li>
             );
           })}

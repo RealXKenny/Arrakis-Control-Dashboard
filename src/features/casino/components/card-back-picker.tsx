@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { useEffect, useState } from 'react';
 import { CARD_BACKS, type CardBack, PlayingCard } from './playing-card';
@@ -29,7 +30,7 @@ export function CardBackPicker({ back, onChange }: { back: CardBack; onChange: (
       <summary className="cursor-pointer py-2">Card back · {back}</summary>
       <div className="flex flex-wrap gap-3 py-3" role="group" aria-label="Card back design">
         {CARD_BACKS.map((value) => (
-          <button
+          <Button
             key={value}
             type="button"
             aria-pressed={back === value}
@@ -38,7 +39,7 @@ export function CardBackPicker({ back, onChange }: { back: CardBack; onChange: (
           >
             <PlayingCard id={null} back={value} dealing={false} />
             <span>{value}</span>
-          </button>
+          </Button>
         ))}
       </div>
     </details>

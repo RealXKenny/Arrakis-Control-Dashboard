@@ -1,4 +1,6 @@
 'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 
 import { useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { ChatMessage, ChatServer } from '../contracts';
@@ -55,7 +57,7 @@ function ChatMessageRow({
     .toLocaleUpperCase();
   const uncertain = message.delivery === 'failed' || message.delivery === 'unknown';
   return (
-    <article
+    <Card
       className={`group flex items-start gap-2.5 px-4 py-3 sm:gap-3 sm:px-6 ${own ? '' : 'flex-row-reverse'}`}
       data-message-id={message.id}
       data-message-side={own ? 'left' : 'right'}
@@ -136,19 +138,19 @@ function ChatMessageRow({
           (isOptimisticChatMessage(message) ? (
             <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <p className="text-xs text-sand-500">The response was lost; the message may already have been sent.</p>
-              <button
+              <Button
                 type="button"
                 className="text-xs font-bold text-spice-300 underline decoration-spice-500/50 underline-offset-4"
                 onClick={() => onCheckStatus(message)}
               >
                 Check status
-              </button>
+              </Button>
             </div>
           ) : (
             <p className="mt-1 text-xs text-sand-500">Check game chat before considering another send.</p>
           ))}
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -232,7 +234,8 @@ function ChatConversation({
   };
 
   return (
-    <section
+    <Card
+      as="section"
       className="panel overflow-hidden border-t-2 border-t-spice-500"
       aria-label={`Live chat for ${server.label}`}
     >
@@ -282,14 +285,14 @@ function ChatConversation({
         >
           <div className="px-4 py-3 text-center sm:px-6">
             {nextCursor ? (
-              <button
+              <Button
                 type="button"
                 className="btn btn-ghost min-h-9 text-[0.65rem]"
                 onClick={() => void loadHistory()}
                 disabled={loadingOlder}
               >
                 {loadingOlder ? 'Loading history…' : 'Load older messages'}
-              </button>
+              </Button>
             ) : (
               <span className="font-mono text-[0.65rem] uppercase tracking-wider text-sand-500">
                 You’re all caught up
@@ -348,14 +351,14 @@ function ChatConversation({
           )}
         </div>
         {unread > 0 && (
-          <button
+          <Button
             type="button"
             className="btn absolute bottom-4 left-1/2 -translate-x-1/2 border border-spice-300 bg-spice-500 text-obsidian-950 shadow-[3px_3px_0_0_#8d370d] hover:bg-spice-400"
             onClick={scrollToLatest}
             aria-live="polite"
           >
             {unread} new {unread === 1 ? 'message' : 'messages'}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -378,13 +381,13 @@ function ChatConversation({
                   {message.content}
                 </p>
               </div>
-              <button
+              <Button
                 type="button"
                 className="btn btn-ghost min-h-10 gap-2 px-3 text-[0.625rem]"
                 onClick={() => dismissFailedMessage(message.id)}
               >
                 <CloseIcon className="size-3" /> Dismiss message
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -413,13 +416,13 @@ function ChatConversation({
             aria-describedby="chat-composer-help"
             className="max-h-44 min-h-16 min-w-0 flex-1 resize-y bg-transparent px-2 py-2 text-sm leading-relaxed text-sand-100 placeholder:text-sand-600 focus:outline-none"
           />
-          <button
+          <Button
             type="submit"
             className="btn min-h-11 shrink-0 gap-2 border border-spice-300 bg-spice-500 px-4 text-obsidian-950 shadow-[3px_3px_0_0_#8d370d] hover:bg-spice-400 disabled:border-sand-200/15 disabled:bg-sand-200/10 disabled:text-sand-600 disabled:shadow-none sm:px-6"
             disabled={!draft.trim()}
           >
             Send <ArrowRightIcon className="size-4" />
-          </button>
+          </Button>
         </div>
         <div id="chat-composer-help" className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-sand-500">
           <span>
@@ -433,7 +436,7 @@ function ChatConversation({
           </span>
         </div>
       </form>
-    </section>
+    </Card>
   );
 }
 

@@ -1,3 +1,4 @@
+import { Card } from '../../../../components/ui/card';
 import type { Metadata } from 'next';
 import { Notice, PageHeader } from '../../../../components/ui/page-header';
 import { requireSession } from '../../../../features/auth/server/session';
@@ -43,7 +44,7 @@ export default async function CasinoWalletPage() {
         </div>
       )}
 
-      <section aria-labelledby="balance" className="panel p-6">
+      <Card as="section" aria-labelledby="balance" className="panel p-6">
         <h2 id="balance" className="eyebrow">
           Casino wallet
         </h2>
@@ -56,7 +57,7 @@ export default async function CasinoWalletPage() {
           Largest wager {formatCredits(wallet.limits.maxWager)}. Largest payout for one round{' '}
           {formatCredits(wallet.limits.maxPayout)}.
         </p>
-      </section>
+      </Card>
 
       <div className="mt-8">
         <TransferPanel enabled={wallet.enabled} available={wallet.solaris.available} initial={transfers} />
@@ -66,7 +67,7 @@ export default async function CasinoWalletPage() {
         <WalletControls pausedUntil={wallet.pausedUntil} />
       </div>
 
-      <section id="transactions" aria-labelledby="transactions-title" className="mt-8 panel p-6">
+      <Card as="section" id="transactions" aria-labelledby="transactions-title" className="mt-8 panel p-6">
         <h2 id="transactions-title" className="eyebrow">
           Wallet transactions
         </h2>
@@ -109,7 +110,7 @@ export default async function CasinoWalletPage() {
             </table>
           </div>
         )}
-      </section>
+      </Card>
     </>
   );
 }

@@ -1,4 +1,6 @@
 'use client';
+import { Button } from '../../../components/ui/button';
+import { Card } from '../../../components/ui/card';
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -62,14 +64,14 @@ export function MemberManageButton({
 
   return (
     <>
-      <button
+      <Button
         type="button"
         className="btn btn-ghost min-h-9 px-3 text-[0.6875rem]"
         aria-label={`Manage ${member.name}`}
         onClick={() => setOpen('menu')}
       >
         Manage
-      </button>
+      </Button>
       {open && (
         <Modal
           title={
@@ -82,43 +84,43 @@ export function MemberManageButton({
           {open === 'menu' && (
             <div className="flex flex-wrap gap-3">
               {actions.includes('promote') && (
-                <button
+                <Button
                   type="button"
                   className="btn btn-primary"
                   disabled={mutation.busy}
                   onClick={() => void act('promote')}
                 >
                   Promote to Officer
-                </button>
+                </Button>
               )}
               {actions.includes('demote') && (
-                <button
+                <Button
                   type="button"
                   className="btn btn-primary"
                   disabled={mutation.busy}
                   onClick={() => void act('demote')}
                 >
                   Demote to Member
-                </button>
+                </Button>
               )}
               {actions.includes('transfer') && (
-                <button
+                <Button
                   type="button"
                   className="btn btn-ghost"
                   disabled={mutation.busy}
                   onClick={() => setOpen('transfer')}
                 >
                   Transfer leadership
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 type="button"
                 className="btn btn-ghost"
                 disabled={mutation.busy}
                 onClick={() => setOpen('remove')}
               >
                 Remove from guild
-              </button>
+              </Button>
             </div>
           )}
           {open === 'remove' && (
@@ -126,14 +128,14 @@ export function MemberManageButton({
               <p className="text-sm text-sand-300">
                 Remove {member.name} from {guildName}?
               </p>
-              <button
+              <Button
                 type="button"
                 className={dangerButton}
                 disabled={mutation.busy}
                 onClick={() => void act('remove', 'REMOVE MEMBER', 'Member removed.')}
               >
                 Confirm removal
-              </button>
+              </Button>
             </>
           )}
           {open === 'transfer' && (
@@ -142,14 +144,14 @@ export function MemberManageButton({
                 Make {member.name} the guild leader? You will be demoted and lose access to leader controls. Online
                 players may need to relog.
               </p>
-              <button
+              <Button
                 type="button"
                 className={dangerButton}
                 disabled={mutation.busy}
                 onClick={() => void act('promote', 'TRANSFER LEADERSHIP', 'Leadership transferred.')}
               >
                 Confirm leadership transfer
-              </button>
+              </Button>
             </>
           )}
           {mutation.busy && (
@@ -185,9 +187,9 @@ export function AddMemberButton({ guildId, onDone }: { guildId: string; onDone: 
 
   return (
     <>
-      <button type="button" className="btn btn-ghost" onClick={() => setOpen(true)}>
+      <Button type="button" className="btn btn-ghost" onClick={() => setOpen(true)}>
         Add member
-      </button>
+      </Button>
       {open && (
         <Modal
           title="Add guild member"
@@ -218,9 +220,9 @@ export function AddMemberButton({ guildId, onDone }: { guildId: string; onDone: 
                 <option value="50">Officer</option>
               </select>
             </Field>
-            <button type="submit" disabled={mutation.busy} className="btn btn-primary self-start disabled:opacity-50">
+            <Button type="submit" disabled={mutation.busy} className="btn btn-primary self-start disabled:opacity-50">
               {mutation.busy ? 'Adding…' : 'Add member'}
-            </button>
+            </Button>
           </form>
         </Modal>
       )}
@@ -247,12 +249,16 @@ export function DisbandPanel({ guildId, guildName }: { guildId: string; guildNam
   }
 
   return (
-    <section aria-label="Disband guild" className="panel flex flex-col gap-3 border-l-4 border-l-status-danger p-6">
+    <Card
+      as="section"
+      aria-label="Disband guild"
+      className="panel flex flex-col gap-3 border-l-4 border-l-status-danger p-6"
+    >
       <h3 className="text-sm uppercase tracking-[0.2em]">Disband guild</h3>
       <p className="text-sm text-sand-400">Permanently remove the guild and its members.</p>
-      <button type="button" className={`${dangerButton} self-start`} onClick={() => setOpen(true)}>
+      <Button type="button" className={`${dangerButton} self-start`} onClick={() => setOpen(true)}>
         Disband guild
-      </button>
+      </Button>
       {open && (
         <Modal
           title={`Disband ${guildName}`}
@@ -279,12 +285,12 @@ export function DisbandPanel({ guildId, guildName }: { guildId: string; guildNam
                 className={inputClass}
               />
             </Field>
-            <button type="submit" disabled={mutation.busy || confirmation !== DISBAND_PHRASE} className={dangerButton}>
+            <Button type="submit" disabled={mutation.busy || confirmation !== DISBAND_PHRASE} className={dangerButton}>
               {mutation.busy ? 'Disbanding…' : 'Permanently disband guild'}
-            </button>
+            </Button>
           </form>
         </Modal>
       )}
-    </section>
+    </Card>
   );
 }

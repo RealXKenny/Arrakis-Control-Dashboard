@@ -1,3 +1,4 @@
+import { Card } from '../../../components/ui/card';
 import type { ReactNode } from 'react';
 
 /**
@@ -29,7 +30,7 @@ const NAV = ['Home', 'Portal', 'Bases', 'Map', 'Chat'];
 export function DashboardIllustration() {
   return (
     <Figure>
-      <div aria-hidden="true" className="panel p-3 sm:p-4">
+      <Card as="div" aria-hidden="true" className="panel p-3 sm:p-4">
         <div className="flex items-center gap-1.5 border-b border-sand-200/10 pb-3">
           <span className="size-2 bg-spice-500" />
           <span className="size-2 bg-sand-200/20" />
@@ -94,7 +95,7 @@ export function DashboardIllustration() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </Figure>
   );
 }
@@ -103,7 +104,7 @@ export function DashboardIllustration() {
 export function MapIllustration() {
   return (
     <Figure>
-      <div aria-hidden="true" className="panel p-3 sm:p-4">
+      <Card as="div" aria-hidden="true" className="panel p-3 sm:p-4">
         <div className="relative aspect-[5/3] overflow-hidden border border-sand-200/10 bg-obsidian-900 bg-grid bg-[size:28px_28px]">
           <svg
             viewBox="0 0 300 180"
@@ -152,7 +153,7 @@ export function MapIllustration() {
             Player
           </span>
         </div>
-      </div>
+      </Card>
     </Figure>
   );
 }
@@ -168,7 +169,7 @@ const ROWS = [
 export function GuildIllustration() {
   return (
     <Figure>
-      <div aria-hidden="true" className="panel p-3 sm:p-4">
+      <Card as="div" aria-hidden="true" className="panel p-3 sm:p-4">
         <div className="font-mono text-[0.625rem] uppercase tracking-widest text-sand-500">Roster</div>
         <ul className="mt-3 flex flex-col gap-2">
           {ROWS.map((row, index) => (
@@ -202,7 +203,7 @@ export function GuildIllustration() {
             <Bar width="35%" />
           </div>
         </div>
-      </div>
+      </Card>
     </Figure>
   );
 }

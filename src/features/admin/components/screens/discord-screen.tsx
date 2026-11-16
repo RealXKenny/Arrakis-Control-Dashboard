@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import Link from 'next/link';
 import ConsoleHandoff from '../console-handoff';
 import { ReadPanel } from '../data-panel';
@@ -26,13 +28,13 @@ export default function DiscordScreen({
   const view = VIEWS.find(([id]) => id === url.read('view'))?.[0] ?? 'status';
   if (!adapterConfigured)
     return (
-      <section className={ui.panel} aria-label="Adapter not configured">
+      <Card as="section" className={ui.panel} aria-label="Adapter not configured">
         <h3>The Discord adapter is not configured</h3>
         <p>
           Set <code>ADAPTER_TOKEN</code> on the dashboard server and restart it to enable adapter reads. That token is
           separate from the administration Console key and is never shown in the browser.
         </p>
-      </section>
+      </Card>
     );
   return (
     <div className={ui.screen}>
@@ -42,14 +44,14 @@ export default function DiscordScreen({
       </p>
       <div className={ui.subTabs} role="group" aria-label="Discord views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'status' ? null : id })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'status' && (
@@ -81,7 +83,7 @@ export default function DiscordScreen({
       )}
       {view === 'lookups' && (
         <>
-          <section className={ui.panel} aria-label="Account links and lookups">
+          <Card as="section" className={ui.panel} aria-label="Account links and lookups">
             <h3>Account links and lookups</h3>
             <p className={ui.stateLine}>
               Account-link verification and inventory or guild lookups take adapter-specific inputs. They open in the
@@ -99,7 +101,7 @@ export default function DiscordScreen({
                 </li>
               ))}
             </ul>
-          </section>
+          </Card>
           <ConsoleHandoff
             operations={operations}
             ids={[

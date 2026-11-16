@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '../../../components/ui/button';
 
 import { LocalTime } from '../../../components/ui/local-time';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -208,9 +209,9 @@ export function GuildChat({ url, title, note, roleLabels, readFrom, onUnreadCoun
       {connectionError && (
         <p role="alert" className="text-sm text-status-danger">
           {connectionError}{' '}
-          <button type="button" className="underline" onClick={() => setReload((value) => value + 1)}>
+          <Button type="button" className="underline" onClick={() => setReload((value) => value + 1)}>
             Reconnect chat
-          </button>
+          </Button>
         </p>
       )}
       <ol
@@ -255,13 +256,13 @@ export function GuildChat({ url, title, note, roleLabels, readFrom, onUnreadCoun
             className={inputClass}
           />
         </label>
-        <button
+        <Button
           type="submit"
           disabled={sending || loading || fatal || !draft.trim()}
           className="btn btn-primary self-start disabled:opacity-50"
         >
           {sending ? 'Sending…' : 'Send message'}
-        </button>
+        </Button>
       </form>
     </section>
   );

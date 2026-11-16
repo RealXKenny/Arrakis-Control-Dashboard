@@ -1,3 +1,5 @@
+import { Card } from '../../../../components/ui/card';
+import { Button } from '../../../../components/ui/button';
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { findOperation } from '../../client';
@@ -33,7 +35,7 @@ function Read({
 }) {
   const result = useAdminQuery(findOperation(operations, id), { query });
   return (
-    <section className={ui.panel} aria-label={title}>
+    <Card as="section" className={ui.panel} aria-label={title}>
       <h3>{title}</h3>
       <QueryState loading={result.loading} error={result.error} onRetry={result.refresh}>
         {kind === 'table' ? (
@@ -42,7 +44,7 @@ function Read({
           <Facts value={result.data} />
         )}
       </QueryState>
-    </section>
+    </Card>
   );
 }
 
@@ -66,7 +68,7 @@ function Worlds({ operations }: { operations: AdminOperation[] }) {
         empty="No maps were reported."
       />
       <Read operations={operations} id="get-map-status" title="Runtime status" query={{ raw: 0 }} />
-      <section className={ui.panel} aria-label="Map controls">
+      <Card as="section" className={ui.panel} aria-label="Map controls">
         <h3>Start, stop and restart</h3>
         <p className={ui.stateLine}>
           Each map and partition action names its exact target and requires its Console confirmation phrase, so these
@@ -79,7 +81,7 @@ function Worlds({ operations }: { operations: AdminOperation[] }) {
             </li>
           ))}
         </ul>
-      </section>
+      </Card>
     </>
   );
 }
@@ -96,12 +98,12 @@ function Memory({ operations }: { operations: AdminOperation[] }) {
       )}
       <Read operations={operations} id="get-maps-memory-live" title="Live memory and swap" />
       <Read operations={operations} id="get-maps-memory" title="Memory limits per map" kind="table" />
-      <section className={ui.panel} aria-label="Memory balancer">
+      <Card as="section" className={ui.panel} aria-label="Memory balancer">
         <h3>Memory balancer</h3>
         <Read operations={operations} id="get-maps-memory-balancer" title="Balancer state" />
         <div className={ui.actions}>
           {[true, false].map((enabled) => (
-            <button
+            <Button
               key={String(enabled)}
               type="button"
               onClick={() =>
@@ -124,10 +126,10 @@ function Memory({ operations }: { operations: AdminOperation[] }) {
               }
             >
               Turn {enabled ? 'on' : 'off'}…
-            </button>
+            </Button>
           ))}
         </div>
-      </section>
+      </Card>
       <Read operations={operations} id="get-maps-memory-swap" title="Swap" />
       <Read operations={operations} id="get-maps-autoscaler" title="Autoscaler" />
       <p className={ui.stateLine}>
@@ -171,7 +173,7 @@ function Settings({ operations }: { operations: AdminOperation[] }) {
           {notice}
         </p>
       )}
-      <section className={ui.panel} aria-label="Runtime settings">
+      <Card as="section" className={ui.panel} aria-label="Runtime settings">
         <h3>Runtime settings</h3>
         <QueryState loading={runtime.loading} error={runtime.error} onRetry={runtime.refresh}>
           <Facts value={runtime.data} />
@@ -181,9 +183,9 @@ function Settings({ operations }: { operations: AdminOperation[] }) {
             Always-on startup parallelism
             <input inputMode="numeric" value={parallelism} onChange={(event) => setParallelism(event.target.value)} />
           </label>
-          <button type="submit">Review…</button>
+          <Button type="submit">Review…</Button>
         </form>
-      </section>
+      </Card>
       <Read
         operations={operations}
         id="get-maps-user-settings-restart-pending"
@@ -249,14 +251,14 @@ export default function MapsScreen({ operations }: { operations: AdminOperation[
     <div className={ui.screen}>
       <div className={ui.subTabs} role="group" aria-label="Map views">
         {VIEWS.map(([id, label]) => (
-          <button
+          <Button
             key={id}
             type="button"
             aria-pressed={id === view}
             onClick={() => url.update({ view: id === 'worlds' ? null : id })}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
       {view === 'worlds' && <Worlds operations={operations} />}

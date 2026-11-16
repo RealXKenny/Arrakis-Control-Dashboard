@@ -23,13 +23,9 @@
 }
 .card,
 .review {
-  min-width: 0;
-  border: 1px solid var(--color-sand-500);
-  background: var(--color-obsidian-900);
   padding: 1.25rem;
   display: grid;
   gap: 1rem;
-  overflow-wrap: anywhere;
 }
 .root h2 {
   color: var(--color-sand-100);
