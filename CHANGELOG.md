@@ -8,6 +8,7 @@
 - Service status shows the active Console restart queue with server-adjusted countdowns and an explicit unavailable state. Daily and IP-change restart schedules are not included in that queue.
 - Service status shows recent Console restart records when available, without treating restarts as confirmed incidents or inventing causes.
 - Members with a separately configured backup-viewer role can see sanitized scheduled-system-backup status. Restore-rehearsal evidence is not currently available.
+- Service status includes an optional read-only check of server status, restart-queue and online-population integration health, with permission and unavailable states and process-local last-success timestamps.
 - Navigation reorganized: the More menu is gone. Everything now sits in the top row as categories (Assets, Bases, Guilds, Casino, Community and Personal), and every dropdown uses the same Bases-style panel with an introduction card and titled groups. Narrower desktop widths place the row on its own line instead of hiding destinations.
 - Universal item finder searches your authorized backpack, base containers and vehicle cargo with permission checks, and private pinned item counters track the stacks you care about.
 - Customizable portal widgets with a compact personal view, saved activity views for different activities, and a Console-default theme with 66 additional themes and a custom color studio.

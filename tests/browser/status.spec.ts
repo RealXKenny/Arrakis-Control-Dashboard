@@ -4,6 +4,35 @@ import { test, expect } from '../helpers/browser-test';
 const REPORT = 'https://wl.hetrixtools.com/r/6fb3cbf6a8f67831f3e046b945b82450/';
 const child = readFileSync('node_modules/iframe-resizer/js/iframeResizer.contentWindow.js', 'utf8');
 
+test('capability checks are manual and report sanitized states', async ({ page }) => {
+  await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
+  let calls = 0;
+  await page.route('**/api/v2/monitoring/capabilities', (route) => {
+    calls++;
+    return route.fulfill({
+      json: {
+        ok: true,
+        readings: [
+          {
+            id: 'population',
+            label: 'Online population',
+            state: 'permission',
+            checkedAt: new Date().toISOString(),
+            lastSuccessAt: null,
+          },
+        ],
+      },
+    });
+  });
+  await page.goto('/status');
+  const report = page.getByRole('region', { name: 'Integration capabilities' });
+  expect(calls).toBe(0);
+  await report.getByRole('button', { name: 'Check capabilities' }).click();
+  await expect(report).toContainText('Credential or permission refused');
+  await expect(report).toContainText('not recorded');
+  expect(calls).toBe(1);
+});
+
 test('shows the confirmed queue and clears it when the provider becomes unavailable', async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ Cookie: '__Host-dashboard_session=browser-member-session' });
   let available = true;
