@@ -33,6 +33,13 @@ test('new location pages show only verified position without a fabricated map', 
     await expect(page.getByText('1.25', { exact: true })).toBeVisible();
     if (name === 'Arrakeen') {
       await expect(page.getByRole('img', { name: 'Your approximate position' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Central Plaza (Locations)', exact: true })).toBeVisible();
+      await page.getByLabel('Locations (9)').uncheck();
+      await expect(page.getByRole('button', { name: 'Central Plaza (Locations)', exact: true })).toHaveCount(0);
+      await page.getByLabel('Locations (9)').check();
+      await page.getByRole('button', { name: 'Central Plaza (Locations)', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect(page.getByRole('status').filter({ hasText: 'Central Plaza — Locations' })).toBeVisible();
     } else {
       await expect(page.getByText(/map has not been calibrated yet/)).toBeVisible();
       await expect(page.getByRole('img', { name: 'Your approximate position' })).toHaveCount(0);

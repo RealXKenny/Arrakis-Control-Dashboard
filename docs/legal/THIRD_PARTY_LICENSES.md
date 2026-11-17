@@ -63,6 +63,8 @@ The landing illustrations, geometric casino emblems, SVG playing-card faces and 
 
 The Arrakeen, Harko Village and Overland map images were supplied by the project user as game images. © Funcom Oslo AS; see [Dune: Awakening](https://duneawakening.com/) and [Funcom's fan-use policy](https://www.funcom.com/legal/). The policy describes limited, revocable noncommercial fan use and does not grant an MIT license.
 
+The Arrakeen marker data was supplied by the project user from [Map Genie](https://mapgenie.io/dune-awakening/maps/arrakeen), who reports receiving permission to use it. The marker data remains subject to its own rights and is not represented as MIT-licensed project artwork.
+
 The 112 palette-derived swatch tiles are CC BY-NC-SA 4.0, not MIT. Their noncommercial and share-alike restrictions must be preserved; commercial redistribution is not covered by that license. No permission is claimed here for commercial use of game artwork. Maintainers must confirm that the intended fan-project distribution of game-derived assets is acceptable before publication.
 
 ## Archivo and JetBrains Mono fonts
