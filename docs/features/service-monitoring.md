@@ -22,6 +22,18 @@ The existing recorder stores one aggregate online-player observation per minute 
 
 The structured status response provides only aggregate population. Although the restart-queue endpoint accepts a map query, its implementation can fall back to the battlegroup-wide count when the scoped read fails, so the response cannot reliably establish per-map historical coverage. The dashboard consequently keeps per-map/per-server filters unavailable rather than mislabeling aggregate values as map data.
 
+## Backup confidence (N078)
+
+Fresh `BACKUP_VIEWER_DISCORD_ROLE_IDS` verification gates all scheduled status and inventory reads. Console transport must be HTTPS or loopback. The scheduled system status reports enabled/interval, last run/result, next run and stale/missing timestamps. Independent database and encrypted-system inventories each return at most 100 sanitized rows with creation metadata and automatic markers, never archive names, paths, messages, passphrases or credentials.
+
+Archive presence is not a successful-run result. These sources provide only the latest scheduled success/skipped/failed/running state, not per-archive success/failure or trusted restore-rehearsal evidence. Those unavailable categories remain explicit; the dashboard performs no backup, restore or administrative mutation.
+
+## Capability report (N080)
+
+The manual report probes 13 fixed read-only endpoints: structured status, readiness, services, performance, restart queue/history/schedule, IP-change monitoring, population, database/system inventories and database/system schedules. One-minute coalescing and six requests/account/minute bound provider work. Responses classify available, permission, unsupported (501), rate-limited and unavailable/unrecognized results; a 404 alone is not called unsupported.
+
+Only labels, categories, check time, last success and stale state reach the browser. Last success is process-local and becomes stale after 15 minutes when a later probe fails. No provider payload, infrastructure detail or credential is exposed, and no elevated scope is requested.
+
 ## Verification and limitations
 
 Focused monitoring and inbox unit/API suites, the production build and smoke tests, and status/inbox Chromium tests cover authorization, independent source failures, sanitization, preference controls, 390px layout and axe accessibility. Native screen readers, physical devices and a live Console deployment remain unverified. No daily/IP-change schedule parsing, per-map population inference, incident-cause inference or restore-rehearsal claim is added.

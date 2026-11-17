@@ -7,8 +7,8 @@
 - The portal's server rhythm panel can show seven days of observed aggregate population by local weekday and hour, including sample counts and missing-data states.
 - Service status shows the active Console restart queue with server-adjusted countdowns and an explicit unavailable state. Daily and IP-change restart schedules are not included in that queue.
 - Service status shows recent Console restart records when available, without treating restarts as confirmed incidents or inventing causes.
-- Members with a separately configured backup-viewer role can see sanitized scheduled-system-backup status. Restore-rehearsal evidence is not currently available.
-- Service status includes an optional read-only check of server status, restart-queue and online-population integration health, with permission and unavailable states and process-local last-success timestamps.
+- Members with a separately configured backup-viewer role can see sanitized scheduled-system-backup status and database/system inventories. Archive presence is not proof of success or restore rehearsal; per-archive results and restore-rehearsal evidence remain unavailable.
+- Service status includes an optional read-only report across 13 server, restart, population and backup capabilities, with permission, unsupported, outage and rate-limit states plus process-local stale last-success timestamps.
 - A community calendar brings scheduled published events, verified personal guild signups and active queued restarts together in local-time agenda, week and month views; missing sources remain visible.
 - Service status records seven days of sanitized health observations and separates observed degradation, outages and recovery from confirmed restart history. The actionable inbox adds scheduled-event and queued-restart categories with per-account notification controls.
 - Community events support private registration and cancellation with bounded attendee seats and waiting lists, atomic last-seat protection and automatic promotion, plus own-status calendar and inbox context.

@@ -76,6 +76,6 @@ it('shows authorized viewers sanitized evidence without claiming recoverability'
   expect(element).not.toBeNull();
   const html = renderToStaticMarkup(element!);
   expect(html).toContain('success');
-  expect(html).toContain('does not prove recoverability');
+  expect(html).toContain('does not prove a successful run or recoverability');
   expect(html).not.toContain('private-name');
 });

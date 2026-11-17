@@ -77,7 +77,8 @@ export function CapabilityReport() {
               <strong>{item.label}:</strong> {labels[item.state] ?? 'Unavailable'}. Checked{' '}
               <LocalTime value={item.checkedAt} />
               {now > 0 && now - Date.parse(item.checkedAt) > 120000 ? ' (stale)' : ''}; last successful check{' '}
-              {item.lastSuccessAt ? <LocalTime value={item.lastSuccessAt} /> : 'not recorded'}.
+              {item.lastSuccessAt ? <LocalTime value={item.lastSuccessAt} /> : 'not recorded'}
+              {item.stale ? ' (last success is stale)' : ''}.
             </li>
           ))}
         </ul>

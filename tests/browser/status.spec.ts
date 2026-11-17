@@ -33,6 +33,20 @@ test('capability checks are manual and report sanitized states', async ({ page }
   await expect(report).toContainText('Credential or permission refused');
   await expect(report).toContainText('not recorded');
   expect(calls).toBe(1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.evaluate(axeSource);
+  const violations = await page.evaluate(async () => {
+    const axe = (
+      window as unknown as {
+        axe: { run(document: Document, options: object): Promise<{ violations: { id: string }[] }> };
+      }
+    ).axe;
+    return (await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'] })).violations.map(
+      (item) => item.id,
+    );
+  });
+  expect(violations).toEqual([]);
 });
 
 test('shows the confirmed queue and clears it when the provider becomes unavailable', async ({ page }) => {
