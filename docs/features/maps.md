@@ -33,6 +33,10 @@ Arrakeen also offers 49 user-supplied Map Genie location, service and contract m
 
 Category-specific Arrakeen marker icons use the user-supplied atlas and metadata.
 
+The dashboard checks the Console's read-only realtime snapshot for the linked character every three seconds while a match is available, and backs off when it is unavailable. Because agent player objects have no canonical identity, the server only offers an **inferred** position when a fresh ready source and the Console both show exactly one online player in that partition, the linked character matches by pawn ID, and the positions are within 300 metres. A changed link, ambiguous match, unavailable agent, missing player scope, or stale snapshot falls back to the existing Console position. No other player positions or raw agent objects are returned. The matching approach is informed by [MapViewer3D](https://github.com/dev-prophet-code/MapViewer3D/blob/main/docs/Agent-EN.md), with stricter ambiguity handling. Agent player collection and `players:read` plus `realtime:read` scopes are required. Harko Village and Overland still need calibrated imagery before a character position can be plotted.
+
+The dashboard uses periodic snapshots, not the Console's 10 Hz SSE stream; marker movement therefore is not frame-rate realtime. A partition with multiple online players deliberately remains on the Console fallback because proximity alone cannot reliably establish identity.
+
 ## Troubleshooting
 
 Blank map: Console unreachable or no marker scope. 3D is slow: software rendering without a GPU; use the 2D view.

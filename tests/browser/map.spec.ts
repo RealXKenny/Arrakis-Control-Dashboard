@@ -93,6 +93,72 @@ test('character marker remains visible during refresh and clears on failure', as
   await expect(marker).toHaveCount(0);
 });
 
+test('Arrakeen uses the inferred live player position and returns to the Console position when unavailable', async ({
+  page,
+}) => {
+  await page.route('**/api/v2/map?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        location: 'Arrakeen',
+        position: { x: 1, y: 2, z: 3, partition: 3 },
+        observedAt: new Date().toISOString(),
+      },
+    }),
+  );
+  let reads = 0;
+  let release: (() => void) | undefined;
+  const next = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/v2/map/player-live?*', async (route) => {
+    reads++;
+    if (reads > 1) await next;
+    return route.fulfill({
+      json: { ok: true, position: reads === 1 ? { x: 5000, y: 2, z: 3, partition: 3, pawnId: '6' } : null },
+    });
+  });
+  await page.goto('/map/arrakeen');
+  const marker = page.getByRole('img', { name: 'Your approximate position' });
+  await expect(page.getByText('Live position · inferred match')).toBeVisible();
+  const liveStyle = await marker.getAttribute('style');
+  release!();
+  await expect(page.getByText('Live position · inferred match')).toHaveCount(0, { timeout: 10000 });
+  await expect(marker).toBeVisible();
+  expect(await marker.getAttribute('style')).not.toBe(liveStyle);
+});
+
+test('Hagga Basin applies the linked live player position to its existing marker', async ({ page }) => {
+  await page.route('**/api/v2/map?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        map: { width: 1000, height: 1000, minX: 0, maxX: 1000, minY: 0, maxY: 1000 },
+        markers: [{ id: '6', type: 'player', x: 100, y: 100, z: 0, name: 'You' }],
+      },
+    }),
+  );
+  await page.route('**/api/v2/map/player-live?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        position: { x: 200, y: 250, z: 3, partition: 1, pawnId: '6' },
+      },
+    }),
+  );
+  await page.goto('/map/hagga-basin');
+  await page.getByRole('button', { name: '2D map', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Player: You', exact: true })).toHaveAttribute(
+    'title',
+    /X: 200, Y: 250/,
+  );
+  await page.getByRole('button', { name: 'Realtime on', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Player: You', exact: true })).toHaveAttribute(
+    'title',
+    /X: 100, Y: 100/,
+  );
+});
+
 test('realtime layer updates, filters instances, clears failures and switches maps', async ({ page }) => {
   let realtimeReads = 0;
   let unavailable = false;

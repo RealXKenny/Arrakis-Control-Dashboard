@@ -15,6 +15,7 @@ import MapStatusBar from './map-status-bar';
 
 import useMapData from '../hooks/use-map-data';
 import useRealtimeData from '../hooks/use-realtime-data';
+import useLivePlayer from '../hooks/use-live-player';
 import useMapZoom from '../hooks/use-map-zoom';
 import useMapDrag from '../hooks/use-map-drag';
 
@@ -181,6 +182,13 @@ function getLegendIconClass(category, subtype) {
   return ['live-map-marker', `marker-${category.type}`].join(' ');
 }
 
+function isLinkedPlayerMarker(item, pawnId: string) {
+  return (
+    String(item?.type || '').toLowerCase() === 'player' &&
+    String(item?.id ?? item?.player_id ?? item?.playerId ?? item?.pawn_id ?? item?.pawnId ?? '').trim() === pawnId
+  );
+}
+
 export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string }) {
   const {
     mapConfig,
@@ -193,9 +201,21 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
     loadMap,
   } = useMapData(mapName);
   const realtime = useRealtimeData(mapName, Boolean(mapConfig));
+  const livePlayer = useLivePlayer(mapName, Boolean(mapConfig) && realtime.enabled);
+  const liveApplied = Boolean(
+    livePlayer && staticMarkers.some((item) => isLinkedPlayerMarker(item, livePlayer.pawnId)),
+  );
   const markers = React.useMemo(
-    () => uniqueMapMarkers([...staticMarkers, ...realtime.markers]),
-    [staticMarkers, realtime.markers],
+    () =>
+      uniqueMapMarkers([
+        ...staticMarkers.map((item) =>
+          livePlayer && isLinkedPlayerMarker(item, livePlayer.pawnId)
+            ? { ...item, x: livePlayer.x, y: livePlayer.y, z: livePlayer.z }
+            : item,
+        ),
+        ...realtime.markers,
+      ]),
+    [staticMarkers, realtime.markers, livePlayer],
   );
   const availableCategories = React.useMemo(() => {
     const present = new Set(
@@ -593,6 +613,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
               </select>
             )}
             <span role="status">{realtime.status}</span>
+            {liveApplied && <span>Character position: inferred live match</span>}
           </div>
         )}
 

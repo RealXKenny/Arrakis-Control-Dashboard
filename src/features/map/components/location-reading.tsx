@@ -8,6 +8,7 @@ import { MAP_LABELS, type MapName } from '../maps';
 import { projectLocation } from '../utils/location-projection';
 import { arrakeenCategories, arrakeenMarkers, type ArrakeenCategory } from '../utils/arrakeen-markers';
 import styles from '../styles/map.module.css';
+import useLivePlayer from '../hooks/use-live-player';
 
 const readingSchema = z.object({
   ok: z.literal(true),
@@ -35,6 +36,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
   const [status, setStatus] = useState('Loading location…');
   const [visibleCategories, setVisibleCategories] = useState<ArrakeenCategory[]>(arrakeenCategories);
   const [selectedMarker, setSelectedMarker] = useState<number | null>(null);
+  const livePlayer = useLivePlayer(mapName, Boolean(reading?.position));
   const active = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
     if (document.hidden || active.current) return;
@@ -86,7 +88,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
       active.current = null;
     };
   }, [refresh]);
-  const marker = reading?.position ? projectLocation(mapName, reading.position) : null;
+  const marker = reading?.position ? projectLocation(mapName, livePlayer ?? reading.position) : null;
   const locations =
     mapName === 'Arrakeen' ? arrakeenMarkers.filter((item) => visibleCategories.includes(item.category)) : [];
   const selected = locations.find((item) => item.id === selectedMarker);
@@ -101,6 +103,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
           <span className="text-xs text-sand-400">
             {mapName === 'Arrakeen' ? 'Character marker is approximate' : 'Character marker not calibrated'}
           </span>
+          {livePlayer && <span className="text-xs text-sand-400">Live position · inferred match</span>}
         </div>
         <div className={`${styles.mapViewport} flex min-h-0 flex-1 items-center overflow-auto`}>
           {mapImages[mapName] && (

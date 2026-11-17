@@ -7,6 +7,7 @@
 - Separate Arrakeen, Harko Village and Overland pages show game map images. Arrakeen displays an approximate linked-character marker for testing; Harko Village and Overland await calibration.
 - Arrakeen includes filterable, approximately aligned community location, service and contract markers with a keyboard-accessible list.
 - Arrakeen uses category-specific map marker icons from the supplied atlas.
+- Live maps can use a fresh, unambiguous inferred agent position for the linked character, falling back to Console positions when realtime data is unavailable.
 - The portal's server rhythm panel can show seven days of observed aggregate population by local weekday and hour, including sample counts and missing-data states.
 - Service status shows the active Console restart queue with server-adjusted countdowns and an explicit unavailable state. Daily and IP-change restart schedules are not included in that queue.
 - Service status shows recent Console restart records when available, without treating restarts as confirmed incidents or inventing causes.
