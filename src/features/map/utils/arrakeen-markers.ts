@@ -25,7 +25,16 @@ const sprites: Record<number, [number, number]> = {
 export type ArrakeenCategory = 'Locations' | 'Services and trainers' | 'Contracts';
 export const arrakeenCategories: ArrakeenCategory[] = ['Locations', 'Services and trainers', 'Contracts'];
 
-/** Approximate alignment against the user-provided Map Genie screenshot, not Console world coordinates. */
+/**
+ * Map Genie coordinates, corrected with a least-squares affine fit against 18 in-game map icons and
+ * checked against four agent-measured standing positions (within about 7 px, about 3 m). The residual
+ * is about 9 px, so positions stay approximate and are not Console world coordinates.
+ */
+const correct = (x: number, y: number) => ({
+  x: 1.04919 * x + 0.01201 * y - 31.34289,
+  y: -0.00221 * x + 1.05528 * y - 9.7588,
+});
+
 export const arrakeenMarkers = data.map((marker) => {
   const category: ArrakeenCategory =
     marker.categoryId === 13076
@@ -33,8 +42,10 @@ export const arrakeenMarkers = data.map((marker) => {
       : marker.categoryId === 12693 || marker.categoryId === 12695
         ? 'Contracts'
         : 'Services and trainers';
-  const x = 733.75 + (marker.longitude + 0.62312158772528) * 1812.5;
-  const y = 273.75 - (marker.latitude - 0.71786135638061) * 1812.5;
+  const { x, y } = correct(
+    733.75 + (marker.longitude + 0.62312158772528) * 1812.5,
+    273.75 - (marker.latitude - 0.71786135638061) * 1812.5,
+  );
   return {
     id: marker.id,
     title: marker.title,
