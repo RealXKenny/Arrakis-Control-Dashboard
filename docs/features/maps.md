@@ -44,3 +44,5 @@ Blank map: Console unreachable or no marker scope. 3D is slow: software renderin
 ## Related
 
 [Dashboard](dashboard.md) · [Vehicles](vehicles.md)
+
+Operational note: the Console's realtime agent only discovers player objects when it scans a map process (at agent start and occasional rescans). A player who joins after the last scan has no agent object, so the dashboard keeps the Console position until the agent rescans. Restarting the agent while a player is online makes that player appear. Verified on 2026-11-17 against a real server: after a restart the agent reported the linked player in `SH_Arrakeen`, its position updated within a second of movement while the Console roster position lagged, and `matchLivePlayer` matched on live data.
