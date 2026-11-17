@@ -19,7 +19,7 @@
 | `npm run test:browser`                    | Playwright (Chromium)                                                            |
 | `npm run format` / `npm run format:check` | Prettier write / check on `src tests scripts`                                    |
 | `npm run docs:format:check`               | Check Prettier formatting for changed files under `docs/`                        |
-| `npm run ai:check`                        | Validate the shared `AGENTS.md` and repository structure                        |
+| `npm run ai:check`                        | Validate the shared `AGENTS.md` and repository structure                         |
 | `npm run env:migrate`                     | Migrate an existing `.env` to current variable names (also runs on dev/start)    |
 | `npm run docs:check`                      | Validate Markdown links and anchors                                              |
 | `npm run workflows:check`                 | Validate workflow and Dependabot YAML, pins, and the required CI gate            |
