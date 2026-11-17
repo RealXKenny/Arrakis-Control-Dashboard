@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { Button } from '../../../components/ui/button';
 import { Card } from '../../../components/ui/card';
@@ -9,6 +9,7 @@ import { projectLocation } from '../utils/location-projection';
 import { arrakeenCategories, arrakeenMarkers, type ArrakeenCategory } from '../utils/arrakeen-markers';
 import styles from '../styles/map.module.css';
 import useLivePlayer from '../hooks/use-live-player';
+import useMapDrag from '../hooks/use-map-drag';
 
 const readingSchema = z.object({
   ok: z.literal(true),
@@ -24,7 +25,9 @@ const readingSchema = z.object({
   observedAt: z.string().datetime(),
 });
 type Reading = z.infer<typeof readingSchema>;
-const zoomLevels = [1, 1.5, 2, 3];
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
+const clampZoom = (value: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
 const mapImages: Partial<Record<MapName, string>> = {
   Arrakeen: '/maps/arrakeen.png',
   HarkoVillage: '/maps/harko-village.png',
@@ -89,8 +92,49 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
       active.current = null;
     };
   }, [refresh]);
-  const [zoomIndex, setZoomIndex] = useState(1);
-  const zoom = zoomLevels[zoomIndex];
+  const [zoom, setZoom] = useState(1.5);
+  const frameRef = useRef<HTMLDivElement | null>(null);
+  const zoomAnchor = useRef<{ fx: number; fy: number; vx: number; vy: number } | null>(null);
+  const { drag, handleMouseDown, handleMouseMove, stopDragging } = useMapDrag({ frameRef });
+  // Zoom around a viewport point so the map under the cursor stays put, as on the Hagga Basin map.
+  const zoomAround = useCallback((next: number, point?: { clientX: number; clientY: number }) => {
+    const frame = frameRef.current;
+    const target = clampZoom(next);
+    if (frame && frame.firstElementChild instanceof HTMLElement) {
+      const rect = frame.getBoundingClientRect();
+      const content = frame.firstElementChild.getBoundingClientRect();
+      const vx = point ? point.clientX - rect.left : rect.width / 2;
+      const vy = point ? point.clientY - rect.top : rect.height / 2;
+      zoomAnchor.current = {
+        fx: (rect.left + vx - content.left) / content.width,
+        fy: (rect.top + vy - content.top) / content.height,
+        vx,
+        vy,
+      };
+    }
+    setZoom(target);
+  }, []);
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    const anchor = zoomAnchor.current;
+    zoomAnchor.current = null;
+    if (!frame || !anchor || !(frame.firstElementChild instanceof HTMLElement)) return;
+    const content = frame.firstElementChild;
+    const marginLeft = Math.max(0, (frame.clientWidth - content.offsetWidth) / 2);
+    const marginTop = Math.max(0, (frame.clientHeight - content.offsetHeight) / 2);
+    frame.scrollLeft = anchor.fx * content.offsetWidth + marginLeft - anchor.vx;
+    frame.scrollTop = anchor.fy * content.offsetHeight + marginTop - anchor.vy;
+  }, [zoom]);
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    const wheel = (event: WheelEvent) => {
+      event.preventDefault();
+      zoomAround(zoom * (event.deltaY < 0 ? 1.12 : 0.88), event);
+    };
+    frame.addEventListener('wheel', wheel, { passive: false });
+    return () => frame.removeEventListener('wheel', wheel);
+  }, [zoom, zoomAround]);
   const marker = reading?.position ? projectLocation(mapName, livePlayer ?? reading.position) : null;
   const locations =
     mapName === 'Arrakeen' ? arrakeenMarkers.filter((item) => visibleCategories.includes(item.category)) : [];
@@ -112,8 +156,8 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
               type="button"
               className={styles.mapButton}
               aria-label="Zoom out"
-              disabled={zoomIndex === 0}
-              onClick={() => setZoomIndex((i) => Math.max(0, i - 1))}
+              disabled={zoom <= MIN_ZOOM}
+              onClick={() => zoomAround(zoom / 1.25)}
             >
               −
             </Button>
@@ -124,19 +168,32 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
               type="button"
               className={styles.mapButton}
               aria-label="Zoom in"
-              disabled={zoomIndex === zoomLevels.length - 1}
-              onClick={() => setZoomIndex((i) => Math.min(zoomLevels.length - 1, i + 1))}
+              disabled={zoom >= MAX_ZOOM}
+              onClick={() => zoomAround(zoom * 1.25)}
             >
               +
             </Button>
           </div>
         </div>
-        <div className={`${styles.mapViewport} flex min-h-0 flex-1 overflow-auto`}>
+        <div
+          ref={frameRef}
+          className={`${styles.mapViewport} flex min-h-0 flex-1 overflow-auto`}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={stopDragging}
+          onMouseLeave={stopDragging}
+          style={{ cursor: drag ? 'grabbing' : 'grab' }}
+        >
           {mapImages[mapName] && (
             <div className="relative m-auto shrink-0" style={{ width: `${zoom * 100}%` }}>
               {/* These local game maps are served through the same-origin asset route. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={mapImages[mapName]} alt={`${MAP_LABELS[mapName]} map`} className="h-auto w-full rounded-lg" />
+              <img
+                src={mapImages[mapName]}
+                alt={`${MAP_LABELS[mapName]} map`}
+                className="h-auto w-full rounded-lg"
+                draggable={false}
+              />
               {locations.map((item) => (
                 <Button
                   key={item.id}
@@ -145,7 +202,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
                   aria-pressed={item.id === selectedMarker}
                   title={item.title}
                   onClick={() => setSelectedMarker(item.id)}
-                  className="absolute z-10 h-8 w-6 -translate-x-1/2 -translate-y-full border-0 bg-transparent p-0 focus-visible:z-30 focus-visible:outline-2 focus-visible:outline-white"
+                  className="hag-map-marker absolute z-10 h-8 w-6 -translate-x-1/2 -translate-y-full border-0 bg-transparent p-0 focus-visible:z-30 focus-visible:outline-2 focus-visible:outline-white"
                   style={{
                     left: `${item.left}%`,
                     top: `${item.top}%`,
