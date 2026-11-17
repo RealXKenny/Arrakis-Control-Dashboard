@@ -60,7 +60,7 @@
 - Guilds and My Guild have been rebuilt: browse recruiting guilds, apply with the guild's own questions, chat privately with reviewers, manage your roster and ranks, edit joining requirements, upload a logo and review applications. Application questions support short text, paragraphs, dropdowns, timezones, checkboxes and decimal-number answers.
 - The Live Map now has its own page for Hagga Basin and the Deep Desert, with 2D and 3D views, searchable markers, bases, vehicles, and an optional realtime layer for online players and world objects. A 2D fallback remains available when WebGL2 is unavailable.
 - Optional automatic announcement of each newly deployed release, sent once even when several servers start together.
-- New public Changelog page that the announcement buttons link to.
+- New public Changelog page that the announcement buttons link to, plus machine-readable release snapshots at `/api/v2/changelog` and the latest-release endpoint. Dashboard announcements link directly to that published release history.
 - You can now sign in with your email and a password as well as with Discord. Choose a password after your first Discord sign-in. Sessions stay open for 30 days.
 - Times are now shown in your own timezone and language, for example `Nov 7, 2026, 11:19 PM EST`, with daylight saving handled for you. Hover a time to see the full local and UTC readings. This covers the Overview "Last reading", base publish dates, guild chat and application times. Countdowns such as the Coriolis cycle and the Landsraad term still count down as durations.
 - The Changelog page and the release announcements understand the grouped Patch Notes format (New Features, Improvements, Fixes and so on).
@@ -72,6 +72,12 @@
 - Discord profile pictures are now stored as image bytes in Redis and served through authenticated dashboard URLs across navigation, profiles and chat. Browsers no longer load pictures from Discord's CDN; missing pictures are fetched by the server and saved before being served.
 - The Solaris Exchange adds a Dune-themed casino lobby, wallet, round history, fairness tools, rules. Its six game modules are The Emperor's Hand (Blackjack), The Spice Wheel (Roulette), Fate of Arrakis (Dice), Spice Harvest (Mines), Ornithopter Run (Crash) and The Great Houses (Coin Flip).
 - Casino wagers use real in-game Solaris through a Redis-backed wallet, with exact-integer balances, reserved wagers, idempotent settlement, committed server seeds and configurable wager and payout ceilings. Deposits, withdrawals and wagering remain disabled by default; live money movement requires deployment-specific verification before enabling it.
+
+### Community Contributions
+
+- The appearance studio includes 66 theme choices from PR #298, with its upstream MIT credit and separate swatch-data terms preserved.
+- Illustrated season objective categories and vector artwork were inspired by Icehunter/dune-admin and retain the upstream MIT attribution.
+- Restart, health and backup integrations use Red-Blink's Dune Console API documentation and structured response contracts; unsupported evidence remains explicitly unavailable.
 
 ### Improvements
 
@@ -150,6 +156,7 @@
 
 - Season progress, claims and deliveries are bound to canonical pawn and controller IDs, use atomic CAS records, and never accept client-supplied evidence, amounts or recipients.
 - The Discord adapter token is separate from the Console API key, and privileged Console transport requires HTTPS or loopback.
+- Moderator, event-reviewer and backup-viewer roles are independently verified against current Discord guild membership and fail closed. Case evidence, event judging and backup evidence never inherit guild-leader, administrator or each other's permissions.
 
 - Members who leave the Discord server or lose the required role are now signed out within 30 minutes. If Discord cannot be reached, a session stays valid for up to 6 hours after its last successful check.
 - Password sign-in re-checks the Discord guild and role every time. Passwords are hashed with scrypt, Discord refresh tokens are encrypted before they are stored, and only a Discord-verified email can be linked to an account.
@@ -191,7 +198,7 @@
 
 ### Upgrade Notes
 
-- `MODERATOR_DISCORD_ROLE_IDS` optionally reserves Discord roles for the forthcoming moderation workspace. The workspace and moderator operations are not yet available.
+- Set `MODERATOR_DISCORD_ROLE_IDS` only for the moderator case workspace and `EVENT_REVIEWER_DISCORD_ROLE_IDS` separately for event-submission review and judging. Each requires current Discord guild-role verification and grants no other privileges.
 - Set `BACKUP_VIEWER_DISCORD_ROLE_IDS` to the separate Discord roles permitted to view backup status, and grant the Console key the `backups:read` scope. The configured Discord bot must be able to read guild members.
 - Set `AUTH_SECRET` to at least 32 random characters. It is required in production.
 - In the Discord developer portal, change the OAuth2 redirect URI to `<APP_URL>/api/auth/callback/discord`.

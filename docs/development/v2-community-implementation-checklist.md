@@ -54,8 +54,8 @@ This is a continuation record, not a claim of completion. Check an item only aft
 
 ## Release audit and delivery
 
-- [ ] Audit every commit and relevant diff in the verified v2 range, including merge/squash ancestry, reverted or superseded work, all contributors and current behavior. Initial merge base is `a5cfb484074bf4d9d7e8930257049e7635c7d579`; `a5cfb484..d177acd` has 107 commits. Reverify after fetching before finalizing.
-- [ ] Correct contradictory and stale v2 changelog claims, group meaningful verified changes, preserve prior releases, document completed features and removals accurately, and check release parser conventions and package/lockfile version consistency.
+- [x] Audit every commit and relevant diff in the verified v2 range, including merge/squash ancestry, reverted or superseded work, all contributors and current behavior. Initial merge base is `a5cfb484074bf4d9d7e8930257049e7635c7d579`; `a5cfb484..d177acd` has 107 commits. Reverify after fetching before finalizing. The final implementation review covered 126 commits through the moderator workspace.
+- [x] Correct contradictory and stale v2 changelog claims, group meaningful verified changes, preserve prior releases, document completed features and removals accurately, and check release parser conventions and package/lockfile version consistency. Added the public release API, all N071–N080 changes, independent role requirements and community credits; package and lockfile both remain 2.0.0.
 - [ ] Run standard format, typecheck, lint and unit tests; applicable build, production smoke, browser/mobile/accessibility, security, concurrency, idempotency, worker and disposable standalone/Cluster Redis integration checks. Investigate failures without weakening tests.
 - [ ] Independently compare the original task with the final implementation and evidence, review the complete diff and security boundaries, commit only task changes, push verified commits to `origin/v2`, and update existing open PR #8 with honest verification. Do not create a branch or PR or merge.
 
