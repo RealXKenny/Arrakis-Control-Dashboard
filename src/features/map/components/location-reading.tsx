@@ -24,6 +24,7 @@ const readingSchema = z.object({
   observedAt: z.string().datetime(),
 });
 type Reading = z.infer<typeof readingSchema>;
+const zoomLevels = [1, 1.5, 2, 3];
 const mapImages: Partial<Record<MapName, string>> = {
   Arrakeen: '/maps/arrakeen.png',
   HarkoVillage: '/maps/harko-village.png',
@@ -88,6 +89,8 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
       active.current = null;
     };
   }, [refresh]);
+  const [zoomIndex, setZoomIndex] = useState(1);
+  const zoom = zoomLevels[zoomIndex];
   const marker = reading?.position ? projectLocation(mapName, livePlayer ?? reading.position) : null;
   const locations =
     mapName === 'Arrakeen' ? arrakeenMarkers.filter((item) => visibleCategories.includes(item.category)) : [];
@@ -104,10 +107,33 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
             {mapName === 'Arrakeen' ? 'Character marker is approximate' : 'Character marker not calibrated'}
           </span>
           {livePlayer && <span className="text-xs text-sand-400">Live position · inferred match</span>}
+          <div className={styles.zoomControls} role="group" aria-label="Map zoom">
+            <Button
+              type="button"
+              className={styles.mapButton}
+              aria-label="Zoom out"
+              disabled={zoomIndex === 0}
+              onClick={() => setZoomIndex((i) => Math.max(0, i - 1))}
+            >
+              −
+            </Button>
+            <span className={styles.zoomReading} aria-live="polite">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              type="button"
+              className={styles.mapButton}
+              aria-label="Zoom in"
+              disabled={zoomIndex === zoomLevels.length - 1}
+              onClick={() => setZoomIndex((i) => Math.min(zoomLevels.length - 1, i + 1))}
+            >
+              +
+            </Button>
+          </div>
         </div>
-        <div className={`${styles.mapViewport} flex min-h-0 flex-1 items-center overflow-auto`}>
+        <div className={`${styles.mapViewport} flex min-h-0 flex-1 overflow-auto`}>
           {mapImages[mapName] && (
-            <div className="relative w-full shrink-0">
+            <div className="relative m-auto shrink-0" style={{ width: `${zoom * 100}%` }}>
               {/* These local game maps are served through the same-origin asset route. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={mapImages[mapName]} alt={`${MAP_LABELS[mapName]} map`} className="h-auto w-full rounded-lg" />

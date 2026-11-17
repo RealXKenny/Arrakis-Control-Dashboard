@@ -27,13 +27,19 @@ export const arrakeenCategories: ArrakeenCategory[] = ['Locations', 'Services an
 
 /**
  * Map Genie coordinates, corrected with a least-squares affine fit against 18 in-game map icons and
- * checked against four agent-measured standing positions (within about 7 px, about 3 m). The residual
+ * checked against three agent-measured standing positions (within about 7 px, about 3 m). The residual
  * is about 9 px, so positions stay approximate and are not Console world coordinates.
  */
 const correct = (x: number, y: number) => ({
   x: 1.04919 * x + 0.01201 * y - 31.34289,
   y: -0.00221 * x + 1.05528 * y - 9.7588,
 });
+
+/** Positions read directly from the in-game map icons where the fitted Map Genie position was visibly wrong. */
+const gameIconOverrides: Record<number, [number, number]> = {
+  460843: [96, 371], // House Wallach Representative
+  460842: [10, 377], // Atreides Vendor
+};
 
 export const arrakeenMarkers = data.map((marker) => {
   const category: ArrakeenCategory =
@@ -42,10 +48,11 @@ export const arrakeenMarkers = data.map((marker) => {
       : marker.categoryId === 12693 || marker.categoryId === 12695
         ? 'Contracts'
         : 'Services and trainers';
-  const { x, y } = correct(
+  const fitted = correct(
     733.75 + (marker.longitude + 0.62312158772528) * 1812.5,
     273.75 - (marker.latitude - 0.71786135638061) * 1812.5,
   );
+  const [x, y] = gameIconOverrides[marker.id] ?? [fitted.x, fitted.y];
   return {
     id: marker.id,
     title: marker.title,

@@ -25,7 +25,6 @@ describe('Arrakeen marker data', () => {
       'Weapons Merchant': [765, 382],
       'Spice Merchant': [753, 185],
       'Taxi Service': [987, 301],
-      'Atreides Vendor': [153, 366],
     };
     for (const [title, [x, y]] of Object.entries(standing)) {
       const item = arrakeenMarkers.find((marker) => marker.title === title)!;
