@@ -35,10 +35,32 @@ const correct = (x: number, y: number) => ({
   y: -0.00221 * x + 1.05528 * y - 9.7588,
 });
 
-/** Positions read directly from the in-game map icons where the fitted Map Genie position was visibly wrong. */
-const gameIconOverrides: Record<number, [number, number]> = {
+/**
+ * Positions read directly from the in-game Arrakeen map icons (screenshot registered to the image, then checked
+ * against agent-measured standing positions). Markers without a matching in-game icon use the fitted position.
+ */
+const gameIconPositions: Record<number, [number, number]> = {
+  460820: [1045, 282], // Exit
+  460824: [858, 220], // The Salusan Bull
+  460831: [744, 278], // Central Plaza
+  460832: [538, 132], // Imperial Consulate
+  460839: [547, 475], // The Warrens
+  460840: [391, 479], // Duncan's Dojo
+  460841: [271, 267], // Residency Approach
+  949804: [874, 348], // Guild Bank
+  949805: [853, 343], // CHOAM Exchange
+  460826: [876, 167], // Barkeep
+  460827: [711, 112], // Base Vendor
+  479723: [621, 362], // Shaffat's Clinic
+  460830: [813, 221], // House Mutelli Representative
   460843: [96, 371], // House Wallach Representative
+  460822: [955, 251], // Scrap Trader
+  460829: [759, 186], // Spice Merchant
+  460821: [985, 298], // Taxi Service
+  460823: [960, 309], // Vehicle Vendor
   460842: [10, 377], // Atreides Vendor
+  460828: [711, 186], // Water Seller
+  460835: [769, 384], // Weapons Merchant
 };
 
 export const arrakeenMarkers = data.map((marker) => {
@@ -52,7 +74,7 @@ export const arrakeenMarkers = data.map((marker) => {
     733.75 + (marker.longitude + 0.62312158772528) * 1812.5,
     273.75 - (marker.latitude - 0.71786135638061) * 1812.5,
   );
-  const [x, y] = gameIconOverrides[marker.id] ?? [fitted.x, fitted.y];
+  const [x, y] = gameIconPositions[marker.id] ?? [fitted.x, fitted.y];
   return {
     id: marker.id,
     title: marker.title,

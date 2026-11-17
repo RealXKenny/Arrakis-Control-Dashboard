@@ -17,8 +17,8 @@ describe('Arrakeen marker data', () => {
   it('aligns the central plaza and exit with the screenshot reference', () => {
     const plaza = arrakeenMarkers.find((item) => item.title === 'Central Plaza')!;
     const exit = arrakeenMarkers.find((item) => item.title === 'Exit')!;
-    expect(plaza.left).toBeCloseTo(61.8, 1);
-    expect(plaza.top).toBeCloseTo(48.55, 1);
+    expect(plaza.left).toBeCloseTo(62.0, 1);
+    expect(plaza.top).toBeCloseTo(48.6, 1);
 
     // Agent-measured standing positions beside these vendors (pixels on the 1200 × 572 image).
     const standing: Record<string, [number, number]> = {
