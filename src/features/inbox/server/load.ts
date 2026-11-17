@@ -9,12 +9,14 @@ import { readResourceRequests } from '../../guilds/server/resource-requests-stor
 import { listCommunityEvents } from '../../events/server/store';
 import { getEventRegistration } from '../../events/server/registrations-store';
 import { readRestartQueue } from '../../monitoring/server/restart-queue';
+import { readHelpRequests } from '../../assistance/server/requests-store';
 import {
   assetAlerts,
   supplyAlerts,
   operationAlerts,
   eventAlerts,
   maintenanceAlerts,
+  assistanceAlerts,
   inboxViewSchema,
   type InboxView,
 } from '../model';
@@ -36,6 +38,7 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
     { category: 'operations', status: 'unavailable', detail: 'Guild membership could not be checked.' },
     { category: 'events', status: 'unavailable', detail: 'Published event readings could not be checked.' },
     { category: 'maintenance', status: 'unavailable', detail: 'Active restart readings could not be checked.' },
+    { category: 'assistance', status: 'unavailable', detail: 'Personal assistance assignments could not be checked.' },
   ];
   let alerts: InboxView['alerts'] = [];
   const result = await loadPortalProfile(session);
@@ -117,11 +120,14 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
       };
   }
 
-  const [events, maintenance] = await Promise.allSettled([
+  const [events, maintenance, assistance] = await Promise.allSettled([
     Promise.resolve()
       .then(() => listCommunityEvents())
       .then((value) => ({ value, readAt: new Date().toISOString() })),
     Promise.resolve().then(() => readRestartQueue()),
+    Promise.resolve()
+      .then(() => readHelpRequests())
+      .then((value) => ({ value, readAt: new Date().toISOString() })),
   ]);
   if (events.status === 'fulfilled') {
     const scheduled = events.value.value.filter((event) => event.startsAt);
@@ -152,6 +158,15 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
       readAt: new Date(maintenance.value.observedAt).toISOString(),
       detail:
         'Confirmed active Console restart queue for the next 24 hours. Daily and IP-change schedules are not inferred.',
+    };
+  }
+  if (assistance.status === 'fulfilled') {
+    alerts.push(...assistanceAlerts(assistance.value.value, session.user.id));
+    sources[6] = {
+      category: 'assistance',
+      status: 'checked',
+      readAt: assistance.value.readAt,
+      detail: 'Only your own help requests and volunteer assignments are checked. Private chat content is not exposed.',
     };
   }
 

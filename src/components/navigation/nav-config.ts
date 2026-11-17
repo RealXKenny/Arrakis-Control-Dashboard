@@ -383,6 +383,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             order: 25,
           },
           {
+            id: 'community-assistance',
+            label: 'Player assistance',
+            href: '/help',
+            icon: 'chat',
+            description: 'Request guidance or volunteer to help another player.',
+            order: 26,
+          },
+          {
             id: 'chat',
             label: 'Live Chat',
             href: '/chat',

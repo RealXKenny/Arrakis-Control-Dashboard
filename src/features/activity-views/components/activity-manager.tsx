@@ -286,11 +286,13 @@ export function ActivityManager() {
                     })
                   }
                 >
-                  {['all', 'assets', 'supply', 'market', 'operations', 'events', 'maintenance'].map((v) => (
-                    <option key={v} value={v}>
-                      {v}
-                    </option>
-                  ))}
+                  {['all', 'assets', 'supply', 'market', 'operations', 'events', 'maintenance', 'assistance'].map(
+                    (v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
               <label className={styles.check}>

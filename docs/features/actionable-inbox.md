@@ -12,6 +12,7 @@ Open **Notifications → Actionable inbox** or `/inbox`. One view combines repor
 | Market      | Personal price-watch alerts depend on the unimplemented N042 engine. The inbox reports this source as unsupported and links to current market browsing; it never infers sales or price crossings from listings. |
 | Events      | Published upcoming/open events starting within seven days, including the caller's own registration/waiting-list status when readable. Unscheduled, cancelled and expired events are excluded.                   |
 | Maintenance | Confirmed active Console restart entries for the next 24 hours and entries already restarting. Daily/IP-change schedules are not inferred from command output.                                                  |
+| Assistance  | Only the caller's own active help requests and volunteer assignments. Resolution stops the alert; private assistance chat content is never included.                                                            |
 
 N021 generator monitoring and N025 personal stockpile thresholds are also unimplemented prerequisites. The inbox does not create them or fabricate their alerts. Current asset rules are fixed and displayed with each alert. [N093 notification preferences](notification-preferences.md) add category controls, quiet hours, cooldowns, dismiss and snooze.
 

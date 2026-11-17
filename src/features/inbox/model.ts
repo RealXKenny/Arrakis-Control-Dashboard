@@ -5,8 +5,18 @@ import type { StoredResourceRequest } from '../guilds/resource-requests';
 import type { CommunityEvent } from '../events/contracts';
 import type { EventRegistrationSummary } from '../events/registrations';
 import type { RestartEntry } from '../monitoring/restart-queue';
+import { assistanceAlerts } from '../assistance/model';
 
-export const inboxCategories = ['assets', 'supply', 'market', 'operations', 'events', 'maintenance'] as const;
+export { assistanceAlerts };
+export const inboxCategories = [
+  'assets',
+  'supply',
+  'market',
+  'operations',
+  'events',
+  'maintenance',
+  'assistance',
+] as const;
 export type InboxCategory = (typeof inboxCategories)[number];
 export const categoryNames: Record<InboxCategory, string> = {
   assets: 'Assets',
@@ -15,6 +25,7 @@ export const categoryNames: Record<InboxCategory, string> = {
   operations: 'Operations',
   events: 'Events',
   maintenance: 'Maintenance',
+  assistance: 'Assistance',
 };
 export const inboxAlertSchema = z
   .object({
@@ -28,7 +39,7 @@ export const inboxAlertSchema = z
     title: z.string().min(1).max(240),
     detail: z.string().max(600),
     action: z.string().max(80),
-    href: z.string().regex(/^\/(?:holdings|vehicles|guild|calendar|status|events)(?:[?#][a-zA-Z0-9_%=&#.~-]*)?$/),
+    href: z.string().regex(/^\/(?:holdings|vehicles|guild|calendar|status|events|help)(?:[?#][a-zA-Z0-9_%=&#.~-]*)?$/),
   })
   .strict();
 export type InboxAlert = z.infer<typeof inboxAlertSchema>;

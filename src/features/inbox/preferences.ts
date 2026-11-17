@@ -14,6 +14,7 @@ export const notificationConfigSchema = z
         operations: feature,
         events: feature.default({ enabled: true, cooldownMinutes: 0 }),
         maintenance: feature.default({ enabled: true, cooldownMinutes: 0 }),
+        assistance: feature.default({ enabled: true, cooldownMinutes: 0 }),
       })
       .strict(),
     quiet: z
@@ -98,6 +99,7 @@ export function defaultNotifications(): NotificationRecord {
         operations: { enabled: true, cooldownMinutes: 0 },
         events: { enabled: true, cooldownMinutes: 0 },
         maintenance: { enabled: true, cooldownMinutes: 0 },
+        assistance: { enabled: true, cooldownMinutes: 0 },
       },
       quiet: { enabled: false, start: '22:00', end: '07:00', timeZone: 'UTC' },
     },

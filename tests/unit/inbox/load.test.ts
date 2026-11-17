@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   member: vi.fn(),
   operations: vi.fn(),
   resources: vi.fn(),
+  assistance: vi.fn(),
 }));
 vi.mock('../../../src/features/portal/server/load', () => ({ loadPortalProfile: mocks.profile }));
 vi.mock('../../../src/features/events/server/store', () => ({ listCommunityEvents: mocks.events }));
@@ -17,6 +18,7 @@ vi.mock('../../../src/features/events/server/registrations-store', () => ({
   getEventRegistration: mocks.registration,
 }));
 vi.mock('../../../src/features/monitoring/server/restart-queue', () => ({ readRestartQueue: mocks.queue }));
+vi.mock('../../../src/features/assistance/server/requests-store', () => ({ readHelpRequests: mocks.assistance }));
 vi.mock('../../../src/features/guilds/server/member-access', () => ({ requireGuildMember: mocks.member }));
 vi.mock('../../../src/features/guilds/server/operations-store', () => ({ readGuildOperations: mocks.operations }));
 vi.mock('../../../src/features/guilds/server/resource-requests-store', () => ({
@@ -30,6 +32,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.profile.mockResolvedValue({ status: 'unlinked' });
   mocks.registration.mockResolvedValue({ ownStatus: 'registered', ownWaitlistPosition: null });
+  mocks.assistance.mockResolvedValue([]);
   mocks.events.mockResolvedValue([
     {
       ...firstCommunityEvent(),
@@ -54,7 +57,7 @@ beforeEach(() => {
 
 it('keeps public event and maintenance alerts independent of private character sources', async () => {
   const data = await loadInbox(session);
-  expect(data.sources).toHaveLength(6);
+  expect(data.sources).toHaveLength(7);
   expect(data.alerts.map((alert) => alert.category).sort()).toEqual(['events', 'maintenance']);
   expect(data.sources.find((source) => source.category === 'assets')?.status).toBe('unlinked');
   expect(data.sources.find((source) => source.category === 'events')?.status).toBe('checked');
@@ -77,4 +80,11 @@ it('keeps public event alerts but marks registration coverage partial on storage
   const data = await loadInbox(session);
   expect(data.alerts.some((alert) => alert.category === 'events')).toBe(true);
   expect(data.sources.find((source) => source.category === 'events')?.status).toBe('partial');
+});
+
+it('keeps assistance source failure independent of other inbox categories', async () => {
+  mocks.assistance.mockRejectedValue(new Error('offline'));
+  const data = await loadInbox(session);
+  expect(data.sources.find((source) => source.category === 'assistance')?.status).toBe('unavailable');
+  expect(data.alerts.some((alert) => alert.category === 'events')).toBe(true);
 });

@@ -25,6 +25,12 @@ export const communityEventKeys = {
     `arrakis:{community-events}:submission-image:${eventId}:${submissionId}`,
 };
 
+export const assistanceKeys = {
+  requests: 'arrakis:{assistance}:requests',
+  volunteers: 'arrakis:{assistance}:volunteers',
+  messages: (requestId: string) => `arrakis:{assistance}:messages:${requestId}`,
+};
+
 export const guildKeys = {
   polls: (guildId: string) => `arrakis:${GUILD_TAG}:polls:${guildId}`,
   onboarding: (guildId: string) => `arrakis:${GUILD_TAG}:onboarding:${guildId}`,

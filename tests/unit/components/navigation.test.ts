@@ -107,6 +107,7 @@ describe('unified navigation configuration', () => {
       '/events',
       '/seasons',
       '/calendar',
+      '/help',
       '/chat',
       '/changelog',
       '/status',

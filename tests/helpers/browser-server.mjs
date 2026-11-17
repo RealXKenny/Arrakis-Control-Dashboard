@@ -4,6 +4,7 @@ import { once } from 'node:events';
 import { createHash } from 'node:crypto';
 import { casinoReply } from './casino-redis.mjs';
 import { eventsReply } from './events-redis.mjs';
+import { assistanceReply } from './assistance-redis.mjs';
 import { noticeboardReply } from './guild-noticeboard-redis.mjs';
 import { operationsReply } from './guild-operations-redis.mjs';
 import { resourcesReply } from './guild-resources-redis.mjs';
@@ -86,6 +87,8 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
   if (noticeboard !== undefined) return noticeboard.value;
   const events = eventsReply(operation, key, args);
   if (events !== undefined) return events.value;
+  const assistance = assistanceReply(operation, key, args);
+  if (assistance !== undefined) return assistance.value;
   const casino = casinoReply(operation, key, args);
   if (casino !== undefined) return casino.value;
   if (operation.toUpperCase() === 'ZRANGE' && key === 'arrakis:{guilds}:requirements-index') return ['guild:2'];
