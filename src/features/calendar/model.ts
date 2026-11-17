@@ -16,6 +16,7 @@ export type CalendarData = {
   maintenanceAvailable: boolean;
   maintenanceObservedAt: string | null;
   unscheduledEvents: number;
+  registrationUnavailable: number;
 };
 
 /** Local calendar days use their actual boundaries, including daylight-saving transitions. */

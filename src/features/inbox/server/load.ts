@@ -7,6 +7,7 @@ import { requireGuildMember } from '../../guilds/server/member-access';
 import { readGuildOperations } from '../../guilds/server/operations-store';
 import { readResourceRequests } from '../../guilds/server/resource-requests-store';
 import { listCommunityEvents } from '../../events/server/store';
+import { getEventRegistration } from '../../events/server/registrations-store';
 import { readRestartQueue } from '../../monitoring/server/restart-queue';
 import {
   assetAlerts,
@@ -123,12 +124,24 @@ export async function loadInbox(session: DashboardSession): Promise<InboxView> {
     Promise.resolve().then(() => readRestartQueue()),
   ]);
   if (events.status === 'fulfilled') {
-    alerts.push(...eventAlerts(events.value.value, Date.now()));
+    const scheduled = events.value.value.filter((event) => event.startsAt);
+    const registrations = Object.fromEntries(
+      await Promise.all(
+        scheduled.map(async (event) => [
+          event.id,
+          await getEventRegistration(event, session.user.id).catch(() => null),
+        ]),
+      ),
+    );
+    const unavailable = Object.values(registrations).filter((value) => value === null).length;
+    alerts.push(...eventAlerts(events.value.value, Date.now(), registrations));
     sources[4] = {
       category: 'events',
-      status: 'checked',
+      status: unavailable ? 'partial' : 'checked',
       readAt: events.value.readAt,
-      detail: 'Published events starting within seven days. Unscheduled and cancelled events are not alerted.',
+      detail: unavailable
+        ? `Published events are shown, but personal registration status is unavailable for ${unavailable} event(s).`
+        : 'Published events starting within seven days, including your registration status. Unscheduled and cancelled events are not alerted.',
     };
   }
   if (maintenance.status === 'fulfilled') {

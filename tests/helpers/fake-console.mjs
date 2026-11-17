@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { resetFixtureEvents, setFixtureEvent } from './events-redis.mjs';
 
 /**
  * A stand-in for the Dune Console and Discord adapter, used only by the browser tests.
@@ -164,6 +165,9 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
         shared = world();
         requests = [];
         byDiscord = fixedMembers();
+        resetFixtureEvents();
+      } else if (path === '/__fixture/event') {
+        setFixtureEvent(body);
       } else if (path === '/__fixture/user') {
         // Create (or reshape) one member: { discordId, name, patch }.
         const suffix = String(body.discordId).slice(-7);

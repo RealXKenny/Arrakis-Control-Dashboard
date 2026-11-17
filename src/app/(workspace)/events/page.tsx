@@ -2,18 +2,26 @@ import type { Metadata } from 'next';
 import { requireSession } from '../../../features/auth/server/session';
 import { PageHeader, Notice } from '../../../components/ui/page-header';
 import { listCommunityEvents } from '../../../features/events/server/store';
+import { getEventRegistration } from '../../../features/events/server/registrations-store';
 import { CommunityEvents } from '../../../features/events/components/community-events';
 
 export const metadata: Metadata = { title: 'Community events' };
 
 export default async function EventsPage() {
-  await requireSession();
+  const session = await requireSession();
   let events;
   try {
     events = await listCommunityEvents();
   } catch {
     events = null;
   }
+  const registrations = events
+    ? Object.fromEntries(
+        await Promise.all(
+          events.map(async (event) => [event.id, await getEventRegistration(event, session.user.id).catch(() => null)]),
+        ),
+      )
+    : {};
   return (
     <>
       <PageHeader eyebrow="Built by the community" title="Community events">
@@ -22,7 +30,7 @@ export default async function EventsPage() {
         </p>
       </PageHeader>
       {events ? (
-        <CommunityEvents events={events} />
+        <CommunityEvents events={events} registrations={registrations} />
       ) : (
         <Notice title="Events are temporarily unavailable" tone="warn">
           We couldn’t load community events. Refresh the page to try again.

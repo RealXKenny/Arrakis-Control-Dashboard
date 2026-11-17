@@ -5,6 +5,7 @@ import { firstCommunityEvent } from '../../../src/features/events/contracts';
 const mocks = vi.hoisted(() => ({
   profile: vi.fn(),
   events: vi.fn(),
+  registration: vi.fn(),
   queue: vi.fn(),
   member: vi.fn(),
   operations: vi.fn(),
@@ -12,6 +13,9 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('../../../src/features/portal/server/load', () => ({ loadPortalProfile: mocks.profile }));
 vi.mock('../../../src/features/events/server/store', () => ({ listCommunityEvents: mocks.events }));
+vi.mock('../../../src/features/events/server/registrations-store', () => ({
+  getEventRegistration: mocks.registration,
+}));
 vi.mock('../../../src/features/monitoring/server/restart-queue', () => ({ readRestartQueue: mocks.queue }));
 vi.mock('../../../src/features/guilds/server/member-access', () => ({ requireGuildMember: mocks.member }));
 vi.mock('../../../src/features/guilds/server/operations-store', () => ({ readGuildOperations: mocks.operations }));
@@ -25,6 +29,7 @@ const session = { user: { id: 'account' } } as DashboardSession;
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.profile.mockResolvedValue({ status: 'unlinked' });
+  mocks.registration.mockResolvedValue({ ownStatus: 'registered', ownWaitlistPosition: null });
   mocks.events.mockResolvedValue([
     {
       ...firstCommunityEvent(),
@@ -53,6 +58,7 @@ it('keeps public event and maintenance alerts independent of private character s
   expect(data.alerts.map((alert) => alert.category).sort()).toEqual(['events', 'maintenance']);
   expect(data.sources.find((source) => source.category === 'assets')?.status).toBe('unlinked');
   expect(data.sources.find((source) => source.category === 'events')?.status).toBe('checked');
+  expect(data.alerts.find((alert) => alert.category === 'events')?.detail).toContain('You are registered.');
   expect(data.sources.find((source) => source.category === 'maintenance')?.status).toBe('checked');
   expect(mocks.member).not.toHaveBeenCalled();
 });
@@ -64,4 +70,11 @@ it('reports independent public source failures as unavailable rather than empty'
   expect(data.alerts).toEqual([]);
   expect(data.sources.find((source) => source.category === 'events')?.status).toBe('unavailable');
   expect(data.sources.find((source) => source.category === 'maintenance')?.status).toBe('unavailable');
+});
+
+it('keeps public event alerts but marks registration coverage partial on storage failure', async () => {
+  mocks.registration.mockRejectedValue(new Error('offline'));
+  const data = await loadInbox(session);
+  expect(data.alerts.some((alert) => alert.category === 'events')).toBe(true);
+  expect(data.sources.find((source) => source.category === 'events')?.status).toBe('partial');
 });

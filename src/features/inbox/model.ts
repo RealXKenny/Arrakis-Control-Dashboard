@@ -3,6 +3,7 @@ import type { PortalProfile } from '../portal/view-model';
 import type { StoredOperation } from '../guilds/operations';
 import type { StoredResourceRequest } from '../guilds/resource-requests';
 import type { CommunityEvent } from '../events/contracts';
+import type { EventRegistrationSummary } from '../events/registrations';
 import type { RestartEntry } from '../monitoring/restart-queue';
 
 export const inboxCategories = ['assets', 'supply', 'market', 'operations', 'events', 'maintenance'] as const;
@@ -164,7 +165,11 @@ export function operationAlerts(operations: StoredOperation[], memberId: string,
     }));
 }
 
-export function eventAlerts(events: CommunityEvent[], now: number): InboxAlert[] {
+export function eventAlerts(
+  events: CommunityEvent[],
+  now: number,
+  registrations: Record<string, EventRegistrationSummary | null> = {},
+): InboxAlert[] {
   return events
     .filter((event) => {
       if (!event.startsAt || !['upcoming', 'open'].includes(event.status)) return false;
@@ -172,15 +177,21 @@ export function eventAlerts(events: CommunityEvent[], now: number): InboxAlert[]
       const ends = event.endsAt ? Date.parse(event.endsAt) : starts + 1;
       return starts <= now + 7 * 86_400_000 && ends > now;
     })
-    .map((event) => ({
-      id: `event:${event.id}`,
-      category: 'events',
-      priority: Date.parse(event.startsAt!) <= now + 3_600_000 ? 'urgent' : 'attention',
-      title: event.title,
-      detail: `Published community event. Starts ${event.startsAt}. Confirmation state is not separately reported.`,
-      href: '/calendar',
-      action: 'Open community calendar',
-    }));
+    .map((event) => {
+      const registration = registrations[event.id];
+      const own = registration?.ownStatus
+        ? ` ${registration.ownStatus === 'registered' ? 'You are registered.' : `You are on the waiting list at position ${registration.ownWaitlistPosition}.`}`
+        : '';
+      return {
+        id: `event:${event.id}`,
+        category: 'events' as const,
+        priority: Date.parse(event.startsAt!) <= now + 3_600_000 ? ('urgent' as const) : ('attention' as const),
+        title: event.title,
+        detail: `Published community event. Starts ${event.startsAt}.${own}`,
+        href: '/calendar' as const,
+        action: 'Open community calendar',
+      };
+    });
 }
 
 export function maintenanceAlerts(entries: RestartEntry[], now: number): InboxAlert[] {

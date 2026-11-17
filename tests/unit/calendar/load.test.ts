@@ -8,8 +8,12 @@ const mocks = vi.hoisted(() => ({
   member: vi.fn(),
   operations: vi.fn(),
   queue: vi.fn(),
+  registration: vi.fn(),
 }));
 vi.mock('../../../src/features/events/server/store', () => ({ listCommunityEvents: mocks.events }));
+vi.mock('../../../src/features/events/server/registrations-store', () => ({
+  getEventRegistration: mocks.registration,
+}));
 vi.mock('../../../src/features/portal/server/load', () => ({ loadPortalProfile: mocks.profile }));
 vi.mock('../../../src/features/guilds/details', () => ({ reportedGuild: mocks.guild }));
 vi.mock('../../../src/features/guilds/server/member-access', () => ({ requireGuildMember: mocks.member }));
@@ -20,6 +24,7 @@ import { loadCalendar } from '../../../src/features/calendar/server/load';
 const session = { user: { id: 'account' } } as DashboardSession;
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.registration.mockResolvedValue({ ownStatus: null });
   mocks.events.mockResolvedValue([
     {
       id: 'event',
@@ -128,4 +133,14 @@ it('keeps other sources when the restart client cannot be constructed', async ()
   const data = await loadCalendar(session);
   expect(data.maintenanceAvailable).toBe(false);
   expect(data.items.map((item) => item.id)).toEqual(['event:event', 'operation:own']);
+});
+
+it('adds only the caller’s registration context and reports unreadable status', async () => {
+  mocks.registration.mockResolvedValue({ ownStatus: 'waiting', ownWaitlistPosition: 3 });
+  const data = await loadCalendar(session);
+  expect(data.items.find((item) => item.id === 'event:event')?.description).toContain('waiting list, position 3');
+  expect(data.items.find((item) => item.id === 'event:event')?.state).toBe('unspecified');
+  expect(data.registrationUnavailable).toBe(0);
+  mocks.registration.mockRejectedValue(new Error('offline'));
+  expect((await loadCalendar(session)).registrationUnavailable).toBe(1);
 });

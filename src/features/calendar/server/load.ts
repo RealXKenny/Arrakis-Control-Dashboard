@@ -1,6 +1,7 @@
 import '../../../lib/assert-server';
 import type { DashboardSession } from '../../auth/server/session-store';
 import { listCommunityEvents } from '../../events/server/store';
+import { getEventRegistration } from '../../events/server/registrations-store';
 import { loadPortalProfile } from '../../portal/server/load';
 import { reportedGuild } from '../../guilds/details';
 import { requireGuildMember } from '../../guilds/server/member-access';
@@ -43,21 +44,26 @@ export async function loadCalendar(session: DashboardSession): Promise<CalendarD
     commitments(session),
     Promise.resolve().then(() => readRestartQueue()),
   ]);
-  const eventItems: CalendarItem[] =
-    events.status === 'fulfilled'
-      ? events.value
-          .filter((event) => event.startsAt)
-          .map((event) => ({
-            id: `event:${event.id}`,
-            category: 'event',
-            title: event.title,
-            description: event.summary,
-            startsAt: event.startsAt!,
-            endsAt: event.endsAt,
-            state: event.status === 'cancelled' ? 'cancelled' : 'unspecified',
-            href: '/events',
-          }))
-      : [];
+  const scheduledEvents = events.status === 'fulfilled' ? events.value.filter((event) => event.startsAt) : [];
+  const registrations = await Promise.all(
+    scheduledEvents.map((event) => getEventRegistration(event, session.user.id).catch(() => null)),
+  );
+  const eventItems: CalendarItem[] = scheduledEvents.map((event, index) => {
+    const registration = registrations[index];
+    const ownStatus = registration?.ownStatus
+      ? `Your registration: ${registration.ownStatus === 'waiting' ? `waiting list, position ${registration.ownWaitlistPosition}` : 'registered'}.`
+      : '';
+    return {
+      id: `event:${event.id}`,
+      category: 'event',
+      title: event.title,
+      description: [event.summary, ownStatus].filter(Boolean).join('\n'),
+      startsAt: event.startsAt!,
+      endsAt: event.endsAt,
+      state: event.status === 'cancelled' ? 'cancelled' : 'unspecified',
+      href: '/events',
+    };
+  });
   const maintenanceItems: CalendarItem[] =
     maintenance.status === 'fulfilled'
       ? maintenance.value.entries
@@ -93,5 +99,6 @@ export async function loadCalendar(session: DashboardSession): Promise<CalendarD
     maintenanceObservedAt:
       maintenance.status === 'fulfilled' ? new Date(maintenance.value.observedAt).toISOString() : null,
     unscheduledEvents: events.status === 'fulfilled' ? events.value.filter((event) => !event.startsAt).length : 0,
+    registrationUnavailable: registrations.filter((value) => value === null).length,
   };
 }

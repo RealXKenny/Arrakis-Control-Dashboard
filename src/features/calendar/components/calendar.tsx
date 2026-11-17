@@ -71,6 +71,9 @@ export function CommunityCalendar({ data }: { data: CalendarData }) {
             {data.unscheduledEvents} community event(s) have no reported start time and are not placed on the calendar.
           </p>
         )}
+        {data.registrationUnavailable > 0 && (
+          <p>Personal registration status is unavailable for {data.registrationUnavailable} event(s).</p>
+        )}
         <p>
           Dates and times use your device timezone. The maintenance source covers active queued restarts only; reload
           for changes.{' '}

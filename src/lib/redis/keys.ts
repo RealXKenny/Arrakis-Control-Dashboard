@@ -17,7 +17,10 @@ import '../assert-server';
 export const GUILD_TAG = '{guilds}';
 
 /** A single bounded hash contains community events and their one-time seed marker. */
-export const communityEventKeys = { records: 'arrakis:{community-events}:records' };
+export const communityEventKeys = {
+  records: 'arrakis:{community-events}:records',
+  registration: (eventId: string) => `arrakis:{community-events}:registration:${eventId}`,
+};
 
 export const guildKeys = {
   polls: (guildId: string) => `arrakis:${GUILD_TAG}:polls:${guildId}`,

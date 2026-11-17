@@ -42,6 +42,8 @@ export const fakeConsole = {
   },
   /** Shape the world every member shares (market, guild list, failures). Call `reset` afterwards. */
   setShared: (patch: Record<string, unknown>) => call('shared', patch),
+  /** Seed one validated community-event record in the isolated browser store. */
+  setEvent: (event: unknown) => call('event', event),
   reset: () => call('reset'),
   async requests(): Promise<Array<{ method: string; path: string; authorized: boolean; body?: string }>> {
     return (await fetch(`${base}/requests`)).json();

@@ -6,8 +6,16 @@ import { useState } from 'react';
 import { LocalTime } from '../../../components/ui/local-time';
 import { BaseIcon } from '../../../components/icons';
 import { EVENT_STATUS_LABELS, type CommunityEvent } from '../contracts';
+import { EventRegistration } from './event-registration';
+import type { EventRegistrationSummary } from '../registrations';
 
-export function CommunityEvents({ events }: { events: CommunityEvent[] }) {
+export function CommunityEvents({
+  events,
+  registrations,
+}: {
+  events: CommunityEvent[];
+  registrations: Record<string, EventRegistrationSummary | null>;
+}) {
   const [filter, setFilter] = useState('All events');
   const visible = events.filter(
     (event) =>
@@ -92,6 +100,11 @@ export function CommunityEvents({ events }: { events: CommunityEvent[] }) {
                     </div>
                   )}
                 </div>
+                <EventRegistration
+                  eventId={event.id}
+                  scheduled={Boolean(event.startsAt)}
+                  initial={registrations[event.id] ?? null}
+                />
               </div>
               <aside
                 aria-label="Event prizes"
