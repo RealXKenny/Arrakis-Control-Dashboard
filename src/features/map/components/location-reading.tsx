@@ -26,8 +26,13 @@ const referenceMaps: Partial<Record<MapName, string>> = {
   HarkoVillage: 'https://duneawakening.th.gl/maps/Harko%20Village',
   Overland: 'https://duneawakening.th.gl/maps/Overland%20Map',
 };
+const mapImages: Partial<Record<MapName, string>> = {
+  Arrakeen: '/maps/arrakeen.png',
+  HarkoVillage: '/maps/harko-village.png',
+  Overland: '/maps/overland.webp',
+};
 
-/** Position-only view until location-specific images and coordinate bounds are verified. */
+/** The character marker stays hidden until the world-to-image transform is verified. */
 export function LocationReading({ mapName }: { mapName: MapName }) {
   const [reading, setReading] = useState<Reading | null>(null);
   const [status, setStatus] = useState('Loading location…');
@@ -88,9 +93,14 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
           {MAP_LABELS[mapName]}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-sand-300">
-          Your position is available from the Console. A calibrated map image is not yet available, so coordinates are
-          shown without a plotted marker.
+          Your position is available from the Console. This map has not been calibrated yet, so coordinates are shown
+          without a plotted marker.
         </p>
+        {mapImages[mapName] && (
+          // These are local, user-supplied game maps served through the existing same-origin asset route.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={mapImages[mapName]} alt={`${MAP_LABELS[mapName]} map`} className="mt-6 h-auto w-full rounded-lg" />
+        )}
         <p role="status" className="mt-6 text-sm text-sand-200">
           {status}
         </p>

@@ -31,7 +31,10 @@ test('new location pages show only verified position without a fabricated map', 
       page.getByRole('status').filter({ hasText: 'Your linked character is in this location.' }),
     ).toBeVisible();
     await expect(page.getByText('1.25', { exact: true })).toBeVisible();
-    await expect(page.getByText(/calibrated map image is not yet available/)).toBeVisible();
+    await expect(page.getByText(/map has not been calibrated yet/)).toBeVisible();
+    const image = page.getByRole('img', { name: `${name} map` });
+    await expect(image).toBeVisible();
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBeGreaterThan(0);
     await expect(page.getByRole('navigation', { name: 'Map', exact: true })).toHaveCount(0);
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
