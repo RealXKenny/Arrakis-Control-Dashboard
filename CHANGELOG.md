@@ -14,6 +14,7 @@
 - Community events support private registration and cancellation with bounded attendee seats and waiting lists, atomic last-seat protection and automatic promotion, plus own-status calendar and inbox context.
 - Event galleries accept owner-managed evidence submissions with validated images, permission-aware review, and separately confirmed judging results under a dedicated event-reviewer Discord role.
 - Player assistance adds categorized help requests, volunteer availability and atomic matching, full assignment lifecycles, private participant chat, abuse reporting and active-assignment inbox alerts.
+- A least-privilege moderator workspace reviews direct player reports and assistance-abuse evidence snapshots with assignment, filtering/search, decisions, closure, bounded history and fresh moderator-role verification.
 - Navigation reorganized: the More menu is gone. Everything now sits in the top row as categories (Assets, Bases, Guilds, Casino, Community and Personal), and every dropdown uses the same Bases-style panel with an introduction card and titled groups. Narrower desktop widths place the row on its own line instead of hiding destinations.
 - Universal item finder searches your authorized backpack, base containers and vehicle cargo with permission checks, and private pinned item counters track the stacks you care about.
 - Customizable portal widgets with a compact personal view, saved activity views for different activities, and a Console-default theme with 66 additional themes and a custom color studio.

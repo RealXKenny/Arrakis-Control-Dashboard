@@ -457,6 +457,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             description: 'Saved widgets, filters and planning context for your activities.',
             order: 20,
           },
+          {
+            id: 'personal-reports',
+            label: 'My reports',
+            href: '/reports',
+            icon: 'portal',
+            description: 'Submit a player report and review its status.',
+            order: 30,
+          },
         ],
       },
       {

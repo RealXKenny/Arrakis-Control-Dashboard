@@ -25,6 +25,8 @@ export const communityEventKeys = {
     `arrakis:{community-events}:submission-image:${eventId}:${submissionId}`,
 };
 
+export const moderationKeys = { cases: 'arrakis:{moderation}:cases' };
+
 export const assistanceKeys = {
   requests: 'arrakis:{assistance}:requests',
   volunteers: 'arrakis:{assistance}:volunteers',

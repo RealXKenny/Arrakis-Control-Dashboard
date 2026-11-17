@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { resetFixtureEvents, setFixtureEvent } from './events-redis.mjs';
 import { resetAssistance } from './assistance-redis.mjs';
+import { resetModeration } from './moderation-redis.mjs';
 
 /**
  * A stand-in for the Dune Console and Discord adapter, used only by the browser tests.
@@ -168,6 +169,7 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
         byDiscord = fixedMembers();
         resetFixtureEvents();
         resetAssistance();
+        resetModeration();
       } else if (path === '/__fixture/event') {
         setFixtureEvent(body);
       } else if (path === '/__fixture/user') {

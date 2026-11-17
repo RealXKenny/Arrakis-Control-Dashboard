@@ -113,6 +113,7 @@ describe('unified navigation configuration', () => {
       '/status',
       '/tasks',
       '/activity-views',
+      '/reports',
       '/privacy',
       '/personal-data',
     ]);
