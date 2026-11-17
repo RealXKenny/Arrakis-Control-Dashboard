@@ -1,6 +1,6 @@
 import '../../lib/assert-server';
-import { runPagesApiHandler } from '../../infrastructure/pages-api';
-import { GET } from '../../modules/auth/server/session';
+import { runPagesApiHandler } from '../../server/pages-api';
+import { GET } from '../../features/auth/server/session-api';
 export default function handler(req, res) {
   return runPagesApiHandler(req, res, 'GET', GET);
 }

@@ -1,8 +1,11 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GET } from '../../src/modules/guilds/server/application-status';
+import { GET } from '../../src/features/guilds/server/application-status';
 const { session, redis } = vi.hoisted(() => ({ session: vi.fn(), redis: { eval: vi.fn() } }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 const id = createHash('sha256').update('2:user').digest('hex');
 const req = (guildIds = '2,3') => ({ query: { guildIds }, headers: { cookie: 'dashboard_session=test' } });
@@ -19,8 +22,8 @@ describe('own application card summaries', () => {
     });
     expect(redis.eval).toHaveBeenCalledWith(
       expect.stringContaining('application.discordId ~= ARGV[2]'),
-      ['arrakis:guild-applications:2'],
-      [id, 'user', `arrakis:guild-chat:2:${id}:`],
+      ['arrakis:{guilds}:applications:2'],
+      [id, 'user', `arrakis:{guilds}:chat:2:${id}:`],
     );
   });
   it('requires authentication and bounds distinct guild IDs before storage access', async () => {

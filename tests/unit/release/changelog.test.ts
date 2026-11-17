@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseChangelog } from '../../../src/modules/changelog/server/read';
+import { parseChangelog } from '../../../src/features/changelog/server/read';
 
 describe('changelog parser', () => {
   it('turns release markdown into display-ready sections', () => {
@@ -21,6 +21,32 @@ describe('changelog parser', () => {
         date: '2026-09-20',
         sections: [{ title: 'Added', items: ['A shiny feature.', 'Another shiny feature.'] }],
       },
+    ]);
+  });
+
+  it('reads the Patch Notes format, with items grouped under its section names', () => {
+    expect(
+      parseChangelog(`## Patch Notes v2.0.0
+### New Features
+- One.
+### Fixes
+- Two.
+- Three.
+
+## Patch Notes v1.4.7
+### Improvements
+- Older.
+`),
+    ).toEqual([
+      {
+        version: '2.0.0',
+        date: '',
+        sections: [
+          { title: 'New Features', items: ['One.'] },
+          { title: 'Fixes', items: ['Two.', 'Three.'] },
+        ],
+      },
+      { version: '1.4.7', date: '', sections: [{ title: 'Improvements', items: ['Older.'] }] },
     ]);
   });
 

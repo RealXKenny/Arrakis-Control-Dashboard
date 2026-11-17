@@ -1,11 +1,12 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import {
   DAY_MS,
+  activityByLocalHour,
   summarizePopulation,
   populationSegments,
   totalPlayHours,
-} from '../../../src/modules/portal/utils/population';
-import { recordPopulation, readPopulationHistory } from '../../../src/modules/portal/server/population';
+} from '../../../src/features/portal/population';
+import { recordPopulation, readPopulationHistory } from '../../../src/features/portal/server/population';
 
 const mocks = vi.hoisted(() => ({
   set: vi.fn(),
@@ -16,9 +17,9 @@ const mocks = vi.hoisted(() => ({
   request: vi.fn(),
 }));
 vi.mock('../../../src/lib/redis/client', () => ({ getRedisClient: () => mocks }));
-vi.mock('../../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
+vi.mock('../../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
 vi.mock('../../../src/config/env', () => ({
-  getServerEnv: () => ({ CONSOLE_URL: 'https://console.test', LOG_LEVEL: 'INFO' }),
+  getServerEnv: () => ({ DUNE_API_URL: 'https://console.test', LOG_LEVEL: 'INFO' }),
 }));
 
 beforeEach(() => {
@@ -85,7 +86,7 @@ describe('population history', () => {
       member: { at: expect.any(Number), online: 3 },
     });
     expect(mocks.zremrangebyscore).toHaveBeenCalled();
-    expect(mocks.expire).toHaveBeenCalledWith(expect.any(String), 172800);
+    expect(mocks.expire).toHaveBeenCalledWith(expect.any(String), 8 * 86400);
     mocks.set.mockResolvedValue(null);
     await recordPopulation();
     expect(mocks.request).toHaveBeenCalledTimes(1);
@@ -101,5 +102,15 @@ describe('population history', () => {
   it('returns an unavailable reading when Redis fails', async () => {
     mocks.zrange.mockRejectedValue(new Error('offline'));
     expect(await readPopulationHistory()).toBeNull();
+  });
+  it('distinguishes observed zero from missing activity and averages samples', () => {
+    const at = new Date(2026, 0, 4, 10).getTime();
+    const cells = activityByLocalHour([
+      { at, online: 0 },
+      { at: at + 60000, online: 4 },
+    ]);
+    expect(cells[10]).toEqual({ samples: 2, average: 2 });
+    expect(cells[11]).toEqual({ samples: 0, average: null });
+    expect(activityByLocalHour([{ at, online: 0 }])[10].average).toBe(0);
   });
 });

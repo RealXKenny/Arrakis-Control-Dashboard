@@ -1,0 +1,345 @@
+[
+  {
+    "id": 460820,
+    "title": "Exit",
+    "categoryId": 13076,
+    "latitude": 0.71822287487676,
+    "longitude": -0.46307688973627
+  },
+  {
+    "id": 460824,
+    "title": "The Salusan Bull",
+    "categoryId": 13076,
+    "latitude": 0.74805080898047,
+    "longitude": -0.56464642788006
+  },
+  {
+    "id": 460831,
+    "title": "Central Plaza",
+    "categoryId": 13076,
+    "latitude": 0.71786135638061,
+    "longitude": -0.62312158772528
+  },
+  {
+    "id": 460832,
+    "title": "Imperial Consulate",
+    "categoryId": 13076,
+    "latitude": 0.79724826230945,
+    "longitude": -0.72520583310759
+  },
+  {
+    "id": 460839,
+    "title": "The Warrens",
+    "categoryId": 13076,
+    "latitude": 0.61687185726413,
+    "longitude": -0.72360930630089
+  },
+  {
+    "id": 460840,
+    "title": "Duncan's Dojo",
+    "categoryId": 13076,
+    "latitude": 0.61239030221829,
+    "longitude": -0.80390095710689
+  },
+  {
+    "id": 460841,
+    "title": "Residency Approach",
+    "categoryId": 13076,
+    "latitude": 0.71934153314804,
+    "longitude": -0.85753817810189
+  },
+  {
+    "id": 949804,
+    "title": "Guild Bank",
+    "categoryId": 13076,
+    "latitude": 0.68496896828802,
+    "longitude": -0.55673949967084
+  },
+  {
+    "id": 949805,
+    "title": "CHOAM Exchange",
+    "categoryId": 13076,
+    "latitude": 0.68445402093049,
+    "longitude": -0.56652419815609
+  },
+  {
+    "id": 460825,
+    "title": "Barkeep",
+    "categoryId": 13082,
+    "latitude": 0.76933495345784,
+    "longitude": -0.54919690395371
+  },
+  {
+    "id": 460826,
+    "title": "Barkeep",
+    "categoryId": 13082,
+    "latitude": 0.77963369511036,
+    "longitude": -0.54473370815307
+  },
+  {
+    "id": 460827,
+    "title": "Base Vendor",
+    "categoryId": 13079,
+    "latitude": 0.79922945085109,
+    "longitude": -0.63860177993877
+  },
+  {
+    "id": 479723,
+    "title": "Shaffat's Clinic",
+    "categoryId": 12710,
+    "latitude": 0.66935041464247,
+    "longitude": -0.69300168650079
+  },
+  {
+    "id": 460830,
+    "title": "House Mutelli Representative",
+    "categoryId": 12687,
+    "latitude": 0.74550913360996,
+    "longitude": -0.59225088018877
+  },
+  {
+    "id": 460833,
+    "title": "House Varota Representative",
+    "categoryId": 12687,
+    "latitude": 0.80050951143761,
+    "longitude": -0.74666350522614
+  },
+  {
+    "id": 460843,
+    "title": "House Wallach Representative",
+    "categoryId": 12687,
+    "latitude": 0.67316803344076,
+    "longitude": -0.97546954407301
+  },
+  {
+    "id": 460836,
+    "title": "Landsraad Vendor",
+    "categoryId": 13078,
+    "latitude": 0.63945937466083,
+    "longitude": -0.60894931765415
+  },
+  {
+    "id": 460837,
+    "title": "Landsraad Vendor",
+    "categoryId": 13078,
+    "latitude": 0.63242169173053,
+    "longitude": -0.60379947634564
+  },
+  {
+    "id": 460838,
+    "title": "Landsraad Vendor",
+    "categoryId": 13078,
+    "latitude": 0.62641390606611,
+    "longitude": -0.60929264040763
+  },
+  {
+    "id": 460847,
+    "title": "Zayn de Witte (Advanced Trainer)",
+    "categoryId": 12683,
+    "latitude": 0.79954724871925,
+    "longitude": -0.52649197724594
+  },
+  {
+    "id": 460822,
+    "title": "Scrap Trader",
+    "categoryId": 13077,
+    "latitude": 0.73040985873612,
+    "longitude": -0.50530558846822
+  },
+  {
+    "id": 460829,
+    "title": "Spice Merchant",
+    "categoryId": 13084,
+    "latitude": 0.76627835252539,
+    "longitude": -0.61851507086234
+  },
+  {
+    "id": 460834,
+    "title": "Tax Collector",
+    "categoryId": 12680,
+    "latitude": 0.81956201995224,
+    "longitude": -0.75833647885975
+  },
+  {
+    "id": 460821,
+    "title": "Taxi Service",
+    "categoryId": 13083,
+    "latitude": 0.70414772635657,
+    "longitude": -0.49294596932677
+  },
+  {
+    "id": 460844,
+    "title": "Kara Valk (Advanced Trainer)",
+    "categoryId": 12682,
+    "latitude": 0.6930116701992,
+    "longitude": -0.60613027812309
+  },
+  {
+    "id": 460823,
+    "title": "Vehicle Vendor",
+    "categoryId": 13081,
+    "latitude": 0.69590859525566,
+    "longitude": -0.50685054086065
+  },
+  {
+    "id": 460842,
+    "title": "Atreides Vendor",
+    "categoryId": 12679,
+    "latitude": 0.67059328982573,
+    "longitude": -0.93358416809633
+  },
+  {
+    "id": 460828,
+    "title": "Water Seller",
+    "categoryId": 13085,
+    "latitude": 0.76678848064417,
+    "longitude": -0.63894510269313
+  },
+  {
+    "id": 460835,
+    "title": "Weapons Merchant",
+    "categoryId": 13080,
+    "latitude": 0.66450775019192,
+    "longitude": -0.61262726783556
+  },
+  {
+    "id": 461265,
+    "title": "Atreides: Hawat: On the Tainted Trail",
+    "categoryId": 12695,
+    "latitude": 0.77457001790991,
+    "longitude": -0.98453676096403
+  },
+  {
+    "id": 461266,
+    "title": "Atreides: Hawat: A New Cultist",
+    "categoryId": 12695,
+    "latitude": 0.77473782882603,
+    "longitude": -0.97852349281413
+  },
+  {
+    "id": 461267,
+    "title": "Atreides: Hawat: A Center of Learning",
+    "categoryId": 12695,
+    "latitude": 0.77479146809864,
+    "longitude": -0.97230076789734
+  },
+  {
+    "id": 461268,
+    "title": "Atreides: Hawat: The Hunt for Skorda",
+    "categoryId": 12695,
+    "latitude": 0.77479382727323,
+    "longitude": -0.96594821964058
+  },
+  {
+    "id": 461269,
+    "title": "Atreides: Hawat: Skorda's Last Stand",
+    "categoryId": 12695,
+    "latitude": 0.76775398931271,
+    "longitude": -0.98157048225337
+  },
+  {
+    "id": 461270,
+    "title": "Atreides: Hawat: The Tainted Spice",
+    "categoryId": 12695,
+    "latitude": 0.76758234334314,
+    "longitude": -0.97539067268374
+  },
+  {
+    "id": 460845,
+    "title": "Trooper: Advanced: Seeking Control",
+    "categoryId": 12693,
+    "latitude": 0.69266896934732,
+    "longitude": -0.59977412223785
+  },
+  {
+    "id": 460846,
+    "title": "Trooper: Advanced: Regaining Control",
+    "categoryId": 12693,
+    "latitude": 0.69255096077548,
+    "longitude": -0.59417366981512
+  },
+  {
+    "id": 460848,
+    "title": "Mentat: Advanced: Calculated Calamity",
+    "categoryId": 12693,
+    "latitude": 0.7995620491193,
+    "longitude": -0.52057829287472
+  },
+  {
+    "id": 461155,
+    "title": "Trooper: Advanced: A Shot at Improving",
+    "categoryId": 12693,
+    "latitude": 0.69239003998783,
+    "longitude": -0.58850884437521
+  },
+  {
+    "id": 461169,
+    "title": "Trooper: Advanced: Master of Weapons",
+    "categoryId": 12693,
+    "latitude": 0.68450793401183,
+    "longitude": -0.59990269387589
+  },
+  {
+    "id": 461173,
+    "title": "Trooper: Advanced: Surgical Strike",
+    "categoryId": 12693,
+    "latitude": 0.68449418666849,
+    "longitude": -0.59434533119455
+  },
+  {
+    "id": 461177,
+    "title": "Trooper: Advanced: The Cleansing of Kara Valk",
+    "categoryId": 12693,
+    "latitude": 0.68475166035276,
+    "longitude": -0.58868050575319
+  },
+  {
+    "id": 461180,
+    "title": "Mentat: Advanced: An Olive Branch",
+    "categoryId": 12693,
+    "latitude": 0.79942255110825,
+    "longitude": -0.51481246948103
+  },
+  {
+    "id": 461181,
+    "title": "Mentat: Advanced: Cataloging Defectors",
+    "categoryId": 12693,
+    "latitude": 0.79921872306046,
+    "longitude": -0.50907254218922
+  },
+  {
+    "id": 461182,
+    "title": "Mentat: Advanced: Bloody Results",
+    "categoryId": 12693,
+    "latitude": 0.7919770740439,
+    "longitude": -0.52074234032983
+  },
+  {
+    "id": 461183,
+    "title": "Mentat: Advanced: The Price of Rejection",
+    "categoryId": 12693,
+    "latitude": 0.79218132202354,
+    "longitude": -0.51524917626432
+  },
+  {
+    "id": 461184,
+    "title": "Mentat: Advanced: Untwisted Questions",
+    "categoryId": 12693,
+    "latitude": 0.79218132202362,
+    "longitude": -0.5094126894478
+  },
+  {
+    "id": 480060,
+    "title": "Dr. Shaffat: Help Needed at the Clinic",
+    "categoryId": 12693,
+    "latitude": 0.66954971300109,
+    "longitude": -0.68674263678918
+  },
+  {
+    "id": 480061,
+    "title": "Shaffat's Import Permit: Acquire Import Permit",
+    "categoryId": 12693,
+    "latitude": 0.72917782540392,
+    "longitude": -0.48987531486259
+  }
+]

@@ -1,0 +1,2580 @@
+{
+  "version": "solaris-v1",
+  "voice": "af_heart",
+  "model": "onnx-community/Kokoro-82M-v1.0-ONNX",
+  "revision": "1939ad2a8e416c0acfeecc08a694d14ef25f2231",
+  "license": "Apache-2.0",
+  "speed": 0.95,
+  "sampleRate": 24000,
+  "bitrate": 48000,
+  "clips": {
+    "0": {
+      "file": "a0063197f0317253a49fb9d1.mp3",
+      "spoken": "zero.",
+      "bytes": 4557,
+      "sha256": "efc9e6a20c0b45eb4b3178b81bd33ce23f19f1c0a6629a30b6bd5f646f88186d"
+    },
+    "1": {
+      "file": "d315ccd51c59b2a7b8eb5f0e.mp3",
+      "spoken": "one.",
+      "bytes": 3981,
+      "sha256": "70e6b20ac2d8fd0cb81da56c5883ac29689b16ec8ffa743bfac3c70b73f1d35e"
+    },
+    "2": {
+      "file": "a7e5569a639ef377e3aab83d.mp3",
+      "spoken": "two.",
+      "bytes": 4125,
+      "sha256": "f16dca6893510011f84f179ff251adc29d9e90942b2fb21b20a6ccf3c0fb26bb"
+    },
+    "3": {
+      "file": "6b0b901e732e9c4bf480264c.mp3",
+      "spoken": "three.",
+      "bytes": 4413,
+      "sha256": "060aeebf589edfe0b8faa6485c486ba223e610b17830e62ba7829ae1df150768"
+    },
+    "4": {
+      "file": "a45018c1d291c1c84c0ec588.mp3",
+      "spoken": "four.",
+      "bytes": 4269,
+      "sha256": "f6782d86c7719e3949fb9e19cbc83183cf0320cd25bc5cba49e7026db6e7d6db"
+    },
+    "5": {
+      "file": "c7c3cfd5b1d09c7f682669e8.mp3",
+      "spoken": "five.",
+      "bytes": 4557,
+      "sha256": "b9f5fc010b2bf75c07fae9d10060f0603443c325e7dba852c8131cb2f763d89a"
+    },
+    "6": {
+      "file": "9a7a196014142e5af704aa88.mp3",
+      "spoken": "six.",
+      "bytes": 4557,
+      "sha256": "fe83bb8944ed1309f8723409016cf1ae40137019680dfe4d327b75c5a331e598"
+    },
+    "7": {
+      "file": "a27e332c1b357da84ec84644.mp3",
+      "spoken": "seven.",
+      "bytes": 4413,
+      "sha256": "b82254edb26aaa7da46a0ff9af7a487d75cfabd3c73a347a29e5a0872d0b81c7"
+    },
+    "8": {
+      "file": "5460dee56db240ebe04d2856.mp3",
+      "spoken": "eight.",
+      "bytes": 4413,
+      "sha256": "4bc4ee0130c94b8132f0ebc02763074295fa85c96485a2d7de230a3ee8c33ed8"
+    },
+    "9": {
+      "file": "0e1d2ec7fc6599605f4126ae.mp3",
+      "spoken": "nine.",
+      "bytes": 4557,
+      "sha256": "6b70debf309f024951554229662403076d3b9597f3dd61a1f7459e18b6de4e27"
+    },
+    "10": {
+      "file": "25af988448215e4fc8db6fd9.mp3",
+      "spoken": "ten.",
+      "bytes": 4125,
+      "sha256": "5a617b8d0dbd798cd4f4bbe8fdf02fd2587b9bb8e0dfe605526f557466c096a0"
+    },
+    "11": {
+      "file": "997f527a80278eac04c63bb8.mp3",
+      "spoken": "eleven.",
+      "bytes": 4701,
+      "sha256": "09c695bbd05f9f80f001bdaf047049b972df0c873c84e183623b568b68410e63"
+    },
+    "12": {
+      "file": "5a4ca5209b37213e2d0c12af.mp3",
+      "spoken": "twelve.",
+      "bytes": 4701,
+      "sha256": "67aa0aeb55bd17ea4289ba23fc351895e8084f92b51d1acdc9ed62563fb4e563"
+    },
+    "13": {
+      "file": "331066645127b6aa01066f6e.mp3",
+      "spoken": "thirteen.",
+      "bytes": 5277,
+      "sha256": "2726c4770e5556dcb5bd87477ff71d3240d714d9f8707dcef462a72f1db95e34"
+    },
+    "14": {
+      "file": "61d82bbcf36bc08ef8373bf7.mp3",
+      "spoken": "fourteen.",
+      "bytes": 5277,
+      "sha256": "56eeaa57306fc220d0049117f4e6b96cdb887264dd28fe7155d022920ef6293a"
+    },
+    "15": {
+      "file": "dec244741be5d7e712e011a5.mp3",
+      "spoken": "fifteen.",
+      "bytes": 5277,
+      "sha256": "983208c868dda720b37aca2312e97d51bbf899821af46630297154334bc6756c"
+    },
+    "16": {
+      "file": "70388e9a1a54022c7674dee4.mp3",
+      "spoken": "sixteen.",
+      "bytes": 5565,
+      "sha256": "25d781b6f66b30c644724d2ee25254bf2e83113b4628cdc7758538480d71accf"
+    },
+    "17": {
+      "file": "c72badc4077e722c5ba83f70.mp3",
+      "spoken": "seventeen.",
+      "bytes": 5997,
+      "sha256": "fadae908a30b7abfbc5663c4f38d56fc9d023c1d07ed4d0c5fff66af85d3cec1"
+    },
+    "18": {
+      "file": "772d4365898ab8bd4be61535.mp3",
+      "spoken": "eighteen.",
+      "bytes": 4989,
+      "sha256": "dd40e0b9f215af514e5de43183e5ef867017a18c7a83d6a9bc5a8da79eb68824"
+    },
+    "19": {
+      "file": "a2f4975c56203e8cc9b2ab4f.mp3",
+      "spoken": "nineteen.",
+      "bytes": 5565,
+      "sha256": "b9139cf0dbc1bbe1e0f882db86a925f1d713b219be4da5d26afda36955ce609f"
+    },
+    "20": {
+      "file": "fc171a5807e5d8dc6eaaf1d4.mp3",
+      "spoken": "twenty.",
+      "bytes": 4989,
+      "sha256": "e6ab6357fc62fb41ad2569889d8edd04f5d81c56ad30a105faefafc1f52e19c4"
+    },
+    "21": {
+      "file": "5c7a03f6fb029dda81b5bdd5.mp3",
+      "spoken": "twenty one.",
+      "bytes": 5565,
+      "sha256": "33c07d4ea81d235fcc74f6b9a6d772dfc05b674fd4592ee85f190b3f1d4c5de3"
+    },
+    "22": {
+      "file": "17b77119923a8903b3af7961.mp3",
+      "spoken": "twenty two.",
+      "bytes": 6141,
+      "sha256": "b124039b21d57173ff3896d345672874c6e4e13d8d674df88a589323e13e85f1"
+    },
+    "23": {
+      "file": "bfc94ac404a867cd75554785.mp3",
+      "spoken": "twenty three.",
+      "bytes": 6141,
+      "sha256": "4a845dd377834eb252e0cc051d41ec52191e299aec8fec1eed9156a379814e3e"
+    },
+    "24": {
+      "file": "898134868d663f9971ce2972.mp3",
+      "spoken": "twenty four.",
+      "bytes": 5853,
+      "sha256": "8c334786d509b3258b6e7b9f989cf4b98bc030ea02d4a6d6720a5c36f6cf46ff"
+    },
+    "25": {
+      "file": "6c43b6ca3982281be7cb8fc7.mp3",
+      "spoken": "twenty five.",
+      "bytes": 5853,
+      "sha256": "21fb9c113fd0077a24d0bf561143f2154555dedae649f24a13e3bc17959d3fd4"
+    },
+    "26": {
+      "file": "b728466e6319c16e9e459ce4.mp3",
+      "spoken": "twenty six.",
+      "bytes": 5853,
+      "sha256": "48545c2b8c13398878f824025ba111991e0ba5727f9916446399ac8649592744"
+    },
+    "27": {
+      "file": "3193192d87a6e52cd7307317.mp3",
+      "spoken": "twenty seven.",
+      "bytes": 6141,
+      "sha256": "3d7d7a57bd7bad026516024efc64823447c2e8c3a287c85025eecf43eaf4a00f"
+    },
+    "28": {
+      "file": "88bddd3e36b582a7370cb84c.mp3",
+      "spoken": "twenty eight.",
+      "bytes": 5709,
+      "sha256": "e87bbe946a5de82b66baa4bef285225c01cfe0fc5dc929dc596513656cfdf637"
+    },
+    "29": {
+      "file": "f724d09e50b13aa06f83868f.mp3",
+      "spoken": "twenty nine.",
+      "bytes": 5709,
+      "sha256": "b5e35ba252d9f94358b29d37343020bd173ca292d40e0e5b90bdbe5e620f261f"
+    },
+    "30": {
+      "file": "440136dad0c5496547315f77.mp3",
+      "spoken": "thirty.",
+      "bytes": 4701,
+      "sha256": "c74020beb0d62fbfb3d9ae16daa2325190c7220f9efa3d125a003ea9cba7f3f6"
+    },
+    "31": {
+      "file": "57ce4bd46907f6061297f6c0.mp3",
+      "spoken": "thirty one.",
+      "bytes": 5421,
+      "sha256": "80be411d37913d77f4b6fb25e8f36a6f2b084ca62a16eba5554e85710740a832"
+    },
+    "32": {
+      "file": "bf1d4206a200f263646288f4.mp3",
+      "spoken": "thirty two.",
+      "bytes": 5709,
+      "sha256": "139f12e21d839e5c316fe8af928de3cd725ab1f296dfc565fa0bb5de02e2716e"
+    },
+    "33": {
+      "file": "5eeea05dbf6adf81dbc90095.mp3",
+      "spoken": "thirty three.",
+      "bytes": 5709,
+      "sha256": "1c4e1c39b13c978a4f151d30373896571f7a0f0e690fc49aac80d3cf3dc4af5d"
+    },
+    "34": {
+      "file": "91d0c55fc17087a90c8f129f.mp3",
+      "spoken": "thirty four.",
+      "bytes": 5709,
+      "sha256": "c3dbdb118050ad6a9c00623ad6c8f39ae3e7a5ad4deae1a1477c574695469de7"
+    },
+    "35": {
+      "file": "616518e5ebd4a528b599af94.mp3",
+      "spoken": "thirty five.",
+      "bytes": 5853,
+      "sha256": "2121cc2b0bfc36186d5ff2dfdc68bcca736518a1efdbaaa9dc36f7f9c4e55358"
+    },
+    "36": {
+      "file": "e8cf383f56c87a621fc11429.mp3",
+      "spoken": "thirty six.",
+      "bytes": 5997,
+      "sha256": "4972c5f9808f3e7316fd7e0b921a2f97af97ed347b7e3e05169faa4f635e05f9"
+    },
+    "37": {
+      "file": "e9ac726fbf88e87aaed2779a.mp3",
+      "spoken": "thirty seven.",
+      "bytes": 5997,
+      "sha256": "1567d162128e761afc6388e338b01824fe22a1a825bc08aef21e34ef3076f0d0"
+    },
+    "38": {
+      "file": "4930b9143e03ac7f31355ee3.mp3",
+      "spoken": "thirty eight.",
+      "bytes": 5709,
+      "sha256": "6cec671f4333b6d277d891e47f77fec5fa181aa3e1a3e4344bfec11e07461cd5"
+    },
+    "39": {
+      "file": "ece408fbcff73d2f4ffbf686.mp3",
+      "spoken": "thirty nine.",
+      "bytes": 5709,
+      "sha256": "0b423e3e028e6b56a9e51fe17cf5ba66b7057bc73f24ee6308ab9212fd89eeb9"
+    },
+    "40": {
+      "file": "31ccd8f41feaf933b0bc65f7.mp3",
+      "spoken": "forty.",
+      "bytes": 4701,
+      "sha256": "3a4abcc13b28b8ec01350e77e7116e9d85b31e4cb176be4994793216c8a0d02c"
+    },
+    "41": {
+      "file": "edf62e45b5efa73bcc44725f.mp3",
+      "spoken": "forty one.",
+      "bytes": 5565,
+      "sha256": "26c9ec014e1342530c4d9bd7998a9d631ce49e04dfe91a179065671bd4efdd2b"
+    },
+    "42": {
+      "file": "373b84d6d415be21e61c05e6.mp3",
+      "spoken": "forty two.",
+      "bytes": 5709,
+      "sha256": "b1cd9b1b095f9ffe9c3ec98a54456fa3d22d38f61f57d02305dbcfc464be1f8f"
+    },
+    "43": {
+      "file": "5c2c2f7c7b3a8d4d097a7286.mp3",
+      "spoken": "forty three.",
+      "bytes": 5853,
+      "sha256": "49d577223ddf2457204a6d8a8a8ff5757cbc91ee0f17e7bce2c1a438383ede19"
+    },
+    "44": {
+      "file": "d4e3d6187a4b240bccd6aa3f.mp3",
+      "spoken": "forty four.",
+      "bytes": 5853,
+      "sha256": "9c68fe3232cdb35c2c7167ffb788e1c744e117d7548980811323203130dcf903"
+    },
+    "45": {
+      "file": "31a7ab071a7b97d9918028b8.mp3",
+      "spoken": "forty five.",
+      "bytes": 5997,
+      "sha256": "ad4046c7344c308ef91f9040ff86d15de56754e33bbb3dcd907eb31aebf41e2a"
+    },
+    "46": {
+      "file": "368b0b99a72b7e783da642d4.mp3",
+      "spoken": "forty six.",
+      "bytes": 6141,
+      "sha256": "6d6c6fafad43c3a4b92cf8b9b5b0ed7e35bfeebed9b4c2d5fcbca0e559886bf3"
+    },
+    "47": {
+      "file": "b903488aab1407538f198e82.mp3",
+      "spoken": "forty seven.",
+      "bytes": 6141,
+      "sha256": "393d1eb6d4b97bde9eed7c485b6c2026ebafc96c34a5d7f75c19788f08ce7fa9"
+    },
+    "48": {
+      "file": "a3d8cbc68a825c9062a0813c.mp3",
+      "spoken": "forty eight.",
+      "bytes": 5709,
+      "sha256": "729aadb96baefdcc3457f30cd72ec653d5152799a986997e172302998de52e33"
+    },
+    "49": {
+      "file": "57fc3371773b608426198d1f.mp3",
+      "spoken": "forty nine.",
+      "bytes": 5853,
+      "sha256": "484ecf8703a2a842cf9a7964723c389fe07d328fc5854c3c59836baaf64ecd99"
+    },
+    "50": {
+      "file": "af197e4362bcd796b3b56d8f.mp3",
+      "spoken": "fifty.",
+      "bytes": 4989,
+      "sha256": "d7854b6d95e3993bc3501e1318570b2bb9aea62296003c2c3e408fa8234241ba"
+    },
+    "51": {
+      "file": "c0f5a93d11205e5c45dc2cd2.mp3",
+      "spoken": "fifty one.",
+      "bytes": 5709,
+      "sha256": "bf12385503a83e8bbb5703cd01b6e84a5fe4f75e72209896d5cf60c3ba213168"
+    },
+    "52": {
+      "file": "26d17d02d4615ba8bcba33b4.mp3",
+      "spoken": "fifty two.",
+      "bytes": 5997,
+      "sha256": "019269d08f22df854afe3062a06e953c9e6d05a3f52996d58815f758fea81203"
+    },
+    "53": {
+      "file": "1f04dab9fca050efc2e6fbcb.mp3",
+      "spoken": "fifty three.",
+      "bytes": 5853,
+      "sha256": "9ab968a6a164b00b8eed846b59c6b3123d46239d33bc6c2a42ae3c1327acc713"
+    },
+    "54": {
+      "file": "a80e572301dcf5318a5200e8.mp3",
+      "spoken": "fifty four.",
+      "bytes": 6141,
+      "sha256": "f5975a824ac03aca9c297e33a82a28a8294479b26350da80f7a534242d1fe38b"
+    },
+    "55": {
+      "file": "a1553fefa14a7a4ecb4a7f18.mp3",
+      "spoken": "fifty five.",
+      "bytes": 6141,
+      "sha256": "7b693f92e19dd9222054136c3159a85b169b6d97727d9063e7774c586b8b8d29"
+    },
+    "56": {
+      "file": "a60de580af7e97f8cd344c95.mp3",
+      "spoken": "fifty six.",
+      "bytes": 6429,
+      "sha256": "2ea4d0a61a182b16e14526bc915d7fd7ea9523a58f6071f1700bfe0d769a9df8"
+    },
+    "57": {
+      "file": "c226387de1a37b27179dd5fb.mp3",
+      "spoken": "fifty seven.",
+      "bytes": 6429,
+      "sha256": "9ba53606190eb0db64a1c6fb05c64ace0db7a651cb3222bd10819c6a87974227"
+    },
+    "58": {
+      "file": "7396bb8c99b0561fea078ebb.mp3",
+      "spoken": "fifty eight.",
+      "bytes": 5853,
+      "sha256": "a020193bc50f8468a94ff7c0a4e2b46c0d1306a6b375f627015d4f0477ff40be"
+    },
+    "59": {
+      "file": "5a27a705fd8063c00ffbfc16.mp3",
+      "spoken": "fifty nine.",
+      "bytes": 6141,
+      "sha256": "e832df5418e31846610e6428597c441776bd2ee46fcb43debfe74fe6ead6f9a4"
+    },
+    "60": {
+      "file": "4ea1acd7917e37e57263c185.mp3",
+      "spoken": "sixty.",
+      "bytes": 5277,
+      "sha256": "7480622d573727d44bf8a3d5f13f994b52a941f6e6c4c48b09f17fd5577cabdc"
+    },
+    "61": {
+      "file": "ab34ddf30d7866def5c2f1b7.mp3",
+      "spoken": "sixty one.",
+      "bytes": 5853,
+      "sha256": "5c84e99b01a47acd779169fde67631ed13558d4f3715f3671734feab5b54cc67"
+    },
+    "62": {
+      "file": "7f013a49041b621bf8b1240a.mp3",
+      "spoken": "sixty two.",
+      "bytes": 6141,
+      "sha256": "7344b8fd3873d7db9b1b3bea0127782501d770f6999df0ede704aad08f9fae33"
+    },
+    "63": {
+      "file": "b6806757f0187f4c1aafdddc.mp3",
+      "spoken": "sixty three.",
+      "bytes": 6285,
+      "sha256": "11d42b4b6ef6fa74f099b5765f6b47f546e33db70710592ee62a0685062fad7c"
+    },
+    "64": {
+      "file": "b6b9b646bd3aa6cbe852e39a.mp3",
+      "spoken": "sixty four.",
+      "bytes": 6141,
+      "sha256": "56c8bae500ec45efd3c57e16a6e14d2e3b52abcafef8f173146c9571f1ccf535"
+    },
+    "65": {
+      "file": "70855192d4d8164fcd6d8389.mp3",
+      "spoken": "sixty five.",
+      "bytes": 6429,
+      "sha256": "cadb2e31831f1554667e4228917cab1b81a3efe821b87b79ecf940b06d4c9685"
+    },
+    "66": {
+      "file": "e1b18db88f59a368c8a2d0ca.mp3",
+      "spoken": "sixty six.",
+      "bytes": 6429,
+      "sha256": "cf71b6f780d27c76746160af058420d55ccf2a0960dac631da24d5a2301993e6"
+    },
+    "67": {
+      "file": "9a441758e54bd01108f80dea.mp3",
+      "spoken": "sixty seven.",
+      "bytes": 6429,
+      "sha256": "996385247b25d70c7f30c5d95267516a4569d94a0a5771520a1b37351e28313b"
+    },
+    "68": {
+      "file": "65705dd3ba58fa66521b3967.mp3",
+      "spoken": "sixty eight.",
+      "bytes": 5997,
+      "sha256": "ac9310ea6b1ca4d101437ac078a8db89413fed3eae78487c31316daf89a55de6"
+    },
+    "69": {
+      "file": "3fb7732459862a83f76c8f2e.mp3",
+      "spoken": "sixty nine.",
+      "bytes": 5997,
+      "sha256": "e30c77ee6e521d5aa83f2190f149e2edcf8bda8abca04e0e070877093e558567"
+    },
+    "70": {
+      "file": "2f0fd46e779574633857b575.mp3",
+      "spoken": "seventy.",
+      "bytes": 5421,
+      "sha256": "a092ed3f48a26479e11e183d1d1c5d423225f7777a0bb7368d846bcc8f968552"
+    },
+    "71": {
+      "file": "33c05a8856c74efd7fbf305b.mp3",
+      "spoken": "seventy one.",
+      "bytes": 6285,
+      "sha256": "5f5fc6228d34a6e507006e226d13356340851174ac9b08acc2d9a4f1a664f798"
+    },
+    "72": {
+      "file": "203cb61c526e35cbd16146ed.mp3",
+      "spoken": "seventy two.",
+      "bytes": 6285,
+      "sha256": "bc7dba2e5c3e762782d583e526407f706842fb51d6a610d3cf9d352a2bb59449"
+    },
+    "73": {
+      "file": "da87bcf8d6694076e2ec6ec5.mp3",
+      "spoken": "seventy three.",
+      "bytes": 6285,
+      "sha256": "bfb6d8deaf61560c40b28b54d76686c70810185c490d9272e46fad7338147d8b"
+    },
+    "74": {
+      "file": "6b3968831dc16235ffcb895e.mp3",
+      "spoken": "seventy four.",
+      "bytes": 6285,
+      "sha256": "b20808415a78cac8a29c11814d3770f1ac9e40da266f6b00d3bf2edf69b6fd22"
+    },
+    "75": {
+      "file": "6690de7b6789a58d51c92ae1.mp3",
+      "spoken": "seventy five.",
+      "bytes": 6429,
+      "sha256": "52b11152edd5dc145f3926ce966cf9fa8d06c3ff78b0ee980ecad4667d42aaf0"
+    },
+    "76": {
+      "file": "efd19b48f98a21bbae3aa135.mp3",
+      "spoken": "seventy six.",
+      "bytes": 6429,
+      "sha256": "0f34c134ebcf6582ef29bee0cc0fd726284d82efdfe5950742d0c0ae8ba0c9be"
+    },
+    "77": {
+      "file": "98138e3fc67c456b9b8e7f0e.mp3",
+      "spoken": "seventy seven.",
+      "bytes": 6573,
+      "sha256": "c0e1c503793b3a998b862ce12788cc300c3941adb827a27f52c467d2e9fc284b"
+    },
+    "78": {
+      "file": "ae45b177e8ae884d7a64bced.mp3",
+      "spoken": "seventy eight.",
+      "bytes": 6141,
+      "sha256": "a768c4d4ca62d0414e5c640c142e7e06a69ab3a91ec7bab61cbc8138c1e21762"
+    },
+    "79": {
+      "file": "7f936cb4b84e676365751352.mp3",
+      "spoken": "seventy nine.",
+      "bytes": 6285,
+      "sha256": "57ee275bd5e69d566c15aafaf2d04dffa007bc0dfe851c6e7f52f2fd958a58b1"
+    },
+    "80": {
+      "file": "343eef9350ee27629ffdae0e.mp3",
+      "spoken": "eighty.",
+      "bytes": 4557,
+      "sha256": "7eef44fa0facca73ecaa1459134d7e3aeac26a0450e4ff8521df4dd5b07711ac"
+    },
+    "81": {
+      "file": "fb8ca85ae6a8a3d76f75a2f0.mp3",
+      "spoken": "eighty one.",
+      "bytes": 5277,
+      "sha256": "f27816ecbce0ce4a78a81a419edd073d9e031cf0c1480b609cb5816a982cf040"
+    },
+    "82": {
+      "file": "a47b23536609f5d6dccc416e.mp3",
+      "spoken": "eighty two.",
+      "bytes": 5421,
+      "sha256": "bfe5d28fcf494f30f3ce3de0cc11251a88dfc0ecb87ebd72ff4424d4f0818196"
+    },
+    "83": {
+      "file": "2fbd6c9dc474112de60d8a5d.mp3",
+      "spoken": "eighty three.",
+      "bytes": 5709,
+      "sha256": "32157ef1d4c01914988607b35acf06d7cd1c02fb56a3f9a37a93e7c8059294f4"
+    },
+    "84": {
+      "file": "aec374598f27279188f7c415.mp3",
+      "spoken": "eighty four.",
+      "bytes": 5709,
+      "sha256": "f204fc658a40d3c394c441b5e2e63084ada072e4beddac919974a4f77a42c18b"
+    },
+    "85": {
+      "file": "c58d580c4e0f6a4ff2cc077c.mp3",
+      "spoken": "eighty five.",
+      "bytes": 5853,
+      "sha256": "d62be9a4d061d22d8fa04d9e913c03d9d6761a572298864b23744638447da4c3"
+    },
+    "86": {
+      "file": "9cc824964cee0b6c621cbc8b.mp3",
+      "spoken": "eighty six.",
+      "bytes": 5853,
+      "sha256": "214dc04d49e78927059947e05ab56e33d9abfb9421418dc63428114c292766b0"
+    },
+    "87": {
+      "file": "1803fd39bf2f3383dd168c69.mp3",
+      "spoken": "eighty seven.",
+      "bytes": 5709,
+      "sha256": "1bb6bb7149c207f2e04b0c02e5d682455d84c2a395b8b70a756d1642ed568192"
+    },
+    "88": {
+      "file": "aee0ae8ac84fc9c1fa81ab36.mp3",
+      "spoken": "eighty eight.",
+      "bytes": 5565,
+      "sha256": "31ca10a950ae7312b833668c738e7fa17e4da33cc0f1dd19fa0d1e1e7d4b1c5f"
+    },
+    "89": {
+      "file": "606bae727078474680a47a11.mp3",
+      "spoken": "eighty nine.",
+      "bytes": 5565,
+      "sha256": "f7fc53a5af476b61847a8ba894b943d85b18f845883cbe2c6183cb59f0e587f0"
+    },
+    "90": {
+      "file": "2f06b4fc43a9a3ee33b0e474.mp3",
+      "spoken": "ninety.",
+      "bytes": 4845,
+      "sha256": "3755d4b6348ee4dabd6fa9711815458dc51495b4ed4b8f23f4338e73a9a176dc"
+    },
+    "91": {
+      "file": "52dc6174c62331288a112a83.mp3",
+      "spoken": "ninety one.",
+      "bytes": 5709,
+      "sha256": "71f7f263a6a8ab9679a7b48644d32c969d6367102a8066a18f006226bdb547e6"
+    },
+    "92": {
+      "file": "17e60fbe537acd00cdc47a4d.mp3",
+      "spoken": "ninety two.",
+      "bytes": 6141,
+      "sha256": "1eb9528e89274227ddc1f24d8cfe3393364f18659f852f8587c96c57a6858d7d"
+    },
+    "93": {
+      "file": "79576a46043f8c389966169e.mp3",
+      "spoken": "ninety three.",
+      "bytes": 6141,
+      "sha256": "e9bd2fefb35baa6e60bf2cabb224010dd267db3c33221408a412a3f8a98f3994"
+    },
+    "94": {
+      "file": "59db6a840e1aef61c03d5fd2.mp3",
+      "spoken": "ninety four.",
+      "bytes": 6141,
+      "sha256": "7665a38b8858df6d56dd338aec6e10a7468b7d7080be403060f648a349092b43"
+    },
+    "95": {
+      "file": "1b38a2f874f650ae2f9fa1cd.mp3",
+      "spoken": "ninety five.",
+      "bytes": 6573,
+      "sha256": "fb76a57035168a81fb0c2975f108066ed432a472a16c07ee2c328ff129154860"
+    },
+    "96": {
+      "file": "94b68f8536b79589a3fc90cc.mp3",
+      "spoken": "ninety six.",
+      "bytes": 6429,
+      "sha256": "ac6f930e6a15ea309d6f021fdd86c4aacab8e63f27e19453d0e78fa1c0e8621c"
+    },
+    "97": {
+      "file": "a294b0e42c4446e86f4ccce7.mp3",
+      "spoken": "ninety seven.",
+      "bytes": 6285,
+      "sha256": "afdc79a74ef78ad13e98b33d9b65e15a9e6b6aa92a0262005207d6935cea7bd0"
+    },
+    "98": {
+      "file": "7bcfb893988b55b2877f1455.mp3",
+      "spoken": "ninety eight.",
+      "bytes": 5997,
+      "sha256": "5d11fd02cf27d307e3117663f59722dae9a8b30ccc6f50533dabbe797b5fc28e"
+    },
+    "99": {
+      "file": "4fb175f2c6c0787bf2f088a4.mp3",
+      "spoken": "ninety nine.",
+      "bytes": 6141,
+      "sha256": "a80da11d19ac238975985118961e9b5f3f1bd0baef905941b115e1891f4697b0"
+    },
+    "welcome to the emperor’s hand.": {
+      "file": "dfd732b8839666789214d30a.mp3",
+      "spoken": "Welcome to the Emperor’s Hand.",
+      "bytes": 10317,
+      "sha256": "7d493ceef552a96f7253094cbc04b03a1a6c9b5021851e2a2ba6b3907828bc58"
+    },
+    "place your bets.": {
+      "file": "f291ff3ab91a55efe27aa236.mp3",
+      "spoken": "Place your bets.",
+      "bytes": 6429,
+      "sha256": "1c276f5ae0c70c17b2d592ee30575834ea33fbcd6d3af589611822f5d9480a1c"
+    },
+    "bets are closed.": {
+      "file": "23d24d90c9aaafb08a608966.mp3",
+      "spoken": "Bets are closed.",
+      "bytes": 7005,
+      "sha256": "292cf2af6aac22b680a9443a660e0331388a2b71388b16ea2c583ee4e49157c1"
+    },
+    "dealing the cards.": {
+      "file": "9a03f9851a644fbcea035186.mp3",
+      "spoken": "Dealing the cards.",
+      "bytes": 7149,
+      "sha256": "e08a5a4f0c2dedbc8b15c2261bab3089cafab661a5d413fe4eaf9f824579327b"
+    },
+    "another card.": {
+      "file": "1584f3c6e0a52be336ffeb2a.mp3",
+      "spoken": "Another card.",
+      "bytes": 6141,
+      "sha256": "2313c1625c00d7e1119f366aeb39ec037f0a098fa6d6308f22709995e5bc4704"
+    },
+    "double down.": {
+      "file": "ea2771fdbe0848b5dc4ddfa4.mp3",
+      "spoken": "Double down.",
+      "bytes": 5997,
+      "sha256": "b7ff6d848a45342eb7101ac38f5cd02490e718c2d18ef8f7626a0ef8e464dd00"
+    },
+    "splitting the pair.": {
+      "file": "9e4acf6e0f78216ceb93d105.mp3",
+      "spoken": "Splitting the pair.",
+      "bytes": 6717,
+      "sha256": "b27bce90934aca5825c86e3b5b2c4a50bd89776ee44f0dbd6f0c7d0be13d1dd2"
+    },
+    "you stand.": {
+      "file": "d7a84cb7617ae9ccee28deba.mp3",
+      "spoken": "You stand.",
+      "bytes": 5277,
+      "sha256": "4b18634cff65cedb6a071ca6353043ff808abbdd2dd26cbe39d82e55e7f1ea6b"
+    },
+    "you have": {
+      "file": "d91968cac7aa75b3ef1a9881.mp3",
+      "spoken": "You have",
+      "bytes": 4701,
+      "sha256": "9360d9fb87dc49089176f62997d71c5e7895b1b8d144388d548939833ed4a8a5"
+    },
+    "and": {
+      "file": "ffd2e39fd565d50c233a017c.mp3",
+      "spoken": "and",
+      "bytes": 3981,
+      "sha256": "828939a8288e708b575dd7b2b256397f565aac73719994f1d8cd9a6a4c341e61"
+    },
+    "point": {
+      "file": "449141897eba9f82ee72bf58.mp3",
+      "spoken": "point",
+      "bytes": 4413,
+      "sha256": "9bd258adf2792bdac46596c9dd0a6e9ddd43b5dfc94c44cb095b096ae1226c26"
+    },
+    "times.": {
+      "file": "513ba724cf55d3f668e8d644.mp3",
+      "spoken": "times.",
+      "bytes": 4701,
+      "sha256": "ba80115b37d6bac76d2b428c2e7fa0d8d9ca7d2430c71f6ce9ba7e60c54050cb"
+    },
+    "hundred": {
+      "file": "c2d631c6db64d085ffdd07e9.mp3",
+      "spoken": "hundred",
+      "bytes": 4557,
+      "sha256": "5fdfca51da39be7db50bebea4f06289acb554c5fcb7cf5417b77a9b7cd3f25c0"
+    },
+    "thousand": {
+      "file": "c1fd661cedfa812e8c4e2853.mp3",
+      "spoken": "thousand",
+      "bytes": 4989,
+      "sha256": "9d465957116a87ec11901961e82cfe65468dd5871655dfabfd07835abfc4aff9"
+    },
+    "million": {
+      "file": "fad0dace50c388be2f0b9b9b.mp3",
+      "spoken": "million",
+      "bytes": 4413,
+      "sha256": "fdfe2a1b6b7c8bbac03b24dbb1697c22c6272da334a5c475953c54640654309e"
+    },
+    "billion": {
+      "file": "20ccb8a481381222f941bd85.mp3",
+      "spoken": "billion",
+      "bytes": 4701,
+      "sha256": "df2082b487eb37ded671820632c9de40b1f2419bd75200c9b44aa305b63e9792"
+    },
+    "trillion": {
+      "file": "d6e6f7676ef6631e3add187e.mp3",
+      "spoken": "trillion",
+      "bytes": 4413,
+      "sha256": "6ff58de9359be111c9b12f59fe11e33a7b4fcbfe8fac607fc75819d9a37e51bd"
+    },
+    "bust.": {
+      "file": "08e71ebc8229b99675e4e8fa.mp3",
+      "spoken": "Bust.",
+      "bytes": 4413,
+      "sha256": "c5d974abe76223fe1e931d13a83ae0fa7323abd540fb12b2342d380a36fb95a0"
+    },
+    "dealer busts.": {
+      "file": "6b718c111bf3d7a661ef41b7.mp3",
+      "spoken": "Dealer busts.",
+      "bytes": 6285,
+      "sha256": "cb7a916718876f1cd86a9c45ffb3bccd3d8e250273253a1169091c0b21b5ae34"
+    },
+    "blackjack. congratulations.": {
+      "file": "d3fbc19f089c47da9f6d076f.mp3",
+      "spoken": "Blackjack. Congratulations.",
+      "bytes": 12045,
+      "sha256": "645814c08b668ea2cbce8b3a90c27a9db15bf94f6247eba66c3d9fde63fcf9ac"
+    },
+    "you win.": {
+      "file": "7a439c17bdd06bb4b0b2087d.mp3",
+      "spoken": "You win.",
+      "bytes": 4701,
+      "sha256": "144373e88c23c0c42b956539c49eedff9c2e994752fc475dbaf76c346c84b582"
+    },
+    "dealer wins.": {
+      "file": "a9bde12c3ffd29b243daea7e.mp3",
+      "spoken": "Dealer wins.",
+      "bytes": 5853,
+      "sha256": "32cc50cac18b589289a181b5c2415011a6175e71b10d14acf40ab3023c9bf5e1"
+    },
+    "hand lost.": {
+      "file": "061141814c67e98d1068af61.mp3",
+      "spoken": "Hand lost.",
+      "bytes": 5853,
+      "sha256": "5c79c7ea8e8115da9753a1ab666dcaa307088f30ff1e3b0f7becb44ce4b56017"
+    },
+    "push. your wager is returned.": {
+      "file": "3737c3e3c2bb86ae3423860b.mp3",
+      "spoken": "Push. Your wager is returned.",
+      "bytes": 12333,
+      "sha256": "192c6eaa2a7b1b8ebbb13af47e2d09ce2e93589a99aea3f17c72ab85d590a78d"
+    },
+    "hand settled.": {
+      "file": "19db87130eb74479fc6a1771.mp3",
+      "spoken": "Hand settled.",
+      "bytes": 6141,
+      "sha256": "f61adb3264178ba9c049f15b687091569d241f0285fde2b5f2404091e08037ec"
+    },
+    "round cancelled. your wager was returned.": {
+      "file": "a91aba2f030f2b76e2cf28d4.mp3",
+      "spoken": "Round cancelled. Your wager was returned.",
+      "bytes": 17517,
+      "sha256": "1923a24cf3f8fb38d2a076afef5103b632eaabf2f7163ae5d896f6e86eb54aae"
+    },
+    "bets settled.": {
+      "file": "abdb5fa6918fbc7560ef28d0.mp3",
+      "spoken": "Bets settled.",
+      "bytes": 5997,
+      "sha256": "d856f70f0381432ae5a05b936b1a341062772b987b3085f27af1e007709ffa8c"
+    },
+    "no win.": {
+      "file": "9598b1c3aad6572a686e3a69.mp3",
+      "spoken": "No win.",
+      "bytes": 5133,
+      "sha256": "735318de5840c1ccb2d106101a690eb5b3315145b46a2832dbbdaeae9a40a6da"
+    },
+    "house scarab prevails.": {
+      "file": "e2b8557977233d1929c22210.mp3",
+      "spoken": "House Scarab prevails.",
+      "bytes": 9165,
+      "sha256": "1403aa6a3654714c27849eff003d728e3d54bc6ae87dd58b1d23aa0fe0c92874"
+    },
+    "house crescent prevails.": {
+      "file": "813ff75885d40d80ab0392bf.mp3",
+      "spoken": "House Crescent prevails.",
+      "bytes": 9309,
+      "sha256": "965f85409d5c98359d01be07b6f2cd6bd4adaa31e736e6f92f1bfba684e2245a"
+    },
+    "your prediction was correct.": {
+      "file": "26397d2dec97d952984fca52.mp3",
+      "spoken": "Your prediction was correct.",
+      "bytes": 9885,
+      "sha256": "17357db63753e8338e2c218ddb2b4475e2ee4c068201dd188c3580d692aecab7"
+    },
+    "the other house wins.": {
+      "file": "a6fa2abaa9c486fa3189f4fc.mp3",
+      "spoken": "The other House wins.",
+      "bytes": 8013,
+      "sha256": "8541dafb8e131746cc0e32b5e1367f5970ad3d9ffce24b25d41515bccf90193d"
+    },
+    "sandworm detected. expedition lost.": {
+      "file": "b79e9724894515f17058afc0.mp3",
+      "spoken": "Sandworm detected. Expedition lost.",
+      "bytes": 15933,
+      "sha256": "e9e3a397709dceb6603c6b790739313d69df8f52e669888d8bf4ceb20cae643c"
+    },
+    "harvest secured. cash-out confirmed.": {
+      "file": "472effa270c188ae9045e7a4.mp3",
+      "spoken": "Harvest secured. Cash-out confirmed.",
+      "bytes": 15501,
+      "sha256": "07c1fd0a1dc0e2560559074e7d24db7d50570af34328c4a96b5a739f76c727e4"
+    },
+    "spice discovered.": {
+      "file": "b0e58ddfa2c06c0b44a0ef96.mp3",
+      "spoken": "Spice discovered.",
+      "bytes": 7293,
+      "sha256": "d067f0283d9266e7a09f1fa5668b60fb112a4b923168933d8a2e606d9235ec11"
+    },
+    "the harvest begins.": {
+      "file": "ebabdf0619a698a731fdaf22.mp3",
+      "spoken": "The harvest begins.",
+      "bytes": 8445,
+      "sha256": "a18c91d33a485fa73574201110d3a998ae7f060aed3d15b182d1b4bf3ca8cf0d"
+    },
+    "storm contact. flight terminated.": {
+      "file": "a80b25266cf5e7572cebe546.mp3",
+      "spoken": "Storm contact. Flight terminated.",
+      "bytes": 14781,
+      "sha256": "b4020582c325ab4885ae86c38c9098ee0920f3b0aa24c48f2f4a73e1d04bd090"
+    },
+    "cash-out confirmed at": {
+      "file": "e2e28585d723733f865952d9.mp3",
+      "spoken": "Cash-out confirmed at",
+      "bytes": 9021,
+      "sha256": "0ea085db5814b4887582af3bd2ad6759473ed1b3c364c7acc8f2111a1dc9079c"
+    },
+    "flight initiated.": {
+      "file": "d460442020850939b337a520.mp3",
+      "spoken": "Flight initiated.",
+      "bytes": 7869,
+      "sha256": "f8d7ecd3a68faf521f8a51492dc0deaf3b7039d2e7c5018023f0fedb4b82f105"
+    },
+    "hand 1": {
+      "file": "79e8886c20395c4443616bac.mp3",
+      "spoken": "Hand one.",
+      "bytes": 5277,
+      "sha256": "7dfdf671901de61d1d80d36ccf9b7c0729613a2c6bf764d575ebde1d57cb53ea"
+    },
+    "hand 2": {
+      "file": "d19194139770863e815b104c.mp3",
+      "spoken": "Hand two.",
+      "bytes": 5421,
+      "sha256": "808272b3bf4e46f5ccf9bc98539079655aeddf298f96c29e0eaad32a051f0728"
+    },
+    "ace": {
+      "file": "1e082ff7c221dfbb125e39bd.mp3",
+      "spoken": "ace.",
+      "bytes": 4413,
+      "sha256": "1d02f2e4f559b3a811ca0b134044b0a6532ea748c9eb92c30e79ae7211ca70ad"
+    },
+    "dealer shows a ace": {
+      "file": "23e8de596f023b5743b55b9b.mp3",
+      "spoken": "Dealer shows an ace.",
+      "bytes": 8157,
+      "sha256": "5713e5ff002d81be9b52888edbb34687de977d343dfcbaba6f83dbd379e133dc"
+    },
+    "dealer shows an ace": {
+      "file": "23e8de596f023b5743b55b9b.mp3",
+      "spoken": "Dealer shows an ace.",
+      "bytes": 8157,
+      "sha256": "5713e5ff002d81be9b52888edbb34687de977d343dfcbaba6f83dbd379e133dc"
+    },
+    "you have ace and ace": {
+      "file": "02213c5b9bf24a7724622a74.mp3",
+      "spoken": "You have an ace and an ace.",
+      "bytes": 9309,
+      "sha256": "f6ae2289b51a3cf696b2a88fff9ae7488ba47b769aea15db99ff0ff3c7425e9c"
+    },
+    "you have ace and two": {
+      "file": "c7f5f2159c3ac89e4a7e876f.mp3",
+      "spoken": "You have an ace and a two.",
+      "bytes": 8877,
+      "sha256": "de32f3f5b0a5d23cf46cfbdc12cc4dd72476e8f8dd3e1999bc39c04b69a67468"
+    },
+    "you have ace and three": {
+      "file": "5d08bb89f8ecec33faa2df67.mp3",
+      "spoken": "You have an ace and a three.",
+      "bytes": 9453,
+      "sha256": "ef0a44691a6643da640143e8abb23c650a0626dfbd19d242f61dffb413c2b790"
+    },
+    "you have ace and four": {
+      "file": "248ce6e46b78c8d93b3b4a15.mp3",
+      "spoken": "You have an ace and a four.",
+      "bytes": 9165,
+      "sha256": "e3ad22c77c84b01dfa932b6ba98b5911a7112e967fbcf1e8dfc94be072cccad9"
+    },
+    "you have ace and five": {
+      "file": "ac834e3108dff9efbba912e3.mp3",
+      "spoken": "You have an ace and a five.",
+      "bytes": 9597,
+      "sha256": "d162358f8c070f543ef94119c05a247d53259caef16d69e207e78c6014a61fd5"
+    },
+    "you have ace and six": {
+      "file": "75096f4781b7b39a5b80995e.mp3",
+      "spoken": "You have an ace and a six.",
+      "bytes": 9309,
+      "sha256": "cdbf4b5ff3d309522b068c8109ef68f174d6bfd417804e58fca2e087fd794e7a"
+    },
+    "you have ace and seven": {
+      "file": "406850ce1baaa23f71f56001.mp3",
+      "spoken": "You have an ace and a seven.",
+      "bytes": 9741,
+      "sha256": "7e6710798f0794a95eb70f7eaed002ad34f6413e7284befa55be45ed21877e4a"
+    },
+    "you have ace and eight": {
+      "file": "747b574c63dd8ee2a24d4f36.mp3",
+      "spoken": "You have an ace and an eight.",
+      "bytes": 9165,
+      "sha256": "3417c431df4532451df508b68e1714e84a127f749e41a8644c8d0ee26bd275c1"
+    },
+    "you have ace and nine": {
+      "file": "091b4d6a24c0fb9440509cef.mp3",
+      "spoken": "You have an ace and a nine.",
+      "bytes": 9309,
+      "sha256": "cf62bc1bf854b5d3409e852237bc265d07a48f270a0168546a6d9a2f3933b902"
+    },
+    "you have ace and ten": {
+      "file": "96cc29c6c8a5bcaec88f9669.mp3",
+      "spoken": "You have an ace and a ten.",
+      "bytes": 9309,
+      "sha256": "e9dfab799bfb2754666d96b4fa380f31d9e1978184bf11e3b16ea0c4fc761cd5"
+    },
+    "you have ace and jack": {
+      "file": "3353ea795dd2d339ab774596.mp3",
+      "spoken": "You have an ace and a jack.",
+      "bytes": 9597,
+      "sha256": "11a182db787df7cecdd12af9434a99b0e7cf78e7b839072078f999038da7175e"
+    },
+    "you have ace and queen": {
+      "file": "273c8b187e612ae64e9f9f14.mp3",
+      "spoken": "You have an ace and a queen.",
+      "bytes": 9741,
+      "sha256": "2118d12da03da08a977a7a156a99675ce200f42d84fe071de312b359f9c6676e"
+    },
+    "you have ace and king": {
+      "file": "fa3c0c5a8f27aa546f3c40dc.mp3",
+      "spoken": "You have an ace and a king.",
+      "bytes": 9309,
+      "sha256": "1e42f0b646b36a0ae313d00db220723031d5223d882c1e94207f2860e2692151"
+    },
+    "two": {
+      "file": "a7e5569a639ef377e3aab83d.mp3",
+      "spoken": "two.",
+      "bytes": 4125,
+      "sha256": "f16dca6893510011f84f179ff251adc29d9e90942b2fb21b20a6ccf3c0fb26bb"
+    },
+    "dealer shows a two": {
+      "file": "1a5f2b59decb60d2fc58a011.mp3",
+      "spoken": "Dealer shows a two.",
+      "bytes": 8157,
+      "sha256": "14db3064e868c2840e301b131af5dd225536e3258c719077a104fd3ad24df09d"
+    },
+    "dealer shows an two": {
+      "file": "1a5f2b59decb60d2fc58a011.mp3",
+      "spoken": "Dealer shows a two.",
+      "bytes": 8157,
+      "sha256": "14db3064e868c2840e301b131af5dd225536e3258c719077a104fd3ad24df09d"
+    },
+    "you have two and ace": {
+      "file": "84a4fa224ef5888b82b13511.mp3",
+      "spoken": "You have a two and an ace.",
+      "bytes": 9165,
+      "sha256": "5941d33132cdab1b564fdf4f6bb8a5968093e72509e38e9240d60a520164df77"
+    },
+    "you have two and two": {
+      "file": "97d27f5f3ddc199905b07351.mp3",
+      "spoken": "You have a two and a two.",
+      "bytes": 8733,
+      "sha256": "5ed038dcc1668132ed1ce5f33648b68e1b28a30655e872844e44525291151b5e"
+    },
+    "you have two and three": {
+      "file": "c7cb6efb3dc2ea5c11872384.mp3",
+      "spoken": "You have a two and a three.",
+      "bytes": 9741,
+      "sha256": "e439d1a51250c923b7d7716f21cf3e22fd43129dca46d28dae03c9ae8d041eb0"
+    },
+    "you have two and four": {
+      "file": "7e73e4c7dcec79860be686d5.mp3",
+      "spoken": "You have a two and a four.",
+      "bytes": 9021,
+      "sha256": "486b7f8de6323a318bcfe75247124f60b6c65a2859ee33a8182d37f0dc055708"
+    },
+    "you have two and five": {
+      "file": "6e0f1b2a23cc84f0cfecc84d.mp3",
+      "spoken": "You have a two and a five.",
+      "bytes": 9453,
+      "sha256": "72ba6515a46aa79db1a7eec0c8e6906149b241465d0fddb44cc7f720b10a3923"
+    },
+    "you have two and six": {
+      "file": "5b84b40f321ac33988f7f48b.mp3",
+      "spoken": "You have a two and a six.",
+      "bytes": 9309,
+      "sha256": "c6ac32a8164441e505f4539c44556c220099426bc147355d665812e0cea0b2ed"
+    },
+    "you have two and seven": {
+      "file": "8e728c72f8d727ab0e7adcdb.mp3",
+      "spoken": "You have a two and a seven.",
+      "bytes": 10029,
+      "sha256": "3f2e453a7ed2318d83690fb36399bd689eafae01855af00973adf97822601f3f"
+    },
+    "you have two and eight": {
+      "file": "421ca974c01c6f25f4a78351.mp3",
+      "spoken": "You have a two and an eight.",
+      "bytes": 8877,
+      "sha256": "05dda1c9763233d336dfac37128e8a4bcfe546eb6aa1acbeaf5a34d15929e14a"
+    },
+    "you have two and nine": {
+      "file": "af9d7790611d50bcc614459d.mp3",
+      "spoken": "You have a two and a nine.",
+      "bytes": 9165,
+      "sha256": "8f8a34208d35b4f07f3b79a6b625ddbd493b4670dc7d0a270092daa25dc5fd65"
+    },
+    "you have two and ten": {
+      "file": "0c9816b8cb2f7fbab1b6e42d.mp3",
+      "spoken": "You have a two and a ten.",
+      "bytes": 8877,
+      "sha256": "882d64460676565bb2a2a6479bbab64a25e818ed949358fdda291f3434a65f2a"
+    },
+    "you have two and jack": {
+      "file": "5636ca089fc0b31feb6e2113.mp3",
+      "spoken": "You have a two and a jack.",
+      "bytes": 9597,
+      "sha256": "a2810f2c7d6d8864fca19e98284bba0c66375a08842d1e84ec2f2d1bc755c2d6"
+    },
+    "you have two and queen": {
+      "file": "d1961d982d9e43679f76582e.mp3",
+      "spoken": "You have a two and a queen.",
+      "bytes": 9309,
+      "sha256": "d5bf8a6a2146ed86e676c31fc97c313de23b46442b388495abe8de08757d39f4"
+    },
+    "you have two and king": {
+      "file": "05f27ed1442c81e9f4f9df97.mp3",
+      "spoken": "You have a two and a king.",
+      "bytes": 8877,
+      "sha256": "23b7fd662674241f5ae5c86bf9b190864de7ab765faf7cefaaafb473708c2ba1"
+    },
+    "three": {
+      "file": "6b0b901e732e9c4bf480264c.mp3",
+      "spoken": "three.",
+      "bytes": 4413,
+      "sha256": "060aeebf589edfe0b8faa6485c486ba223e610b17830e62ba7829ae1df150768"
+    },
+    "dealer shows a three": {
+      "file": "241635599ee521c99def643d.mp3",
+      "spoken": "Dealer shows a three.",
+      "bytes": 8589,
+      "sha256": "a49e18af654441957e6f49aad53ce0ecf1b451d9662dd0f88db296ef230fd4f1"
+    },
+    "dealer shows an three": {
+      "file": "241635599ee521c99def643d.mp3",
+      "spoken": "Dealer shows a three.",
+      "bytes": 8589,
+      "sha256": "a49e18af654441957e6f49aad53ce0ecf1b451d9662dd0f88db296ef230fd4f1"
+    },
+    "you have three and ace": {
+      "file": "beeb324f4355fa8b0cee5fe6.mp3",
+      "spoken": "You have a three and an ace.",
+      "bytes": 9741,
+      "sha256": "f5a20ea7473cf52ad663299befe61fa00578ba71ab0dedb7ef6050ec6856ccd7"
+    },
+    "you have three and two": {
+      "file": "746a33d0549843e3370a5e91.mp3",
+      "spoken": "You have a three and a two.",
+      "bytes": 9885,
+      "sha256": "7eeee5698922945e1fc07a94124765e9de77e27eb6378f00d6dfb3dd9b9996f6"
+    },
+    "you have three and three": {
+      "file": "fcc275215daf93c6f346e1bd.mp3",
+      "spoken": "You have a three and a three.",
+      "bytes": 10461,
+      "sha256": "65a39c7a7f71f0121f4eabedd1c5d3c9be12dbc8fade4c05d977c885995b1c16"
+    },
+    "you have three and four": {
+      "file": "4b26b629a6ca7fe96f7cea9e.mp3",
+      "spoken": "You have a three and a four.",
+      "bytes": 9885,
+      "sha256": "c238c29e4ed47ff72ce577932bbf85160717503f8cd35c5f00f746afa2b9643d"
+    },
+    "you have three and five": {
+      "file": "667e6a63e8762e1acdddadcd.mp3",
+      "spoken": "You have a three and a five.",
+      "bytes": 9741,
+      "sha256": "6669ffd0c78c1923d58d212fb84820947cedc72a38ce0c5ab139dc894166e093"
+    },
+    "you have three and six": {
+      "file": "3b64e0403574c73fd6b0a5f9.mp3",
+      "spoken": "You have a three and a six.",
+      "bytes": 9741,
+      "sha256": "232a79970c6d05b72d7908dc9184609bbef0a7072152bba2b23de8edc30f9d82"
+    },
+    "you have three and seven": {
+      "file": "c7daed028bc749a5c9f07a9e.mp3",
+      "spoken": "You have a three and a seven.",
+      "bytes": 10317,
+      "sha256": "e841fcd63274a91b75b1e6929a30be159efb97220664c8e751a4329e4a0efe6d"
+    },
+    "you have three and eight": {
+      "file": "a48f8d9a75c87643e9aa0b94.mp3",
+      "spoken": "You have a three and an eight.",
+      "bytes": 9597,
+      "sha256": "eded6b99c894fee4b89e2bab86af3c80acf307ddb5efade11d6a89883edae1e3"
+    },
+    "you have three and nine": {
+      "file": "782e816bef22703c2a54a411.mp3",
+      "spoken": "You have a three and a nine.",
+      "bytes": 10029,
+      "sha256": "9ca13d32de16a879c3f8181d1677c864e57fae27905842f02397ea3e774cc44e"
+    },
+    "you have three and ten": {
+      "file": "5b7d6100e86e424923cdcd99.mp3",
+      "spoken": "You have a three and a ten.",
+      "bytes": 9741,
+      "sha256": "6b5603b820bab40d5096383de35fbcd09c3f23498a94ece6765ccb42dfc9aa63"
+    },
+    "you have three and jack": {
+      "file": "a7c21c7a936b2a9b746c89a3.mp3",
+      "spoken": "You have a three and a jack.",
+      "bytes": 10317,
+      "sha256": "97d5ddcfbc7472ce1d08bdc30856598df07852234cda35f7ce12a7e0e20336c6"
+    },
+    "you have three and queen": {
+      "file": "0c29df4cc736425b9ee76045.mp3",
+      "spoken": "You have a three and a queen.",
+      "bytes": 9885,
+      "sha256": "23fca485af488a412ec6f50f86784af68fa49d1520038584590e4f62736e60c6"
+    },
+    "you have three and king": {
+      "file": "3eba63a7074d93bd5ed2678c.mp3",
+      "spoken": "You have a three and a king.",
+      "bytes": 9309,
+      "sha256": "aa9da2f171ceec470dfc398eeab3ea0f548ec0629648460d2f91ce8e1304bf78"
+    },
+    "four": {
+      "file": "a45018c1d291c1c84c0ec588.mp3",
+      "spoken": "four.",
+      "bytes": 4269,
+      "sha256": "f6782d86c7719e3949fb9e19cbc83183cf0320cd25bc5cba49e7026db6e7d6db"
+    },
+    "dealer shows a four": {
+      "file": "516597ffea8d9392d0232b6b.mp3",
+      "spoken": "Dealer shows a four.",
+      "bytes": 8157,
+      "sha256": "d2289e5f37d8e85722f79d5cbcf7344068ce343f40a0c45be5401ee83d8cd2f4"
+    },
+    "dealer shows an four": {
+      "file": "516597ffea8d9392d0232b6b.mp3",
+      "spoken": "Dealer shows a four.",
+      "bytes": 8157,
+      "sha256": "d2289e5f37d8e85722f79d5cbcf7344068ce343f40a0c45be5401ee83d8cd2f4"
+    },
+    "you have four and ace": {
+      "file": "8bfd7c196e9dc5f937e65894.mp3",
+      "spoken": "You have a four and an ace.",
+      "bytes": 9453,
+      "sha256": "684bccd9db35b79685cc14c676b6b4edaa34fbc6d3e65cf07b390e806672b90f"
+    },
+    "you have four and two": {
+      "file": "4ffb98a0cbdef2b56e9ab941.mp3",
+      "spoken": "You have a four and a two.",
+      "bytes": 8877,
+      "sha256": "f4f61e3bea5d0f2b58c887d45a10e6f09d88d50ab163709dc248eb828b92371e"
+    },
+    "you have four and three": {
+      "file": "826306c725e7cf777adc9fde.mp3",
+      "spoken": "You have a four and a three.",
+      "bytes": 9597,
+      "sha256": "f2c590284a2136b7aa21508d204896eea1dacfbc4d767a2b63baa733b97696fc"
+    },
+    "you have four and four": {
+      "file": "bf07330ed7b8a16fa5b90b0b.mp3",
+      "spoken": "You have a four and a four.",
+      "bytes": 9021,
+      "sha256": "5479e502e6079bfe616e34b8513bee3ef2ed69876c86c154bcc28606a1bc3afb"
+    },
+    "you have four and five": {
+      "file": "68b3ba75e9c2e4d8626f93e2.mp3",
+      "spoken": "You have a four and a five.",
+      "bytes": 9453,
+      "sha256": "645514b4ca14a80ed93d9cadd69bed8fb7a496fed6935d643b4d53d46949bf8d"
+    },
+    "you have four and six": {
+      "file": "2b956fc48f2c6930b61ef540.mp3",
+      "spoken": "You have a four and a six.",
+      "bytes": 9309,
+      "sha256": "e42dd657e9b68230959433f67cb7f7ec63e4bd805d19dda9f7f52c953fb44759"
+    },
+    "you have four and seven": {
+      "file": "798d1cf1fa79d20c6514cb97.mp3",
+      "spoken": "You have a four and a seven.",
+      "bytes": 9741,
+      "sha256": "28ba1f7af55d016137c09568c0baa9b408f37e4d89f8388f8b7795ab857d83c2"
+    },
+    "you have four and eight": {
+      "file": "4b9d708bc44a9af868bbaa25.mp3",
+      "spoken": "You have a four and an eight.",
+      "bytes": 9021,
+      "sha256": "4997cf48512b461a7cdb2f631b87c5d4cde9c09da3dd1f4b943bedd4f28edc46"
+    },
+    "you have four and nine": {
+      "file": "025fb4fa27b0ce1d753af90a.mp3",
+      "spoken": "You have a four and a nine.",
+      "bytes": 9309,
+      "sha256": "4a9085e018f13f9c2a44b9e25999662f63a892424176c15eeda316d3e278afef"
+    },
+    "you have four and ten": {
+      "file": "833ea7f744e6291f2e71fafe.mp3",
+      "spoken": "You have a four and a ten.",
+      "bytes": 9021,
+      "sha256": "4656683e34b660e09b41cbb53ac57dfce148cb6cf104bcd1d7e6e21a54c1f564"
+    },
+    "you have four and jack": {
+      "file": "5ea0fcf21e4a6126c74b3a41.mp3",
+      "spoken": "You have a four and a jack.",
+      "bytes": 9885,
+      "sha256": "ea8bb2c7f5c1cf9f9ba8c67d4a81ebce51e6f6e85efa4b86e9cc338ef6c294b2"
+    },
+    "you have four and queen": {
+      "file": "b0a3e8dc9840a3fb0d98a1e8.mp3",
+      "spoken": "You have a four and a queen.",
+      "bytes": 9453,
+      "sha256": "16c096d8c1e8406e193b6994e746c13b04e0764d8e93f5eb69f1456e1dc744bc"
+    },
+    "you have four and king": {
+      "file": "cb3b76e685a7f8cd3ddb699e.mp3",
+      "spoken": "You have a four and a king.",
+      "bytes": 9021,
+      "sha256": "d95c3feb7615d7bff9d1a5741de05b049c82e13a43743abc579fefb643d14053"
+    },
+    "five": {
+      "file": "c7c3cfd5b1d09c7f682669e8.mp3",
+      "spoken": "five.",
+      "bytes": 4557,
+      "sha256": "b9f5fc010b2bf75c07fae9d10060f0603443c325e7dba852c8131cb2f763d89a"
+    },
+    "dealer shows a five": {
+      "file": "3d7d8833ebb0d6eadb30f31f.mp3",
+      "spoken": "Dealer shows a five.",
+      "bytes": 8877,
+      "sha256": "35cf2a8507930adf8827ab6e6041481b0e533eee70499d21c2a9dc34b27e5118"
+    },
+    "dealer shows an five": {
+      "file": "3d7d8833ebb0d6eadb30f31f.mp3",
+      "spoken": "Dealer shows a five.",
+      "bytes": 8877,
+      "sha256": "35cf2a8507930adf8827ab6e6041481b0e533eee70499d21c2a9dc34b27e5118"
+    },
+    "you have five and ace": {
+      "file": "ba2b41ef9297b5ff010defa5.mp3",
+      "spoken": "You have a five and an ace.",
+      "bytes": 9597,
+      "sha256": "9dd48106b2de7a80458375ecd701abb30b08b02515a4a17b6d1ec959dcb872e8"
+    },
+    "you have five and two": {
+      "file": "a2e5e8364f022c26abbe14b6.mp3",
+      "spoken": "You have a five and a two.",
+      "bytes": 9453,
+      "sha256": "da9d25d8411e9dd8d10aa7d667826044dee57118351c6e50a99e3c9052ee058f"
+    },
+    "you have five and three": {
+      "file": "2b28ba0462dafb425e2b6ced.mp3",
+      "spoken": "You have a five and a three.",
+      "bytes": 10029,
+      "sha256": "3ea8ddcaaca2c2f3bdb829bbd709c7fdf43d3f9b0c7f673014035387066c068a"
+    },
+    "you have five and four": {
+      "file": "8c3a370502f6c106fa2d0b16.mp3",
+      "spoken": "You have a five and a four.",
+      "bytes": 9309,
+      "sha256": "3366af0e5c38d87ee9e144e56ecc5e246880b2c60af1b0b4a41ce87c151ed010"
+    },
+    "you have five and five": {
+      "file": "10b3b908f1c8e058153e095b.mp3",
+      "spoken": "You have a five and a five.",
+      "bytes": 9885,
+      "sha256": "b29878ec106ed1158c3d9b7eb39a0ee97a37460e4ff27a9c7cd99ce925fcfef8"
+    },
+    "you have five and six": {
+      "file": "39903601141845d5297dd48c.mp3",
+      "spoken": "You have a five and a six.",
+      "bytes": 9309,
+      "sha256": "e76d7a5079ccc38aab2235672ed0dabffc3de390908e781dbc261a163589b20f"
+    },
+    "you have five and seven": {
+      "file": "c898f751ce74cb300320813f.mp3",
+      "spoken": "You have a five and a seven.",
+      "bytes": 9597,
+      "sha256": "8f8c7813209233cd1e327d04ad2c1bada8607e884958a5f78c7351a77d7b46ac"
+    },
+    "you have five and eight": {
+      "file": "b44f975f78f24e612a4241a5.mp3",
+      "spoken": "You have a five and an eight.",
+      "bytes": 9597,
+      "sha256": "9c45c93b33358178f5460e02e0fe1745ce1da10814d59239274c8f933537b53c"
+    },
+    "you have five and nine": {
+      "file": "c5c6f7237085e0da2613aca8.mp3",
+      "spoken": "You have a five and a nine.",
+      "bytes": 9309,
+      "sha256": "e072f88f4c5b83440f074452873a720d731629bac6fe7ebf7b7dc187dc77b410"
+    },
+    "you have five and ten": {
+      "file": "4fa114f3d3a59a46f4033647.mp3",
+      "spoken": "You have a five and a ten.",
+      "bytes": 9453,
+      "sha256": "9e5df93bcf318c14ac3fbc3cd1dd82ff221ea962ab151f8ee9958e34d57ee36c"
+    },
+    "you have five and jack": {
+      "file": "43b80106450336c03c002dd1.mp3",
+      "spoken": "You have a five and a jack.",
+      "bytes": 9741,
+      "sha256": "befc11018f590f1e92302483115e9dc7063e089f645bc9a0c85b019bc6e57857"
+    },
+    "you have five and queen": {
+      "file": "79a5834059fb4de60503ab44.mp3",
+      "spoken": "You have a five and a queen.",
+      "bytes": 10029,
+      "sha256": "90f205a2c73397f3907fdc68acc8058a7d9d969cb5a137564a6308eb22021c61"
+    },
+    "you have five and king": {
+      "file": "53c8d85d951dde4ab65394a7.mp3",
+      "spoken": "You have a five and a king.",
+      "bytes": 9597,
+      "sha256": "1f8a15b7ff7a07b48b55f8054b9cb981c487baf32378a7ae828af42c3668c608"
+    },
+    "six": {
+      "file": "9a7a196014142e5af704aa88.mp3",
+      "spoken": "six.",
+      "bytes": 4557,
+      "sha256": "fe83bb8944ed1309f8723409016cf1ae40137019680dfe4d327b75c5a331e598"
+    },
+    "dealer shows a six": {
+      "file": "88fcf431a1b5130d4aafb52a.mp3",
+      "spoken": "Dealer shows a six.",
+      "bytes": 8445,
+      "sha256": "869641b1fcd2d094d349e8110fb8bc394967969a83e68aa91b1973e1fadc5125"
+    },
+    "dealer shows an six": {
+      "file": "88fcf431a1b5130d4aafb52a.mp3",
+      "spoken": "Dealer shows a six.",
+      "bytes": 8445,
+      "sha256": "869641b1fcd2d094d349e8110fb8bc394967969a83e68aa91b1973e1fadc5125"
+    },
+    "you have six and ace": {
+      "file": "2173443a261a5a062c41f646.mp3",
+      "spoken": "You have a six and an ace.",
+      "bytes": 9309,
+      "sha256": "26200ab41303b64e541d265efa4d38bf10a402841edb249af83b996e8ef963f9"
+    },
+    "you have six and two": {
+      "file": "27a5a903dca732b5f9d06cf0.mp3",
+      "spoken": "You have a six and a two.",
+      "bytes": 9021,
+      "sha256": "7f0f1438da853d93589731848ef126f39ad5ecdb6c661bceeaea99ba9d1b7356"
+    },
+    "you have six and three": {
+      "file": "7ccb4666dc71bc1f78bc6714.mp3",
+      "spoken": "You have a six and a three.",
+      "bytes": 9741,
+      "sha256": "ef2a154ad584a0a3182907752e5db46bffaa35c94c64bc92892fafdffa69e9a6"
+    },
+    "you have six and four": {
+      "file": "d5e00562f243ed3f54324bd3.mp3",
+      "spoken": "You have a six and a four.",
+      "bytes": 9309,
+      "sha256": "82189dd97ff018e1cafebddb053d535f5d88c05661cf9447f8a0a611bce8aed4"
+    },
+    "you have six and five": {
+      "file": "9ebc5634b8e4b62bb01b1e07.mp3",
+      "spoken": "You have a six and a five.",
+      "bytes": 9453,
+      "sha256": "095abd24b70e343a75f4b80099d0c6a35fa5837e7b9793b5d0944d49529b0d51"
+    },
+    "you have six and six": {
+      "file": "831110aeab528a96100c2914.mp3",
+      "spoken": "You have a six and a six.",
+      "bytes": 9453,
+      "sha256": "94ca7dd95436c2d65a755bb994eef6b576299fd423a14baadbd6f59114d126b3"
+    },
+    "you have six and seven": {
+      "file": "6fd9d40cbaac1eab273ac8e9.mp3",
+      "spoken": "You have a six and a seven.",
+      "bytes": 10029,
+      "sha256": "9d10e2bcd96d177cd5b10d4f8e69871cad328ca03d774a964f44d7eb4aa35f7d"
+    },
+    "you have six and eight": {
+      "file": "5a09842ec59a655c880c011e.mp3",
+      "spoken": "You have a six and an eight.",
+      "bytes": 9453,
+      "sha256": "bf2e912ce73d08318da1d8c5026db2f336d7c05e668cb8ef5453a31d391d0e01"
+    },
+    "you have six and nine": {
+      "file": "af2abbbff44582ff5b127a52.mp3",
+      "spoken": "You have a six and a nine.",
+      "bytes": 9453,
+      "sha256": "78de03abf36b8295429726de5edfef4764b40b1170eca6b1d8b982e1cd2f6b36"
+    },
+    "you have six and ten": {
+      "file": "ad69fed46098758189797c42.mp3",
+      "spoken": "You have a six and a ten.",
+      "bytes": 9453,
+      "sha256": "c71efd7f864689c853fb2361e7f8ba1b8c8b8875defc4ca489ebc989b2594041"
+    },
+    "you have six and jack": {
+      "file": "068cd109a7f73ee67a9ee44f.mp3",
+      "spoken": "You have a six and a jack.",
+      "bytes": 9741,
+      "sha256": "8a99b356fac78c7a0256e577bfc8426acc10681e1e67e2803057a457064e1348"
+    },
+    "you have six and queen": {
+      "file": "d431946c57393708ec298e97.mp3",
+      "spoken": "You have a six and a queen.",
+      "bytes": 9741,
+      "sha256": "8a346cab2ee7921d4dd77f3957e07a2b48e60ba5978dd7f574fdada03ce77150"
+    },
+    "you have six and king": {
+      "file": "29059e6ed28e38d46962c305.mp3",
+      "spoken": "You have a six and a king.",
+      "bytes": 9165,
+      "sha256": "971f6adff5c28f23c62c03ebaf4ae566c8b5ffaf55c9cb12ab69b32a105f08b0"
+    },
+    "seven": {
+      "file": "a27e332c1b357da84ec84644.mp3",
+      "spoken": "seven.",
+      "bytes": 4413,
+      "sha256": "b82254edb26aaa7da46a0ff9af7a487d75cfabd3c73a347a29e5a0872d0b81c7"
+    },
+    "dealer shows a seven": {
+      "file": "8d55c2776c94d613d800608f.mp3",
+      "spoken": "Dealer shows a seven.",
+      "bytes": 8445,
+      "sha256": "63a9025ffa1de941e01d6bdc7ef7baf1f3200b94ad55a3f20c636c569ff3ef38"
+    },
+    "dealer shows an seven": {
+      "file": "8d55c2776c94d613d800608f.mp3",
+      "spoken": "Dealer shows a seven.",
+      "bytes": 8445,
+      "sha256": "63a9025ffa1de941e01d6bdc7ef7baf1f3200b94ad55a3f20c636c569ff3ef38"
+    },
+    "you have seven and ace": {
+      "file": "2efff87fad45c296b6977a36.mp3",
+      "spoken": "You have a seven and an ace.",
+      "bytes": 9453,
+      "sha256": "37f12930cc2412addf86333699f02b62b794d44e934657ddda4684b2de3607bb"
+    },
+    "you have seven and two": {
+      "file": "5639a61fb394b52e46c8fc0e.mp3",
+      "spoken": "You have a seven and a two.",
+      "bytes": 9165,
+      "sha256": "1a9dbc6e021a2290e293ca3aa77952440090c42401ea9dc93343b2627da983a4"
+    },
+    "you have seven and three": {
+      "file": "941d354babf51a2b42000582.mp3",
+      "spoken": "You have a seven and a three.",
+      "bytes": 10461,
+      "sha256": "5373ab68b9ff63743d183b853a58b8f63a73f6348311f44510d4c4c70476ac6f"
+    },
+    "you have seven and four": {
+      "file": "15b5efe5d484e860cef241ac.mp3",
+      "spoken": "You have a seven and a four.",
+      "bytes": 9165,
+      "sha256": "152311d8a98c040599d0d37eec5dbe66238b0ccaab7cd9b815ed7b88a5d1e4f8"
+    },
+    "you have seven and five": {
+      "file": "4d4036d6d93253a4843e3a0b.mp3",
+      "spoken": "You have a seven and a five.",
+      "bytes": 9741,
+      "sha256": "d24c206110d1f465072ee1643100e20a849fe26934a8518f12a78f2255d793ef"
+    },
+    "you have seven and six": {
+      "file": "7ba12a630dcf8ff8232e26af.mp3",
+      "spoken": "You have a seven and a six.",
+      "bytes": 9741,
+      "sha256": "13602e9590218ed81ba82c013b63956c360fefc736412b68d1d56829ff1403b7"
+    },
+    "you have seven and seven": {
+      "file": "006dac02c23bb6de589cd48c.mp3",
+      "spoken": "You have a seven and a seven.",
+      "bytes": 10605,
+      "sha256": "2cfd294d4b6e55e38b86cab9cffd225dbeb1419894db98ba3488fba13e242f8d"
+    },
+    "you have seven and eight": {
+      "file": "036bfc9a3e7812367479eac2.mp3",
+      "spoken": "You have a seven and an eight.",
+      "bytes": 9885,
+      "sha256": "0f313ab38f504275488c84bb61ea15aa93c43af8ef8cd177100eeba2e268712d"
+    },
+    "you have seven and nine": {
+      "file": "bdd793af3922b6b72fa3e2d6.mp3",
+      "spoken": "You have a seven and a nine.",
+      "bytes": 9885,
+      "sha256": "a6c82bfda40a6dbd35c9f1eaf9dd9e449f25b3d8fd53cfaaee7d9d94e47a82ca"
+    },
+    "you have seven and ten": {
+      "file": "67e303dd5ac07addd55becaf.mp3",
+      "spoken": "You have a seven and a ten.",
+      "bytes": 9741,
+      "sha256": "255c7f859a9246e02ab7c566ed5dccca5af9a70dacd1a363078c9f94681c7c9b"
+    },
+    "you have seven and jack": {
+      "file": "3b3877360589c3ecdbc52710.mp3",
+      "spoken": "You have a seven and a jack.",
+      "bytes": 10461,
+      "sha256": "0e54337fa848838bfefdcf9a954deb5ae6710949f0b250adbac60707809384d7"
+    },
+    "you have seven and queen": {
+      "file": "f133b0f4427b6e923657d014.mp3",
+      "spoken": "You have a seven and a queen.",
+      "bytes": 9597,
+      "sha256": "216da287d1683ac6f470a7640f094b88f11cf6f38a271dbebd41f27be1401d6f"
+    },
+    "you have seven and king": {
+      "file": "c292ba7df4c75ac2750165c6.mp3",
+      "spoken": "You have a seven and a king.",
+      "bytes": 9021,
+      "sha256": "a01a88336c0dc98263fede737afe21bcb93ab0cba3368067aa22e8a8393509b6"
+    },
+    "eight": {
+      "file": "5460dee56db240ebe04d2856.mp3",
+      "spoken": "eight.",
+      "bytes": 4413,
+      "sha256": "4bc4ee0130c94b8132f0ebc02763074295fa85c96485a2d7de230a3ee8c33ed8"
+    },
+    "dealer shows a eight": {
+      "file": "6d9e1eb58531ed2fa877d9c2.mp3",
+      "spoken": "Dealer shows an eight.",
+      "bytes": 8157,
+      "sha256": "8a4e59ce771c0cf98d269bc514d1ffd7574319f503f0dffcb401125f6304fe60"
+    },
+    "dealer shows an eight": {
+      "file": "6d9e1eb58531ed2fa877d9c2.mp3",
+      "spoken": "Dealer shows an eight.",
+      "bytes": 8157,
+      "sha256": "8a4e59ce771c0cf98d269bc514d1ffd7574319f503f0dffcb401125f6304fe60"
+    },
+    "you have eight and ace": {
+      "file": "135444fefb7cf490770d18a6.mp3",
+      "spoken": "You have an eight and an ace.",
+      "bytes": 9741,
+      "sha256": "6afb5aed64c00b947aabb41728ccdac6d10abcf65f5b80a90d88b8be4f9b42b1"
+    },
+    "you have eight and two": {
+      "file": "035d90fd20073bcaa612549a.mp3",
+      "spoken": "You have an eight and a two.",
+      "bytes": 9597,
+      "sha256": "7916e0ef05468802f053d4b05494f5380c0e2ee5c4a45a975863b89090cf6c64"
+    },
+    "you have eight and three": {
+      "file": "fd3f8f6bd32ffd2b6bd533e6.mp3",
+      "spoken": "You have an eight and a three.",
+      "bytes": 9741,
+      "sha256": "b825475c8dc5e867efc175409f05617499b4c40f3c9ca8939f268d181e6e9d2a"
+    },
+    "you have eight and four": {
+      "file": "ecb5153802d85d06cec397b7.mp3",
+      "spoken": "You have an eight and a four.",
+      "bytes": 9309,
+      "sha256": "3f6460467e0489bbb9acbfb008c6471cb36551330b91511ac5f013f41c656de8"
+    },
+    "you have eight and five": {
+      "file": "e7d04aaec9b69bb2cc3ad45d.mp3",
+      "spoken": "You have an eight and a five.",
+      "bytes": 9885,
+      "sha256": "874767f6d6dbe506bcd96212e458b522f01377856f629f01ac5dbb2429516c99"
+    },
+    "you have eight and six": {
+      "file": "45f3bf0a55a1edd009ef4df7.mp3",
+      "spoken": "You have an eight and a six.",
+      "bytes": 9597,
+      "sha256": "b03194c49243deb55c7efe70bfcc5af0ee1cd916ff3c3d67b60a99c1ccd89276"
+    },
+    "you have eight and seven": {
+      "file": "49bf73ba4762ebf25978b5d6.mp3",
+      "spoken": "You have an eight and a seven.",
+      "bytes": 10029,
+      "sha256": "d9d4d749dab5460681edb1cf9e3499bc97f69e4e0c2d5221f65407f5d7ae578a"
+    },
+    "you have eight and eight": {
+      "file": "538187e0f6e0377e0f188682.mp3",
+      "spoken": "You have an eight and an eight.",
+      "bytes": 9597,
+      "sha256": "8bb9734d0abb2f97f8a8691d89eb56532f8c6bbd37984c7263abd13b34567d56"
+    },
+    "you have eight and nine": {
+      "file": "9f8ab15aa85dcf3edb08208d.mp3",
+      "spoken": "You have an eight and a nine.",
+      "bytes": 9741,
+      "sha256": "41dbbaf04bcb2dd9bad54c0b35993b178adca9465d96210d48aef154b1bd78fb"
+    },
+    "you have eight and ten": {
+      "file": "4621168c10eda2a2c71662d9.mp3",
+      "spoken": "You have an eight and a ten.",
+      "bytes": 9453,
+      "sha256": "8ba8009443eb99cbbc417a4c4a69ce96acc535733d16ce629e7743b59c6240f3"
+    },
+    "you have eight and jack": {
+      "file": "fb5c815683966e1e4a4c6f41.mp3",
+      "spoken": "You have an eight and a jack.",
+      "bytes": 10029,
+      "sha256": "debaa56cb368f5a5874047e700795801545b215345277ba0c6500e9027648271"
+    },
+    "you have eight and queen": {
+      "file": "0985a9577464b0513dac2dd2.mp3",
+      "spoken": "You have an eight and a queen.",
+      "bytes": 9885,
+      "sha256": "82b17db8af21f47efb8a807cee4ef886677fe501a8446fa8d9f6a08c1a2557c2"
+    },
+    "you have eight and king": {
+      "file": "11b164d533db112e27ce5900.mp3",
+      "spoken": "You have an eight and a king.",
+      "bytes": 9309,
+      "sha256": "abca664a627eb5263c239ca90a18862fa47ce30881cbb51c9df27ff4025d9301"
+    },
+    "nine": {
+      "file": "0e1d2ec7fc6599605f4126ae.mp3",
+      "spoken": "nine.",
+      "bytes": 4557,
+      "sha256": "6b70debf309f024951554229662403076d3b9597f3dd61a1f7459e18b6de4e27"
+    },
+    "dealer shows a nine": {
+      "file": "6d828837c8752db34bb90a39.mp3",
+      "spoken": "Dealer shows a nine.",
+      "bytes": 8301,
+      "sha256": "d099f24981286c19cd71e4561044bc15f4949420e821218310c0d5ee94e8bc12"
+    },
+    "dealer shows an nine": {
+      "file": "6d828837c8752db34bb90a39.mp3",
+      "spoken": "Dealer shows a nine.",
+      "bytes": 8301,
+      "sha256": "d099f24981286c19cd71e4561044bc15f4949420e821218310c0d5ee94e8bc12"
+    },
+    "you have nine and ace": {
+      "file": "4040554973938c583993264c.mp3",
+      "spoken": "You have a nine and an ace.",
+      "bytes": 9309,
+      "sha256": "72a074cc9b8d351b8cd56040fd94e98072f5491f339c3a333a53a4cbcec2bbbe"
+    },
+    "you have nine and two": {
+      "file": "d4922776a8c7c9ca85f2651b.mp3",
+      "spoken": "You have a nine and a two.",
+      "bytes": 9021,
+      "sha256": "d7aa0eb08fc2db2809a2a7790c46d38aa6d672bf27eb8de2608d4a35966eb9de"
+    },
+    "you have nine and three": {
+      "file": "07f28f5ce18a1de6236a0cb4.mp3",
+      "spoken": "You have a nine and a three.",
+      "bytes": 9453,
+      "sha256": "10c838c5509745904d9207ccd59156c260cce4991498a0cc8ff16357e11b1a27"
+    },
+    "you have nine and four": {
+      "file": "f82ab2c07dcc1ab6457e1c23.mp3",
+      "spoken": "You have a nine and a four.",
+      "bytes": 9021,
+      "sha256": "2ced220e1ea21bb4673e845f50896758673148fa8c32ad9263e6b05ea1cdab83"
+    },
+    "you have nine and five": {
+      "file": "655e97d5b595f735255a6362.mp3",
+      "spoken": "You have a nine and a five.",
+      "bytes": 9741,
+      "sha256": "69ae245fe4b861081ebd49320c7e956ae34d0b1dfb2c9461e10ce0e5bcdfa5ac"
+    },
+    "you have nine and six": {
+      "file": "6ee02976bb8ac677aca3e9f8.mp3",
+      "spoken": "You have a nine and a six.",
+      "bytes": 9597,
+      "sha256": "7d01b5f19ba736bde7ec0d05b726fe4237a5f535db405677afd405b793d27809"
+    },
+    "you have nine and seven": {
+      "file": "6ac7cdc4560fd7c0a777b69b.mp3",
+      "spoken": "You have a nine and a seven.",
+      "bytes": 10029,
+      "sha256": "6a3f613607ddc8e93d4f93c5a492ff86f3eaecb3739a31a5e014f90195d1f03b"
+    },
+    "you have nine and eight": {
+      "file": "e6eeaaa78ba5b76a3e5daace.mp3",
+      "spoken": "You have a nine and an eight.",
+      "bytes": 9309,
+      "sha256": "1837e8fcacbad54efd78ae3f3eec5424af05c73f04c7a36f0f981672825acd67"
+    },
+    "you have nine and nine": {
+      "file": "d3e34264f49d92c0cb14c1c0.mp3",
+      "spoken": "You have a nine and a nine.",
+      "bytes": 9741,
+      "sha256": "ae782fe872db048852d389861ee9581c68f04344de042cbe0be4afdc53946acd"
+    },
+    "you have nine and ten": {
+      "file": "450bbeda3f711fa155464b0b.mp3",
+      "spoken": "You have a nine and a ten.",
+      "bytes": 9309,
+      "sha256": "b070dcb30e21b2aa23c9c2308247c9b09799dbf3d536da3b332fa235aacf0e9d"
+    },
+    "you have nine and jack": {
+      "file": "5fbf781f120f6240f5a254f9.mp3",
+      "spoken": "You have a nine and a jack.",
+      "bytes": 9597,
+      "sha256": "99933279644e02b26290b039fe3a712e63a4d480c98cbf6683daa2af0772397d"
+    },
+    "you have nine and queen": {
+      "file": "c7c3c887b1c8fa8826f57e46.mp3",
+      "spoken": "You have a nine and a queen.",
+      "bytes": 9453,
+      "sha256": "e4511c9271727ba1ed3af7d1efadb403463e1166962e75cbe43e01bdd40df53c"
+    },
+    "you have nine and king": {
+      "file": "812bf19f8b39ced6567afa12.mp3",
+      "spoken": "You have a nine and a king.",
+      "bytes": 9021,
+      "sha256": "5d10ace8fd90251c23d03cca5ad09ad084b912ed71d31d021c38b1fe2b172503"
+    },
+    "ten": {
+      "file": "25af988448215e4fc8db6fd9.mp3",
+      "spoken": "ten.",
+      "bytes": 4125,
+      "sha256": "5a617b8d0dbd798cd4f4bbe8fdf02fd2587b9bb8e0dfe605526f557466c096a0"
+    },
+    "dealer shows a ten": {
+      "file": "30645b9e6eae2b098ff6679f.mp3",
+      "spoken": "Dealer shows a ten.",
+      "bytes": 8445,
+      "sha256": "e10a4f48f573e505b5b1cd0b2530aab4d102fec4afc1c7b880d5d04dc5572854"
+    },
+    "dealer shows an ten": {
+      "file": "30645b9e6eae2b098ff6679f.mp3",
+      "spoken": "Dealer shows a ten.",
+      "bytes": 8445,
+      "sha256": "e10a4f48f573e505b5b1cd0b2530aab4d102fec4afc1c7b880d5d04dc5572854"
+    },
+    "you have ten and ace": {
+      "file": "0401961c7990b7b2caa55fdb.mp3",
+      "spoken": "You have a ten and an ace.",
+      "bytes": 9309,
+      "sha256": "b0882241c6b171fd987f044b6d0afc059e72a13e80ddaac6ca1153c1868573f6"
+    },
+    "you have ten and two": {
+      "file": "fa7c2566a505305c64c9dda8.mp3",
+      "spoken": "You have a ten and a two.",
+      "bytes": 8733,
+      "sha256": "81297ca6fed1f8ed8b2ccffe60aa8f311da12315b4de05f935f9c61b526a453e"
+    },
+    "you have ten and three": {
+      "file": "f25be8d196f6d833c821415e.mp3",
+      "spoken": "You have a ten and a three.",
+      "bytes": 9741,
+      "sha256": "d0b34bae7a2a2467eafa5e7f60bf92332efa9ac9b011113c076afff09646f59f"
+    },
+    "you have ten and four": {
+      "file": "9769c317137320037e4d7ff1.mp3",
+      "spoken": "You have a ten and a four.",
+      "bytes": 9309,
+      "sha256": "022b260ec070f2eea5e99e9a4b69ce48524f9f4db797abd1c747018165d568c6"
+    },
+    "you have ten and five": {
+      "file": "21fdf19d904ef8be9bde00f1.mp3",
+      "spoken": "You have a ten and a five.",
+      "bytes": 9885,
+      "sha256": "1334097a63069bf005d0b5d225fdf0edbcdce70d902397643c422fe56eb571dd"
+    },
+    "you have ten and six": {
+      "file": "6cf58bb3336e0457ffed06ab.mp3",
+      "spoken": "You have a ten and a six.",
+      "bytes": 9453,
+      "sha256": "38bdfd89656c183c5e7e6d9d00bbd8fb3a98600b8dfa8f7298e6d6c0fa9ed58f"
+    },
+    "you have ten and seven": {
+      "file": "bde31917ee99ffd883466acd.mp3",
+      "spoken": "You have a ten and a seven.",
+      "bytes": 10029,
+      "sha256": "c19d94ca30747bee80aa20aad7cb4c21a7e8633e1fb3ed9a98378b7f40def03d"
+    },
+    "you have ten and eight": {
+      "file": "4f1ea015341d6b1b38324b07.mp3",
+      "spoken": "You have a ten and an eight.",
+      "bytes": 9309,
+      "sha256": "cfa62fc97574ac1dcad9946f0134dd5545d438dbc07e9e831cfb35a9d9215696"
+    },
+    "you have ten and nine": {
+      "file": "5f6017b5d89db786c1fbbe6c.mp3",
+      "spoken": "You have a ten and a nine.",
+      "bytes": 9453,
+      "sha256": "f76d7bd4bee723d757bea07980b32cb6592f50e80361ac06f5bc1de12efc587a"
+    },
+    "you have ten and ten": {
+      "file": "a102e4360f2f412e5aaa6da7.mp3",
+      "spoken": "You have a ten and a ten.",
+      "bytes": 9453,
+      "sha256": "639c73f85aa4b728f56bbc094be01eba16c0b78b0508954cb64155ed5c5f2c63"
+    },
+    "you have ten and jack": {
+      "file": "33ad1f6d781edef1771ad872.mp3",
+      "spoken": "You have a ten and a jack.",
+      "bytes": 9597,
+      "sha256": "88b5ee0fb62d9f9db3b9b6cd89042bb1a25b07781cab03d25c85296fae66df85"
+    },
+    "you have ten and queen": {
+      "file": "1c5c15476ba85c8d16230c67.mp3",
+      "spoken": "You have a ten and a queen.",
+      "bytes": 9741,
+      "sha256": "7006763d2692c9b1a3f3edaacdf569d674e810fc1a8bb6f999bfccba34b9c91c"
+    },
+    "you have ten and king": {
+      "file": "05a63fc18ea0e41e006c394d.mp3",
+      "spoken": "You have a ten and a king.",
+      "bytes": 8733,
+      "sha256": "14c8f92da8898c7c9f3098b2487967b0fa837b768a7c22bac5076c11d227a3fc"
+    },
+    "jack": {
+      "file": "291bc1527adbf5b862b94114.mp3",
+      "spoken": "jack.",
+      "bytes": 4557,
+      "sha256": "283a6c530e9429c49a9c06e3b1ea1c4c75f23267da54b7e310f6ba67d7662989"
+    },
+    "dealer shows a jack": {
+      "file": "dbb73eadc4d4c4743e0ac963.mp3",
+      "spoken": "Dealer shows a jack.",
+      "bytes": 8589,
+      "sha256": "8c6214c4c529aadc9c6dcb971491331f28cd2bde3ec356e690a904d1426235a7"
+    },
+    "dealer shows an jack": {
+      "file": "dbb73eadc4d4c4743e0ac963.mp3",
+      "spoken": "Dealer shows a jack.",
+      "bytes": 8589,
+      "sha256": "8c6214c4c529aadc9c6dcb971491331f28cd2bde3ec356e690a904d1426235a7"
+    },
+    "you have jack and ace": {
+      "file": "7d8e335527290121265cf9f0.mp3",
+      "spoken": "You have a jack and an ace.",
+      "bytes": 9597,
+      "sha256": "29fb83ef4cab24284a13ba7b67252b192cb65e5d801fe5768d619a0811e238a9"
+    },
+    "you have jack and two": {
+      "file": "3634ea704f4f2d89ecdbac83.mp3",
+      "spoken": "You have a jack and a two.",
+      "bytes": 9597,
+      "sha256": "bc793ff590cae830a749804d872de7e8f5bb3d00d23b24f783e61a29dd71f22c"
+    },
+    "you have jack and three": {
+      "file": "fb853a36f29bdf7330012728.mp3",
+      "spoken": "You have a jack and a three.",
+      "bytes": 9741,
+      "sha256": "b15a33b18b74f072f02568c2ec9c82b2bfaab2aaa239341bf8a736765c36140c"
+    },
+    "you have jack and four": {
+      "file": "efdb3e43c374dc836055ed62.mp3",
+      "spoken": "You have a jack and a four.",
+      "bytes": 9597,
+      "sha256": "c1733f7834ac1b1abd6920db2afde84adb528b8f0a86b4037ae183db11237ba8"
+    },
+    "you have jack and five": {
+      "file": "6eb2387d72de9426212742c4.mp3",
+      "spoken": "You have a jack and a five.",
+      "bytes": 10173,
+      "sha256": "fdba9612daea87a3edff72ce88a1990f2c2c34b4fed05605aea9171ff6754971"
+    },
+    "you have jack and six": {
+      "file": "86426b8dd16cc680b701d2af.mp3",
+      "spoken": "You have a jack and a six.",
+      "bytes": 9741,
+      "sha256": "144d6f1e67fa8e9dae6dd49d327775e44d70653f107d96e13e7d05f873fc267c"
+    },
+    "you have jack and seven": {
+      "file": "77577b8747f57d972692b976.mp3",
+      "spoken": "You have a jack and a seven.",
+      "bytes": 10461,
+      "sha256": "8781c9ac8530d8c156e90db7a361a912164e44d254c37a67a3d0b2244da6aa12"
+    },
+    "you have jack and eight": {
+      "file": "ee9e3c10340cbed0915014b7.mp3",
+      "spoken": "You have a jack and an eight.",
+      "bytes": 9453,
+      "sha256": "b0bcd70bb621cc7e6cdd5d85cc1d901a33197d0d29097181aa4eccf5e9f3f306"
+    },
+    "you have jack and nine": {
+      "file": "1fa80c36c390d3acd8164995.mp3",
+      "spoken": "You have a jack and a nine.",
+      "bytes": 9885,
+      "sha256": "62407f1acfe3da3d2a03b5d490377941bb0767e6f15c5a377eb824d6046895f6"
+    },
+    "you have jack and ten": {
+      "file": "ff2eea9bb972ca5cfce635ac.mp3",
+      "spoken": "You have a jack and a ten.",
+      "bytes": 9597,
+      "sha256": "91e0fee1e07c5e0bee831e1e025ee91eec809c1d719f806770e73d95cffe15c8"
+    },
+    "you have jack and jack": {
+      "file": "af8f5e87122c760b314ee3b4.mp3",
+      "spoken": "You have a jack and a jack.",
+      "bytes": 10029,
+      "sha256": "8138e53c4f3d15afef3e698e20060b7cc2d73e3d0e5618d72e5a2cd6aecaaa8b"
+    },
+    "you have jack and queen": {
+      "file": "4011e4adcc9c96f590ff0258.mp3",
+      "spoken": "You have a jack and a queen.",
+      "bytes": 10029,
+      "sha256": "5f9dcef8ea92a65068a0390d14709eea95628b5486114d3d810d196d4649f1a2"
+    },
+    "you have jack and king": {
+      "file": "9cb6993a4682f5ae3e70d7fe.mp3",
+      "spoken": "You have a jack and a king.",
+      "bytes": 9453,
+      "sha256": "7d0698cceb769eaed9664d0d0b48fa7bd9f44f4cbd00d3a217a3355e46475ce9"
+    },
+    "queen": {
+      "file": "acb285dedf85eb670d4051bb.mp3",
+      "spoken": "queen.",
+      "bytes": 4413,
+      "sha256": "4731b286321712934ae268966a53c73176fc5b8bf4bf9f562097dd8ef9c00017"
+    },
+    "dealer shows a queen": {
+      "file": "3ac62fc34de4c833941986d4.mp3",
+      "spoken": "Dealer shows a queen.",
+      "bytes": 8445,
+      "sha256": "52cf17dfd27148f8a7e21883393e8ac04da1505dd5e0e19b5f80ad43cb26c680"
+    },
+    "dealer shows an queen": {
+      "file": "3ac62fc34de4c833941986d4.mp3",
+      "spoken": "Dealer shows a queen.",
+      "bytes": 8445,
+      "sha256": "52cf17dfd27148f8a7e21883393e8ac04da1505dd5e0e19b5f80ad43cb26c680"
+    },
+    "you have queen and ace": {
+      "file": "5e7e51af580bb1444d0aa0b9.mp3",
+      "spoken": "You have a queen and an ace.",
+      "bytes": 9597,
+      "sha256": "ede1666afa96590533fd0b9941f88e0cae34ce780a412adfd448780c8bbb8f05"
+    },
+    "you have queen and two": {
+      "file": "398680c82443f951b38f4634.mp3",
+      "spoken": "You have a queen and a two.",
+      "bytes": 9453,
+      "sha256": "7e8990e95bbe682d0cdfb330a6f078ea3e7506bc732016d1c7807df121dfe5fe"
+    },
+    "you have queen and three": {
+      "file": "c2dde392c1d9c5510c1641a4.mp3",
+      "spoken": "You have a queen and a three.",
+      "bytes": 9597,
+      "sha256": "c4fe4d9d574f4fbe0ad7010fc3ab2fe1d8abf88facc04a3157264d958f64d1b0"
+    },
+    "you have queen and four": {
+      "file": "cca9182089825a43739a2ee9.mp3",
+      "spoken": "You have a queen and a four.",
+      "bytes": 9453,
+      "sha256": "a9196af9cd2296d84913be1434b0f7149f60bdf656a85344a4bc6cfc9ec4ab0e"
+    },
+    "you have queen and five": {
+      "file": "53eeb3d07f5e206ed3c8deef.mp3",
+      "spoken": "You have a queen and a five.",
+      "bytes": 9885,
+      "sha256": "29cf579310beba9fd2e509ce5b879021002543e384111eb91611b354dbb02443"
+    },
+    "you have queen and six": {
+      "file": "b50ed9501d24697f533e3605.mp3",
+      "spoken": "You have a queen and a six.",
+      "bytes": 9741,
+      "sha256": "51aa3bffece2fd17ebf3156ad0e8af46f48c0438b81e65aceab9c57b5a677421"
+    },
+    "you have queen and seven": {
+      "file": "4fd417540158d7c7445dd552.mp3",
+      "spoken": "You have a queen and a seven.",
+      "bytes": 10317,
+      "sha256": "a79e4c8221867d6b9c1dc8d0121c72e6fb9cfde8a5a83410056bae0fd7c45dd6"
+    },
+    "you have queen and eight": {
+      "file": "73fa38c3fbe356e8f011ab49.mp3",
+      "spoken": "You have a queen and an eight.",
+      "bytes": 9453,
+      "sha256": "95bacfce95905c652c918099ed48ac04b4b7ab4947ee74720f9bab01f5d49020"
+    },
+    "you have queen and nine": {
+      "file": "4527074406ce0cc03eb7b4d2.mp3",
+      "spoken": "You have a queen and a nine.",
+      "bytes": 9885,
+      "sha256": "e5c5cd76849c1d43be8486915d5a646de2b35f8810ec777d274c699aba19b7e0"
+    },
+    "you have queen and ten": {
+      "file": "81c4bfa2d83f4e6afd1c2f59.mp3",
+      "spoken": "You have a queen and a ten.",
+      "bytes": 9453,
+      "sha256": "bed4403746cd1c1e9bb088c37f6699b4bb95558a7eaa943a40aa3726bf813c16"
+    },
+    "you have queen and jack": {
+      "file": "84670cd72b0b45a7994c49bf.mp3",
+      "spoken": "You have a queen and a jack.",
+      "bytes": 9741,
+      "sha256": "c7a58153af63c745b04b2bc07efcaab671f4ef4b5647cc2a3b1ab119b9274557"
+    },
+    "you have queen and queen": {
+      "file": "1bed1dac615d2a46d1d953c4.mp3",
+      "spoken": "You have a queen and a queen.",
+      "bytes": 9597,
+      "sha256": "6f3f81f32dc502327dd2a723424ee4d0fc948700c57f5e59c849ad3740e3f84e"
+    },
+    "you have queen and king": {
+      "file": "a382674238170f689ab7339a.mp3",
+      "spoken": "You have a queen and a king.",
+      "bytes": 9309,
+      "sha256": "76a49fa0ef99db48d26f04829596039a56b2e1645278390f350131c563c38146"
+    },
+    "king": {
+      "file": "059cbf6ed438247bc87f9645.mp3",
+      "spoken": "king.",
+      "bytes": 4125,
+      "sha256": "20dc5d39d62008aed2fca9c23ae9737be5cc931313e41fa82ceffe9a30972e46"
+    },
+    "dealer shows a king": {
+      "file": "9b292904e9c01118566cb2fd.mp3",
+      "spoken": "Dealer shows a king.",
+      "bytes": 8013,
+      "sha256": "2ba6c4cf354b05bd1144e623f198f144a4c1766009e7618629013ea572bf76ca"
+    },
+    "dealer shows an king": {
+      "file": "9b292904e9c01118566cb2fd.mp3",
+      "spoken": "Dealer shows a king.",
+      "bytes": 8013,
+      "sha256": "2ba6c4cf354b05bd1144e623f198f144a4c1766009e7618629013ea572bf76ca"
+    },
+    "you have king and ace": {
+      "file": "2f51f2c6f7cfa619ef1ef5b8.mp3",
+      "spoken": "You have a king and an ace.",
+      "bytes": 9453,
+      "sha256": "a0b4015e009cf527af2c0bd9964455b3eb36bc9d22d804d5ef9d6068dfbd2ed4"
+    },
+    "you have king and two": {
+      "file": "3bed4dfb0575fff60e2ddf83.mp3",
+      "spoken": "You have a king and a two.",
+      "bytes": 8733,
+      "sha256": "ef0af9619f54449cf9a09d007109bd50ccea22d70b1c6a6240e5033baecf7e19"
+    },
+    "you have king and three": {
+      "file": "8a8dd4cbc7f3df72bd9bbf9d.mp3",
+      "spoken": "You have a king and a three.",
+      "bytes": 9453,
+      "sha256": "7f4c12f029dc0480a3bac67cdebb07a1b3097cb8f6a80c198e51cfe585bea541"
+    },
+    "you have king and four": {
+      "file": "0cbfc67f7b003988c36a3a9c.mp3",
+      "spoken": "You have a king and a four.",
+      "bytes": 9165,
+      "sha256": "2d1c54f51c9d6ac722eac23792de8faebea7f56c3d321682a5bb25d696446be2"
+    },
+    "you have king and five": {
+      "file": "fb945164ffec83a9c0f34771.mp3",
+      "spoken": "You have a king and a five.",
+      "bytes": 9741,
+      "sha256": "5033170bce546014d6ab5d4ddbe349eeab3b805c258cb29cd3ea645efa9ff34f"
+    },
+    "you have king and six": {
+      "file": "6dbd63e4c3409f3731b9ec62.mp3",
+      "spoken": "You have a king and a six.",
+      "bytes": 9453,
+      "sha256": "bd3ebeb4973992d4876eaf891baa0022dfde7b168a4bf51f7e87a5190dec5b99"
+    },
+    "you have king and seven": {
+      "file": "d56ebf9b9c68ef8138783eed.mp3",
+      "spoken": "You have a king and a seven.",
+      "bytes": 10173,
+      "sha256": "85352c533f0f650b76c233bf457c4ca3c39be3b6d940b40aa23ce61b8ab8c54d"
+    },
+    "you have king and eight": {
+      "file": "0a17ab7267c92e6802d15433.mp3",
+      "spoken": "You have a king and an eight.",
+      "bytes": 9309,
+      "sha256": "6cc020bb07427a5d71781cd884704601e990f9b6158e80e5d2c1a40dbde7c64e"
+    },
+    "you have king and nine": {
+      "file": "b96a32485a542546849aed12.mp3",
+      "spoken": "You have a king and a nine.",
+      "bytes": 9741,
+      "sha256": "65c3d7edb94002b084500aca00f79810b198350a8d06fabbbcc2e994b94fc970"
+    },
+    "you have king and ten": {
+      "file": "4dfda2f3bf6ff3f6e6c15998.mp3",
+      "spoken": "You have a king and a ten.",
+      "bytes": 9453,
+      "sha256": "bba4f0b2e043bd243767bbb6b0b7f17277cc3356ba9207b52df9cdd2b5bed07e"
+    },
+    "you have king and jack": {
+      "file": "a98fa783c73a6cb20f0dcc23.mp3",
+      "spoken": "You have a king and a jack.",
+      "bytes": 9741,
+      "sha256": "d155d93b5cd2c8a0388ed5cace6b50e3d944a53b11a5ba0c2e666fc6ca22a929"
+    },
+    "you have king and queen": {
+      "file": "adc2e27ecb7838ecdb40c482.mp3",
+      "spoken": "You have a king and a queen.",
+      "bytes": 9597,
+      "sha256": "beafcaae8c6b4fcf54f7744bf4ef62e0098c6e00637f603343e40ed84e92e7cd"
+    },
+    "you have king and king": {
+      "file": "cb124a9704489ab4396f8ee7.mp3",
+      "spoken": "You have a king and a king.",
+      "bytes": 9021,
+      "sha256": "1e6e69774eb5f6f39b1e43062b69efa06834312a55ca09ffebabdd2edb7a864a"
+    },
+    "dealer has 0": {
+      "file": "4feab0228bd8b9e9d6638742.mp3",
+      "spoken": "Dealer has zero.",
+      "bytes": 7437,
+      "sha256": "a99cd142df7495a26727dd633ecc826bd1e4631540b9781832113250c86ea96d"
+    },
+    "dealer has 1": {
+      "file": "ebae0d3a9470978d34757420.mp3",
+      "spoken": "Dealer has one.",
+      "bytes": 6717,
+      "sha256": "949145681323c527945985dd19293c39ebe45386d55c8f62f4d53e70908f4069"
+    },
+    "dealer has 2": {
+      "file": "a2fcaabd3b39dc538b904278.mp3",
+      "spoken": "Dealer has two.",
+      "bytes": 7149,
+      "sha256": "be75e824cb04b65332cccb9bc618a83b6fca7bb6fa4caa46d25aa4684826e84d"
+    },
+    "dealer has 3": {
+      "file": "670698088d3e60c6b6ed31fb.mp3",
+      "spoken": "Dealer has three.",
+      "bytes": 7005,
+      "sha256": "4213b321d7e7e1910e7f658918add8b30c3b824042fce19efb7422989048ed71"
+    },
+    "dealer has 4": {
+      "file": "92ef36d7ad3a3b05427b8c92.mp3",
+      "spoken": "Dealer has four.",
+      "bytes": 7005,
+      "sha256": "a1e094128b01e3912570e751ad48e095fe40fd75e6c7c22fcc89c9b812656d6a"
+    },
+    "dealer has 5": {
+      "file": "b9f82307c18647040c57df85.mp3",
+      "spoken": "Dealer has five.",
+      "bytes": 7293,
+      "sha256": "3cdb4fd8dfa924daff7b0e758dcc5a26a3a69b6198817ef0298a4817dd9d1605"
+    },
+    "dealer has 6": {
+      "file": "202c30504522e0100c5f6e99.mp3",
+      "spoken": "Dealer has six.",
+      "bytes": 7293,
+      "sha256": "bb00cba0e80aec46a16b04b9d6b7968e3d69df7e42ec170556257b9d2111eb5b"
+    },
+    "dealer has 7": {
+      "file": "4ac57ddafde9d1ce8f7e6d83.mp3",
+      "spoken": "Dealer has seven.",
+      "bytes": 7437,
+      "sha256": "0ef9372c556217f5803105399096c3b98a33513912f2e57dc40f92b72f2a22db"
+    },
+    "dealer has 8": {
+      "file": "ff90a880db9c6435de484548.mp3",
+      "spoken": "Dealer has eight.",
+      "bytes": 6717,
+      "sha256": "739ab37c55e3cc3512231704c902e6afc3480ac97091f6c2004ba7869ae51156"
+    },
+    "dealer has 9": {
+      "file": "6f6783d31903d2ae32b6b21b.mp3",
+      "spoken": "Dealer has nine.",
+      "bytes": 7005,
+      "sha256": "6de2afb67617940314276c1ce0b60529b03e328ec7c79e6055f65421c07f1408"
+    },
+    "dealer has 10": {
+      "file": "22a0ebcdc088487a09582bf7.mp3",
+      "spoken": "Dealer has ten.",
+      "bytes": 7149,
+      "sha256": "b458919f04c46d129266e30eb9fa6d74bd99745fcc1017bf6977b8635cad1819"
+    },
+    "dealer has 11": {
+      "file": "5648d8f1fecd7416363b77f1.mp3",
+      "spoken": "Dealer has eleven.",
+      "bytes": 7725,
+      "sha256": "73b3f435720ae4fd1d80a40cca7d0bda8d175863b0c84027641ddb6230a2514e"
+    },
+    "dealer has 12": {
+      "file": "857d6515f6bb0a467f6feaab.mp3",
+      "spoken": "Dealer has twelve.",
+      "bytes": 7437,
+      "sha256": "4645eba4fad73b6aff3dc3308b58c17e0eb3cd9c3b76885ccde2015bbc077dfa"
+    },
+    "dealer has 13": {
+      "file": "04a20c828047ee0ae21514be.mp3",
+      "spoken": "Dealer has thirteen.",
+      "bytes": 8157,
+      "sha256": "b5bf972d254861fb2d06dacf6b513d502748114b6195bfb77d87f40f81715b23"
+    },
+    "dealer has 14": {
+      "file": "75d04a636997921a3a96d113.mp3",
+      "spoken": "Dealer has fourteen.",
+      "bytes": 7869,
+      "sha256": "ed7663bdee0071cf77d72381c839e2bf0d6cbcb80958d1534a9ba80429b79b2d"
+    },
+    "dealer has 15": {
+      "file": "af2b5827b8bcc6ce35f5220f.mp3",
+      "spoken": "Dealer has fifteen.",
+      "bytes": 7725,
+      "sha256": "819b4f0abfe7b9be23c0bf015998ce960436515fb522dbb6784faf45d966bdfc"
+    },
+    "dealer has 16": {
+      "file": "94b893dcfad3eb3d28109815.mp3",
+      "spoken": "Dealer has sixteen.",
+      "bytes": 7725,
+      "sha256": "94114e77dc70792b86ef6524cfa50d77497ff2838d79d67a81fd8899205cbb3c"
+    },
+    "dealer has 17": {
+      "file": "b3a26c3c6b5481b8b37706e2.mp3",
+      "spoken": "Dealer has seventeen.",
+      "bytes": 8589,
+      "sha256": "4ceaeda636526d6bdc90b97533d8157de403ca18e57f8ef3ce85c4b7dc6358e6"
+    },
+    "dealer has 18": {
+      "file": "835d2111bc24c70cf26abac0.mp3",
+      "spoken": "Dealer has eighteen.",
+      "bytes": 7869,
+      "sha256": "1413d990fab1a38af507d8903c8580ac7dcc7efda712f889690d7e5c95210cf1"
+    },
+    "dealer has 19": {
+      "file": "6af9a2fae8c6010d1d86e1ac.mp3",
+      "spoken": "Dealer has nineteen.",
+      "bytes": 8445,
+      "sha256": "8bffee3a20e2f44d33cdf8863208ca781da9eec29163ffbe30e76d36519cdbd1"
+    },
+    "dealer has 20": {
+      "file": "b2989da5bb7cdc3e945ef6e7.mp3",
+      "spoken": "Dealer has twenty.",
+      "bytes": 7581,
+      "sha256": "d0b5b78841e971d339b4054c7f50a9f1428d130acf46b1e48d68e6d7cd8c7fdb"
+    },
+    "dealer has 21": {
+      "file": "fb1d23cecab150dd89123dec.mp3",
+      "spoken": "Dealer has twenty one.",
+      "bytes": 8733,
+      "sha256": "de30b06e1552679814b0707a8ab30b0118a0b2898cc76a4afa4838f8be1bcdaf"
+    },
+    "dealer has 22": {
+      "file": "602f3eeceb23a7322fdecccf.mp3",
+      "spoken": "Dealer has twenty two.",
+      "bytes": 8733,
+      "sha256": "6c093129f29ac9d7c699e4d99f61fc56b45486e85fc01406e57b894017a8ec1f"
+    },
+    "dealer has 23": {
+      "file": "9dace44fadba8d92b3233944.mp3",
+      "spoken": "Dealer has twenty three.",
+      "bytes": 9021,
+      "sha256": "d24f14e9b801a1321d1d608dc48b66ea95236a1a8663f471bfc2f2e1e198c3b7"
+    },
+    "dealer has 24": {
+      "file": "864e86aea834907c4d158606.mp3",
+      "spoken": "Dealer has twenty four.",
+      "bytes": 9021,
+      "sha256": "0203f2d9fe9a22d9286476d773a8595a0785371d6e1cfba7cb30d9200ef32385"
+    },
+    "dealer has 25": {
+      "file": "719b6499c2cc040d0a309480.mp3",
+      "spoken": "Dealer has twenty five.",
+      "bytes": 9597,
+      "sha256": "784f78e032d054f2ad4e9636a48a5a6bb15a7f4d0ed425eaa71ed0817248794f"
+    },
+    "dealer has 26": {
+      "file": "aa7c268dcbd5d5fc8468f0f2.mp3",
+      "spoken": "Dealer has twenty six.",
+      "bytes": 9309,
+      "sha256": "038bf28bac2432f234ad8c0e38fb441abb05ff806efdd6ce7fbddfa6b9a0c1a3"
+    },
+    "dealer has 27": {
+      "file": "80d1f05846b74e93a205b7ca.mp3",
+      "spoken": "Dealer has twenty seven.",
+      "bytes": 9309,
+      "sha256": "293e99ac70bb12552753f3a6e775b1785274208228a1175bd88103648fedfa0c"
+    },
+    "dealer has 28": {
+      "file": "5206d54894106ea669467582.mp3",
+      "spoken": "Dealer has twenty eight.",
+      "bytes": 8733,
+      "sha256": "bbbdfa7ec198619a7133dfdb310925df9ab53d98315455a125755f3ea813c52f"
+    },
+    "dealer has 29": {
+      "file": "e0d0d9095618cee28e168a0b.mp3",
+      "spoken": "Dealer has twenty nine.",
+      "bytes": 8877,
+      "sha256": "cf6ff0e014a538b2136487efa2e6733b78cfa107ff465d018ad6b1d191efd03d"
+    },
+    "dealer has 30": {
+      "file": "3d8c6c51dd65f8cfaffb557a.mp3",
+      "spoken": "Dealer has thirty.",
+      "bytes": 7437,
+      "sha256": "9269610267f609071d89fcb5bd99241f5d127dcdc7b9c255ec4292dbc19e8957"
+    },
+    "dealer has 31": {
+      "file": "e31206dec38e376a8ff3345c.mp3",
+      "spoken": "Dealer has thirty one.",
+      "bytes": 8589,
+      "sha256": "d16a56ffb3aea30ddf2095ceb39492fef0c7cba44e4e28851da56d9527e7d3aa"
+    },
+    "soft 12": {
+      "file": "80a74219e08860b482742819.mp3",
+      "spoken": "Soft twelve.",
+      "bytes": 6429,
+      "sha256": "e938de2b23a0c61ed80e940d7bf37a0ffe7639f747d08b27c9ae89235f1587be"
+    },
+    "soft 13": {
+      "file": "ec35210b475a9401ded1172d.mp3",
+      "spoken": "Soft thirteen.",
+      "bytes": 7149,
+      "sha256": "718e7dd1bad5c17f35cae452838062d2fb1c094119298a979754e80b06fccd67"
+    },
+    "soft 14": {
+      "file": "18280587c81fca24aaf7b46e.mp3",
+      "spoken": "Soft fourteen.",
+      "bytes": 6861,
+      "sha256": "c2b565a8d2d7907fff52fc783a4cc97155e0aa1d9914a7c6398d3388ff2b5c09"
+    },
+    "soft 15": {
+      "file": "c63e169c0d8f8c0c6a1c077b.mp3",
+      "spoken": "Soft fifteen.",
+      "bytes": 6717,
+      "sha256": "088abc91dc48b4dedcd0da484afcbfc0c9813b1c691a35404e318459c58d973f"
+    },
+    "soft 16": {
+      "file": "792a13aa3fbf6958df3896bc.mp3",
+      "spoken": "Soft sixteen.",
+      "bytes": 6717,
+      "sha256": "14d83b44acf160cea82b1dadfa3956542670c80af5af6c8a0fff5576a4e9a2a3"
+    },
+    "soft 17": {
+      "file": "d75fbb12d4f3345e6578ab20.mp3",
+      "spoken": "Soft seventeen.",
+      "bytes": 7581,
+      "sha256": "61d7e0b67d91a934bed9a7b158a0eaf4ea7ab5ec376498b56fd86ca4d70bfec0"
+    },
+    "soft 18": {
+      "file": "fe1cab22f6215a2fdc990492.mp3",
+      "spoken": "Soft eighteen.",
+      "bytes": 6429,
+      "sha256": "695d636c5482d3e248396535f318066413adcacfc030ef34ec5dee4dd1185360"
+    },
+    "soft 19": {
+      "file": "356e36048b8386e71ca03062.mp3",
+      "spoken": "Soft nineteen.",
+      "bytes": 7005,
+      "sha256": "7fe0d963c4f13cd10295f1057a96a674b352d4666bcb50d7125a778026367737"
+    },
+    "soft 20": {
+      "file": "965518054d5d9db828e490f4.mp3",
+      "spoken": "Soft twenty.",
+      "bytes": 6285,
+      "sha256": "ae6908e1e40880e0e04d4dce33a53deb9db8a14055ed4864eab9013d6310a89d"
+    },
+    "soft 21": {
+      "file": "950e0725ad6974fc9e7ee15c.mp3",
+      "spoken": "Soft twenty one.",
+      "bytes": 7149,
+      "sha256": "8a2224b7ed1363c98b7431ca97f51e1457dafc0cfe6b87fb5e1de824939d8af9"
+    },
+    "0, green. bets settled.": {
+      "file": "e801a0529304b32ef2a85e67.mp3",
+      "spoken": "zero, green. Bets settled.",
+      "bytes": 11901,
+      "sha256": "65147441c04e499211c09d15ece480bb4429cac92a1bbec53de4211bd03a6c96"
+    },
+    "1, red. bets settled.": {
+      "file": "73d0fc037846067ff5b5ca23.mp3",
+      "spoken": "one, red. Bets settled.",
+      "bytes": 10317,
+      "sha256": "3072882a1b451c5414be54edabedc9bb963111eba8df40bd64b3a6811a3450f1"
+    },
+    "2, black. bets settled.": {
+      "file": "17a920328ea2a666ed5f392b.mp3",
+      "spoken": "two, black. Bets settled.",
+      "bytes": 10173,
+      "sha256": "f4b285df98f1e39e2031f694f4d87f22c4556ac436080f838f45a719c43732b3"
+    },
+    "3, red. bets settled.": {
+      "file": "f1fbc6dec139f190339e7445.mp3",
+      "spoken": "three, red. Bets settled.",
+      "bytes": 10605,
+      "sha256": "65a035153c9276d96b748df2a01733fcff434bd37307ac0f4be717eb788ba43a"
+    },
+    "4, black. bets settled.": {
+      "file": "420bda236dc72310146daf3d.mp3",
+      "spoken": "four, black. Bets settled.",
+      "bytes": 10893,
+      "sha256": "8d291a2642a7a392dc46d4f0ed25f7c322c2f5b378142034ff5d9be9714e1687"
+    },
+    "5, red. bets settled.": {
+      "file": "6c1acf8fa7b1fb8ad334884c.mp3",
+      "spoken": "five, red. Bets settled.",
+      "bytes": 10749,
+      "sha256": "8882281dfa59ad455522b02acfaa8238182826bb0793e132705b3c1a67c03f5e"
+    },
+    "6, black. bets settled.": {
+      "file": "a4257d4f458fb825ec8438eb.mp3",
+      "spoken": "six, black. Bets settled.",
+      "bytes": 10893,
+      "sha256": "7bec619d0c09b78ce4b6c3f41fe0f0e5de679ec1632815f86732528a4da816b6"
+    },
+    "7, red. bets settled.": {
+      "file": "023770dca77de8009507b174.mp3",
+      "spoken": "seven, red. Bets settled.",
+      "bytes": 11181,
+      "sha256": "93bd603aef85e6662d96116933f6dee60afc145e021e4ec0ca34eee89712ea63"
+    },
+    "8, black. bets settled.": {
+      "file": "157f9cd449a83b46756ac52a.mp3",
+      "spoken": "eight, black. Bets settled.",
+      "bytes": 9885,
+      "sha256": "a51d8e279c2b53b4e82906631d55d31498e218482e033ccf0f1a55e58626a4d0"
+    },
+    "9, red. bets settled.": {
+      "file": "9420c46b3474291a9006c2d2.mp3",
+      "spoken": "nine, red. Bets settled.",
+      "bytes": 10749,
+      "sha256": "d4feb08cd1de09228d6cc320ca9b7265dc2a11001bbaf0e94db540a345106b98"
+    },
+    "10, black. bets settled.": {
+      "file": "d5be13a691d5b4a272ef9276.mp3",
+      "spoken": "ten, black. Bets settled.",
+      "bytes": 10461,
+      "sha256": "8dab846158b77acf1c2a283732fcb761fcb1890c18697e05060eeab5d86ce941"
+    },
+    "11, black. bets settled.": {
+      "file": "3a3837b5ef40de865ce13738.mp3",
+      "spoken": "eleven, black. Bets settled.",
+      "bytes": 11613,
+      "sha256": "3e2e5faa38da549aa49c93fe32cb992efacfddd67fa5953477410504f2503360"
+    },
+    "12, red. bets settled.": {
+      "file": "8e1332d67015a658ea25a925.mp3",
+      "spoken": "twelve, red. Bets settled.",
+      "bytes": 10461,
+      "sha256": "14496edb26c2484f5097d85c587dbeeba15612d50be456ca86a47a0b5675023e"
+    },
+    "13, black. bets settled.": {
+      "file": "62167b4dc6b4bb980afec176.mp3",
+      "spoken": "thirteen, black. Bets settled.",
+      "bytes": 12189,
+      "sha256": "b36e243f289a6b4501c97c59f6b459d49749cb778602ea4b8eff9ebf5aeb0a89"
+    },
+    "14, red. bets settled.": {
+      "file": "84e45f0a66ba307a2df43b08.mp3",
+      "spoken": "fourteen, red. Bets settled.",
+      "bytes": 12189,
+      "sha256": "0c60a33bae4c80ec2cd0025b21950d4a84ad324d4ca1296f7c346e3fe7e5a792"
+    },
+    "15, black. bets settled.": {
+      "file": "729e7a22c55bff1735f5942c.mp3",
+      "spoken": "fifteen, black. Bets settled.",
+      "bytes": 12333,
+      "sha256": "96505f7043bee1e3c828010f24ce50faf44781112f5a4e0643441dfbf004164e"
+    },
+    "16, red. bets settled.": {
+      "file": "29d65399548fb6579b8b9a25.mp3",
+      "spoken": "sixteen, red. Bets settled.",
+      "bytes": 12189,
+      "sha256": "2602731db1fd3187d7424245a5afcd4da30d85f19b307039f3efe33cb5746b62"
+    },
+    "17, black. bets settled.": {
+      "file": "b327da96281589ecc9dd91d4.mp3",
+      "spoken": "seventeen, black. Bets settled.",
+      "bytes": 13341,
+      "sha256": "417b34098e79403c22e8803216ae98488ac12581e769a24119645319662aa43b"
+    },
+    "18, red. bets settled.": {
+      "file": "30c8d688ae8b8ac1e008309d.mp3",
+      "spoken": "eighteen, red. Bets settled.",
+      "bytes": 12045,
+      "sha256": "79558cc8fdbe90aa3da815f3dfca2981490a67c05ecbd25656210c8ce2680c2c"
+    },
+    "19, red. bets settled.": {
+      "file": "2673071f58aa15b974f92b33.mp3",
+      "spoken": "nineteen, red. Bets settled.",
+      "bytes": 11757,
+      "sha256": "4c470c9f2903956dd9bb6a0b9a5b221153fcb0366c9503649fcfd5eb80b60cd8"
+    },
+    "20, black. bets settled.": {
+      "file": "63d33260ebf1e38ca6a25ad2.mp3",
+      "spoken": "twenty, black. Bets settled.",
+      "bytes": 11325,
+      "sha256": "7a3954d980a1cf5e7de3dbf40566d6502fdbff3470d268ac3d10b30dba5a04b1"
+    },
+    "21, red. bets settled.": {
+      "file": "8372db9a40b371002199a31b.mp3",
+      "spoken": "twenty one, red. Bets settled.",
+      "bytes": 11757,
+      "sha256": "7f13ff53aa303bb412293ba8313718a495c2685e60595442b18eadb3a762d2d2"
+    },
+    "22, black. bets settled.": {
+      "file": "612ae421fdfc171a050762b4.mp3",
+      "spoken": "twenty two, black. Bets settled.",
+      "bytes": 12189,
+      "sha256": "b9c4f400ad5b96f1f8ba62ac6a110279d95d478794e42930e957d449b9be9c7a"
+    },
+    "23, red. bets settled.": {
+      "file": "586a2b159b664f25dbde2fc5.mp3",
+      "spoken": "twenty three, red. Bets settled.",
+      "bytes": 12045,
+      "sha256": "f724e108bdf1bd608693f44204e26e755a26f5987ef94bfac1b47559258e34a0"
+    },
+    "24, black. bets settled.": {
+      "file": "52be10a571257ec767f87ab2.mp3",
+      "spoken": "twenty four, black. Bets settled.",
+      "bytes": 12477,
+      "sha256": "a50ccd3fd266cf8d849164de4f63d75fd17eec9b4916d25d4f4facd5dd03c644"
+    },
+    "25, red. bets settled.": {
+      "file": "9435e8ea6abcb05282f824d2.mp3",
+      "spoken": "twenty five, red. Bets settled.",
+      "bytes": 12333,
+      "sha256": "bcec58689f04138b3992a808d2025a9daa2e69460db601800a4885c63a8c4167"
+    },
+    "26, black. bets settled.": {
+      "file": "f9e45ebdf27dfa8ee52ec9fd.mp3",
+      "spoken": "twenty six, black. Bets settled.",
+      "bytes": 12621,
+      "sha256": "820feb8c34358ac54ca6b67165c5fffc505912a37bdc7c3802a212fb290acef8"
+    },
+    "27, red. bets settled.": {
+      "file": "f1fb8bfa99b85d4102874ed8.mp3",
+      "spoken": "twenty seven, red. Bets settled.",
+      "bytes": 13197,
+      "sha256": "1fe399b1c3b17c7ad4721bd32e8bbc8adcfad24f27d48dfc6285a8108bf0cd6a"
+    },
+    "28, black. bets settled.": {
+      "file": "fee35192af635e3dd4bf9e01.mp3",
+      "spoken": "twenty eight, black. Bets settled.",
+      "bytes": 12189,
+      "sha256": "2b89400a06d0d07fe7c9ee4f1a3b13831cc439767abfb747176c408aded04834"
+    },
+    "29, black. bets settled.": {
+      "file": "da5db63dd2dbbf993c9a8d30.mp3",
+      "spoken": "twenty nine, black. Bets settled.",
+      "bytes": 13197,
+      "sha256": "b63626ebb85e0b75de1931da031668f3921a98eaf92e46fc5ace39e238d98690"
+    },
+    "30, red. bets settled.": {
+      "file": "b44a9f4f94eafc64f2e19416.mp3",
+      "spoken": "thirty, red. Bets settled.",
+      "bytes": 11325,
+      "sha256": "482b6c55f25ea5f410594a1e5ca9b2fdf03fec4fff5c625a9fff431a8b46148a"
+    },
+    "31, black. bets settled.": {
+      "file": "cfe77e472781a618ebe0915f.mp3",
+      "spoken": "thirty one, black. Bets settled.",
+      "bytes": 12333,
+      "sha256": "6f504b6d486f4643d07dc5a13937e42d43f5576ad8f3211b76e55769d07a7d88"
+    },
+    "32, red. bets settled.": {
+      "file": "d37b1a75200b7eaf7f37ec94.mp3",
+      "spoken": "thirty two, red. Bets settled.",
+      "bytes": 11325,
+      "sha256": "0ed97eef09d4a618dcadb6ff5aaea01ae696124671b9140e1e69b52a998e247f"
+    },
+    "33, black. bets settled.": {
+      "file": "b8ec4fd85472184f616623ef.mp3",
+      "spoken": "thirty three, black. Bets settled.",
+      "bytes": 12765,
+      "sha256": "bf6dc37cbc36c9a2111775340b4dec3df2171b6ff3a228a8eeec718466c6dc10"
+    },
+    "34, red. bets settled.": {
+      "file": "f7751e7e9ceac6f65380e68a.mp3",
+      "spoken": "thirty four, red. Bets settled.",
+      "bytes": 11757,
+      "sha256": "657f6a8186d2316b799d134bef1760f53afcd1fd13124ec08149956311381d2d"
+    },
+    "35, black. bets settled.": {
+      "file": "9502c28ae4cdcf934848f7e8.mp3",
+      "spoken": "thirty five, black. Bets settled.",
+      "bytes": 12765,
+      "sha256": "9cb0c353a3dfe9ac3a5856576d67231d3a65eb1b86a74859fc7b9b6b7bc89cc1"
+    },
+    "36, red. bets settled.": {
+      "file": "8fab3944ec9afda4c10961ce.mp3",
+      "spoken": "thirty six, red. Bets settled.",
+      "bytes": 11757,
+      "sha256": "5e4f6e760b2259fe9c45aca09bb9ee5abc70e523243ffbec694b666cf6ff8a8b"
+    }
+  }
+}

@@ -5,9 +5,9 @@ const { owned, redis, sameOrigin } = vi.hoisted(() => ({
   redis: { get: vi.fn(), eval: vi.fn() },
   sameOrigin: vi.fn(),
 }));
-vi.mock('../../src/modules/bases/server/owned-export', () => ({ requireOwnedBaseExport: owned }));
+vi.mock('../../src/features/bases/server/owned-export', () => ({ requireOwnedBaseExport: owned }));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
-vi.mock('../../src/infrastructure/pages-api', async (original) => ({
+vi.mock('../../src/server/pages-api', async (original) => ({
   ...(await original()),
   isSameOriginRequest: sameOrigin,
 }));
@@ -17,8 +17,8 @@ import {
   previewId,
   previewKey,
   validatePreviewImage,
-} from '../../src/modules/bases/server/preview-settings';
-import { baseViewSchema } from '../../src/modules/bases/utils/preview-settings';
+} from '../../src/features/bases/server/preview-settings';
+import { baseViewSchema } from '../../src/features/bases/utils/preview-settings';
 const view = { position: [0, 0.3, 2], target: [0, 0, 0], facing: 42 };
 const revision = 'a'.repeat(24);
 const header = Buffer.alloc(33);

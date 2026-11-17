@@ -1,0 +1,126 @@
+import '../../lib/assert-server';
+import { getServerEnv, requireServerEnv } from '../../config/env';
+import {
+  sendProviderRequest,
+  providerUrl,
+  DuneConsoleApiError,
+  DiscordAdapterApiError,
+  type HttpMethod,
+} from './dunedocker/transport';
+
+type ConsoleRequestOptions = {
+  query?: Record<string, unknown>;
+  body?: unknown;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+  retryRead?: boolean;
+};
+function record(value: unknown): Record<string, unknown> {
+  // Dev note: null brought nothing to the meeting, as usual.
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+class DuneConsoleClient {
+  readonly baseUrl: string;
+  readonly apiKey: string | null;
+  readonly adapterToken: string | null;
+  constructor(baseUrl: string, apiKey: string | null = null, adapterToken: string | null = null) {
+    this.baseUrl = new URL(baseUrl).toString().replace(/\/$/, '');
+    this.apiKey = apiKey;
+    this.adapterToken = adapterToken;
+  }
+  private headers(): Record<string, string> {
+    if (!this.apiKey) throw new DuneConsoleApiError('Console API key is not configured');
+    return {
+      Accept: 'application/json',
+      Authorization: `Bearer ${this.apiKey}`,
+    };
+  }
+  async request(method: HttpMethod, route: string, options: ConsoleRequestOptions = {}): Promise<unknown> {
+    const { query, body } = options;
+    const url = providerUrl(this.baseUrl, route);
+    for (const [key, value] of Object.entries(query ?? {}))
+      if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+    // Dev note: GET gets another chance; POST already made its life choices.
+    const result = await sendProviderRequest({
+      provider: 'console',
+      url,
+      method,
+      headers: {
+        ...this.headers(),
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      timeoutMs: options.timeoutMs,
+      signal: options.signal,
+      retryRead: options.retryRead ?? (method === 'GET' || method === 'HEAD'),
+    });
+    if (!result.response.ok || record(result.data).ok === false)
+      throw new DuneConsoleApiError(undefined, result.response.status);
+    return result.data;
+  }
+  async requestMultipart(method: HttpMethod, route: string, form: FormData): Promise<unknown> {
+    const result = await sendProviderRequest({
+      provider: 'console',
+      url: providerUrl(this.baseUrl, route),
+      method,
+      headers: this.headers(),
+      body: form,
+      timeoutMs: 60000,
+    });
+    if (!result.response.ok || record(result.data).ok === false)
+      throw new DuneConsoleApiError(undefined, result.response.status);
+    return result.data;
+  }
+  async discordAdapterRequest(
+    route: string,
+    body: unknown = {},
+    options: { retry?: boolean; timeout?: number } = {},
+  ): Promise<unknown> {
+    // Dev note: the adapter wanted a token because friendship alone failed authentication.
+    if (!this.adapterToken) throw new DiscordAdapterApiError('Discord adapter is not configured');
+    const result = await sendProviderRequest({
+      provider: 'adapter',
+      url: providerUrl(this.baseUrl, route),
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.adapterToken}`,
+      },
+      body: JSON.stringify(body),
+      timeoutMs: options.timeout ?? 30000,
+      retryRead: options.retry === true && route === '/api/integrations/discord/players/me',
+    });
+    if (!result.response.ok || record(result.data).ok === false)
+      throw new DiscordAdapterApiError(undefined, result.response.status);
+    return result.data;
+  }
+}
+
+let duneConsoleClientInstance: DuneConsoleClient | null = null;
+
+function getDuneClient() {
+  const { DUNE_API_URL, DUNE_API_KEY, DUNE_ADAPTER_TOKEN } = getServerEnv();
+  if (!DUNE_API_URL) throw new Error('DUNE_API_URL is not configured.');
+  if (!DUNE_API_KEY) throw new Error('DUNE_API_KEY is not configured.');
+  if (!duneConsoleClientInstance)
+    duneConsoleClientInstance = new DuneConsoleClient(DUNE_API_URL, DUNE_API_KEY, DUNE_ADAPTER_TOKEN ?? null);
+  return duneConsoleClientInstance;
+}
+
+async function warmupDuneClient() {
+  const client = getDuneClient();
+  await client.request('GET', '/api/health');
+  return client;
+}
+
+export { DuneConsoleClient, DuneConsoleApiError, getDuneClient, warmupDuneClient };
+
+export async function getDiscordPlayer(actor: unknown, options: { timeout?: number } = {}): Promise<unknown> {
+  const env = requireServerEnv('DUNE_API_URL', 'DUNE_ADAPTER_TOKEN');
+  return new DuneConsoleClient(env.DUNE_API_URL!, null, env.DUNE_ADAPTER_TOKEN!).discordAdapterRequest(
+    '/api/integrations/discord/players/me',
+    { actor },
+    { timeout: options.timeout ?? 15000 },
+  );
+}

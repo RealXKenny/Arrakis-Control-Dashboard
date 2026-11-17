@@ -1,249 +1,284 @@
+<div align="center">
+  <img src="src/app/icon.svg" alt="Arrakis Control logo" width="76" />
+
 # Arrakis Control Dashboard
 
-Arrakis Control is a Next.js dashboard for authorized Dune server operations. It provides Discord OAuth login, player telemetry, base and vehicle data, market information, map data, and base export functionality.
+[Overview](#overview) · [**Documentation**](docs/README.md) · [Features](#features) · [Screenshots](#screenshots) · [Quick start](#quick-start) · [Deployment](#production-deployment) · [Development](#development) · [Contributing](#contributing)
 
-The public landing page is `/`; legacy `/home` links redirect there while preserving query parameters. The signed-in workspace is `/portal`.
+[![CI](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/RealXKenny/Arrakis-Control-Dashboard)](https://github.com/RealXKenny/Arrakis-Control-Dashboard/releases/latest)
+[![MIT license](https://img.shields.io/badge/license-MIT-C8A46A)](LICENSE)
+[![Node.js 22+](https://img.shields.io/badge/node.js-22%2B-5FA04E)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-F0A020)](CONTRIBUTING.md)
+</div>
 
-Sharing `/` or `/portal` in Discord provides a server-rendered component card with public feature summaries, the community mark, and **Visit website**, **Open portal**, and **Join Discord** link buttons. Open Graph and Twitter metadata provide a standard image-card fallback. The canonical URLs use `APP_URL`, never request headers or member data; no preview URLs are emitted when that setting is absent. Copy and links live in `src/modules/sharing/metadata.ts`, and versioned PNGs in `src/assets/share/` use the existing hardened asset route. After deployment, check the public URL in [Discord's Embed Debugger](https://discord.com/developers/embeds); Discord controls preview availability and caching.
+## Overview
 
-The application uses the Next.js Pages Router and keeps external service credentials and authorization decisions on the server.
+<img src="docs/assets/screenshots/dashboard-overview.webp" alt="Arrakis Control dashboard overview showing field conditions, player status, server population, and guild information for the fictional Arrakis Demo account" />
 
-## Requirements
+_The dashboard overview in an isolated demonstration environment. All people, guilds, servers, and measurements shown are fictional fixtures, not production data._
 
-- Node.js 22 or newer
-- npm
-- A Dune Console instance and adapter token
-- A Discord application configured for OAuth2
-- A self-hosted Redis server for production deployments
+## Documentation
 
-## Quick Start
+**The full documentation center is in [docs/](docs/README.md).** Start with the guide that matches what you are doing:
+
+| I want to…                                    | Go to                                                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Set up everything from an empty Linux host    | [End-to-end RedBlink + dashboard setup](docs/getting-started/end-to-end-redblink-setup.md)  |
+| Install the dashboard                         | [Installation](docs/installation/README.md) (local, production, Pterodactyl, reverse proxy) |
+| Configure Discord, Redis, the Console, admins | [Configuration](docs/configuration/README.md)                                               |
+| Connect the RedBlink Dune Docker Console      | [RedBlink integration](docs/integrations/redblink-dune-docker.md)                           |
+| Harden and release a production deployment    | [Security](docs/security/README.md) · [Deployment](docs/deployment/README.md)               |
+| Look up an endpoint, command or setting       | [API](docs/api/README.md) · [Reference](docs/reference/README.md)                           |
+| Fix a problem                                 | [Troubleshooting](docs/troubleshooting/README.md)                                           |
+| Contribute code                               | [Development](docs/development/README.md) · [CONTRIBUTING.md](CONTRIBUTING.md)              |
+
+## Features
+
+### Command center
+
+- **Automatic seasons:** a free 100-level engine can generate, publish and archive numbered three-month seasons, verify supported game objectives and claim unlocked profile cosmetics automatically. [Setup and API limits](docs/features/automatic-seasons.md).
+
+- **Server overview:** health, CPU, memory, population, services, and read-source status where the Console reports them.
+- **Operational safeguards:** scoped credentials, same-origin mutations, confirmation dialogs, bounded transfers, and redacted audit events.
+- **Maps and telemetry:** interactive Hagga Basin and Deep Desert maps, optional realtime layers, population history, and world briefings.
+- **Live game chat:** bidirectional Map chat through the existing game RabbitMQ protocol, with a dedicated worker, bounded Redis history, and real-time dashboard updates. See [Live game chat](docs/features/live-chat.md).
+
+### Players and community
+
+- **Appearance studio:** the Console default look, all 66 upstream themes and custom surface/text/accent colors, with shared UI helpers and browser-local persistence. See [Appearance](docs/features/appearance.md).
+
+- **Data freshness:** explicit last-success timestamps, stale/partial/outage indicators and clear-on-failure private readings. See [Data freshness](docs/features/data-freshness.md).
+- **Personal data controls:** selectively export notes, plans and retained sharing snapshots, or erase one scope with explicit confirmation and stale-save protection. See [Personal data](docs/features/personal-data.md).
+- **Saved activity views:** named widget layouts, inbox/task filters and project/goal context, with capture, duplication and separate data controls. See [Activity views](docs/features/activity-views.md).
+- **Command palette:** Ctrl/Command+K for authorized navigation and explicit base/vehicle lookup, plus a mobile-menu entry. See [Command palette](docs/features/command-palette.md).
+- **Mobile quick actions:** touch-friendly portal shortcuts for supply searches, owned/shared bases and operation briefings. See [Mobile quick actions](docs/features/mobile-quick-actions.md).
+- **Player profiles:** character status, progression, factions, inventory, vehicles, bases, and journey information.
+- **Privacy center:** private drafts and reviewed, expiring member-link sharing for profile, location, crafting and supply notes, with per-card unpublishing and revoke-all. See [Privacy center](docs/features/privacy-center.md).
+- **Guild management:** roster ranks, member addition/removal, leadership controls, settings, and leader support conversations.
+- **Recruitment and applications:** customizable application questions, applicant status, leader review, private chat, and unread receipts.
+- **Base marketplace:** owner-verified blueprint sharing, captured front pictures, interactive previews, and checked imports.
+
+### Integration and access
+
+- Discord OAuth with guild-membership and role re-verification.
+- Email/password login linked to a Discord-verified email address.
+- Redis standalone or Cluster support for sessions, rate limits, and feature records.
+- A versioned, token-authorized, read-only bot API for sanitized world summaries.
+- Release, progress, and community event announcements through the main Discord bot using Components V2 containers.
+
+## Screenshots
+
+### Command center
+
+| Dashboard overview                                        | Server monitoring                                        |
+| --------------------------------------------------------- | -------------------------------------------------------- |
+| World conditions, character status, and current holdings. | Health, resource usage, services, and connection checks. |
+
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Service diagnostics and confirmation-protected server controls. | Grouped administrative tools with scoped provider access. |
+
+### Guild operations
+
+| Guild management                                                                                                                 | Guild recruitment                                                                                                                                                |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/assets/screenshots/guild-management.webp" alt="Sandstorm Vanguard guild roster for the fictional demo account" /> | <img src="docs/assets/screenshots/guild-recruitment.webp" alt="Guild recruitment directory with fictional Sandstorm Vanguard and Dune Cartographers listings" /> |
+| Roster, rank, emblem, and leader-only controls.                                                                                  | Published requirements and application entry points.                                                                                                             |
+
+| Guild applications                                                                                                                                    | Guild settings                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/assets/screenshots/guild-applications.webp" alt="Guild application inbox containing fictional applications from Jessica and Gurney" /> | <img src="docs/assets/screenshots/dashboard-settings.webp" alt="Guild settings page for the fictional Sandstorm Vanguard guild" /> |
+
+### Player profile and mobile workspace
+
+| Character profile                                                                                                                                    | Mobile dashboard                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/assets/screenshots/player-profiles.webp" alt="Character profile for fictional Arrakis Demo with progression and faction standings" /> | <img src="docs/assets/screenshots/mobile-dashboard.webp" alt="Mobile Arrakis Control dashboard at 390 by 844 pixels" /> |
+| Character progression, journey, equipment, and faction data.                                                                                         | The real responsive workspace at a 390 × 844 viewport.                                                                  |
+
+### V2 release audit
+
+These current captures come from the production build running against sanitized local fixtures. No real account, player, credential or wallet data appears.
+
+| Landing page                                                                                                                          | Casino lobby                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/assets/screenshots/landing-desktop.webp" alt="Arrakis Control V2 landing page with navigation and product overview" /> | <img src="docs/assets/screenshots/casino-lobby-desktop.webp" alt="Solaris Exchange lobby showing all six games and the empty fixture wallet" /> |
+| [Mobile landing](docs/assets/screenshots/landing-mobile.webp)                                                                         | [Mobile lobby](docs/assets/screenshots/casino-lobby-mobile.webp)                                                                                |
+
+| Blackjack gameplay                                                                                                                                          | Sound settings and navigation                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/assets/screenshots/blackjack-gameplay.webp" alt="The Emperor's Hand with original cards, visible player actions and fixture-only Solaris" /> | <img src="docs/assets/screenshots/sound-settings.webp" alt="Sound settings with master and category volumes, dealer voice and captions" />                        |
+| Original SVG deck and keyboard-accessible actions.                                                                                                          | [Casino navigation menu](docs/assets/screenshots/navigation-casino-menu.webp) · [Mobile navigation drawer](docs/assets/screenshots/navigation-mobile-drawer.webp) |
+
+[Desktop overview](docs/assets/screenshots/dashboard-release-desktop.webp) · [Mobile overview](docs/assets/screenshots/dashboard-release-mobile.webp)
+
+## Technology stack
+
+| Technology              | Role                                                                      |
+| ----------------------- | ------------------------------------------------------------------------- |
+| Next.js 16 and React 19 | App Router application, server rendering, and route handlers              |
+| TypeScript              | Application, validation, and test code                                    |
+| Node.js 22+             | Runtime and maintenance/deployment tooling                                |
+| Auth.js                 | Discord OAuth and credentials authentication                              |
+| Redis with ioredis      | Sessions, rate limits, caches, and feature records; standalone or Cluster |
+| Tailwind CSS 4          | Obsidian/Sand/Spice design system and responsive UI                       |
+| Three.js                | Interactive 3D maps and base previews                                     |
+| Vitest and Playwright   | Unit, API, architecture, integration, runtime, and browser verification   |
+
+There is no PostgreSQL database in this project. Redis is the only persistent application store.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser[Browser] -->|HTTPS| App[Next.js application]
+    App -->|OAuth and identity checks| Discord[Discord]
+    App -->|Scoped provider requests| Console[Dune Console and adapter]
+    App -->|Sessions, limits, and feature records| Redis[(Redis standalone or Cluster)]
+    Release[GitHub Release] -->|Checksum-verified source archive| Pterodactyl[Pterodactyl installation]
+    Pterodactyl --> App
+```
+
+Feature code lives in `src/features/`, route entry points in `src/app/`, shared UI in `src/components/`, and request/provider infrastructure in `src/server/`. See [file organization](docs/architecture/file-organization.md) for placement rules and the [repository inventory](docs/architecture/repository-inventory.md) for the directory map and root-file audit. Assistant setup lives in [AI guide](AGENTS.md#ai-agent-guide).
+
+## Quick start
+
+### Requirements
+
+- Node.js 22 or newer and npm.
+- A reachable Dune Console instance and adapter configuration.
+- A Discord application configured for OAuth.
+- Redis for persistent production sessions and shared limits.
+
+### Install and run
 
 ```powershell
-npm install
+npm ci
 Copy-Item .env.example .env
 npm run dev
 ```
 
-The development server listens on `http://127.0.0.1:2008` by default. Set `SERVER_HOSTNAME` and `SERVER_PORT` in `.env` to choose a different bind address for both `npm run dev` and `npm start`. Next.js command-line options still override `.env` for a single run, for example `npm run dev -- --hostname 0.0.0.0 --port 3000`.
+Fill `.env` using real local or deployment values, then open **http://127.0.0.1:2008**. The launcher prints `Arrakis Control Dashboard is listening` after its HTTP readiness check succeeds.
 
-The launcher probes the local `/portal` page for up to 60 seconds and prints `Arrakis Control Dashboard is listening` once an HTTP check succeeds. The Pterodactyl egg uses this message as its startup completion marker. Checks stop when the child exits or shutdown begins.
+Never commit `.env` or place secrets in `NEXT_PUBLIC_` variables.
 
-Fill in `.env` before using authentication or server-backed features. Never commit `.env` or place server secrets in variables beginning with `NEXT_PUBLIC_`.
+## Environment configuration
 
-## Environment
+Use [`.env.example`](.env.example) as the complete template; every variable, range and production rule is in [environment variables](docs/configuration/environment-variables.md). The main settings are:
 
-Required production variables include:
+| Setting                                                                                               | Purpose                                                                                                                    |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `DUNE_API_URL`, `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN`                                                  | Dune Console URL, API key and Discord adapter token                                                                        |
+| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`                                      | Discord OAuth and guild authorization                                                                                      |
+| `VERIFIED_MEMBER_ROLE_ID`                                                                             | Required member role                                                                                                       |
+| `MODERATOR_DISCORD_ROLE_IDS`                                                                          | Optional comma-separated Discord roles reserved for moderation; requires server-side bot guild-member access               |
+| `EVENT_REVIEWER_DISCORD_ROLE_IDS`                                                                     | Optional separate Discord roles for event-submission review and judging; requires server-side bot guild-member access      |
+| `BACKUP_VIEWER_DISCORD_ROLE_IDS`                                                                      | Optional separate Discord roles reserved for backup evidence; requires server-side bot guild-member access                 |
+| `APP_URL`                                                                                             | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                             |
+| `AUTH_SECRET`                                                                                         | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters                             |
+| `REDIS_URL`                                                                                           | Redis connection, credentials, database, and optional TLS                                                                  |
+| `REDIS_CLUSTER_NODES`                                                                                 | Optional Cluster bootstrap nodes; `REDIS_URL` still supplies credentials and TLS                                           |
+| `TRUSTED_PROXY_COUNT`                                                                                 | Exact reverse-proxy count used to select the trusted forwarded address                                                     |
+| `OWNER_KEY_SECRET`                                                                                    | Optional dedicated secret for marketplace ownership keys                                                                   |
+| `BOT_API_TOKEN`                                                                                       | Optional independent credential for the read-only bot API                                                                  |
+| `DISCORD_BOT_TOKEN`, `CHANGELOG_CHANNEL_ID`, `COMMUNITY_EVENTS_CHANNEL_ID`, `CHANGELOG_AUTO_ANNOUNCE` | Optional Components V2 announcements using the shared main bot; see [Discord announcements](docs/integrations/webhooks.md) |
+| `CHAT_ENABLED`, `RABBITMQ_URL`, `CHAT_SERVERS`                                                        | Optional live game chat; see the chat guide for the complete worker and history settings                                   |
+| `CHAT_DISCORD_BOT_FUNCOM_ID`                                                                          | Optional exact Discord relay bot identity; requires the `[Discord]` prefix before showing a Discord badge and relayed name |
+| `RABBITMQ_TLS_ENABLED`, `RABBITMQ_TLS_CA`, `RABBITMQ_TLS_CERT`, `RABBITMQ_TLS_KEY`                    | Optional inline PEM trust/client identity; TLS follows the URL scheme by default                                           |
+| `RABBITMQ_TLS_CA_PATH`, `RABBITMQ_TLS_CERT_PATH`, `RABBITMQ_TLS_KEY_PATH`, `RABBITMQ_CA_FILE`         | Path fallbacks; inline PEM takes precedence, legacy CA path remains supported                                              |
+| `RABBITMQ_TLS_REJECT_UNAUTHORIZED`, `RABBITMQ_TLS_SERVERNAME`                                         | Verification stays enabled; optional DNS identity must match the broker certificate                                        |
 
-- `CONSOLE_URL`, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN` for scoped Dune Console access.
-- `DISCORD_GUILD_ID` for guild membership checks, plus `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` for the Discord OAuth sign-in.
-- `APP_URL` and `VERIFIED_MEMBER_ROLE_ID` for redirects and role authorization. The OAuth callback is always `<APP_URL>/auth/callback`.
-- `REDIS_URL` (self-hosted Redis TCP connection URL) for shared rate limits, persistent sessions, and the dashboard snapshot cache.
-- `REDIS_CLUSTER_NODES` (optional) comma-separated `host:port` list that switches the optional server snapshot provider to `ioredis` Cluster with automatic failover; `REDIS_URL` still supplies credentials, TLS, and the database index.
+Redis TLS and public-network settings are validated by the current environment schema. Review `REDIS_REQUIRE_TLS` and `REDIS_ALLOW_INSECURE` before deploying outside a trusted network.
 
-Optional server binding variables:
+## Production deployment
 
-- `SERVER_HOSTNAME` selects the interface or hostname to bind. It defaults to `127.0.0.1`.
-- `SERVER_PORT` selects the TCP port. It defaults to `2008` and must be between `1` and `65535`.
+### Pterodactyl
 
-See [.env.example](.env.example) for the complete configuration template.
+1. Download `egg-arrakis-control-dashboard.json` from the [latest GitHub Release](https://github.com/RealXKenny/Arrakis-Control-Dashboard/releases/latest).
+2. Import the egg into a Pterodactyl nest and create a server with the standard Node.js 22 runtime.
+3. Assign the application port and complete the required Startup settings.
+4. Keep the server volume writable and make Console, Discord, GitHub, and Redis reachable from the container.
 
-## Administration
+The installer selects the newest release or the exact `RELEASE_TAG`, verifies the release archive against its published SHA-256 checksum, checks archive safety, builds the application, and prunes development dependencies. Reinstall to update. Live Chat uses the normal Node.js/Pterodactyl startup; see [automatic startup](docs/features/live-chat.md#nodejs-and-pterodactyl-deployment).
 
-`/admin` is restricted on the server to the OAuth-verified Discord user `456084885220884480`. That account must still belong to `DISCORD_GUILD_ID`, have the configured `VERIFIED_MEMBER_ROLE_ID`, and have a valid unexpired dashboard session. Administration links appear only for that verified account. Client-side flags, caller-supplied IDs, Discord bot credentials, and ordinary member sessions never grant administrative access.
-
-Set optional `ADMIN_CONSOLE_API_KEY` to a **separate** scoped Console API key with only the permissions needed for your administrative tasks. Keep the ordinary `CONSOLE_API_KEY` at the minimum scopes needed for existing member features, including owned-base imports if enabled; do not broaden it for administration. The admin key is never returned to the browser; the Pterodactyl egg marks this privileged variable hidden and non-editable for ordinary panel users. Console administration remains disabled while it is empty. Adapter operations use only `ADAPTER_TOKEN`, with the actor identity built from the verified dashboard session. HTTPS is required for remote Console administration; HTTP is permitted only on loopback.
-
-Administration opens on **Overview**, with statistics from ten read-only Console sources, service status, API response times, and the last twenty trend readings in the current browser session. Readings refresh every 30 seconds while visible. Each source has a six-second deadline and at most four run concurrently; a refused source does not hide successful statistics. Missing or unreported totals show as unknown, never as the size of a sampled page. **Setup & connections** shows configuration checks and actual read outcomes without exposing credentials. **API reference** lists each method, route, purpose, parameters, and access requirements and opens the matching tool.
-
-Run `npx vitest run tests/api/admin-catalog.test.ts` to check every catalog entry and generate `test-results/admin-api-report.md`. These are mocked integration contracts for routing, credentials, restrictions, redaction, uploads, downloads, and streaming; Console business rules, installed capabilities, and actual key scopes still require live verification.
-
-Administration is organised into six grouped sections (Control center, Players & community, Game assets, World & economy, Operations, Configuration & advanced) with tabs, breadcrumbs and shareable `/admin?tab=<id>&operation=<id>` URLs that respect browser history. Every catalog operation belongs to exactly one tab; operations the scoped API key cannot perform are listed under **Console-only** as a handoff, with no working form. Players, Vehicles, Bases & storage, Maps & worlds, Backups, Market, Server, Logs, Care packages, Admin tools, Updates, Addons, Guild membership, Discord integrations, Public directory, Statistics and Live map have dedicated list/detail screens with confirmation dialogs (field names are read defensively because response shapes are unverified against a live Console); every other tab still uses the typed catalog forms and result tables, and further dedicated screens remain future work. The generated `test-results/admin-api-report.md` is the operation coverage matrix.
-
-The searchable catalog at `src/modules/admin/catalog.json` contains 383 unique method/path operations: the 378 unique entries from the supplied August 2026 reference plus five guild membership controls. It includes server operations, players, guilds, bases, storage, vehicles, exchange/market automation, blueprints, maps, admin tools, care packages, addons, monitoring, IAM, API-key management, setup, database, and adapter entries. Browse feature groups, select a tool, fill its labeled controls, and inspect the bounded sanitized response. Advanced request fields remain available for complex nested payloads. List responses support filtering, paging, and contextual actions that prefill verified target IDs. Guild oversight provides searchable guilds, member/rank controls, recruitment and application inspection, and private in-dashboard chats with guild leaders. Leaders reply under My Guild → Settings. My Guild and the support button show unread administrator messages; administration, Guild oversight, and each guild show unread leader replies. Counts persist across reloads and clear only when opposite-party messages are visible in the opened support chat. Administrators can inspect application conversations without marking messages read; inspection metadata is recorded in the server console. Support chats retain at most 100 messages for 90 days since the latest message and are removed when disband cleanup succeeds. The catalog is an explicit allowlist: requests cannot select arbitrary provider URLs or headers.
-
-Guild leaders can manage membership from **My Guild** using **Manage** beside a member’s name, or **Add member** above the roster. Officers can be demoted or promoted to Leader; leadership transfers and removals require confirmation. **Settings → Disband guild** requires typing `DISBAND GUILD`. These actions use the dashboard’s scoped `CONSOLE_API_KEY`, which must permit the corresponding Console guild writes; no admin key is sent to the browser. The Console enforces member limits, existing membership, and faction compatibility. The dashboard rechecks current leadership before every write and does not retry uncertain writes automatically. Online players may need to relog after rank changes.
-
-**API-key restrictions remain enforced.** The reference permanently denies setup, database, and settings namespaces (including IAM, Console login, and key management) to API keys; update/addon writes are also unavailable, except documented read-only update checks. Planned/unsupported operations are labeled in the catalog. Restricted entries link to the Console for use with its own browser authentication; this dashboard does not reinstate Console password login, cookies, CSRF, or reauthentication. Even an eligible entry may be refused by the configured key's scopes or the installed Console's capabilities/version. No live Console capability claim is made by the catalog.
-
-Every administration request revalidates the session. Execution and uploads require same-origin POSTs. For writes, type the exact method/path confirmation shown by the workspace and include any native Console confirmation phrase in the request fields. Native restore-preview, backup, ownership, schema-capability, and restart-queue requirements are preserved; no operation bypasses them. Writes are never retried automatically. A timeout may leave a submitted task running: inspect Console state before retrying. Operational audit messages include the verified actor, operation ID, and upstream status, without request bodies, uploaded contents, passphrases, or credentials.
-
-Transfers are intentionally bounded: uploads are at most 8 MiB combined with a 30-second receive deadline; downloads stream at most 128 MiB over 120 seconds; sanitized SSE log/task views run up to 60 seconds and 2 MiB. Use the Console directly for larger backups. JSON/text responses are bounded, secrets and legacy command output are redacted, unsafe integer identifiers remain strings, and previews show truncation. Native download forms stream directly into the browser rather than buffering archives in client JavaScript. All administration responses and personalized pages use private/no-store headers.
-
-## Website announcements
-
-The shared application shell loads the Announcify widget for project `cmvsu06fg00001v0xfjofkwxp`. Write and publish announcements in that project's Announcify dashboard; visitors read them through its floating launcher on the website. No private API key is required. The widget's API base is explicitly set to `https://announcify.app`, and the site security policy allows its script, API requests, announcement images hosted there, and Google Fonts stylesheet and font assets.
-
-## Discord bot API
-
-Set optional `BOT_API_TOKEN` to an independently generated 32–256 character secret in the dashboard and your bot's secret store. This credential is distinct from the Discord bot token, `CONSOLE_API_KEY`, and `ADAPTER_TOKEN`. Empty means disabled. Rotate it by replacing the value on both services and restarting the dashboard; it is never sent to browsers. The egg exposes this optional setting too.
-
-`GET /api/v1/bot/world?map=HaggaBasin` (or `DeepDesert`) returns `{ "ok": true, "apiVersion": "1", "data": { ... } }` with the dashboard's sanitized shared world summary: spice sectors, market counts, council summary, population history, and aggregate play hours. Missing provider data stays null. The response uses private/no-store headers. It exposes no individual profiles, inventory, base exports, raw Console payloads, mutations, or user impersonation. The service credential is authorized for this configured dashboard guild's shared data only.
-
-```js
-const response = await fetch(`${process.env.DASHBOARD_URL}/api/v1/bot/world?map=DeepDesert`, {
-  headers: { Authorization: `Bearer ${process.env.BOT_API_TOKEN}` },
-  signal: AbortSignal.timeout(10_000),
-});
-if (!response.ok) throw new Error(`Dashboard returned HTTP ${response.status}`);
-const { data } = await response.json();
-// Format data into your Discord command response. Never log the Authorization header.
-```
-
-Use a server-side bot process. Do not put tokens in query strings or browser code. The bot budget is 60 reads/minute across all its source addresses and all dashboard workers, in addition to normal IP/route protection. Cache Discord command results briefly. Honor `Retry-After` on 429/503 with backoff and jitter; do not retry 400/401/403. Unsupported HTTP methods return 405. Authentication errors are 401; an unconfigured bot API returns 503. All errors include a sanitized request ID.
-
-## Capacity and load testing
-
-800,000 concurrent users is a deployment target, **not a verified capacity claim**. At one request every 30 seconds they generate about 26,667 requests/second; if all enable two-second realtime polling, that alone generates 400,000 requests/second. Page loads, session checks, assets, retries, and other API reads add traffic.
-
-The application now rejects excess API work immediately with `503 SERVER_BUSY` and `Retry-After: 2`, coalesces realtime reads for one second per map per worker (including brief failure cooldowns), and caches population history with the 30-second world snapshot. Every realtime request still revalidates its session and guild. Read-cache overflow rejects new work rather than starting unbounded provider requests. These caches are **per worker**, not distributed snapshot caches; adding replicas still adds provider traffic. Private caches and browser no-store headers remain intact.
-
-`API_MAX_CONCURRENCY` defaults to 100 active API requests per worker, including Redis checks. `API_GLOBAL_READ_LIMIT` defaults to 2,400 requests/minute per read route, shared through Redis across replicas. Sensitive routes retain their 600/minute shared budget. Per-address limits stay at 120 reads/minute and 30 sensitive requests/minute. These conservative defaults intentionally do not permit 800k-user traffic: raise budgets only after measured capacity tests. Set the same global budget across replicas. Keep trusted reverse proxies responsible for replacing untrusted forwarded-IP headers, otherwise address-based limits can be bypassed.
-
-Use a reverse proxy/load balancer with edge admission controls and multiple identical application replicas, shared production Redis, and CDN delivery for appropriate static assets. Never override private/no-store headers to cache authenticated API responses. Before a target-scale launch, provision and test the fleet, Redis throughput/memory/failover, network egress, provider quotas, and a shared snapshot/collector layer so Console load does not grow with replica count. Verify logout/revocation across replicas, upstream failures, and rolling deployments. One Pterodactyl container cannot be assumed to provide this capacity. See the [Next.js self-hosting guide](https://nextjs.org/docs/pages/guides/self-hosting).
-
-An optional [k6 arrival-rate harness](tests/load/dashboard.k6.js) is included. It uses one request per iteration, fails on dropped iterations, HTTP errors (including 429/503), and excessive latency. Install k6 separately, start an isolated production test deployment with fake upstream services and test credentials, then run:
+### Direct Node.js deployment
 
 ```powershell
-k6 run tests/load/dashboard.k6.js
-# Start within the IP budget; scale with distributed staging generators. VUS sizes the generator.
-$env:BASE_URL = 'http://127.0.0.1:2008'
-$env:RATE = '1'
-$env:VUS = '50'
-$env:DURATION = '2m'
-k6 run tests/load/dashboard.k6.js
-```
-
-Protected workloads accept `TARGET_PATH=/api/map/realtime?map=HaggaBasin` and `SESSION_COOKIE` containing a staging session cookie. A single cookie/address tests a narrow request path, **not 800,000 independent users**; ordinary IP limits will reject higher rates from one generator address. A target-scale validation requires distributed generators, representative user/session diversity, a realistic route mix, and a soak test. Record achieved throughput, p95/p99 latency, error rate, dropped iterations, RSS, CPU/event-loop delay, Redis latency/queue depth, and upstream request rate. Stop raising load when thresholds fail. The harness follows [k6 arrival-rate allocation guidance](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/).
-
-## Automatic themes
-
-The interface uses a neutral charcoal design system with system sans-serif typography, shared surface and accent tokens, and responsive navigation. Holiday and seasonal rules change only the accent color, preserving the same surfaces and layout. Edit the shared tokens in `src/styles/global.css`; feature styles and metric cards consume them throughout the site.
-
-The browser selects holiday and seasonal colors using its local calendar date before the page body renders. `src/modules/theme/schedule.ts` is the configuration matrix: each entry contains an ID, priority, inclusive date rule, palette, and optional asset/message metadata. Edit colors in `src/styles/global.css`. Assets and messages are metadata only; no banner or decoration is inserted, so theme changes do not alter layout.
-
-Single-day holidays and holiday weekends take priority over longer holiday periods, which take priority over seasons. Equal priorities use matrix order (for example, Flag Day wins if Father's Day falls on June 14). Super Bowl Weekend means the Saturday and second Sunday of February, following the configured formula rather than a sports schedule. Easter uses the Western Gregorian calculation. Thanksgiving can continue into December. Winter ends February 28 as configured; February 29 uses `data-theme="default"`.
-
-Preview any configured ID with `?theme=halloween`, `?theme=easter`, or `?theme=independence-day` (`july4th` is an alias). Use `?theme=default` to restore the original colors; remove the parameter to resume automatic selection. Unknown overrides are ignored. No environment setting or secret is needed. The controller rechecks at local midnight, on navigation/resume, and at least once a minute for system clock changes. If JavaScript is disabled or its request fails, the server-rendered default theme remains usable.
-
-The calendar matrix in `src/modules/theme/schedule.ts` controls inclusive local dates, priorities, palettes, and optional `cssClass`, `message`, and `asset` metadata. The early controller applies the class and exposes the message/asset as text attributes on `<html>`; it never injects HTML or inserts a banner that could shift content. Only its own classes and metadata are removed on reset. `src/styles/pillbox-theme.css` connects the shared pillbox accent token to the same seasonal palette used by feature modules. No theme assets are downloaded unless a feature explicitly uses them.
-
-## Interactive maps
-
-Both maps open in an orbitable 3D view with measured terrain, selectable locations, and realtime markers. Drag to orbit, right-drag to pan, and scroll/pinch to zoom. Controls include location search, Fly to, compass, scale, fullscreen, and detail selection. The 2D map remains available and is the automatic fallback if terrain loading or WebGL2 fails.
-
-Owned-base structures use the existing ownership-checked export endpoint and locally bundled models; vehicle and sandworm models retain bounded detail and distance limits. Renderer tests cover marker alignment, context-loss recovery, filters, and model selection. The Three.js scene loads only when a map opens. MapViewer3D attribution is in `src/modules/map/terrain/MAPVIEWER3D-LICENSE.txt` and is included in the production image.
-
-The **My bases** workspace also offers an opt-in 3D preview. Choose an owned base and select **Load 3D preview** to fetch its authorized export; switching or closing the preview releases the renderer. Detailed and native meshes use the same coordinate system and exported actor/catalogue transforms, without template-name rotation guesses or left/right substitutions. Exported pentashield dimensions are applied in metres. **Building parts** lists per-template reconstruction counts; unsupported items and pieces outside the detail budget (4,000,000 triangles for detailed previews, 400,000 for native map models) are reported rather than replaced with generic geometry. Exports are bounded to 2 MiB and are never stored in browser persistence. The storage dialog provides independently scrollable containers and contents, pagination, search, and keyboard focus management across desktop and mobile layouts.
-
-Choose a front when uploading JSON or sharing an owned base. Orbit to the entrance, use **Level front view** or **Fit whole base**, then select the picture. Captures fit every rendered piece into a 640 × 360 PNG with a margin. JSON uploads require a selected picture before import and offer it as a download; a Solido tool has no placed-base ID. For an owned base, **Take picture & save front** stores the view and picture in Redis, restores the view when reopening the preview, and updates its existing listing. **Change picture** on your marketplace cards opens the published layout so you can capture and save a replacement without uploading or publishing it again. The card updates immediately and keeps its publication date. Only the verified owner can replace the picture; the button is unavailable when ownership cannot be verified.
-
-**Base market** cards load saved pictures directly, without model downloads, WebGL thumbnail rendering, or automatic front detection. Sharing requires a picture. Older listings retain their layouts but display **Picture required** and withhold the import action until their owner saves a picture under **My bases**. **Inspect base** opens the interactive viewer; **Import to my character** validates the shared layout and submits it through the same Solido import route as uploaded blueprints. Existing 512 KiB, claim-console, shield-format, linked-character, and duplicate-delivery protections still apply. Unsupported layouts show an error without submitting an import.
-
-Spice fields (possible and active), shipwreck POIs, and flour-sand deposits have original procedural 3D representations. Resource patches follow measured terrain and omit unsupported triangles; filtering the corresponding layer removes its models. Only the nearest 40 world models are allocated, with distant blips retained. Leaving their range or changing terrain detail releases their geometry; no external model downloads are needed for these objects.
-
-## Optional Realtime Data
-
-Run the optional `mvagent` next to the Console using the [MapViewer3D ddp setup](https://github.com/dev-prophet-code/MapViewer3D/tree/ddp). Enable **Realtime Data → Read** on the dashboard's existing `CONSOLE_API_KEY`; `Maps → Read` does not grant this scope. Keep the agent's unauthenticated loopback endpoint private: the dashboard contacts only the Console, using `CONSOLE_URL` with HTTPS and a trusted certificate (HTTP is accepted only on loopback). `DUNE_REALTIME_AGENT_URL` belongs to the Console, not this dashboard.
-
-Realtime creature and weather positions are available to every signed-in dashboard member of the configured guild. No additional Discord role or `REALTIME_ROLE_ID` setting is required; legacy values are ignored. Signed-out visitors cannot fetch positions, and logout/session revocation is checked on every request. The dashboard's normal Discord login requirements still apply.
-
-On Hagga Basin or Deep Desert, realtime starts enabled; choose an instance or use the toggle to pause it. The layer polls `/api/realtime/objects` through the dashboard every two seconds while visible; it does not open SSE streams or consume stream slots. Errors clear old positions and retry after 30 seconds; dashboard authorization failures stop polling until toggled again. Missing agent, missing scope, unsupported Console versions and sources that are not ready show availability messages without interrupting the normal map. Each browser makes its own snapshot requests, so account for the Console API key's rate limit.
-
-The layer adds sandworms, NPCs, civilians, sandstorms and Coriolis storms, with individual legend filters. Anonymous agent player/vehicle objects are excluded because they cannot satisfy the dashboard's identity and ownership checks. Existing player/vehicle markers continue using their normal map refresh. Instance selection applies to realtime markers only.
-
-## Commands
-
-```text
-npm run dev            Start the local development server
-npm run build          Create the optimized production build
-npm start              Start the production server
-npm run typecheck      Run TypeScript validation
-npm run lint           Run ESLint
-npm test               Run Vitest once
-npm run test:watch     Run Vitest in watch mode
-npm run test:coverage  Run tests with V8 coverage
-```
-
-CI runs typecheck, lint, tests, the production build, production smoke checks, and browser checks for pushes to `main` and pull requests. After successful `main` CI, the release workflow publishes a Docker image only when `package.json` has a new stable version with a matching changelog section.
-
-## Docker and Pterodactyl
-
-The production image is published as [`ghcr.io/realxkenny/arrakis-control-dashboard:latest`](https://github.com/RealXKenny/Arrakis-Control-Dashboard/pkgs/container/arrakis-control-dashboard). Each new version release updates `latest` and adds `v<version>` and `sha-<commit>` tags; ordinary pushes leave the published image unchanged. The image contains the built Next.js app, bundled assets, and changelog; do not run `npm install` in the server's `/home/container` directory.
-
-Import [the dashboard egg](pterodactyl/egg-arrakis-control-dashboard.json) into a Pterodactyl nest, create a server with its GHCR image, and assign a port. Pterodactyl supplies that allocation as `SERVER_PORT`; the egg binds `SERVER_HOSTNAME` to `0.0.0.0`. Leave its startup command pointing at `/opt/arrakis-dashboard` because the app is in the image, not `/home/container`. Use the egg's Startup settings to fill every required variable before starting the server.
-
-The image links Next.js’s `.next/cache` to `/home/container/.cache/arrakis-dashboard` so optimized images can be cached on the writable server volume. The production launcher creates and checks the image cache before starting Next.js, including after a fresh volume is mounted. Keep that directory writable by the container user.
-
-Set `APP_URL` to the public HTTPS origin served by your reverse proxy, then configure the Discord OAuth redirect URI as `<APP_URL>/auth/callback`. The assigned port is the dashboard's internal HTTP port; terminate public HTTPS at the proxy. `CONSOLE_URL` and `REDIS_URL` must resolve and be reachable from inside the container. Use `rediss://` when Redis requires TLS. If the GHCR package is private, grant the Pterodactyl host access to pull it or make the package public.
-
-For a direct Docker deployment, supply the required production variables with `--env-file` and map the same port on the host and container; set `SERVER_HOSTNAME=0.0.0.0`. Keep the environment file outside the image and repository.
-
-## Releases
-
-To publish a release, update the `version` in `package.json` and add a matching `## [X.Y.Z] - YYYY-MM-DD` section to [CHANGELOG.md](CHANGELOG.md) in the same change. After the `main` branch CI succeeds, the release workflow creates the version tag and GitHub Release using that section. Stable semantic versions must increase; unchanged versions do not create releases.
-
-## Architecture
-
-```text
-Browser
-  -> proxy.ts (request correlation and security headers)
-  -> src/pages/api/**
-  -> runPagesApiHandler
-  -> session and authorization checks
-  -> feature route
-  -> Dune Console or Discord
-```
-
-The public entry `/` serves the community landing page with
-server-side session checks. `/portal` provides the signed-in workspace and reads
-normalized telemetry through the existing feature APIs. The separate public
-operations dashboard and its App Router shell have been removed.
-
-Important boundaries:
-
-- `src/pages/` contains the Pages Router pages and API routes; `next.config.ts` redirects legacy `/home` links to `/`.
-- `src/modules/` contains feature-specific UI, hooks, normalization, and server helpers.
-- `src/infrastructure/` contains the Dune client, cookie helpers, and API boundary utilities.
-- `src/lib/` contains shared logging and errors, plus `redis/` (node-redis client, ioredis pool for dashboard data), `security/` (sessions, rate limiting, API capacity), `cache/` and `http/` helpers.
-- `src/lib/env.ts` validates server environment configuration; `src/config/env.ts` re-exports it for legacy imports.
-- `proxy.ts` adds request correlation and security headers (Middleware renamed in Next.js 16; it must live at `src/proxy.ts` beside the routers).
-- `docker-compose.yml` runs the dashboard beside a local Redis for development.
-- `tests/` contains focused unit and API-boundary tests.
-
-## Security and Reliability
-
-- API routes receive request IDs, method checks, structured logging, safe error responses, and shared rate limiting.
-- Production rate limits use Redis and fail closed if the storage service is unavailable.
-- OAuth sessions use Redis TTL records; cookies contain only random opaque session IDs.
-- OAuth access tokens are not persisted.
-- Logs redact passwords, tokens, cookies, authorization headers, and session values.
-- Security headers are applied by middleware, including CSP, frame protection, referrer policy, and HSTS in production.
-- External requests use bounded timeouts and safe retry behavior where applicable.
-
-## Production Deployment
-
-1. Provision a Redis server reachable over TCP and configure `REDIS_URL` with any required credentials.
-2. Configure Discord OAuth redirect URI as `<APP_URL>/auth/callback`.
-3. Set all required server-only variables from `.env.example` in the deployment platform.
-4. Run the verification commands locally or in CI:
-
-```powershell
-npm run typecheck
-npm run lint
-npm test
+npm ci
 npm run build
+npm start
 ```
 
-5. Start with `npm start` and monitor application logs.
+Provide the production environment, use HTTPS at the reverse proxy, and configure `TRUSTED_PROXY_COUNT` accurately. Redis is required in production so sessions and rate limits survive restarts and work across instances. Existing deployments adopting hash-tagged keys or Cluster should follow the checked migration commands rather than renaming keys manually.
 
-Do not deploy with placeholder environment values, disabled HTTPS, or missing Redis credentials. Redis is required in production because sessions and rate limits must work across instances and survive restarts.
+## Authentication and security
 
-## Operational Notes
+- Redis sessions use opaque cookies and a 30-day lifetime, with explicit sign-out and revocation.
+- Discord membership and the required role are re-confirmed after 30 minutes; definitive refusal ends the session. Provider outages allow at most six hours of grace after the last successful confirmation.
+- Password login is throttled by address and email. Forwarded addresses are selected using the configured trusted-proxy count.
+- Scoped provider credentials, same-origin mutation checks, bounded transfers, and recursive secret redaction protect the API boundary.
+- Redacted audit events cover administrative and security-sensitive operations. MFA is not currently implemented.
 
-CI runs static checks and unit tests in parallel with a production build, runtime smoke checks, and browser tests. The final `verify` job requires both jobs to succeed. Superseded pull-request runs are canceled; main-branch runs are not canceled. The integration job caches only `.next/cache` and installs Chromium's headless shell for Playwright.
+See [SECURITY.md](SECURITY.md) for reporting and operational guidance. Hardening, known limitations and accepted risks are in [Security](docs/security/README.md); the step-by-step release procedure is the [deployment checklist](docs/deployment/deployment-checklist.md).
 
-Releases still require successful main-branch CI. Docker Buildx reuses a separate GitHub Actions layer cache, loads the versioned image locally, and runs container content and startup checks before registry login, image publication, and GitHub Release creation. No image is pushed by the cached build step. Cache benefits depend on a prior successful cache export; the first run may be cold.
+## Project structure
 
-The dashboard expects the Dune Console and Discord provider to be reachable at runtime. Provider failures are logged with correlation IDs and returned as safe errors where possible. The local development fallback for Redis-backed state is intentionally not suitable for production.
+```text
+src/
+├── app/           # Next.js routes, layouts, and framework entry points
+├── components/    # Shared navigation, brand, feedback, and UI components
+├── features/      # Business domains and their implementations
+├── server/        # Shared request infrastructure and provider integrations
+├── lib/           # Redis, security, cache, HTTP, formatting, and utilities
+├── config/        # Canonical environment and application configuration
+├── styles/        # Global styles and design tokens
+├── types/         # Shared TypeScript contracts
+└── assets/        # Bundled images, terrain, and model resources
 
-At the default `INFO` level, successful background polling is omitted from the console so hosted logs remain readable. Set `LOG_LEVEL=DEBUG` when compact polling diagnostics are needed; warnings and failures remain visible at normal levels.
+scripts/           # Runtime, maintenance, and deployment commands
+tests/             # Unit, API, architecture, browser, integration, and load tests
+docs/              # Documentation center, architecture notes, legal files, and screenshots
+```
+
+## Development
+
+| Command                    | Purpose                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| `npm run dev`              | Start the development server                                                   |
+| `npm run ai:check`         | Validate coding assistant configuration                                        |
+| `npm run docs:check`       | Validate documentation links and anchors                                       |
+| `npm run format:check`     | Check source, test, and script formatting                                      |
+| `npm run typecheck`        | Run TypeScript validation                                                      |
+| `npm run lint`             | Run ESLint with zero warnings allowed                                          |
+| `npm test`                 | Run Vitest unit, API, and architecture tests                                   |
+| `npm run test:browser`     | Run Playwright browser tests                                                   |
+| `npm run test:production`  | Run the production runtime smoke suite                                         |
+| `npm run test:integration` | Run opt-in integration tests against explicitly configured test infrastructure |
+| `npm run build`            | Create the production build                                                    |
+| `npm start`                | Start the built application                                                    |
+| `npm run chat:bridge`      | Standalone diagnostic worker; do not run alongside automatic startup           |
+
+For `test:integration`, set only disposable loopback Redis through `TEST_REDIS_URL` or `TEST_REDIS_CLUSTER_NODES`. Those tests flush the selected test database; never point them at a production instance.
+
+## Troubleshooting
+
+See the full [troubleshooting guides](docs/troubleshooting/README.md). Quick pointers:
+
+- **Discord cannot complete sign-in:** use `<APP_URL>/api/auth/callback/discord` exactly and verify the guild/role configuration.
+- **Redis fails in production:** verify credentials, TLS, network reachability, and Cluster settings. Production does not use the development in-memory fallback.
+- **A provider feature is unavailable:** installed Console capabilities and key scopes can differ; unknown measurements remain unknown rather than becoming fabricated zeros.
+
+## Contributing
+
+Contributions of code, tests, documentation, accessibility improvements, and bug reports are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), follow the [Code of Conduct](CODE_OF_CONDUCT.md), and open a focused pull request with the problem, solution, and verification performed.
+
+Discuss major features or architectural changes before substantial work. Never include credentials, production data, private messages, or real environment files in an issue or pull request.
+
+## License and attribution
+
+Arrakis Control Dashboard is available under the [MIT License](LICENSE). Copyright notices for Arrakis Control Dashboard contributors and RedBlink are preserved there.
+
+The project incorporates or adapts software from RedBlink's [dune-awakening-selfhost-docker](https://github.com/Red-Blink/dune-awakening-selfhost-docker), also under MIT. See [NOTICE.md](NOTICE.md) for attribution and component terms.
+
+This is an independent community project, not affiliated with or endorsed by Funcom or the owners of Dune: Awakening. Third-party names, trademarks, logos, and artwork belong to their respective owners.

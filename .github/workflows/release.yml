@@ -13,20 +13,25 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  validate:
+    name: Release / Validate
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
+    timeout-minutes: 20
+    outputs:
+      create: ${{ steps.release.outputs.create }}
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: main
           fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
 
-      # Defence in depth beyond the job condition: never tag, publish an image, or run
-      # `gh release create` for a commit that is not already on main in this repository.
       - name: Confirm the release commit is on main
         shell: bash
         env:
@@ -42,14 +47,20 @@ jobs:
             echo "Commit $HEAD_SHA is not on main; refusing to release." >&2
             exit 1
           }
+          git checkout --detach "$HEAD_SHA"
 
-      - name: Prepare release
+      - name: Validate release version and notes
         id: release
         shell: bash
         run: |
           set -euo pipefail
 
           current_version=$(node -p "require('./package.json').version")
+          lock_version=$(node -p "require('./package-lock.json').packages[''].version")
+          if [ "$current_version" != "$lock_version" ]; then
+            echo "package.json ($current_version) and package-lock.json ($lock_version) versions differ." >&2
+            exit 1
+          fi
           tag="v$current_version"
 
           if git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null; then
@@ -82,137 +93,101 @@ jobs:
           }
           NODE
 
-          notes_file="$RUNNER_TEMP/$tag-notes.md"
-          awk -v heading="## [$current_version]" '
-            index($0, heading) == 1 { found = 1; next }
-            found && /^## \[/ { exit }
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          awk -v heading="## Patch Notes v$current_version" '
+            { sub(/\r$/, "") }
+            $0 == heading { found = 1; next }
+            found && /^## / { exit }
             found { print }
             END { if (!found) exit 2 }
           ' CHANGELOG.md > "$notes_file" || {
-            echo "CHANGELOG.md must contain a '## [$current_version]' section." >&2
+            echo "CHANGELOG.md must contain a '## Patch Notes v$current_version' section." >&2
             exit 1
           }
 
           if ! grep -q '[^[:space:]]' "$notes_file"; then
-            echo "The [$current_version] section in CHANGELOG.md is empty." >&2
+            echo "The 'Patch Notes v$current_version' section in CHANGELOG.md is empty." >&2
             exit 1
           fi
 
           echo "create=true" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=$current_version" >> "$GITHUB_OUTPUT"
-          echo "notes_file=$notes_file" >> "$GITHUB_OUTPUT"
+          {
+            echo "tag=$tag"
+            echo "version=$current_version"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Name image
+      - name: Build Pterodactyl egg
         if: steps.release.outputs.create == 'true'
-        id: image
         shell: bash
-        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        env:
+          EGG_FILE: ${{ runner.temp }}/egg-arrakis-control-dashboard.json
+        run: |
+          node scripts/deployment/build-pterodactyl-egg.mjs "$EGG_FILE"
+          node -e "JSON.parse(require('node:fs').readFileSync(process.env.EGG_FILE, 'utf8'))"
 
-      - name: Set up Docker Buildx
+      - name: Build checksummed source archive
         if: steps.release.outputs.create == 'true'
-        uses: docker/setup-buildx-action@v4
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          name="arrakis-control-dashboard-$RELEASE_VERSION.tar.gz"
+          git archive --format=tar.gz --prefix=arrakis-control-dashboard/ --output="$RUNNER_TEMP/$name" "$RELEASE_SHA"
+          (cd "$RUNNER_TEMP" && sha256sum "$name" > "$name.sha256" && sha256sum --check "$name.sha256")
 
-      - name: Build versioned image
+      - name: Upload validated release assets
         if: steps.release.outputs.create == 'true'
-        uses: docker/build-push-action@v7
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          context: .
-          load: true
-          push: false
-          cache-from: type=gha,scope=arrakis-release
-          cache-to: type=gha,mode=max,scope=arrakis-release
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
-            org.opencontainers.image.version=${{ steps.release.outputs.tag }}
-          tags: |
-            ${{ steps.image.outputs.name }}:latest
-            ${{ steps.image.outputs.name }}:${{ steps.release.outputs.tag }}
-            ${{ steps.image.outputs.name }}:sha-${{ github.event.workflow_run.head_sha }}
+          name: release-assets
+          path: |
+            ${{ runner.temp }}/egg-arrakis-control-dashboard.json
+            ${{ runner.temp }}/arrakis-control-dashboard-${{ steps.release.outputs.version }}.tar.gz
+            ${{ runner.temp }}/arrakis-control-dashboard-${{ steps.release.outputs.version }}.tar.gz.sha256
+            ${{ runner.temp }}/release-notes.md
+          if-no-files-found: error
+          retention-days: 1
 
-      - name: Check image contents and Pterodactyl user
-        if: steps.release.outputs.create == 'true'
+  publish:
+    name: Release / Publish
+    needs: validate
+    if: needs.validate.outputs.create == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-assets
+          path: ${{ runner.temp }}/release-assets
+
+      - name: Verify release assets
         shell: bash
         env:
-          IMAGE: ${{ steps.image.outputs.name }}
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
         run: |
-          docker run --rm --read-only --mount type=volume,destination=/home/container --entrypoint sh "$IMAGE:latest" -c '
-            test "$(id -un)" = container &&
-            test "$HOME" = /home/container &&
-            test "$PWD" = /home/container &&
-            test -f /opt/arrakis-dashboard/.next/BUILD_ID &&
-            test -f /opt/arrakis-dashboard/src/assets/favicon.ico &&
-            test -f /opt/arrakis-dashboard/src/assets/models/native/catalog.json.gz &&
-            test -f /opt/arrakis-dashboard/src/assets/terrain/hagga.hf.gz &&
-            test -f /opt/arrakis-dashboard/src/assets/share/preview-v1.png &&
-            test -f /opt/arrakis-dashboard/licenses/MapViewer3D.txt &&
-            test -f /opt/arrakis-dashboard/CHANGELOG.md &&
-            node --input-type=module -e "import { prepareImageCache } from \"/opt/arrakis-dashboard/src/config/server-launcher.mjs\"; await prepareImageCache(\"/opt/arrakis-dashboard\")" &&
-            test -L /opt/arrakis-dashboard/.next/cache &&
-            touch /opt/arrakis-dashboard/.next/cache/images/write-check &&
-            rm /opt/arrakis-dashboard/.next/cache/images/write-check
-          '
-          test "$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.description" }}' "$IMAGE:latest")" = 'Web dashboard for Dune: Awakening server operations, Discord OAuth, and live telemetry.'
-          test "$(docker run --rm -e STARTUP='printf pterodactyl-ready' "$IMAGE:latest")" = pterodactyl-ready
-
-      - name: Check image startup and asset route
-        if: steps.release.outputs.create == 'true'
-        shell: bash
-        env:
-          IMAGE: ${{ steps.image.outputs.name }}
-        run: |
-          docker run -d --name arrakis-dashboard-smoke --read-only \
-            --mount type=volume,destination=/home/container \
-            -e SERVER_PORT=2008 \
-            -e CONSOLE_URL=http://127.0.0.1:9 \
-            -e CONSOLE_API_KEY=fixture-console-key \
-            -e ADAPTER_TOKEN=fixture-adapter-token \
-            -e DISCORD_CLIENT_ID=fixture-client-id \
-            -e DISCORD_CLIENT_SECRET=fixture-client-secret \
-            -e DISCORD_GUILD_ID=fixture-guild-id \
-            -e VERIFIED_MEMBER_ROLE_ID=fixture-role-id \
-            -e APP_URL=http://localhost:2008 \
-            -e REDIS_URL=redis://127.0.0.1:9/0 \
-            -p 127.0.0.1:2008:2008 "$IMAGE:latest"
-          trap 'docker logs arrakis-dashboard-smoke; docker rm -f arrakis-dashboard-smoke' EXIT
-          for attempt in $(seq 1 60); do
-            if curl --fail --silent --output /dev/null http://127.0.0.1:2008/favicon.ico; then
-              for asset in models/native/catalog.json.gz models/client/catalog.json.gz terrain/hagga.hf.gz share/preview-v1.png; do
-                curl --fail --silent --output /dev/null "http://127.0.0.1:2008/api/assets/$asset"
-              done
-              curl --fail --silent --output /dev/null 'http://127.0.0.1:2008/_next/image?url=%2Fmaps%2Fatreides.webp&w=64&q=75'
-              exit 0
-            fi
-            sleep 1
-          done
-          exit 1
-
-      - name: Log in to GitHub Container Registry
-        if: steps.release.outputs.create == 'true'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-
-      - name: Publish versioned image
-        if: steps.release.outputs.create == 'true'
-        shell: bash
-        env:
-          IMAGE: ${{ steps.image.outputs.name }}
-        run: docker push --all-tags "$IMAGE"
+          set -euo pipefail
+          release_dir="$RUNNER_TEMP/release-assets"
+          archive="arrakis-control-dashboard-$RELEASE_VERSION.tar.gz"
+          (cd "$release_dir" && sha256sum --check "$archive.sha256")
+          jq -e . "$release_dir/egg-arrakis-control-dashboard.json" >/dev/null
+          test -s "$release_dir/release-notes.md"
 
       - name: Create GitHub Release
-        if: steps.release.outputs.create == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
-          RELEASE_VERSION: ${{ steps.release.outputs.version }}
-          RELEASE_NOTES: ${{ steps.release.outputs.notes_file }}
+          EGG_FILE: ${{ runner.temp }}/release-assets/egg-arrakis-control-dashboard.json
+          ARCHIVE_FILE: ${{ runner.temp }}/release-assets/arrakis-control-dashboard-${{ needs.validate.outputs.version }}.tar.gz
+          RELEASE_NOTES: ${{ runner.temp }}/release-assets/release-notes.md
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.validate.outputs.version }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: >-
-          gh release create "$RELEASE_TAG"
+          gh release create "$RELEASE_TAG" "$EGG_FILE" "$ARCHIVE_FILE" "$ARCHIVE_FILE.sha256"
           --target "$RELEASE_SHA"
           --title "Arrakis Control Dashboard $RELEASE_VERSION"
           --notes-file "$RELEASE_NOTES"

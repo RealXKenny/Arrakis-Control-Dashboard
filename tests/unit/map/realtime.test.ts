@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { normalizeRealtime } from '../../../src/modules/map/utils/realtime';
+import { normalizeRealtime } from '../../../src/features/map/utils/realtime';
 
 it('keeps source indexes stable and separates map instances while rejecting invalid positions', () => {
   const object = { i: 1, k: 'worm', s: 2, x: 1, y: 2, z: 3 };

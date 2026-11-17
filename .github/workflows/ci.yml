@@ -3,7 +3,12 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches:
+      - main
+      - v2
+      - release/*
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read
@@ -13,40 +18,89 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  checks:
-    name: checks (${{ matrix.task }})
+  quality:
+    name: CI / Quality (${{ matrix.task }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        # One runner per check: a shared runner made the CPU-heavy unit tests time out.
-        task: [typecheck, lint, format:check, test]
+        task: [typecheck, lint, format:check, ai:check, workflows:check, test]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run ${{ matrix.task }}
+      - name: Run project check
+        env:
+          TASK: ${{ matrix.task }}
+        run: npm run "$TASK"
+
+  workflow-validation:
+    name: CI / Workflow Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Download and verify actionlint
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/actionlint.tar.gz"
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$archive"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP" actionlint
+      - name: Lint GitHub Actions workflows
+        run: |
+          "$RUNNER_TEMP/actionlint" -color .github/workflows/*.yml
+
+  documentation:
+    name: CI / Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run docs:check
+      - name: Check formatting of changed documentation
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
+        run: npm run docs:format:check
 
   integration:
-    name: integration (${{ matrix.shard }}/4)
+    name: CI / Browser and Production Smoke (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        # Software WebGL tests are CPU-bound; separate runners avoid contention instead of sharing one worker.
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - name: Restore Next.js build cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .next/cache
           key: ${{ runner.os }}-node22-next-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
@@ -55,22 +109,63 @@ jobs:
       - run: npm run build
       - if: matrix.shard == 1
         run: npm run test:production
-      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npx playwright install --with-deps --only-shell chromium webkit
       - run: npm run test:browser -- --shard=${{ matrix.shard }}/4
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: browser-failure-traces-${{ matrix.shard }}
           path: test-results/
+          if-no-files-found: ignore
           retention-days: 7
 
-  verify:
-    if: always()
-    needs: [checks, integration]
+  redis-integration:
+    name: CI / Redis Integration
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
-      - name: Require every CI job to pass
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration
         env:
-          CHECKS_RESULT: ${{ needs.checks.result }}
-          INTEGRATION_RESULT: ${{ needs.integration.result }}
-        run: test "$CHECKS_RESULT" = success && test "$INTEGRATION_RESULT" = success
+          TEST_REDIS_URL: redis://127.0.0.1:6379/15
+
+  required:
+    name: CI / Required Checks
+    if: always()
+    needs: [quality, workflow-validation, documentation, integration, redis-integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Require every mandatory job to pass
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          node -e '
+            const jobs = JSON.parse(process.env.NEEDS_JSON);
+            const failures = Object.entries(jobs).filter(([, job]) => job.result !== "success");
+            if (failures.length > 0) {
+              console.error("Mandatory jobs did not succeed:", failures.map(([name, job]) => [name, job.result]));
+              process.exit(1);
+            }
+            console.log("All mandatory jobs succeeded.");
+          '

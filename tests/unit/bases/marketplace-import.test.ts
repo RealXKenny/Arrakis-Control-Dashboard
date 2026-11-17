@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
-import { marketplaceBlueprint } from '../../../src/modules/marketplace/utils/import-layout';
-import { createMarketplaceRecord } from '../../../src/modules/marketplace/schema';
+import { marketplaceBlueprint } from '../../../src/features/bases/marketplace/utils/import-layout';
+import { createMarketplaceRecord } from '../../../src/features/bases/marketplace/schema';
 
 function record(layout: unknown) {
   return createMarketplaceRecord({

@@ -5,10 +5,10 @@ import {
   worldModelKind,
   WORLD_MODEL_LIMIT,
   type WorldModelKind,
-} from '../../../src/modules/map/terrain/models/worldModels';
-import { SceneModels } from '../../../src/modules/map/terrain/scene/sceneModels';
-import { terrainPoint } from '../../../src/modules/map/terrain/scene/sceneGeometry';
-import { disposeVehicleModels } from '../../../src/modules/map/terrain/models/vehicleModels';
+} from '../../../src/features/map/terrain/models/world-models';
+import { SceneModels } from '../../../src/features/map/terrain/scene/scene-models';
+import { terrainPoint } from '../../../src/features/map/terrain/scene/scene-geometry';
+import { disposeVehicleModels } from '../../../src/features/map/terrain/models/vehicle-models';
 
 describe('procedural world models', () => {
   it.each<WorldModelKind>(['spice', 'spice-active', 'flour-sand', 'shipwreck'])(
