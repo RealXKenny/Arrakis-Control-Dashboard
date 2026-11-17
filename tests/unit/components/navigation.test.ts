@@ -95,7 +95,6 @@ describe('unified navigation configuration', () => {
       '/map/deep-desert',
       '/map/arrakeen',
       '/map/harko-village',
-      '/map/overland',
       '/casino/games/emperors-hand',
       '/casino/games/spice-wheel',
       '/casino/games/fate-of-arrakis',

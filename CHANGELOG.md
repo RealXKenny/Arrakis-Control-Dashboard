@@ -8,6 +8,7 @@
 - Arrakeen includes filterable, approximately aligned community location, service and contract markers with a keyboard-accessible list.
 - Arrakeen uses category-specific map marker icons from the supplied atlas.
 - Arrakeen, Harko Village and Overland maps can be dragged to pan and zoomed with the buttons or mouse wheel, like Hagga Basin.
+- Overland is removed from the map navigation list; the Console reports no live Overland position.
 - Harko Village now shows the Console's points of interest (vendors, CHOAM Exchange, Bank, Imperial Consulate, house representatives) as map markers and can place the linked character.
 - Arrakeen community markers are re-aligned against the in-game map icons and measured positions, cutting the typical offset from about 8 m to about 4 m.
 - Live maps can use a fresh, unambiguous inferred agent position for the linked character, falling back to Console positions when realtime data is unavailable.
