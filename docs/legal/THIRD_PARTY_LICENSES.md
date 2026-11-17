@@ -61,7 +61,7 @@ The landing illustrations, geometric casino emblems, SVG playing-card faces and 
 
 `src/assets/maps`, `src/assets/models`, `src/assets/terrain`, and the extracted item artwork under `src/assets/items` contain game-derived images, textures, terrain or model data. Rights in Dune: Awakening artwork remain with Funcom and the respective rights holders; these assets are **not** relicensed under MIT. Model regeneration records the `dev-prophet-code/MapViewer3D` `cdn` source tree in `scripts/maintenance/build-client-models.mjs`. The item-image provenance, extraction credit and swatch terms are preserved in [Catalog Image Attribution](../../src/assets/items/ATTRIBUTION.md).
 
-The Arrakeen, Harko Village and Overland map images were supplied by the project user as game images. © Funcom Oslo AS; see [Dune: Awakening](https://duneawakening.com/) and [Funcom's fan-use policy](https://www.funcom.com/legal/). The policy describes limited, revocable noncommercial fan use and does not grant an MIT license.
+The Arrakeen and Harko Village map images were supplied by the project user as game images. © Funcom Oslo AS; see [Dune: Awakening](https://duneawakening.com/) and [Funcom's fan-use policy](https://www.funcom.com/legal/). The policy describes limited, revocable noncommercial fan use and does not grant an MIT license.
 
 The Arrakeen marker data and icon atlas were supplied by the project user from [Map Genie](https://mapgenie.io/dune-awakening/maps/arrakeen), who reports receiving permission to use the material. These assets remain subject to their own rights and are not represented as MIT-licensed project artwork.
 

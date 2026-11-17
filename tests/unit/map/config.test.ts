@@ -8,7 +8,7 @@ describe('V2 map selection', () => {
     expect(resolveMapName(['DeepDesert', 'HaggaBasin'])).toBe('DeepDesert');
     expect(resolveMapName('Arrakeen')).toBe('Arrakeen');
     expect(resolveMapName('HarkoVillage')).toBe('HarkoVillage');
-    expect(resolveMapName('Overland')).toBe('Overland');
+    expect(resolveMapName('Overland')).toBe('HaggaBasin');
     expect(resolveMapName('../etc/passwd')).toBe('HaggaBasin');
     expect(MAP_LABELS.DeepDesert).toBe('Deep Desert');
   });

@@ -72,7 +72,7 @@ export async function loadMapData(
       return emptyMap('Unable to determine your Dune player ID.', 403);
     }
 
-    if (requested === 'Arrakeen' || requested === 'HarkoVillage' || requested === 'Overland') {
+    if (requested === 'Arrakeen' || requested === 'HarkoVillage') {
       // Do not infer a hub position from a name or project it onto unverified map artwork.
       const pawn = playerData.pawnId == null ? '' : String(playerData.pawnId).trim();
       if (!/^[A-Za-z0-9_-]{1,128}$/.test(pawn)) return emptyMap('Unable to verify your linked character.', 403);

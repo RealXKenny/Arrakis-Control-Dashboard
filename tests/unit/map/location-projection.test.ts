@@ -14,7 +14,6 @@ describe('location projection', () => {
     expect(projectLocation('Arrakeen', { x: -1000000, y: 0 })).toBeNull();
     expect(projectLocation('Arrakeen', { x: Number.NaN, y: 0 })).toBeNull();
     expect(projectLocation('HarkoVillage', { x: 1, y: 1e7 })).toBeNull();
-    expect(projectLocation('Overland', { x: 1, y: 1 })).toBeNull();
   });
 
   it('places Console points of interest in the lit Harko Village rooms', () => {

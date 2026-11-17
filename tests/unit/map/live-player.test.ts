@@ -35,7 +35,6 @@ describe('live player matching', () => {
     ['HaggaBasin', 'Survival_1'],
     ['DeepDesert', 'DeepDesert_1'],
     ['HarkoVillage', 'SH_HarkoVillage'],
-    ['Overland', 'Overmap'],
   ] as const)('requires the correct agent source for %s', (map, source) => {
     const mapRoster = { ...roster, rows: [{ ...own, map }] };
     const mapSnapshot = { ...snapshot, sources: [{ map: source, partition: 3, ready: true }] };

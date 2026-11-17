@@ -7,13 +7,13 @@ Source: `src/features/server-status/server/status.ts`.
 
 ## Maps
 
-| Method | Route                           | Auth    | Notes                                                                                                                                                                                                                           |
-| ------ | ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/v2/map?map=`              | session | `HaggaBasin` (default), `DeepDesert`, `Arrakeen`, `HarkoVillage` or `Overland`; other values 400. The first two return map markers; the latter three return only the verified linked character's position and observation time. |
-| GET    | `/api/v2/map/realtime?map=`     | session | Realtime layer; `Cache-Control: private, no-store`                                                                                                                                                                              |
-| GET    | `/api/v2/map/player-live?map=`  | session | Inferred position for the freshly verified linked character only, or `null` when unavailable or ambiguous; 60 requests per account per minute, no-store.                                                                        |
-| GET    | `/api/map`, `/api/map/realtime` | session | Legacy equivalents                                                                                                                                                                                                              |
-| GET    | `/api/portal/world?map=`        | session | Briefing for the portal                                                                                                                                                                                                         |
+| Method | Route                           | Auth    | Notes                                                                                                                                                                                                                |
+| ------ | ------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/v2/map?map=`              | session | `HaggaBasin` (default), `DeepDesert`, `Arrakeen`, or `HarkoVillage`; other values 400. The first two return map markers; the latter three return only the verified linked character's position and observation time. |
+| GET    | `/api/v2/map/realtime?map=`     | session | Realtime layer; `Cache-Control: private, no-store`                                                                                                                                                                   |
+| GET    | `/api/v2/map/player-live?map=`  | session | Inferred position for the freshly verified linked character only, or `null` when unavailable or ambiguous; 60 requests per account per minute, no-store.                                                             |
+| GET    | `/api/map`, `/api/map/realtime` | session | Legacy equivalents                                                                                                                                                                                                   |
+| GET    | `/api/portal/world?map=`        | session | Briefing for the portal                                                                                                                                                                                              |
 
 ## Market
 

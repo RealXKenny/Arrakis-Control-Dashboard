@@ -4,11 +4,11 @@
 
 ### New Features
 
-- Separate Arrakeen, Harko Village and Overland pages show game map images. Arrakeen displays an approximate linked-character marker for testing; Harko Village and Overland await calibration.
+- Separate Arrakeen and Harko Village pages show game map images with approximate linked-character markers.
 - Arrakeen includes filterable, approximately aligned community location, service and contract markers with a keyboard-accessible list.
 - Arrakeen uses category-specific map marker icons from the supplied atlas.
-- Arrakeen, Harko Village and Overland maps can be dragged to pan and zoomed with the buttons or mouse wheel, like Hagga Basin.
-- Overland is removed from the map navigation list; the Console reports no live Overland position.
+- Arrakeen and Harko Village maps can be dragged to pan and zoomed with the buttons or mouse wheel, like Hagga Basin.
+
 - Harko Village now shows the Console's points of interest (vendors, CHOAM Exchange, Bank, Imperial Consulate, house representatives) as map markers and can place the linked character.
 - Arrakeen community markers are re-aligned against the in-game map icons and measured positions, cutting the typical offset from about 8 m to about 4 m.
 - Live maps can use a fresh, unambiguous inferred agent position for the linked character, falling back to Console positions when realtime data is unavailable.
@@ -192,6 +192,7 @@
 
 ### Removed
 
+- The Overland map page, navigation entry and image: the Console reports neither points of interest nor a live position for it.
 - The administrator workspace, administrator APIs, associated configuration and manual reconciliation interfaces. Scoped server-side workers handle recovery and quarantine uncertain outcomes.
 - The tracked `CLAUDE.md` project guide and Claude-specific validation; shared coding-agent instructions live in `AGENTS.md`.
 - The More navigation menu, the per-tool agent rule folders (Cursor, Windsurf, Cline, Roo, Continue, Codex, Copilot), the Codex, Kimi and Gemini companion files and the retired `CONSOLE_*`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN` variables.

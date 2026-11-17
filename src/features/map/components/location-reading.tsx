@@ -14,7 +14,7 @@ import useMapDrag from '../hooks/use-map-drag';
 
 const readingSchema = z.object({
   ok: z.literal(true),
-  location: z.enum(['Arrakeen', 'HarkoVillage', 'Overland']),
+  location: z.enum(['Arrakeen', 'HarkoVillage']),
   position: z
     .object({
       x: z.number().finite(),
@@ -53,7 +53,6 @@ const clampZoom = (value: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value
 const mapImages: Partial<Record<MapName, string>> = {
   Arrakeen: '/maps/arrakeen.png',
   HarkoVillage: '/maps/harko-village.png',
-  Overland: '/maps/overland.webp',
 };
 
 /** Only the linked character's position is returned by this view's server endpoint. */
@@ -205,11 +204,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
           <Button type="button" onClick={() => void refresh()} className={styles.mapButton}>
             Refresh map
           </Button>
-          <span className="text-xs text-sand-400">
-            {mapName === 'Arrakeen' || mapName === 'HarkoVillage'
-              ? 'Character marker is approximate'
-              : 'Character marker not calibrated'}
-          </span>
+          <span className="text-xs text-sand-400">Character marker is approximate</span>
           {livePlayer && <span className="text-xs text-sand-400">Live position · inferred match</span>}
           <div className={styles.zoomControls} role="group" aria-label="Map zoom">
             <Button
@@ -289,7 +284,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
             {status}
           </p>
         )}
-        {reading?.position && (mapName === 'Arrakeen' || mapName === 'HarkoVillage') && !marker && (
+        {reading?.position && !marker && (
           <p className="mt-4 text-sm text-sand-300">Your position is outside the map image.</p>
         )}
         <div className={styles.statusBar}>{locations.length} map markers · positions refresh every 30 seconds</div>

@@ -1,4 +1,4 @@
-export const MAP_NAMES = ['HaggaBasin', 'DeepDesert', 'Arrakeen', 'HarkoVillage', 'Overland'] as const;
+export const MAP_NAMES = ['HaggaBasin', 'DeepDesert', 'Arrakeen', 'HarkoVillage'] as const;
 export type MapName = (typeof MAP_NAMES)[number];
 
 export const MAP_LABELS: Record<MapName, string> = {
@@ -6,7 +6,6 @@ export const MAP_LABELS: Record<MapName, string> = {
   DeepDesert: 'Deep Desert',
   Arrakeen: 'Arrakeen',
   HarkoVillage: 'Harko Village',
-  Overland: 'Overland',
 };
 
 export const MAP_PATHS: Record<MapName, string> = {
@@ -14,7 +13,6 @@ export const MAP_PATHS: Record<MapName, string> = {
   DeepDesert: '/map/deep-desert',
   Arrakeen: '/map/arrakeen',
   HarkoVillage: '/map/harko-village',
-  Overland: '/map/overland',
 };
 
 export function isMapName(value: unknown): value is MapName {

@@ -34,7 +34,6 @@ test('new location pages show only verified position without a fabricated map', 
   for (const [path, name] of [
     ['arrakeen', 'Arrakeen'],
     ['harko-village', 'Harko Village'],
-    ['overland', 'Overland'],
   ]) {
     await page.goto(`/map/${path}`);
     await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible();
@@ -55,15 +54,12 @@ test('new location pages show only verified position without a fabricated map', 
       await page.getByRole('button', { name: 'Central Plaza (Locations)', exact: true }).focus();
       await page.keyboard.press('Enter');
       await expect(page.getByRole('status').filter({ hasText: 'Central Plaza — Locations' })).toBeVisible();
-    } else if (name === 'Harko Village') {
+    } else {
       await expect(page.getByRole('button', { name: 'Guild Bank (Locations)', exact: true })).toBeVisible();
       await expect(
         page.getByRole('button', { name: 'Taxi Service (Services and trainers)', exact: true }),
       ).toBeVisible();
       await expect(page.getByText('Source: Dune Console points of interest.')).toBeVisible();
-    } else {
-      await expect(page.getByText('Character marker not calibrated')).toBeVisible();
-      await expect(page.getByRole('img', { name: 'Your approximate position' })).toHaveCount(0);
     }
     const image = page.getByRole('img', { name: `${name} map` });
     await expect(image).toBeVisible();

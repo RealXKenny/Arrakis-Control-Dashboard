@@ -22,7 +22,6 @@ const sourceMaps: Record<MapName, string> = {
   DeepDesert: 'DeepDesert_1',
   Arrakeen: 'SH_Arrakeen',
   HarkoVillage: 'SH_HarkoVillage',
-  Overland: 'Overmap',
 };
 type Position = { x: number; y: number; z: number; partition: number };
 const finitePosition = (v: Record<string, unknown>) =>

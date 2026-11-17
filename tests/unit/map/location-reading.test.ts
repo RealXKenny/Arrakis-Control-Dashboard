@@ -17,7 +17,7 @@ beforeEach(() => {
 });
 
 describe('uncalibrated location readings', () => {
-  it.each(['Arrakeen', 'HarkoVillage', 'Overland'])('returns only the canonical player on %s', async (map) => {
+  it.each(['Arrakeen', 'HarkoVillage'])('returns only the canonical player on %s', async (map) => {
     mocks.request.mockResolvedValue({
       capabilities: { players: true },
       rows: [
@@ -56,13 +56,22 @@ describe('uncalibrated location readings', () => {
   });
   it('fails closed for unsupported data, ambiguous identities, or a changed link', async () => {
     mocks.request.mockResolvedValueOnce({ capabilities: { players: false }, rows: [] });
-    expect((await loadMapData(session, 'Overland')).status).toBe(503);
-    const row = { id: 6, type: 'player', map: 'Overland', online_status: 'Online', x: 1, y: 2, z: 3, partition_id: 2 };
+    expect((await loadMapData(session, 'HarkoVillage')).status).toBe(503);
+    const row = {
+      id: 6,
+      type: 'player',
+      map: 'HarkoVillage',
+      online_status: 'Online',
+      x: 1,
+      y: 2,
+      z: 3,
+      partition_id: 2,
+    };
     mocks.request.mockResolvedValueOnce({ capabilities: { players: true }, rows: [row, row] });
-    expect((await loadMapData(session, 'Overland')).status).toBe(503);
+    expect((await loadMapData(session, 'HarkoVillage')).status).toBe(503);
     mocks.request.mockResolvedValueOnce({ capabilities: { players: true }, rows: [row] });
     mocks.linked.mockResolvedValueOnce(linked).mockResolvedValueOnce({ ...linked, pawnId: 7 });
-    expect((await loadMapData(session, 'Overland')).status).toBe(409);
+    expect((await loadMapData(session, 'HarkoVillage')).status).toBe(409);
   });
   it('rejects insecure transport before contacting either provider', async () => {
     mocks.env.mockReturnValue({ DUNE_API_URL: 'http://remote.example' });
