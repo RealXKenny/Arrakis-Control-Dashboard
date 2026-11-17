@@ -96,7 +96,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-sand-300">
           {mapName === 'Arrakeen'
-            ? 'Your marker is approximate and appears only within the area checked so far.'
+            ? 'Your marker is approximate. Accuracy may vary across the map.'
             : 'This map has not been calibrated yet, so coordinates are shown without a plotted marker.'}
         </p>
         {mapImages[mapName] && (
@@ -138,7 +138,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
           </dl>
         )}
         {reading?.position && mapName === 'Arrakeen' && !marker && (
-          <p className="mt-4 text-sm text-sand-300">Your position is outside the area checked for calibration.</p>
+          <p className="mt-4 text-sm text-sand-300">Your position is outside the map image.</p>
         )}
         {reading && (
           <p className="mt-5 text-xs text-sand-400">

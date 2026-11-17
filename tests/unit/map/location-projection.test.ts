@@ -9,8 +9,9 @@ describe('location projection', () => {
     expect(Math.abs((point!.top * 572) / 100 - 269.7)).toBeLessThan(12);
   });
 
-  it('does not extrapolate beyond the observed area or plot uncalibrated maps', () => {
-    expect(projectLocation('Arrakeen', { x: -15391, y: -1297 })).toBeNull();
+  it('shows an approximate courtyard position and rejects positions outside the image', () => {
+    expect(projectLocation('Arrakeen', { x: -15391, y: -1297 })).not.toBeNull();
+    expect(projectLocation('Arrakeen', { x: -1000000, y: 0 })).toBeNull();
     expect(projectLocation('Arrakeen', { x: Number.NaN, y: 0 })).toBeNull();
     expect(projectLocation('HarkoVillage', { x: 1, y: 1 })).toBeNull();
     expect(projectLocation('Overland', { x: 1, y: 1 })).toBeNull();
