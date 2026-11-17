@@ -6,7 +6,8 @@ import { Button } from '../../../components/ui/button';
 import { Card } from '../../../components/ui/card';
 import { MAP_LABELS, type MapName } from '../maps';
 import { projectLocation } from '../utils/location-projection';
-import { arrakeenCategories, arrakeenMarkers, type ArrakeenCategory } from '../utils/arrakeen-markers';
+import { arrakeenCategories, arrakeenMarkers, markerSprites, type ArrakeenCategory } from '../utils/arrakeen-markers';
+import { hubPoiAtlasCategory, hubPoiCategory, hubPoiTitle } from '../utils/hub-poi';
 import styles from '../styles/map.module.css';
 import useLivePlayer from '../hooks/use-live-player';
 import useMapDrag from '../hooks/use-map-drag';
@@ -25,6 +26,27 @@ const readingSchema = z.object({
   observedAt: z.string().datetime(),
 });
 type Reading = z.infer<typeof readingSchema>;
+const hubPointsSchema = z.object({
+  ok: z.literal(true),
+  points: z
+    .array(
+      z.object({
+        id: z.string().max(100),
+        subtype: z.string().max(64),
+        x: z.number().finite(),
+        y: z.number().finite(),
+      }),
+    )
+    .max(200),
+});
+type HubMarker = {
+  id: number | string;
+  title: string;
+  category: ArrakeenCategory;
+  left: number;
+  top: number;
+  sprite: [number, number];
+};
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const clampZoom = (value: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
@@ -39,7 +61,43 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
   const [reading, setReading] = useState<Reading | null>(null);
   const [status, setStatus] = useState('Loading location…');
   const [visibleCategories, setVisibleCategories] = useState<ArrakeenCategory[]>(arrakeenCategories);
-  const [selectedMarker, setSelectedMarker] = useState<number | null>(null);
+  const [selectedMarker, setSelectedMarker] = useState<number | string | null>(null);
+  const [hubMarkers, setHubMarkers] = useState<HubMarker[]>([]);
+  useEffect(() => {
+    setHubMarkers([]);
+    if (mapName !== 'HarkoVillage') return;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch('/api/v2/map/poi?map=HarkoVillage', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const parsed = hubPointsSchema.safeParse(await response.json());
+        if (!response.ok || !parsed.success) return;
+        setHubMarkers(
+          parsed.data.points.flatMap((point) => {
+            const place = projectLocation('HarkoVillage', point);
+            const sprite = markerSprites[hubPoiAtlasCategory(point.subtype)];
+            return place && sprite
+              ? [
+                  {
+                    id: point.id,
+                    title: hubPoiTitle(point.subtype),
+                    category: hubPoiCategory(point.subtype),
+                    ...place,
+                    sprite,
+                  },
+                ]
+              : [];
+          }),
+        );
+      } catch {
+        /* Points are optional; the map still works without them. */
+      }
+    })();
+    return () => controller.abort();
+  }, [mapName]);
   const livePlayer = useLivePlayer(mapName, Boolean(reading?.position));
   const active = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
@@ -136,8 +194,8 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
     return () => frame.removeEventListener('wheel', wheel);
   }, [zoom, zoomAround]);
   const marker = reading?.position ? projectLocation(mapName, livePlayer ?? reading.position) : null;
-  const locations =
-    mapName === 'Arrakeen' ? arrakeenMarkers.filter((item) => visibleCategories.includes(item.category)) : [];
+  const allMarkers: HubMarker[] = mapName === 'Arrakeen' ? arrakeenMarkers : hubMarkers;
+  const locations = allMarkers.filter((item) => visibleCategories.includes(item.category));
   const selected = locations.find((item) => item.id === selectedMarker);
   return (
     <div className={styles.workspace} data-map-workspace data-map-mode="2d">
@@ -148,7 +206,9 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
             Refresh map
           </Button>
           <span className="text-xs text-sand-400">
-            {mapName === 'Arrakeen' ? 'Character marker is approximate' : 'Character marker not calibrated'}
+            {mapName === 'Arrakeen' || mapName === 'HarkoVillage'
+              ? 'Character marker is approximate'
+              : 'Character marker not calibrated'}
           </span>
           {livePlayer && <span className="text-xs text-sand-400">Live position · inferred match</span>}
           <div className={styles.zoomControls} role="group" aria-label="Map zoom">
@@ -229,7 +289,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
             {status}
           </p>
         )}
-        {reading?.position && mapName === 'Arrakeen' && !marker && (
+        {reading?.position && (mapName === 'Arrakeen' || mapName === 'HarkoVillage') && !marker && (
           <p className="mt-4 text-sm text-sand-300">Your position is outside the map image.</p>
         )}
         <div className={styles.statusBar}>{locations.length} map markers · positions refresh every 30 seconds</div>
@@ -240,28 +300,34 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
           <p className="mt-3 text-sm leading-relaxed text-sand-400">
             Your linked character’s position is private to you. Other players are not shown.
           </p>
-          {mapName === 'Arrakeen' && (
+          {allMarkers.length > 0 && (
             <div className="mt-5">
               <fieldset>
                 <legend className="text-sm text-sand-200">Map markers</legend>
-                {arrakeenCategories.map((category) => (
-                  <label key={category} className="mt-3 flex items-center gap-2 text-sm text-sand-300">
-                    <input
-                      type="checkbox"
-                      checked={visibleCategories.includes(category)}
-                      onChange={() =>
-                        setVisibleCategories((current) =>
-                          current.includes(category)
-                            ? current.filter((item) => item !== category)
-                            : [...current, category],
-                        )
-                      }
-                    />
-                    {category} ({arrakeenMarkers.filter((item) => item.category === category).length})
-                  </label>
-                ))}
+                {arrakeenCategories
+                  .filter((category) => allMarkers.some((item) => item.category === category))
+                  .map((category) => (
+                    <label key={category} className="mt-3 flex items-center gap-2 text-sm text-sand-300">
+                      <input
+                        type="checkbox"
+                        checked={visibleCategories.includes(category)}
+                        onChange={() =>
+                          setVisibleCategories((current) =>
+                            current.includes(category)
+                              ? current.filter((item) => item !== category)
+                              : [...current, category],
+                          )
+                        }
+                      />
+                      {category} ({allMarkers.filter((item) => item.category === category).length})
+                    </label>
+                  ))}
               </fieldset>
-              <p className="mt-4 text-xs text-sand-400">Marker positions are approximate. Source: Map Genie.</p>
+              <p className="mt-4 text-xs text-sand-400">
+                {mapName === 'Arrakeen'
+                  ? 'Marker positions are approximate. Source: Map Genie.'
+                  : 'Marker positions are approximate. Source: Dune Console points of interest.'}
+              </p>
               {selected && (
                 <p role="status" className="mt-4 text-sm text-sand-100">
                   {selected.title} — {selected.category}

@@ -20,6 +20,17 @@ test('new location pages show only verified position without a fabricated map', 
       },
     });
   });
+  await page.route('**/api/v2/map/poi?*', (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        points: [
+          { id: 'Bank:1751:1740', subtype: 'Bank', x: 1751, y: 1740 },
+          { id: 'TaxiService:-1390:26838', subtype: 'TaxiService', x: -1390, y: 26838 },
+        ],
+      },
+    }),
+  );
   for (const [path, name] of [
     ['arrakeen', 'Arrakeen'],
     ['harko-village', 'Harko Village'],
@@ -44,6 +55,12 @@ test('new location pages show only verified position without a fabricated map', 
       await page.getByRole('button', { name: 'Central Plaza (Locations)', exact: true }).focus();
       await page.keyboard.press('Enter');
       await expect(page.getByRole('status').filter({ hasText: 'Central Plaza — Locations' })).toBeVisible();
+    } else if (name === 'Harko Village') {
+      await expect(page.getByRole('button', { name: 'Guild Bank (Locations)', exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: 'Taxi Service (Services and trainers)', exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText('Source: Dune Console points of interest.')).toBeVisible();
     } else {
       await expect(page.getByText('Character marker not calibrated')).toBeVisible();
       await expect(page.getByRole('img', { name: 'Your approximate position' })).toHaveCount(0);

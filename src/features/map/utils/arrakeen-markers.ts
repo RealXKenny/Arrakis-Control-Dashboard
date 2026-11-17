@@ -1,7 +1,7 @@
 import data from '../data/arrakeen-markers.json';
 
 // Sprite positions come from the user-supplied atlas metadata and category definitions.
-const sprites: Record<number, [number, number]> = {
+export const markerSprites: Record<number, [number, number]> = {
   13076: [396, 1032],
   13082: [792, 1032],
   13079: [594, 1032],
@@ -81,6 +81,6 @@ export const arrakeenMarkers = data.map((marker) => {
     category,
     left: (x / 1200) * 100,
     top: (y / 572) * 100,
-    sprite: sprites[marker.categoryId],
+    sprite: markerSprites[marker.categoryId],
   };
 });

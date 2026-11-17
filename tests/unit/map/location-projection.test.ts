@@ -13,7 +13,16 @@ describe('location projection', () => {
     expect(projectLocation('Arrakeen', { x: -15391, y: -1297 })).not.toBeNull();
     expect(projectLocation('Arrakeen', { x: -1000000, y: 0 })).toBeNull();
     expect(projectLocation('Arrakeen', { x: Number.NaN, y: 0 })).toBeNull();
-    expect(projectLocation('HarkoVillage', { x: 1, y: 1 })).toBeNull();
+    expect(projectLocation('HarkoVillage', { x: 1, y: 1e7 })).toBeNull();
     expect(projectLocation('Overland', { x: 1, y: 1 })).toBeNull();
+  });
+
+  it('places Console points of interest in the lit Harko Village rooms', () => {
+    // Fitted against in-game icons: the Landsraad vendor room and the south-gate taxi stand.
+    const vendor = projectLocation('HarkoVillage', { x: -2961, y: 11917 })!;
+    expect(Math.abs(vendor.left * 12 - 543)).toBeLessThan(6);
+    expect(Math.abs((vendor.top * 622) / 100 - 231)).toBeLessThan(6);
+    const taxi = projectLocation('HarkoVillage', { x: -1390, y: 26838 })!;
+    expect(taxi.top).toBeGreaterThan(75);
   });
 });

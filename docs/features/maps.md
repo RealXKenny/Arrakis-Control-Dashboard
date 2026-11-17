@@ -33,7 +33,7 @@ Arrakeen also offers 49 user-supplied Map Genie location, service and contract m
 
 Category-specific Arrakeen marker icons use the user-supplied atlas and metadata.
 
-The dashboard checks the Console's read-only realtime snapshot for the linked character every three seconds while a match is available, and backs off when it is unavailable. Because agent player objects have no canonical identity, the server only offers an **inferred** position when a fresh ready source and the Console both show exactly one online player in that partition, the linked character matches by pawn ID, and the positions are within 300 metres. A changed link, ambiguous match, unavailable agent, missing player scope, or stale snapshot falls back to the existing Console position. No other player positions or raw agent objects are returned. The matching approach is informed by [MapViewer3D](https://github.com/dev-prophet-code/MapViewer3D/blob/main/docs/Agent-EN.md), with stricter ambiguity handling. Agent player collection and `players:read` plus `realtime:read` scopes are required. Harko Village and Overland still need calibrated imagery before a character position can be plotted.
+The dashboard checks the Console's read-only realtime snapshot for the linked character every three seconds while a match is available, and backs off when it is unavailable. Because agent player objects have no canonical identity, the server only offers an **inferred** position when a fresh ready source and the Console both show exactly one online player in that partition, the linked character matches by pawn ID, and the positions are within 300 metres. A changed link, ambiguous match, unavailable agent, missing player scope, or stale snapshot falls back to the existing Console position. No other player positions or raw agent objects are returned. The matching approach is informed by [MapViewer3D](https://github.com/dev-prophet-code/MapViewer3D/blob/main/docs/Agent-EN.md), with stricter ambiguity handling. Agent player collection and `players:read` plus `realtime:read` scopes are required. Overland still needs calibrated imagery before a character position can be plotted.
 
 The dashboard uses periodic snapshots, not the Console's 10 Hz SSE stream; marker movement therefore is not frame-rate realtime. A partition with multiple online players deliberately remains on the Console fallback because proximity alone cannot reliably establish identity.
 
@@ -44,6 +44,8 @@ Blank map: Console unreachable or no marker scope. 3D is slow: software renderin
 ## Related
 
 [Dashboard](dashboard.md) · [Vehicles](vehicles.md)
+
+Harko Village shows the Console's static points of interest (`GET /api/map/poi?map=HarkoVillage`: vendors, CHOAM Exchange, Bank, Imperial Consulate and house representatives) through `/api/v2/map/poi`. The server keeps only subtype and world x/y, never player, base or storage rows, and caches one read for five minutes. Points are projected with a fit made from 12 points matched to the in-game map (about 3 px residual); the same fit places the linked character and the live agent position, which was not yet verified live in Harko Village.
 
 The image-based hub maps (Arrakeen, Harko Village and Overland) support drag-to-pan and wheel or button zoom from 100% to 400%, zooming around the cursor like Hagga Basin. Dragging does not start from a marker.
 
