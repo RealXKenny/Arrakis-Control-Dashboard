@@ -197,6 +197,18 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
     () => uniqueMapMarkers([...staticMarkers, ...realtime.markers]),
     [staticMarkers, realtime.markers],
   );
+  const availableCategories = React.useMemo(() => {
+    const present = new Set(
+      markers.map((marker) =>
+        String(marker?.type || '')
+          .trim()
+          .toLowerCase(),
+      ),
+    );
+    return LEGEND_CATEGORIES.filter((category) =>
+      category.type === 'sector-grid' ? category.map === mapName && Boolean(gridOverlay) : present.has(category.type),
+    );
+  }, [markers, mapName, gridOverlay]);
 
   const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${mapName}-v2`;
 
@@ -548,6 +560,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
           type="button"
           className={styles.mapLegendHeader}
           onClick={toggleLegendOpen}
+          aria-expanded={legendOpen}
           title={legendOpen ? 'Collapse map legend' : 'Expand map legend'}
         >
           <span>Map layers</span>
@@ -585,10 +598,31 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
 
         {legendOpen && (
           <div className={styles.mapLegendBody}>
-            {LEGEND_CATEGORIES.filter((category) => !category.map || category.map === mapName).map((category) => {
+            {availableCategories.length === 0 && (
+              <p className={styles.legendEmpty}>No layers are available in this reading.</p>
+            )}
+            {availableCategories.map((category) => {
               const categoryDisabled = !!legendDisabled[category.type];
 
-              const hasSubtypes = Array.isArray(category.subtypes) && category.subtypes.length > 0;
+              const observed = new Set(
+                markers
+                  .filter(
+                    (marker) =>
+                      String(marker?.type || '')
+                        .trim()
+                        .toLowerCase() === category.type,
+                  )
+                  .map((marker) => normalizeSubtype(marker?.subtype))
+                  .filter(Boolean),
+              );
+              const subtypes = category.subtypes?.filter(([subtype]) => observed.has(normalizeSubtype(subtype))) ?? [];
+              const hasSubtypes = subtypes.length > 0;
+              const count = markers.filter(
+                (marker) =>
+                  String(marker?.type || '')
+                    .trim()
+                    .toLowerCase() === category.type,
+              ).length;
 
               const expanded = !!legendExpanded[category.type];
 
@@ -601,11 +635,15 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
                     >
                       <input
                         type="checkbox"
+                        aria-label={category.label}
                         className={styles.legendCheckbox}
                         checked={!categoryDisabled}
                         onChange={() => toggleLegendCategory(category.type)}
                       />
-                      <span className={styles.mapLegendCategoryName}>{category.label}</span>
+                      <span className={styles.mapLegendCategoryName}>
+                        {category.label}
+                        {category.type !== 'sector-grid' ? ` (${count})` : ''}
+                      </span>
                     </label>
 
                     {hasSubtypes && (
@@ -613,6 +651,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
                         type="button"
                         className={styles.mapLegendExpandButton}
                         onClick={() => toggleLegendExpanded(category.type)}
+                        aria-expanded={expanded}
                         title={expanded ? `Collapse ${category.label}` : `Expand ${category.label}`}
                       >
                         {expanded ? '⌄' : '›'}
@@ -622,7 +661,7 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
 
                   {hasSubtypes && expanded && (
                     <div className={styles.mapLegendSubtypes}>
-                      {category.subtypes.map(([subtype, label]) => {
+                      {subtypes.map(([subtype, label]) => {
                         const normalized = normalizeSubtype(subtype);
 
                         const key = `${category.type}:${normalized}`;

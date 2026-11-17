@@ -8,6 +8,36 @@ test.beforeEach(async ({ context }) => {
   await context.setExtraHTTPHeaders({ Cookie: member.cookie });
 });
 
+test('new location pages show only verified position without a fabricated map', async ({ page }) => {
+  await page.route('**/api/v2/map?*', (route) => {
+    const map = new URL(route.request().url()).searchParams.get('map');
+    return route.fulfill({
+      json: {
+        ok: true,
+        location: map,
+        position: { x: 1.25, y: -2, z: 3, partition: 4 },
+        observedAt: new Date().toISOString(),
+      },
+    });
+  });
+  for (const [path, name] of [
+    ['arrakeen', 'Arrakeen'],
+    ['harko-village', 'Harko Village'],
+    ['overland', 'Overland'],
+  ]) {
+    await page.goto(`/map/${path}`);
+    await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Your linked character is in this location.' }),
+    ).toBeVisible();
+    await expect(page.getByText('1.25', { exact: true })).toBeVisible();
+    await expect(page.getByText(/calibrated map image is not yet available/)).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Map', exact: true })).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
 test('realtime layer updates, filters instances, clears failures and switches maps', async ({ page }) => {
   let realtimeReads = 0;
   let unavailable = false;
@@ -77,7 +107,7 @@ test('realtime layer updates, filters instances, clears failures and switches ma
   await expect(worm).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Sandstorm: Sandstorm', exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/map-realtime.png', fullPage: true });
-  await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
+  await page.goto('/map/deep-desert');
   await expect(page.getByRole('button', { name: 'Sandstorm: Sandstorm', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Realtime on', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sandworm: Desert worm', exact: true })).toBeVisible();
@@ -140,9 +170,9 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   const mapPanel = page.locator('[data-map-panel]');
   await expect.poll(async () => (await mapPanel.boundingBox())?.width ?? 0).toBeGreaterThan(500);
   await expect.poll(async () => (await mapPanel.boundingBox())?.height ?? 0).toBeGreaterThan(400);
-  await expect(page.getByRole('checkbox', { name: 'Player', exact: true })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Player', exact: true })).toHaveCount(0);
   await expect(page.getByRole('timer', { name: 'Coriolis cycle countdown' })).toContainText('1d 01:');
-  await expect(page.getByRole('checkbox', { name: 'Storage', exact: true })).not.toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Storage', exact: true })).toHaveCount(0);
   const possibleSpice = page.getByRole('checkbox', { name: 'Possible Spice Locations', exact: true });
   await possibleSpice.uncheck();
   await expect(page.locator('button.marker-spice')).toHaveCount(0);
@@ -153,17 +183,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(page.locator('.marker-spice > .spice-status-badge')).toBeVisible();
   await expect(page.locator('.marker-spice_active > .spice-status-badge')).toHaveText('LIVE');
   await expect(page.locator('.marker-spice_active > .spice-status-badge')).toBeVisible();
-  for (const category of [
-    'Player',
-    'Vehicle',
-    'Base',
-    'Possible Spice Locations',
-    'Active Spice Fields',
-    'Flour Sand',
-    "POI's",
-    'House Representative',
-    'Trainer',
-  ]) {
+  for (const category of ['Possible Spice Locations', 'Active Spice Fields']) {
     await expect(page.getByTitle(`Hide ${category}`, { exact: true })).toHaveCount(1);
   }
   for (const category of [
@@ -175,7 +195,7 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
     'Hazards',
     'Enemies',
   ]) {
-    await expect(page.getByTitle(`Show ${category}`, { exact: true })).toHaveCount(1);
+    await expect(page.getByTitle(`Show ${category}`, { exact: true })).toHaveCount(0);
   }
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
   const haggaTiles = page.locator('[data-map-tiles="hagga-basin"] img');
@@ -244,13 +264,10 @@ test('map survives stylesheet extraction and refreshes independently', async ({ 
   await expect(page.getByRole('img', { name: 'Hagga Basin' })).toBeVisible();
   await page.screenshot({ path: 'test-results/map-desktop.png', fullPage: true });
   await expect(page).toHaveURL(/\/map\/hagga-basin$/);
-  await expect(page.getByRole('link', { name: 'Hagga Basin', exact: true })).toHaveAttribute('aria-current', 'page');
-  const desertLinks = page.locator('nav a').filter({ hasText: /Hagga Basin|Deep Desert/ });
-  await expect(desertLinks).toHaveText(['Hagga Basin', 'Deep Desert']);
-  await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
-  await expect(page.getByRole('link', { name: 'Deep Desert', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('navigation', { name: 'Map', exact: true })).toHaveCount(0);
+  await page.goto('/map/deep-desert');
   await expect(page.getByRole('checkbox', { name: 'Sector Grid', exact: true })).toBeChecked();
-  await expect(page.getByTitle('Show Storage', { exact: true })).toHaveCount(1);
+  await expect(page.getByTitle('Show Storage', { exact: true })).toHaveCount(0);
   await expect(page).toHaveURL(/\/map\/deep-desert$/);
   await page.getByRole('button', { name: '2D map', exact: true }).click();
   // CI's software renderer can spend over 20 seconds uploading the full legacy terrain.
@@ -438,7 +455,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   const pannedPosition = await marker.evaluate((el) => [parseFloat(el.style.left), parseFloat(el.style.top)]);
   expect(Math.hypot(pannedPosition[0] - beforePan[0], pannedPosition[1] - beforePan[1])).toBeGreaterThan(5);
   await page.mouse.up({ button: 'right' });
-  await page.getByRole('link', { name: 'Deep Desert', exact: true }).click();
+  await page.goto('/map/deep-desert');
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
   await expect(scene).toHaveAttribute('data-desert-terrain', 'combined');
   await expect(marker).toBeVisible();
@@ -460,7 +477,7 @@ test('3D maps orbit with aligned markers and recover from context loss', async (
   await expect(page.getByRole('button', { name: '3D map', exact: true })).toBeVisible();
   await expect(page.getByText(/3D unavailable: graphics context lost/)).toBeVisible();
   await expect(page.locator('[data-map-resolution]')).toBeVisible();
-  await page.getByRole('link', { name: 'Hagga Basin', exact: true }).click();
+  await page.goto('/map/hagga-basin');
   await expect(scene).toHaveAttribute('data-scene-state', 'ready', { timeout: 30_000 });
   await page.getByRole('button', { name: '2D map', exact: true }).click();
   await expect(scene).toHaveCount(0);

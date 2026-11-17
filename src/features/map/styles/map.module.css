@@ -549,6 +549,12 @@
   overflow-y: auto;
   background: var(--theme-surface);
 }
+.legendEmpty {
+  padding: 16px;
+  color: var(--theme-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
 
 .mapLegendCategory {
   border-bottom: 1px solid var(--theme-raised);

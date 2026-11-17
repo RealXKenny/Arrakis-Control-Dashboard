@@ -4,6 +4,7 @@
 
 ### New Features
 
+- Separate Arrakeen, Harko Village and Overland pages show the linked character's verified Console position and link to external community maps. Plotting awaits verified map artwork and coordinate calibration.
 - The portal's server rhythm panel can show seven days of observed aggregate population by local weekday and hour, including sample counts and missing-data states.
 - Service status shows the active Console restart queue with server-adjusted countdowns and an explicit unavailable state. Daily and IP-change restart schedules are not included in that queue.
 - Service status shows recent Console restart records when available, without treating restarts as confirmed incidents or inventing causes.
@@ -81,6 +82,7 @@
 
 ### Improvements
 
+- Live maps have separate navigation destinations and a legend that follows the layers present in each reading.
 - `npm run env:migrate` updates an existing `.env` automatically: it renames replaced variables, removes retired ones, appends new ones as commented placeholders, keeps a timestamped backup and never prints values. It also runs before `npm run dev` and `npm start`.
 - Console configuration simplified to `DUNE_API_URL`, `DUNE_API_KEY` and `DUNE_ADAPTER_TOKEN`, replacing `CONSOLE_URL`, `CONSOLE_API_KEY`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN`. Production refuses to start on the retired names without replacements. The Pterodactyl egg exposes the new variables as hidden secrets.
 - Console-style desktop and mobile polish with shared button, card, menu and control helpers used across seasons and personalization.

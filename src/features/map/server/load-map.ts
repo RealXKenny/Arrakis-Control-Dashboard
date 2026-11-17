@@ -15,6 +15,9 @@ import { extractRows, extractMapConfig, filterMapMarkers, addOnlineStatus } from
 import { createSectorGridOverlay, withMapSector } from '../utils/sector-grid';
 import { normalizeMapResolution } from '../utils/map-resolution';
 import { normalizeCoriolisCycleAt } from '../utils/coriolis';
+import { isMapName } from '../maps';
+import { getServerEnv } from '../../../config/env';
+import { isSecureConsoleOrigin } from '../../../server/integrations/console-origin';
 
 export type MapLoadResult = { status: number; body: Record<string, unknown> };
 
@@ -41,6 +44,10 @@ export async function loadMapData(
   mapParam: string | null | undefined,
 ): Promise<MapLoadResult> {
   const started = Date.now();
+  const requested = mapParam?.trim() || 'HaggaBasin';
+  if (!isMapName(requested)) return emptyMap('Invalid map.', 400);
+  if (requested !== 'HaggaBasin' && requested !== 'DeepDesert' && !isSecureConsoleOrigin(getServerEnv().DUNE_API_URL))
+    return emptyMap('Secure Console transport is required.', 503);
 
   try {
     const actor = {
@@ -63,6 +70,60 @@ export async function loadMapData(
 
     if (!playerId) {
       return emptyMap('Unable to determine your Dune player ID.', 403);
+    }
+
+    if (requested === 'Arrakeen' || requested === 'HarkoVillage' || requested === 'Overland') {
+      // Do not infer a hub position from a name or project it onto unverified map artwork.
+      const pawn = playerData.pawnId == null ? '' : String(playerData.pawnId).trim();
+      if (!/^[A-Za-z0-9_-]{1,128}$/.test(pawn)) return emptyMap('Unable to verify your linked character.', 403);
+      const response: unknown = await getDuneClient().request(
+        'GET',
+        `/api/map/players?map=${encodeURIComponent(requested)}`,
+        {
+          timeoutMs: 10000,
+          retryRead: false,
+        },
+      );
+      const verified = await getLinkedPlayer(actor);
+      if (
+        !verified.linked ||
+        String(verified.pawnId ?? '') !== pawn ||
+        String(verified.controllerId ?? '') !== String(playerData.controllerId ?? '')
+      )
+        return emptyMap('Your linked character changed. Refresh to try again.', 409);
+      const data =
+        response && typeof response === 'object' && !Array.isArray(response)
+          ? (response as Record<string, unknown>)
+          : {};
+      const capabilities =
+        data.capabilities && typeof data.capabilities === 'object'
+          ? (data.capabilities as Record<string, unknown>)
+          : {};
+      if (capabilities.players !== true || !Array.isArray(data.rows) || data.rows.length > 10000)
+        return emptyMap('Player positions are unavailable for this location.', 503);
+      const matches = data.rows.filter((row: unknown) => {
+        if (!row || typeof row !== 'object' || Array.isArray(row)) return false;
+        const item = row as Record<string, unknown>;
+        return (
+          String(item.id ?? '') === pawn &&
+          item.type === 'player' &&
+          item.map === requested &&
+          typeof item.online_status === 'string' &&
+          item.online_status.trim().toLowerCase() === 'online'
+        );
+      });
+      if (matches.length > 1) return emptyMap('Player position is ambiguous.', 503);
+      const row = matches[0] as Record<string, unknown> | undefined;
+      const position =
+        row &&
+        [row.x, row.y, row.z].every((value) => typeof value === 'number' && Number.isFinite(value)) &&
+        typeof row.partition_id === 'number' &&
+        Number.isSafeInteger(row.partition_id) &&
+        row.partition_id >= 0
+          ? { x: row.x, y: row.y, z: row.z, partition: row.partition_id }
+          : null;
+      if (row && !position) return emptyMap('Player position is invalid.', 503);
+      return { status: 200, body: { ok: true, location: requested, position, observedAt: new Date().toISOString() } };
     }
 
     const duneClient = getDuneClient();

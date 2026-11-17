@@ -7,12 +7,12 @@ Source: `src/features/server-status/server/status.ts`.
 
 ## Maps
 
-| Method | Route                           | Auth    | Notes                                                                                                                                                   |
-| ------ | ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/v2/map?map=`              | session | `HaggaBasin` (default) or `DeepDesert`; other values 400. Body `{ ok, markers, bases, map, count, … }`; failures `{ ok: false, error, markers: [], … }` |
-| GET    | `/api/v2/map/realtime?map=`     | session | Realtime layer; `Cache-Control: private, no-store`                                                                                                      |
-| GET    | `/api/map`, `/api/map/realtime` | session | Legacy equivalents                                                                                                                                      |
-| GET    | `/api/portal/world?map=`        | session | Briefing for the portal                                                                                                                                 |
+| Method | Route                           | Auth    | Notes                                                                                                                                                                                                                           |
+| ------ | ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/v2/map?map=`              | session | `HaggaBasin` (default), `DeepDesert`, `Arrakeen`, `HarkoVillage` or `Overland`; other values 400. The first two return map markers; the latter three return only the verified linked character's position and observation time. |
+| GET    | `/api/v2/map/realtime?map=`     | session | Realtime layer; `Cache-Control: private, no-store`                                                                                                                                                                              |
+| GET    | `/api/map`, `/api/map/realtime` | session | Legacy equivalents                                                                                                                                                                                                              |
+| GET    | `/api/portal/world?map=`        | session | Briefing for the portal                                                                                                                                                                                                         |
 
 ## Market
 
