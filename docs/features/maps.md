@@ -27,7 +27,7 @@ Unknown map names return 400.
 Terrain bundles and models ship with the application (`src/assets`); terrain paths are allowlisted. Large worlds are rendered
 near the camera only. Data freshness follows Console polling.
 
-Arrakeen, Harko Village and Overland show user-supplied game map images and the signed-in member's linked character position from the Console's player endpoint, refreshed every 30 seconds while visible. The server verifies the linked character before and after the read and returns no other players. These pages provide links to third-party community maps; those maps are external and do not receive or display dashboard coordinates. Coordinate bounds and an accurate world-to-image transformation have not been verified, so positions are not plotted.
+Arrakeen, Harko Village and Overland show user-supplied game map images and the signed-in member's linked character position from the Console's player endpoint, refreshed every 30 seconds while visible. The server verifies the linked character before and after the read and returns no other players. These pages provide links to third-party community maps; those maps are external and do not receive or display dashboard coordinates. Arrakeen shows an approximate marker within the sampled central and landing area; another courtyard reading disagreed with the projection, so positions outside this bounded area are not plotted. Harko Village and Overland still require calibration.
 
 ## Troubleshooting
 

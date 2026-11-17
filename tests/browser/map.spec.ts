@@ -31,7 +31,12 @@ test('new location pages show only verified position without a fabricated map', 
       page.getByRole('status').filter({ hasText: 'Your linked character is in this location.' }),
     ).toBeVisible();
     await expect(page.getByText('1.25', { exact: true })).toBeVisible();
-    await expect(page.getByText(/map has not been calibrated yet/)).toBeVisible();
+    if (name === 'Arrakeen') {
+      await expect(page.getByRole('img', { name: 'Your approximate position' })).toBeVisible();
+    } else {
+      await expect(page.getByText(/map has not been calibrated yet/)).toBeVisible();
+      await expect(page.getByRole('img', { name: 'Your approximate position' })).toHaveCount(0);
+    }
     const image = page.getByRole('img', { name: `${name} map` });
     await expect(image).toBeVisible();
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBeGreaterThan(0);

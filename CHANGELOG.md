@@ -4,7 +4,7 @@
 
 ### New Features
 
-- Separate Arrakeen, Harko Village and Overland pages show game map images, the linked character's verified Console position and links to external community maps. Plotting awaits coordinate calibration.
+- Separate Arrakeen, Harko Village and Overland pages show game map images, the linked character's verified Console position and links to external community maps. Arrakeen displays an approximate marker within its sampled area; other areas await calibration.
 - The portal's server rhythm panel can show seven days of observed aggregate population by local weekday and hour, including sample counts and missing-data states.
 - Service status shows the active Console restart queue with server-adjusted countdowns and an explicit unavailable state. Daily and IP-change restart schedules are not included in that queue.
 - Service status shows recent Console restart records when available, without treating restarts as confirmed incidents or inventing causes.

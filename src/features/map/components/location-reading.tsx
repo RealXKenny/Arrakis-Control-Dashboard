@@ -6,6 +6,7 @@ import { Button } from '../../../components/ui/button';
 import { Card } from '../../../components/ui/card';
 import { LocalTime } from '../../../components/ui/local-time';
 import { MAP_LABELS, type MapName } from '../maps';
+import { projectLocation } from '../utils/location-projection';
 
 const readingSchema = z.object({
   ok: z.literal(true),
@@ -32,7 +33,7 @@ const mapImages: Partial<Record<MapName, string>> = {
   Overland: '/maps/overland.webp',
 };
 
-/** The character marker stays hidden until the world-to-image transform is verified. */
+/** Only the linked character's position is returned by this view's server endpoint. */
 export function LocationReading({ mapName }: { mapName: MapName }) {
   const [reading, setReading] = useState<Reading | null>(null);
   const [status, setStatus] = useState('Loading location…');
@@ -85,6 +86,7 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
       active.current = null;
     };
   }, [refresh]);
+  const marker = reading?.position ? projectLocation(mapName, reading.position) : null;
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <Card as="section" aria-labelledby="location-heading" className="panel min-h-[24rem] p-6 sm:p-8">
@@ -93,13 +95,25 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
           {MAP_LABELS[mapName]}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-sand-300">
-          Your position is available from the Console. This map has not been calibrated yet, so coordinates are shown
-          without a plotted marker.
+          {mapName === 'Arrakeen'
+            ? 'Your marker is approximate and appears only within the area checked so far.'
+            : 'This map has not been calibrated yet, so coordinates are shown without a plotted marker.'}
         </p>
         {mapImages[mapName] && (
-          // These are local, user-supplied game maps served through the existing same-origin asset route.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={mapImages[mapName]} alt={`${MAP_LABELS[mapName]} map`} className="mt-6 h-auto w-full rounded-lg" />
+          <div className="relative mt-6">
+            {/* These local game maps are served through the same-origin asset route. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={mapImages[mapName]} alt={`${MAP_LABELS[mapName]} map`} className="h-auto w-full rounded-lg" />
+            {marker && (
+              <span
+                role="img"
+                aria-label="Your approximate position"
+                title="Your approximate position"
+                className="absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-fuchsia-500 shadow-lg"
+                style={{ left: `${marker.left}%`, top: `${marker.top}%` }}
+              />
+            )}
+          </div>
         )}
         <p role="status" className="mt-6 text-sm text-sand-200">
           {status}
@@ -122,6 +136,9 @@ export function LocationReading({ mapName }: { mapName: MapName }) {
               </div>
             ))}
           </dl>
+        )}
+        {reading?.position && mapName === 'Arrakeen' && !marker && (
+          <p className="mt-4 text-sm text-sand-300">Your position is outside the area checked for calibration.</p>
         )}
         {reading && (
           <p className="mt-5 text-xs text-sand-400">
