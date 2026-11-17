@@ -9,7 +9,7 @@ test.afterEach(async () => {
   await fakeConsole.reset();
 });
 const axeSource = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
-const categories = ['assets', 'supply', 'market', 'operations'];
+const categories = ['assets', 'supply', 'market', 'operations', 'events', 'maintenance', 'assistance'];
 async function setup(page: import('@playwright/test').Page) {
   const member = await fakeConsole.newMember('Freshness traveller', { guild: null });
   await page.context().setExtraHTTPHeaders({ Cookie: member.cookie });

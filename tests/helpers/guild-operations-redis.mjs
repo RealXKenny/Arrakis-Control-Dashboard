@@ -15,3 +15,7 @@ export function operationsReply(operation, script, args) {
   guilds.set(key, records);
   return { value: 'ok' };
 }
+
+export function resetOperations() {
+  guilds.clear();
+}
