@@ -3,7 +3,6 @@
 
 # Arrakis Control Dashboard
 
-
 [Overview](#overview) · [**Documentation**](docs/README.md) · [Features](#features) · [Screenshots](#screenshots) · [Quick start](#quick-start) · [Deployment](#production-deployment) · [Development](#development) · [Contributing](#contributing)
 
 [![CI](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/workflows/ci.yml)
@@ -15,8 +14,6 @@
 </div>
 
 ## Overview
-
-
 
 <img src="docs/assets/screenshots/dashboard-overview.webp" alt="Arrakis Control dashboard overview showing field conditions, player status, server population, and guild information for the fictional Arrakis Demo account" />
 
@@ -71,17 +68,16 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - A versioned, token-authorized, read-only bot API for sanitized world summaries.
 - Release, progress, and community event announcements through the main Discord bot using Components V2 containers.
 
-
 ## Screenshots
 
 ### Command center
 
-| Dashboard overview                                                                                                              | Server monitoring                                                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| World conditions, character status, and current holdings.                                                                       | Health, resource usage, services, and connection checks.                                                                                         |
+| Dashboard overview                                        | Server monitoring                                        |
+| --------------------------------------------------------- | -------------------------------------------------------- |
+| World conditions, character status, and current holdings. | Health, resource usage, services, and connection checks. |
 
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Service diagnostics and confirmation-protected server controls.                                                                                | Grouped administrative tools with scoped provider access.                                                                      |
+| Service diagnostics and confirmation-protected server controls. | Grouped administrative tools with scoped provider access. |
 
 ### Guild operations
 
@@ -176,8 +172,9 @@ Use [`.env.example`](.env.example) as the complete template; every variable, ran
 | `DUNE_API_URL`, `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN`                                                  | Dune Console URL, API key and Discord adapter token                                                                        |
 | `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`                                      | Discord OAuth and guild authorization                                                                                      |
 | `VERIFIED_MEMBER_ROLE_ID`                                                                             | Required member role                                                                                                       |
-| `MODERATOR_DISCORD_ROLE_IDS`                                                                           | Optional comma-separated Discord roles reserved for moderation; requires server-side bot guild-member access                  |
-| `BACKUP_VIEWER_DISCORD_ROLE_IDS`                                                                       | Optional separate Discord roles reserved for backup evidence; requires server-side bot guild-member access                   |
+| `MODERATOR_DISCORD_ROLE_IDS`                                                                          | Optional comma-separated Discord roles reserved for moderation; requires server-side bot guild-member access               |
+| `EVENT_REVIEWER_DISCORD_ROLE_IDS`                                                                     | Optional separate Discord roles for event-submission review and judging; requires server-side bot guild-member access      |
+| `BACKUP_VIEWER_DISCORD_ROLE_IDS`                                                                      | Optional separate Discord roles reserved for backup evidence; requires server-side bot guild-member access                 |
 | `APP_URL`                                                                                             | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                             |
 | `AUTH_SECRET`                                                                                         | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters                             |
 | `REDIS_URL`                                                                                           | Redis connection, credentials, database, and optional TLS                                                                  |

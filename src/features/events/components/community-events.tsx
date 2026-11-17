@@ -153,6 +153,11 @@ export function CommunityEvents({
                     </p>
                   </section>
                 </div>
+                <p>
+                  <a className="font-semibold text-spice-300 underline" href={`/events/${event.id}`}>
+                    Open submission gallery
+                  </a>
+                </p>
               </div>
             </details>
           </Card>

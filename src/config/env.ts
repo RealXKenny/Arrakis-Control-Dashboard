@@ -141,6 +141,12 @@ const serverEnvSchema = z.object({
     .trim()
     .regex(/^\d{15,25}(?:\s*,\s*\d{15,25}){0,19}$/)
     .optional(),
+  /** Separate roles for event-submission review and judging; no other privileges are implied. */
+  EVENT_REVIEWER_DISCORD_ROLE_IDS: z
+    .string()
+    .trim()
+    .regex(/^\d{15,25}(?:\s*,\s*\d{15,25}){0,19}$/)
+    .optional(),
   /** Separate roles for operational backup evidence; moderator roles do not imply this access. */
   BACKUP_VIEWER_DISCORD_ROLE_IDS: z
     .string()

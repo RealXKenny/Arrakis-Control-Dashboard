@@ -20,6 +20,9 @@ export const GUILD_TAG = '{guilds}';
 export const communityEventKeys = {
   records: 'arrakis:{community-events}:records',
   registration: (eventId: string) => `arrakis:{community-events}:registration:${eventId}`,
+  submissions: (eventId: string) => `arrakis:{community-events}:submissions:${eventId}`,
+  submissionImage: (eventId: string, submissionId: string) =>
+    `arrakis:{community-events}:submission-image:${eventId}:${submissionId}`,
 };
 
 export const guildKeys = {

@@ -1,6 +1,8 @@
 // Isolated browser fixture only. Production executes the Lua scripts against Redis.
 const records = new Map();
 const registrations = new Map();
+const submissions = new Map();
+const submissionImages = new Map();
 const KEY = 'arrakis:{community-events}:records';
 const values = (records) => [...records].flat();
 
@@ -12,6 +14,8 @@ export function setFixtureEvent(event) {
 export function resetFixtureEvents() {
   records.clear();
   registrations.clear();
+  submissions.clear();
+  submissionImages.clear();
 }
 
 function registrationReply(script, args) {
@@ -62,10 +66,52 @@ function registrationReply(script, args) {
   return { value: values(stored) };
 }
 
+function submissionReply(script, args) {
+  const key = args[1];
+  const stored = submissions.get(key) ?? new Map();
+  if (script.includes('event-submissions-read')) return { value: values(stored) };
+  if (!script.includes('event-submission-mutate')) return undefined;
+  const [id, expected, action, payload, owner, eventId, endsAt, endsMs, limit, image] = args.slice(4);
+  const old = stored.get(id) ? JSON.parse(stored.get(id)) : null;
+  if ((old?.revision ?? '') !== expected) return { value: 'conflict' };
+  const event = JSON.parse(records.get(eventId) ?? '{}');
+  const open =
+    event.visibility === 'published' &&
+    event.status === 'open' &&
+    event.endsAt === endsAt &&
+    Date.now() < Number(endsMs);
+  if (action === 'save' || action === 'withdraw') {
+    if (!open) return { value: 'closed' };
+    if (old && (old.owner !== owner || old.result !== null)) return { value: 'forbidden' };
+    if (action === 'save' && old && !['pending', 'rejected', 'withdrawn'].includes(old.status))
+      return { value: 'forbidden' };
+    if (!old && [...stored.values()].some((raw) => JSON.parse(raw).owner === owner)) return { value: 'duplicate' };
+    if (!old && stored.size >= Number(limit)) return { value: 'full' };
+  } else if (action === 'review') {
+    if (!old || old.status !== 'pending' || !['open', 'judging'].includes(event.status)) return { value: 'closed' };
+  } else if (action === 'judge') {
+    if (!old || old.status !== 'approved' || !['judging', 'completed'].includes(event.status))
+      return { value: 'closed' };
+    const next = JSON.parse(payload);
+    if (
+      next.result === 'winner' &&
+      [...stored].some(([field, raw]) => field !== id && JSON.parse(raw).result === 'winner')
+    )
+      return { value: 'winner-conflict' };
+  }
+  stored.set(id, payload);
+  submissions.set(key, stored);
+  if (image) submissionImages.set(args[3], image);
+  return { value: 'ok' };
+}
+
 export function eventsReply(operation, key, args) {
+  if (operation.toUpperCase() === 'GET' && String(key).startsWith('arrakis:{community-events}:submission-image:'))
+    return { value: submissionImages.get(key) ?? null };
   if (operation.toUpperCase() === 'HGET' && key === KEY) return { value: records.get(args[0]) ?? null };
   if (operation.toUpperCase() !== 'EVAL') return undefined;
   if (String(args[1]).startsWith('arrakis:{community-events}:registration:')) return registrationReply(key, args);
+  if (String(args[1]).startsWith('arrakis:{community-events}:submissions:')) return submissionReply(key, args);
   if (args[1] !== KEY) return undefined;
   const values = args.slice(2);
   if (key.includes('community-events:initialize')) {
