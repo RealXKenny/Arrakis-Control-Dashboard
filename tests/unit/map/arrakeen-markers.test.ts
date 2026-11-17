@@ -10,6 +10,7 @@ describe('Arrakeen marker data', () => {
       expect(item.left).toBeLessThanOrEqual(100);
       expect(item.top).toBeGreaterThanOrEqual(0);
       expect(item.top).toBeLessThanOrEqual(100);
+      expect(item.sprite).toHaveLength(2);
     }
   });
 

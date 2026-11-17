@@ -27,9 +27,11 @@ Unknown map names return 400.
 Terrain bundles and models ship with the application (`src/assets`); terrain paths are allowlisted. Large worlds are rendered
 near the camera only. Data freshness follows Console polling.
 
-Arrakeen, Harko Village and Overland show user-supplied game map images and the signed-in member's linked character position from the Console's player endpoint, refreshed every 30 seconds while visible. The server verifies the linked character before and after the read and returns no other players. These pages provide links to third-party community maps; those maps are external and do not receive or display dashboard coordinates. Arrakeen shows an approximate marker throughout the image for testing; a courtyard reading disagreed with the projection, so accuracy can vary. Harko Village and Overland still require calibration.
+Arrakeen, Harko Village and Overland show user-supplied game map images and read the signed-in member's linked character position from the Console's player endpoint every 30 seconds while visible. The server verifies the linked character before and after the read and returns no other players. Arrakeen shows an approximate marker throughout the image for testing; a courtyard reading disagreed with the projection, so accuracy can vary. Harko Village and Overland still require calibration. The marker stays visible during a refresh and is cleared when a read fails or the page is hidden.
 
 Arrakeen also offers 49 user-supplied Map Genie location, service and contract markers, grouped by layer with a keyboard-accessible list. Their positions are approximately aligned from the supplied Map Genie screenshot; quest markers may be offset to separate overlapping locations. They are independent of the Console and do not represent live activity.
+
+Category-specific Arrakeen marker icons use the user-supplied atlas and metadata.
 
 ## Troubleshooting
 

@@ -27,13 +27,17 @@ test('new location pages show only verified position without a fabricated map', 
   ]) {
     await page.goto(`/map/${path}`);
     await expect(page.getByRole('heading', { name, exact: true }).first()).toBeVisible();
-    await expect(
-      page.getByRole('status').filter({ hasText: 'Your linked character is in this location.' }),
-    ).toBeVisible();
-    await expect(page.getByText('1.25', { exact: true })).toBeVisible();
+    await expect(page.getByText('Your linked character is in this location.')).toHaveCount(0);
+    await expect(page.getByText('1.25', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Open community map (external)' })).toHaveCount(0);
     if (name === 'Arrakeen') {
       await expect(page.getByRole('img', { name: 'Your approximate position' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Central Plaza (Locations)', exact: true })).toBeVisible();
+      expect((await page.request.get('/maps/arrakeen-marker-atlas.webp')).status()).toBe(200);
+      await expect(page.getByRole('button', { name: 'Central Plaza (Locations)', exact: true })).toHaveCSS(
+        'background-image',
+        /arrakeen-marker-atlas\.webp/,
+      );
       await page.getByLabel('Locations (9)').uncheck();
       await expect(page.getByRole('button', { name: 'Central Plaza (Locations)', exact: true })).toHaveCount(0);
       await page.getByLabel('Locations (9)').check();
@@ -41,7 +45,7 @@ test('new location pages show only verified position without a fabricated map', 
       await page.keyboard.press('Enter');
       await expect(page.getByRole('status').filter({ hasText: 'Central Plaza — Locations' })).toBeVisible();
     } else {
-      await expect(page.getByText(/map has not been calibrated yet/)).toBeVisible();
+      await expect(page.getByText('Character marker not calibrated')).toBeVisible();
       await expect(page.getByRole('img', { name: 'Your approximate position' })).toHaveCount(0);
     }
     const image = page.getByRole('img', { name: `${name} map` });
@@ -51,6 +55,42 @@ test('new location pages show only verified position without a fabricated map', 
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
+});
+
+test('character marker remains visible during refresh and clears on failure', async ({ page }) => {
+  let reads = 0;
+  let release: (() => void) | undefined;
+  const delayed = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/v2/map?*', async (route) => {
+    reads++;
+    if (reads === 2) await delayed;
+    if (reads === 3) return route.fulfill({ status: 503, json: { ok: false } });
+    return route.fulfill({
+      json: {
+        ok: true,
+        location: 'Arrakeen',
+        position: { x: 1, y: 2, z: 3, partition: 3 },
+        observedAt: new Date().toISOString(),
+      },
+    });
+  });
+  await page.goto('/map/arrakeen');
+  const marker = page.getByRole('img', { name: 'Your approximate position' });
+  await expect(marker).toBeVisible();
+  await page.getByRole('button', { name: 'Refresh map' }).click();
+  await expect.poll(() => reads).toBe(2);
+  await expect(marker).toBeVisible();
+  const refreshed = page.waitForResponse(
+    (response) => response.url().includes('/api/v2/map?') && response.status() === 200,
+  );
+  release!();
+  await refreshed;
+  await expect(marker).toBeVisible();
+  await page.getByRole('button', { name: 'Refresh map' }).click();
+  await expect(page.getByText('Location reading is unavailable.')).toBeVisible();
+  await expect(marker).toHaveCount(0);
 });
 
 test('realtime layer updates, filters instances, clears failures and switches maps', async ({ page }) => {
