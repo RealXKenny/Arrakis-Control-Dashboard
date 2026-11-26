@@ -14,7 +14,7 @@ enum Opcode {
 }
 
 /** Origins the Discord client may message the Activity from (the SDK's own list, minus local development). */
-const DISCORD_ORIGINS = [
+export const DISCORD_ORIGINS: readonly string[] = [
   'https://discord.com',
   'https://discordapp.com',
   'https://ptb.discord.com',
@@ -173,12 +173,17 @@ export class DiscordActivityClient {
 /** The real browser channel: the Discord client is the parent (or the opener of a popped-out Activity). */
 export function browserChannel(): MessageChannel {
   const target = window.parent.opener ?? window.parent;
+  const allowed = new Set([...DISCORD_ORIGINS, window.location.origin]);
   const targetOrigin = document.referrer ? new URL(document.referrer).origin : '*';
   return {
     ownOrigin: window.location.origin,
     post: (message) => (target as Window).postMessage(message, targetOrigin),
     listen: (handler) => {
-      const listener = (event: MessageEvent) => handler(event.origin, event.data);
+      const listener = (event: MessageEvent) => {
+        // Checked here as well as in the client, so no other window's messages ever reach it.
+        if (!allowed.has(event.origin)) return;
+        handler(event.origin, event.data);
+      };
       window.addEventListener('message', listener);
       return () => window.removeEventListener('message', listener);
     },
