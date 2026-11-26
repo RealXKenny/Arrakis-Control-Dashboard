@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react';
 import { StatusBadge } from '../../../components/ui/status-badge';
 import { freshnessLabel, type ReadingHealth } from '../freshness';
 import styles from './data-freshness.module.css';
+
+/** Readable, hydration-safe UTC stamp: `2026-11-26 02:09:10 UTC`. The full ISO value stays in `dateTime`. */
+export function formatFreshnessStamp(iso: string): string {
+  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})/.exec(iso);
+  return match ? `${match[1]} ${match[2]} UTC` : iso;
+}
 export function DataFreshness({
   label,
   health,
@@ -46,7 +52,9 @@ export function DataFreshness({
           <dt>{successLabel}</dt>
           <dd>
             {health.lastSuccessAt ? (
-              <time dateTime={health.lastSuccessAt}>{health.lastSuccessAt} (UTC)</time>
+              <time dateTime={health.lastSuccessAt} title={health.lastSuccessAt}>
+                {formatFreshnessStamp(health.lastSuccessAt)}
+              </time>
             ) : (
               'No successful read recorded in this view'
             )}
@@ -56,7 +64,9 @@ export function DataFreshness({
           <dt>Last attempt (device time)</dt>
           <dd>
             {health.lastAttemptAt ? (
-              <time dateTime={health.lastAttemptAt}>{health.lastAttemptAt} (UTC)</time>
+              <time dateTime={health.lastAttemptAt} title={health.lastAttemptAt}>
+                {formatFreshnessStamp(health.lastAttemptAt)}
+              </time>
             ) : (
               'Not attempted in this view'
             )}

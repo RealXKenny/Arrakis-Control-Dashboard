@@ -85,7 +85,8 @@ test('verified source context changes, unlinked states and hidden documents disc
   await page.route('**/api/v2/inbox', (route) => route.fulfill({ json: body }));
   await page.goto('/inbox');
   const source = page.getByRole('group', { name: 'Supply source freshness', exact: true });
-  await expect(source).toContainText(stamp);
+  await expect(source).toContainText(`${stamp.slice(0, 10)} ${stamp.slice(11, 19)} UTC`);
+  await expect(source.locator('time').first()).toHaveAttribute('datetime', stamp);
   body = inbox(now, stamp, 'b'.repeat(64));
   body.data.sources[1] = { ...body.data.sources[1], status: 'unavailable', readAt: null };
   await page.getByRole('button', { name: 'Refresh inbox', exact: true }).click();

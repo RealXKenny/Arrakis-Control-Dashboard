@@ -1,11 +1,16 @@
 import { Card } from '../../../components/ui/card';
+import { cardClass } from '../../../components/ui/control-styles';
 import Link from 'next/link';
 import type { ResolvedActivity } from '../server/resolve';
 import { activityHref } from '../model';
 import styles from './activity-views.module.css';
 export function ActivityBar({ state, area }: { state: ResolvedActivity; area: 'portal' | 'inbox' | 'tasks' }) {
   return (
-    <Card as="section" className={styles.card} aria-label="Activity view">
+    <Card
+      as="section"
+      className={cardClass({ className: state.status === 'none' ? styles.strip : styles.card })}
+      aria-label="Activity view"
+    >
       {state.status === 'ok' ? (
         <>
           <h2>{state.view.name}</h2>
@@ -34,7 +39,10 @@ export function ActivityBar({ state, area }: { state: ResolvedActivity; area: 'p
           No saved activity has been applied.
         </p>
       ) : (
-        <p>Keep separate dashboard settings for building, exploration or your own activities.</p>
+        <p>
+          <span className={styles.stripLabel}>Activity views</span>
+          Keep separate dashboard settings for building, exploration or your own activities.
+        </p>
       )}
       <div className={styles.actions}>
         <Link href="/activity-views" prefetch={false}>
