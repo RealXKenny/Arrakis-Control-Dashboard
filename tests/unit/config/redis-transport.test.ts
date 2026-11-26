@@ -43,3 +43,18 @@ describe('redisTransportWarnings', () => {
     ).toEqual([]);
   });
 });
+
+describe('consoleTransportWarnings', () => {
+  it('warns only for public plain-HTTP Console URLs in production, without echoing the URL', async () => {
+    const { consoleTransportWarnings } = await import('../../../src/config/env');
+    expect(consoleTransportWarnings({ NODE_ENV: 'development', DUNE_API_URL: 'http://console.example.com' })).toEqual(
+      [],
+    );
+    for (const url of ['https://console.example.com', 'http://127.0.0.1:8080', 'http://10.0.0.5', 'http://console']) {
+      expect(consoleTransportWarnings({ NODE_ENV: 'production', DUNE_API_URL: url })).toEqual([]);
+    }
+    const warnings = consoleTransportWarnings({ NODE_ENV: 'production', DUNE_API_URL: 'http://console.example.com' });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).not.toContain('console.example.com');
+  });
+});

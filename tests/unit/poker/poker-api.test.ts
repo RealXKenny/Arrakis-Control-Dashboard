@@ -11,6 +11,8 @@ const state = vi.hoisted(() => ({
   enabled: true,
   store: new Map<string, string>(),
   limited: false,
+  limitedKey: null as string | null,
+  limitKeys: [] as Array<{ key: string; limit: number }>,
   audits: [] as unknown[],
   saves: 0,
   conflictNextSave: false,
@@ -38,7 +40,11 @@ vi.mock('../../../src/lib/security/audit', () => ({
 }));
 vi.mock('../../../src/lib/security/rate-limit', () => ({
   getClientAddress: () => '198.51.100.7',
-  checkRateLimit: async () => ({ allowed: !state.limited, remaining: 1, retryAfter: 1 }),
+  checkRateLimit: async (key: string, rule: { limit: number }) => {
+    state.limitKeys.push({ key, limit: rule.limit });
+    const blocked = state.limited || (state.limitedKey !== null && key.startsWith(state.limitedKey));
+    return { allowed: !blocked, remaining: 1, retryAfter: 1 };
+  },
 }));
 vi.mock('../../../src/lib/redis/client', () => ({
   getRedisClient: () => ({
@@ -84,6 +90,8 @@ beforeEach(() => {
   state.enabled = true;
   state.store.clear();
   state.limited = false;
+  state.limitedKey = null;
+  state.limitKeys = [];
   state.audits = [];
   state.saves = 0;
   state.conflictNextSave = false;
@@ -197,6 +205,15 @@ describe('poker Activity session', () => {
   it('rate limits sign-in attempts', async () => {
     state.limited = true;
     const { createSession } = await handlers();
+    expect((await routed(createSession, sessionRequest('code-alice'))).status).toBe(429);
+  });
+
+  it('keeps a generous shared-address ceiling and a tighter per-instance budget', async () => {
+    const { createSession } = await handlers();
+    expect((await routed(createSession, sessionRequest('code-alice'))).status).toBe(200);
+    expect(state.limitKeys).toContainEqual({ key: 'poker:session:198.51.100.7', limit: 60 });
+    expect(state.limitKeys).toContainEqual({ key: 'poker:session-instance:i-live', limit: 12 });
+    state.limitedKey = 'poker:session-instance:';
     expect((await routed(createSession, sessionRequest('code-alice'))).status).toBe(429);
   });
 });

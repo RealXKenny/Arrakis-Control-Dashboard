@@ -21,7 +21,7 @@ export async function register() {
     // Dev note: a misconfigured production server that smiles and serves anyway is a trap with a welcome mat.
     // Configuration errors stop startup (Next refuses to serve when register() throws); only the optional warm-up
     // steps below may fail without taking the site down. The reason names variables, never their values.
-    const { validateProductionEnv, redisTransportWarnings } = await import('./config/env');
+    const { validateProductionEnv, redisTransportWarnings, consoleTransportWarnings } = await import('./config/env');
     let env: ReturnType<typeof validateProductionEnv>;
     try {
       env = validateProductionEnv();
@@ -44,7 +44,7 @@ export async function register() {
     }
 
     try {
-      for (const warning of redisTransportWarnings(env)) startup.warn(warning);
+      for (const warning of [...redisTransportWarnings(env), ...consoleTransportWarnings(env)]) startup.warn(warning);
       if (env.REDIS_URL) {
         const { getRedisPool } = await import('./lib/redis/pool');
         getRedisPool();

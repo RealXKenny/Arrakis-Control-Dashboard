@@ -304,3 +304,22 @@ export function redisTransportWarnings(
     warnings.push('REDIS_URL carries no password; make sure Redis is not reachable from untrusted networks.');
   return warnings;
 }
+
+/**
+ * The Console API key travels in every request's Authorization header. Production still accepts plain HTTP for
+ * existing private-network deployments, so a public plain-HTTP Console URL is reported loudly instead of refused.
+ */
+export function consoleTransportWarnings(env: Pick<ServerEnv, 'NODE_ENV' | 'DUNE_API_URL'>): string[] {
+  if (env.NODE_ENV !== 'production' || !env.DUNE_API_URL) return [];
+  let url: URL;
+  try {
+    url = new URL(env.DUNE_API_URL);
+  } catch {
+    return [];
+  }
+  if (url.protocol !== 'http:' || PRIVATE_HOST.test(url.hostname)) return [];
+  // Dev note: sending the spice manifest by open sandcrawler; anyone along the route can read the key.
+  return [
+    'DUNE_API_URL uses plain HTTP on a public-looking host; the Console API key can be read in transit. Use https://.',
+  ];
+}

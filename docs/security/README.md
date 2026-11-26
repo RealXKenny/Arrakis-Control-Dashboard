@@ -1,6 +1,6 @@
 # Security
 
-[2026-11-16 audit](audit-2026-11-16.md) records the V2 integration review; [issue #12](https://github.com/RealXKenny/Arrakis-Control-Dashboard/issues/12) tracks findings and remediation.
+[2026-11-26 launch audit](audit-2026-11-26.md) is the latest review, with operator actions before launch. The [2026-11-16 audit](audit-2026-11-16.md) records the V2 integration review; [issue #12](https://github.com/RealXKenny/Arrakis-Control-Dashboard/issues/12) tracks findings and remediation.
 
 To **report a vulnerability** use the private process in [SECURITY.md](../../SECURITY.md) (not a public issue).
 

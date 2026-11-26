@@ -15,11 +15,14 @@ function headerRecord(request: Request): Record<string, string> {
 export async function createSession(request: Request): Promise<Response> {
   requirePokerEnabled();
   assertActivityOrigin(request);
+  // Activity traffic can reach us through Discord's proxy, so many players may share one address. The address
+  // ceiling stays generous and the tighter budget applies per Activity instance, before any Discord call.
   await enforcePokerLimit(`session:${getClientAddress({ headers: headerRecord(request) })}`, {
-    limit: 10,
+    limit: 60,
     windowMs: 60_000,
   });
   const input = await readJson(request, sessionRequestSchema, 2048);
+  await enforcePokerLimit(`session-instance:${input.instanceId}`, { limit: 12, windowMs: 60_000 });
   const player = await identifyActivityPlayer(input.code);
   await verifyActivityInstance(input.instanceId, player.userId);
   const { token, session } = await issueActivitySession({

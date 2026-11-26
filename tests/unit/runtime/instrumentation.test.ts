@@ -20,7 +20,11 @@ vi.mock('../../../src/lib/assert-server', () => ({}));
 vi.mock('../../../src/lib/logger', () => ({
   createLogger: () => ({ header: vi.fn(), info, warn, error, debug: vi.fn(), fatal: vi.fn() }),
 }));
-vi.mock('../../../src/config/env', () => ({ validateProductionEnv: validate, redisTransportWarnings: () => [] }));
+vi.mock('../../../src/config/env', () => ({
+  validateProductionEnv: validate,
+  redisTransportWarnings: () => [],
+  consoleTransportWarnings: () => [],
+}));
 vi.mock('../../../src/lib/redis/pool', () => ({ getRedisPool: vi.fn() }));
 vi.mock('../../../src/server/integrations/dune', () => ({ warmupDuneClient: warmup }));
 vi.mock('../../../src/features/portal/server/population', () => ({ startPopulationRecorder: vi.fn() }));
