@@ -91,6 +91,8 @@ describe('GitHub Actions workflows', () => {
     expect(release.text).toContain('retention-days: 1');
     expect(publish.steps?.some((step) => step.uses?.startsWith('actions/download-artifact@'))).toBe(true);
     expect(publish.steps?.some((step) => step.run?.includes('gh release create'))).toBe(true);
+    // Publish has no checkout, so gh must be told which repository to release.
+    expect(publish.steps?.some((step) => step.run?.includes('--repo "$GITHUB_REPOSITORY"'))).toBe(true);
     expect(publish.steps?.some((step) => step.run?.includes('build-pterodactyl-egg.mjs'))).toBe(false);
     expect(publish.permissions).toEqual({ contents: 'write' });
   });

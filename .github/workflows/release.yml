@@ -188,6 +188,7 @@ jobs:
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: >-
           gh release create "$RELEASE_TAG" "$EGG_FILE" "$ARCHIVE_FILE" "$ARCHIVE_FILE.sha256"
+          --repo "$GITHUB_REPOSITORY"
           --target "$RELEASE_SHA"
           --title "Arrakis Control Dashboard $RELEASE_VERSION"
           --notes-file "$RELEASE_NOTES"
