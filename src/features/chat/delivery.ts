@@ -1,7 +1,7 @@
 import { canTransitionDelivery, parseChatMessage, type ChatDelivery, type ChatMessage } from './contracts';
 
 /** Browser-side placeholder IDs; a server message with the same correlation ID replaces one. */
-export const OPTIMISTIC_ID_PREFIX = 'optimistic-';
+const OPTIMISTIC_ID_PREFIX = 'optimistic-';
 /** Three bounded publish attempts, retry delays, and Redis work fit before the browser times out. */
 export const CHAT_SEND_TIMEOUT_MS = 40_000;
 /** Keep a long-lived browser tab bounded independently of broker traffic and server retention. */

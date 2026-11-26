@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const EVENT_SUBMISSION_LIMIT = 25;
 export const EVENT_SUBMISSION_IMAGE_MAX_BYTES = 700 * 1024;
 export const EVENT_SUBMISSION_STORED_IMAGE_MAX_BYTES = 256 * 1024;
-export const submissionStatusSchema = z.enum(['pending', 'approved', 'rejected', 'withdrawn']);
-export const judgingResultSchema = z.enum(['winner', 'finalist', 'not-selected']);
+const submissionStatusSchema = z.enum(['pending', 'approved', 'rejected', 'withdrawn']);
+const judgingResultSchema = z.enum(['winner', 'finalist', 'not-selected']);
 export const eventSubmissionSchema = z
   .object({
     id: z.uuid(),

@@ -115,7 +115,7 @@ async function sendNextResponse(res, response: NextResponse) {
   return res.send(response.body);
 }
 
-export function getRequestOrigin(req) {
+function getRequestOrigin(req) {
   const configured = getServerEnv().APP_URL;
   if (configured) return new URL(configured).origin;
   const forwarded = Array.isArray(req.headers['x-forwarded-proto'])

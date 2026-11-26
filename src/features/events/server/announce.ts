@@ -1,6 +1,7 @@
 import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
 import { createLogger } from '../../../lib/logger';
+import { describeOperationalError } from '../../../lib/errors';
 import { discordContainer } from '../../../lib/discord-components';
 import { syncDiscordAnnouncement, type DiscordAnnouncementResult } from '../../../server/integrations/discord-bot';
 import { buildEventAnnouncement } from '../discord';
@@ -47,8 +48,10 @@ export function startCommunityEventAnnouncements(): void {
         if (['failed', 'unknown'].includes(result.status))
           log.warn('Community event announcement needs attention', { eventId: event.id, outcome: result.status });
       }
-    } catch {
-      log.warn('Community event announcements are temporarily unavailable.');
+    } catch (error) {
+      log.warn('Community event announcements are temporarily unavailable.', {
+        reason: describeOperationalError(error),
+      });
     } finally {
       running = false;
     }

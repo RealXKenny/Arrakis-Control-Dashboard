@@ -56,9 +56,9 @@ Documentation keeps its established audience categories: getting-started, instal
 
 ## AI compatibility
 
-Claude, Codex, Gemini, Kimi, Copilot, Cursor, Cline, Continue, Roo, and Windsurf native configuration paths are retained. No model identifiers, permission settings, or import syntax were added. Six repeated shared-contract adapters now explicitly direct the assistant to canonical guidance. The Claude architecture rule was updated to the new component home. Root CODEX.md and KIMI.md remain optional references; actual instruction discovery must be verified in the installed tool. The Aider guide remains an explicit --read reference.
+Codex, Gemini, Kimi, Copilot, Cursor, Cline, Continue, Roo, and Windsurf native configuration paths are retained. No model identifiers, permission settings, or import syntax were added. Six repeated shared-contract adapters now explicitly direct the assistant to canonical guidance. Root CODEX.md and KIMI.md remain optional references; actual instruction discovery must be verified in the installed tool. The Aider guide remains an explicit --read reference.
 
-AI validation checks required files, canonical references, JSON, managed-block markers, known frontmatter fields, nonempty top-level AI guides, and retired directories. All tracked YAML was additionally parsed with the existing js-yaml dependency. It does not emulate tool loaders or fully validate TOML/assistant settings against installed product schemas. The Codex TOML and Claude settings are unchanged.
+AI validation checks required files, canonical references, JSON, managed-block markers, known frontmatter fields, nonempty top-level AI guides, and retired directories. All tracked YAML was additionally parsed with the existing js-yaml dependency. It does not emulate tool loaders or fully validate TOML/assistant settings against installed product schemas. The Codex TOML is unchanged.
 
 ## Source architecture
 

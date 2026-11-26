@@ -3,7 +3,7 @@ import { getDuneClient } from '../../server/integrations/dune';
 import { acquireApiCapacity } from '../security/api-capacity';
 import { checkRateLimit } from '../security/rate-limit';
 import { getServerEnv } from '../../config/env';
-import { getRedisPool, RedisUnavailableError, REDIS_SNAPSHOT_TTL_SECONDS, REDIS_STALE_GRACE_SECONDS } from './pool';
+import { getRedisPool, REDIS_SNAPSHOT_TTL_SECONDS, REDIS_STALE_GRACE_SECONDS } from './pool';
 import { DAY_MS, summarizePopulation, totalPlayHours } from '../../features/portal/population';
 import type {
   DashboardSnapshot,
@@ -41,7 +41,7 @@ import type {
  * cap first, then per-scope and global fixed windows per minute.
  */
 
-export const MAP_IDS: readonly MapId[] = ['DeepDesert', 'HaggaBasin'];
+const MAP_IDS: readonly MapId[] = ['DeepDesert', 'HaggaBasin'];
 
 const READS_PER_IP_PER_MINUTE = 120;
 const DEFAULT_GLOBAL_READS_PER_MINUTE = 2400;
@@ -63,7 +63,7 @@ export function parseMapParam(value: string | string[] | undefined): MapId {
   return isMapId(candidate) ? candidate : 'HaggaBasin';
 }
 
-export function resolveLoadProfile(): LoadProfile {
+function resolveLoadProfile(): LoadProfile {
   const env = getServerEnv();
   return {
     globalReadsPerMinute: env.API_GLOBAL_READ_LIMIT ?? DEFAULT_GLOBAL_READS_PER_MINUTE,
@@ -496,7 +496,7 @@ const globals = globalThis as typeof globalThis & {
   arrakisAppRouterSnapshots?: Map<MapId, SnapshotCacheEntry>;
 };
 
-export function getDashboardDataProvider(): DashboardDataProvider {
+function getDashboardDataProvider(): DashboardDataProvider {
   if (!globals.arrakisAppRouterProvider) {
     const env = getServerEnv();
     if (env.REDIS_URL) {
@@ -533,11 +533,3 @@ export function getDashboardSnapshot(map: MapId, scope = 'page-render'): Promise
   }
   return value;
 }
-
-/** Test hook: reset the process-wide provider and snapshot cache. */
-export function resetDashboardDataProviderForTests(): void {
-  delete globals.arrakisAppRouterProvider;
-  delete globals.arrakisAppRouterSnapshots;
-}
-
-export { RedisUnavailableError };

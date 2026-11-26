@@ -44,14 +44,14 @@ SOFTWARE.
 
 The installed package metadata and lockfile were checked for the 2.0.0 release. npm retains each package's own license text on installation; transitive dependencies and exact versions are locked in `package-lock.json`.
 
-| Package                      | License      | Package              | License |
-| ---------------------------- | ------------ | -------------------- | ------- |
-| `@fontsource/jetbrains-mono` | OFL-1.1      | `amqplib`            | MIT     |
-| `dotenv`                     | BSD-2-Clause | `iframe-resizer`     | MIT     |
-| `ioredis`                    | MIT          | `next`               | MIT     |
-| `next-auth`                  | ISC          | `react`, `react-dom` | MIT     |
-| `three`                      | MIT          | `tsx`                | MIT     |
-| `zod`                        | MIT          |                      |         |
+| Package              | License | Package     | License      |
+| -------------------- | ------- | ----------- | ------------ |
+| `amqplib`            | MIT     | `dotenv`    | BSD-2-Clause |
+| `iframe-resizer`     | MIT     | `ioredis`   | MIT          |
+| `next`               | MIT     | `next-auth` | ISC          |
+| `react`, `react-dom` | MIT     | `sharp`     | Apache-2.0   |
+| `three`              | MIT     | `tsx`       | MIT          |
+| `zod`                | MIT     |             |              |
 
 ## Original dashboard artwork and sounds
 
@@ -69,7 +69,7 @@ The 112 palette-derived swatch tiles are CC BY-NC-SA 4.0, not MIT. Their noncomm
 
 ## Archivo and JetBrains Mono fonts
 
-Archivo and JetBrains Mono are bundled in `src/assets/fonts/` and loaded through `next/font/local`; builds and browsers need no Google Fonts connection. Their weight ranges and Archivo width axis are preserved. JetBrains Mono is also pinned through `@fontsource/jetbrains-mono`. See [font provenance](font-provenance.md) for the pinned upstream revision, exact files, checksums and bundled licenses. The fonts remain under SIL Open Font License 1.1:
+Archivo and JetBrains Mono are bundled in `src/assets/fonts/` and loaded through `next/font/local`; builds and browsers need no Google Fonts connection. Their weight ranges and Archivo width axis are preserved. See [font provenance](font-provenance.md) for the pinned upstream revision, exact files, checksums and bundled licenses. The fonts remain under SIL Open Font License 1.1:
 
 - Archivo: Copyright 2020 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo), [license source](https://github.com/google/fonts/blob/main/ofl/archivo/OFL.txt).
 - JetBrains Mono: Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono), [license source](https://github.com/google/fonts/blob/main/ofl/jetbrainsmono/OFL.txt).

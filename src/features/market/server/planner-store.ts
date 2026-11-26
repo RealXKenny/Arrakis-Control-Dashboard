@@ -104,7 +104,7 @@ function ownerHash(userId: string): string {
 }
 export const plannerKey = (userId: string) => `arrakis:market-planner:v1:${ownerHash(userId)}`;
 export const alertsKey = (userId: string) => `arrakis:market-alerts:v1:${ownerHash(userId)}`;
-export const searchesKey = (userId: string) => `arrakis:market-searches:v1:${ownerHash(userId)}`;
+const searchesKey = (userId: string) => `arrakis:market-searches:v1:${ownerHash(userId)}`;
 /** Observed prices are public exchange data shared by every member, keyed by item and grade only. */
 export const priceKey = (templateId: string, grade: number | null) =>
   `arrakis:market-prices:v1:${hash(templateId.toLowerCase(), grade === null ? '*' : String(grade))}`;
@@ -182,7 +182,7 @@ export async function writeAlertStates(userId: string, states: Record<string, Al
   }
 }
 
-export function normalizeSearch(value: string): string | null {
+function normalizeSearch(value: string): string | null {
   const text = value.replace(/\s+/g, ' ').trim();
   return text && text.length <= 128 ? text : null;
 }

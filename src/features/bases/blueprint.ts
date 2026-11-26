@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const MAX_BLUEPRINT_BYTES = 512 * 1024;
+const MAX_BLUEPRINT_BYTES = 512 * 1024;
 const coordinate = z.number().finite().min(-1e8).max(1e8);
 const id = z.union([z.number().int().nonnegative().safe(), z.string().regex(/^\d{1,20}$/)]);
 const building = z

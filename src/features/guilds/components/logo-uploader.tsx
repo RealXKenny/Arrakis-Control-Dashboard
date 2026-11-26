@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { detectBrokenImage } from '../../../lib/ui/image-fallback';
 import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { useState } from 'react';
 import { guildInitials } from '../details';
@@ -69,6 +70,7 @@ export function GuildEmblem({
       height={96}
       unoptimized
       onError={() => setMissing(true)}
+      ref={detectBrokenImage(() => setMissing(true))}
       className="size-full object-contain"
     />
   );

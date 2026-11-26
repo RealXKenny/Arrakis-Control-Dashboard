@@ -1,9 +1,12 @@
 name: Release
 
 on:
+  # Only CI runs on main can lead to a release, so CI on pull requests and
+  # release branches never starts this workflow at all.
   workflow_run:
     workflows: [CI]
     types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -136,6 +139,9 @@ jobs:
           name="arrakis-control-dashboard-$RELEASE_VERSION.tar.gz"
           git archive --format=tar.gz --prefix=arrakis-control-dashboard/ --output="$RUNNER_TEMP/$name" "$RELEASE_SHA"
           (cd "$RUNNER_TEMP" && sha256sum "$name" > "$name.sha256" && sha256sum --check "$name.sha256")
+          # Per-file hashes let the automatic updater verify every file and tell local changes from release files.
+          node scripts/deployment/build-release-manifest.mjs "$RUNNER_TEMP/$name" "$RELEASE_VERSION" \
+            "$RUNNER_TEMP/arrakis-control-dashboard-$RELEASE_VERSION.manifest.json"
 
       - name: Upload validated release assets
         if: steps.release.outputs.create == 'true'
@@ -146,6 +152,7 @@ jobs:
             ${{ runner.temp }}/egg-arrakis-control-dashboard.json
             ${{ runner.temp }}/arrakis-control-dashboard-${{ steps.release.outputs.version }}.tar.gz
             ${{ runner.temp }}/arrakis-control-dashboard-${{ steps.release.outputs.version }}.tar.gz.sha256
+            ${{ runner.temp }}/arrakis-control-dashboard-${{ steps.release.outputs.version }}.manifest.json
             ${{ runner.temp }}/release-notes.md
           if-no-files-found: error
           retention-days: 1
@@ -174,6 +181,10 @@ jobs:
           archive="arrakis-control-dashboard-$RELEASE_VERSION.tar.gz"
           (cd "$release_dir" && sha256sum --check "$archive.sha256")
           jq -e . "$release_dir/egg-arrakis-control-dashboard.json" >/dev/null
+          manifest="$release_dir/arrakis-control-dashboard-$RELEASE_VERSION.manifest.json"
+          jq -e --arg version "$RELEASE_VERSION" --arg sum "$(cut -d' ' -f1 "$release_dir/$archive.sha256")" \
+            '.schemaVersion == 1 and .version == $version and .archive.sha256 == $sum and (.files | length > 0)' \
+            "$manifest" >/dev/null
           test -s "$release_dir/release-notes.md"
 
       - name: Create GitHub Release
@@ -182,12 +193,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           EGG_FILE: ${{ runner.temp }}/release-assets/egg-arrakis-control-dashboard.json
           ARCHIVE_FILE: ${{ runner.temp }}/release-assets/arrakis-control-dashboard-${{ needs.validate.outputs.version }}.tar.gz
+          MANIFEST_FILE: ${{ runner.temp }}/release-assets/arrakis-control-dashboard-${{ needs.validate.outputs.version }}.manifest.json
           RELEASE_NOTES: ${{ runner.temp }}/release-assets/release-notes.md
           RELEASE_TAG: ${{ needs.validate.outputs.tag }}
           RELEASE_VERSION: ${{ needs.validate.outputs.version }}
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: >-
-          gh release create "$RELEASE_TAG" "$EGG_FILE" "$ARCHIVE_FILE" "$ARCHIVE_FILE.sha256"
+          gh release create "$RELEASE_TAG" "$EGG_FILE" "$ARCHIVE_FILE" "$ARCHIVE_FILE.sha256" "$MANIFEST_FILE"
           --repo "$GITHUB_REPOSITORY"
           --target "$RELEASE_SHA"
           --title "Arrakis Control Dashboard $RELEASE_VERSION"

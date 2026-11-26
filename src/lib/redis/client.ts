@@ -1,6 +1,8 @@
 import '../assert-server';
 import { Cluster, Redis, type ClusterOptions, type RedisOptions } from 'ioredis';
 import { getServerEnv } from '../../config/env';
+import { describeOperationalError } from '../errors';
+import { createLogger } from '../logger';
 import { assertSingleSlot, clusterNodesFromEnv, parseRedisUrl } from './connection';
 
 function decode<T>(value: string): T {
@@ -20,6 +22,8 @@ function encode(value: unknown): string {
 const READY_WAIT_MS = 1_500;
 
 type Connection = Redis | Cluster;
+
+const log = createLogger('REDIS');
 
 /** Reconnect forever with a short, capped, jittered backoff: a later request can always recover. */
 function endlessRetry(attempt: number): number {
@@ -59,12 +63,18 @@ function createConnection(url: string | undefined, clusterNodes: string | undefi
   return new Redis(standaloneOptions(url));
 }
 
+/** Carry the last socket/auth failure so callers can log why Redis is down, not only that it is. */
+export function unavailableError(cause: Error | undefined): Error {
+  if (!cause) return new Error('Redis is unavailable.');
+  return new Error(`Redis is unavailable: ${describeOperationalError(cause)}`, { cause });
+}
+
 /**
  * Make sure the connection is usable, connecting lazily on first use. Offline queueing is off, so
  * a dead Redis fails within READY_WAIT_MS rather than stalling requests, and a recovered Redis is
  * picked up by the very next command.
  */
-async function ready(connection: Connection): Promise<void> {
+async function ready(connection: Connection, lastError: () => Error | undefined): Promise<void> {
   if (connection.status === 'ready') return;
   if (connection.status === 'end') throw new Error('Redis connection is closed.');
   if (connection.status === 'wait') void connection.connect().catch(() => undefined);
@@ -79,7 +89,7 @@ async function ready(connection: Connection): Promise<void> {
     };
     const onReady = () => finish();
     const onEnd = () => finish(new Error('Redis connection is closed.'));
-    const timer = setTimeout(() => finish(new Error('Redis is unavailable.')), READY_WAIT_MS);
+    const timer = setTimeout(() => finish(unavailableError(lastError())), READY_WAIT_MS);
     connection.on('ready', onReady);
     connection.on('end', onEnd);
     // The state may have flipped between the check above and registering listeners.
@@ -94,11 +104,26 @@ async function ready(connection: Connection): Promise<void> {
 export function createDashboardRedis(url: string | undefined, options: { clusterNodes?: string } = {}) {
   const clustered = Boolean(options.clusterNodes);
   const connection = createConnection(url, options.clusterNodes);
-  // Dev note: errors travel upward, while credentials remain in the witness program.
-  connection.on('error', () => {});
+  // Errors reach callers through unavailableError(); this only reports state changes, once each,
+  // so a Redis outage is visible in the console without one line per retry.
+  let lastError: Error | undefined;
+  let reportedDown = false;
+  connection.on('error', (error: Error) => {
+    lastError = error;
+    if (reportedDown) return;
+    reportedDown = true;
+    log.warn('Redis connection unavailable; retrying automatically.', { reason: describeOperationalError(error) });
+  });
+  connection.on('ready', () => {
+    lastError = undefined;
+    if (!reportedDown) return;
+    reportedDown = false;
+    // Dev note: the spice is flowing again.
+    log.info('Redis connection restored.');
+  });
 
   async function command(args: Array<string | number>): Promise<unknown> {
-    await ready(connection);
+    await ready(connection, () => lastError);
     const [name, ...rest] = args;
     return connection.call(String(name), ...rest.map(String));
   }

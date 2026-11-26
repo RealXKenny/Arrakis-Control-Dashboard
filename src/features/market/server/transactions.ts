@@ -10,7 +10,7 @@ import type { Trade } from '../planner';
  * the release that introduced it forward, so every reading reports support and coverage explicitly.
  */
 const PAGE_SIZE = 100;
-export const TRADE_PAGE_LIMIT = 5;
+const TRADE_PAGE_LIMIT = 5;
 
 export interface TradeCoverage {
   fetched: number;

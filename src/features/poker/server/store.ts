@@ -110,7 +110,7 @@ const unavailable = () => new AppError('Poker is unavailable. Try again shortly.
 export const tableConflict = () => new AppError('The table changed. Try again.', 409, 'POKER_CONFLICT', true);
 
 /** One table per Discord Activity instance; the instance ID is hashed so keys stay uniform. */
-export function pokerTableKey(instanceId: string): string {
+function pokerTableKey(instanceId: string): string {
   if (!INSTANCE_ID.test(instanceId)) throw unavailable();
   return `arrakis:poker:table:v1:${createHash('sha256').update(instanceId).digest('hex')}`;
 }

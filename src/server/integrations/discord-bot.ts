@@ -22,7 +22,7 @@ export type DiscordAnnouncementResult = {
 };
 
 /** Credentials stay on this fixed Discord origin; raw provider bodies and errors never escape. */
-export async function discordBotRequest(path: string, method = 'GET', body?: unknown): Promise<Response> {
+async function discordBotRequest(path: string, method = 'GET', body?: unknown): Promise<Response> {
   const token = getServerEnv().DISCORD_BOT_TOKEN;
   if (!token)
     throw new AppError('Set DISCORD_BOT_TOKEN to enable announcements.', 503, 'DISCORD_BOT_NOT_CONFIGURED', true);
@@ -45,7 +45,7 @@ export async function discordBotRequest(path: string, method = 'GET', body?: unk
   }
 }
 
-export async function verifyAnnouncementChannel(channelId: string): Promise<void> {
+async function verifyAnnouncementChannel(channelId: string): Promise<void> {
   if (!/^\d{15,25}$/.test(channelId))
     throw new AppError('Invalid Discord channel configuration.', 503, 'DISCORD_CHANNEL_INVALID', true);
   const response = await discordBotRequest(`/channels/${channelId}`);

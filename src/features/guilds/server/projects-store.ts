@@ -43,7 +43,7 @@ function storage() {
 
 type Snapshot = { storeRevision: string; book: GuildProjectsBook };
 
-export async function readProjectsSnapshot(guildId: string): Promise<Snapshot> {
+async function readProjectsSnapshot(guildId: string): Promise<Snapshot> {
   projectGuildIdSchema.parse(guildId);
   try {
     const raw = await storage().eval(READ, [guildKeys.projects(guildId)], [MAX_BYTES]);

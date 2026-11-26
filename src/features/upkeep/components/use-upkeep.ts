@@ -15,7 +15,7 @@ export interface UpkeepOverview {
   water?: { baseId: string; samples: WaterSample[] | null; analysis: WaterAnalysis | null }[];
 }
 
-export class UpkeepRequestError extends Error {
+class UpkeepRequestError extends Error {
   constructor(
     message: string,
     readonly status: number,

@@ -61,13 +61,14 @@ export function GuildDirectory({
           polling = false;
         }
       }
-      if (!controller.signal.aborted) timer = setTimeout(poll, Math.min(30000, 10000 * 2 ** Math.min(failures, 2)));
+      if (!controller.signal.aborted)
+        timer = setTimeout(() => void poll(), Math.min(30000, 10000 * 2 ** Math.min(failures, 2)));
     }
     const visible = () => {
       if (!document.hidden) void poll();
     };
     document.addEventListener('visibilitychange', visible);
-    timer = setTimeout(poll, 10000);
+    timer = setTimeout(() => void poll(), 10000);
     return () => {
       controller.abort();
       clearTimeout(timer);

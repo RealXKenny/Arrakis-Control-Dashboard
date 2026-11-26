@@ -69,9 +69,11 @@ export default function useMapData(mapName = 'HaggaBasin') {
   const expired = useRef(false);
   const active = useRef<AbortController | null>(null);
   const hasReading = useRef(false);
+  const lastLoad = useRef(0);
   const loadMap = useCallback(
     async (force = false) => {
       if (active.current || expired.current) return;
+      lastLoad.current = Date.now();
       const controller = new AbortController();
       active.current = controller;
       const timeout = setTimeout(() => controller.abort(), 15000);
@@ -123,8 +125,10 @@ export default function useMapData(mapName = 'HaggaBasin') {
     setCoriolisNextCycleAt(null);
     setGridOverlay(null);
     void loadMap();
+    // Returning to the tab refreshes only when the reading is older than the normal interval.
     const refresh = () => {
-      if (document.visibilityState === 'visible') void loadMap();
+      if (document.visibilityState === 'visible' && Date.now() - lastLoad.current >= REFRESH_INTERVAL - 1000)
+        void loadMap();
     };
     const timer = setInterval(refresh, REFRESH_INTERVAL);
     document.addEventListener('visibilitychange', refresh);

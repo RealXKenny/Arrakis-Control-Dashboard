@@ -230,7 +230,7 @@ export function AddMemberButton({ guildId, onDone }: { guildId: string; onDone: 
   );
 }
 
-export const DISBAND_PHRASE = 'DISBAND GUILD';
+const DISBAND_PHRASE = 'DISBAND GUILD';
 
 export function DisbandPanel({ guildId, guildName }: { guildId: string; guildName: string }) {
   const router = useRouter();

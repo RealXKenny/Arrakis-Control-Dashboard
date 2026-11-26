@@ -2,7 +2,6 @@ import { engineError, type GameModule } from '../engine/types';
 import { payoutFromBps } from '../fairness/rng';
 import {
   DICE_SIDES,
-  EDGE_NUMERATOR,
   MAX_WINNING,
   MIN_WINNING,
   isWin,
@@ -11,7 +10,7 @@ import {
   type DiceParams,
 } from './dice-math';
 
-export { DICE_SIDES, EDGE_NUMERATOR, MAX_WINNING, MIN_WINNING, isWin, multiplierBps, winningOutcomes };
+export { DICE_SIDES, MAX_WINNING, MIN_WINNING, isWin, multiplierBps, winningOutcomes };
 export type { DiceParams };
 
 /**

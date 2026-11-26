@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** Pure and browser-safe: the same rules run in the form (for fast feedback) and on the server (for trust). */
-export const emailSchema = z.string().trim().toLowerCase().min(3).max(254).pipe(z.email());
+const emailSchema = z.string().trim().toLowerCase().min(3).max(254).pipe(z.email());
 
 export const loginSchema = z.object({
   email: emailSchema,

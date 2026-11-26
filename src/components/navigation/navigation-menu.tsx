@@ -70,7 +70,7 @@ export function NavigationDirectLink({ item, pathname }: { item: NavigationItem;
   );
 }
 
-export function NavigationMenuItems({
+function NavigationMenuItems({
   items,
   pathname,
   onNavigate,

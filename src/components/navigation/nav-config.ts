@@ -407,6 +407,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             order: 20,
           },
           {
+            id: 'community-dungeons',
+            label: 'Dungeon leaderboard',
+            href: '/dungeons',
+            icon: 'status',
+            description: 'Fastest dungeon runs by dungeon and difficulty, plus your own records.',
+            order: 22,
+          },
+          {
             id: 'community-calendar',
             label: 'Community calendar',
             href: '/calendar',
@@ -445,6 +453,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             icon: 'changelog',
             description: 'Release notes and dashboard improvements.',
             order: 10,
+          },
+          {
+            id: 'roadmap',
+            label: 'Roadmap',
+            href: '/roadmap',
+            icon: 'changelog',
+            description: 'Planned, in-progress and released dashboard and bot features.',
+            order: 15,
           },
           {
             id: 'service-status',

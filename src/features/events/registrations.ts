@@ -35,7 +35,7 @@ export const eventRegistrationSummarySchema = z
   .strict();
 export type EventRegistrationSummary = z.infer<typeof eventRegistrationSummarySchema>;
 
-export function eventRegistrationOpen(event: CommunityEvent, now: number): boolean {
+function eventRegistrationOpen(event: CommunityEvent, now: number): boolean {
   return Boolean(
     event.visibility === 'published' &&
     ['upcoming', 'open'].includes(event.status) &&

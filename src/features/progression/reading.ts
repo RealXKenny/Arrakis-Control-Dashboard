@@ -12,7 +12,7 @@ const MAX_ROWS = 24;
 const MAX_ASSETS = 25;
 const MAX_JOURNEY = 1000;
 const MAX_SCHEMATICS = 200;
-export const journeyGroups = ['story', 'contract', 'codex', 'tutorial'] as const;
+const journeyGroups = ['story', 'contract', 'codex', 'tutorial'] as const;
 
 const decimal = z.string().regex(/^-?(0|[1-9][0-9]{0,29})$/);
 const named = z.object({ name: z.string().min(1).max(80), value: decimal.nullable() }).strict();
@@ -304,7 +304,7 @@ function namedChanges(
       });
   }
 }
-export function assetChanges(previous: Snapshot, next: Pick<Snapshot, 'bases' | 'vehicles'>) {
+function assetChanges(previous: Snapshot, next: Pick<Snapshot, 'bases' | 'vehicles'>) {
   const result: { kind: 'Base' | 'Vehicle'; change: 'added' | 'removed'; name: string }[] = [];
   const unobserved: string[] = [];
   for (const [key, kind] of [

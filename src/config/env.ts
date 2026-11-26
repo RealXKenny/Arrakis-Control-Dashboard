@@ -67,6 +67,29 @@ const serverEnvSchema = z.object({
   DUNE_API_KEY: z.string().min(1).optional(),
   /** Bearer token for the Console's Discord adapter. The adapter accepts only its own token, never DUNE_API_KEY. */
   DUNE_ADAPTER_TOKEN: z.string().min(1).optional(),
+  /** Default Console read timeout in milliseconds. Writes keep their own longer limit; probes keep their shorter one. */
+  DUNE_API_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).optional(),
+  /** How long a shared dungeon leaderboard reading counts as fresh before one background refresh is allowed. */
+  DUNGEON_LEADERBOARD_REFRESH_SECONDS: z.coerce.number().int().min(60).max(3_600).default(300),
+  /** Public roadmap: GitHub issues carrying ROADMAP_LABEL in these public repositories, refreshed at this interval. */
+  ROADMAP_REPOSITORIES: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}(?:\s*,\s*[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}){0,4}$/)
+    .default('RealXKenny/Arrakis-Control-Dashboard,RealXKenny/Arrakis-Control-Bot'),
+  ROADMAP_LABEL: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9 :._-]{1,50}$/)
+    .default('roadmap'),
+  ROADMAP_REFRESH_SECONDS: z.coerce.number().int().min(300).max(86_400).default(1_200),
+  /** Optional read-only GitHub token (public repository read access only). Raises the anonymous rate limit. */
+  ROADMAP_GITHUB_TOKEN: z
+    .string()
+    .min(20)
+    .max(255)
+    .regex(/^[A-Za-z0-9_]+$/)
+    .optional(),
   /**
    * Solaris Exchange: real Solaris deposits, withdrawals and play. Off unless explicitly set to `true`; the server
    * refuses every wager and transfer while it is off. See docs/features/solaris-exchange.md before enabling.

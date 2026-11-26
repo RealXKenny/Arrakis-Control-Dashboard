@@ -25,7 +25,7 @@ import {
  * gate and the table limits live in the service layer; the engine itself enforces the per-round payout ceiling.
  */
 
-export const MAX_HOLDS = 4;
+const MAX_HOLDS = 4;
 
 export type RoundStorePort = {
   create(round: RoundRecord): Promise<{ round: RoundRecord; created: boolean }>;
@@ -65,7 +65,7 @@ function game(deps: EngineDeps, id: string): GameModule {
   return found;
 }
 
-export function toView(deps: EngineDeps, round: RoundRecord): RoundView {
+function toView(deps: EngineDeps, round: RoundRecord): RoundView {
   const finished = round.status === 'settling' || round.status === 'settled' || round.status === 'voided';
   return {
     id: round.id,

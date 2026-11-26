@@ -6,7 +6,7 @@ import { describeKind, progressOf, satisfied, type Measurement } from '../engine
 import { fail } from './store';
 
 const decimal = z.string().regex(/^(0|[1-9][0-9]{0,24})$/);
-export const baselineSchema = z
+const baselineSchema = z
   .object({
     version: z.literal(1),
     pawn: z.string().regex(/^[1-9][0-9]{0,19}$/),

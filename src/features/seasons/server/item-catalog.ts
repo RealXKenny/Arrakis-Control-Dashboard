@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { getServerEnv } from '../../../config/env';
 import { getDuneClient } from '../../../server/integrations/dune';
+import { readShared, type CachePolicy } from '../../../lib/cache/shared-cache';
 import type { CatalogItem } from '../engine/economy';
 
 const rowSchema = z.object({
@@ -15,7 +16,20 @@ const rowSchema = z.object({
   requiredDlc: z.string().max(200).optional(),
 });
 const MAX_ROWS = 10000;
-let cache: { at: number; value: { items: CatalogItem[]; hash: string } } | null = null;
+// Static game metadata: one shared reading refreshed twice a day, kept for a week as the last known good copy.
+const catalogPolicy: CachePolicy<CatalogItem[]> = {
+  name: 'item-catalog',
+  version: 1,
+  freshMs: 12 * 3_600_000,
+  retainMs: 7 * 86_400_000,
+  maxBytes: 6 * 1024 * 1024,
+  lockMs: 60_000,
+  validate: (raw) => {
+    const items = Array.isArray(raw) ? normalizeCatalog({ rows: raw }) : normalizeCatalog(raw);
+    // An empty catalog is never a usable reward source; keep the previous one instead.
+    return items.length ? items : undefined;
+  },
+};
 export const catalogHash = (items: ReadonlyArray<CatalogItem>) =>
   createHash('sha256')
     .update(
@@ -25,7 +39,7 @@ export const catalogHash = (items: ReadonlyArray<CatalogItem>) =>
         .join('\n'),
     )
     .digest('hex');
-export function normalizeCatalog(payload: unknown): CatalogItem[] {
+function normalizeCatalog(payload: unknown): CatalogItem[] {
   const rows = (payload as { rows?: unknown } | null)?.rows;
   if (!Array.isArray(rows) || rows.length > MAX_ROWS) throw new Error('Invalid item catalog response.');
   const out: CatalogItem[] = [];
@@ -49,17 +63,15 @@ export function normalizeCatalog(payload: unknown): CatalogItem[] {
 export async function loadItemCatalog(): Promise<{ items: CatalogItem[]; hash: string } | null | undefined> {
   const env = getServerEnv();
   if (!env.DUNE_API_URL || !env.DUNE_API_KEY) return undefined;
-  if (cache && Date.now() - cache.at < 600000) return cache.value;
   try {
-    const payload = await getDuneClient().request('GET', '/api/admin/items/catalog', {
-      query: { limit: MAX_ROWS },
-      timeoutMs: 15000,
-      retryRead: true,
-    });
-    const items = normalizeCatalog(payload);
-    if (!items.length) return null;
-    cache = { at: Date.now(), value: { items, hash: catalogHash(items) } };
-    return cache.value;
+    const reading = await readShared(catalogPolicy, [env.DUNE_API_URL], () =>
+      getDuneClient().request('GET', '/api/admin/items/catalog', {
+        query: { limit: MAX_ROWS },
+        timeoutMs: 15000,
+        retryRead: true,
+      }),
+    );
+    return { items: reading.data, hash: catalogHash(reading.data) };
   } catch {
     return null;
   }

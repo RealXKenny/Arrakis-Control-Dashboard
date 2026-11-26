@@ -4,6 +4,39 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-11-26
+
+### New Features
+
+- **Dungeon leaderboard** (`/dungeons`, under Community): the fastest run for every dungeon and difficulty, recent runs with dungeon and difficulty filters and paging, and your own personal bests from your linked character. It reads only the Console's documented `/api/dungeons/leaderboard` and `/api/dungeons/runs` endpoints, shows when the data was last updated, refreshes automatically while the page is visible, and keeps the last good reading with a clear "Cached" label when the Console is unreachable. Party members who deleted their character stay unnamed.
+- **Public roadmap** (`/roadmap`): planned, in-progress, testing and released work from both Arrakis Control repositories. Only issues carrying the `roadmap` label appear; anything labelled security, private, internal, confidential or embargoed never does, pull requests are excluded, and a target version or due date is shown only when a maintainer set one on the issue's milestone.
+- **Automatic updates for Pterodactyl**: the egg now starts an update supervisor that installs verified releases at startup and on a schedule (stable or prerelease channel, version pin, interval, optional UTC maintenance window, optional read-only token). Every file is checked against the release's checksum, GitHub's digest and a new per-file manifest; the release is built in a staging folder before the dashboard is stopped; any file you changed or added is never overwritten, and a version that does not start is rolled back and skipped.
+
+### Improvements
+
+- A central Redis cache now backs Console reads shared by every viewer (map layers, online count, player totals, restart history, item catalog, hub points of interest, dungeon records and the roadmap): one upstream request per refresh no matter how many people are watching, background refresh of stale data, last-known-good readings during outages, distributed refresh locks across instances, versioned and validated entries, and Redis Cluster support. Security-sensitive operations never use cached data. See `docs/architecture/caching.md`.
+- Dune Console reads now have a configurable timeout (`DUNE_API_TIMEOUT_MS`, 20 seconds by default; the status probe stays at most 10 seconds), up to two jittered retries that honour `Retry-After`, and a circuit breaker that fails fast during an outage. Writes are never retried.
+- The `Provider network failure … /api/server/status duration ms=5001` warning is gone: individual recoverable failures are logged at DEBUG, a sustained outage produces one warning (plus a short summary at most every ten minutes) and recovery one info line. Failed writes are still warned about.
+- Pages that refresh in the background pause while the tab is hidden and no longer refetch data the server already rendered.
+- The Pterodactyl egg now offers every application setting (live chat, RabbitMQ TLS, casino, Poker Activity, event reviewers, Console timeout, dungeon and roadmap settings) and hides RabbitMQ and GitHub credentials from panel users. Tests keep the egg, `.env.example` and the environment schema in sync.
+
+- Redis connection problems are now logged with their reason, such as `ECONNREFUSED`, `ETIMEDOUT` or `WRONGPASS`: one warning when the connection drops and one info line when it recovers, instead of silence. Warnings like "Community event announcements are temporarily unavailable" and "Population sample unavailable" now include that reason too. Connection strings are scrubbed from these messages.
+- Starting the dashboard before a production build exists now stops with a clear message to run `npm run build` (or rebuild the Pterodactyl server) instead of a Next.js error.
+- Dependency updates: Next.js 16.4.6, React 19.3.1, amqplib 2.4.2, and patch releases of Vitest, Playwright, Tailwind CSS, Prettier and the Next.js ESLint config.
+- Code cleanup with no change in behaviour: removed unused code (an old Discord sign-in exchange, unused vehicle, market and base helpers, and test-only hooks nothing called), stopped exporting values only used in their own file, and dropped two unused packages, `@fontsource/jetbrains-mono` (the font is bundled locally) and `@types/amqplib` (amqplib ships its own types).
+- Background timers and event listeners no longer hand promises to callbacks that ignore them, and the release workflow starts only for CI runs on `main`, so pushes to pull requests and release branches no longer create a skipped release run.
+
+### Fixes
+
+- Automatic seasons now sort each member's generated objectives into the category the game tracks them in: XP and level goals under Levels, story under Story, contracts under Side quests, codex entries under Exploration, and other journey goals under Achievements. Before, all 100 sat under Achievements and the other cards read "0/0 No objectives configured". Categories a season does not use are hidden; Faction stays hidden because faction reputation is not verified game evidence.
+- Season progress sync no longer stops for good with an `Unexpected token '<'` JSON error when a proxy or restarting server answers with a web page, a timeout or a rate limit. It explains what happened, shows the HTTP status, and retries automatically after 30 seconds, then 1, 2 and up to 5 minutes. Definite refusals, such as a missing linked character, still stop with their reason.
+- Guild logos that are missing or fail to load now fall back to the guild's initials on the guild page and in the guild directory, even when the image failed before the page finished loading, instead of showing a broken image.
+
+### Upgrade Notes
+
+- Pterodactyl servers created from an older egg keep starting the dashboard directly. To get automatic updates, import the new egg (or change the startup command to `node scripts/deployment/updater/supervisor.mjs`) as described in `docs/deployment/automatic-updates.md`. **Reinstall** no longer overwrites an existing installation.
+- New optional settings: `DUNE_API_TIMEOUT_MS`, `DUNGEON_LEADERBOARD_REFRESH_SECONDS`, `ROADMAP_REPOSITORIES`, `ROADMAP_LABEL`, `ROADMAP_REFRESH_SECONDS`, `ROADMAP_GITHUB_TOKEN` and the `AUTO_UPDATE_*` settings. All have safe defaults.
+
 ## [2.0.0] - 2026-11-25
 
 ### New Features
@@ -210,7 +243,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - The dashboard no longer posts changelogs to Discord; the Arrakis Control bot is the only changelog publisher and reads `/api/v2/changelog`. `CHANGELOG_CHANNEL_ID` and `CHANGELOG_AUTO_ANNOUNCE` were removed. Community event announcements are unchanged.
 - The Overland map page, navigation entry and image: the Console reports neither points of interest nor a live position for it.
 - The administrator workspace, administrator APIs, associated configuration and manual reconciliation interfaces. Scoped server-side workers handle recovery and quarantine uncertain outcomes.
-- The tracked `CLAUDE.md` project guide and Claude-specific validation; shared coding-agent instructions live in `AGENTS.md`.
+- The tool-specific project guide and its validation; shared coding-agent instructions live in `AGENTS.md`.
 - The More navigation menu, the per-tool agent rule folders (Cursor, Windsurf, Cline, Roo, Continue, Codex, Copilot), the Codex, Kimi and Gemini companion files and the retired `CONSOLE_*`, `ADMIN_CONSOLE_API_KEY` and `ADAPTER_TOKEN` variables.
 
 - Root Docker build, Compose and ignore files, container entrypoint scripts and the custom application image. Releases use the standard Pterodactyl Node.js runtime, and optional chat starts through the existing Node.js launcher without an additional required process manager.
@@ -243,343 +276,3 @@ All notable changes to Arrakis Control Dashboard are documented here.
 - Community events initialize the first competition once per Redis store and retain edits across restarts. Published events are considered for automatic Discord announcements at startup and after saves; configure the bot and channel before enabling this behavior in production.
 - Keep `CASINO_SOLARIS_ENABLED=false` until the transfer and reconciliation workflow has been independently verified for your deployment. Review `CASINO_MAX_WAGER` and `CASINO_MAX_PAYOUT` before enabling real wagers; there is no demo-money fallback.
 - These notes describe the implemented code, not a claim that every integration is production-verified. Live game delivery, disposable standalone/Cluster Redis scripts, Discord channel permissions and real Solaris transfers require their respective infrastructure checks. See the feature and progress guides under `docs/` for remaining limitations.
-
-## [1.20.6] - 2026-11-05
-
-### Added
-
-- Confirmation dialogs now open centred and lay out their typed-phrase prompt on one line (found while recording showcase footage); a test guards the position.
-- Statistics screen under Control center: a readings table with value, status (available / not reported / source failed / not configured), source and freshness, session-only trends, market and Discord-adapter statistics with their own sources, and explicit limits (no per-player metrics, event history or long-term trends).
-- Accessibility and visual pass on the administration screens: pillbox-styled buttons and visible focus rings for every manager control, underlined accent links, short row-action labels with full accessible names, dialog focus returned to the opener, and a regression test for overflow at desktop/tablet/mobile, unnamed controls and dialog focus.
-- Dedicated Live map screen (capabilities, explicit map and partition selection that never starts a map, player/base/storage/service/marker/spice/POI layers with links to management records, partition-scoped player teleport with confirmation).
-- Dedicated Guild membership screen (guild directory, roster with ranks, promote/demote/make-leader/remove/add with explicit confirmations, disband with cleanup warning), Discord integrations screen (adapter health/version/readiness/services/ports, population and activity, capability catalog, honest not-configured and denied-scope states, restricted adapter writes listed as unavailable) and Public directory status screen with a Console handoff for editing and claiming. Fixed guild rows being labelled generically.
-- Dedicated Updates screen (game and stack update checks that only look, automatic-update settings) and Addons screen (installed and community lists, bounded addon file inspection) with an explicit Console handoff for every restricted apply, repair, install, enable, disable and removal.
-- Dedicated Care packages screen (capabilities, enable/disable and scan with Console phrases, eligible players, grants/history) and Admin tools screen (broadcast and map chat, item/vehicle/skill-module catalogs, Landsraad overview and task goals, message of the day/announcement/transfer settings with restore-defaults, administrator history). Grants and other writes whose confirmation wording is undocumented stay in the full forms.
-- Dedicated Server screen (status, guarded start/stop/restart and per-service restart, shutdown protection, readiness/ports/doctor with repairs and cleanup, restart schedule and countdown cancel/restart-now, IP-change restart, title, write-only Funcom token) and Logs screen (service selection, bounded sanitized output, download, SSE live stream with stop/reconnect and a 64 KiB tail). The Console records no administrator command history, so none is shown.
-- Dedicated Market screen (statistics, items, time/trader-filtered transactions, read-only probe versus confirmed buyback/seed runs, sweep log, safety-backup toggle with the Console phrase, seed-plan activation/rename/CSV export, seller and blacklist configuration).
-- Dedicated Backups screen (game backups, encrypted system backups with required preview before an explicit apply, passphrases never retained, automatic schedule) and Maps & worlds dashboard (maps/status, memory and scaling, settings and pending restarts, Deep Desert/Sietches/spicefields/terminals).
-- Dedicated Bases & storage screen (base detail with generators/water maintenance, auto-refill enrollment and settings, access, export, deletion; storage container directory with item adds and export; pending-queue cancellation) plus Players and Vehicles administration screens: searchable paginated lists, URL-preserved detail views (profile, inventory, progression, moderation, cargo, access, pending deletions) and accessible confirmation dialogs; the generic API forms stay available under Advanced tools.
-- Grouped administration navigation (six sections, tabs, breadcrumbs, URL/back-forward state, shared `PillNav`), a Console-only handoff screen, and an operation coverage matrix in the generated API report.
-- Added an admin control-center overview with API-backed server health, CPU/memory, player/guild/base/vehicle/map/backup statistics, service status, session trends, and per-source response times. Added Setup & connections diagnostics, a searchable complete API reference, and operation purpose/credential/behavior guides. Missing data and scope failures remain visible without hiding successful readings.
-
-- Added persistent unread admin-message badges to My Guild and unread leader-reply badges to administration, Guild oversight, and individual guilds. Counts clear only when the relevant support messages are viewed.
-
-- Expanded administration into grouped tools with labeled request forms, filterable/paginated results, and contextual player, guild, base, and vehicle actions. Added guild oversight, administrator member/rank/disband controls, read-only application conversation inspection, and private administrator–guild leader support chats in My Guild Settings.
-
-- Added a Guilds page in Community where members can browse guild recruitment listings and joining details. Leader settings stay under My Guild.
-- Added leader-only Guild settings to edit joining requirements and contact details, and publish or unlist a guild.
-- Accepting an application now adds the applicant’s verified linked character to the guild as a Member. Failed joins keep the previous application status; Console enforces guild capacity, faction compatibility, and existing membership.
-- Guild listings now show their saved logos and offer a joining application form. Applicants can check their application status; guild leaders can review, accept, decline, and remove applications in My Guild → Settings.
-- Guild leaders can add required or optional application questions. Submitted answers keep their original question wording. Applicants and the current guild leader can exchange private live chat messages from the application and review inbox.
-- Application forms are now built entirely by the guild owner, with no preset fields. Questions support short answers, paragraphs, dropdown choices, time-zone dropdowns, checkboxes, and numbers. Existing submissions retain their original answers.
-- Guild leaders can manage members beside each name: promote Members to Officers, demote Officers, confirm leadership transfers, and remove members. Added member invitations and a typed-confirmation disband action in Settings. Every change rechecks current leadership and member ranks; disbanding also clears saved recruitment data.
-
-### Removed
-
-- Clerk sign-in. Discord OAuth is the only sign-in: the `/sign-in` page, the `/auth/complete` bridge, the Clerk middleware, `AUTH_PROVIDER`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and the `@clerk/nextjs` dependency are gone, and `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` are always required in production.
-
-### Changed
-
-- Existing applications show Check status and Chat with reviewer on guild cards, with a persistent unread reply badge that clears when messages are viewed.
-
-- Refreshed Guilds listings with larger logo tiles, recruiting badges, compact requirement previews, question counts, and aligned actions. Details and applications expand across the row for easier reading on desktop and mobile.
-
-### Security
-
-- Guild settings and logo changes verify the linked character’s guild leadership by character ID. Matching character names cannot authorize edits.
-
-### Fixed
-
-- Moved the image cache into Pterodactyl’s writable server storage and prepare it before startup, preventing image cache directory errors on containers with a read-only application filesystem.
-- Guild leader settings now verify both linked pawn and controller IDs instead of relying on a cached single ID. Settings visibility uses the same server-verified permission as saving changes.
-
-## [1.20.5] - 2026-11-05
-
-### Added
-
-- Added an optional Clerk sign-in. Members still sign in with Discord, and the dashboard still checks that they belong to the community and have the required role. Signing out also ends the Clerk session.
-- Added more Choam and Harkonnen building pieces to base previews, with their matching surface textures.
-- Expanded base previews with additional Atreides, CHOAM, and Desert Mechanic building pieces.
-- Added more detailed vertical and horizontal pentashield shapes to base previews.
-- Restored separate glass panes in supported windows and replaced the unrelated model used for Desert Mechanic Prudence doors.
-- Added the separately exported Atreides Outpost window panes to the matching window pieces.
-
-### Changed
-
-- Refreshed the dashboard’s look with smoother controls, cards that lift gently on hover, and content that glides into place as it loads. If your device is set to reduce motion, the animations are turned off.
-- Base previews now use full-detail building models taken from the game, with surface textures on most pieces. Detailed previews also download much less data than before.
-- Windows, roofs, and machines from more building sets now show their glass panes, including Smuggler, Water Shipper, Sardaukar, and CHOAM pieces.
-- Desert Mechanic doors now appear in base previews with their own door model.
-- The top navigation now scrolls away with the page instead of staying pinned to the screen.
-- Each base preview load now refreshes its model and surface files so the browser does not reuse an older cached copy.
-- Grouped the Atreides Outpost building pieces and their shared surface images into separate sets so the base preview can find and update them more easily.
-- Adjusted the foundation floor’s hex pattern to look closer to the reference.
-- Corrected color handling that made some Atreides surfaces look muddy.
-
-### Fixed
-
-- Announcements load again after the announcement service moved to a new web address.
-
-### Security
-
-- Updated the dashboard’s web framework and supporting libraries to versions that close several known security issues.
-- Pages now allow only the scripts the dashboard sends with each visit, keeping the strict script protection in place after the update.
-
-## [1.20.4] - 2026-10-30
-
-### Added
-
-- Vehicle cards now show matching pictures, making vehicles easier to recognize.
-- Added surface images for machinery and building pieces used in bases 2010 and 1250. More pieces should now show their intended look instead of plain gray.
-- Added a full-screen base preview with desert scenery and day and night lighting.
-- Grouped the top navigation into **Bases** and **Vehicles**. **Base Market** is now under **Bases**.
-- Added a progress bar and a quick early view while large bases finish loading.
-
-### Changed
-
-- The preview remembers the saved view of your base and loads more building pieces together to reduce waiting.
-- Reloading a preview checks for updated model and surface files and downloads newer copies when available.
-
-### Fixed
-
-- Corrected material colors and surface patterns that left some pieces gray or too dark.
-- Prevented surface images from being applied to pieces that cannot use them, which could make them appear as dark specks.
-- Removed an unrelated shield shape that appeared in place of some animated doors.
-- Updated the available building pieces when visual files change and clarified the preview loading message.
-- Kept a basic preview available when the detailed view takes too long or cannot load.
-
-## [1.20.3] - 2026-10-29
-
-### Added
-
-- Choose which side of a base faces forward and take a picture when uploading or sharing it. The picture includes the whole visible base.
-- Your chosen view and picture are saved with your base and restored when you open it again.
-- Base owners can change a shared listing’s picture without sharing the base again or changing its place in the listings. Older listings can add a picture too.
-
-### Changed
-
-- Shared base cards use the picture selected by the owner.
-- A picture is now required when sharing a base. Older listings remain available, and their owners can add a picture before community import is offered.
-
-## [1.20.2] - 2026-10-28
-
-### Added
-
-- Added a community announcements panel across the dashboard.
-- Shared base listings can show a straight-on picture above the piece count.
-- Added **Import to my character** beside **Inspect base**, with clear messages for layouts that cannot be imported.
-
-### Fixed
-
-- Restored detailed previews for owned and shared bases, including camera and front-facing controls.
-- Corrected building position, direction, and size so pieces line up with the base export, including left- and right-facing parts.
-- Fixed the shared-base list so newer listings appear first, even when there are many.
-
-## [1.20.1] - 2026-10-27
-
-### Added
-
-- Added a front-facing control so you can compare bases from the same direction.
-- Added previews for upright and sideways pentashield pieces.
-- Added **Base Market**, where owners can share bases and the community can browse by author or size, download layouts, and view available previews.
-
-### Changed
-
-- Kept each building piece in its exported position while letting you turn the whole preview to a chosen direction.
-- Added available surface images for owned bases, including Atreides Outpost surfaces. Pieces without matching images keep a fallback appearance.
-- Increased the size limit for base previews and corrected sloped wall, stair, and ramp placement.
-- Refreshed the landing page and improved the exchange, map, inventory, market, and vehicle screens.
-
-## [1.2.0] - 2026-10-26
-
-### Added
-
-- Added rotatable 3D maps for Hagga Basin and the Deep Desert, with location search, a compass, a scale, full-screen viewing, and terrain detail controls. A regular map view is available on devices that cannot show the 3D map.
-- Added map markers that follow the terrain for spice fields, shipwrecks, and flour-sand deposits.
-- Added an optional 3D preview for your bases under **My Bases**, with controls to turn, zoom, fit, and view from above. The preview shows how many building pieces it could display.
-- Added share-card previews for the dashboard and its community page.
-
-### Changed
-
-- Updated the landing page, workspace, maps, inventory, and dialogs with a consistent look that adapts to different screen sizes.
-- The public landing page now opens first. Older home-page links still work, and the signed-in workspace remains available.
-- Seasonal colors now follow your local date and update at midnight.
-- Improved map marker alignment while moving or zooming and removed duplicate markers.
-- Discord sign-in now begins only when you select it.
-
-### Security
-
-- Kept sign-in, guild membership, administrator access, and private base access checks in place.
-- Kept private base exports and account credentials out of public pages.
-- Public share cards show dashboard information and links, not member activity.
-
-### Known limitations
-
-- The dashboard has not been confirmed to support 800,000 people at once. That would require planning and testing with the servers that host it.
-- Community rewards were planned but were not included in this release.
-
-## [1.1.3] - 2026-10-26
-
-### Added
-
-- Added a workspace for approved administrators.
-- Added a searchable list of server actions, with forms, readable results, confirmation before changes, file transfers, and cleaned-up activity details.
-- Added an optional administrator sign-in credential, separate from regular panel access.
-
-### Changed
-
-- Replaced the Dune-inspired interface with a simpler charcoal design across the dashboard, maps, inventory, and market.
-- Simplified the landing page and made seasonal changes affect only its accent color.
-
-### Security
-
-- Checked administrator access for every action, kept administrator credentials private, limited file transfers, and removed sensitive details from activity records.
-- Some administrator actions depend on the connected server’s permissions and were not checked against a live server.
-
-## [1.1.2] - 2026-10-26
-
-### Added
-
-- Added seasonal color themes for holidays and a way to preview a theme using a link.
-- Added an optional read-only connection for sharing guild-wide world summaries with a bot.
-- Added safeguards to help the dashboard stay responsive when many requests arrive at once.
-
-### Changed
-
-- Reused recent map information to reduce repeated requests and made busy-server messages clearer, including when to try again.
-- Improved startup and shutdown messages.
-- Bot access is separate from sign-in and server credentials. The bot cannot make changes or act as a user.
-
-### Known limitations
-
-- Support for 800,000 people at once has not been confirmed and would require additional planning and testing.
-
-## [1.1.1] - 2026-10-19
-
-### Changed
-
-- Live map positions for sandworms, non-player characters, civilians, sandstorms, and Coriolis storms are now available to all signed-in members of the configured guild. A separate staff role is no longer needed.
-- Sign-in checks and player and vehicle privacy protections remain in place.
-
-## [1.1.0] - 2026-10-19
-
-### Added
-
-- Added optional live information to Hagga Basin and Deep Desert maps, including sandworms, non-player characters, civilians, sandstorms, and Coriolis storms.
-- Added controls for choosing a game instance and showing or hiding marker types. The map explains when live information is unavailable.
-
-### Security
-
-- At first, live information was limited to approved guild members with an extra staff role. That extra role was removed in version 1.1.1.
-- Anonymous player and vehicle records are excluded. Live updates pause while a map is hidden and stop if access is denied.
-
-## [1.0.7] - 2026-09-20
-
-### Changed
-
-- Cleaned up routine server messages so important warnings and errors are easier to find.
-
-## [1.0.6] - 2026-09-20
-
-### Added
-
-- Added settings for choosing the dashboard’s network address and port when running it yourself, with sensible defaults.
-- Added checks to catch invalid address and port choices before startup.
-
-## [1.0.5] - 2026-09-20
-
-### Added
-
-- Added a change-history window inside the dashboard. Select the version in the footer to read it.
-- Replaced the map pictures with detailed versions and split them into smaller pieces to help them load faster.
-- Added Deep Desert terrain that changes with the current Coriolis layout, plus a regular map view for devices that cannot show the terrain.
-- Added an optional A1–I9 Deep Desert grid and a countdown to the next Coriolis cycle.
-- Added suggested Market Board prices based on the lowest current offer and the server’s buyback rate.
-
-### Changed
-
-- Improved map fit and zoom, marker visibility, status information, phone and tablet spacing, and seasonal colors.
-- Made startup and server messages easier to understand.
-- Improved protection for sign-in, sessions, shared images, and large file transfers.
-
-### Fixed
-
-- Corrected map cropping and alignment between terrain, grid, and markers.
-- Added a regular map view when detailed terrain cannot load.
-- Preserved exact large market prices and quantities in totals.
-
-## [1.0.4] - 2026-09-08
-
-### Changed
-
-- Updated how the dashboard saves sign-in sessions, guild pictures, population history, and base import records. People running their own installation need to update its storage connection setting.
-
-### Fixed
-
-- Restored sign-in and sign-out, corrected errors when returning to the home page, and removed a startup warning.
-
-### Upgrade notes
-
-- The new storage starts empty, and old saved information is not copied. Everyone will need to sign in again. Guild pictures, population history, and import records will start over.
-
-## [1.0.3] - 2026-09-08
-
-### Added
-
-- Added guild discovery, guild pictures, member information, and details connecting characters to their guild.
-- Refreshed the landing page with community links, live server status, and sign-in actions.
-- Improved the workspace overview, player details, market, population screens, and shared inventory appearance.
-
-### Changed
-
-- Improved small-screen layouts, sign-in sessions, and startup messages.
-
-## [1.0.2] - 2026-09-07
-
-### Added
-
-- Added the original Crimson Skies workspace with character details, searchable storage, guild information, and holdings.
-- Added Hagga Basin and Deep Desert maps with marker controls, spice status, and owned-resource details.
-- Added population history with a 24-hour graph, Landsraad pictures, Discord avatars, and artwork for 1,514 items.
-- Added private base import under **My Bases**, with checks for valid layouts, character selection, and duplicate actions.
-
-### Changed
-
-- Kept workspace navigation working across reloads and browser back and forward. Older map links now open the workspace.
-- Kept global market information available while personal filters are used and explained partial market results more clearly.
-- Removed unused live-information collection and diagnostic features.
-
-### Known limitations
-
-- Actual in-game base delivery, continuous 24-hour data collection, and a full 12-hour session were not confirmed for this release.
-- Publishing the dashboard files did not put the website online; the site still needs to be set up and started by its owner.
-
-## [1.0.1] - 2026-09-07
-
-### Added
-
-- Added retries for temporary player-profile and market loading errors.
-- Improved market search and page navigation, and made expired sign-in messages clearer.
-- Added clearer startup checks and sign-in activity messages.
-
-### Changed
-
-- Sign-in sessions now last up to 12 hours, and development sessions remain available across page reloads.
-- Improved screen spacing, character headers, and landing-page controls on different screen sizes.
-- Kept market listings visible if totals or buyback settings fail, with a warning when results may be incomplete.
-
-### Fixed
-
-- Preserved very large market quantities and prices and accepted more buyback setting formats.
-- Corrected sign-out redirects and made session-ending failures visible.
-- Added protection against cross-site sign-out requests and strengthened session privacy.
-
-## [1.0.0] - 2026-09-06
-
-### Added
-
-- Released the Arrakis Control Dashboard for managing a Dune: Awakening server through its Console.
-- Added Discord sign-in and checks for membership in the configured guild and role.
-- Added player status, bases, vehicles, inventory, market, and map screens.
-- Added protected base exports and settings for choosing the dashboard’s network address.
-- Added safer sign-in sessions, request limits, clearer startup messages, and protection against exposing sensitive details.

@@ -137,7 +137,7 @@ function parseRecord(value: unknown): EventRegistrationRecord {
   return { revision, entries };
 }
 
-export async function readEventRegistration(eventId: string): Promise<EventRegistrationRecord> {
+async function readEventRegistration(eventId: string): Promise<EventRegistrationRecord> {
   try {
     const raw = await storage().eval(
       READ,

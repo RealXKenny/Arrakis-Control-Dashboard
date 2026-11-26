@@ -33,7 +33,7 @@ export function projectMemberKey(guildId: string, memberId: string) {
 }
 
 type Access = Awaited<ReturnType<typeof requireGuildMember>>;
-export function projectActor(guildId: string, access: Access): ProjectActor {
+function projectActor(guildId: string, access: Access): ProjectActor {
   if (!access.memberId || access.roster.length > ROSTER_LIMIT)
     throw new AppError('The current guild roster could not be verified.', 503, 'GUILD_VERIFICATION_UNAVAILABLE', true);
   const roster = [

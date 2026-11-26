@@ -17,7 +17,7 @@ export type TransferState =
 
 export const TERMINAL_STATES: ReadonlySet<TransferState> = new Set(['completed', 'failed']);
 
-export const TRANSITIONS: Readonly<Record<TransferState, readonly TransferState[]>> = {
+const TRANSITIONS: Readonly<Record<TransferState, readonly TransferState[]>> = {
   created: ['debit_sent', 'credit_sent', 'failed'],
   debit_sent: ['game_applied', 'needs_reconciliation', 'failed'],
   credit_sent: ['game_applied', 'needs_reconciliation', 'failed'],

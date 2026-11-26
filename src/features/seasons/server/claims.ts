@@ -46,7 +46,7 @@ async function linked(owner: string) {
 }
 /** A persisted send marker older than this is treated as an interrupted send and parked, never resent. */
 const STUCK_MS = 120000;
-export const CLAIM_ALL_BATCH = 10;
+const CLAIM_ALL_BATCH = 10;
 type Claims = Record<string, ClaimRecord>;
 export type ClaimState = 'locked' | 'available' | 'claiming' | 'claimed' | 'pending' | 'uncertain' | 'unavailable';
 

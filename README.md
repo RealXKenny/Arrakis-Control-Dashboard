@@ -59,6 +59,8 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - **Guild management:** roster ranks, member addition/removal, leadership controls, settings, and leader support conversations.
 - **Recruitment and applications:** customizable application questions, applicant status, leader review, private chat, and unread receipts.
 - **Base marketplace:** owner-verified blueprint sharing, captured front pictures, interactive previews, and checked imports.
+- **Dungeon leaderboard:** fastest run per dungeon and difficulty, recent runs with filters and paging, and your own personal bests, read only from the Console's documented dungeon endpoints and shared through the Redis cache. See [Dungeon leaderboard](docs/features/dungeon-leaderboard.md).
+- **Public roadmap:** approved, labelled GitHub issues from both Arrakis Control repositories with status, area and confirmed milestone versions only; security and private items are never shown. See [Roadmap](docs/features/roadmap.md).
 - **Poker Activity:** optional play-money Texas Hold'em for up to four players, with AI players to fill empty seats, that members open as a Discord Activity launched by the main bot. See [Poker Activity](docs/features/poker-activity.md).
 
 ### Integration and access
@@ -68,6 +70,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - Redis standalone or Cluster support for sessions, rate limits, and feature records.
 - A versioned, token-authorized, read-only bot API for sanitized world summaries.
 - Release, progress, and community event announcements through the main Discord bot using Components V2 containers.
+- A shared Redis cache with stale-while-revalidate, last-known-good readings, distributed refresh locks and per-family metrics, so many viewers cost one Console request and an outage shows cached data with a clear stale label. See [Caching](docs/architecture/caching.md).
 
 ## Screenshots
 
@@ -90,6 +93,12 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 | Guild applications                                                                                                                                    | Guild settings                                                                                                                     |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | <img src="docs/assets/screenshots/guild-applications.webp" alt="Guild application inbox containing fictional applications from Jessica and Gurney" /> | <img src="docs/assets/screenshots/dashboard-settings.webp" alt="Guild settings page for the fictional Sandstorm Vanguard guild" /> |
+
+### Dungeon leaderboard
+
+| <img src="docs/assets/screenshots/dungeon-leaderboard-desktop.png" alt="Dungeon leaderboard with the fastest fictional run per dungeon and difficulty, filters and a current-data badge" /> | <img src="docs/assets/screenshots/dungeon-leaderboard-mobile.png" alt="Dungeon leaderboard on a 393 pixel wide phone" width="260" /> |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Records, filters and freshness, captured from the browser test with fictional runs.                                                                                                         | The same view on a phone.                                                                                                            |
 
 ### Player profile and mobile workspace
 
@@ -168,28 +177,28 @@ Never commit `.env` or place secrets in `NEXT_PUBLIC_` variables.
 
 Use [`.env.example`](.env.example) as the complete template; every variable, range and production rule is in [environment variables](docs/configuration/environment-variables.md). The main settings are:
 
-| Setting                                                                                               | Purpose                                                                                                                    |
-| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `DUNE_API_URL`, `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN`                                                  | Dune Console URL, API key and Discord adapter token                                                                        |
-| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`                                      | Discord OAuth and guild authorization                                                                                      |
-| `VERIFIED_MEMBER_ROLE_ID`                                                                             | Required member role                                                                                                       |
-| `MODERATOR_DISCORD_ROLE_IDS`                                                                          | Optional comma-separated Discord roles reserved for moderation; requires server-side bot guild-member access               |
-| `EVENT_REVIEWER_DISCORD_ROLE_IDS`                                                                     | Optional separate Discord roles for event-submission review and judging; requires server-side bot guild-member access      |
-| `BACKUP_VIEWER_DISCORD_ROLE_IDS`                                                                      | Optional separate Discord roles reserved for backup evidence; requires server-side bot guild-member access                 |
-| `APP_URL`                                                                                             | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                             |
-| `AUTH_SECRET`                                                                                         | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters                             |
-| `REDIS_URL`                                                                                           | Redis connection, credentials, database, and optional TLS                                                                  |
-| `REDIS_CLUSTER_NODES`                                                                                 | Optional Cluster bootstrap nodes; `REDIS_URL` still supplies credentials and TLS                                           |
-| `TRUSTED_PROXY_COUNT`                                                                                 | Exact reverse-proxy count used to select the trusted forwarded address                                                     |
-| `OWNER_KEY_SECRET`                                                                                    | Optional dedicated secret for marketplace ownership keys                                                                   |
-| `BOT_API_TOKEN`                                                                                       | Optional independent credential for the read-only bot API                                                                  |
-| `DISCORD_BOT_TOKEN`, `COMMUNITY_EVENTS_CHANNEL_ID` | Optional Components V2 community event announcements using the shared main bot; see [Discord announcements](docs/integrations/webhooks.md). Changelogs are posted by the bot from `/api/v2/changelog` |
-| `POKER_ACTIVITY_ENABLED`                                                                              | Optional play-money poker Discord Activity; see [Poker Activity](docs/features/poker-activity.md)                          |
-| `CHAT_ENABLED`, `RABBITMQ_URL`, `CHAT_SERVERS`                                                        | Optional live game chat; see the chat guide for the complete worker and history settings                                   |
-| `CHAT_DISCORD_BOT_FUNCOM_ID`                                                                          | Optional exact Discord relay bot identity; requires the `[Discord]` prefix before showing a Discord badge and relayed name |
-| `RABBITMQ_TLS_ENABLED`, `RABBITMQ_TLS_CA`, `RABBITMQ_TLS_CERT`, `RABBITMQ_TLS_KEY`                    | Optional inline PEM trust/client identity; TLS follows the URL scheme by default                                           |
-| `RABBITMQ_TLS_CA_PATH`, `RABBITMQ_TLS_CERT_PATH`, `RABBITMQ_TLS_KEY_PATH`, `RABBITMQ_CA_FILE`         | Path fallbacks; inline PEM takes precedence, legacy CA path remains supported                                              |
-| `RABBITMQ_TLS_REJECT_UNAUTHORIZED`, `RABBITMQ_TLS_SERVERNAME`                                         | Verification stays enabled; optional DNS identity must match the broker certificate                                        |
+| Setting                                                                                       | Purpose                                                                                                                                                                                               |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DUNE_API_URL`, `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN`                                          | Dune Console URL, API key and Discord adapter token                                                                                                                                                   |
+| `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`                              | Discord OAuth and guild authorization                                                                                                                                                                 |
+| `VERIFIED_MEMBER_ROLE_ID`                                                                     | Required member role                                                                                                                                                                                  |
+| `MODERATOR_DISCORD_ROLE_IDS`                                                                  | Optional comma-separated Discord roles reserved for moderation; requires server-side bot guild-member access                                                                                          |
+| `EVENT_REVIEWER_DISCORD_ROLE_IDS`                                                             | Optional separate Discord roles for event-submission review and judging; requires server-side bot guild-member access                                                                                 |
+| `BACKUP_VIEWER_DISCORD_ROLE_IDS`                                                              | Optional separate Discord roles reserved for backup evidence; requires server-side bot guild-member access                                                                                            |
+| `APP_URL`                                                                                     | Canonical public origin; the callback is `<APP_URL>/api/auth/callback/discord`                                                                                                                        |
+| `AUTH_SECRET`                                                                                 | Signs Auth.js state and seals stored Discord refresh tokens; use at least 32 random characters                                                                                                        |
+| `REDIS_URL`                                                                                   | Redis connection, credentials, database, and optional TLS                                                                                                                                             |
+| `REDIS_CLUSTER_NODES`                                                                         | Optional Cluster bootstrap nodes; `REDIS_URL` still supplies credentials and TLS                                                                                                                      |
+| `TRUSTED_PROXY_COUNT`                                                                         | Exact reverse-proxy count used to select the trusted forwarded address                                                                                                                                |
+| `OWNER_KEY_SECRET`                                                                            | Optional dedicated secret for marketplace ownership keys                                                                                                                                              |
+| `BOT_API_TOKEN`                                                                               | Optional independent credential for the read-only bot API                                                                                                                                             |
+| `DISCORD_BOT_TOKEN`, `COMMUNITY_EVENTS_CHANNEL_ID`                                            | Optional Components V2 community event announcements using the shared main bot; see [Discord announcements](docs/integrations/webhooks.md). Changelogs are posted by the bot from `/api/v2/changelog` |
+| `POKER_ACTIVITY_ENABLED`                                                                      | Optional play-money poker Discord Activity; see [Poker Activity](docs/features/poker-activity.md)                                                                                                     |
+| `CHAT_ENABLED`, `RABBITMQ_URL`, `CHAT_SERVERS`                                                | Optional live game chat; see the chat guide for the complete worker and history settings                                                                                                              |
+| `CHAT_DISCORD_BOT_FUNCOM_ID`                                                                  | Optional exact Discord relay bot identity; requires the `[Discord]` prefix before showing a Discord badge and relayed name                                                                            |
+| `RABBITMQ_TLS_ENABLED`, `RABBITMQ_TLS_CA`, `RABBITMQ_TLS_CERT`, `RABBITMQ_TLS_KEY`            | Optional inline PEM trust/client identity; TLS follows the URL scheme by default                                                                                                                      |
+| `RABBITMQ_TLS_CA_PATH`, `RABBITMQ_TLS_CERT_PATH`, `RABBITMQ_TLS_KEY_PATH`, `RABBITMQ_CA_FILE` | Path fallbacks; inline PEM takes precedence, legacy CA path remains supported                                                                                                                         |
+| `RABBITMQ_TLS_REJECT_UNAUTHORIZED`, `RABBITMQ_TLS_SERVERNAME`                                 | Verification stays enabled; optional DNS identity must match the broker certificate                                                                                                                   |
 
 Redis TLS and public-network settings are validated by the current environment schema. Review `REDIS_REQUIRE_TLS` and `REDIS_ALLOW_INSECURE` before deploying outside a trusted network.
 
@@ -202,7 +211,7 @@ Redis TLS and public-network settings are validated by the current environment s
 3. Assign the application port and complete the required Startup settings.
 4. Keep the server volume writable and make Console, Discord, GitHub, and Redis reachable from the container.
 
-The installer selects the newest release or the exact `RELEASE_TAG`, verifies the release archive against its published SHA-256 checksum, checks archive safety, builds the application, and prunes development dependencies. Reinstall to update. Live Chat uses the normal Node.js/Pterodactyl startup; see [automatic startup](docs/features/live-chat.md#nodejs-and-pterodactyl-deployment).
+The installer selects the newest release or the exact `RELEASE_TAG`, verifies the release archive against its published SHA-256 checksum, checks archive safety, builds the application, and prunes development dependencies. After that the server keeps itself current: at startup and on a schedule the update supervisor installs verified releases, refuses to overwrite any file you changed or added (`.env`, certificates, custom folders), and rolls back a version that does not start. Pin a version with `RELEASE_TAG`, choose `stable` or `prerelease`, or switch updates off; see [Automatic updates](docs/deployment/automatic-updates.md), including the one-time migration for servers created from an older egg. Live Chat uses the normal Node.js/Pterodactyl startup; see [automatic startup](docs/features/live-chat.md#nodejs-and-pterodactyl-deployment).
 
 ### Direct Node.js deployment
 

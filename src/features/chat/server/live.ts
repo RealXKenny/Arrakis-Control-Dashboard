@@ -1,6 +1,5 @@
 import '../../../lib/assert-server';
 import { createRedisPatternSubscriber } from '../../../lib/redis/subscriber';
-import { chatKeys } from '../../../lib/redis/keys';
 import { createLogger } from '../../../lib/logger';
 import { parseChatMessage, type ChatMessage } from '../contracts';
 
@@ -47,8 +46,4 @@ export async function subscribeToChat(serverId: string, listener: Listener): Pro
     current.delete(listener);
     if (!current.size) listeners.delete(serverId);
   };
-}
-
-export function chatLiveChannel(serverId: string): string {
-  return chatKeys.live(serverId);
 }

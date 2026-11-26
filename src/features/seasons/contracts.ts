@@ -2,13 +2,13 @@ import { z } from 'zod';
 
 export const paths = ['solo', 'builder', 'explorer', 'supplier', 'mentor'] as const;
 export const objectiveCategories = ['level', 'story', 'side_quest', 'faction', 'exploration', 'achievement'] as const;
-export const cosmeticKinds = ['badge', 'banner', 'title', 'decoration', 'achievement'] as const;
+const cosmeticKinds = ['badge', 'banner', 'title', 'decoration', 'achievement'] as const;
 export const journeyGroups = ['story', 'contract', 'codex', 'tutorial'] as const;
 export const tiers = ['beginner', 'intermediate', 'advanced', 'veteran', 'endgame'] as const;
 export const identifier = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
 const text = (max: number) => z.string().trim().min(1).max(max);
-export const artworkSchema = z.object({ id: z.string().regex(/^[a-f0-9]{64}$/), alt: text(200) }).strict();
-export const presentationSchema = z
+const artworkSchema = z.object({ id: z.string().regex(/^[a-f0-9]{64}$/), alt: text(200) }).strict();
+const presentationSchema = z
   .object({
     subtitle: text(160),
     description: text(3000),
@@ -78,7 +78,7 @@ export const challengeSchema = z.object({
   xp: z.number().int().min(1).max(100000),
   limit: z.number().int().min(1).max(20),
 });
-export const milestoneSchema = z.object({
+const milestoneSchema = z.object({
   id: identifier,
   name: text(100),
   description: text(600),
@@ -219,7 +219,7 @@ export type CommunityUpdate = {
   observedAt: string;
 };
 /** Component-level state of one player's claim of one reward. Never rewound; uncertain outcomes need an administrator. */
-export const claimComponentSchema = z
+const claimComponentSchema = z
   .object({
     reward: gameRewardSchema,
     status: z.enum(['pending', 'sending', 'delivered', 'uncertain', 'cancelled']),
@@ -440,11 +440,7 @@ function periodCount(definition: Definition, challenge: Challenge, cache: Map<st
   cache.set(challenge.cadence, periods.size);
   return periods.size;
 }
-export function availableXp(
-  definition: Definition,
-  path: (typeof paths)[number],
-  cache = new Map<string, number>(),
-): number {
+function availableXp(definition: Definition, path: (typeof paths)[number], cache = new Map<string, number>()): number {
   let total = 0;
   for (const challenge of definition.challenges.filter((v) => v.path === path)) {
     if (!['daily', 'weekly'].includes(challenge.cadence)) {

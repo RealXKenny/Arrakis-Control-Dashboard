@@ -138,7 +138,7 @@ export function colorsForPreference(pref: AppearancePreference) {
     ? pref.custom
     : (appearancePalettes.find((p) => p.id === pref.selected)?.colors ?? defaultColors);
 }
-export function clearAppearance(root: HTMLElement = document.documentElement) {
+function clearAppearance(root: HTMLElement = document.documentElement) {
   ownedColorProperties.forEach((name) => root.style.removeProperty(name));
   root.style.removeProperty('color-scheme');
   delete root.dataset.appearance;

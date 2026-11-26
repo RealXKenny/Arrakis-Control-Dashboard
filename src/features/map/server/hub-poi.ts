@@ -2,21 +2,26 @@ import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
 import { getDuneClient } from '../../../server/integrations/dune';
 import { isSecureConsoleOrigin } from '../../../server/integrations/console-origin';
-import { ReadCache } from '../../../lib/cache/read-cache';
+import { readShared, type CachePolicy } from '../../../lib/cache/shared-cache';
 import type { DashboardSession } from '../../auth/server/session-store';
 import type { MapName } from '../maps';
 
 export type HubPoi = { id: string; subtype: string; x: number; y: number };
 
-// Static points of interest change rarely, so one shared read is kept for five minutes.
-const reads = new ReadCache<unknown>(
-  (value) => JSON.stringify(value).length,
-  () => true,
-  { ttlMs: 300_000, maxEntries: 4, maxPending: 4 },
-);
-export function clearHubPoiCache() {
-  reads.clear();
-}
+// Static points of interest are game metadata: one shared reading refreshed every six hours, kept for a week.
+const policy: CachePolicy<HubPoi[]> = {
+  name: 'hub-poi',
+  version: 1,
+  freshMs: 6 * 3_600_000,
+  retainMs: 7 * 86_400_000,
+  validate: (raw) => {
+    if (Array.isArray(raw)) return parseHubPoi({ rows: raw.map((point) => ({ ...point, type: 'poi' })) });
+    const data = (raw as { data?: unknown } | null)?.data;
+    // A response without a rows array is malformed and never replaces a good reading; an empty array is legitimate.
+    if (!data || typeof data !== 'object' || !Array.isArray((data as { rows?: unknown }).rows)) return undefined;
+    return parseHubPoi(data);
+  },
+};
 
 /** Keep only bounded static points of interest; players, vehicles, bases and storage never pass through. */
 export function parseHubPoi(data: unknown): HubPoi[] {
@@ -44,13 +49,13 @@ export async function readHubPoi(session: DashboardSession, map: MapName): Promi
   const env = getServerEnv();
   if (session.guildId !== env.DISCORD_GUILD_ID || !isSecureConsoleOrigin(env.DUNE_API_URL)) return null;
   try {
-    const response = await reads.get(`poi:${map}`, () =>
+    const reading = await readShared(policy, [map], () =>
       getDuneClient().request('GET', `/api/map/poi?map=${encodeURIComponent(map)}`, {
         timeoutMs: 8000,
         retryRead: false,
       }),
     );
-    return parseHubPoi((response as { data?: unknown }).data);
+    return reading.data;
   } catch {
     return null;
   }

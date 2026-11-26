@@ -2,7 +2,7 @@
 const focusableSelector =
   'a[href], area[href], button, input, select, textarea, summary, [tabindex], [contenteditable="true"], audio[controls], video[controls]';
 
-export function focusableControls(container: HTMLElement): HTMLElement[] {
+function focusableControls(container: HTMLElement): HTMLElement[] {
   return [...container.querySelectorAll<HTMLElement>(focusableSelector)].filter((element) => {
     if (
       element.tabIndex < 0 ||

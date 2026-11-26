@@ -7,7 +7,7 @@ import { guildKeys } from '../../../lib/redis/keys';
 import { operationGuildIdSchema } from '../operations';
 
 export type LogisticsSection = 'templates' | 'availability' | 'fleet' | 'landsraad';
-export const LOGISTICS_MAX_BYTES: Record<LogisticsSection, number> = {
+const LOGISTICS_MAX_BYTES: Record<LogisticsSection, number> = {
   templates: 262_144,
   availability: 262_144,
   fleet: 131_072,
@@ -34,14 +34,14 @@ else redis.call('SET', KEYS[1], ARGV[2], 'EX', tonumber(ARGV[3])) end
 return 'ok'
 `;
 
-export const logisticsUnavailable = () =>
+const logisticsUnavailable = () =>
   new AppError(
     'Guild logistics storage is unavailable. Refresh before trying again.',
     503,
     'LOGISTICS_UNAVAILABLE',
     true,
   );
-export const logisticsConflict = () =>
+const logisticsConflict = () =>
   new AppError('This plan changed. Refresh before trying again. Your draft is kept.', 409, 'LOGISTICS_CONFLICT', true);
 
 function storage() {

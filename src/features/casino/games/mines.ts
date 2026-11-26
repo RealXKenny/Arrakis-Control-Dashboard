@@ -18,7 +18,7 @@ import { payoutFromBps } from '../fairness/rng';
  */
 
 export const TILES = 25;
-export const MIN_HAZARDS = 1;
+const MIN_HAZARDS = 1;
 export const MAX_HAZARDS = 24;
 
 type MinesState = { hazards: number[]; hazardCount: number; revealed: number[]; wager: string; hit?: number };

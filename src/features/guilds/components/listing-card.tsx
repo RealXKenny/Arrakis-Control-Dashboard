@@ -3,6 +3,7 @@ import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 
 import Image from 'next/image';
+import { detectBrokenImage } from '../../../lib/ui/image-fallback';
 import { useId, useState } from 'react';
 import { guildInitials } from '../details';
 import type { GuildApplicationSummary } from '../applications';
@@ -57,6 +58,7 @@ export function ListingCard({
             height={72}
             unoptimized
             onError={() => setMissingLogo(true)}
+            ref={detectBrokenImage(() => setMissingLogo(true))}
             className="size-[4.5rem] shrink-0 border border-sand-200/15 bg-obsidian-900 object-contain"
           />
         )}

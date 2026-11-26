@@ -81,7 +81,7 @@ export const paletteShades = {
   ibad: [300, 400, 500, 600],
   status: ['ok', 'warn', 'danger'],
 } as const;
-export const roleNames = [
+const roleNames = [
   'surface',
   'raised',
   'hover',

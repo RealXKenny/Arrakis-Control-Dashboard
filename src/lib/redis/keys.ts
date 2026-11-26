@@ -14,7 +14,7 @@ import '../assert-server';
  * this file: a test asserts every old name maps to exactly the builder here.
  */
 
-export const GUILD_TAG = '{guilds}';
+const GUILD_TAG = '{guilds}';
 
 /** A single bounded hash contains community events and their one-time seed marker. */
 export const communityEventKeys = {
@@ -89,7 +89,7 @@ export const discordAvatarKeys = {
   access: 'arrakis:{avatars}:v1:access',
 };
 
-export const BASE_MARKETPLACE_TAG = '{bm}';
+const BASE_MARKETPLACE_TAG = '{bm}';
 
 /** Legacy (V1) marketplace and preview storage. The V2 store lives under `arrakis:{bm}:v2:`. */
 export const baseKeys = {

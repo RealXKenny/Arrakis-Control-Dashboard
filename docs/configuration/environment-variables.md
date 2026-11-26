@@ -24,25 +24,31 @@ Startup stops serving (HTTP 500 on every request, reason logged by variable name
 
 ## Optional
 
-| Variable                      | Default                    | Rule / meaning                                                                                        |
-| ----------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `SERVER_HOSTNAME`             | `127.0.0.1`                | Bind address (no whitespace). Use `0.0.0.0` in containers                                             |
-| `SERVER_PORT`                 | `2008`                     | 1 to 65535 (Wings supplies it on Pterodactyl)                                                         |
-| `LOG_LEVEL`                   | `INFO`                     | `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`                                                             |
-| `API_MAX_CONCURRENCY`         | `100`                      | 1 to 10000 active API requests per worker; excess get 503 `SERVER_BUSY`                               |
-| `API_GLOBAL_READ_LIMIT`       | `2400`                     | Reads per route per minute shared through Redis                                                       |
-| `TRUSTED_PROXY_COUNT`         | `1`                        | 0 to 5 proxies in front of the app ([reverse proxy](../installation/reverse-proxy.md))                |
-| `OWNER_KEY_SECRET`            | derived from `AUTH_SECRET` | 32 to 256 characters; HMAC secret for marketplace owner keys. Set before publishing listings you keep |
-| `BOT_API_TOKEN`               | unset                      | 32 to 256 characters; enables the read-only [bot API](../api/server.md#bot-world-summary)             |
-| `REDIS_CLUSTER_NODES`         | unset                      | Comma-separated `host:port` (or `[ipv6]:port`) bootstrap nodes; selects Cluster mode                  |
-| `REDIS_REQUIRE_TLS`           | `false`                    | `true` makes production refuse a `redis://` URL                                                       |
-| `REDIS_ALLOW_INSECURE`        | `false`                    | `true` accepts plain-text, passwordless Redis on a public-looking host (do not)                       |
-| `AUDIT_LOG_STDOUT`            | `true`                     | Print readable, colored AUDIT entries independently of LOG_LEVEL                                      |
-| `AUDIT_LOG_REDIS`             | `true`                     | Keep the bounded audit trail in Redis                                                                 |
-| `AUDIT_LOG_RETENTION_DAYS`    | `90`                       | 1 to 3650                                                                                             |
-| `AUDIT_LOG_MAX_ENTRIES`       | `10000`                    | 100 to 1000000                                                                                        |
-| `DISCORD_BOT_TOKEN`           | unset                      | Shared main Discord bot token; server-only secret, no webhook or second bot process                   |
-| `COMMUNITY_EVENTS_CHANNEL_ID` | unset                      | Text/announcement channel ID for automatic community event containers (15–25 digits)                  |
+| Variable                              | Default                    | Rule / meaning                                                                                           |
+| ------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `SERVER_HOSTNAME`                     | `127.0.0.1`                | Bind address (no whitespace). Use `0.0.0.0` in containers                                                |
+| `SERVER_PORT`                         | `2008`                     | 1 to 65535 (Wings supplies it on Pterodactyl)                                                            |
+| `LOG_LEVEL`                           | `INFO`                     | `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`                                                                |
+| `API_MAX_CONCURRENCY`                 | `100`                      | 1 to 10000 active API requests per worker; excess get 503 `SERVER_BUSY`                                  |
+| `API_GLOBAL_READ_LIMIT`               | `2400`                     | Reads per route per minute shared through Redis                                                          |
+| `TRUSTED_PROXY_COUNT`                 | `1`                        | 0 to 5 proxies in front of the app ([reverse proxy](../installation/reverse-proxy.md))                   |
+| `OWNER_KEY_SECRET`                    | derived from `AUTH_SECRET` | 32 to 256 characters; HMAC secret for marketplace owner keys. Set before publishing listings you keep    |
+| `BOT_API_TOKEN`                       | unset                      | 32 to 256 characters; enables the read-only [bot API](../api/server.md#bot-world-summary)                |
+| `DUNE_API_TIMEOUT_MS`                 | `20000`                    | 1000 to 120000; default Console read timeout. Writes keep 30 s; health probes cap at 10 s                |
+| `DUNGEON_LEADERBOARD_REFRESH_SECONDS` | `300`                      | 60 to 3600; how long a shared [dungeon leaderboard](../features/dungeon-leaderboard.md) reading is fresh |
+| `ROADMAP_REPOSITORIES`                | both Arrakis repositories  | Up to five comma-separated public `owner/repo` names the [roadmap](../features/roadmap.md) reads         |
+| `ROADMAP_LABEL`                       | `roadmap`                  | Label that approves an issue for the public roadmap                                                      |
+| `ROADMAP_REFRESH_SECONDS`             | `1200`                     | 300 to 86400; how long the shared roadmap reading is fresh                                               |
+| `ROADMAP_GITHUB_TOKEN`                | unset                      | Optional read-only GitHub token (public repository read only). Raises the anonymous rate limit           |
+| `REDIS_CLUSTER_NODES`                 | unset                      | Comma-separated `host:port` (or `[ipv6]:port`) bootstrap nodes; selects Cluster mode                     |
+| `REDIS_REQUIRE_TLS`                   | `false`                    | `true` makes production refuse a `redis://` URL                                                          |
+| `REDIS_ALLOW_INSECURE`                | `false`                    | `true` accepts plain-text, passwordless Redis on a public-looking host (do not)                          |
+| `AUDIT_LOG_STDOUT`                    | `true`                     | Print readable, colored AUDIT entries independently of LOG_LEVEL                                         |
+| `AUDIT_LOG_REDIS`                     | `true`                     | Keep the bounded audit trail in Redis                                                                    |
+| `AUDIT_LOG_RETENTION_DAYS`            | `90`                       | 1 to 3650                                                                                                |
+| `AUDIT_LOG_MAX_ENTRIES`               | `10000`                    | 100 to 1000000                                                                                           |
+| `DISCORD_BOT_TOKEN`                   | unset                      | Shared main Discord bot token; server-only secret, no webhook or second bot process                      |
+| `COMMUNITY_EVENTS_CHANNEL_ID`         | unset                      | Text/announcement channel ID for automatic community event containers (15–25 digits)                     |
 
 ### Live game chat (optional)
 
@@ -84,13 +90,14 @@ Boolean variables accept only the strings `true` and `false`.
 
 Season game delivery has no feature toggle: in-game season rewards (Solaris, House Credits and items) are delivered on explicit player claims for generated seasons, and by independently reviewed administrator execution for legacy seasons, whenever `DUNE_API_KEY` is set and `DUNE_API_URL` is HTTPS or loopback HTTP. It never grants automatically and never touches casino transfers. Automatic seasons start by default; an administrator pause saved in Redis is preserved across restarts. See [season operations](../features/community-seasons.md#in-game-delivery-boundary).
 
-| Variable                                     | Used by                                                                                                                                                                                                           |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `OWNER_KEY_PREVIOUS_SECRET`                  | `npm run marketplace:rekey` only, after rotating `OWNER_KEY_SECRET` ([migration](../deployment/migration.md))                                                                                                     |
-| `TEST_REDIS_URL`, `TEST_REDIS_CLUSTER_NODES` | Redis integration tests only ([testing](../development/testing.md#redis-integration-tests))                                                                                                                       |
-| `ALLOW_UNVERIFIED_RELEASE`, `RELEASE_TAG`    | Pterodactyl installer only ([Pterodactyl](../installation/pterodactyl.md))                                                                                                                                        |
-| `NEXT_TELEMETRY_DISABLED`                    | Forced to `1` by the launcher, installer and egg                                                                                                                                                                  |
-| `NODE_ENV`                                   | `development`, `test` or `production`. Set by the tooling (`npm run dev`, `npm start`, Vitest); do not set it yourself. Production enables the validation gate, `__Host-` cookies, HSTS and fail-closed behaviour |
+| Variable                                                                                                                                                                                 | Used by                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OWNER_KEY_PREVIOUS_SECRET`                                                                                                                                                              | `npm run marketplace:rekey` only, after rotating `OWNER_KEY_SECRET` ([migration](../deployment/migration.md))                                                                                                     |
+| `TEST_REDIS_URL`, `TEST_REDIS_CLUSTER_NODES`                                                                                                                                             | Redis integration tests only ([testing](../development/testing.md#redis-integration-tests))                                                                                                                       |
+| `ALLOW_UNVERIFIED_RELEASE`, `RELEASE_TAG`                                                                                                                                                | Pterodactyl installer and the update supervisor (`RELEASE_TAG` pins a version) ([Pterodactyl](../installation/pterodactyl.md))                                                                                    |
+| `AUTO_UPDATE_ENABLED`, `AUTO_UPDATE_ON_STARTUP`, `AUTO_UPDATE_CHANNEL`, `AUTO_UPDATE_INTERVAL_HOURS`, `AUTO_UPDATE_WINDOW_UTC`, `AUTO_UPDATE_HEALTH_SECONDS`, `AUTO_UPDATE_GITHUB_TOKEN` | The update supervisor only ([automatic updates](../deployment/automatic-updates.md))                                                                                                                              |
+| `NEXT_TELEMETRY_DISABLED`                                                                                                                                                                | Forced to `1` by the launcher, installer and egg                                                                                                                                                                  |
+| `NODE_ENV`                                                                                                                                                                               | `development`, `test` or `production`. Set by the tooling (`npm run dev`, `npm start`, Vitest); do not set it yourself. Production enables the validation gate, `__Host-` cookies, HSTS and fail-closed behaviour |
 
 ## Production validation rules beyond presence
 

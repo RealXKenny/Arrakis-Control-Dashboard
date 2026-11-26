@@ -81,7 +81,7 @@ function readNumber(raw: Raw, keys: string[]): number | null {
 }
 
 /** Providers hide the vehicle list under assorted wrappers; walk them breadth-first. */
-export function extractVehicleRows(payload: unknown): unknown[] {
+function extractVehicleRows(payload: unknown): unknown[] {
   if (Array.isArray(payload)) return payload;
   // Dev note: a sandworm wraps responses less often than this API does.
   const queue: unknown[] = [payload];
@@ -108,7 +108,7 @@ export function isContainerVehicle(raw: Raw): boolean {
   return /container/.test(identity(raw));
 }
 
-export function vehicleImage(raw: Raw): string | null {
+function vehicleImage(raw: Raw): string | null {
   const id = identity(raw);
   if (/container/.test(id)) return '/maps/vehicle-container.webp';
   if (/sand\s*crawler|sandcrawler/.test(id)) return '/maps/vehicle-sandcrawler.webp';

@@ -29,7 +29,7 @@ const CURRENCY: Record<Currency, { id: 0 | 1; names: string[] }> = {
 export const currencyOf = (reward: GameReward): Currency | null =>
   reward.type === 'solaris' || reward.type === 'house-credits' ? reward.type : null;
 /** Exactly one balance row must match; enum-mode databases report the currency by name, others by number. */
-export function currencyBalance(payload: unknown, currency: Currency = 'solaris') {
+function currencyBalance(payload: unknown, currency: Currency = 'solaris') {
   const rows = record(payload).rows;
   if (!Array.isArray(rows)) throw new Error('Invalid currency response.');
   const matches = rows

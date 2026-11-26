@@ -1,7 +1,7 @@
 // A minimal Discord Activity RPC client: handshake, READY and AUTHORIZE over postMessage.
 // It mirrors the Embedded App SDK 2.5.0 protocol without depending on it (the SDK pulls in a vulnerable zod 3).
 
-export const RPC_PROTOCOL_VERSION = 1;
+const RPC_PROTOCOL_VERSION = 1;
 /** The SDK release whose message protocol this mirrors; Discord uses it to pick compatible behavior. */
 export const COMPATIBLE_SDK_VERSION = '2.5.0';
 const MOBILE_SDK_VERSION_MINIMUM = 250;
@@ -14,7 +14,7 @@ enum Opcode {
 }
 
 /** Origins the Discord client may message the Activity from (the SDK's own list, minus local development). */
-export const DISCORD_ORIGINS: readonly string[] = [
+const DISCORD_ORIGINS: readonly string[] = [
   'https://discord.com',
   'https://discordapp.com',
   'https://ptb.discord.com',
@@ -41,7 +41,7 @@ export interface MessageChannel {
   readonly ownOrigin: string;
 }
 
-export class ActivityClientError extends Error {
+class ActivityClientError extends Error {
   constructor(
     message: string,
     readonly code: string,

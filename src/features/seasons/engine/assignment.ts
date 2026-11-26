@@ -10,10 +10,10 @@ import { analyzeCapability, type Capability, type CapabilityInput } from './capa
 import { candidateKinds, kindKey } from './kinds';
 import { seededRandom, weightedPick } from './rng';
 
-export const ASSIGNMENT_ALGORITHM = 1;
+const ASSIGNMENT_ALGORITHM = 1;
 export type AssignmentHistory = { kindCounts?: Readonly<Record<string, number>> };
 /** Relative difficulty (1-20) comes from the published objective's own base target, never from player data. */
-export function difficultyOf(challenge: Challenge, indexInPath: number) {
+function difficultyOf(challenge: Challenge, indexInPath: number) {
   const base = challenge.minimumGameXp ? Math.round(challenge.minimumGameXp / 1000) : indexInPath + 1;
   return Math.max(1, Math.min(20, base));
 }

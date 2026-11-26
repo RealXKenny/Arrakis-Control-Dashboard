@@ -18,7 +18,7 @@ export function clearRealtimeReadCache() {
   snapshots.clear();
 }
 
-export const REALTIME_MAPS = ['HaggaBasin', 'DeepDesert'] as const;
+const REALTIME_MAPS = ['HaggaBasin', 'DeepDesert'] as const;
 
 /** Session-checked realtime snapshot shared by the legacy Pages API and the V2 route handler. */
 export async function loadRealtime(session: DashboardSession, mapParam: string | null): Promise<RealtimeResult> {

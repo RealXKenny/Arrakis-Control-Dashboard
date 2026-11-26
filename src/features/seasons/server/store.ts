@@ -41,7 +41,7 @@ export const seasonKeys = {
     `${root}:presentation:${identifier.parse(id)}:${identifier.parse(revision)}`,
 };
 /** All validation happens before the first write. CAS is never automatically retried. */
-export const COMMIT = `-- community-seasons:commit-v1
+const COMMIT = `-- community-seasons:commit-v1
 local input = cjson.decode(ARGV[1])
 for i = 1, #KEYS do
   local kind = redis.call('TYPE', KEYS[i]).ok

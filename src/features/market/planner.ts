@@ -41,11 +41,11 @@ export const watchSchema = z
     message: 'The low threshold must be below the high threshold.',
   });
 
-export const basketLineSchema = z.object({ templateId, name: itemName, grade, quantity }).strict();
+const basketLineSchema = z.object({ templateId, name: itemName, grade, quantity }).strict();
 
-export const materialSchema = z.object({ templateId, name: itemName, quantity }).strict();
+const materialSchema = z.object({ templateId, name: itemName, quantity }).strict();
 
-export const projectSchema = z
+const projectSchema = z
   .object({
     id: z.uuid(),
     name: z.string().trim().min(1).max(80),
@@ -56,7 +56,7 @@ export const projectSchema = z
     message: 'Each material may appear once per project.',
   });
 
-export const savedFilterSchema = z
+const savedFilterSchema = z
   .object({
     id: z.uuid(),
     label: z.string().trim().min(1).max(60),
@@ -198,7 +198,7 @@ export interface AlertDecision {
   notifiedAt: string | null;
 }
 
-export function alertCondition(watch: Pick<Watch, 'below' | 'above'>, lowest: string | null): AlertCondition {
+function alertCondition(watch: Pick<Watch, 'below' | 'above'>, lowest: string | null): AlertCondition {
   if (lowest === null) return 'unknown';
   if (watch.below !== null && compare(lowest, watch.below) <= 0) return 'below';
   if (watch.above !== null && compare(lowest, watch.above) >= 0) return 'above';

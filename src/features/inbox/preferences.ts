@@ -43,7 +43,7 @@ export const notificationConfigSchema = z
   })
   .strict();
 export type NotificationConfig = z.infer<typeof notificationConfigSchema>;
-export const notificationStateSchema = z
+const notificationStateSchema = z
   .object({
     id: z.string().regex(/^[a-f0-9]{64}$/),
     dismissed: z

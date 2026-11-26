@@ -1,4 +1,4 @@
-import { hash32, seededRandom } from './rng';
+import { seededRandom } from './rng';
 
 export type SeasonTheme = {
   id: string;
@@ -97,4 +97,3 @@ export function themeForSeason(number: number): SeasonTheme {
   const n = Math.max(1, number);
   return THEMES[orderFor(Math.floor((n - 1) / THEMES.length))[(n - 1) % THEMES.length]];
 }
-export const themeSeed = (number: number) => hash32(`theme:${themeForSeason(number).id}:${number}`);

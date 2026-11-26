@@ -1,7 +1,7 @@
 import type { SVGProps } from 'react';
 
 /** Dune-ridge mark. Mirrors `src/app/icon.svg` so the favicon and logo stay one identity. */
-export function LogoMark(props: SVGProps<SVGSVGElement>) {
+function LogoMark(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false" {...props}>
       <path d="M6 46 L24 18 L34 32 L42 22 L58 46 Z" className="fill-spice-500" />

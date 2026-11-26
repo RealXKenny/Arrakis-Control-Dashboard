@@ -3,12 +3,17 @@ import { test, expect } from '../helpers/browser-test';
 test('public changelog previews sections, expands notes, filters and searches the full release', async ({ page }) => {
   await page.goto('/changelog');
   await expect(page.getByRole('heading', { name: 'Changelog.', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Version 2.0.1', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Version 2.0.0', exact: true })).toBeVisible();
-  await expect(page.getByRole('status')).toHaveText('1 update to explore');
+  await expect(page.getByRole('status')).toHaveText('2 updates to explore');
   await expect(
     page.getByRole('button', { name: 'All updates', exact: true }).locator('[aria-hidden="true"]'),
-  ).toHaveText('1');
-  const features = page.getByRole('region', { name: 'New Features', exact: true });
+  ).toHaveText('2');
+  // 2.0.0 has more new features than the preview shows, so its section exercises the "View all" control.
+  const release = page
+    .getByRole('article')
+    .filter({ has: page.getByRole('heading', { name: 'Version 2.0.0', exact: true }) });
+  const features = release.getByRole('region', { name: 'New Features', exact: true });
   await expect(features.locator('li')).toHaveCount(5);
   await features.getByRole('button', { name: /View all/ }).click();
   expect(await features.locator('li').count()).toBeGreaterThan(5);
@@ -61,7 +66,7 @@ test('release journal fits desktop and mobile with readable cards and keyboard c
     await filter.focus();
     await page.keyboard.press('Enter');
     await expect(filter).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('heading', { name: 'Upgrade Notes', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Upgrade Notes', exact: true }).first()).toBeVisible();
     await page.getByRole('button', { name: 'All updates', exact: true }).click();
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: test.info().outputPath(`changelog-${width}.png`), fullPage: false });
@@ -72,11 +77,11 @@ test('bot history is separate from dashboard releases', async ({ page }) => {
   await page.goto('/changelog');
   await page.getByRole('link', { name: 'Bot releases' }).click();
   await expect(page.getByRole('heading', { name: 'Arrakis Control Bot release history' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Version 1.11.7' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Version 2.0.0' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Bot releases' })).toHaveAttribute('aria-current', 'page');
 });
 
 test('published dashboard history links resolve independently of unreleased notes', async ({ page }) => {
-  await page.goto('/changelog?project=dashboard&show=all#v1.20.6');
-  await expect(page.getByRole('heading', { name: 'Version 1.20.6' })).toBeVisible();
+  await page.goto('/changelog?project=dashboard&show=all#v2.0.0');
+  await expect(page.getByRole('heading', { name: 'Version 2.0.0' })).toBeVisible();
 });
