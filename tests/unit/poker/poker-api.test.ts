@@ -286,8 +286,9 @@ describe('poker table API', () => {
     vi.setSystemTime(new Date('2026-12-01T12:00:10Z'));
     const { getTable } = await handlers();
     const after = (await (await routed(getTable, tableRequest(alice))).json()) as Record<string, any>;
-    // The AI has played every turn that came due; the action is back with Alice or the hand is over.
-    expect(after.table.street).not.toBe('preflop');
+    // The AI has played every turn that came due (check, call, raise or fold are all legal for it),
+    // so the table changed and the action is back with Alice or the hand is over.
+    expect(after.revision).not.toBe(called.body.revision);
     expect(after.table.seats[after.table.turn]?.isBot ?? false).toBe(false);
   });
 
