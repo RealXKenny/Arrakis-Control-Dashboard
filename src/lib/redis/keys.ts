@@ -38,6 +38,8 @@ export const guildKeys = {
   onboarding: (guildId: string) => `arrakis:${GUILD_TAG}:onboarding:${guildId}`,
   baseDirectory: (guildId: string) => `arrakis:${GUILD_TAG}:base-directory:${guildId}`,
   resourceRequests: (guildId: string) => `arrakis:${GUILD_TAG}:resource-requests:${guildId}`,
+  /** N051–N060 projects, shared stockpile, crafting directory and commissions (one CAS hash). */
+  projects: (guildId: string) => `arrakis:${GUILD_TAG}:projects:${guildId}`,
   operations: (guildId: string) => `arrakis:${GUILD_TAG}:operations:${guildId}`,
   noticeboard: (guildId: string) => `arrakis:${GUILD_TAG}:noticeboard:${guildId}`,
   applications: (guildId: string) => `arrakis:${GUILD_TAG}:applications:${guildId}`,

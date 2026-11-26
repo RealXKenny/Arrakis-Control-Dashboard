@@ -11,6 +11,7 @@ import { operationsReply } from './guild-operations-redis.mjs';
 import { resourcesReply } from './guild-resources-redis.mjs';
 import { baseDirectoryReply } from './guild-base-directory-redis.mjs';
 import { onboardingReply } from './guild-onboarding-redis.mjs';
+import { projectsReply } from './guild-projects-redis.mjs';
 import { itemPinsReply } from './item-pins-redis.mjs';
 import { equipmentReply } from './equipment-redis.mjs';
 import { pollsReply } from './guild-polls-redis.mjs';
@@ -87,6 +88,8 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
   if (onboarding !== undefined) return onboarding.value;
   const directory = baseDirectoryReply(operation, key, args);
   if (directory !== undefined) return directory.value;
+  const projects = projectsReply(operation, key, args);
+  if (projects !== undefined) return projects.value;
   const resources = resourcesReply(operation, key, args);
   if (resources !== undefined) return resources.value;
   const operations = operationsReply(operation, key, args);

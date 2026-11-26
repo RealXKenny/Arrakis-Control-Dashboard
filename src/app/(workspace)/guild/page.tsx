@@ -21,6 +21,7 @@ import { GuildResourceRequests } from '../../../features/guilds/components/resou
 import { GuildBaseDirectory } from '../../../features/guilds/components/base-directory';
 import { GuildOnboarding } from '../../../features/guilds/components/onboarding';
 import { GuildPolls } from '../../../features/guilds/components/polls';
+import { GuildProjectsWorkspace } from '../../../features/guilds/components/projects-workspace';
 
 export const metadata: Metadata = { title: 'My guild' };
 
@@ -79,11 +80,13 @@ export default async function MyGuildPage({
           ? 'bases'
           : requestedTab === 'resources'
             ? 'resources'
-            : requestedTab === 'operations'
-              ? 'operations'
-              : canEdit && requestedTab === 'settings'
-                ? 'settings'
-                : 'roster';
+            : requestedTab === 'projects' || requestedTab === 'crafting'
+              ? requestedTab
+              : requestedTab === 'operations'
+                ? 'operations'
+                : canEdit && requestedTab === 'settings'
+                  ? 'settings'
+                  : 'roster';
   const groups = groupMembersByRank(members);
   const leader = members.find((member) => member.roleId === 100);
   const emblem = factionEmblem(guild.faction);
@@ -99,6 +102,8 @@ export default async function MyGuildPage({
           { id: 'roster', label: 'My Guild', href: '/guild' },
           { id: 'operations', label: 'Operations', href: '/guild?tab=operations' },
           { id: 'resources', label: 'Resources', href: '/guild?tab=resources' },
+          { id: 'projects', label: 'Projects', href: '/guild?tab=projects' },
+          { id: 'crafting', label: 'Crafting', href: '/guild?tab=crafting' },
           { id: 'bases', label: 'Bases', href: '/guild?tab=bases' },
           { id: 'onboarding', label: 'Onboarding', href: '/guild?tab=onboarding' },
           { id: 'polls', label: 'Polls', href: '/guild?tab=polls' },
@@ -120,6 +125,8 @@ export default async function MyGuildPage({
         <GuildOnboarding key={guild.id} guildId={guild.id} />
       ) : tab === 'bases' ? (
         <GuildBaseDirectory key={guild.id} guildId={guild.id} />
+      ) : tab === 'projects' || tab === 'crafting' ? (
+        <GuildProjectsWorkspace key={`${guild.id}-${tab}`} guildId={guild.id} section={tab} />
       ) : tab === 'resources' ? (
         <GuildResourceRequests key={guild.id} guildId={guild.id} />
       ) : tab === 'operations' ? (
