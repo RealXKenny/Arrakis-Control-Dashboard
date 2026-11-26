@@ -20,6 +20,7 @@
 - Starting the dashboard before a production build exists now stops with a clear message to run `npm run build` (or rebuild the Pterodactyl server) instead of a Next.js error.
 - Dependency updates: Next.js 16.4.6, React 19.3.1, amqplib 2.4.2, and patch releases of Vitest, Playwright, Tailwind CSS, Prettier and the Next.js ESLint config.
 - Code cleanup with no change in behaviour: removed unused code (an old Discord sign-in exchange, unused vehicle, market and base helpers, and test-only hooks nothing called), stopped exporting values only used in their own file, and dropped two unused packages, `@fontsource/jetbrains-mono` (the font is bundled locally) and `@types/amqplib` (amqplib ships its own types).
+- Background timers and event listeners no longer hand promises to callbacks that ignore them, and the release workflow starts only for CI runs on `main`, so pushes to pull requests and release branches no longer create a skipped release run.
 
 ### Fixes
 

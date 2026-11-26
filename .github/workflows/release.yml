@@ -1,9 +1,12 @@
 name: Release
 
 on:
+  # Only CI runs on main can lead to a release, so CI on pull requests and
+  # release branches never starts this workflow at all.
   workflow_run:
     workflows: [CI]
     types: [completed]
+    branches: [main]
 
 permissions:
   contents: read

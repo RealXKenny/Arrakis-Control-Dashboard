@@ -82,6 +82,12 @@ describe('GitHub Actions workflows', () => {
       expect(condition).toContain(part);
   });
 
+  it('starts the release workflow only for CI runs on main', () => {
+    const release = workflows.find(({ file }) => file === 'release.yml')!;
+    const trigger = (release.workflow.on as Record<string, { branches?: string[] }>).workflow_run;
+    expect(trigger.branches).toEqual(['main']);
+  });
+
   it('builds and validates release assets before granting publish permission', () => {
     const release = workflows.find(({ file }) => file === 'release.yml')!;
     const validate = release.workflow.jobs.validate;

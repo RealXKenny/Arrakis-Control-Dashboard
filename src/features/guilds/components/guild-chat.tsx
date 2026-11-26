@@ -89,7 +89,7 @@ export function GuildChat({ url, title, note, roleLabels, readFrom, onUnreadCoun
         }
       }
       if (!controller.signal.aborted && !stopped)
-        timer = setTimeout(poll, Math.min(30_000, 2000 * 2 ** Math.min(failures, 4)));
+        timer = setTimeout(() => void poll(), Math.min(30_000, 2000 * 2 ** Math.min(failures, 4)));
     }
     const visible = () => {
       if (!document.hidden) void poll();
@@ -147,13 +147,14 @@ export function GuildChat({ url, title, note, roleLabels, readFrom, onUnreadCoun
       void read();
     });
     observer.observe(element);
-    element.addEventListener('scroll', read);
-    document.addEventListener('visibilitychange', read);
+    const onActivity = () => void read();
+    element.addEventListener('scroll', onActivity);
+    document.addEventListener('visibilitychange', onActivity);
     return () => {
       controller.abort();
       observer.disconnect();
-      element.removeEventListener('scroll', read);
-      document.removeEventListener('visibilitychange', read);
+      element.removeEventListener('scroll', onActivity);
+      document.removeEventListener('visibilitychange', onActivity);
     };
   }, [messages, readFrom, url, support]);
 

@@ -69,7 +69,7 @@ export default function DeepDesertTerrain({
   useEffect(() => {
     const controller = new AbortController();
     setReady(false);
-    (async () => {
+    void (async () => {
       try {
         const [shared, assets] = await Promise.all([
           loadSharedAssets(undefined, controller.signal),

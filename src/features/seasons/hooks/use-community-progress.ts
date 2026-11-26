@@ -46,7 +46,7 @@ export function useCommunityProgress(seasonId: string | undefined, onUpdate: (up
       } finally {
         clearTimeout(deadline);
         running = false;
-        if (!disposed && !document.hidden) next = setTimeout(poll, resumeImmediately ? 0 : delay);
+        if (!disposed && !document.hidden) next = setTimeout(() => void poll(), resumeImmediately ? 0 : delay);
         resumeImmediately = false;
       }
     }
@@ -60,7 +60,7 @@ export function useCommunityProgress(seasonId: string | undefined, onUpdate: (up
     };
     document.addEventListener('visibilitychange', visibility);
     // Give the initial member view time to settle; no need to repeat its aggregates immediately.
-    next = setTimeout(poll, 15000);
+    next = setTimeout(() => void poll(), 15000);
     return () => {
       disposed = true;
       clearTimeout(next);

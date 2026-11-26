@@ -61,7 +61,7 @@ export function AutomaticProgress({
             `New game progress tracked since ${data.tracking.startedAt}: ${data.tracking.newGameXp} game XP; ${data.tracking.newJourneys} new journey objectives. ${manual.current ? 'Claim unlocked rewards yourself with Claim Reward.' : 'Unlocked cosmetics are claimed automatically.'}`,
           );
         }
-        if (!disposed) timer = setTimeout(sync, 60000);
+        if (!disposed) timer = setTimeout(() => void sync(), 60000);
       } catch (e) {
         if (disposed) return;
         if (document.hidden) {
@@ -80,7 +80,7 @@ export function AutomaticProgress({
           failures++;
           const wait = retryDelayMs(failures);
           setState(`Progress sync paused: ${reason}. Trying again in ${Math.round(wait / 1000)} seconds.`);
-          timer = setTimeout(sync, wait);
+          timer = setTimeout(() => void sync(), wait);
         } else {
           setState(`Progress sync stopped: ${reason}. Refresh to reconcile safely.`);
         }

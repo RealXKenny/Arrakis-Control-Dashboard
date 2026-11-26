@@ -110,7 +110,7 @@ export function startPopulationRecorder() {
       pending = false;
     }
   };
-  globals.arrakisPopulationTimer = setInterval(tick, 60000);
+  globals.arrakisPopulationTimer = setInterval(() => void tick(), 60000);
   globals.arrakisPopulationTimer.unref();
   void tick();
 }

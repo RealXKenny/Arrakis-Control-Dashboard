@@ -66,13 +66,11 @@ export async function getSeasons(request: Request) {
   const members = await Promise.all(seasons.map((v) => loadMember(v.id, session.user.id)));
   return json({
     ok: true,
-    seasons: await Promise.all(
-      members.map(async (v) => ({
-        season: v.season.value,
-        progress: v.progress.value,
-        totals: v.totals.value,
-      })),
-    ),
+    seasons: members.map((v) => ({
+      season: v.season.value,
+      progress: v.progress.value,
+      totals: v.totals.value,
+    })),
     nextOffset: offset.data + 25,
   });
 }
