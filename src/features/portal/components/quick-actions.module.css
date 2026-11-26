@@ -1,12 +1,15 @@
 .root {
   min-width: 0;
   margin-bottom: 1.5rem;
-  border: 1px solid var(--color-sand-500);
+  border: 1px solid rgb(var(--theme-text-rgb) / 0.14);
+  border-radius: 10px;
+  overflow: hidden;
   background: var(--color-obsidian-900);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.18);
 }
 .heading {
   padding: 1.25rem;
-  border-bottom: 1px solid var(--color-sand-500);
+  border-bottom: 1px solid rgb(var(--theme-text-rgb) / 0.14);
 }
 .heading > p:first-child {
   color: var(--color-spice-300);
@@ -33,7 +36,7 @@
   overflow-wrap: anywhere;
 }
 .card + .card {
-  border-left: 1px solid var(--color-sand-500);
+  border-left: 1px solid rgb(var(--theme-text-rgb) / 0.14);
 }
 .number {
   color: var(--color-spice-300);
@@ -95,6 +98,6 @@
   }
   .card + .card {
     border-left: 0;
-    border-top: 1px solid var(--color-sand-500);
+    border-top: 1px solid rgb(var(--theme-text-rgb) / 0.14);
   }
 }

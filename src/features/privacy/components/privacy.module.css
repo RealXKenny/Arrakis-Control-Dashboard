@@ -68,7 +68,7 @@
 .editor,
 .linkPanel {
   padding: 1.25rem;
-  border: 1px solid var(--color-sand-500);
+  border: 1px solid rgb(var(--theme-text-rgb) / 0.14);
   background: var(--color-obsidian-900);
   min-width: 0;
   overflow-wrap: anywhere;
@@ -102,7 +102,7 @@
 }
 .offer {
   padding: 1rem;
-  border: 1px solid var(--color-sand-500);
+  border: 1px solid rgb(var(--theme-text-rgb) / 0.14);
   display: grid;
   gap: 0.75rem;
   min-width: 0;

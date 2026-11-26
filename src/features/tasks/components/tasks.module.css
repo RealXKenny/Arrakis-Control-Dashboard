@@ -48,7 +48,7 @@
 }
 .editor:has(form) {
   padding: 1.25rem;
-  border: 1px solid var(--color-sand-500);
+  border: 1px solid rgb(var(--theme-text-rgb) / 0.14);
   background: var(--color-obsidian-900);
 }
 .fields {
@@ -78,7 +78,7 @@
   padding: 1.25rem;
   min-width: 0;
   overflow-wrap: anywhere;
-  border: 1px solid var(--color-sand-500);
+  border: 1px solid rgb(var(--theme-text-rgb) / 0.14);
   background: var(--color-obsidian-900);
   scroll-margin-top: 6rem;
 }
@@ -114,7 +114,7 @@
 .confirm {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--color-sand-500);
+  border-top: 1px solid rgb(var(--theme-text-rgb) / 0.14);
 }
 .root :is(button, input, select, textarea, a):focus-visible {
   outline: 2px solid var(--color-spice-300);

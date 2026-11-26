@@ -14,7 +14,7 @@ export function SegmentedNav({ label, items, active }: { label: string; items: S
   return (
     <nav
       aria-label={label}
-      className={`mb-6 grid border border-sand-200/20 ${width} ${items.length > 4 ? 'max-lg:grid-cols-3!' : ''} ${items.length > 3 ? 'max-sm:grid-cols-2!' : ''}`}
+      className={`mb-6 grid gap-1 rounded-[10px] border border-sand-200/15 bg-obsidian-900/70 p-1 ${width} ${items.length > 4 ? 'max-lg:grid-cols-3!' : ''} ${items.length > 3 ? 'max-sm:grid-cols-2!' : ''}`}
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
     >
       {items.map((item) => (
