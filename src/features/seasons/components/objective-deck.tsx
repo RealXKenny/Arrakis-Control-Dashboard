@@ -1,6 +1,6 @@
 import { Button } from '../../../components/ui/button';
-import { categoryLabels, categoryStats, rewardSummary, type ObjectiveCategory } from '../catalog';
-import type { Definition, Progress } from '../contracts';
+import { categoryLabels, categoryStats, rewardSummary, visibleCategories, type ObjectiveCategory } from '../catalog';
+import type { Assignment, Definition, Progress } from '../contracts';
 
 const symbols: Record<ObjectiveCategory, string> = {
   level: 'M40 128 80 72 120 128 M54 108 80 42 106 108 M80 42V24',
@@ -16,17 +16,22 @@ const symbols: Record<ObjectiveCategory, string> = {
 export function ObjectiveDeck({
   definition,
   progress,
+  assignment,
   now,
   selected,
   onSelect,
 }: {
   definition: Definition;
   progress: Progress;
+  assignment?: Assignment | null;
   now: number;
   selected: string;
   onSelect: (category: ObjectiveCategory) => void;
 }) {
   const summary = rewardSummary(definition, progress);
+  const shown = new Set(visibleCategories(definition, assignment));
+  const personal = definition.challenges.some((c) => c.personalized);
+  const stats = categoryStats(definition, progress, now, assignment).filter((stat) => shown.has(stat.category));
   return (
     <section aria-labelledby="season-objectives-title" className="season-objectives">
       <div className="season-section-heading">
@@ -44,11 +49,14 @@ export function ObjectiveDeck({
         </p>
       </div>
       <p>
-        Six ways to explore your objectives. Categories organize quests; every play style keeps its own path to the
-        level cap.
+        {personal
+          ? assignment
+            ? 'Your objectives are generated for your character and sorted by what the game tracks for them. Every play style keeps its own path to the level cap.'
+            : 'Your personal objectives are generated automatically on your first progress check, then sorted into these categories.'
+          : 'Six ways to explore your objectives. Categories organize quests; every play style keeps its own path to the level cap.'}
       </p>
       <div className="season-objective-deck">
-        {categoryStats(definition, progress, now).map((stat) => (
+        {stats.map((stat) => (
           <Button
             key={stat.category}
             className={`season-objective-card ${selected === stat.category ? 'is-selected' : ''}`}

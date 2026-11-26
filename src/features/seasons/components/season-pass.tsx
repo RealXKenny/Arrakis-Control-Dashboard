@@ -27,12 +27,12 @@ import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
 import { RewardArt } from './reward-art';
 import { SeasonDialog } from './season-dialog';
 import { useCommunityProgress } from '../hooks/use-community-progress';
-import { categoryLabels, categoryOf, objectiveStatus } from '../catalog';
+import { categoryLabels, categoryOf, objectiveStatus, visibleCategories } from '../catalog';
 import { describeKind } from '../engine/kinds';
 import { CLAIM_STATE_LABELS, claimStateOf, claimSummary } from '../claim-view';
-import { objectiveCategories } from '../contracts';
 import { ObjectiveDeck } from './objective-deck';
 import { AutomaticProgress } from './automatic-progress';
+import { readSeasonResponse } from '../response';
 import '../styles/seasons.css';
 
 export type SeasonView = {
@@ -49,9 +49,7 @@ export async function seasonRequest<T>(url: string, payload?: unknown): Promise<
     headers: payload ? { 'Content-Type': 'application/json' } : undefined,
     body: payload ? JSON.stringify(payload) : undefined,
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(typeof data.error === 'string' ? data.error : 'Season request failed.');
-  return data as T;
+  return readSeasonResponse<T>(response);
 }
 function statusOf(challenge: Challenge, view: SeasonView) {
   return objectiveStatus(challenge, view.season.definition, view.progress, Date.now());
@@ -90,9 +88,8 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
     const controller = new AbortController();
     fetch(memberUrl(), { cache: 'no-store', signal: controller.signal })
       .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error);
-        setViews(data.season ? [data] : data.seasons);
+        const data = await readSeasonResponse<{ seasons?: SeasonView[] } & Partial<SeasonView>>(r);
+        setViews(data.season ? [data as SeasonView] : (data.seasons ?? []));
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
@@ -194,7 +191,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
   const filtered = definition.challenges.filter(
     (v) =>
       (filter === 'all' || v.path === filter) &&
-      (category === 'all' || categoryOf(v) === category) &&
+      (category === 'all' || categoryOf(v, view.assignment) === category) &&
       (status === 'all' || statusOf(v, view) === status) &&
       (cadence === 'all' || v.cadence === cadence),
   );
@@ -570,6 +567,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
           <ObjectiveDeck
             definition={definition}
             progress={progress}
+            assignment={view.assignment}
             now={now}
             selected={category}
             onSelect={(next) => {
@@ -600,7 +598,7 @@ export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challe
                 Category
                 <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
                   <option value="all">All categories</option>
-                  {objectiveCategories.map((c) => (
+                  {visibleCategories(definition, view.assignment).map((c) => (
                     <option key={c} value={c}>
                       {categoryLabels[c]}
                     </option>

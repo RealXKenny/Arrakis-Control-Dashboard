@@ -6,8 +6,10 @@ import {
   objectiveCategories,
   levelProgress,
   periodFor,
+  type Assignment,
   type Challenge,
   type Definition,
+  type ObjectiveKind,
   type Progress,
 } from './contracts';
 
@@ -20,7 +22,22 @@ export const categoryLabels: Record<(typeof objectiveCategories)[number], string
   achievement: 'Achievements',
 };
 export type ObjectiveCategory = (typeof objectiveCategories)[number];
-export function categoryOf(challenge: Challenge): ObjectiveCategory {
+/**
+ * Where an automatically assigned objective belongs. The game reports XP, levels and four journey groups; faction
+ * reputation is not part of the verified evidence, so no personal objective is ever filed under Faction.
+ */
+export function kindCategory(kind: ObjectiveKind): ObjectiveCategory {
+  if (kind.type === 'game-xp' || kind.type === 'levels') return 'level';
+  if (kind.group === 'story') return 'story';
+  if (kind.group === 'contract') return 'side_quest';
+  if (kind.group === 'codex') return 'exploration';
+  return 'achievement';
+}
+type Plan = Pick<Assignment, 'objectives'> | null | undefined;
+export function categoryOf(challenge: Challenge, assignment?: Plan): ObjectiveCategory {
+  // Dev note: the plan knows what you are chasing; the template only knew it was something.
+  const kind = challenge.personalized ? assignment?.objectives[challenge.id] : undefined;
+  if (kind) return kindCategory(kind);
   return (
     challenge.category ??
     (challenge.verification === 'character-level'
@@ -37,9 +54,9 @@ export function objectiveStatus(challenge: Challenge, definition: Definition, pr
   if (entries.filter((s) => s.status === 'approved').length >= challenge.limit) return 'completed';
   return entries.some((s) => s.status === 'pending') ? 'pending' : 'available';
 }
-export function categoryStats(definition: Definition, progress: Progress, now: number) {
+export function categoryStats(definition: Definition, progress: Progress, now: number, assignment?: Plan) {
   return objectiveCategories.map((category) => {
-    const challenges = definition.challenges.filter((c) => categoryOf(c) === category);
+    const challenges = definition.challenges.filter((c) => categoryOf(c, assignment) === category);
     const completed = challenges.filter((c) => objectiveStatus(c, definition, progress, now) === 'completed').length;
     const pending = challenges.filter((c) => objectiveStatus(c, definition, progress, now) === 'pending').length;
     return {
@@ -51,6 +68,15 @@ export function categoryStats(definition: Definition, progress: Progress, now: n
       percent: challenges.length ? Math.round((completed / challenges.length) * 100) : 0,
     };
   });
+}
+/**
+ * Categories worth showing. A season of personalized objectives hides categories its plan does not use, so members
+ * never see an empty "No objectives configured" card for a season that is generated automatically.
+ */
+export function visibleCategories(definition: Definition, assignment?: Plan): ObjectiveCategory[] {
+  if (!definition.challenges.some((c) => c.personalized)) return [...objectiveCategories];
+  const used = new Set(definition.challenges.map((c) => categoryOf(c, assignment)));
+  return objectiveCategories.filter((category) => used.has(category));
 }
 export function rewardSummary(definition: Definition, progress: Progress) {
   const level = levelProgress(definition, progress.xp).level;

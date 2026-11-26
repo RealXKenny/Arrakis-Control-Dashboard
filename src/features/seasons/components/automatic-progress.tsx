@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import type { Assignment, Progress, Totals } from '../contracts';
+import { readSeasonResponse, retryDelayMs, SeasonResponseError } from '../response';
+
+type SyncReply = {
+  progress: Progress;
+  totals: Totals;
+  assignment?: Assignment | null;
+  tracking: { startedAt: string; newGameXp: string; newJourneys: number; objectives?: Record<string, number> };
+};
 
 export function AutomaticProgress({
   seasonId,
@@ -26,6 +34,7 @@ export function AutomaticProgress({
   useEffect(() => {
     let disposed = false,
       running = false,
+      failures = 0,
       timer: ReturnType<typeof setTimeout>,
       request: AbortController;
     const sync = async () => {
@@ -41,8 +50,8 @@ export function AutomaticProgress({
           body: JSON.stringify({ action: 'sync', seasonId }),
           signal: request.signal,
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error ?? 'Progress verification unavailable.');
+        const data = await readSeasonResponse<SyncReply>(response, 'Progress verification unavailable.');
+        failures = 0;
         if (!disposed && !document.hidden) {
           latest.current(data.progress, data.totals, {
             assignment: data.assignment ?? null,
@@ -54,12 +63,27 @@ export function AutomaticProgress({
         }
         if (!disposed) timer = setTimeout(sync, 60000);
       } catch (e) {
-        if (!disposed)
-          setState(
-            document.hidden
-              ? 'Automatic progress paused while this page is hidden.'
-              : `Progress sync stopped: ${e.message}. Refresh to reconcile safely.`,
-          );
+        if (disposed) return;
+        if (document.hidden) {
+          setState('Automatic progress paused while this page is hidden.');
+          return;
+        }
+        const reason =
+          e instanceof Error && e.name === 'AbortError'
+            ? 'the game took longer than 15 seconds to answer'
+            : e instanceof Error
+              ? e.message.replace(/\.$/, '')
+              : 'Progress verification unavailable';
+        // A timeout, network drop or proxy page is temporary: keep trying on a widening schedule instead of stopping.
+        const retryable = !(e instanceof SeasonResponseError) || e.retryable;
+        if (retryable) {
+          failures++;
+          const wait = retryDelayMs(failures);
+          setState(`Progress sync paused: ${reason}. Trying again in ${Math.round(wait / 1000)} seconds.`);
+          timer = setTimeout(sync, wait);
+        } else {
+          setState(`Progress sync stopped: ${reason}. Refresh to reconcile safely.`);
+        }
       } finally {
         clearTimeout(timeout);
         running = false;

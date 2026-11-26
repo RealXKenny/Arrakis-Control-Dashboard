@@ -14,6 +14,8 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ### Fixes
 
+- Automatic seasons now sort each member's generated objectives into the category the game tracks them in: XP and level goals under Levels, story under Story, contracts under Side quests, codex entries under Exploration, and other journey goals under Achievements. Before, all 100 sat under Achievements and the other cards read "0/0 No objectives configured". Categories a season does not use are hidden; Faction stays hidden because faction reputation is not verified game evidence.
+- Season progress sync no longer stops for good with an `Unexpected token '<'` JSON error when a proxy or restarting server answers with a web page, a timeout or a rate limit. It explains what happened, shows the HTTP status, and retries automatically after 30 seconds, then 1, 2 and up to 5 minutes. Definite refusals, such as a missing linked character, still stop with their reason.
 - Guild logos that are missing or fail to load now fall back to the guild's initials on the guild page and in the guild directory, even when the image failed before the page finished loading, instead of showing a broken image.
 
 ## [2.0.0] - 2026-11-25
