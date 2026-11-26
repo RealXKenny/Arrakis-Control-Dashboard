@@ -1,0 +1,849 @@
+'use client';
+import { Card } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+
+import Link from 'next/link';
+import Image from 'next/image';
+import { useEffect, useRef, useState, useId } from 'react';
+import {
+  type Season,
+  type Progress,
+  type Totals,
+  type Reward,
+  type Challenge,
+  paths,
+  levelProgress,
+  seasonState,
+  emptyProgress,
+  emptyTotals,
+  seasonPresentation,
+  artworkUrl,
+  gameRewardLabel,
+  rewardComponents,
+  usesManualClaims,
+  type Assignment,
+} from '../contracts';
+import { useFeedbackSound } from '../../../lib/audio/use-feedback-sound';
+import { RewardArt } from './reward-art';
+import { SeasonDialog } from './season-dialog';
+import { useCommunityProgress } from '../hooks/use-community-progress';
+import { categoryLabels, categoryOf, objectiveStatus } from '../catalog';
+import { describeKind } from '../engine/kinds';
+import { CLAIM_STATE_LABELS, claimStateOf, claimSummary } from '../claim-view';
+import { objectiveCategories } from '../contracts';
+import { ObjectiveDeck } from './objective-deck';
+import { AutomaticProgress } from './automatic-progress';
+import '../styles/seasons.css';
+
+export type SeasonView = {
+  season: Season;
+  progress: Progress;
+  totals: Totals;
+  assignment?: Assignment | null;
+  gameClaims?: Record<string, { status: string }[]>;
+};
+export async function seasonRequest<T>(url: string, payload?: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: payload ? 'POST' : 'GET',
+    cache: 'no-store',
+    headers: payload ? { 'Content-Type': 'application/json' } : undefined,
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(typeof data.error === 'string' ? data.error : 'Season request failed.');
+  return data as T;
+}
+function statusOf(challenge: Challenge, view: SeasonView) {
+  return objectiveStatus(challenge, view.season.definition, view.progress, Date.now());
+}
+export function SeasonPass({ mode = 'pass', preview }: { mode?: 'pass' | 'challenges' | 'history'; preview?: Season }) {
+  const [views, setViews] = useState<SeasonView[]>(
+    preview ? [{ season: preview, progress: emptyProgress(), totals: emptyTotals() }] : [],
+  );
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(!preview);
+  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [cadence, setCadence] = useState('all');
+  const [category, setCategory] = useState('all');
+  const [selection, setSelection] = useState<Reward | null>(null);
+  const [objectiveValues, setObjectiveValues] = useState<Record<string, number>>({});
+  const [claimAll, setClaimAll] = useState<{ total: number; done: number; running: boolean } | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  const track = useRef<HTMLDivElement>(null);
+  const dialogTrigger = useRef<HTMLElement | null>(null);
+  const trackId = useId();
+  useFeedbackSound(error, message);
+  function memberUrl() {
+    const id = mode === 'history' ? null : new URLSearchParams(window.location.search).get('season');
+    return id ? `/api/v2/seasons?season=${encodeURIComponent(id)}` : '/api/v2/seasons';
+  }
+  async function reload() {
+    const data = await seasonRequest<{ seasons?: SeasonView[] } & Partial<SeasonView>>(memberUrl());
+    setViews(data.season ? [data as SeasonView] : (data.seasons ?? []));
+  }
+  useEffect(() => {
+    if (preview) return;
+    const controller = new AbortController();
+    fetch(memberUrl(), { cache: 'no-store', signal: controller.signal })
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error);
+        setViews(data.season ? [data] : data.seasons);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(e.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+    // Route mode is fixed for this mounted page; memberUrl reads the current document selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview, mode]);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+  const view =
+    views.find((v) => seasonState(v.season, now) === 'active') ??
+    views.find((v) => seasonState(v.season, now) === 'scheduled') ??
+    views[0];
+  const connection = useCommunityProgress(!preview && mode !== 'history' ? view?.season.id : undefined, (update) => {
+    setViews((previous) =>
+      previous.map((entry) =>
+        entry.season.id !== update.season.id
+          ? entry
+          : {
+              ...entry,
+              season:
+                (update.season.version ?? 0) >= (entry.season.version ?? 0)
+                  ? { ...entry.season, ...update.season }
+                  : entry.season,
+              totals: (update.totals.version ?? 0) >= (entry.totals.version ?? 0) ? update.totals : entry.totals,
+            },
+      ),
+    );
+  });
+  async function act(payload: Record<string, unknown>) {
+    if (!view || preview || busy) return;
+    setBusy(true);
+    setError('');
+    setMessage('');
+    try {
+      const oldLevel = levelProgress(view.season.definition, view.progress.xp).level;
+      const result = await seasonRequest<{
+        progress?: Progress;
+        duplicate?: boolean;
+        trackingOnly?: boolean;
+        trackingEstablished?: boolean;
+      }>('/api/v2/seasons', {
+        ...payload,
+        seasonId: view.season.id,
+      });
+      await reload();
+      const newLevel = result.progress ? levelProgress(view.season.definition, result.progress.xp).level : oldLevel;
+      setMessage(
+        result.trackingOnly
+          ? result.trackingEstablished
+            ? 'Season tracking started. Existing game progress does not count.'
+            : 'No new qualifying game progress observed yet.'
+          : result.duplicate
+            ? 'Already recorded. Your progress is safe.'
+            : newLevel > oldLevel
+              ? `Level ${newLevel} reached. New rewards await.`
+              : payload.action === 'submit'
+                ? 'Evidence submitted for review.'
+                : payload.action === 'claim-rewards'
+                  ? 'Reward claimed. Check its delivery state below.'
+                  : payload.action === 'claim'
+                    ? 'Cosmetic claimed. It is yours to keep.'
+                    : payload.action === 'equip'
+                      ? 'Cosmetic equipped.'
+                      : payload.action === 'delivery-request'
+                        ? 'Game delivery requested for administrator review.'
+                        : 'Challenge verified. Season XP awarded.',
+      );
+      setSelection(null);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (loading) return <p role="status">Opening the season chronicle…</p>;
+  if (!view)
+    return (
+      <section className="season-empty">
+        <span className="season-kicker">Community seasons</span>
+        <h1>The next chapter awaits.</h1>
+        <p>No published season is available yet. Your earned recognition will always remain in Season History.</p>
+        {error && <p role="alert">{error}</p>}
+      </section>
+    );
+  const { season, progress, totals } = view;
+  const definition = season.definition;
+  const manual = usesManualClaims(definition);
+  const presentation = seasonPresentation(season);
+  const leveling = levelProgress(definition, progress.xp);
+  const remaining = Math.max(0, Date.parse(definition.endsAt) - now);
+  const rewards = [...definition.rewards].sort((a, b) => a.level - b.level);
+  const filtered = definition.challenges.filter(
+    (v) =>
+      (filter === 'all' || v.path === filter) &&
+      (category === 'all' || categoryOf(v) === category) &&
+      (status === 'all' || statusOf(v, view) === status) &&
+      (cadence === 'all' || v.cadence === cadence),
+  );
+  return (
+    <div className="season-root">
+      {!preview && (
+        <nav className="season-tabs" aria-label="Season navigation">
+          <Link href="/seasons" aria-current={mode === 'pass' ? 'page' : undefined}>
+            Season pass
+          </Link>
+          <Link href="/seasons/challenges" aria-current={mode === 'challenges' ? 'page' : undefined}>
+            Challenges
+          </Link>
+          <Link href="/seasons/history" aria-current={mode === 'history' ? 'page' : undefined}>
+            Season History
+          </Link>
+        </nav>
+      )}
+      {error && (
+        <p className="season-notice" role="alert">
+          {error}
+        </p>
+      )}
+      {message && (
+        <p className="season-notice" role="status">
+          {message}
+        </p>
+      )}
+      {mode === 'history' ? (
+        <>
+          <header>
+            <span className="season-kicker">Your permanent chronicle</span>
+            <h1>Season History</h1>
+            <p>Every contribution leaves a mark. Cosmetics and recognition remain yours.</p>
+          </header>
+          {views.map((entry) => (
+            <Card className="season-history" key={entry.season.id}>
+              <div>
+                <span className="season-kicker">
+                  Season {entry.season.definition.number} · {seasonState(entry.season)}
+                </span>
+                <h2>{entry.season.definition.name}</h2>
+                <Link className="season-button" href={`/seasons?season=${entry.season.id}`}>
+                  Open historical reward track
+                </Link>
+                <p>
+                  Level {levelProgress(entry.season.definition, entry.progress.xp).level} ·{' '}
+                  {entry.progress.xp.toLocaleString()} Season XP ·{' '}
+                  {entry.progress.submissions.filter((v) => v.status === 'approved').length} approved challenges
+                </p>
+              </div>
+              <div className="season-cosmetics">
+                {entry.progress.claims.map((claim) => (
+                  <Button
+                    key={claim.reward.id}
+                    disabled={busy}
+                    onClick={() => {
+                      setBusy(true);
+                      seasonRequest('/api/v2/seasons', {
+                        action: 'equip',
+                        seasonId: entry.season.id,
+                        rewardId: claim.reward.id,
+                      })
+                        .then(() => setMessage(`${claim.reward.name} equipped.`))
+                        .catch((e) => setError(e.message))
+                        .finally(() => setBusy(false));
+                    }}
+                  >
+                    <RewardArt reward={claim.reward} seasonId={entry.season.id} />
+                    <span>Equip {claim.reward.name}</span>
+                  </Button>
+                ))}
+              </div>
+              <details>
+                <summary>Challenges, milestones & XP history</summary>
+                {entry.progress.submissions.map((s) => (
+                  <p key={s.id}>
+                    {entry.season.definition.challenges.find((c) => c.id === s.challengeId)?.name} · {s.status} ·{' '}
+                    {s.note}
+                  </p>
+                ))}
+                {entry.season.definition.milestones.map((m) => (
+                  <p key={m.id}>
+                    {m.name}: {Math.min(m.target, entry.totals.completions)} / {m.target}
+                  </p>
+                ))}
+                <ol>
+                  {entry.progress.ledger.map((event) => (
+                    <li key={event.id}>
+                      {event.at.slice(0, 10)} · {event.delta > 0 ? '+' : ''}
+                      {event.delta} XP · {event.reason}
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            </Card>
+          ))}
+          <Button
+            disabled={busy}
+            className="season-button"
+            onClick={async () => {
+              setBusy(true);
+              try {
+                const next = offset + 25;
+                const data = await seasonRequest<{ seasons: SeasonView[] }>(`/api/v2/seasons?offset=${next}`);
+                setViews((v) => [...v, ...data.seasons]);
+                setOffset(next);
+                if (!data.seasons.length) setMessage('You have reached the end of this history page.');
+              } catch (e) {
+                setError(e.message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Load older seasons
+          </Button>
+        </>
+      ) : (
+        <>
+          <header className={`season-hero season-theme-${presentation.theme}`}>
+            <div className="season-hero-landscape" aria-hidden="true" />
+            {presentation.artwork && (
+              <Image
+                src={artworkUrl(season.id, presentation.artwork.id)}
+                alt={presentation.artwork.alt}
+                fill
+                sizes="100vw"
+                className="season-hero-artwork"
+                unoptimized
+              />
+            )}
+            <div className="season-hero-copy">
+              <span className="season-kicker">
+                Community season {String(definition.number).padStart(2, '0')} / Free for every traveller
+              </span>
+              <h1>{definition.name}</h1>
+              <p className="season-subtitle">{presentation.subtitle}</p>
+              <p>{presentation.description}</p>
+              <div className="season-hero-meta">
+                <span>{preview ? 'Administrator preview' : seasonState(season, now)}</span>
+                <span>
+                  {remaining > 0 && !['ended', 'archived'].includes(seasonState(season, now))
+                    ? `${Math.floor(remaining / 86400000)}d ${Math.floor(remaining / 3600000) % 24}h remaining`
+                    : 'Season ended'}
+                </span>
+                <span>{definition.timezone}</span>
+              </div>
+            </div>
+            <div className="season-level">
+              <span className="season-kicker">Your level</span>
+              <strong>{String(leveling.level).padStart(2, '0')}</strong>
+              <span>{progress.xp.toLocaleString()} Season XP</span>
+              <progress value={leveling.fraction} max="1" aria-label="Progress to next level" />
+              <small>
+                {leveling.next === null
+                  ? 'Reward track complete'
+                  : `${(leveling.next - progress.xp).toLocaleString()} XP to level ${leveling.level + 1}`}
+              </small>
+            </div>
+          </header>
+          {mode === 'pass' && (
+            <section aria-labelledby="reward-track-title">
+              <div className="season-section-heading">
+                <div>
+                  <span className="season-kicker">Your journey, your recognition</span>
+                  <h2 id="reward-track-title">The reward track</h2>
+                </div>
+                <span>
+                  All rewards are free · {progress.claims.length}/{rewards.length} claimed
+                </span>
+                <div className="season-actions">
+                  <Button
+                    type="button"
+                    className="season-button"
+                    aria-controls={trackId}
+                    aria-label="Previous rewards"
+                    onClick={() =>
+                      track.current?.scrollBy({
+                        left: -(track.current.clientWidth * 0.8),
+                        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                      })
+                    }
+                  >
+                    ← Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    className="season-button"
+                    aria-controls={trackId}
+                    aria-label="Next rewards"
+                    onClick={() =>
+                      track.current?.scrollBy({
+                        left: track.current.clientWidth * 0.8,
+                        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                      })
+                    }
+                  >
+                    Next →
+                  </Button>
+                </div>
+              </div>
+              {rewards.length > 20 && (
+                <nav className="season-actions season-track-chapters" aria-label="Reward level chapters">
+                  {Array.from({ length: Math.ceil(rewards.length / 10) }, (_, chapter) => (
+                    <Button
+                      key={chapter}
+                      type="button"
+                      className="season-button"
+                      aria-controls={trackId}
+                      onClick={() => {
+                        const card = track.current?.children[chapter * 10];
+                        if (card)
+                          card.scrollIntoView({
+                            block: 'nearest',
+                            inline: 'start',
+                            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                          });
+                      }}
+                    >
+                      Levels {rewards[chapter * 10].level}–
+                      {rewards[Math.min(chapter * 10 + 9, rewards.length - 1)].level}
+                    </Button>
+                  ))}
+                </nav>
+              )}
+              <div
+                className="season-track"
+                id={trackId}
+                ref={track}
+                tabIndex={0}
+                role="region"
+                aria-label="Reward track. Scroll horizontally to explore rewards."
+              >
+                {rewards.map((reward) => {
+                  const claimed = progress.claims.some((v) => v.reward.id === reward.id);
+                  const unlocked =
+                    leveling.level >= reward.level &&
+                    !['draft', 'preview', 'scheduled'].includes(seasonState(season, now));
+                  return (
+                    <Button
+                      key={reward.id}
+                      className={`season-reward ${claimed ? 'is-claimed' : unlocked ? 'is-unlocked' : ''}`}
+                      onClick={(event) => {
+                        dialogTrigger.current = event.currentTarget;
+                        setSelection(reward);
+                      }}
+                    >
+                      <span className="season-reward-level">Level {String(reward.level).padStart(2, '0')}</span>
+                      <RewardArt reward={reward} seasonId={season.id} />
+                      <span className="season-kicker">{reward.kind}</span>
+                      <strong>{reward.name}</strong>
+                      <span className="season-reward-state">
+                        {claimed ? '✓ Claimed' : unlocked ? 'Ready to claim' : 'Locked · Preview'}
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+          {view.assignment && (
+            <section className="season-editor-card" aria-label="Your season plan">
+              <span className="season-kicker">Your personal plan · {view.assignment.tier}</span>
+              <p>
+                Your objectives were fixed when tracking began and never change. They are based only on verified game
+                data for your linked character.
+              </p>
+              {view.assignment.limitations.length > 0 && (
+                <ul>
+                  {view.assignment.limitations.map((text) => (
+                    <li key={text}>{text}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+          {manual && !preview && (
+            <section className="season-editor-card" aria-label="Claim rewards">
+              {(() => {
+                const summary = claimSummary(definition, progress.xp, view.gameClaims);
+                return (
+                  <>
+                    <span className="season-kicker">Rewards</span>
+                    <p role="status">
+                      {summary.available} reward{summary.available === 1 ? '' : 's'} ready to claim
+                      {summary.uncertain > 0 && ` · ${summary.uncertain} awaiting administrator verification`}.
+                    </p>
+                    {claimAll ? (
+                      <div role="group" aria-label="Confirm Claim All">
+                        <p>
+                          Claim {claimAll.total} reward{claimAll.total === 1 ? '' : 's'} in level order? Each item,
+                          Solaris and House Credits payment is sent to your linked character once. Log out of the game
+                          first.
+                        </p>
+                        <p role="status">
+                          {claimAll.running ? `Claiming… ${claimAll.done} of ${claimAll.total} processed` : ''}
+                        </p>
+                        <Button
+                          className="season-button season-primary"
+                          disabled={busy || claimAll.running}
+                          onClick={async () => {
+                            setClaimAll({ ...claimAll, running: true });
+                            let done = 0;
+                            try {
+                              for (let guard = 0; guard < 12; guard++) {
+                                const batch = await seasonRequest<{
+                                  results: { state: string }[];
+                                  remaining: number;
+                                  blocked?: string | null;
+                                }>('/api/v2/seasons', { action: 'claim-all', seasonId: season.id });
+                                done += batch.results.length;
+                                setClaimAll((current) => current && { ...current, done });
+                                if (batch.blocked) throw new Error(batch.blocked);
+                                if (batch.remaining === 0 || batch.results.some((r) => r.state !== 'claimed')) break;
+                              }
+                              setMessage('Claim All finished. Check each reward for its delivery state.');
+                            } catch (e) {
+                              setError(e instanceof Error ? e.message : 'Claim All stopped.');
+                            } finally {
+                              await reload();
+                              setClaimAll(null);
+                            }
+                          }}
+                        >
+                          Confirm Claim All
+                        </Button>
+                        <Button className="season-button" disabled={claimAll.running} onClick={() => setClaimAll(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        className="season-button season-primary"
+                        disabled={busy || summary.available === 0}
+                        onClick={() => setClaimAll({ total: summary.available, done: 0, running: false })}
+                      >
+                        Claim All Available
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
+            </section>
+          )}
+          {!preview && season.automatic && seasonState(season, now) === 'active' && (
+            <AutomaticProgress
+              key={season.id}
+              seasonId={season.id}
+              manualClaims={manual}
+              onProgress={(next, updatedTotals, plan) => {
+                setObjectiveValues(plan.objectives);
+                setViews((previous) =>
+                  previous.map((entry) =>
+                    entry.season.id === season.id
+                      ? {
+                          ...entry,
+                          assignment: plan.assignment ?? entry.assignment,
+                          progress: next,
+                          totals:
+                            (updatedTotals.version ?? 0) >= (entry.totals.version ?? 0) ? updatedTotals : entry.totals,
+                        }
+                      : entry,
+                  ),
+                );
+                if (next.xp > progress.xp)
+                  setMessage(
+                    `Automatic progress recorded. Level ${levelProgress(definition, next.xp).level}.${manual ? ' Claim your unlocked rewards.' : ' Unlocked cosmetics claimed.'}`,
+                  );
+              }}
+            />
+          )}
+          <ObjectiveDeck
+            definition={definition}
+            progress={progress}
+            now={now}
+            selected={category}
+            onSelect={(next) => {
+              setCategory(next);
+              setFilter('all');
+              setStatus('all');
+              setCadence('all');
+            }}
+          />
+          <section aria-labelledby="season-challenges-title">
+            <div className="season-section-heading">
+              <div>
+                <span className="season-kicker">Choose your path</span>
+                <h2 id="season-challenges-title">
+                  {mode === 'challenges' ? 'Challenge dispatch' : 'Active challenges'}
+                </h2>
+              </div>
+              <Link href="/seasons/challenges">Browse challenges →</Link>
+            </div>
+            <p>Every path can reach the level cap. Solo challenges require no guild or group attendance.</p>
+            <p>
+              {season.automatic
+                ? 'Game progress is verified automatically while you view this season. Unlocked dashboard cosmetics are claimed for you; no evidence submission is required.'
+                : 'Complete objectives in game, then submit a description and optional HTTPS screenshots or clips. Moderators review gameplay evidence before awarding XP.'}
+            </p>
+            <div className="season-filters">
+              <label>
+                Category
+                <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
+                  <option value="all">All categories</option>
+                  {objectiveCategories.map((c) => (
+                    <option key={c} value={c}>
+                      {categoryLabels[c]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Path
+                <select aria-label="Path" value={filter} onChange={(e) => setFilter(e.target.value)}>
+                  <option value="all">All paths</option>
+                  {paths.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Status
+                <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <option value="all">All statuses</option>
+                  <option value="available">Available</option>
+                  <option value="pending">Pending review</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </label>
+              <label>
+                Type
+                <select aria-label="Type" value={cadence} onChange={(e) => setCadence(e.target.value)}>
+                  <option value="all">All types</option>
+                  {['daily', 'weekly', 'seasonal', 'once', 'event'].map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {mode !== 'challenges' && filtered.length > 6 && (
+              <p>
+                Showing six of {filtered.length} matching quests.{' '}
+                <Link href="/seasons/challenges">Browse every in-game quest →</Link>
+              </p>
+            )}
+            {filtered.length === 0 && (
+              <p role="status">No objectives match these filters. Choose another category or path.</p>
+            )}
+            <div className="season-challenges season-objective-timeline">
+              {(mode === 'challenges' ? filtered : filtered.slice(0, 6)).map((c) => (
+                <Card className="season-challenge" key={c.id}>
+                  <div className="season-section-heading">
+                    <span className="season-kicker">
+                      {c.path} / {c.cadence}
+                    </span>
+                    <strong>+{c.xp.toLocaleString()} XP</strong>
+                  </div>
+                  <h3>{c.name}</h3>
+                  {view.assignment && c.personalized ? (
+                    view.assignment.objectives[c.id] ? (
+                      <>
+                        <p>{describeKind(view.assignment.objectives[c.id])}</p>
+                        <p className="season-kicker" role="status">
+                          Progress {objectiveValues[c.id] ?? 0} / {view.assignment.objectives[c.id].target}
+                        </p>
+                      </>
+                    ) : (
+                      <p>
+                        No verifiable game evidence supports this objective for your character, so it cannot be earned.
+                      </p>
+                    )
+                  ) : (
+                    <p>{c.description}</p>
+                  )}
+                  <div className="season-challenge-bottom">
+                    <span>
+                      {c.verification === 'review' ? 'Moderator-reviewed' : 'API-observed'} · {statusOf(c, view)}
+                    </span>
+                    <Button
+                      className="season-button"
+                      disabled={
+                        busy || !!preview || seasonState(season, now) !== 'active' || statusOf(c, view) !== 'available'
+                      }
+                      onClick={() => act({ action: 'verify', challengeId: c.id })}
+                    >
+                      Verify now
+                    </Button>
+                  </div>
+                  {progress.submissions
+                    .filter((s) => s.challengeId === c.id)
+                    .map((s) => (
+                      <p key={s.id} className="season-review-note">
+                        {s.status}
+                        {s.note ? `: ${s.note}` : ''}
+                      </p>
+                    ))}
+                </Card>
+              ))}
+            </div>
+            {!filtered.length && <p>No challenges match these filters.</p>}
+          </section>
+          <section>
+            <div className="season-section-heading">
+              <div>
+                <span className="season-kicker">Together, beyond the horizon</span>
+                <h2>Community milestones</h2>
+              </div>
+              <span>{totals.participants.toLocaleString()} participants</span>
+            </div>
+            {!preview && (
+              <p className="season-live-status" aria-live="polite">
+                {connection === 'stale'
+                  ? 'Live progress delayed. Showing the last confirmed totals; reconnecting automatically.'
+                  : connection === 'paused'
+                    ? 'Live progress paused while this page is hidden.'
+                    : connection === 'live'
+                      ? 'Community progress is live · refreshes every 15 seconds.'
+                      : 'Connecting to live community progress…'}
+              </p>
+            )}
+            <div className="season-challenges">
+              {definition.milestones.map((m) => (
+                <Card className="season-challenge" key={m.id}>
+                  <span className="season-kicker" aria-live="polite">
+                    {totals.completions >= m.target ? '✦ Shared achievement unlocked' : 'Community objective'}
+                  </span>
+                  <h3>{m.name}</h3>
+                  {totals.milestones?.[m.id] && (
+                    <p>Unlocked {new Date(totals.milestones[m.id]).toLocaleDateString()}</p>
+                  )}
+                  <p>{m.description}</p>
+                  <progress max={m.target} value={Math.min(totals.completions, m.target)} aria-label={m.name} />
+                  <p>
+                    {totals.completions.toLocaleString()} / {m.target.toLocaleString()} approved challenges
+                  </p>
+                </Card>
+              ))}
+            </div>
+          </section>
+          {progress.claims.length > 0 && (
+            <section>
+              <h2>Recently claimed</h2>
+              <div className="season-cosmetics">
+                {progress.claims
+                  .slice(-5)
+                  .reverse()
+                  .map((c) => (
+                    <Button
+                      key={c.reward.id}
+                      onClick={(event) => {
+                        dialogTrigger.current = event.currentTarget;
+                        setSelection(c.reward);
+                      }}
+                    >
+                      <RewardArt reward={c.reward} seasonId={season.id} />
+                      <span>{c.reward.name}</span>
+                    </Button>
+                  ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+      {selection && (
+        <div className="season-modal-backdrop">
+          <SeasonDialog
+            labelledBy="reward-preview-title"
+            returnFocus={dialogTrigger}
+            onClose={() => setSelection(null)}
+          >
+            <RewardArt reward={selection} seasonId={season.id} />
+            <span className="season-kicker">
+              Level {selection.level} / {selection.kind}
+            </span>
+            <h2 id="reward-preview-title">{selection.name}</h2>
+            <p>{selection.description}</p>
+            {manual && (
+              <div role="group" aria-label="Reward contents">
+                <span className="season-kicker">You will receive</span>
+                <ul>
+                  <li>Dashboard cosmetic: {selection.name}</li>
+                  {rewardComponents(selection).map((part, index) => (
+                    <li key={index}>
+                      {gameRewardLabel(part)}
+                      {view.gameClaims?.[selection.id]?.[index] && ` — ${view.gameClaims[selection.id][index].status}`}
+                    </li>
+                  ))}
+                </ul>
+                <p role="status">
+                  {CLAIM_STATE_LABELS[claimStateOf(definition, progress.xp, selection, view.gameClaims)]}
+                </p>
+                <p>
+                  Delivery goes to your linked character and needs you logged out of the game. An unconfirmed delivery
+                  is never resent automatically.
+                </p>
+              </div>
+            )}
+            <div className="season-profile-preview">
+              <span className="season-kicker">Profile preview</span>
+              <strong>{selection.kind === 'title' ? selection.name : 'Desert Traveller'}</strong>
+              <span>
+                {selection.kind} · {selection.name}
+              </span>
+            </div>
+            <div className="season-actions">
+              <Button autoFocus className="season-button" onClick={() => setSelection(null)}>
+                Close preview
+              </Button>
+              {manual &&
+                ['available', 'pending'].includes(
+                  claimStateOf(definition, progress.xp, selection, view.gameClaims),
+                ) && (
+                  <Button
+                    className="season-button season-primary"
+                    disabled={busy || !!preview || ['draft', 'preview', 'scheduled'].includes(seasonState(season, now))}
+                    onClick={() => act({ action: 'claim-rewards', rewardId: selection.id })}
+                  >
+                    {claimStateOf(definition, progress.xp, selection, view.gameClaims) === 'pending'
+                      ? 'Retry Claim'
+                      : 'Claim Reward'}
+                  </Button>
+                )}
+              {progress.claims.some((v) => v.reward.id === selection.id) ? (
+                <Button
+                  className="season-button"
+                  disabled={busy || !!preview}
+                  onClick={() => act({ action: 'equip', rewardId: selection.id })}
+                >
+                  Equip cosmetic
+                </Button>
+              ) : manual ? null : (
+                <Button
+                  className="season-button season-primary"
+                  disabled={
+                    busy ||
+                    !!preview ||
+                    leveling.level < selection.level ||
+                    ['draft', 'preview', 'scheduled'].includes(seasonState(season, now))
+                  }
+                  onClick={() => act({ action: 'claim', rewardId: selection.id })}
+                >
+                  Confirm free claim
+                </Button>
+              )}
+            </div>
+          </SeasonDialog>
+        </div>
+      )}
+    </div>
+  );
+}

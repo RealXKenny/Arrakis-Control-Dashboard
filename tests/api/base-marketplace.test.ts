@@ -15,25 +15,25 @@ const {
   getMarketplaceRecord: vi.fn(),
   getSession: vi.fn(),
 }));
-vi.mock('../../src/modules/bases/server/owned-export', () => ({ requireOwnedBaseExport, ownedBaseContext }));
-vi.mock('../../src/modules/marketplace/server/store', () => ({
+vi.mock('../../src/features/bases/server/owned-export', () => ({ requireOwnedBaseExport, ownedBaseContext }));
+vi.mock('../../src/features/bases/marketplace/server/store', () => ({
   publishMarketplaceRecord,
   listMarketplaceSummaries,
   getMarketplaceRecord,
 }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession }));
-vi.mock('../../src/modules/bases/server/preview-settings', async (original) => ({
+vi.mock('../../src/features/auth/server/session', () => ({ getSession }));
+vi.mock('../../src/features/bases/server/preview-settings', async (original) => ({
   ...(await original()),
   getPreviewSettings: vi.fn(async () => ({ image: 'data:image/png;base64,AAAA' })),
 }));
-vi.mock('../../src/infrastructure/pages-api', async (importOriginal) => ({
+vi.mock('../../src/server/pages-api', async (importOriginal) => ({
   ...(await importOriginal()),
   isSameOriginRequest: () => true,
 }));
 
-import { POST } from '../../src/modules/marketplace/server/publish';
-import { detail, list } from '../../src/modules/marketplace/server/read';
-import { getPreviewSettings, previewId } from '../../src/modules/bases/server/preview-settings';
+import { POST } from '../../src/features/bases/marketplace/server/publish';
+import { detail, list } from '../../src/features/bases/marketplace/server/read';
+import { getPreviewSettings, previewId } from '../../src/features/bases/server/preview-settings';
 
 const summary = {
   id: 'a'.repeat(24),

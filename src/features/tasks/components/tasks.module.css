@@ -1,0 +1,127 @@
+.root,
+.fields {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.root label {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--color-sand-200);
+}
+.root input,
+.root select,
+.root textarea {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0.65rem;
+  border: 1px solid var(--color-sand-500);
+  background: var(--color-obsidian-900);
+  color: var(--color-sand-100);
+}
+.root textarea {
+  resize: vertical;
+}
+.root button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1rem;
+  min-width: 0;
+}
+.actions > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.editor {
+  scroll-margin-top: 6rem;
+}
+.editor:has(form) {
+  padding: 1.25rem;
+  border: 1px solid rgb(var(--theme-text-rgb) / 0.14);
+  background: var(--color-obsidian-900);
+}
+.fields {
+  border: 0;
+  padding: 0;
+}
+.fields legend {
+  padding-bottom: 1rem;
+  color: var(--color-sand-100);
+  font-weight: bold;
+}
+.note {
+  color: var(--color-sand-300);
+  font-size: 0.875rem;
+}
+.error {
+  color: var(--color-sand-100);
+  padding: 1rem;
+  border-left: 3px solid var(--color-spice-400);
+}
+.list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.card {
+  padding: 1.25rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  border: 1px solid rgb(var(--theme-text-rgb) / 0.14);
+  background: var(--color-obsidian-900);
+  scroll-margin-top: 6rem;
+}
+.card:target,
+.card[data-focused='true'] {
+  border-color: var(--color-spice-400);
+}
+.card h2 {
+  font-size: 1.125rem;
+  margin: 0.75rem 0;
+}
+.card p {
+  color: var(--color-sand-300);
+  font-size: 0.875rem;
+}
+.card .eyebrow {
+  color: var(--color-spice-300);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+.notes {
+  white-space: pre-wrap;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-spice-300);
+  text-decoration: underline;
+  margin: 0.5rem 0;
+}
+.confirm {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(var(--theme-text-rgb) / 0.14);
+}
+.root :is(button, input, select, textarea, a):focus-visible {
+  outline: 2px solid var(--color-spice-300);
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

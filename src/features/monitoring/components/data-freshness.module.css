@@ -1,0 +1,47 @@
+/* One compact status line: badge first, then the two readings. Wraps cleanly on narrow screens. */
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgb(var(--theme-text-rgb) / 0.08);
+  border-radius: 8px;
+  background: rgb(var(--theme-text-rgb) / 0.025);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.root .state {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.root dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--color-sand-300);
+}
+.root dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  min-width: 0;
+}
+.root dt {
+  color: var(--color-sand-400);
+}
+.root dt::after {
+  content: ':';
+}
+.root dd {
+  margin: 0;
+  color: var(--color-sand-200);
+}
+.root time {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}

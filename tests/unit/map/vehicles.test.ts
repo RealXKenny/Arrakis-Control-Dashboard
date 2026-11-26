@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isContainerVehicle } from '../../../src/modules/portal/utils/vehicles';
+import { isContainerVehicle } from '../../../src/features/vehicles/presentation';
 
 describe('vehicle presentation', () => {
   it('identifies container vehicles by their reported type without matching ordinary vehicles', () => {

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { expect, it } from 'vitest';
-import { fitBaseCamera } from '../../../src/modules/bases/utils/preview-camera';
+import { fitBaseCamera } from '../../../src/features/bases/utils/preview-camera';
 
 it('fits every corner in a picture while preserving the chosen viewing direction', () => {
   const bounds = new THREE.Box3(new THREE.Vector3(-80, -20, -9), new THREE.Vector3(80, 20, 9));

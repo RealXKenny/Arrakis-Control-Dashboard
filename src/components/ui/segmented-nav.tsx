@@ -1,0 +1,34 @@
+import Link from 'next/link';
+import { menuItemClass } from './control-styles';
+
+export interface SegmentedItem {
+  id: string;
+  label: string;
+  count?: number;
+  href: string;
+}
+
+/** Link-based tab bar (works without JavaScript, state lives in the URL). */
+export function SegmentedNav({ label, items, active }: { label: string; items: SegmentedItem[]; active: string }) {
+  const width = items.length > 6 ? 'max-w-4xl' : items.length > 4 ? 'max-w-3xl' : 'max-w-md';
+  return (
+    <nav
+      aria-label={label}
+      className={`mb-6 grid gap-1 rounded-[10px] border border-sand-200/15 bg-obsidian-900/70 p-1 ${width} ${items.length > 4 ? 'max-lg:grid-cols-3!' : ''} ${items.length > 3 ? 'max-sm:grid-cols-2!' : ''}`}
+      style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+    >
+      {items.map((item) => (
+        <Link
+          key={item.id}
+          href={item.href}
+          replace
+          aria-current={active === item.id ? 'page' : undefined}
+          className={menuItemClass({ active: active === item.id, layout: 'segment' })}
+        >
+          {item.label}
+          {item.count !== undefined && <span className="font-mono opacity-70">{item.count}</span>}
+        </Link>
+      ))}
+    </nav>
+  );
+}

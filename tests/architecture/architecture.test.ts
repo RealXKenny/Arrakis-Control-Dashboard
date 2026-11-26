@@ -11,7 +11,7 @@ const files = fs
   .map((p) => path.join(root, p));
 const normalize = (file: string) => path.relative(root, file).replaceAll('\\', '/');
 
-function imports(file: string, text = fs.readFileSync(file, 'utf8')): string[] {
+function imports(file: string, text = fs.readFileSync(file, 'utf8'), runtimeOnly = false): string[] {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   const result: string[] = [];
   function visit(node: ts.Node) {
@@ -36,6 +36,30 @@ function imports(file: string, text = fs.readFileSync(file, 'utf8')): string[] {
       node.moduleSpecifier &&
       ts.isStringLiteral(node.moduleSpecifier)
     ) {
+      if (runtimeOnly) {
+        if (ts.isImportDeclaration(node) && node.importClause) {
+          const clause = node.importClause;
+          if (clause.isTypeOnly) return;
+          if (
+            !clause.name &&
+            clause.namedBindings &&
+            ts.isNamedImports(clause.namedBindings) &&
+            clause.namedBindings.elements.length > 0 &&
+            clause.namedBindings.elements.every((element) => element.isTypeOnly)
+          )
+            return;
+        }
+        if (ts.isExportDeclaration(node)) {
+          if (node.isTypeOnly) return;
+          if (
+            node.exportClause &&
+            ts.isNamedExports(node.exportClause) &&
+            node.exportClause.elements.length > 0 &&
+            node.exportClause.elements.every((element) => element.isTypeOnly)
+          )
+            return;
+        }
+      }
       result.push(node.moduleSpecifier.text);
     }
     if (
@@ -48,6 +72,15 @@ function imports(file: string, text = fs.readFileSync(file, 'utf8')): string[] {
   }
   visit(source);
   return result;
+}
+
+function hasDirective(file: string, directive: string, text = fs.readFileSync(file, 'utf8')): boolean {
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+  for (const statement of source.statements) {
+    if (!ts.isExpressionStatement(statement) || !ts.isStringLiteral(statement.expression)) break;
+    if (statement.expression.text === directive) return true;
+  }
+  return false;
 }
 
 describe('module boundaries', () => {
@@ -64,28 +97,58 @@ describe('module boundaries', () => {
     function visit(file: string) {
       if (visited.has(file)) return;
       visited.add(file);
+      // Next turns file-level server actions into client references, not browser code.
+      if (hasDirective(file, 'use server')) return;
       expect(normalize(file)).not.toMatch(
         /(^infrastructure\/|^config\/env\.ts$|\/server\/|^lib\/(assert-server|logger)\.ts$|^lib\/(redis|security)\/)/,
       );
-      for (const spec of imports(file)) {
+      for (const spec of imports(file, undefined, true)) {
         expect(spec).not.toBe('server-only');
         if (!spec.startsWith('.')) continue;
         const base = path.resolve(path.dirname(file), spec);
-        const resolved = [base, base + '.ts', base + '.tsx', path.join(base, 'index.ts')].find((p) =>
-          files.includes(p),
-        );
+        const resolved = [
+          base,
+          base + '.ts',
+          base + '.tsx',
+          path.join(base, 'index.ts'),
+          path.join(base, 'index.tsx'),
+        ].find((p) => files.includes(p));
         if (resolved) visit(resolved);
       }
     }
-    for (const file of files.filter((p) => /^(pages\/(?!api\/)|instrumentation-client)/.test(normalize(p))))
+    for (const file of files.filter(
+      (p) => /^(pages\/(?!api\/)|instrumentation-client)/.test(normalize(p)) || hasDirective(p, 'use client'),
+    ))
       visit(file);
+  });
+
+  it('recognizes App Router boundaries and distinguishes erased imports from runtime imports', () => {
+    const file = path.join(root, 'features/example.tsx');
+    expect(hasDirective(file, 'use client', `/* comment */ 'use client'; export const x = 1;`)).toBe(true);
+    expect(hasDirective(file, 'use server', `'use server'; export async function action() {}`)).toBe(true);
+    expect(hasDirective(file, 'use client', `export function f() { 'use client'; }`)).toBe(false);
+    expect(
+      imports(
+        file,
+        `
+      import type { Session } from './server/session';
+      import { type Result } from './server/load';
+      export type { Result } from './server/load';
+      export { type Result } from './server/load';
+      import { type Shape, render } from './view';
+      import './side-effect';
+      import('./dynamic');
+    `,
+        true,
+      ),
+    ).toEqual(['./view', './side-effect', './dynamic']);
   });
 
   it('keeps every API route behind the common handler', () => {
     const routes = files.filter(
       (p) => normalize(p).startsWith('pages/api/') && normalize(p) !== 'pages/api/assets/[...path].ts',
     );
-    expect(routes).toHaveLength(50);
+    expect(routes).toHaveLength(32);
     for (const route of routes) {
       const method = /\/guilds\/\[guildId\]\/(index|members\/\[playerId\])\.ts$/.test(normalize(route))
         ? 'DELETE'
@@ -97,7 +160,119 @@ describe('module boundaries', () => {
       expect(fs.readFileSync(route, 'utf8').replaceAll("'", '"')).toContain(
         `return runPagesApiHandler(req, res, "${method}", ${method})`,
       );
-      expect(imports(route).some((spec) => spec.includes('/modules/'))).toBe(true);
+      expect(imports(route).some((spec) => spec.includes('/features/'))).toBe(true);
     }
+  });
+});
+
+describe('repository organization', () => {
+  it('gives every source module a documented top-level owner', () => {
+    for (const file of files) {
+      expect(normalize(file)).toMatch(
+        /^(app|components|config|features|lib|pages\/api|server|types)\/|^(instrumentation|proxy)\.ts$/,
+      );
+    }
+  });
+
+  it('keeps shared UI independent of feature internals except navigation authentication', () => {
+    for (const file of files.filter((file) => normalize(file).startsWith('components/'))) {
+      for (const spec of imports(file)) {
+        if (!spec.includes('/features/')) continue;
+        expect(normalize(file)).toMatch(/^components\/navigation\//);
+        expect(spec).toMatch(/\/features\/auth\/(identity|actions)$/);
+      }
+    }
+  });
+
+  it('retires obsolete homes and keeps feature implementations out of route folders', () => {
+    for (const file of files) {
+      expect(normalize(file)).not.toMatch(/^(modules|infrastructure)\//);
+      expect(normalize(file)).not.toMatch(/^app\/.*\/_components\//);
+      expect(normalize(file)).not.toMatch(/^app\/(globals|tokens|legacy-bridge)\.css$/);
+    }
+  });
+
+  it('uses predictable kebab-case source filenames with framework exceptions', () => {
+    const special = /^(page|layout|route|loading|error|not-found|template|default|global-error|instrumentation)\.tsx?$/;
+    for (const file of files) {
+      const name = path.basename(file);
+      if (special.test(name) || name.startsWith('[') || name === 'next-auth.d.ts') continue;
+      expect(name, normalize(file)).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.d)?\.(ts|tsx)$/);
+    }
+  });
+
+  it('detects static and dynamic dependency cycles', () => {
+    const available = new Set(files.map((file) => path.resolve(file)));
+    const graph = new Map<string, string[]>();
+    for (const file of files) {
+      const absolute = path.resolve(file);
+      const edges = [];
+      for (const spec of imports(file)) {
+        if (!spec.startsWith('.')) continue;
+        const base = path.resolve(path.dirname(absolute), spec);
+        const resolved = [
+          base,
+          `${base}.ts`,
+          `${base}.tsx`,
+          path.join(base, 'index.ts'),
+          path.join(base, 'index.tsx'),
+        ].find((candidate) => available.has(candidate));
+        if (resolved) edges.push(resolved);
+      }
+      graph.set(absolute, edges);
+    }
+    const state = new Map<string, number>();
+    const stack: string[] = [];
+    const cycles: string[] = [];
+    function visit(file: string) {
+      if (state.get(file) === 2) return;
+      if (state.get(file) === 1) {
+        const start = stack.indexOf(file);
+        cycles.push([...stack.slice(start), file].map((entry) => normalize(entry)).join(' -> '));
+        return;
+      }
+      state.set(file, 1);
+      stack.push(file);
+      for (const dependency of graph.get(file) ?? []) visit(dependency);
+      stack.pop();
+      state.set(file, 2);
+    }
+    for (const file of graph.keys()) visit(file);
+    expect(cycles).toEqual([]);
+  });
+
+  it('allows only documented files in the repository root', () => {
+    const allowed = new Set([
+      '.env',
+      '.env.example',
+      '.gitattributes',
+      '.gitignore',
+      '.prettierignore',
+      '.prettierrc.json',
+      'AGENTS.md',
+      'CHANGELOG.md',
+      'CODE_OF_CONDUCT.md',
+      'CONTRIBUTING.md',
+      'LICENSE',
+      'NOTICE.md',
+      'README.md',
+      'SECURITY.md',
+      'eslint.config.mjs',
+      'next-env.d.ts',
+      'next.config.ts',
+      'package-lock.json',
+      'package.json',
+      'playwright.config.ts',
+      'postcss.config.mjs',
+      'tailwind.config.ts',
+      'tsconfig.json',
+      'vitest.config.mjs',
+    ]);
+    const rootFiles = fs
+      .readdirSync(path.dirname(root), { withFileTypes: true })
+      // Linked Git worktrees use a .git pointer file instead of a metadata directory.
+      .filter((entry) => entry.isFile() && !['tsconfig.tsbuildinfo', '.git'].includes(entry.name))
+      .map((entry) => entry.name);
+    expect(rootFiles.filter((file) => !allowed.has(file))).toEqual([]);
   });
 });

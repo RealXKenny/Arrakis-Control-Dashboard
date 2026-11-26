@@ -1,23 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GET as listGuilds } from '../../src/modules/guilds/server/list';
-import { GET as listMembers } from '../../src/modules/guilds/server/members';
-import { GET as getLogo, POST as saveLogo } from '../../src/modules/guilds/server/logo';
+import { GET as listGuilds } from '../../src/features/guilds/server/list';
+import { GET as listMembers } from '../../src/features/guilds/server/members';
+import { GET as getLogo, POST as saveLogo } from '../../src/features/guilds/server/logo';
 import {
   GET as getRequirements,
   POST as saveRequirements,
   LIST as listRequirements,
-} from '../../src/modules/guilds/server/requirements';
+} from '../../src/features/guilds/server/requirements';
 
-const { request, session, linkedPlayer, redis } = vi.hoisted(() => ({
+const { request, session, linkedPlayer, redis, registry } = vi.hoisted(() => ({
   request: vi.fn(),
+  registry: { name: vi.fn(), display: vi.fn((stored: string) => stored) },
   session: vi.fn(),
   linkedPlayer: vi.fn(),
   redis: { get: vi.fn(), set: vi.fn(), eval: vi.fn(), zrange: vi.fn() },
 }));
 
-vi.mock('../../src/infrastructure/dune', () => ({ getDuneClient: () => ({ request }) }));
-vi.mock('../../src/lib/security/session-store', () => ({ getSession: session }));
-vi.mock('../../src/modules/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
+vi.mock('../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request }) }));
+vi.mock('../../src/features/auth/server/session', () => {
+  const getSession = session;
+  return { getSession, currentSession: () => getSession() };
+});
+vi.mock('../../src/features/player/server/linked-player', () => ({ getLinkedPlayer: linkedPlayer }));
+vi.mock('../../src/features/guilds/server/guild-registry', () => ({
+  authoritativeGuildName: registry.name,
+  displayGuildName: async (_id: string, stored: string) => registry.display(stored),
+}));
 vi.mock('../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 
 const req = (url: string, query = {}) => ({
@@ -30,6 +38,8 @@ const req = (url: string, query = {}) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   request.mockReset();
+  registry.name.mockReset();
+  registry.name.mockResolvedValue('Crimson Skies');
   session.mockResolvedValue({
     user: { id: 'discord-user', username: 'leader' },
     guildId: 'discord-guild',
@@ -122,6 +132,30 @@ describe('guild recruitment settings', () => {
     });
   });
 
+  it('stores the Console guild name for the immutable guild ID, not the name typed into the form', async () => {
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
+    const response = await saveRequirements(
+      {
+        ...req('/api/guilds/2/requirements', { guildId: '2' }),
+        body: { ...requirements, guildName: 'The Real Guild Of Someone Else', published: true },
+      },
+      {},
+    );
+    expect(JSON.parse(response.body).data.guildName).toBe('Crimson Skies');
+    const [, , args] = redis.eval.mock.calls.at(-1)!;
+    expect(JSON.parse(args[0]).guildName).toBe('Crimson Skies');
+    expect(args[3]).toBe('guild:2');
+  });
+
+  it('refuses to save when the Console cannot confirm the guild name', async () => {
+    request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
+    registry.name.mockResolvedValue(null);
+    await expect(
+      saveRequirements({ ...req('/api/guilds/2/requirements', { guildId: '2' }), body: requirements }, {}),
+    ).rejects.toMatchObject({ statusCode: 503, code: 'GUILD_NAME_UNAVAILABLE' });
+    expect(redis.eval).not.toHaveBeenCalled();
+  });
+
   it('publishes and unlists a guild through one atomic Redis operation', async () => {
     request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '100' }] });
     for (const published of [true, false]) {
@@ -133,7 +167,7 @@ describe('guild recruitment settings', () => {
       expect(JSON.parse(response.body).data).toEqual({ ...requirements, published });
       expect(redis.eval).toHaveBeenLastCalledWith(
         expect.stringContaining("redis.call('ZREM'"),
-        ['arrakis:guild-requirements:2', 'arrakis:guild-requirements'],
+        ['arrakis:{guilds}:requirements:2', 'arrakis:{guilds}:requirements-index'],
         [JSON.stringify({ ...requirements, published }), published ? '1' : '0', expect.any(Number), 'guild:2'],
       );
     }
@@ -187,7 +221,7 @@ describe('guild recruitment settings', () => {
     );
     const response = await listRequirements(req('/api/guilds/requirements', { page: '1' }), {});
     expect(JSON.parse(response.body).data).toEqual({ rows: [{ ...requirements, guildId: '2' }], hasMore: false });
-    expect(redis.zrange).toHaveBeenCalledWith('arrakis:guild-requirements', 20, 40, { byScore: false });
+    expect(redis.zrange).toHaveBeenCalledWith('arrakis:{guilds}:requirements-index', 20, 40, { byScore: false });
     session.mockResolvedValue(null);
     await expect(listRequirements(req('/api/guilds/requirements'), {})).rejects.toMatchObject({ statusCode: 401 });
   });
@@ -235,7 +269,7 @@ describe('guild API handlers', () => {
       {},
     );
     expect(response.status).toBe(200);
-    expect(redis.set).toHaveBeenCalledWith('arrakis:guild-logo:2', `data:image/png;base64,${png}`);
+    expect(redis.set).toHaveBeenCalledWith('arrakis:{guilds}:logo:2', `data:image/png;base64,${png}`);
 
     request.mockResolvedValue({ rows: [{ player_id: '4', role_id: '1' }] });
     const denied = await expect(

@@ -1,0 +1,7 @@
+# Public changelog API
+
+`GET /api/v2/changelog` returns both project histories. Add `?project=bot` or `?project=dashboard` to select one. `GET /api/v2/changelog/latest?project=bot` (or `dashboard`) returns the highest stable semantic version in that project's snapshot. Unknown and repeated query parameters are rejected. The response has schema version 1, a response generation time and release objects with project, stable ID, version, title, optional date and categorized notes. The timestamp describes response generation, not the age of the source data.
+
+The API reads the reviewed public snapshots in `docs/changelog/bot.md` and `docs/changelog/dashboard.md`; it does not treat a version heading in the root changelog as evidence of a published release. Snapshots can be stale. After each release is actually published, update the relevant snapshot in a reviewed dashboard pull request. For the bot, use the export script in the bot repository. For the dashboard, copy the published root changelog to its snapshot after verifying its public contents. Never copy unpublished notes or private operational information. The two projects remain independently versioned and the dashboard root changelog remains authoritative for its release workflow.
+
+The API rejects oversized snapshots and responses and duplicate stable versions. It never uses GitHub or credentials. A failure returns the standard safe server error; no unpublished release is substituted.

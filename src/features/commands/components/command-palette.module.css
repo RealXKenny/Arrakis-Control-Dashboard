@@ -1,0 +1,98 @@
+.dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  max-width: 100%;
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--color-sand-500);
+  background: var(--color-obsidian-950);
+  color: var(--color-sand-100);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+.dialog::backdrop {
+  background: #000b;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+}
+.header h2 {
+  font-size: 1.125rem;
+  margin: 0.5rem 0;
+}
+.eyebrow {
+  color: var(--color-spice-300);
+  font: 0.6875rem var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+.dialog p {
+  color: var(--color-sand-300);
+  font-size: 0.8125rem;
+  margin: 0.75rem 0;
+}
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.dialog button {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-sand-500);
+  color: var(--color-spice-300);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.dialog button[aria-pressed='true'] {
+  background: var(--color-spice-500);
+  color: var(--color-obsidian-950);
+}
+.dialog button:disabled {
+  opacity: 0.6;
+}
+.search {
+  display: grid;
+  min-width: 0;
+  gap: 0.75rem;
+}
+.search label {
+  font-size: 0.875rem;
+}
+.search input {
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--color-sand-500);
+  background: var(--color-obsidian-900);
+  padding: 0.75rem;
+}
+.results {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  list-style: none;
+}
+.results a {
+  display: grid;
+  min-height: 48px;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid transparent;
+}
+.results span {
+  font-size: 0.75rem;
+  color: var(--color-sand-300);
+}
+.results a[data-selected='true'] {
+  border-color: var(--color-sand-500);
+  background: var(--color-obsidian-900);
+}
+.dialog :is(a, button, input):focus-visible {
+  outline: 2px solid var(--color-spice-300);
+  outline-offset: 2px;
+}

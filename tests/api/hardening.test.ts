@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppError, getSafeError } from '../../src/lib/errors';
 import { createLogger, logger, logRequestAccess } from '../../src/lib/logger';
 import { checkRateLimit } from '../../src/lib/security/rate-limit';
-import { deleteSession, getSession, saveSession } from '../../src/lib/security/session-store';
-import { getRequestCookie } from '../../src/infrastructure/cookies';
+import { deleteSession, saveSession } from '../../src/features/auth/server/session-store';
+import { getSession } from '../../src/features/auth/server/session';
+import { getRequestCookie } from '../../src/server/cookies';
 
 describe('shared production hardening', () => {
   afterEach(() => {
@@ -21,9 +22,10 @@ describe('shared production hardening', () => {
   it('persists and invalidates sessions through the storage interface', async () => {
     const sessionId = `session-${Date.now()}`;
     const session = {
-      user: { id: '42', username: 'tester' },
+      user: { id: '42', username: 'tester', guild_nickname: null },
       guildId: 'guild',
       roleIds: ['member'],
+      verifiedAt: Date.now(),
       expiresAt: Date.now() + 60_000,
     };
     await saveSession(sessionId, session);
@@ -46,10 +48,11 @@ describe('shared production hardening', () => {
     logger.info('test', { token: 'secret-value', route: '/api/test' });
     const [message] = output.mock.calls[0];
     const plainMessage = message.replace(/\u001B\[[0-9;]*m/g, '');
-    expect(plainMessage).toContain('[INFO]');
-    expect(plainMessage).toContain('[DASHBOARD] test');
-    expect(plainMessage).toContain('"token":"[REDACTED]"');
-    expect(plainMessage).toContain('"route":"/api/test"');
+    expect(plainMessage).toContain('● INFO');
+    expect(plainMessage).toContain('DASHBOARD    │ test');
+    expect(plainMessage).toContain('token = [REDACTED]');
+    expect(plainMessage).toContain('route = /api/test');
+    expect(plainMessage).not.toContain('secret-value');
   });
 
   it('writes debug details to the console only when enabled', () => {
@@ -57,18 +60,20 @@ describe('shared production hardening', () => {
     createLogger('DUNE API', 'DEBUG').debug('Provider request completed', { status: 200 });
     const [message] = output.mock.calls[0];
     const plainMessage = message.replace(/\u001B\[[0-9;]*m/g, '');
-    expect(plainMessage).toContain('◆ [DEBUG] [DUNE API] Provider request completed');
-    expect(plainMessage).toContain('· {"status":200}');
+    expect(plainMessage).toContain('◆ DEBUG DUNE API     │ Provider request completed');
+    expect(plainMessage).toContain('· status = 200');
   });
 
-  it('clears ANSI and Pterodactyl terminals before printing the startup banner', () => {
+  it('preserves redirected output while printing the startup banner', () => {
     const clear = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const output = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     createLogger('DASHBOARD', 'INFO').header('ARRAKIS CONTROL', 'Dune: Awakening Dashboard');
 
-    expect(clear).toHaveBeenCalledWith('\u001B[2J\u001B[3J\u001B[H');
-    expect(clear.mock.invocationCallOrder[0]).toBeLessThan(output.mock.invocationCallOrder[0]);
+    if (process.stdout.isTTY && process.env.NO_COLOR === undefined) {
+      expect(clear).toHaveBeenCalledWith('\u001B[2J\u001B[3J\u001B[H');
+      expect(clear.mock.invocationCallOrder[0]).toBeLessThan(output.mock.invocationCallOrder[0]);
+    } else expect(clear).not.toHaveBeenCalled();
     expect(output.mock.calls.map(([message]) => message).join('\n')).toContain('ARRAKIS CONTROL');
   });
 
@@ -88,7 +93,7 @@ describe('shared production hardening', () => {
     expect(output).toHaveBeenCalledTimes(2);
     const first = output.mock.calls[0][0].replace(/\u001B\[[0-9;]*m/g, '');
     const second = output.mock.calls[1][0].replace(/\u001B\[[0-9;]*m/g, '');
-    expect(first).toContain(`[HTTP] GET ${request.route} → 200 (41ms)`);
+    expect(first).toContain(`HTTP         │ GET ${request.route} → 200 (41ms)`);
     expect(first).not.toContain('requestId');
     expect(second).toContain('1 repeat suppressed');
   });
@@ -123,7 +128,7 @@ describe('shared production hardening', () => {
 
     expect(output).toHaveBeenCalledTimes(1);
     expect(output.mock.calls[0][0].replace(/\u001B\[[0-9;]*m/g, '')).toContain(
-      '[HTTP] GET /api/server/status → 200 (125ms)',
+      'HTTP         │ GET /api/server/status → 200 (125ms)',
     );
   });
 

@@ -1,43 +1,65 @@
 {
-  "name": "Arrakis-Control-Dashboard",
-  "version": "1.20.6",
+  "name": "arrakis-control-dashboard-v2",
+  "version": "2.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "node src/config/server-launcher.mjs dev",
+    "dev": "node scripts/server-launcher.mjs dev",
     "build": "next build",
-    "start": "node src/config/server-launcher.mjs start",
+    "start": "node scripts/server-launcher.mjs start",
+    "chat:bridge": "tsx src/features/chat/server/worker.ts",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:production": "node tests/smoke-production.mjs",
+    "test:production": "node tests/production/smoke.mjs && node tests/production/chat-startup.mjs",
     "test:browser": "playwright test",
-    "format": "prettier --write src tests",
-    "format:check": "prettier --check src tests"
+    "format": "prettier --write src tests scripts",
+    "format:check": "prettier --check src tests scripts",
+    "redis:rekey": "node scripts/maintenance/rekey-redis.mjs",
+    "marketplace:rekey": "node scripts/maintenance/rekey-marketplace.mjs",
+    "seasons:import": "tsx scripts/maintenance/import-season.ts",
+    "docs:check": "node scripts/maintenance/check-docs.mjs",
+    "docs:format:check": "node scripts/maintenance/check-changed-markdown.mjs",
+    "test:integration": "vitest run tests/integration --no-file-parallelism",
+    "ai:check": "node scripts/maintenance/validate-ai-config.mjs",
+    "env:migrate": "node scripts/maintenance/migrate-env.mjs",
+    "workflows:check": "node scripts/maintenance/check-workflows.mjs"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",
+    "amqplib": "^2.3.1",
     "dotenv": "^17.4.2",
+    "iframe-resizer": "4.3.11",
     "ioredis": "^5.11.1",
     "next": "^16.4.5",
+    "next-auth": "5.0.0-beta.32",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "redis": "^6.2.1",
+    "sharp": "0.35.5",
     "three": "^0.186.1",
+    "tsx": "^4.23.15",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/amqplib": "^0.10.8",
     "@types/node": "26.4.1",
     "@types/react": "19.2.18",
     "@types/three": "^0.186.0",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.1.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.4",
+    "js-yaml": "^4.3.2",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.5"
+    }
   }
 }

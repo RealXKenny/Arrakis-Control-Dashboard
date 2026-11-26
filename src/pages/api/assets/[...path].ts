@@ -1,6 +1,7 @@
 import '../../../lib/assert-server';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import casinoVoiceManifest from '../../../assets/audio/casino/solaris-v1/manifest.json';
 
 export const config = {
   api: {
@@ -17,7 +18,15 @@ const contentTypes = Object.freeze({
   '.png': 'image/png',
   '.webp': 'image/webp',
   '.gz': 'application/gzip',
+  '.mp3': 'audio/mpeg',
 });
+const casinoVoiceFiles = new Set(Object.values(casinoVoiceManifest.clips).map((clip) => clip.file));
+const isCasinoVoiceAsset = (segments: string[]) =>
+  segments.length === 4 &&
+  segments[0] === 'audio' &&
+  segments[1] === 'casino' &&
+  segments[2] === 'solaris-v1' &&
+  casinoVoiceFiles.has(segments[3]);
 
 function isTerrainAsset(segments: string[]) {
   const name = segments.slice(1).join('/');
@@ -63,6 +72,7 @@ function resolveAsset(parts: unknown): { file: string; contentType: string } | n
     (segments.length === 2 && ['items', 'maps'].includes(segments[0])) ||
     isTiledMapAsset(segments) ||
     isModelAsset(segments) ||
+    isCasinoVoiceAsset(segments) ||
     (segments[0] === 'terrain' && isTerrainAsset(segments));
   if (
     !validFile ||
@@ -71,6 +81,7 @@ function resolveAsset(parts: unknown): { file: string; contentType: string } | n
     return null;
 
   const extension = path.extname(segments.at(-1)!).toLowerCase();
+  if (extension === '.mp3' && !isCasinoVoiceAsset(segments)) return null;
   const contentType = contentTypes[extension as keyof typeof contentTypes];
   if (!contentType) return null;
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { mapPixelsToWorld, visibleWorldRect } from '../../../src/modules/map/utils/coordinates';
-import { probeTerrainSupport } from '../../../src/modules/map/terrain/surface/terrainSupport';
-import { bundledAsset } from '../../../src/modules/map/terrain/surface/terrainAssets';
-import { normalizeMapResolution } from '../../../src/modules/map/utils/mapResolution';
+import { mapPixelsToWorld, visibleWorldRect } from '../../../src/features/map/utils/coordinates';
+import { probeTerrainSupport } from '../../../src/features/map/terrain/surface/terrain-support';
+import { bundledAsset } from '../../../src/features/map/terrain/surface/terrain-assets';
+import { normalizeMapResolution } from '../../../src/features/map/utils/map-resolution';
 
 const map = {
   width: 4096,

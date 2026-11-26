@@ -1,12 +1,12 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import route from '../../src/pages/api/v1/bot/world';
 import { responseMock } from '../helpers/response';
-import { readWorld } from '../../src/modules/portal/server/world';
+import { readWorld } from '../../src/features/portal/server/world';
 import { checkRateLimit } from '../../src/lib/security/rate-limit';
 
 const config = vi.hoisted(() => ({ BOT_API_TOKEN: 'independent-bot-credential-32-characters' as string | undefined }));
 vi.mock('../../src/config/env', () => ({ getServerEnv: () => ({ NODE_ENV: 'test', LOG_LEVEL: 'FATAL', ...config }) }));
-vi.mock('../../src/modules/portal/server/world', () => ({ readWorld: vi.fn() }));
+vi.mock('../../src/features/portal/server/world', () => ({ readWorld: vi.fn() }));
 vi.mock('../../src/lib/security/rate-limit', () => ({ checkRateLimit: vi.fn(), getClientAddress: () => 'test' }));
 
 async function call(authorization?: string, url = '/api/v1/bot/world?map=DeepDesert', method = 'GET') {
@@ -33,7 +33,14 @@ it('is disabled by default and never substitutes a browser session for service a
   config.BOT_API_TOKEN = undefined;
   expect((await call()).res.statusCode).toBe(503);
   config.BOT_API_TOKEN = 'independent-bot-credential-32-characters';
-  for (const header of [undefined, 'Bearer wrong', 'Basic token', `Bearer ${'x'.repeat(300)}`]) {
+  for (const header of [
+    undefined,
+    'Bearer wrong',
+    'Basic token',
+    `Bearer ${'x'.repeat(300)}`,
+    `Bearer ${config.BOT_API_TOKEN.slice(0, -1)}X`,
+    `Bearer ${config.BOT_API_TOKEN}X`,
+  ]) {
     const { res, body } = await call(header);
     expect(res.statusCode).toBe(401);
     expect(res.getHeader('WWW-Authenticate')).toContain('Bearer');

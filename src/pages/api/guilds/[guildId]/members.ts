@@ -1,6 +1,6 @@
-import { runPagesApiHandler } from '../../../../infrastructure/pages-api';
-import { GET } from '../../../../modules/guilds/server/members';
-import { ADD as POST } from '../../../../modules/guilds/server/membership';
+import { runPagesApiHandler } from '../../../../server/pages-api';
+import { GET } from '../../../../features/guilds/server/members';
+import { ADD as POST } from '../../../../features/guilds/server/membership';
 
 export const config = { api: { bodyParser: { sizeLimit: '1kb' } } };
 

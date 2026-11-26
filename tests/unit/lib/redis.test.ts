@@ -40,6 +40,7 @@ it('preserves JSON, raw strings, leases, sorted sets and Lua arguments over TCP'
     }
     if (op === 'DEL') return Number(values.delete(key));
     if (op === 'ZRANGEBYSCORE') return ['{"at":123,"online":5}'];
+    if (op === 'ZREVRANGEBYSCORE') return ['{"at":123,"online":5}'];
     if (op === 'ZRANGE') return ['{"title":"Shared base"}'];
     if (op === 'EVAL') return [1, 60000];
     return 1;
@@ -61,8 +62,12 @@ it('preserves JSON, raw strings, leases, sorted sets and Lua arguments over TCP'
   expect(await client.set('lease', '1', { ex: 120, nx: true })).toBeNull();
   await client.zadd('history', { score: 123, member: { at: 123, online: 5 } });
   expect(await client.zrange('history', 0, 999, { byScore: true })).toEqual([{ at: 123, online: 5 }]);
+  expect(await client.zrange('history', 0, 999, { byScore: true, reverse: true, limit: 10 })).toEqual([
+    { at: 123, online: 5 },
+  ]);
   expect(await client.zrange('marketplace', 0, 99, { byScore: false })).toEqual([{ title: 'Shared base' }]);
   expect(commands).toContainEqual(['ZRANGE', 'marketplace', '0', '99']);
+  expect(commands).toContainEqual(['ZREVRANGEBYSCORE', 'history', '999', '0', 'LIMIT', '0', '10']);
   await client.zremrangebyscore('history', 0, 100);
   await client.expire('history', 172800);
   expect(await client.eval('return {1, 60000}', ['rate'], [60000])).toEqual([1, 60000]);

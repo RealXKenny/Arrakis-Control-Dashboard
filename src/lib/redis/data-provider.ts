@@ -1,10 +1,10 @@
 import '../assert-server';
-import { getDuneClient } from '../../infrastructure/dune';
+import { getDuneClient } from '../../server/integrations/dune';
 import { acquireApiCapacity } from '../security/api-capacity';
 import { checkRateLimit } from '../security/rate-limit';
-import { getServerEnv } from '../env';
+import { getServerEnv } from '../../config/env';
 import { getRedisPool, RedisUnavailableError, REDIS_SNAPSHOT_TTL_SECONDS, REDIS_STALE_GRACE_SECONDS } from './pool';
-import { DAY_MS, summarizePopulation, totalPlayHours } from '../../modules/portal/utils/population';
+import { DAY_MS, summarizePopulation, totalPlayHours } from '../../features/portal/population';
 import type {
   DashboardSnapshot,
   LandsraadTerm,
@@ -17,7 +17,7 @@ import type {
   SpiceSectorStatus,
   SystemLogEntry,
   SystemLogLevel,
-} from '../types';
+} from '../../types/dashboard';
 
 /**
  * Server-only data provider for the App Router dashboard.
@@ -32,12 +32,12 @@ import type {
  *   same payload shapes, used when Redis is not configured or while the
  *   circuit breaker is open.
  *
- * Credential boundary: CONSOLE_URL / CONSOLE_API_KEY / ADAPTER_TOKEN are only
+ * Credential boundary: DUNE_API_URL / DUNE_API_KEY / DUNE_ADAPTER_TOKEN are only
  * referenced inside this server module (via the Dune client) and inside
  * `src/lib/redis-client.ts`; nothing here may be imported by a 'use client'
  * file — `assert-server` enforces that at module load.
  *
- * Load posture mirrors src/infrastructure/pages-api.ts: per-worker concurrency
+ * Load posture mirrors src/server/pages-api.ts: per-worker concurrency
  * cap first, then per-scope and global fixed windows per minute.
  */
 
@@ -403,7 +403,7 @@ export class RedisDashboardDataProvider implements DashboardDataProvider {
   }
 
   private historyKey(): string {
-    const origin = getServerEnv().CONSOLE_URL ?? 'unconfigured';
+    const origin = getServerEnv().DUNE_API_URL ?? 'unconfigured';
     let digest = 0;
     for (let index = 0; index < origin.length; index++) {
       digest = Math.imul(digest ^ origin.charCodeAt(index), 16777619) >>> 0;
@@ -515,7 +515,7 @@ export function getDashboardDataProvider(): DashboardDataProvider {
 /**
  * Coalescing snapshot cache: concurrent renders share one in-flight read per
  * map, and fresh-enough entries skip the provider entirely. Mirrors the 30s
- * window in src/modules/portal/server/world.ts.
+ * window in features/portal/server/world.ts.
  */
 export function getDashboardSnapshot(map: MapId, scope = 'page-render'): Promise<DashboardSnapshot> {
   const cache = (globals.arrakisAppRouterSnapshots ??= new Map());

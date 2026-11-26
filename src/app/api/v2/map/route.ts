@@ -1,0 +1,18 @@
+import { AppError } from '../../../../lib/errors';
+import { isMapName } from '../../../../features/map/maps';
+import { loadMapData } from '../../../../features/map/server/load-map';
+import { json, route } from '../../../../server/http';
+import { currentSession } from '../../../../features/auth/server/session';
+
+export const dynamic = 'force-dynamic';
+
+export const GET = route(async (request: Request) => {
+  const session = await currentSession();
+  if (!session) throw new AppError('Sign in to view the map.', 401, 'UNAUTHORIZED', true);
+  const requested = new URL(request.url).searchParams.get('map') ?? 'HaggaBasin';
+  if (!isMapName(requested)) {
+    return json({ ok: false, error: 'Invalid map' }, 400);
+  }
+  const result = await loadMapData(session, requested);
+  return json(result.body, result.status);
+});

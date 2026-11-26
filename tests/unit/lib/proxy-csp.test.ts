@@ -17,3 +17,29 @@ it('issues a fresh script nonce per request without allowing arbitrary inline sc
   });
   expect(nonces[0]).not.toBe(nonces[1]);
 });
+
+it('allows no third-party script, connect or image origins', () => {
+  const response = proxy(new NextRequest('http://127.0.0.1:2008/portal')) as Response;
+  const policy = response.headers.get('Content-Security-Policy') ?? '';
+  expect(policy).not.toMatch(/announcify/i);
+  const directive = (name: string) => policy.split('; ').find((entry) => entry.startsWith(name + ' ')) ?? '';
+  expect(directive('script-src')).not.toMatch(/https:/);
+  expect(directive('connect-src')).not.toMatch(/https:/);
+  expect(directive('img-src')).not.toMatch(/https:/);
+});
+
+const HETRIX_HOST = 'wl.hetrixtools.com';
+it('allows the HetrixTools frame only on the service status page without widening script or image policy', () => {
+  for (const path of ['/status', '/status/', '/portal', '/chat', '/status/other']) {
+    const policy = proxy(new NextRequest(`http://127.0.0.1:2008${path}`)).headers.get('Content-Security-Policy') ?? '';
+    const hosts = policy
+      .split('; ')
+      .flatMap((directive) => directive.split(' '))
+      .filter((source) => URL.canParse(source))
+      .map((source) => new URL(source).hostname);
+    const allowed = hosts.filter((host) => host === HETRIX_HOST).length;
+    expect(allowed).toBe(path === '/status' || path === '/status/' ? 1 : 0);
+    expect(policy).not.toContain('static.hetrix.io');
+    expect(policy.split('; ').find((entry) => entry.startsWith('script-src'))).not.toMatch(/https:/);
+  }
+});

@@ -1,0 +1,103 @@
+/*
+ * Console-style baseline. Tailwind utilities bind to these same properties with matching fallbacks;
+ * the appearance engine overrides one shared palette for utilities and feature modules together.
+ * tests/unit/styles/tokens.test.ts guards both the bindings and their exact default values.
+ */
+:root {
+  --color-obsidian-50: #f5f6f7;
+  --color-obsidian-100: #e6e9eb;
+  --color-obsidian-200: #cbd0d5;
+  --color-obsidian-300: #a4abb1;
+  --color-obsidian-400: #7f878f;
+  --color-obsidian-500: #565d66;
+  --color-obsidian-600: #42474e;
+  --color-obsidian-700: #2b3035;
+  --color-obsidian-800: #202428;
+  --color-obsidian-900: #171a1d;
+  --color-obsidian-950: #0d0f12;
+  --color-sand-50: #fff1d4;
+  --color-sand-100: #f3efe7;
+  --color-sand-200: #e6e0d6;
+  --color-sand-300: #ceb894;
+  --color-sand-400: #ad9f89;
+  --color-sand-500: #9f9586;
+  --color-sand-600: #7f705a;
+  --color-sand-700: #5f503f;
+  --color-sand-800: #423a30;
+  --color-sand-900: #2d271f;
+  --color-sand-950: #1b1713;
+  --color-spice-50: #fff6e8;
+  --color-spice-100: #ffedd4;
+  --color-spice-200: #ffdeb2;
+  --color-spice-300: #ffd08a;
+  --color-spice-400: #d49a5c;
+  --color-spice-500: #c68b4a;
+  --color-spice-600: #b87b3f;
+  --color-spice-700: #9b5f2a;
+  --color-spice-800: #8d5328;
+  --color-spice-900: #683d20;
+  --color-spice-950: #3e2415;
+  --color-ibad-300: #b5d4f0;
+  --color-ibad-400: #85b7eb;
+  --color-ibad-500: #6196ce;
+  --color-ibad-600: #4775a5;
+  --color-status-ok: #9be6bd;
+  --color-status-warn: #ffd08a;
+  --color-status-danger: #ffb4a8;
+}
+
+/*
+ * Design tokens consumed by the CSS modules of the map and the 3D base preview. They keep the
+ * stable `--theme-*` names and resolve to the same Console-style palette as the rest of the UI.
+ */
+:root {
+  --theme-text: var(--color-sand-100);
+  --theme-muted: var(--color-sand-400);
+  --theme-accent: var(--color-spice-400);
+  --theme-on-accent: var(--color-obsidian-950);
+  --theme-border: #302b25;
+  --theme-background: var(--color-obsidian-950);
+  --theme-surface: var(--color-obsidian-900);
+  --theme-raised: var(--color-obsidian-800);
+  --theme-hover: var(--color-obsidian-700);
+  --theme-soft: var(--color-sand-300);
+  --theme-success: var(--color-status-ok);
+  --theme-danger: var(--color-status-danger);
+  --theme-masthead: #101316;
+  --theme-header: #101316;
+  --theme-menu: #171a1d;
+  --theme-header-border: #4d4032;
+  --theme-ink: #ad9f89;
+  --theme-ink-strong: #f3efe7;
+  --theme-accent-ink: #d49a5c;
+  --theme-accent-soft: #ffd08a;
+  --theme-accent-rgb: 198 139 74;
+  --theme-text-rgb: 243 239 231;
+  --theme-panel-rgb: 23 26 29;
+  --theme-border-rgb: 77 64 50;
+  --workspace-gutter: clamp(16px, 2.5vw, 80px);
+}
+
+/* Live-map marker glyphs (global because the markers are created outside the module scope). */
+.realtime-symbol {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: var(--theme-surface);
+  color: #d6a264;
+  font-size: 16px;
+}
+
+.marker-realtime_npc .realtime-symbol {
+  color: #d88d80;
+}
+.marker-civilian .realtime-symbol {
+  color: #85bdb3;
+}
+.marker-storm .realtime-symbol,
+.marker-coriolis .realtime-symbol {
+  color: #bca7cf;
+}

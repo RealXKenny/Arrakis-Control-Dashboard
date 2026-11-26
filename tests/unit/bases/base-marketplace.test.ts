@@ -9,12 +9,12 @@ const { redis } = vi.hoisted(() => ({
 }));
 vi.mock('../../../src/lib/redis/client', () => ({ getRedisClient: () => redis }));
 
-import { createMarketplaceRecord, parseMarketplaceLayout } from '../../../src/modules/marketplace/schema';
+import { createMarketplaceRecord, parseMarketplaceLayout } from '../../../src/features/bases/marketplace/schema';
 import {
   getMarketplaceRecord,
   listMarketplaceSummaries,
   publishMarketplaceRecord,
-} from '../../../src/modules/marketplace/server/store';
+} from '../../../src/features/bases/marketplace/server/store';
 
 const summaries = new Map<string, string>();
 const records = new Map<string, string>();
@@ -106,7 +106,7 @@ describe('Base Marketplace schema and Redis store', () => {
     await publishMarketplaceRecord(record('b'.repeat(24), 'Two', '2026-10-26T12:00:00.000Z'));
     await publishMarketplaceRecord(record('c'.repeat(24), 'Three'));
     expect((await listMarketplaceSummaries(2)).map((listing) => listing.title)).toEqual(['Three', 'Two']);
-    expect(redis.zrange).toHaveBeenLastCalledWith('arrakis:base-marketplace:listings', 0, 1, { byScore: false });
+    expect(redis.zrange).toHaveBeenLastCalledWith('arrakis:{bm}:v1:listings', 0, 1, { byScore: false });
     expect((await getMarketplaceRecord('a'.repeat(24)))?.summary.title).toBe('One');
     expect(await getMarketplaceRecord('not-an-id')).toBeNull();
   });
