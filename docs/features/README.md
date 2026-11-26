@@ -39,6 +39,8 @@
 
 [Notification preferences](notification-preferences.md) add inbox category controls, timezone quiet hours, cooldowns, dismiss and snooze.
 
+[Base upkeep](base-upkeep.md) combines base-care alerts, water history, stockpile minimums, container zones, inspections, reminders, blueprint revisions and relocation plans at `/upkeep`.
+
 The [actionable inbox](actionable-inbox.md) combines authorized asset, supply and operation alerts at `/inbox`, with explicit coverage for unsupported monitoring sources.
 
 | Feature                                                    | Who uses it                          | Page                                     |

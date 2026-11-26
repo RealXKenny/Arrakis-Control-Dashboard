@@ -29,7 +29,7 @@ const occupied = (rows: unknown[]) =>
       (value) => value !== undefined && value !== null && value !== '',
     );
   }).length;
-const text = (value: unknown, fallback = 'Unknown'): string =>
+export const text = (value: unknown, fallback = 'Unknown'): string =>
   typeof value === 'string' && value.trim()
     ? value.trim().slice(0, 200)
     : typeof value === 'number' && Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value))
@@ -38,20 +38,20 @@ const text = (value: unknown, fallback = 'Unknown'): string =>
 // Exact values must become unknown when oversized, never a different truncated quantity or identity.
 const exactText = (value: unknown, fallback = 'Unknown'): string =>
   typeof value === 'string' && value.trim().length > 200 ? fallback : text(value, fallback);
-const id = (value: unknown): string | null => {
+export const id = (value: unknown): string | null => {
   const candidate = text(value, '');
   return /^[1-9][0-9]{0,15}$/.test(candidate) && Number.isSafeInteger(Number(candidate)) ? candidate : null;
 };
-function array(value: unknown): unknown[] {
+export function array(value: unknown): unknown[] {
   if (!Array.isArray(value)) throw new Error('Unsupported response');
   return value;
 }
-function supported(value: unknown): Record<string, unknown> {
+export function supported(value: unknown): Record<string, unknown> {
   const data = record(value);
   if (data.supported === false || data.found === false || data.ok === false) throw new Error('Unavailable source');
   return data;
 }
-function rosterRank(value: unknown, controller: string): number | null {
+export function rosterRank(value: unknown, controller: string): number | null {
   const data = supported(value);
   if (data.claimed === false) return null;
   const entry = array(data.entries)
@@ -81,7 +81,7 @@ export async function resolveItemCharacter(session: DashboardSession) {
 }
 
 /** Fresh session-linked reads only. Names, list filters and caller IDs never authorize an asset. */
-type Selection = { templates: string[] | null; controller: string; player: string };
+type Selection = { templates: string[] | null; controller: string; player: string; baseId?: string };
 async function scanItems(
   session: DashboardSession,
   query: string,
@@ -232,11 +232,13 @@ async function scanItems(
     );
     if (cursor < values.length) result.limited = true;
   };
-  await source('Character inventory', async () => {
-    const data = supported(await read(`/api/players/${player}/inventory`));
-    add(data.rows, 'Character', '/storage', { kind: 'character', key: 'character', label: 'Character' });
-  });
-  for (const kind of ['bases', 'vehicles'] as const) {
+  const baseOnly = selection?.baseId ?? null;
+  if (!baseOnly)
+    await source('Character inventory', async () => {
+      const data = supported(await read(`/api/players/${player}/inventory`));
+      add(data.rows, 'Character', '/storage', { kind: 'character', key: 'character', label: 'Character' });
+    });
+  for (const kind of baseOnly ? (['bases'] as const) : (['bases', 'vehicles'] as const)) {
     await source(kind === 'bases' ? 'Base discovery' : 'Vehicle discovery', async () => {
       const data = supported(await read(`/api/players/${player}/${kind}`));
       const values = Array.isArray(data.rows) ? data.rows : [];
@@ -267,7 +269,15 @@ async function scanItems(
             return [id(row.id ?? row.base_id ?? row.vehicle_id), row] as const;
           }),
         ).entries(),
-      ].filter(([key]) => key !== null);
+      ].filter(([key]) => key !== null && (!baseOnly || key === baseOnly));
+      if (baseOnly && !unique.length) {
+        result.limited = true;
+        status(
+          kind === 'bases' ? 'Base discovery' : 'Vehicle discovery',
+          'excluded',
+          'The selected base is not in your current base list.',
+        );
+      }
       await work(unique, async (value) => {
         const [assetId, asset] = value as [string, Record<string, unknown>];
         const name = `${kind === 'bases' ? 'Base' : 'Vehicle'} ${text(asset.name)} #${assetId}`;
@@ -400,4 +410,27 @@ export function collectPinnedItems(
   return scanItems(session, '', signal, { templates, ...character }).then(
     ({ containers: _containers, items, ...rest }): FinderResult => ({ ...rest, items: items.map(publicItem) }),
   );
+}
+
+/** N025: one freshly authorised base only, with the same permission, container and stack bounds. */
+export async function collectBaseItems(
+  session: DashboardSession,
+  baseId: string,
+  templates: string[],
+  character: { controller: string; player: string },
+  signal?: AbortSignal,
+): Promise<FinderResult> {
+  if (!id(baseId)) throw new AppError('Choose a supported base.', 400, 'INVALID_BASE', true);
+  if (!templates.length || templates.length > 12)
+    throw new AppError('Choose 1–12 stockpile items.', 400, 'INVALID_MINIMUMS', true);
+  const {
+    containers: _containers,
+    items,
+    ...rest
+  } = await scanItems(session, '', signal, {
+    templates,
+    ...character,
+    baseId,
+  });
+  return { ...rest, items: items.map(publicItem) };
 }

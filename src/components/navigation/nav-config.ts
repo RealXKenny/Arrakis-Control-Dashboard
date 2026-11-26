@@ -78,6 +78,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             description: 'Owned and shared bases, access, and details.',
             order: 10,
           },
+          {
+            id: 'upkeep',
+            label: 'Base upkeep',
+            href: '/upkeep',
+            icon: 'holdings',
+            description: 'Water, power and supply alerts, checklists and reminders.',
+            order: 20,
+          },
         ],
       },
       {

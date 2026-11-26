@@ -83,6 +83,7 @@ describe('unified navigation configuration', () => {
       '/portal',
       '/character',
       '/holdings',
+      '/upkeep',
       '/vehicles',
       '/expeditions',
       '/bases',
