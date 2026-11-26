@@ -56,9 +56,12 @@ Published and fully verified in `d4ed2969a116d24ad4f7ea1758d971eb2bc0a4d4`. N002
 - [Real Redis Cluster](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/42961661117): passed.
 - [CodeQL](https://github.com/RealXKenny/Arrakis-Control-Dashboard/actions/runs/42961666455): both analyses passed.
 
-## Current item: N003 saved equipment loadouts
+## Completed: N003–N010 solo inventory and equipment
 
-Not started. N001 and N002 are complete; N003–N100 remain unchecked. No unresolved blocker is known. Next: read the Character/equipment UI, current inventory models and relevant docs, then implement bounded private saved loadout plans for harvesting, combat, building and exploration. Derive the exact linked character from the session/adapter; keep plans in Redis and do not equip/move game items. Readiness comparison is N004 and must not be claimed as already delivered. Add focused behavior/permission/failure, browser and real standalone/Cluster persistence coverage, run required checks and follow hosted checks before marking N003 complete.
+Implemented together as the Storage equipment planner (see [player management](../features/player-management.md#equipment-planner-n003n010)): saved loadouts (N003), readiness comparison (N004), owned-gear comparison (N005), wear watchlist (N006), resupply checklist (N007), observed inventory-change history (N008), reusable filters (N009) and storage destination suggestions (N010).
+
+- Private per-account/per-linked-pair plans (96 KiB) and a separate six-snapshot aggregate history (256 KiB) use UUID CAS and 90-day inactivity expiry. Readings reuse the N001 permission pipeline and six-scan budget; only derived views reach the browser. No game writes.
+- Local verification: unit, API and full Vitest suites; real standalone Redis integration for the new stores and N002; Playwright for the planner at 320px plus the Storage-related browser specs; typecheck, lint, format and production build. Hosted CI and Redis Cluster results are pending after publication.
 
 Keep the complete PR backlog intact and PR #8 draft.
 

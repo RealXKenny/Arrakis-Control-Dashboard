@@ -12,6 +12,7 @@ import { resourcesReply } from './guild-resources-redis.mjs';
 import { baseDirectoryReply } from './guild-base-directory-redis.mjs';
 import { onboardingReply } from './guild-onboarding-redis.mjs';
 import { itemPinsReply } from './item-pins-redis.mjs';
+import { equipmentReply } from './equipment-redis.mjs';
 import { pollsReply } from './guild-polls-redis.mjs';
 import { createSeasonFixture } from './seasons-redis.mjs';
 import { createPortalLayoutFixture } from './portal-layout-redis.mjs';
@@ -78,6 +79,8 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
   if (portalLayout !== undefined) return portalLayout.value;
   const itemPins = itemPinsReply(operation, key, args);
   if (itemPins !== undefined) return itemPins.value;
+  const equipment = equipmentReply(operation, key, args);
+  if (equipment !== undefined) return equipment.value;
   const polls = pollsReply(operation, key, args);
   if (polls !== undefined) return polls.value;
   const onboarding = onboardingReply(operation, key, args);

@@ -4,7 +4,7 @@ vi.mock('../../../src/lib/assert-server', () => ({}));
 vi.mock('../../../src/features/player/server/linked-player', () => ({ getLinkedPlayer: state.linked }));
 vi.mock('../../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request: state.request }) }));
 vi.mock('../../../src/server/read-budget', () => ({ spendReadBudget: state.budget }));
-import { collectPinnedItems, findItems } from '../../../src/features/player/server/item-finder';
+import { collectInventory, collectPinnedItems, findItems } from '../../../src/features/player/server/item-finder';
 
 const session = {
   user: { id: 'discord', username: 'Member' },
@@ -222,6 +222,44 @@ describe('universal item finder', () => {
     expect(state.request).not.toHaveBeenCalled();
     expect(result.items).toEqual([]);
     expect(result.sources.every((entry) => entry.status === 'unavailable')).toBe(true);
+  });
+  it('keeps planning metadata and container capacity out of public finder results', async () => {
+    const result = await findItems(session, 'spice');
+    expect(Object.keys(result).sort()).toEqual(['items', 'limited', 'sources', 'startedAt']);
+    for (const item of result.items) expect(item).not.toHaveProperty('containerKey');
+    const pinned = await collectPinnedItems(session, ['Spice'], { controller: '202', player: '101' });
+    expect(pinned).not.toHaveProperty('containers');
+    expect(pinned.items[0]).not.toHaveProperty('sourceKind');
+  });
+  it('collects every authorized stack with source metadata and only exact reported slot capacities', async () => {
+    responses['/api/bases/11/containers/33'] = {
+      supported: true,
+      inventories: [{ inventoryId: '44', maxSlots: 12, slots: [slot, { ...slot, itemId: '6', templateId: 'Water' }] }],
+    };
+    responses['/api/vehicles/22/storage'] = {
+      supported: true,
+      inventoryId: '55',
+      capacity: 900,
+      slots: [{ ...slot, itemId: '7' }],
+    };
+    const result = await collectInventory(session, { controller: '202', player: '101' });
+    // The fixture's character row has no template ID, so it is excluded rather than guessed.
+    expect(result.items.map((item) => [item.sourceKind, item.templateId])).toEqual([
+      ['base', 'Spice'],
+      ['base', 'Water'],
+      ['vehicle', 'Spice'],
+    ]);
+    expect(result.items[0]).toMatchObject({ group: null, containerKey: 'base:11:33', container: 'Supplies' });
+    expect(result.sources).toContainEqual(expect.objectContaining({ name: 'Item identity', status: 'excluded' }));
+    expect(result.containers).toEqual([
+      expect.objectContaining({ key: 'base:11:33', label: 'Supplies', usedSlots: 2, maxSlots: 12 }),
+      // A volume-style capacity is not a slot count, so the vehicle stays unverified.
+      expect.objectContaining({ key: 'vehicle:22', sourceKind: 'vehicle', usedSlots: 1, maxSlots: null }),
+    ]);
+    expect(JSON.stringify(result)).not.toContain('Secret');
+    await expect(collectInventory(session, { controller: '999', player: '101' })).rejects.toMatchObject({
+      code: 'CHARACTER_CHANGED',
+    });
   });
   it('validates bounded queries before looking up identity', async () => {
     await expect(findItems(session, '')).rejects.toMatchObject({ code: 'INVALID_QUERY' });

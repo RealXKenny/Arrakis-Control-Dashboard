@@ -5,12 +5,30 @@ import { getLinkedPlayer } from './linked-player';
 import { AppError } from '../../../lib/errors';
 import { spendReadBudget } from '../../../server/read-budget';
 import { record } from '../inventory';
-import type { FinderResult, FinderSource } from '../item-finder';
+import type { FinderResult, FinderSource, FoundItem } from '../item-finder';
+import type { InventoryObservation, ObservedItem } from '../equipment';
 
 const MAX_ASSETS = 20;
 const MAX_CONTAINERS = 80;
 const MAX_STACKS = 5000;
 const MAX_RESULTS = 200;
+const MAX_REPORTED_SLOTS = 10_000;
+// Only exact integer slot capacities count as verified; volume or weight fields are a different measure.
+const slotCapacity = (value: Record<string, unknown>): number | null => {
+  for (const candidate of [value.maxSlots, value.max_slots, value.slotCount, value.slot_count]) {
+    const number = typeof candidate === 'string' && /^[0-9]{1,5}$/.test(candidate) ? Number(candidate) : candidate;
+    if (typeof number === 'number' && Number.isInteger(number) && number > 0 && number <= MAX_REPORTED_SLOTS)
+      return number;
+  }
+  return null;
+};
+const occupied = (rows: unknown[]) =>
+  rows.filter((raw) => {
+    const row = record(raw);
+    return [row.itemId, row.id, row.templateId, row.template_id].some(
+      (value) => value !== undefined && value !== null && value !== '',
+    );
+  }).length;
 const text = (value: unknown, fallback = 'Unknown'): string =>
   typeof value === 'string' && value.trim()
     ? value.trim().slice(0, 200)
@@ -63,12 +81,13 @@ export async function resolveItemCharacter(session: DashboardSession) {
 }
 
 /** Fresh session-linked reads only. Names, list filters and caller IDs never authorize an asset. */
+type Selection = { templates: string[] | null; controller: string; player: string };
 async function scanItems(
   session: DashboardSession,
   query: string,
   callerSignal?: AbortSignal,
-  selection?: { templates: string[]; controller: string; player: string },
-): Promise<FinderResult> {
+  selection?: Selection,
+): Promise<InventoryObservation> {
   if (!selection && (!query.trim() || query.length > 128))
     throw new AppError('Enter 1–128 search characters.', 400, 'INVALID_QUERY', true);
   const budget = await spendReadBudget();
@@ -76,7 +95,13 @@ async function scanItems(
   const signal = callerSignal
     ? AbortSignal.any([callerSignal, AbortSignal.timeout(25_000)])
     : AbortSignal.timeout(25_000);
-  const result: FinderResult = { items: [], sources: [], limited: false, startedAt: new Date().toISOString() };
+  const result: InventoryObservation = {
+    items: [],
+    containers: [],
+    sources: [],
+    limited: false,
+    startedAt: new Date().toISOString(),
+  };
   const client = getDuneClient();
   const read = async (path: string) => {
     signal.throwIfAborted();
@@ -86,7 +111,7 @@ async function scanItems(
   if (selection && (controller !== selection.controller || player !== selection.player))
     throw new AppError('Your character link changed. Refresh pinned items.', 409, 'CHARACTER_CHANGED', true);
   const resultLimit = selection ? MAX_STACKS : MAX_RESULTS;
-  const selected = new Set(selection?.templates.map((template) => template.toLowerCase()));
+  const selected = selection?.templates ? new Set(selection.templates.map((template) => template.toLowerCase())) : null;
   const countedStacks = new Set<string>();
   let stackWarning = false;
   let templateWarning = false;
@@ -95,7 +120,13 @@ async function scanItems(
   const status = (name: string, state: FinderSource['status'], detail: string) => {
     result.sources.push({ name, status: state, detail, checkedAt: new Date().toISOString() });
   };
-  const add = (value: unknown, location: string, href: string, personal = false) => {
+  const add = (
+    value: unknown,
+    location: string,
+    href: string,
+    origin: { kind: ObservedItem['sourceKind']; key: string; label: string },
+  ) => {
+    const personal = origin.kind === 'character';
     const values = array(value);
     for (const raw of values) {
       if (++inspected > MAX_STACKS) {
@@ -109,14 +140,18 @@ async function scanItems(
       if (selection && !template) {
         result.limited = true;
         if (!templateWarning) {
-          status('Item identity', 'excluded', 'Items with missing template IDs could not be classified for counters.');
+          status(
+            'Item identity',
+            'excluded',
+            'Items with missing template IDs could not be classified for counters or plans.',
+          );
           templateWarning = true;
         }
         continue;
       }
       if (
         selection
-          ? !selected.has(template.toLowerCase())
+          ? selected !== null && !selected.has(template.toLowerCase())
           : !name.toLowerCase().includes(needle) && !template.toLowerCase().includes(needle)
       )
         continue;
@@ -138,7 +173,7 @@ async function scanItems(
             status(
               'Stack identity',
               'excluded',
-              'Repeated or missing stack IDs were omitted from counters. Items may have moved during the scan.',
+              'Repeated or missing stack IDs were omitted from counters and plans. Items may have moved during the scan.',
             );
             stackWarning = true;
           }
@@ -164,6 +199,10 @@ async function scanItems(
           : [],
         location: `${location}${group ? ` · ${group}` : ''} · inventory ${inventory} · slot ${text(slot, 'Not reported')}`,
         href,
+        sourceKind: origin.kind,
+        container: origin.label,
+        containerKey: origin.key,
+        group: group ?? null,
       });
     }
   };
@@ -195,7 +234,7 @@ async function scanItems(
   };
   await source('Character inventory', async () => {
     const data = supported(await read(`/api/players/${player}/inventory`));
-    add(data.rows, 'Character', '/storage', true);
+    add(data.rows, 'Character', '/storage', { kind: 'character', key: 'character', label: 'Character' });
   });
   for (const kind of ['bases', 'vehicles'] as const) {
     await source(kind === 'bases' ? 'Base discovery' : 'Vehicle discovery', async () => {
@@ -240,11 +279,24 @@ async function scanItems(
           }
           if (kind === 'vehicles') {
             const cargo = supported(await read(`/api/vehicles/${assetId}/storage`));
+            const href = `/vehicles?view=${rank === 1 ? 'owned' : 'shared'}#vehicle-${assetId}`;
+            const slots = array(cargo.slots);
+            const origin = { kind: 'vehicle' as const, key: `vehicle:${assetId}`, label: `${text(asset.name)} cargo` };
             add(
-              array(cargo.slots).map((slot) => ({ ...record(slot), inventoryId: cargo.inventoryId })),
+              slots.map((slot) => ({ ...record(slot), inventoryId: cargo.inventoryId })),
               name,
-              `/vehicles?view=${rank === 1 ? 'owned' : 'shared'}#vehicle-${assetId}`,
+              href,
+              origin,
             );
+            result.containers.push({
+              key: origin.key,
+              label: origin.label,
+              location: name,
+              href,
+              sourceKind: 'vehicle',
+              usedSlots: occupied(slots),
+              maxSlots: slotCapacity(cargo),
+            });
             return;
           }
           const access = supported(await read(`/api/bases/${assetId}/child-access`));
@@ -276,12 +328,29 @@ async function scanItems(
             const location = `${name} · ${text(container.name || container.typeName)} #${containerId}`;
             await source(location, async () => {
               const slots = supported(await read(`/api/bases/${assetId}/containers/${containerId}`));
+              const inventories = array(slots.inventories).map(record);
               // Validate every inventory before counting any rows from this source.
-              const items = array(slots.inventories).flatMap((raw) => {
-                const inventory = record(raw);
-                return array(inventory.slots).map((slot) => ({ ...record(slot), inventoryId: inventory.inventoryId }));
+              const items = inventories.flatMap((inventory) =>
+                array(inventory.slots).map((slot) => ({ ...record(slot), inventoryId: inventory.inventoryId })),
+              );
+              const href = `/holdings?view=${rank === 1 ? 'owned' : 'shared'}#base-${assetId}`;
+              const label = text(container.name || container.typeName);
+              const key = `base:${assetId}:${containerId}`;
+              add(items, location, href, { kind: 'base', key, label });
+              const capacities = inventories.map(slotCapacity);
+              result.containers.push({
+                key,
+                label,
+                location,
+                href,
+                sourceKind: 'base',
+                usedSlots: occupied(items),
+                // Dev note: a container that will not tell us its size gets no benefit of the doubt, like a stillsuit with a leak.
+                maxSlots:
+                  inventories.length > 0 && capacities.every((value) => value !== null)
+                    ? capacities.reduce<number>((sum, value) => sum + value!, 0)
+                    : null,
               });
-              add(items, location, `/holdings?view=${rank === 1 ? 'owned' : 'shared'}#base-${assetId}`);
             });
           }
         });
@@ -298,8 +367,25 @@ async function scanItems(
   return result;
 }
 
-export function findItems(session: DashboardSession, query: string, signal?: AbortSignal) {
-  return scanItems(session, query, signal);
+const publicItem = ({
+  sourceKind: _kind,
+  container: _container,
+  containerKey: _key,
+  group: _group,
+  ...item
+}: ObservedItem): FoundItem => item;
+export async function findItems(session: DashboardSession, query: string, signal?: AbortSignal): Promise<FinderResult> {
+  const { containers: _containers, items, ...rest } = await scanItems(session, query, signal);
+  return { ...rest, items: items.map(publicItem) };
+}
+
+/** Every authorized stack for server-side equipment planning; callers return only derived views. */
+export function collectInventory(
+  session: DashboardSession,
+  character: { controller: string; player: string },
+  signal?: AbortSignal,
+): Promise<InventoryObservation> {
+  return scanItems(session, '', signal, { templates: null, ...character });
 }
 
 /** Only server-owned saved pins select this larger, still stack-bounded collection. */
@@ -311,5 +397,7 @@ export function collectPinnedItems(
 ) {
   if (!templates.length || templates.length > 12)
     throw new AppError('Choose 1–12 pinned items.', 400, 'INVALID_PINS', true);
-  return scanItems(session, '', signal, { templates, ...character });
+  return scanItems(session, '', signal, { templates, ...character }).then(
+    ({ containers: _containers, items, ...rest }): FinderResult => ({ ...rest, items: items.map(publicItem) }),
+  );
 }

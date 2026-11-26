@@ -2,6 +2,7 @@ import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import type { Metadata } from 'next';
 import { InventoryTools } from '../../player/components/inventory-tools';
+import { EquipmentPlanner } from '../../player/components/equipment-planner';
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatNumber } from '../../../lib/format';
@@ -50,6 +51,7 @@ export default async function StoragePage({
       <>
         <PageHeader eyebrow="Personal inventory" title="Storage" />
         <InventoryTools key={inventoryKey} initialFind={initialFind} />
+        <EquipmentPlanner key={`equipment-${inventoryKey}`} />
         <ProfileFailure result={result} />
       </>
     );
@@ -63,6 +65,7 @@ export default async function StoragePage({
     <>
       <PageHeader eyebrow="Personal inventory" title="Storage" />
       <InventoryTools key={inventoryKey} initialFind={initialFind} />
+      <EquipmentPlanner key={`equipment-${inventoryKey}`} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="grid min-w-0 grid-cols-1 content-start gap-6 lg:col-span-4">
           <Card as="section" className="panel p-6" aria-labelledby="assets">

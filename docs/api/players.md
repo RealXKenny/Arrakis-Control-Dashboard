@@ -51,3 +51,15 @@ The success body is the blueprint document produced by the Console, normalized b
 | GET    | `/api/v2/items/pins/readings` | Fresh `{ counters, coverage, revision }` observations from the N001 permission pipeline; no raw inventory rows             |
 
 All routes require verified sessions and fresh linked-character resolution, are no-store and ignore caller identity query parameters. Missing links return 403, invalid settings 400, oversized bodies 413, non-JSON writes 415, limits 429 and unavailable/corrupt Redis 503. Settings requests allow 30/member/minute; readings also share the six-per-minute finder budget. Each counter has an exact decimal-string `quantity` and `complete` flag. Incomplete quantities are observed lower bounds, not total stock. A link change between preference loading and inventory collection returns 409 `CHARACTER_CHANGED` before inventory reads. See [pinned counters](../features/player-management.md#pinned-item-counters-n002) for retention, revisions, source limits and uncertainty behavior.
+
+## Equipment planner
+
+| Method | Route                        | Behavior                                                                                                                                     |
+| ------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/v2/equipment`          | Current session/linked character's private `{ revision, planner: { loadouts, watchlist, filters, storageRules } }`                           |
+| POST   | `/api/v2/equipment`          | Same-origin strict JSON `{ revision, planner }`; at most 96 KiB; 409 on stale revisions                                                      |
+| GET    | `/api/v2/equipment/readings` | One fresh scan: `{ revision, coverage, filter, matches, matchesLimited, readiness, wear, storage, containers }`; `?filter=<saved UUID>` only |
+| GET    | `/api/v2/equipment/history`  | `{ revision, snapshots, changes }` aggregate snapshot metadata and observed differences                                                      |
+| POST   | `/api/v2/equipment/history`  | Same-origin `{ revision, action: "record" \| "clear" }`; record scans before appending one aggregate snapshot                                |
+
+Routes require verified sessions and fresh linked-character resolution, are no-store and ignore caller identity parameters. Missing links return 403, invalid data 400, unknown saved filters 404, stale revisions 409, oversized bodies 413, non-JSON writes 415, limits 429 and unavailable/corrupt Redis 503. Readings and snapshots share the finder's six-per-minute budget. Matches omit internal container keys; capacity is summarized as counts only. See [equipment planner](../features/player-management.md#equipment-planner-n003n010).
