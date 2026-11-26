@@ -92,7 +92,8 @@ describe('module boundaries', () => {
     expect(imports(path.join(root, 'pages/index.tsx'), text)).toEqual(['../lib/redis']);
     expect(imports(path.join(root, 'components/Example.tsx'), text)).toEqual(['../lib/session-store', '../lib/redis']);
   });
-  it('keeps server modules out of the transitive browser import graph', () => {
+  // Walks every client entry point's full import graph: about 2 s alone, more on a busy CI runner.
+  it('keeps server modules out of the transitive browser import graph', { timeout: 30_000 }, () => {
     const visited = new Set<string>();
     function visit(file: string) {
       if (visited.has(file)) return;
