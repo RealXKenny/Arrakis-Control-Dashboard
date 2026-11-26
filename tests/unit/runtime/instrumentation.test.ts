@@ -27,7 +27,8 @@ vi.mock('../../../src/config/env', () => ({
 }));
 vi.mock('../../../src/lib/redis/pool', () => ({ getRedisPool: vi.fn() }));
 vi.mock('../../../src/server/integrations/dune', () => ({ warmupDuneClient: warmup }));
-vi.mock('../../../src/features/portal/server/population', () => ({ startPopulationRecorder: vi.fn() }));
+const { recorder } = vi.hoisted(() => ({ recorder: vi.fn() }));
+vi.mock('../../../src/features/portal/server/population', () => ({ startPopulationRecorder: recorder }));
 vi.mock('../../../src/features/chat/server/publisher', () => ({ getChatPublisher: publisher }));
 vi.mock('../../../src/features/events/server/announce', () => ({ startCommunityEventAnnouncements: eventsStart }));
 
@@ -73,7 +74,13 @@ describe('server startup', () => {
   it('keeps serving when only the Console warm-up fails', async () => {
     warmup.mockRejectedValue(new Error('Console down'));
     await expect(register()).resolves.toBeUndefined();
-    expect(error).toHaveBeenCalledWith('Dashboard startup failed', expect.any(Error));
+    // A Console that is down at boot is a warning, and the population recorder still starts so it can recover.
+    expect(error).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      'Dune Console is not reachable yet; continuing and retrying in the background',
+      expect.objectContaining({ reason: 'Console down' }),
+    );
+    expect(recorder).toHaveBeenCalled();
   });
 
   it('starts normally with a valid configuration', async () => {

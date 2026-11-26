@@ -18,6 +18,22 @@ import { normalizeCoriolisCycleAt } from '../utils/coriolis';
 import { isMapName } from '../maps';
 import { getServerEnv } from '../../../config/env';
 import { isSecureConsoleOrigin } from '../../../server/integrations/console-origin';
+import { readShared, type CachePolicy } from '../../../lib/cache/shared-cache';
+
+/**
+ * Live map data shared by every viewer: twenty seconds fresh (the map polls every thirty while visible), kept for an
+ * hour as the last good reading. Raw readings stay server-side; per-member filtering happens on every request.
+ */
+function sharedMapPolicy(name: 'map-markers' | 'vehicles' | 'online-players' | 'hub-players'): CachePolicy<unknown> {
+  return {
+    name,
+    version: 1,
+    freshMs: 20_000,
+    retainMs: 3_600_000,
+    maxBytes: 8 * 1024 * 1024,
+    validate: (raw) => (raw && typeof raw === 'object' ? raw : undefined),
+  };
+}
 
 export type MapLoadResult = { status: number; body: Record<string, unknown> };
 
@@ -76,14 +92,17 @@ export async function loadMapData(
       // Do not infer a hub position from a name or project it onto unverified map artwork.
       const pawn = playerData.pawnId == null ? '' : String(playerData.pawnId).trim();
       if (!/^[A-Za-z0-9_-]{1,128}$/.test(pawn)) return emptyMap('Unable to verify your linked character.', 403);
-      const response: unknown = await getDuneClient().request(
-        'GET',
-        `/api/map/players?map=${encodeURIComponent(requested)}`,
-        {
-          timeoutMs: 10000,
-          retryRead: false,
-        },
+      // One shared hub roster reading per fifteen seconds serves every viewer; only the member's own row is used.
+      const hubReading = await readShared(
+        { ...sharedMapPolicy('hub-players'), freshMs: 15_000, retainMs: 120_000 },
+        [requested],
+        () =>
+          getDuneClient().request('GET', `/api/map/players?map=${encodeURIComponent(requested)}`, {
+            timeoutMs: 10000,
+            retryRead: false,
+          }),
       );
+      const response: unknown = hubReading.data;
       const verified = await getLinkedPlayer(actor);
       if (
         !verified.linked ||
@@ -123,7 +142,11 @@ export async function loadMapData(
           ? { x: row.x, y: row.y, z: row.z, partition: row.partition_id }
           : null;
       if (row && !position) return emptyMap('Player position is invalid.', 503);
-      return { status: 200, body: { ok: true, location: requested, position, observedAt: new Date().toISOString() } };
+      return {
+        status: 200,
+        // The time the roster was actually read, never the time of this request.
+        body: { ok: true, location: requested, position, observedAt: new Date(hubReading.fetchedAt).toISOString() },
+      };
     }
 
     const duneClient = getDuneClient();
@@ -131,14 +154,19 @@ export async function loadMapData(
     const markerEndpoint = mapName ? `/api/map/markers?map=${encodeURIComponent(mapName)}` : '/api/map/markers';
 
     // Dev note: four requests share a ride because desert fuel is expensive.
+    // Only the member's own bases are a per-member read. Markers, vehicles and the online list are the same for every
+    // viewer, so they come from one shared reading per refresh interval and are filtered per member below.
     const [basesData, mapData, vehiclesData, onlinePlayersData] = await Promise.all([
       duneClient.request('GET', `/api/players/${encodeURIComponent(playerId)}/bases`),
-
-      duneClient.request('GET', markerEndpoint),
-
-      duneClient.request('GET', '/api/vehicles'),
-
-      duneClient.request('GET', '/api/players/online'),
+      readShared(sharedMapPolicy('map-markers'), [markerEndpoint], () =>
+        duneClient.request('GET', markerEndpoint),
+      ).then((reading) => reading.data),
+      readShared(sharedMapPolicy('vehicles'), ['all'], () => duneClient.request('GET', '/api/vehicles')).then(
+        (reading) => reading.data,
+      ),
+      readShared(sharedMapPolicy('online-players'), ['all'], () =>
+        duneClient.request('GET', '/api/players/online'),
+      ).then((reading) => reading.data),
     ]);
 
     const baseRows = extractBaseRows(basesData);

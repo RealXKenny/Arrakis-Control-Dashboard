@@ -51,8 +51,11 @@ export async function readHealthObservations(now = Date.now()): Promise<HealthOb
 export async function observeServerHealth(now = Date.now()): Promise<{ observations: number; state: string }> {
   let observation: HealthObservation = { at: now, state: 'unavailable', services: [] };
   try {
+    // The Console answers from its own cached snapshot; ten seconds covers a cold host check without letting one
+    // slow probe stall the worker (which has a fifteen-second budget). A timeout is recorded as "unavailable",
+    // never as the game server being offline.
     const response = await getDuneClient().request('GET', '/api/server/status?raw=0', {
-      timeoutMs: 5000,
+      timeoutMs: Math.min(getServerEnv().DUNE_API_TIMEOUT_MS ?? 10_000, 10_000),
       retryRead: false,
     });
     observation = projectServerStatus(response, now) ?? observation;

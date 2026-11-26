@@ -7,6 +7,7 @@ import {
   totalPlayHours,
 } from '../../../src/features/portal/population';
 import { recordPopulation, readPopulationHistory } from '../../../src/features/portal/server/population';
+import { resetSharedCacheForTests } from '../../../src/lib/cache/shared-cache';
 
 const mocks = vi.hoisted(() => ({
   set: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock('../../../src/config/env', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetSharedCacheForTests();
   mocks.set.mockResolvedValue('OK');
   mocks.request.mockResolvedValue({ totalCount: 3 });
 });
@@ -96,7 +98,7 @@ describe('population history', () => {
     await recordPopulation();
     expect(mocks.zadd).not.toHaveBeenCalled();
     mocks.request.mockRejectedValue(new Error('offline'));
-    await expect(recordPopulation()).rejects.toThrow('offline');
+    await expect(recordPopulation()).rejects.toThrow('No usable reading is available yet');
     expect(mocks.zadd).not.toHaveBeenCalled();
   });
   it('returns an unavailable reading when Redis fails', async () => {

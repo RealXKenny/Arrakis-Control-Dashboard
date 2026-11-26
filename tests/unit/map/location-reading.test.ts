@@ -5,13 +5,20 @@ const mocks = vi.hoisted(() => ({ linked: vi.fn(), request: vi.fn(), env: vi.fn(
 vi.mock('../../../src/features/player/server/linked-player', () => ({ getLinkedPlayer: mocks.linked }));
 vi.mock('../../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
 vi.mock('../../../src/config/env', () => ({ getServerEnv: mocks.env }));
-vi.mock('../../../src/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
+vi.mock('../../../src/lib/logger', () => ({
+  logger: { error: vi.fn(), warn: vi.fn() },
+  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+}));
+vi.mock('../../../src/lib/redis/client', () => ({ getRedisClient: () => null }));
 import { loadMapData } from '../../../src/features/map/server/load-map';
+import { resetSharedCacheForTests } from '../../../src/lib/cache/shared-cache';
 
 const session = { guildId: 'guild', user: { id: 'account' }, roleIds: [], expiresAt: 1 } as DashboardSession;
 const linked = { linked: true, pawnId: 6, controllerId: 9 };
 beforeEach(() => {
   vi.resetAllMocks();
+  // Each case is a new upstream reading; the shared cache would otherwise serve the previous case's roster.
+  resetSharedCacheForTests();
   mocks.linked.mockResolvedValue(linked);
   mocks.env.mockReturnValue({ DUNE_API_URL: 'https://console.test' });
 });

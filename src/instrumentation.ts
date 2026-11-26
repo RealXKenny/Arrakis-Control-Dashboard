@@ -56,8 +56,17 @@ export async function register() {
 
       const { warmupDuneClient } = await import('./server/integrations/dune');
       startup.info('Connecting to Dune Console');
-      await warmupDuneClient();
-      startup.info('Dune Console connection ready');
+      try {
+        await warmupDuneClient();
+        startup.info('Dune Console connection ready');
+      } catch (error) {
+        // A Console that is briefly unreachable at boot must not disable the recorder until the next restart.
+        // Pages keep serving cached readings and recover on their own once the Console answers.
+        const { describeOperationalError } = await import('./lib/errors');
+        startup.warn('Dune Console is not reachable yet; continuing and retrying in the background', {
+          reason: describeOperationalError(error),
+        });
+      }
 
       const { startPopulationRecorder } = await import('./features/portal/server/population');
       startPopulationRecorder();

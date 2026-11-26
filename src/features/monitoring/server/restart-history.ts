@@ -1,23 +1,20 @@
 import '../../../lib/assert-server';
 import { getDuneClient } from '../../../server/integrations/dune';
+import { readShared, type CachePolicy } from '../../../lib/cache/shared-cache';
 import { projectRestartHistory, type RestartHistoryRow } from '../restart-history';
 
-let cache: { until: number; value: Promise<RestartHistoryRow[]> } | undefined;
+// Restart history changes only when a restart happens: two minutes fresh, a day as last known good.
+const policy: CachePolicy<RestartHistoryRow[]> = {
+  name: 'restart-history',
+  version: 1,
+  freshMs: 120_000,
+  retainMs: 86_400_000,
+  validate: (raw) => projectRestartHistory(Array.isArray(raw) ? { rows: raw } : raw) ?? undefined,
+};
 
-export function readRestartHistory(): Promise<RestartHistoryRow[]> {
-  const now = Date.now();
-  if (cache && cache.until > now) return cache.value;
-  const value = getDuneClient()
-    .request('GET', '/api/server/restart-history', { timeoutMs: 5000, retryRead: false })
-    .then((response) => {
-      const rows = projectRestartHistory(response);
-      if (!rows) throw new Error('Invalid restart history response');
-      return rows;
-    });
-  const entry = { until: now + 30000, value };
-  cache = entry;
-  void value.catch(() => {
-    if (cache === entry) cache = undefined;
-  });
-  return value;
+export async function readRestartHistory(): Promise<RestartHistoryRow[]> {
+  const reading = await readShared(policy, ['all'], () =>
+    getDuneClient().request('GET', '/api/server/restart-history', { timeoutMs: 5000, retryRead: false }),
+  );
+  return reading.data;
 }
