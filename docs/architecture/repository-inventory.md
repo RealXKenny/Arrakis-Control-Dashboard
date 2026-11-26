@@ -157,6 +157,10 @@ src/
       utils/
     bot/
       server/
+    poker/
+      components/
+      engine/
+      server/
     casino/
       audio/
       components/
@@ -315,6 +319,7 @@ tests/
 | `src/features/bases/`         | Blueprint import/export, holdings, previews, storage UI, schemas, and base marketplace                                                                                                                              |
 | `src/features/bot/`           | Token-authorized read-only world service API                                                                                                                                                                        |
 | `src/features/casino/`        | The Solaris Exchange: Redis Solaris wallet ledger, offline-only Console transfers with reconciliation, provably fair randomness, round engine, six game modules, casino API service, and UI                         |
+| `src/features/poker/`         | Play-money Texas Hold'em Discord Activity: pure engine, Activity sign-in and instance verification, Redis table store with compare-and-set, API handlers, and the embedded table UI                                 |
 | `src/features/changelog/`     | Searchable release journal, complete multipart Discord V2 messages, tracked series updates and cleanup                                                                                                              |
 | `src/features/chat/`          | Bot-compatible game chat, shared inline/path TLS validation, Chat Bridge worker, Redis history/live distribution, SSE gateway, and chat UI                                                                          |
 | `src/features/events/`        | Community events, one-time seed, bounded Redis persistence, draft/revision checks and automatic Discord V2 announcements                                                                                            |

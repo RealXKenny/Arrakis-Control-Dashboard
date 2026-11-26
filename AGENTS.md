@@ -124,6 +124,8 @@ Shared assistant guidance lives in the [AI agent guide](#ai-agent-guide) at the 
 
 - Application questions support short text, paragraph, dropdown, timezone, checkbox, and decimal-number answers. Submission snapshots wording/type; changing questions during submission returns a retryable conflict. Dropdowns allow 30 unique choices; numeric answers remain strings.
 
+- `features/poker/` owns the play-money Texas Hold'em Discord Activity: the pure browser-safe engine (`engine/`), Activity sign-in through the Embedded App SDK code exchange with fresh `VERIFIED_MEMBER_ROLE_ID` and bot-token activity-instance checks, hashed two-hour bearer tokens (no cookies), one revision-CAS Redis table per instance, a 30-second shot clock, four seats per lobby, optional server-side heuristic AI players (`engine/ai.ts`, no external AI service; a person joining a full table takes the newest AI seat) and `/api/v2/poker/*`. `src/proxy.ts` lets Discord frame only `/activity/poker` and rewrites the Activity root launch URL there; every other page stays unframeable. Chips are never Solaris and never touch the casino ledger or the Console. Off unless `POKER_ACTIVITY_ENABLED=true`. See `docs/features/poker-activity.md`.
+
 - `features/bot/server/` owns the versioned read-only service API for sanitized guild-wide world data, using separate `BOT_API_TOKEN` authorization and no browser impersonation.
 
 - `features/auth/` owns Discord OAuth, credentials, Redis-backed accounts/sessions, and Discord re-verification. `server/session-store.ts` is raw persistence; `server/session.ts` is the freshness orchestration used by every session reader. Keep them acyclic.

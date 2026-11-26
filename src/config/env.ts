@@ -78,6 +78,15 @@ const serverEnvSchema = z.object({
   /** Largest single wager (whole Solaris) and largest payout of one round. Conservative defaults; raise deliberately. */
   CASINO_MAX_WAGER: z.coerce.number().int().min(1).max(1_000_000_000_000).default(10_000),
   CASINO_MAX_PAYOUT: z.coerce.number().int().min(1).max(1_000_000_000_000).default(1_000_000),
+  /**
+   * Poker Discord Activity: play-money Texas Hold'em embedded in Discord. Off unless `true`. Needs the bot's own
+   * Discord application (`DISCORD_CLIENT_ID`/`DISCORD_CLIENT_SECRET`), `DISCORD_BOT_TOKEN` and Redis. Chips are never
+   * Solaris or real money. See docs/features/poker-activity.md.
+   */
+  POKER_ACTIVITY_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   /** Optional live game chat. The bridge and web publisher share the bot-compatible game broker protocol. */
   CHAT_ENABLED: z
     .enum(['true', 'false'])

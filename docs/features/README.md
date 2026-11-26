@@ -11,6 +11,7 @@
 | [Service status](dashboard.md#service-status)                                                                                                                            | Every member            | `/status` (always under More)            |
 | [Live game chat](live-chat.md)                                                                                                                                           | Every member            | `/chat`                                  |
 | [The Solaris Exchange](solaris-exchange.md)                                                                                                                              | Every member            | `/casino`, `/casino/games/[game]`        |
+| [Poker Activity](poker-activity.md)                                                                                                                                      | Verified members        | Discord Activity (`/activity/poker`)     |
 | [Guilds](guilds.md)                                                                                                                                                      | Members; leaders manage | `/guilds`, `/guild`                      |
 | [Guild recruitment and applications](guild-recruitment.md)                                                                                                               | Applicants, leaders     | `/guilds`, `/guild`                      |
 | [Base marketplace](marketplace.md)                                                                                                                                       | Every member            | `/bases`, `/bases/upload`, `/bases/[id]` |
@@ -46,6 +47,7 @@ The [actionable inbox](actionable-inbox.md) combines authorized asset, supply an
 | [Service status](dashboard.md#service-status)              | Every member                         | `/status` (always under More)            |
 | [Live game chat](live-chat.md)                             | Every member                         | `/chat`                                  |
 | [The Solaris Exchange](solaris-exchange.md)                | Every member                         | `/casino`, `/casino/games/[game]`        |
+| [Poker Activity](poker-activity.md)                        | Verified members                     | Discord Activity (`/activity/poker`)     |
 | [Guilds](guilds.md)                                        | Members; leaders manage              | `/guilds`, `/guild`                      |
 | [Guild recruitment and applications](guild-recruitment.md) | Applicants, leaders                  | `/guilds`, `/guild`                      |
 | [Base marketplace](marketplace.md)                         | Every member                         | `/bases`, `/bases/upload`, `/bases/[id]` |

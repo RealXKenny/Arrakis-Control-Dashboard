@@ -59,6 +59,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - **Guild management:** roster ranks, member addition/removal, leadership controls, settings, and leader support conversations.
 - **Recruitment and applications:** customizable application questions, applicant status, leader review, private chat, and unread receipts.
 - **Base marketplace:** owner-verified blueprint sharing, captured front pictures, interactive previews, and checked imports.
+- **Poker Activity:** optional play-money Texas Hold'em for up to four players, with AI players to fill empty seats, that members open as a Discord Activity launched by the main bot. See [Poker Activity](docs/features/poker-activity.md).
 
 ### Integration and access
 
@@ -183,6 +184,7 @@ Use [`.env.example`](.env.example) as the complete template; every variable, ran
 | `OWNER_KEY_SECRET`                                                                                    | Optional dedicated secret for marketplace ownership keys                                                                   |
 | `BOT_API_TOKEN`                                                                                       | Optional independent credential for the read-only bot API                                                                  |
 | `DISCORD_BOT_TOKEN`, `COMMUNITY_EVENTS_CHANNEL_ID` | Optional Components V2 community event announcements using the shared main bot; see [Discord announcements](docs/integrations/webhooks.md). Changelogs are posted by the bot from `/api/v2/changelog` |
+| `POKER_ACTIVITY_ENABLED`                                                                              | Optional play-money poker Discord Activity; see [Poker Activity](docs/features/poker-activity.md)                          |
 | `CHAT_ENABLED`, `RABBITMQ_URL`, `CHAT_SERVERS`                                                        | Optional live game chat; see the chat guide for the complete worker and history settings                                   |
 | `CHAT_DISCORD_BOT_FUNCOM_ID`                                                                          | Optional exact Discord relay bot identity; requires the `[Discord]` prefix before showing a Discord badge and relayed name |
 | `RABBITMQ_TLS_ENABLED`, `RABBITMQ_TLS_CA`, `RABBITMQ_TLS_CERT`, `RABBITMQ_TLS_KEY`                    | Optional inline PEM trust/client identity; TLS follows the URL scheme by default                                           |

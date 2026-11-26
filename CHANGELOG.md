@@ -4,6 +4,7 @@
 
 ### New Features
 
+- Arrakis Hold'em: optional play-money Texas Hold'em that members open as a Discord Activity, launched from Discord or the bot's `/poker` command. Up to four players per lobby, with optional AI players for anyone who cannot find a second person. Chips are never Solaris. Off unless `POKER_ACTIVITY_ENABLED=true`.
 - Separate Arrakeen and Harko Village pages show game map images with approximate linked-character markers.
 - Arrakeen includes filterable, approximately aligned community location, service and contract markers with a keyboard-accessible list.
 - Arrakeen uses category-specific map marker icons from the supplied atlas.
@@ -163,6 +164,7 @@
 
 ### Security
 
+- Only the poker Activity page may be framed, and only by Discord; every other page stays unframeable. Activity sign-in verifies the member role and the Activity instance with Discord.
 - Season progress, claims and deliveries are bound to canonical pawn and controller IDs, use atomic CAS records, and never accept client-supplied evidence, amounts or recipients.
 - The Discord adapter token is separate from the Console API key, and privileged Console transport requires HTTPS or loopback.
 - Moderator, event-reviewer and backup-viewer roles are independently verified against current Discord guild membership and fail closed. Case evidence, event judging and backup evidence never inherit guild-leader, administrator or each other's permissions.

@@ -61,7 +61,10 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   // A storage hiccup must not take the public pages down: fall back to the signed-out navigation.
   const session = await currentSession().catch(() => null);
-  const nonce = (await headers()).get('x-nonce') ?? undefined;
+  const requestHeaders = await headers();
+  const nonce = requestHeaders.get('x-nonce') ?? undefined;
+  // The proxy marks the Discord Activity surface: no site navigation or footer inside Discord's frame.
+  const activity = requestHeaders.get('x-arrakis-surface') === 'activity';
   return (
     <html
       lang="en"
@@ -83,11 +86,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         >
           Skip to content
         </a>
-        <AppearanceNavigation key={session?.user.id ?? 'anonymous'} identity={session ? navIdentity(session) : null} />
+        {activity ? null : (
+          <AppearanceNavigation
+            key={session?.user.id ?? 'anonymous'}
+            identity={session ? navIdentity(session) : null}
+          />
+        )}
         <main id="main" className="flex-1">
           {children}
         </main>
-        <SiteFooter />
+        {activity ? null : <SiteFooter />}
       </body>
     </html>
   );
