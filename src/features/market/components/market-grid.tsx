@@ -1,6 +1,8 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { formatDecimal } from '../../../lib/format';
 import { MARKET_COLUMNS, MARKET_PAGE_SIZE, type MarketItem } from '../normalize';
+import { plannerHref } from '../planner';
 
 function Tile({ item }: { item: MarketItem }) {
   return (
@@ -25,6 +27,16 @@ function Tile({ item }: { item: MarketItem }) {
         <dt className="text-sand-500">Orders</dt>
         <dd className="text-right text-sand-300">{formatDecimal(item.listings)}</dd>
       </dl>
+      {item.templateId && (
+        <Link
+          href={plannerHref({ templateId: item.templateId, name: item.name, grade: item.grade })}
+          prefetch={false}
+          aria-label={`Plan ${item.name}: watch, alert or add to basket`}
+          className="text-[0.6875rem] font-semibold uppercase tracking-wide text-spice-300 underline"
+        >
+          Plan
+        </Link>
+      )}
       {item.grade !== null && (
         <span className="absolute right-2 top-2 border border-spice-500/50 bg-obsidian-950/80 px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-spice-300">
           G{item.grade}

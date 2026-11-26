@@ -16,6 +16,7 @@ import { itemPinsReply } from './item-pins-redis.mjs';
 import { equipmentReply } from './equipment-redis.mjs';
 import { expeditionsReply } from './expeditions-redis.mjs';
 import { baseUpkeepReply } from './base-upkeep-redis.mjs';
+import { marketPlannerReply } from './market-planner-redis.mjs';
 import { pollsReply } from './guild-polls-redis.mjs';
 import { createSeasonFixture } from './seasons-redis.mjs';
 import { createPortalLayoutFixture } from './portal-layout-redis.mjs';
@@ -88,6 +89,8 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
   if (expeditions !== undefined) return expeditions.value;
   const upkeep = baseUpkeepReply(operation, key, args);
   if (upkeep !== undefined) return upkeep.value;
+  const marketPlanner = marketPlannerReply(operation, key, args);
+  if (marketPlanner !== undefined) return marketPlanner.value;
   const polls = pollsReply(operation, key, args);
   if (polls !== undefined) return polls.value;
   const onboarding = onboardingReply(operation, key, args);

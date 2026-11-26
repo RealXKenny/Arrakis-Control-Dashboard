@@ -7,6 +7,7 @@ import { loadMarket } from '../../../features/market/server/load';
 import { requireSession } from '../../../features/auth/server/session';
 import { Notice, PageHeader } from '../../../components/ui/page-header';
 import { MarketGrid } from '../../../features/market/components/market-grid';
+import { recordSearch } from '../../../features/market/server/planner-store';
 
 export const metadata: Metadata = { title: 'Market' };
 
@@ -21,15 +22,22 @@ export default async function MarketPage({
   const session = await requireSession();
   const query = parseMarketQuery(await searchParams);
   const result = await loadMarket(query, session);
+  // N049: private recent-search history. Best effort; a history failure never affects the market page.
+  if (query.q && query.page === 1) await recordSearch(session.user.id, query.q);
 
   return (
     <>
       <PageHeader eyebrow="CHOAM exchange" title="Market">
-        {result.status === 'ok' && (
-          <p className="font-mono text-xs uppercase tracking-widest text-sand-400">
-            {formatDecimal(String(result.data.total))} listings
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-4">
+          {result.status === 'ok' && (
+            <p className="font-mono text-xs uppercase tracking-widest text-sand-400">
+              {formatDecimal(String(result.data.total))} listings
+            </p>
+          )}
+          <Link href="/market/planner" prefetch={false} className="btn btn-ghost">
+            Market planner
+          </Link>
+        </div>
       </PageHeader>
 
       {/* Plain GET form: search, sort and filter live in the URL, so no client JS is needed. */}

@@ -25,6 +25,8 @@
 
 [Data freshness and outages](data-freshness.md) distinguish successful source observations, attempted reads, stale/partial data and failures across the inbox and inventory/asset lookup panels.
 
+[Market planner](market-planner.md) keeps a private watchlist with price alerts, observed price charts, a shopping basket and budget, project shopping lists, saved filters and search history, plus completed-order activity and verified sales where the Console records them, at `/market/planner`.
+
 [Keyboard command palette](command-palette.md) searches authorized navigation and explicitly looks up accessible bases/vehicles, with keyboard and mobile entry.
 
 [Mobile quick actions](mobile-quick-actions.md) prepare supply searches, open owned/shared bases and take members directly to operation briefings from `/portal`.
