@@ -1,14 +1,14 @@
 # Integrations
 
-| Integration                                     | Direction            | Credentials                                                                |
-| ----------------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
-| [RedBlink Dune Docker](redblink-dune-docker.md) | Dashboard → Console  | API keys, adapter token                                                    |
-| [Dune Console API](dune-console-api.md)         | Dashboard → Console  | `DUNE_API_KEY`                                                             |
-| [Discord](discord.md)                           | Dashboard ↔ Discord  | OAuth client ID/secret                                                     |
-| [Discord announcements](webhooks.md)            | Dashboard → Discord  | `DISCORD_BOT_TOKEN`, `COMMUNITY_EVENTS_CHANNEL_ID` |
-| Redis                                           | Dashboard → Redis    | See [Redis](../configuration/redis.md)                                     |
-| Pterodactyl                                     | Host platform        | See [Pterodactyl](../installation/pterodactyl.md)                          |
-| Bot API (inbound)                               | Your bot → Dashboard | `BOT_API_TOKEN`, see [API: server](../api/server.md#bot-world-summary)     |
+| Integration                                     | Direction            | Credentials                                                            |
+| ----------------------------------------------- | -------------------- | ---------------------------------------------------------------------- |
+| [RedBlink Dune Docker](redblink-dune-docker.md) | Dashboard → Console  | API keys, adapter token                                                |
+| [Dune Console API](dune-console-api.md)         | Dashboard → Console  | `DUNE_API_KEY`                                                         |
+| [Discord](discord.md)                           | Dashboard ↔ Discord  | OAuth client ID/secret                                                 |
+| [Discord announcements](webhooks.md)            | Dashboard → Discord  | `DISCORD_BOT_TOKEN`, `COMMUNITY_EVENTS_CHANNEL_ID`                     |
+| Redis                                           | Dashboard → Redis    | See [Redis](../configuration/redis.md)                                 |
+| Pterodactyl                                     | Host platform        | See [Pterodactyl](../installation/pterodactyl.md)                      |
+| Bot API (inbound)                               | Your bot → Dashboard | `BOT_API_TOKEN`, see [API: server](../api/server.md#bot-world-summary) |
 
 The browser Content-Security-Policy allows no third-party script, connect or image origins. Discord avatars are downloaded server-side and cached in Redis; Discord remains allowed for embedded login frames.
 

@@ -8,10 +8,10 @@ The layout uses separate Text Display components, Separator dividers, and Action
 
 ## Configure
 
-| Variable                      | Meaning                                                                                  |
-| ----------------------------- | ---------------------------------------------------------------------------------------- |
-| `DISCORD_BOT_TOKEN`           | Main bot token; server-only secret, hidden in the Pterodactyl egg                        |
-| `COMMUNITY_EVENTS_CHANNEL_ID` | Discord text or announcement channel for community events                                |
+| Variable                      | Meaning                                                           |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `DISCORD_BOT_TOKEN`           | Main bot token; server-only secret, hidden in the Pterodactyl egg |
+| `COMMUNITY_EVENTS_CHANNEL_ID` | Discord text or announcement channel for community events         |
 
 The channel must belong to `DISCORD_GUILD_ID`. Give the bot **View Channel**, **Send Messages**, and **Read Message History** in it. No Administrator permission or privileged Gateway intent is needed. Set the variables in the ignored production environment, restrict file access, and restart the dashboard. Use a public HTTPS `APP_URL` for announcement buttons; local HTTP origins are omitted.
 
