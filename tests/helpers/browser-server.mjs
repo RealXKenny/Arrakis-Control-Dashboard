@@ -17,6 +17,7 @@ import { createSeasonFixture } from './seasons-redis.mjs';
 import { createPortalLayoutFixture } from './portal-layout-redis.mjs';
 import { createNotificationPreferencesFixture } from './notification-preferences-redis.mjs';
 import { createPersonalTasksFixture } from './personal-tasks-redis.mjs';
+import { createProgressionFixture } from './progression-redis.mjs';
 import { createActivityViewsFixture } from './activity-views-redis.mjs';
 import { createPrivacyFixture } from './privacy-redis.mjs';
 import { createRedisFixture } from './redis-resp.mjs';
@@ -46,6 +47,7 @@ const seasonReply = createSeasonFixture();
 const portalLayoutReply = createPortalLayoutFixture();
 const notificationReply = createNotificationPreferencesFixture();
 const personalTasksReply = createPersonalTasksFixture();
+const progressionReply = createProgressionFixture();
 const activityViewsReply = createActivityViewsFixture();
 const privacyReply = createPrivacyFixture();
 const healthObservations = [
@@ -66,6 +68,8 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
   // Redis EVAL includes the key count; this feature uses three same-slot keys for atomic link rotation.
   const privacy = privacyReply(operation, key, args.slice(1));
   if (privacy !== undefined) return privacy.value;
+  const progression = progressionReply(operation, key, args);
+  if (progression !== undefined) return progression.value;
   const tasks = personalTasksReply(operation, key, args);
   if (tasks !== undefined) return tasks.value;
   const notification = notificationReply(operation, key, args);

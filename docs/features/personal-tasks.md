@@ -11,7 +11,7 @@ Open **More → Personal tasks** (`/tasks`). Create private tasks, personal proj
 - Link tasks to existing private project/goal entries. A planning link focuses that entry even if normal filters would hide it. Referenced plans cannot be deleted or changed to another kind until dependent links are edited or removed. Planning entries cannot link to each other, preventing cycles. Titles update through the referenced entry rather than stale copied labels.
 - **Delete entry** requires a separate inline confirmation. Other entries are never automatically evicted. **Cancel editing** leaves the saved record unchanged. New/edit/delete controls prevent replacing an active editor accidentally. Reloading explicitly discards an open editor and reads the current saved list.
 
-Projects and goals here are private planning entries within this task list. They are not the unimplemented N011 character milestone board or N051 guild project-budget system. No guild project API, achievement evidence or permissions are invented.
+Projects and goals here are private planning entries within this task list. They are not the [N011 character goal board](progression.md) or N051 guild project-budget system. No guild project API, achievement evidence or permissions are invented.
 
 ## Context links
 

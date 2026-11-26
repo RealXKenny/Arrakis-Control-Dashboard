@@ -114,6 +114,7 @@ describe('unified navigation configuration', () => {
       '/changelog',
       '/status',
       '/tasks',
+      '/progression',
       '/activity-views',
       '/reports',
       '/privacy',

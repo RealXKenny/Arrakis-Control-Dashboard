@@ -28,6 +28,7 @@
 - Universal item finder searches your authorized backpack, base containers and vehicle cargo with permission checks, and private pinned item counters track the stacks you care about.
 - Customizable portal widgets with a compact personal view, saved activity views for different activities, and a Console-default theme with 66 additional themes and a custom color studio.
 - Unified actionable inbox for asset needs, supply follow-ups and operation briefings, with per-feature notification preferences, quiet hours, cooldowns and snooze controls.
+- A private progression planner for your linked character: goals pinned to the portal, faction and Solari savings targets, skill builds compared with verified ranks, research and recipe checklists, pinned journey objectives, an opt-in observation journal, a notebook and a return-to-game briefing.
 - Private personal tasks and goals linked to items, vehicles, bases and projects, and a privacy center for voluntary profile, location, crafting and supply sharing with revocable links.
 - Mobile field quick actions, an authorized keyboard command palette (Ctrl or Command + K), and freshness and outage indicators with explicit last-success timestamps on monitoring panels.
 - Personal data export and erasure controls for dashboard-owned notes, plans and retained snapshots.

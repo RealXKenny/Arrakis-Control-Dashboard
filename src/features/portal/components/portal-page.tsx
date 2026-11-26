@@ -11,6 +11,7 @@ import { portalPanels } from './portal-panels';
 import { PortalQuickActions } from './quick-actions';
 import { resolveActivity } from '../../activity-views/server/resolve';
 import { ActivityBar } from '../../activity-views/components/activity-bar';
+import { PinnedGoals } from '../../progression/components/pinned-goals';
 
 export const metadata: Metadata = { title: 'Overview' };
 export default async function PortalPage({
@@ -62,6 +63,13 @@ export default async function PortalPage({
       {result.status !== 'ok' && <ProfileFailure result={result} />}
       <ActivityBar state={activity} area="portal" />
       <PortalQuickActions guildState={profile ? (profile.character.guild ? 'member' : 'solo') : 'unknown'} />
+      {profile && result.status === 'ok' && (
+        <PinnedGoals
+          owner={session.user.id}
+          profile={profile}
+          capturedAt={result.capturedAt ?? new Date().toISOString()}
+        />
+      )}
       {(activity.status === 'none' || activity.status === 'ok') && (
         <PortalWidgets
           key={`${session.user.id}:${activity.status === 'ok' ? JSON.stringify(activity.view) : 'normal'}:${map}`}

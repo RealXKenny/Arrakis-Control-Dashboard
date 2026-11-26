@@ -466,6 +466,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             order: 10,
           },
           {
+            id: 'personal-progression',
+            label: 'Progression',
+            href: '/progression',
+            icon: 'character',
+            description: 'Goals, skill builds, journey pins, journal and notebook for your character.',
+            order: 15,
+          },
+          {
             id: 'activity-views',
             label: 'Activity views',
             href: '/activity-views',

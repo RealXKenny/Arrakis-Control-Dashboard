@@ -31,6 +31,8 @@
 
 [Privacy center](privacy-center.md) controls reviewed, expiring member-link publication of profile, location, crafting and supply cards at `/privacy`.
 
+[Progression planner](progression.md) keeps private character goals (pinned to the portal), research and recipe lists, skill builds, journey pins, an opt-in observation journal, a notebook and a return briefing at `/progression`.
+
 [Personal tasks](personal-tasks.md) link private checklist entries to items, bases, vehicles, personal projects and goals at `/tasks`.
 
 [Notification preferences](notification-preferences.md) add inbox category controls, timezone quiet hours, cooldowns, dismiss and snooze.
