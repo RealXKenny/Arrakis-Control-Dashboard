@@ -173,7 +173,6 @@ export class DiscordActivityClient {
 /** The real browser channel: the Discord client is the parent (or the opener of a popped-out Activity). */
 export function browserChannel(): MessageChannel {
   const target = window.parent.opener ?? window.parent;
-  const allowed = new Set([...DISCORD_ORIGINS, window.location.origin]);
   const targetOrigin = document.referrer ? new URL(document.referrer).origin : '*';
   return {
     ownOrigin: window.location.origin,
@@ -181,7 +180,8 @@ export function browserChannel(): MessageChannel {
     listen: (handler) => {
       const listener = (event: MessageEvent) => {
         // Checked here as well as in the client, so no other window's messages ever reach it.
-        if (!allowed.has(event.origin)) return;
+        const trusted = event.origin === window.location.origin || DISCORD_ORIGINS.includes(event.origin);
+        if (!trusted) return;
         handler(event.origin, event.data);
       };
       window.addEventListener('message', listener);
