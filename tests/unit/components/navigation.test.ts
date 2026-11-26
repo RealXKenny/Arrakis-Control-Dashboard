@@ -84,6 +84,7 @@ describe('unified navigation configuration', () => {
       '/character',
       '/holdings',
       '/vehicles',
+      '/expeditions',
       '/bases',
       '/bases/upload',
       '/holdings/preview',

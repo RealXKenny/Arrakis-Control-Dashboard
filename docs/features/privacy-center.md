@@ -25,7 +25,7 @@ Published cards are available through one unlisted `/sharing/<random ID>` link. 
 
 Revocation stops future fresh reads. It cannot retract information already received, saved or in flight. An already-open member page is not a live revocation stream. Browser prefetch is disabled on the center's member-view link, and authenticated responses use no-store headers.
 
-These controls manage these four voluntary cards. Existing game rosters, chat messages, guild coordination records and base-marketplace publications retain their own authorization and controls; links to their workspaces appear in the center. N040 rescue cards, N053 guild stockpiles and N056 a crafting directory are separate backlog features, not implemented by these cards. This center does not claim to erase previously shared information throughout the application or mutate game resources.
+These controls manage these four voluntary cards. Existing game rosters, chat messages, guild coordination records and base-marketplace publications retain their own authorization and controls; links to their workspaces appear in the center. [N040 rescue cards](vehicle-expeditions.md#rescue-request-cards-n040) are a separate feature with their own expiring links; N053 guild stockpiles and N056 a crafting directory are separate backlog features, not implemented by these cards. This center does not claim to erase previously shared information throughout the application or mutate game resources.
 
 ## Persistence and security
 

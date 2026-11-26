@@ -24,4 +24,4 @@ Empty list: no linked character, no accessible vehicles, or the Console is unrea
 
 ## Related
 
-[Maps](maps.md) (vehicle markers) · [Character and holdings](player-management.md)
+[Maps](maps.md) (vehicle markers) · [Character and holdings](player-management.md) · [Fleet tools and expeditions](vehicle-expeditions.md)

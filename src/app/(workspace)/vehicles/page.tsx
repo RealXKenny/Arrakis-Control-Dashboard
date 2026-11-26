@@ -5,6 +5,7 @@ import { requireSession } from '../../../features/auth/server/session';
 import { Notice, PageHeader } from '../../../components/ui/page-header';
 import { AccessBar } from '../../../features/vehicles/components/access-bar';
 import { VehicleCard } from '../../../features/vehicles/components/vehicle-card';
+import { FleetTools } from '../../../features/vehicles/components/fleet-tools';
 
 export const metadata: Metadata = { title: 'Vehicles' };
 
@@ -65,6 +66,7 @@ export default async function VehiclesPage({
           </ul>
         </>
       )}
+      <FleetTools />
     </>
   );
 }
