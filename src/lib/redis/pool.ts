@@ -28,7 +28,7 @@ export const REDIS_SNAPSHOT_TTL_SECONDS = 30;
 export const REDIS_STALE_GRACE_SECONDS = 600;
 
 /** Errors surfaced to providers — never carry connection strings. */
-export class RedisUnavailableError extends Error {
+class RedisUnavailableError extends Error {
   readonly code = 'REDIS_UNAVAILABLE';
 
   constructor(message = 'Redis is unavailable') {

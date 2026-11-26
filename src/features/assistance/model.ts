@@ -8,8 +8,8 @@ export const helpCategories = [
   'vehicles',
   'guilds',
 ] as const;
-export const helpCategorySchema = z.enum(helpCategories);
-export const helpStatusSchema = z.enum(['open', 'assigned', 'in-progress', 'resolved', 'cancelled', 'closed']);
+const helpCategorySchema = z.enum(helpCategories);
+const helpStatusSchema = z.enum(['open', 'assigned', 'in-progress', 'resolved', 'cancelled', 'closed']);
 export const HELP_REQUEST_LIMIT = 200;
 export const HELP_OPEN_PER_MEMBER = 3;
 export const HELP_MESSAGE_LIMIT = 50;

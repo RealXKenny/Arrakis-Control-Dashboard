@@ -72,7 +72,7 @@ function generatorSeconds(raw: Record<string, unknown>): number | null {
   return value === null || value < 0 ? null : value;
 }
 
-export function careBases(profile: PortalProfile): { bases: CareBase[]; limited: boolean; unsupported: number } {
+function careBases(profile: PortalProfile): { bases: CareBase[]; limited: boolean; unsupported: number } {
   const raw = new Map<string, Record<string, unknown>>();
   (extractBases({ details: profile.details }) as Array<Record<string, unknown>>).forEach((base, index) => {
     raw.set(String(getBaseId(base) ?? `base-${index}`), base);

@@ -18,8 +18,8 @@ export const PROGRESSION_LIMITS = {
 const text = (max: number) => z.string().trim().min(1).max(max);
 const optionalText = (max: number) => z.string().trim().max(max);
 /** Exact whole-number targets stay decimal strings so large Solari or reputation values never lose precision. */
-export const wholeNumber = z.string().regex(/^(0|[1-9][0-9]{0,29})$/);
-export const characterIdSchema = z.string().regex(/^[1-9][0-9]{0,19}$/);
+const wholeNumber = z.string().regex(/^(0|[1-9][0-9]{0,29})$/);
+const characterIdSchema = z.string().regex(/^[1-9][0-9]{0,19}$/);
 const timestamps = { createdAt: z.iso.datetime(), updatedAt: z.iso.datetime() };
 
 export const goalKinds = ['level', 'faction', 'specialization', 'journey', 'solari', 'custom'] as const;
@@ -101,7 +101,7 @@ export type ChecklistDraft = z.infer<typeof checklistDraftSchema>;
  */
 export const NOTE_LINK_PATTERN =
   /^\/(holdings|vehicles|storage|character|bases|map|tasks|calendar|progression|market)(\/[A-Za-z0-9._~-]{1,80}){0,3}(\?[A-Za-z0-9=&._~%+-]{1,200})?(#[A-Za-z0-9_-]{1,80})?$/;
-export const noteLinkSchema = z
+const noteLinkSchema = z
   .object({ label: text(60), href: z.string().max(400).regex(NOTE_LINK_PATTERN) })
   .strict()
   .refine((link) => !link.href.includes('..') && !link.href.startsWith('//'));

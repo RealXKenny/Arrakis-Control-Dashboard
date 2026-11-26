@@ -19,7 +19,7 @@ type TlsEnvironment = Pick<
 >;
 
 /** Values and OpenSSL errors must never escape this boundary (they can include PEM/key material). */
-export class ChatTlsConfigurationError extends Error {
+class ChatTlsConfigurationError extends Error {
   constructor(setting: string) {
     super(`Invalid RabbitMQ TLS configuration: ${setting}. Check PEM material, trust and certificate/key pairing.`);
     this.name = 'ChatTlsConfigurationError';

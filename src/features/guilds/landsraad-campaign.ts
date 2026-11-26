@@ -24,7 +24,7 @@ const targetFields = {
   updatedAt: z.iso.datetime(),
   updatedBy: z.string().min(1).max(200),
 };
-export const campaignTargetSchema = z.object({
+const campaignTargetSchema = z.object({
   ...targetFields,
   assignees: z
     .array(z.object({ memberId, name: z.string().min(1).max(200) }))

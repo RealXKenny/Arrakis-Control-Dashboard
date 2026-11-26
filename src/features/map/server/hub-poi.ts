@@ -2,7 +2,7 @@ import '../../../lib/assert-server';
 import { getServerEnv } from '../../../config/env';
 import { getDuneClient } from '../../../server/integrations/dune';
 import { isSecureConsoleOrigin } from '../../../server/integrations/console-origin';
-import { clearSharedMemory, readShared, type CachePolicy } from '../../../lib/cache/shared-cache';
+import { readShared, type CachePolicy } from '../../../lib/cache/shared-cache';
 import type { DashboardSession } from '../../auth/server/session-store';
 import type { MapName } from '../maps';
 
@@ -22,9 +22,6 @@ const policy: CachePolicy<HubPoi[]> = {
     return parseHubPoi(data);
   },
 };
-export function clearHubPoiCache() {
-  clearSharedMemory(policy);
-}
 
 /** Keep only bounded static points of interest; players, vehicles, bases and storage never pass through. */
 export function parseHubPoi(data: unknown): HubPoi[] {

@@ -6,7 +6,7 @@ import { toDecimalString } from '../../lib/format';
  * Intelligence and buyback data are intentionally absent from this model.
  */
 export const MARKET_COLUMNS = 5;
-export const MARKET_ROWS = 5;
+const MARKET_ROWS = 5;
 export const MARKET_PAGE_SIZE = MARKET_COLUMNS * MARKET_ROWS;
 
 export const MARKET_SORTS = ['listed', 'price', 'name'] as const;

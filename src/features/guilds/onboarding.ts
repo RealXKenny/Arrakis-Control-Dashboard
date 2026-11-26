@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const ONBOARDING_MEMBER_LIMIT = 200;
 export const onboardingGuildId = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
-export const onboardingMemberKey = z.string().regex(/^[a-f0-9]{64}$/);
+const onboardingMemberKey = z.string().regex(/^[a-f0-9]{64}$/);
 const revision = z.uuid().nullable();
 const step = z.object({ id: z.uuid(), text: z.string().trim().min(1).max(200) }).strict();
 export const onboardingGuideSchema = z
@@ -16,7 +16,7 @@ export const onboardingGuideSchema = z
       .refine((steps) => new Set(steps.map((value) => value.id)).size === steps.length),
   })
   .strict();
-export const onboardingProgressSchema = z.object({
+const onboardingProgressSchema = z.object({
   memberKey: onboardingMemberKey,
   memberName: z.string().min(1).max(200),
   mentorKey: onboardingMemberKey.nullable(),

@@ -14,7 +14,7 @@ const POLL_MS = 1500;
 const SUIT_INDEX: Record<PokerCard['suit'], number> = { s: 0, h: 1, d: 2, c: 3 };
 
 /** Maps engine cards onto the casino card art: suit-major, Ace first. */
-export function cardArtId(card: PokerCard | null): number | null {
+function cardArtId(card: PokerCard | null): number | null {
   if (!card) return null;
   return SUIT_INDEX[card.suit] * 13 + (card.rank === 14 ? 0 : card.rank - 1);
 }

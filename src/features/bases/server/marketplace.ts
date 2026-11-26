@@ -47,7 +47,7 @@ export function ownerKeyFor(session: DashboardSession): string {
 }
 
 /** Current and legacy keys: ownership checks accept both until `marketplace:rekey` has been applied. */
-export function ownerKeysFor(session: DashboardSession): string[] {
+function ownerKeysFor(session: DashboardSession): string[] {
   return ownerKeysForId(session.user.id);
 }
 
@@ -186,7 +186,7 @@ function parseSummaries(values: unknown[]): BaseSummary[] {
 }
 
 /** V2 listings merged with read-only legacy listings, newest first. Cached for 10s. */
-export async function listBases(): Promise<BaseSummary[]> {
+async function listBases(): Promise<BaseSummary[]> {
   const entry = await listCache.get('all', async () => {
     const [current, legacy] = await Promise.all([
       withTimeout(

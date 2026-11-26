@@ -46,7 +46,7 @@ export const loadoutSchema = z
     items: z.array(loadoutItemSchema).min(1).max(LOADOUT_ITEM_LIMIT).refine(uniqueTemplates),
   })
   .strict();
-export const wearWatchSchema = z
+const wearWatchSchema = z
   .object({ templateId, name: itemName, thresholdPercent: z.number().int().min(1).max(100) })
   .strict();
 export const ITEM_KINDS = ['any', 'equipped', 'durable', 'supplies'] as const;
@@ -56,7 +56,7 @@ export const itemKindLabel: Record<(typeof ITEM_KINDS)[number], string> = {
   durable: 'Gear reporting durability',
   supplies: 'Supplies without reported durability',
 };
-export const SOURCE_KINDS = ['any', 'character', 'base', 'vehicle'] as const;
+const SOURCE_KINDS = ['any', 'character', 'base', 'vehicle'] as const;
 export const savedFilterSchema = z
   .object({
     id: z.uuid(),
@@ -72,7 +72,7 @@ export const savedFilterSchema = z
   })
   .strict()
   .refine((value) => value.minGrade === null || value.maxGrade === null || value.minGrade <= value.maxGrade);
-export const storageRuleSchema = z
+const storageRuleSchema = z
   .object({
     id: z.uuid(),
     containerLabel: z.string().trim().min(1).max(60),
@@ -124,7 +124,7 @@ export function coverageComplete(coverage: Coverage): boolean {
   return !coverage.limited && coverage.sources.length > 0 && coverage.sources.every((s) => s.status === 'ok');
 }
 const exactQuantity = (value: string): bigint | null => (/^[0-9]{1,200}$/.test(value) ? BigInt(value) : null);
-export function gradeValue(value: string): number | null {
+function gradeValue(value: string): number | null {
   return /^[0-9]{1,2}$/.test(value) ? Number(value) : null;
 }
 /** Parses the finder's `current / max` text. Missing, zero or inconsistent maxima stay unknown. */
@@ -461,7 +461,7 @@ export function storageSuggestions(
 
 // ---- N008 observed change history ----
 export const SNAPSHOT_LIMIT = 6;
-export const SNAPSHOT_TEMPLATE_LIMIT = 150;
+const SNAPSHOT_TEMPLATE_LIMIT = 150;
 export const HISTORY_MAX_BYTES = 256 * 1024;
 export const snapshotSchema = z
   .object({

@@ -27,7 +27,6 @@
     "workflows:check": "node scripts/maintenance/check-workflows.mjs"
   },
   "dependencies": {
-    "@fontsource/jetbrains-mono": "^5.3.0",
     "amqplib": "^2.4.2",
     "dotenv": "^17.4.2",
     "iframe-resizer": "4.3.11",
@@ -44,7 +43,6 @@
   "devDependencies": {
     "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "^4.3.5",
-    "@types/amqplib": "^0.10.8",
     "@types/node": "26.4.1",
     "@types/react": "19.2.18",
     "@types/three": "^0.186.0",

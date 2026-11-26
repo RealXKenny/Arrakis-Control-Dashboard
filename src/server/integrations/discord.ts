@@ -15,42 +15,6 @@ async function discordJson(response: Response): Promise<Record<string, unknown>>
   }
 }
 
-export async function exchangeDiscordIdentity(
-  code: string,
-  config: { clientId: string; clientSecret: string; guildId: string; redirectUri: string },
-) {
-  // Dev note: OAuth wanted closure, so JavaScript gave it a callback.
-  const { clientId, clientSecret, guildId, redirectUri } = config;
-  const bodyParams = new URLSearchParams({
-    client_id: clientId,
-    client_secret: clientSecret,
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: redirectUri,
-  });
-
-  const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: bodyParams,
-    cache: 'no-store',
-    signal: AbortSignal.timeout(10000),
-  });
-
-  const tokenData = await discordJson(tokenResponse);
-
-  if (!tokenResponse.ok) {
-    throw new AppError('Authentication was declined.', 400, 'OAUTH_REJECTED', true);
-  }
-
-  if (typeof tokenData.access_token !== 'string' || !tokenData.access_token || tokenData.access_token.length > 4096) {
-    throw new AppError('Authentication was declined.', 400, 'OAUTH_REJECTED', true);
-  }
-  return readDiscordIdentity(tokenData.access_token, guildId);
-}
-
 /**
  * Verify a Discord user access token and its guild membership for the OAuth callback.
  */

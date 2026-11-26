@@ -21,7 +21,7 @@ import { createHash, createHmac, randomBytes } from 'node:crypto';
 const TWO_32 = 0x1_0000_0000;
 const TWO_48 = 2 ** 48;
 
-export const SEED_PATTERN = /^[0-9a-f]{64}$/;
+const SEED_PATTERN = /^[0-9a-f]{64}$/;
 export const CLIENT_SEED_PATTERN = /^[A-Za-z0-9_.-]{1,64}$/;
 
 export function generateServerSeed(): string {

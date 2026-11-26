@@ -5,7 +5,7 @@ import { requireApiSession } from '../../../server/http';
 import { identifier, type Definition } from '../contracts';
 import { fail, loadSeason, readRecord, seasonKeys } from './store';
 
-export const ARTWORK_OUTPUT_LIMIT = 256 * 1024;
+const ARTWORK_OUTPUT_LIMIT = 256 * 1024;
 const artworkRecordSchema = z.object({
   id: z.string().regex(/^[a-f0-9]{64}$/),
   data: z.string().max(350000),

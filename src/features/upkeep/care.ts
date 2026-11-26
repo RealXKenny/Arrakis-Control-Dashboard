@@ -40,7 +40,7 @@ export interface WaterSample {
 export const baseHref = (base: Pick<CareBase, 'id' | 'owned'>) =>
   `/holdings${base.owned ? '' : '?view=shared'}#base-${encodeURIComponent(base.id)}`;
 /** Readable, timezone-explicit times for server-built text. */
-export const utc = (value: number | string) => `${new Date(value).toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+const utc = (value: number | string) => `${new Date(value).toISOString().slice(0, 16).replace('T', ' ')} UTC`;
 const known = (value: number | null): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
 const hoursText = (hours: number) =>
@@ -165,7 +165,7 @@ export interface WaterAnalysis {
   projectedThresholdAt: string | null;
 }
 
-export const SAMPLE_GAP_HOURS = 2;
+const SAMPLE_GAP_HOURS = 2;
 
 /** N028: observed usage only, with gaps, refills and unknown readings kept visible. */
 export function analyzeWater(samples: WaterSample[], threshold: number): WaterAnalysis {

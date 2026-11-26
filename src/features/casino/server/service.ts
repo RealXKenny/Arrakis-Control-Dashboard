@@ -31,7 +31,7 @@ import { listWalletEntries, readWalletBalance } from './wallet-store';
  */
 
 /** The identifier of the game server the Console fronts. Wallets are per member per server. */
-export const CASINO_SCOPE = 'arrakis';
+const CASINO_SCOPE = 'arrakis';
 export const PAUSE_HOURS = [1, 24, 168, 720] as const;
 // Dev note: five tables is plenty; nobody out-multitasks a sandworm.
 /** Unfinished rounds one member may hold at once. Each pins funds and the active seed, and a sweep slot. */
@@ -78,7 +78,7 @@ export function ownerOf(session: DashboardSession): string {
 }
 
 /** Table ceilings and the activation gate, read from the server environment on every call. */
-export function casinoLimits() {
+function casinoLimits() {
   const env = getServerEnv();
   return {
     enabled: env.CASINO_SOLARIS_ENABLED,
@@ -88,7 +88,7 @@ export function casinoLimits() {
 }
 
 /** The server-enforced activation gate. Nothing that touches real Solaris runs without it. */
-export function assertOpen(): void {
+function assertOpen(): void {
   if (!casinoLimits().enabled)
     throw new AppError(
       'The Solaris Exchange is closed. Real Solaris play is not enabled.',

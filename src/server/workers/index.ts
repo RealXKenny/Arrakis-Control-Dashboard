@@ -10,7 +10,7 @@ import { startWorkers, type WorkerDefinition } from './runner';
  * exposed over HTTP, and none can send a game grant or Solaris transfer that was not already authorized by the
  * player's own click and recorded durably before the worker existed.
  */
-export const WORKERS: ReadonlyArray<WorkerDefinition> = [
+const WORKERS: ReadonlyArray<WorkerDefinition> = [
   {
     name: 'seasons',
     scope:

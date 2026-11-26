@@ -2,7 +2,7 @@ import { journeyGroups, type ObjectiveKind } from '../contracts';
 import type { Capability, JourneyGroup, Tier } from './capability';
 import { GAME_LEVEL_CAP } from './capability';
 
-export const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record<string, string> = {
   'game-xp': 'Game XP',
   levels: 'Character levels',
   'journeys:any': 'Journey objectives',

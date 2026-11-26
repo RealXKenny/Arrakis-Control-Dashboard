@@ -39,7 +39,7 @@ export const catalogHash = (items: ReadonlyArray<CatalogItem>) =>
         .join('\n'),
     )
     .digest('hex');
-export function normalizeCatalog(payload: unknown): CatalogItem[] {
+function normalizeCatalog(payload: unknown): CatalogItem[] {
   const rows = (payload as { rows?: unknown } | null)?.rows;
   if (!Array.isArray(rows) || rows.length > MAX_ROWS) throw new Error('Invalid item catalog response.');
   const out: CatalogItem[] = [];

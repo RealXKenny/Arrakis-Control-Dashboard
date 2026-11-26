@@ -1,5 +1,5 @@
 /** Deterministic, dependency-free hashing and seeded choice. Browser-safe; same input always yields the same output. */
-export function hash32(text: string) {
+function hash32(text: string) {
   let hash = 2166136261;
   for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 16777619) >>> 0;
   return hash >>> 0;

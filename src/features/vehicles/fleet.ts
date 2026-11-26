@@ -132,7 +132,7 @@ export interface MaintenanceItem {
   weakest: FleetComponent | null;
 }
 
-export function weakestComponent(vehicle: FleetVehicle): FleetComponent | null {
+function weakestComponent(vehicle: FleetVehicle): FleetComponent | null {
   let weakest: FleetComponent | null = null;
   for (const component of vehicle.components) {
     if (component.conditionPercent === null) continue;

@@ -63,9 +63,9 @@ export interface HandResult {
 
 export class PokerError extends Error {}
 
-export const MAX_MISSED_TURNS = 2;
+const MAX_MISSED_TURNS = 2;
 
-export const DEFAULT_TABLE_CONFIG: TableConfig = { smallBlind: 5, bigBlind: 10, startingStack: 1000, maxSeats: 4 };
+const DEFAULT_TABLE_CONFIG: TableConfig = { smallBlind: 5, bigBlind: 10, startingStack: 1000, maxSeats: 4 };
 
 export class PokerTable {
   readonly config: TableConfig;

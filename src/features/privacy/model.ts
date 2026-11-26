@@ -20,11 +20,11 @@ const text = (max: number) =>
         }),
       'Use valid Unicode text.',
     );
-export const profileSchema = z.object({ displayName: text(80), about: text(600) }).strict();
-export const locationSchema = z
+const profileSchema = z.object({ displayName: text(80), about: text(600) }).strict();
+const locationSchema = z
   .object({ map: z.enum(['Hagga Basin', 'Deep Desert', 'Other']), directions: text(400), note: text(300) })
   .strict();
-export const craftingSchema = z
+const craftingSchema = z
   .object({
     specialties: z
       .array(text(48).refine((s) => s.length > 0))
@@ -34,7 +34,7 @@ export const craftingSchema = z
     contact: text(120),
   })
   .strict();
-export const supplySchema = z
+const supplySchema = z
   .object({
     offers: z
       .array(
@@ -118,7 +118,7 @@ export const privacyRecordSchema = z
   })
   .strict();
 export type PrivacyRecord = z.infer<typeof privacyRecordSchema>;
-export const publicCardSchema = z.discriminatedUnion('category', [
+const publicCardSchema = z.discriminatedUnion('category', [
   z.object({ category: z.literal('profile'), data: profileSchema, ...times }).strict(),
   z.object({ category: z.literal('location'), data: locationSchema, ...times }).strict(),
   z.object({ category: z.literal('crafting'), data: craftingSchema, ...times }).strict(),

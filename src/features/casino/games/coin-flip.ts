@@ -11,7 +11,7 @@ import { payoutFromBps } from '../fairness/rng';
  * Verification: replay `start` with the revealed server seed, the round's client seed and nonce.
  */
 
-export const COIN_SIDES = ['scarab', 'crescent'] as const;
+const COIN_SIDES = ['scarab', 'crescent'] as const;
 export type CoinSide = (typeof COIN_SIDES)[number];
 export const COIN_PAYOUT_BPS = 19_600n;
 

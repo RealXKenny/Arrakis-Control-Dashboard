@@ -20,7 +20,7 @@ export type VerifyInput = {
   startedAt?: number;
 };
 
-export function replayRound(mod: GameModule, input: Omit<VerifyInput, 'commitment'>): Settlement | null {
+function replayRound(mod: GameModule, input: Omit<VerifyInput, 'commitment'>): Settlement | null {
   const started = mod.start(new Rng(input.serverSeed, input.clientSeed, input.nonce), input.wager, input.params, {
     now: input.startedAt ?? 0,
   });

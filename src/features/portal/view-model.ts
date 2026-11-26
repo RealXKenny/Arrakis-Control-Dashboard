@@ -95,7 +95,7 @@ function storageGauge(base: Record<string, unknown>): Gauge {
   };
 }
 
-export function buildPortalBases(player: unknown): PortalBase[] {
+function buildPortalBases(player: unknown): PortalBase[] {
   return (extractBases(player) as Array<Record<string, unknown>>).map((base, index) => {
     const water = waterGauge(base);
     const storage = storageGauge(base);

@@ -11,7 +11,7 @@ const API = 'https://api.github.com';
 const MAX_BYTES = 4 * 1024 * 1024;
 const log = createLogger('GITHUB');
 
-export class GitHubReadError extends Error {
+class GitHubReadError extends Error {
   constructor(
     readonly status: number,
     readonly rateLimited = false,

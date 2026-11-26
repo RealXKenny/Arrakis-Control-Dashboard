@@ -237,20 +237,6 @@ export function isOwnedBase(base) {
   return false;
 }
 
-export function getBaseRelationship(base) {
-  if (isOwnedBase(base)) {
-    return 'Owned';
-  }
-
-  const relationship = base?.relationship ?? base?.relation ?? base?.access;
-
-  if (relationship) {
-    return relationship;
-  }
-
-  return 'Shared';
-}
-
 export function getBaseName(base, index) {
   return base?.name ?? base?.baseName ?? base?.base_name ?? base?.title ?? `Base ${index + 1}`;
 }

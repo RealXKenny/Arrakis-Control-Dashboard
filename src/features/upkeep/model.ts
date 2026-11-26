@@ -23,7 +23,7 @@ export const UPKEEP_LIMITS = {
 
 export const CONTAINER_ZONES = ['Building', 'Medical', 'Fuel', 'Expedition', 'Water', 'Crafting', 'Other'] as const;
 export type ContainerZone = (typeof CONTAINER_ZONES)[number];
-export const CHECK_KINDS = ['water', 'power', 'supplies', 'access', 'custom'] as const;
+const CHECK_KINDS = ['water', 'power', 'supplies', 'access', 'custom'] as const;
 export type CheckKind = (typeof CHECK_KINDS)[number];
 
 const assetId = z.string().regex(/^[1-9][0-9]{0,15}$/);
@@ -50,12 +50,12 @@ const timestamp = z.iso.datetime();
 const unique = <T>(values: T[], key: (value: T) => string) =>
   new Set(values.map((value) => key(value).toLowerCase())).size === values.length;
 
-export const minimumSchema = z.object({ templateId: line(128), name: line(200), minimum: quantitySchema }).strict();
+const minimumSchema = z.object({ templateId: line(128), name: line(200), minimum: quantitySchema }).strict();
 export const checkItemSchema = z.object({ id: uuid, label: line(120), kind: z.enum(CHECK_KINDS) }).strict();
-export const inspectionResultSchema = z
+const inspectionResultSchema = z
   .object({ itemId: uuid, status: z.enum(['ok', 'attention', 'skipped']), note: notes(300) })
   .strict();
-export const inspectionSchema = z
+const inspectionSchema = z
   .object({
     at: timestamp,
     results: z.array(inspectionResultSchema).max(UPKEEP_LIMITS.checklist),
@@ -88,11 +88,11 @@ export const baseUpkeepSchema = z
   })
   .strict();
 
-export const containerLabelSchema = z
+const containerLabelSchema = z
   .object({ baseId: assetId, containerId: assetId, alias: line(60), zone: z.enum(CONTAINER_ZONES) })
   .strict();
 
-export const reminderInputSchema = z
+const reminderInputSchema = z
   .object({
     id: uuid,
     title: line(120),
@@ -122,7 +122,7 @@ export const blueprintSummarySchema = z
     footprint: z.array(z.tuple([z.number().int().min(0).max(1000), z.number().int().min(0).max(1000)])).max(200),
   })
   .strict();
-export const blueprintMetaSchema = z
+const blueprintMetaSchema = z
   .object({ id: uuid, design: line(80), label: line(60), description: notes(1000) })
   .strict();
 export const blueprintRevisionSchema = blueprintMetaSchema

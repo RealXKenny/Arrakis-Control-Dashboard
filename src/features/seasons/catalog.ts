@@ -88,8 +88,8 @@ export function rewardSummary(definition: Definition, progress: Progress) {
     total: definition.rewards.length,
   };
 }
-export const catalogSchema = z.object({ schemaVersion: z.literal(1), definition: definitionSchema }).strict();
-export const MAX_CATALOG_BYTES = 200 * 1024;
+const catalogSchema = z.object({ schemaVersion: z.literal(1), definition: definitionSchema }).strict();
+const MAX_CATALOG_BYTES = 200 * 1024;
 function rejectKeys(value: unknown, depth = 0) {
   if (depth > 16) throw new Error('Catalog nesting exceeds the limit.');
   if (!value || typeof value !== 'object') return;

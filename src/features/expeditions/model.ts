@@ -52,7 +52,7 @@ export const thresholdsSchema = z
   })
   .strict();
 
-export const manifestLineSchema = z
+const manifestLineSchema = z
   .object({
     templateId: required(128),
     name: required(200),
@@ -83,7 +83,7 @@ export const bookmarkSchema = z
   })
   .strict();
 
-export const routeSchema = z
+const routeSchema = z
   .object({
     id: z.uuid(),
     name: required(60),
@@ -92,7 +92,7 @@ export const routeSchema = z
   })
   .strict();
 
-export const journalEntrySchema = z
+const journalEntrySchema = z
   .object({
     id: z.uuid(),
     map: z.enum(MAP_NAMES),
@@ -105,9 +105,9 @@ export const journalEntrySchema = z
   .strict()
   .refine((entry) => (entry.x === null) === (entry.y === null), 'Both coordinates or neither');
 
-export const checklistItemSchema = z.object({ id: z.uuid(), label: required(120), done: z.boolean() }).strict();
+const checklistItemSchema = z.object({ id: z.uuid(), label: required(120), done: z.boolean() }).strict();
 
-export const departureSchema = z
+const departureSchema = z
   .object({
     routeId: z.uuid().nullable(),
     vehicleId: assetId.nullable(),
@@ -167,7 +167,7 @@ export type ChecklistItem = z.infer<typeof checklistItemSchema>;
 export type PlanData = z.infer<typeof planDataSchema>;
 export type PlanRecord = z.infer<typeof planRecordSchema>;
 
-export const DEFAULT_THRESHOLDS: Thresholds = { fuelPercent: 25, conditionPercent: 40 };
+const DEFAULT_THRESHOLDS: Thresholds = { fuelPercent: 25, conditionPercent: 40 };
 
 export function emptyPlan(): PlanData {
   return {

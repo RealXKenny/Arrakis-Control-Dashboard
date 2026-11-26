@@ -19,6 +19,7 @@
 - Redis connection problems are now logged with their reason, such as `ECONNREFUSED`, `ETIMEDOUT` or `WRONGPASS`: one warning when the connection drops and one info line when it recovers, instead of silence. Warnings like "Community event announcements are temporarily unavailable" and "Population sample unavailable" now include that reason too. Connection strings are scrubbed from these messages.
 - Starting the dashboard before a production build exists now stops with a clear message to run `npm run build` (or rebuild the Pterodactyl server) instead of a Next.js error.
 - Dependency updates: Next.js 16.4.6, React 19.3.1, amqplib 2.4.2, and patch releases of Vitest, Playwright, Tailwind CSS, Prettier and the Next.js ESLint config.
+- Code cleanup with no change in behaviour: removed unused code (an old Discord sign-in exchange, unused vehicle, market and base helpers, and test-only hooks nothing called), stopped exporting values only used in their own file, and dropped two unused packages, `@fontsource/jetbrains-mono` (the font is bundled locally) and `@types/amqplib` (amqplib ships its own types).
 
 ### Fixes
 

@@ -5,27 +5,27 @@ import { z } from 'zod';
  * Browser-safe contracts and the pure change engine. Every record is planning metadata only:
  * nothing here moves, locks, crafts or purchases game items or currency.
  */
-export const PROJECT_LIMIT = 15;
+const PROJECT_LIMIT = 15;
 export const PROJECT_MILESTONE_LIMIT = 20;
 export const PROJECT_MATERIAL_LIMIT = 30;
-export const PROJECT_ASSIGNMENT_LIMIT = 60;
-export const PROJECT_RESERVATION_LIMIT = 60;
-export const PROJECT_CONTRIBUTION_LIMIT = 100;
-export const PROJECT_CORRECTION_LIMIT = 10;
-export const PROJECT_COST_LIMIT = 40;
-export const STOCK_LIMIT = 200;
+const PROJECT_ASSIGNMENT_LIMIT = 60;
+const PROJECT_RESERVATION_LIMIT = 60;
+const PROJECT_CONTRIBUTION_LIMIT = 100;
+const PROJECT_CORRECTION_LIMIT = 10;
+const PROJECT_COST_LIMIT = 40;
+const STOCK_LIMIT = 200;
 export const STOCK_MEMBER_LIMIT = 25;
-export const SPECIALIST_LIMIT = 200;
+const SPECIALIST_LIMIT = 200;
 export const SPECIALIST_CAPABILITY_LIMIT = 12;
-export const COMMISSION_LIMIT = 100;
-export const COMMISSION_OPEN_LIMIT = 5;
-export const COMMISSION_EVENT_LIMIT = 20;
-export const COMMISSION_CLOSED_RETENTION_MS = 90 * 86_400_000;
+const COMMISSION_LIMIT = 100;
+const COMMISSION_OPEN_LIMIT = 5;
+const COMMISSION_EVENT_LIMIT = 20;
+const COMMISSION_CLOSED_RETENTION_MS = 90 * 86_400_000;
 /** A just-prepared resource-request link blocks a second draft while the request is being created. */
-export const REQUEST_LINK_GRACE_MS = 60_000;
+const REQUEST_LINK_GRACE_MS = 60_000;
 
 export const projectGuildIdSchema = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
-export const memberKeySchema = z.string().regex(/^[a-f0-9]{64}$/);
+const memberKeySchema = z.string().regex(/^[a-f0-9]{64}$/);
 export const projectQuantitySchema = z
   .string()
   .trim()
@@ -34,7 +34,7 @@ export const solariAmountSchema = z
   .string()
   .trim()
   .regex(/^(0|[1-9]\d{0,17})$/, 'Enter whole Solari of up to 18 digits.');
-export const templateIdSchema = z
+const templateIdSchema = z
   .string()
   .trim()
   .regex(/^[\w./:-]{1,200}$/);
@@ -55,7 +55,7 @@ export const CRAFT_CATEGORIES = [
   'other',
 ] as const;
 export const SPECIALIST_AVAILABILITY = ['available', 'limited', 'unavailable'] as const;
-export const COMMISSION_STATUSES = ['requested', 'accepted', 'claimed', 'received', 'cancelled'] as const;
+const COMMISSION_STATUSES = ['requested', 'accepted', 'claimed', 'received', 'cancelled'] as const;
 
 /* ------------------------------------------------------------------ stored records */
 
@@ -284,7 +284,7 @@ const unique = (values: string[]) => new Set(values).size === values.length;
 const sum = (values: string[]) => values.reduce((total, value) => total + BigInt(value), 0n);
 
 /** Cross-record invariants that a single field schema cannot express. Returns null when consistent. */
-export function bookProblem(book: Omit<GuildProjectsBook, 'version'> & { version: number }): string | null {
+function bookProblem(book: Omit<GuildProjectsBook, 'version'> & { version: number }): string | null {
   if (!unique(book.projects.map((project) => project.id))) return 'duplicate project';
   if (!unique(book.stockpile.map((entry) => entry.id))) return 'duplicate stock entry';
   if (!unique(book.specialists.map((entry) => entry.ownerKey))) return 'duplicate specialist';
@@ -463,7 +463,7 @@ export const commissionDraftSchema = z
     crafterKey: memberKeySchema.nullable(),
   })
   .strict();
-export const contributionDraftSchema = z
+const contributionDraftSchema = z
   .object({
     id: z.uuid(),
     materialId: z.uuid().nullable(),
@@ -473,7 +473,7 @@ export const contributionDraftSchema = z
     source: sourceSchema,
   })
   .strict();
-export const requestDraftSchema = z
+const requestDraftSchema = z
   .object({ dropoff: required(200), details: text(1500), priority: z.enum(['normal', 'urgent']) })
   .strict();
 

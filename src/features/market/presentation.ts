@@ -5,16 +5,6 @@ export function formatMarketNumber(value: unknown): string {
   return Number.isFinite(number) ? number.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—';
 }
 
-export function getBuybackPercent(config) {
-  return (
-    config?.buyback?.buybackPercent ??
-    config?.buybackSchedule?.buybackPercent ??
-    config?.schedule?.buybackPercent ??
-    config?.buybackPercent ??
-    null
-  );
-}
-
 export function getSuggestedSellPrice(price: unknown, percent: unknown): string | null {
   const priceText = typeof price === 'bigint' ? price.toString() : String(price ?? '').trim();
   const percentText = String(percent ?? '').trim();

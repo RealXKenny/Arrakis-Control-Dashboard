@@ -15,9 +15,9 @@ export interface RankGroup {
 
 export type MemberAction = 'promote' | 'demote' | 'transfer' | 'remove';
 
-export const LEADER_ROLE = 100;
-export const OFFICER_ROLE = 50;
-export const MEMBER_ROLE = 1;
+const LEADER_ROLE = 100;
+const OFFICER_ROLE = 50;
+const MEMBER_ROLE = 1;
 
 export function toMemberView(member: Record<string, unknown>): GuildMemberView {
   return { id: guildMemberId(member), name: guildMemberName(member), roleId: guildMemberRole(member) };

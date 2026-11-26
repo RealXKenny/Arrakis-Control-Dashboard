@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const EVENT_LIMIT = 50;
 export const eventIdSchema = z.string().regex(/^[a-z0-9][a-z0-9-]{0,79}$/);
-export const eventStatusSchema = z.enum(['upcoming', 'open', 'judging', 'completed', 'cancelled']);
+const eventStatusSchema = z.enum(['upcoming', 'open', 'judging', 'completed', 'cancelled']);
 const fields = {
   title: z.string().trim().min(3).max(120),
   summary: z.string().trim().min(10).max(300),

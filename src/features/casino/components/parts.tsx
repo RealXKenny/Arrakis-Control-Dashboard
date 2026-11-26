@@ -96,7 +96,7 @@ const REMINDER_KEY = 'casino-play-reminder';
 const REMINDER_MS = 30 * 60_000;
 
 /** Optional time-on-table reminder. Off by default, stored only in this browser, never an incentive to keep playing. */
-export function PlayReminder() {
+function PlayReminder() {
   const [enabled, setEnabled] = useState(false);
   const [due, setDue] = useState(false);
 

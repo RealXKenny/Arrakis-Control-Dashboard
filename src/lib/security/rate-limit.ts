@@ -29,7 +29,7 @@ function trustedProxyCount(): number {
  * IPv6 clients usually hold a whole /64, so a per-address bucket would give one caller 2^64 fresh budgets.
  * Rate limits therefore key IPv6 callers by their /64 network.
  */
-export function ipv6Network(address: string): string {
+function ipv6Network(address: string): string {
   const [plain] = address.split('%');
   const [head, tail = ''] = plain.split('::');
   const headGroups = head ? head.split(':') : [];

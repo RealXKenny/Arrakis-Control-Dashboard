@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { summaryHasThumbnail, type BaseSummary } from '../../schema';
 import { BaseIcon } from '../../../../components/icons';
 
-export function baseImageSrc(summary: BaseSummary): string {
+function baseImageSrc(summary: BaseSummary): string {
   const version = summary.previewRevision ?? Date.parse(summary.publishedAt);
   return `/api/v2/bases/marketplace/${summary.id}/image?v=${version}`;
 }

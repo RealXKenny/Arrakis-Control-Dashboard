@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const OPERATION_LIMIT = 20;
-export const OPERATION_CAPACITY = 50;
+const OPERATION_CAPACITY = 50;
 export const OPERATION_PREPARATION_LIMIT = 20;
 export const OPERATION_WAYPOINT_LIMIT = 12;
 export const OPERATION_WAITLIST_LIMIT = 50;
@@ -12,7 +12,7 @@ export const OPERATION_LESSON_LIMIT = 10;
 export const OPERATION_FOLLOW_UP_LIMIT = 20;
 export const OPERATION_SCREENSHOT_LIMIT = 3;
 /** A role invitation holds its seat for two hours, or until the operation starts if that is sooner. */
-export const OPERATION_INVITATION_MS = 2 * 3_600_000;
+const OPERATION_INVITATION_MS = 2 * 3_600_000;
 export const operationRoles = ['pilot', 'scout', 'escort', 'harvester', 'support', 'supplier'] as const;
 export const operationKinds = ['spice-run', 'deep-desert', 'boss-run', 'other'] as const;
 export type OperationRole = (typeof operationRoles)[number];
@@ -44,7 +44,7 @@ export const readinessStatuses = ['ready', 'partial', 'not-ready'] as const;
 export const readinessLabel = { ready: 'Ready', partial: 'Partly ready', 'not-ready': 'Not ready' } as const;
 export const reportOutcomes = ['success', 'partial', 'failed'] as const;
 export const reportOutcomeLabel = { success: 'Objectives met', partial: 'Partly met', failed: 'Not met' } as const;
-export const followUpStatuses = ['proposed', 'accepted', 'declined', 'done'] as const;
+const followUpStatuses = ['proposed', 'accepted', 'declined', 'done'] as const;
 export const followUpStatusLabel = {
   proposed: 'Awaiting review',
   accepted: 'Accepted',
@@ -66,7 +66,7 @@ export const operationSlotsSchema = z
       new Set(values.map((entry) => entry.role)).size === values.length &&
       values.reduce((sum, entry) => sum + entry.capacity, 0) <= OPERATION_CAPACITY,
   );
-export const preparationItemSchema = z.object({ id: z.uuid(), text: text(200) }).strict();
+const preparationItemSchema = z.object({ id: z.uuid(), text: text(200) }).strict();
 export const preparationSchema = z.array(preparationItemSchema).max(OPERATION_PREPARATION_LIMIT).refine(uniqueIds);
 const briefing = z.string().trim().max(1000).optional();
 /** Role-specific instructions: members only receive the briefing for the role they hold or are invited to. */
@@ -125,7 +125,7 @@ export const operationDraftSchema = z
   .object(draftFields)
   .strict()
   .refine(schedule, { message: 'The end must follow the start by no more than 24 hours.' });
-export const readinessSchema = z
+const readinessSchema = z
   .object({
     status: z.enum(readinessStatuses),
     checked: z.array(z.uuid()).max(OPERATION_PREPARATION_LIMIT),
@@ -134,13 +134,13 @@ export const readinessSchema = z
   })
   .strict();
 const signupFields = { id: z.uuid(), name: z.string().min(1).max(200), role, signedUpAt: z.iso.datetime() };
-export const operationSignupSchema = z.object({
+const operationSignupSchema = z.object({
   ...signupFields,
   memberId: operationGuildIdSchema,
   readiness: readinessSchema.optional(),
 });
 const waitFields = { id: z.uuid(), name: z.string().min(1).max(200), role, joinedAt: z.iso.datetime() };
-export const waitlistEntrySchema = z.object({ ...waitFields, memberId: operationGuildIdSchema });
+const waitlistEntrySchema = z.object({ ...waitFields, memberId: operationGuildIdSchema });
 const invitationFields = {
   id: z.uuid(),
   name: z.string().min(1).max(200),
@@ -149,7 +149,7 @@ const invitationFields = {
   invitedAt: z.iso.datetime(),
   expiresAt: z.iso.datetime(),
 };
-export const invitationSchema = z.object({ ...invitationFields, memberId: operationGuildIdSchema });
+const invitationSchema = z.object({ ...invitationFields, memberId: operationGuildIdSchema });
 const quantity = z.string().regex(/^[1-9]\d{0,11}$/);
 export const convoyVehicleSchema = z
   .object({
@@ -200,7 +200,7 @@ const screenshotFields = {
   uploadedBy: z.string().min(1).max(200),
   uploadedAt: z.iso.datetime(),
 };
-export const screenshotSchema = z.object({ ...screenshotFields, uploaderId: operationGuildIdSchema });
+const screenshotSchema = z.object({ ...screenshotFields, uploaderId: operationGuildIdSchema });
 const fields = {
   ...draftFields,
   revision: z.uuid(),
@@ -352,7 +352,7 @@ export function operationSettlementChanged(before: StoredOperation, after: Store
 }
 
 /** The role whose briefing a member may read: their signup, else a pending invitation. */
-export function operationMemberRole(operation: StoredOperation, memberId: string): OperationRole | null {
+function operationMemberRole(operation: StoredOperation, memberId: string): OperationRole | null {
   return (
     operation.signups.find((entry) => entry.memberId === memberId)?.role ??
     (operation.invitations ?? []).find((entry) => entry.memberId === memberId)?.role ??

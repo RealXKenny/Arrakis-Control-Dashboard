@@ -6,7 +6,7 @@ import { getRedisClient } from '../../../lib/redis/client';
 import { INSTANCE_ID, SNOWFLAKE } from '../contracts';
 
 /** Activity sessions are short: Discord re-authorizes silently when the Activity is reopened. */
-export const ACTIVITY_SESSION_SECONDS = 2 * 60 * 60;
+const ACTIVITY_SESSION_SECONDS = 2 * 60 * 60;
 
 const sessionSchema = z
   .object({
@@ -21,7 +21,7 @@ export type ActivitySession = z.infer<typeof sessionSchema>;
 const TOKEN = /^[A-Za-z0-9_-]{43}$/;
 
 /** Only a hash of the bearer token is stored, so a Redis read never yields a usable token. */
-export function activitySessionKey(token: string): string {
+function activitySessionKey(token: string): string {
   return `arrakis:poker:session:v1:${createHash('sha256').update(token).digest('hex')}`;
 }
 
@@ -40,7 +40,7 @@ export async function issueActivitySession(
   return { token, session };
 }
 
-export function bearerToken(request: Request): string | null {
+function bearerToken(request: Request): string | null {
   const header = request.headers.get('authorization');
   const match = header ? /^Bearer ([A-Za-z0-9_-]{43})$/.exec(header) : null;
   return match?.[1] ?? null;

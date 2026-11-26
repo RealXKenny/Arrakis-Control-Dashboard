@@ -17,12 +17,12 @@ import { createLogger, type Logger } from '../../../lib/logger';
 export type ProviderName = 'console' | 'adapter';
 export type FailureKind = 'network' | 'timeout' | 'status' | 'invalid' | 'rate-limited';
 
-export const OUTAGE_WARN_AFTER_FAILURES = 3;
-export const OUTAGE_WARN_AFTER_MS = 60_000;
-export const OUTAGE_SUMMARY_EVERY_MS = 10 * 60_000;
+const OUTAGE_WARN_AFTER_FAILURES = 3;
+const OUTAGE_WARN_AFTER_MS = 60_000;
+const OUTAGE_SUMMARY_EVERY_MS = 10 * 60_000;
 export const BREAKER_OPEN_AFTER_FAILURES = 5;
-export const BREAKER_BASE_OPEN_MS = 15_000;
-export const BREAKER_MAX_OPEN_MS = 5 * 60_000;
+const BREAKER_BASE_OPEN_MS = 15_000;
+const BREAKER_MAX_OPEN_MS = 5 * 60_000;
 
 type State = {
   consecutiveFailures: number;
@@ -39,7 +39,7 @@ type State = {
   routes: Set<string>;
 };
 
-export class ProviderUnavailableError extends Error {
+class ProviderUnavailableError extends Error {
   constructor(readonly retryAfterMs: number) {
     super('Upstream provider is temporarily unavailable');
     this.name = 'ProviderUnavailableError';

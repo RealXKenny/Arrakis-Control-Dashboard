@@ -1,5 +1,5 @@
 /** Browser-side request helper for the market planner. Errors carry the server's safe message and status. */
-export class PlannerRequestError extends Error {
+class PlannerRequestError extends Error {
   constructor(
     message: string,
     readonly status: number,

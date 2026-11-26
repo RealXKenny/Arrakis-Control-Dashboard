@@ -6,7 +6,7 @@
 export const DICE_SIDES = 10_000;
 export const MIN_WINNING = 100;
 export const MAX_WINNING = 9_800;
-export const EDGE_NUMERATOR = 99_000_000n;
+const EDGE_NUMERATOR = 99_000_000n;
 
 export type DiceParams = { direction: 'over' | 'under'; target: number };
 

@@ -42,7 +42,7 @@ export type SeasonView = {
   assignment?: Assignment | null;
   gameClaims?: Record<string, { status: string }[]>;
 };
-export async function seasonRequest<T>(url: string, payload?: unknown): Promise<T> {
+async function seasonRequest<T>(url: string, payload?: unknown): Promise<T> {
   const response = await fetch(url, {
     method: payload ? 'POST' : 'GET',
     cache: 'no-store',

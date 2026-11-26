@@ -4,9 +4,9 @@ import { snapshotSchema, type Snapshot } from './reading';
 /** Server-recorded observation snapshots (N016/N018). Browser-safe schema and recording policy. */
 export const JOURNAL_LIMIT = 40;
 /** Opening the planner records at most one automatic observation per window. */
-export const AUTOMATIC_INTERVAL_MS = 6 * 3600_000;
+const AUTOMATIC_INTERVAL_MS = 6 * 3600_000;
 /** A manual "Record now" still waits this long so repeated clicks cannot flood the bounded history. */
-export const MANUAL_INTERVAL_MS = 15 * 60_000;
+const MANUAL_INTERVAL_MS = 15 * 60_000;
 
 export const journalRecordSchema = z
   .object({

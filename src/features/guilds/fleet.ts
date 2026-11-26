@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 export const FLEET_VEHICLE_LIMIT = 30;
 export const FLEET_RESERVATION_LIMIT = 100;
-export const FLEET_BOOKING_MAX_MS = 48 * 3_600_000;
-export const FLEET_BOOKING_HORIZON_MS = 60 * 86_400_000;
+const FLEET_BOOKING_MAX_MS = 48 * 3_600_000;
+const FLEET_BOOKING_HORIZON_MS = 60 * 86_400_000;
 
 const memberId = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
 const ref = z.string().regex(/^[a-f0-9]{24}$/);
@@ -26,7 +26,7 @@ const vehicleFields = {
   notes: z.string().trim().max(200),
   publishedAt: z.iso.datetime(),
 };
-export const fleetVehicleSchema = z.object({
+const fleetVehicleSchema = z.object({
   ...vehicleFields,
   vehicleRef: z.string().min(1).max(128),
   ownerId: memberId,
@@ -45,7 +45,7 @@ const reservationFields = {
   bookedByName: name,
   createdAt: z.iso.datetime(),
 };
-export const fleetReservationSchema = z.object({ ...reservationFields, pilotId: memberId, bookedById: memberId });
+const fleetReservationSchema = z.object({ ...reservationFields, pilotId: memberId, bookedById: memberId });
 export const fleetDocumentSchema = z
   .object({
     revision: z.uuid(),

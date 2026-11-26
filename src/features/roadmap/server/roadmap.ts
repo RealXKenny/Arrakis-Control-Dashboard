@@ -160,7 +160,7 @@ export function toEntry(issue: unknown, repository: string, approvalLabel: strin
   };
 }
 
-export function parseIssues(raw: unknown, repository: string, approvalLabel: string): RoadmapEntry[] {
+function parseIssues(raw: unknown, repository: string, approvalLabel: string): RoadmapEntry[] {
   if (!Array.isArray(raw) || raw.length > MAX_PER_REPOSITORY) throw new InvalidReadingError();
   return raw.flatMap((issue) => {
     const entry = toEntry(issue, repository, approvalLabel);

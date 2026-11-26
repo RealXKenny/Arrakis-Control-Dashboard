@@ -3,10 +3,10 @@ import type { HelpRequest } from '../assistance/model';
 
 export const MODERATION_CASE_LIMIT = 200;
 export const MODERATION_HISTORY_LIMIT = 30;
-export const moderationCaseTypeSchema = z.enum(['player-report', 'assistance-abuse']);
-export const moderationStatusSchema = z.enum(['open', 'assigned', 'resolved', 'closed']);
-export const moderationDecisionSchema = z.enum(['confirmed', 'dismissed']);
-export const moderationHistorySchema = z
+const moderationCaseTypeSchema = z.enum(['player-report', 'assistance-abuse']);
+const moderationStatusSchema = z.enum(['open', 'assigned', 'resolved', 'closed']);
+const moderationDecisionSchema = z.enum(['confirmed', 'dismissed']);
+const moderationHistorySchema = z
   .object({
     action: z.string().min(1).max(40),
     actorName: z.string().min(1).max(100),

@@ -6,7 +6,7 @@ import { readBoundedBody } from '../../../lib/http/bounded-body';
 import { recordAudit } from '../../../lib/security/audit';
 import { checkRateLimit, type RateLimitRule } from '../../../lib/security/rate-limit';
 
-export function pokerEnabled(): boolean {
+function pokerEnabled(): boolean {
   return getServerEnv().POKER_ACTIVITY_ENABLED;
 }
 
@@ -15,7 +15,7 @@ export function requirePokerEnabled(): void {
 }
 
 /** The Activity is served through Discord's proxy at `<client id>.discordsays.com`, so that is its origin. */
-export function activityOrigins(): string[] {
+function activityOrigins(): string[] {
   const env = getServerEnv();
   const origins: string[] = [];
   if (env.DISCORD_CLIENT_ID && /^\d{15,25}$/.test(env.DISCORD_CLIENT_ID)) {

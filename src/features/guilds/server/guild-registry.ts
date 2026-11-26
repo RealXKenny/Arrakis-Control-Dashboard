@@ -19,7 +19,7 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : '';
 }
 
-export function parseGuildRows(response: unknown): Record<string, unknown>[] {
+function parseGuildRows(response: unknown): Record<string, unknown>[] {
   const holder = response && typeof response === 'object' ? (response as Record<string, unknown>) : {};
   const rows = Array.isArray(response) ? response : Array.isArray(holder.rows) ? holder.rows : holder.data;
   return Array.isArray(rows)

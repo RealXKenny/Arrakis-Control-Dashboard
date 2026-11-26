@@ -21,16 +21,6 @@ import { engineError, type GameModule, type Settlement } from '../engine/types';
 
 const DECKS = 6;
 const KEPT_CARDS = 60;
-export const BLACKJACK_RULES = {
-  decks: DECKS,
-  dealerStandsOn: 'all 17',
-  blackjackPays: '3:2',
-  doubleOn: 'any first two cards, also after split (not split aces)',
-  split: 'same rank, once, no re-split, split aces one card each',
-  insurance: false,
-  surrender: false,
-  shuffle: 'fresh 6-deck shoe every round',
-} as const;
 
 type Hand = { cards: number[]; doubled: boolean; done: boolean; fromSplit: boolean; splitAces: boolean };
 export type BlackjackState = {

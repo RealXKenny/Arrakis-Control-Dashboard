@@ -40,7 +40,7 @@ export const activityInputSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delete'), revision: z.uuid(), id: z.uuid(), confirmed: z.literal(true) }).strict(),
 ]);
 export type ActivityInput = z.infer<typeof activityInputSchema>;
-export const planOptionSchema = z
+const planOptionSchema = z
   .object({ id: z.uuid(), kind: z.enum(['project', 'goal']), title: z.string().max(120) })
   .strict();
 export const activityEnvelopeSchema = z

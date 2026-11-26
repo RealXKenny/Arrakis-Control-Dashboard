@@ -3,8 +3,8 @@ import { clockPattern, parseClock, validTimeZone, zonedDate, zonedToUtc } from '
 
 export const AVAILABILITY_ENTRY_LIMIT = 500;
 export const AVAILABILITY_WINDOW_LIMIT = 14;
-export const AVAILABILITY_STALE_DAYS = 30;
-export const AVAILABILITY_HOURS = 168;
+const AVAILABILITY_STALE_DAYS = 30;
+const AVAILABILITY_HOURS = 168;
 
 const window = z
   .object({
@@ -27,7 +27,7 @@ const entryFields = {
   name: z.string().min(1).max(200),
   updatedAt: z.iso.datetime(),
 };
-export const availabilityEntrySchema = z.object({
+const availabilityEntrySchema = z.object({
   ...entryFields,
   memberId: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/),
 });

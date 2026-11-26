@@ -9,7 +9,7 @@ import type { UpkeepOwner } from './store';
  * N028 observed water samples. A sample is recorded only when the member views upkeep with a fresh profile,
  * so the history is sparse by design and its gaps are shown rather than interpolated.
  */
-export const WATER_SAMPLE_LIMITS = {
+const WATER_SAMPLE_LIMITS = {
   intervalMs: 10 * 60_000,
   samples: 1008,
   retentionSeconds: 14 * 86400,

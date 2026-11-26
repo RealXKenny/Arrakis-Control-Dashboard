@@ -374,9 +374,3 @@ export function resetSharedCacheForTests(): void {
   state.metrics.clear();
   state.redisDownLoggedAt = 0;
 }
-
-/** Remove process-memory readings for one family (used by existing per-feature reset hooks). */
-export function clearSharedMemory(policy: { name: string; version: number }): void {
-  const prefix = `arrakis:cache:v${policy.version}:${policy.name}:`;
-  for (const key of shared().memory.keys()) if (key.startsWith(prefix)) shared().memory.delete(key);
-}
