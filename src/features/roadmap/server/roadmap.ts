@@ -50,27 +50,58 @@ export function repositories(): string[] {
   ];
 }
 
+/** Removes every `open`…`close` block (case-insensitive); an unclosed block runs to the end of the text. */
+function removeBlocks(text: string, open: string, close: string): string {
+  const lower = text.toLowerCase();
+  let result = '';
+  let index = 0;
+  while (index < text.length) {
+    const start = lower.indexOf(open, index);
+    if (start < 0) return result + text.slice(index);
+    result += text.slice(index, start);
+    const end = lower.indexOf(close, start + open.length);
+    if (end < 0) return result;
+    index = end + close.length;
+  }
+  return result;
+}
+
+/** Drops every tag and every angle bracket, without a regular expression that could leave a tag behind. */
+function stripTags(text: string): string {
+  let result = '';
+  let pending: string | null = null;
+  for (const character of text) {
+    if (character === '<') {
+      if (pending !== null) result += pending;
+      pending = '';
+    } else if (character === '>') pending = null;
+    else if (pending !== null) pending += character;
+    else result += character;
+  }
+  // An unclosed `<` is a stray bracket, not a tag: keep the text after it.
+  return pending === null ? result : result + pending;
+}
+
 /** Plain-text summary: a "Roadmap summary" section when present, otherwise the first paragraph. */
 export function summarize(body: unknown): string {
   if (typeof body !== 'string') return '';
-  // Repeat until nothing changes, so removing one block cannot leave another behind.
   let text = body.slice(0, 20_000);
-  for (let previous = ''; previous !== text;) {
-    previous = text;
-    text = text.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '');
-  }
+  for (const [open, close] of [
+    ['<!--', '-->'],
+    ['<script', '</script>'],
+    ['<style', '</style>'],
+  ] as const)
+    text = removeBlocks(text, open, close);
   text = text.replace(/```[\s\S]*?```/g, '').replace(/\r\n/g, '\n');
   const section = /^#{1,4}\s*roadmap summary\s*$\n([\s\S]*?)(?=^#{1,4}\s|$(?![\s\S]))/im.exec(text);
   const source = section
     ? section[1]
     : (text.split(/\n\s*\n/).find((paragraph) => paragraph.trim() && !/^\s*#/.test(paragraph)) ?? '');
-  // Strip tags, then any stray angle bracket: the summary is plain text.
-  return source
-    .replace(/<[^>]*>/g, '')
-    .replace(/[<>]/g, '')
+  // The summary is plain text: no tag or angle bracket survives.
+  return stripTags(source)
     .replace(/!\[[^\]]*]\([^)]*\)/g, '')
     .replace(/\[([^\]]*)]\([^)]*\)/g, '$1')
-    .replace(/[*_`>#~|]/g, '')
+    .replace(/[*_`#~|]/g, '')
     .replace(/^\s*[-+]\s+/gm, '')
     .replace(/\s+/g, ' ')
     .trim()
