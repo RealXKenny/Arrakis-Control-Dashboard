@@ -171,19 +171,10 @@ const serverEnvSchema = z.object({
     .max(256)
     .regex(/^[A-Za-z0-9._-]+$/)
     .optional(),
-  CHANGELOG_CHANNEL_ID: z
-    .string()
-    .regex(/^\d{15,25}$/)
-    .optional(),
   COMMUNITY_EVENTS_CHANNEL_ID: z
     .string()
     .regex(/^\d{15,25}$/)
     .optional(),
-  /** When "true", a newly deployed release in CHANGELOG.md is announced once, automatically. */
-  CHANGELOG_AUTO_ANNOUNCE: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform((value) => value === 'true'),
   /**
    * Optional comma-separated `host:port` list. When set, the dashboard data
    * provider connects through `ioredis` Cluster (with automatic failover and

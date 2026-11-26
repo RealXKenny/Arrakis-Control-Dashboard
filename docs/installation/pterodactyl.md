@@ -51,7 +51,7 @@ them in the Startup tab; only a panel administrator can.
 | `NEXT_TELEMETRY_DISABLED`                                                                                 | `1`                                       | hidden, fixed | Keeps Next.js telemetry off                                                 |
 | `REDIS_REQUIRE_TLS`, `REDIS_ALLOW_INSECURE`, `REDIS_CLUSTER_NODES`                                        | `false`, `false`, empty                   | visible       | See [Redis](../configuration/redis.md)                                      |
 | `AUDIT_LOG_STDOUT`, `AUDIT_LOG_REDIS`, `AUDIT_LOG_MAX_ENTRIES`, `AUDIT_LOG_RETENTION_DAYS`                | `true`, `true`, `10000`, `90`             | visible       | [Audit logs](../features/audit-logs.md)                                     |
-| `API_MAX_CONCURRENCY`, `API_GLOBAL_READ_LIMIT`, `LOG_LEVEL`, `SERVER_HOSTNAME`, `CHANGELOG_AUTO_ANNOUNCE` | `100`, `2400`, `INFO`, `0.0.0.0`, `false` | visible       |                                                                             |
+| `API_MAX_CONCURRENCY`, `API_GLOBAL_READ_LIMIT`, `LOG_LEVEL`, `SERVER_HOSTNAME` | `100`, `2400`, `INFO`, `0.0.0.0` | visible       |                                                                             |
 
 The egg passes only the variables it defines, so a setting that is not an egg variable cannot reach the application.
 
@@ -61,7 +61,7 @@ Hiding is **panel access control, not encryption.** Panel administrators can rea
 server's files, its process environment or its console can still see them once the server runs. Restrict subuser permissions,
 keep the node private, and rotate secrets if access was broader than intended ([secrets management](../security/secrets-management.md)).
 
-Optional Discord announcements use `DISCORD_BOT_TOKEN`, `CHANGELOG_CHANNEL_ID`, `COMMUNITY_EVENTS_CHANNEL_ID`, and `CHANGELOG_AUTO_ANNOUNCE`. Reuse the main bot token; both channels must belong to `DISCORD_GUILD_ID`. The egg hides the bot token from panel users. See [Discord announcements](../integrations/webhooks.md).
+Optional community event announcements use `DISCORD_BOT_TOKEN` and `COMMUNITY_EVENTS_CHANNEL_ID`. Reuse the main bot token; the channel must belong to `DISCORD_GUILD_ID`. Changelogs are posted by the Arrakis Control bot, not the dashboard. The egg hides the bot token from panel users. See [Discord announcements](../integrations/webhooks.md).
 
 ## Verify
 

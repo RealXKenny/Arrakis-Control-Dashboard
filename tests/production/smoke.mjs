@@ -112,7 +112,6 @@ const child = spawn(
     env: {
       ...process.env,
       DISCORD_BOT_TOKEN: '',
-      CHANGELOG_CHANNEL_ID: '',
       COMMUNITY_EVENTS_CHANNEL_ID: '',
       NODE_ENV: mode === 'dev' ? 'development' : 'production',
       CHAT_ENABLED: 'false',

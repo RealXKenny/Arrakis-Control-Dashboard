@@ -71,9 +71,7 @@ const child = spawn(process.execPath, ['--input-type=module', '-e', wrapper], {
     VERIFIED_MEMBER_ROLE_ID: 'fixture',
     APP_URL: `http://127.0.0.1:${port}`,
     AUTH_SECRET: 'fixture-only-authentication-secret-32',
-    CHANGELOG_AUTO_ANNOUNCE: 'false',
     DISCORD_BOT_TOKEN: '',
-    CHANGELOG_CHANNEL_ID: '',
     COMMUNITY_EVENTS_CHANNEL_ID: '',
   },
 });

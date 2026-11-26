@@ -42,9 +42,7 @@ Startup stops serving (HTTP 500 on every request, reason logged by variable name
 | `AUDIT_LOG_RETENTION_DAYS`    | `90`                       | 1 to 3650                                                                                             |
 | `AUDIT_LOG_MAX_ENTRIES`       | `10000`                    | 100 to 1000000                                                                                        |
 | `DISCORD_BOT_TOKEN`           | unset                      | Shared main Discord bot token; server-only secret, no webhook or second bot process                   |
-| `CHANGELOG_CHANNEL_ID`        | unset                      | Text/announcement channel ID for changelog containers (15–25 digits)                                  |
 | `COMMUNITY_EVENTS_CHANNEL_ID` | unset                      | Text/announcement channel ID for automatic community event containers (15–25 digits)                  |
-| `CHANGELOG_AUTO_ANNOUNCE`     | `false`                    | `true` announces each newly deployed release once                                                     |
 
 ### Live game chat (optional)
 

@@ -192,6 +192,7 @@
 
 ### Removed
 
+- The dashboard no longer posts changelogs to Discord; the Arrakis Control bot is the only changelog publisher and reads `/api/v2/changelog`. `CHANGELOG_CHANNEL_ID` and `CHANGELOG_AUTO_ANNOUNCE` were removed. Community event announcements are unchanged.
 - The Overland map page, navigation entry and image: the Console reports neither points of interest nor a live position for it.
 - The administrator workspace, administrator APIs, associated configuration and manual reconciliation interfaces. Scoped server-side workers handle recovery and quarantine uncertain outcomes.
 - The tracked `CLAUDE.md` project guide and Claude-specific validation; shared coding-agent instructions live in `AGENTS.md`.

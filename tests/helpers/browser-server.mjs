@@ -140,7 +140,6 @@ const child = spawn(
     env: {
       ...process.env,
       DISCORD_BOT_TOKEN: '',
-      CHANGELOG_CHANNEL_ID: '',
       COMMUNITY_EVENTS_CHANNEL_ID: '',
       REDIS_URL: `redis://127.0.0.1:${storage.server.address().port}/0`,
       DUNE_API_URL: fakeConsole.url,

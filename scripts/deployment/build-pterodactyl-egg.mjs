@@ -319,27 +319,11 @@ function buildEgg() {
         },
       ),
       variable(
-        'Changelog Channel ID',
-        'Discord text channel for release and progress announcements.',
-        'CHANGELOG_CHANNEL_ID',
-        '',
-        { rules: 'nullable|string|regex:/^[0-9]{15,25}$/' },
-      ),
-      variable(
         'Community Events Channel ID',
         'Discord text channel for automatically published community events.',
         'COMMUNITY_EVENTS_CHANNEL_ID',
         '',
         { rules: 'nullable|string|regex:/^[0-9]{15,25}$/' },
-      ),
-      variable(
-        'Changelog Auto Announce',
-        'Announce each newly deployed changelog release once.',
-        'CHANGELOG_AUTO_ANNOUNCE',
-        'false',
-        {
-          rules: 'required|string|in:true,false',
-        },
       ),
     ],
   };

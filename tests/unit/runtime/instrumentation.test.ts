@@ -24,9 +24,6 @@ vi.mock('../../../src/config/env', () => ({ validateProductionEnv: validate, red
 vi.mock('../../../src/lib/redis/pool', () => ({ getRedisPool: vi.fn() }));
 vi.mock('../../../src/server/integrations/dune', () => ({ warmupDuneClient: warmup }));
 vi.mock('../../../src/features/portal/server/population', () => ({ startPopulationRecorder: vi.fn() }));
-vi.mock('../../../src/features/changelog/server/announce', () => ({
-  announceLatestRelease: vi.fn().mockResolvedValue('disabled'),
-}));
 vi.mock('../../../src/features/chat/server/publisher', () => ({ getChatPublisher: publisher }));
 vi.mock('../../../src/features/events/server/announce', () => ({ startCommunityEventAnnouncements: eventsStart }));
 
