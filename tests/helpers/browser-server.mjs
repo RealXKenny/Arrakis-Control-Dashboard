@@ -8,6 +8,7 @@ import { assistanceReply } from './assistance-redis.mjs';
 import { moderationReply } from './moderation-redis.mjs';
 import { noticeboardReply } from './guild-noticeboard-redis.mjs';
 import { operationsReply } from './guild-operations-redis.mjs';
+import { logisticsReply } from './guild-logistics-redis.mjs';
 import { resourcesReply } from './guild-resources-redis.mjs';
 import { baseDirectoryReply } from './guild-base-directory-redis.mjs';
 import { onboardingReply } from './guild-onboarding-redis.mjs';
@@ -103,6 +104,8 @@ const storage = createRedisFixture(([operation, key, ...args]) => {
   if (resources !== undefined) return resources.value;
   const operations = operationsReply(operation, key, args);
   if (operations !== undefined) return operations.value;
+  const logistics = logisticsReply(operation, key, args);
+  if (logistics !== undefined) return logistics.value;
   const noticeboard = noticeboardReply(operation, key, args);
   if (noticeboard !== undefined) return noticeboard.value;
   const events = eventsReply(operation, key, args);

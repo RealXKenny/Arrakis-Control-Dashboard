@@ -22,6 +22,7 @@ import { GuildBaseDirectory } from '../../../features/guilds/components/base-dir
 import { GuildOnboarding } from '../../../features/guilds/components/onboarding';
 import { GuildPolls } from '../../../features/guilds/components/polls';
 import { GuildProjectsWorkspace } from '../../../features/guilds/components/projects-workspace';
+import { GuildLogistics } from '../../../features/guilds/components/guild-logistics';
 
 export const metadata: Metadata = { title: 'My guild' };
 
@@ -84,9 +85,11 @@ export default async function MyGuildPage({
               ? requestedTab
               : requestedTab === 'operations'
                 ? 'operations'
-                : canEdit && requestedTab === 'settings'
-                  ? 'settings'
-                  : 'roster';
+                : requestedTab === 'logistics'
+                  ? 'logistics'
+                  : canEdit && requestedTab === 'settings'
+                    ? 'settings'
+                    : 'roster';
   const groups = groupMembersByRank(members);
   const leader = members.find((member) => member.roleId === 100);
   const emblem = factionEmblem(guild.faction);
@@ -101,6 +104,7 @@ export default async function MyGuildPage({
         items={[
           { id: 'roster', label: 'My Guild', href: '/guild' },
           { id: 'operations', label: 'Operations', href: '/guild?tab=operations' },
+          { id: 'logistics', label: 'Logistics', href: '/guild?tab=logistics' },
           { id: 'resources', label: 'Resources', href: '/guild?tab=resources' },
           { id: 'projects', label: 'Projects', href: '/guild?tab=projects' },
           { id: 'crafting', label: 'Crafting', href: '/guild?tab=crafting' },
@@ -131,6 +135,8 @@ export default async function MyGuildPage({
         <GuildResourceRequests key={guild.id} guildId={guild.id} />
       ) : tab === 'operations' ? (
         <GuildOperationsPlanner key={guild.id} guildId={guild.id} />
+      ) : tab === 'logistics' ? (
+        <GuildLogistics key={guild.id} guildId={guild.id} />
       ) : tab === 'roster' ? (
         <div className="flex flex-col gap-8">
           <Card

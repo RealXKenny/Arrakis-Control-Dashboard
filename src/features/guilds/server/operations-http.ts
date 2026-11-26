@@ -5,12 +5,12 @@ import { checkRateLimit } from '../../../lib/security/rate-limit';
 import { spendReadBudget } from '../../../server/read-budget';
 import { recordAudit } from '../../../lib/security/audit';
 import { AppError } from '../../../lib/errors';
-import { operationGuildIdSchema, operationInputSchema, operationsView } from '../operations';
+import { memberOperationActions, operationGuildIdSchema, operationInputSchema, operationsView } from '../operations';
 import { requireGuildMember } from './member-access';
-import { mutateGuildOperation, readGuildOperations } from './operations-store';
+import { mutateGuildOperation, readSettledOperations } from './operations-store';
 
 type Context = { params: Promise<{ guildId: string }> };
-async function context(ctx: Context, write: boolean) {
+export async function operationsAccess(ctx: Context, write: boolean) {
   const session = await requireApiSession();
   const parsed = operationGuildIdSchema.safeParse((await ctx.params).guildId);
   if (!parsed.success) throw new AppError('Invalid guild ID.', 400, 'INVALID_GUILD_ID', true);
@@ -33,15 +33,15 @@ async function context(ctx: Context, write: boolean) {
   return { session, guildId: parsed.data, ...member };
 }
 export async function getGuildOperations(_request: Request, ctx: Context) {
-  const access = await context(ctx, false);
+  const access = await operationsAccess(ctx, false);
   return json({
     ok: true,
-    data: operationsView(await readGuildOperations(access.guildId), access.memberId, access.canEdit),
+    data: operationsView(await readSettledOperations(access.guildId), access.memberId, access.canEdit),
   });
 }
 export async function mutateGuildOperations(request: Request, ctx: Context) {
   assertSameOrigin(request);
-  const access = await context(ctx, true);
+  const access = await operationsAccess(ctx, true);
   const bytes = await readBoundedBody(request, 16_384);
   if (!bytes) throw new AppError('Operation details are too large.', 413, 'OPERATIONS_BODY_TOO_LARGE', true);
   let raw: unknown;
@@ -53,7 +53,7 @@ export async function mutateGuildOperations(request: Request, ctx: Context) {
   const parsed = operationInputSchema.safeParse(raw);
   if (!parsed.success)
     throw new AppError('Check the operation fields, dates and role capacities.', 400, 'INVALID_OPERATION', true);
-  if (!['join', 'leave'].includes(parsed.data.action) && !access.canEdit)
+  if (!memberOperationActions.has(parsed.data.action) && !access.canEdit)
     throw new AppError('Only the guild leader can manage operations.', 403, 'GUILD_LEADER_REQUIRED', true);
   const operation = await mutateGuildOperation(access.guildId, parsed.data, access);
   void recordAudit({

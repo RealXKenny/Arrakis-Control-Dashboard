@@ -41,6 +41,11 @@ export const guildKeys = {
   /** N051–N060 projects, shared stockpile, crafting directory and commissions (one CAS hash). */
   projects: (guildId: string) => `arrakis:${GUILD_TAG}:projects:${guildId}`,
   operations: (guildId: string) => `arrakis:${GUILD_TAG}:operations:${guildId}`,
+  /** Re-encoded after-action screenshots, fields `<operation>:<screenshot>`. */
+  operationScreenshots: (guildId: string) => `arrakis:${GUILD_TAG}:operation-screenshots:${guildId}`,
+  /** One CAS document per logistics section: templates, availability, fleet or landsraad. */
+  logistics: (guildId: string, section: 'templates' | 'availability' | 'fleet' | 'landsraad') =>
+    `arrakis:${GUILD_TAG}:logistics:${section}:${guildId}`,
   noticeboard: (guildId: string) => `arrakis:${GUILD_TAG}:noticeboard:${guildId}`,
   applications: (guildId: string) => `arrakis:${GUILD_TAG}:applications:${guildId}`,
   applicationsIndex: (guildId: string) => `arrakis:${GUILD_TAG}:applications-index:${guildId}`,

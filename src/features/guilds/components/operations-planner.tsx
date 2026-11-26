@@ -17,6 +17,14 @@ import {
   type OperationView,
 } from '../operations';
 import { OperationForm } from './operation-form';
+import { OperationExtras, RoleWaitlist } from './operation-extras';
+import {
+  nextTemplateStart,
+  operationFromTemplate,
+  templateFromOperation,
+  templatesViewSchema,
+  type TemplatesView,
+} from '../operation-templates';
 
 const changeViewSchema = z.object({ operation: operationsViewSchema.shape.operations.element.nullable() });
 
@@ -30,8 +38,11 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
   const [editor, setEditor] = useState<{ draft: OperationDraft; revision: string | null } | null>(null);
   const [confirmation, setConfirmation] = useState<OperationInput | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [templates, setTemplates] = useState<TemplatesView | null>(null);
+  const [templateId, setTemplateId] = useState('');
   const pending = useRef(false);
   const url = `/api/v2/guilds/${encodeURIComponent(guildId)}/operations`;
+  const logisticsUrl = `/api/v2/guilds/${encodeURIComponent(guildId)}/logistics`;
 
   useEffect(() => {
     const update = () => {
@@ -111,11 +122,15 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
       if (input.action === 'save' || (input.action === 'delete' && editor?.draft.id === id)) setEditor(null);
       setConfirmation(null);
       setStatus(
-        input.action === 'join'
-          ? 'Your role sign-up is saved.'
-          : input.action === 'leave'
-            ? 'You have withdrawn from this operation.'
-            : 'Guild operation updated.',
+        {
+          join: 'Your role sign-up is saved.',
+          leave: 'You have withdrawn from this operation.',
+          'waitlist-join': 'You are on the waitlist. You will be offered a seat here if one opens.',
+          'waitlist-leave': 'You have left the waitlist.',
+          invitation: 'Your answer to the seat offer is saved.',
+          readiness: 'Your readiness is updated.',
+          'follow-up': 'Follow-up task proposed for review.',
+        }[input.action] ?? 'Guild operation updated.',
       );
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to confirm the change. Refresh before trying again.');
@@ -156,8 +171,74 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
         startsAt: operation.startsAt,
         endsAt: operation.endsAt,
         roles: operation.roles,
+        preparation: operation.preparation ?? [],
+        briefings: operation.briefings ?? {},
+        waypoints: operation.waypoints ?? [],
+        templateId: operation.templateId ?? null,
       },
     });
+  }
+  function replace(operation: OperationView) {
+    setView((current) =>
+      current
+        ? { ...current, operations: current.operations.map((entry) => (entry.id === operation.id ? operation : entry)) }
+        : null,
+    );
+    setStatus('Screenshot added to the report.');
+  }
+  async function loadTemplates() {
+    if (pending.current) return null;
+    pending.current = true;
+    setError('');
+    try {
+      const next = templatesViewSchema.parse(await guildRequest(`${logisticsUrl}?section=templates`));
+      setTemplates(next);
+      return next;
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Operation templates could not be loaded.');
+      return null;
+    } finally {
+      pending.current = false;
+    }
+  }
+  function applyTemplate() {
+    const template = templates?.templates.find((entry) => entry.id === templateId);
+    if (!template) return;
+    const last =
+      view?.operations
+        .filter((operation) => operation.templateId === template.id)
+        .map((operation) => operation.startsAt)
+        .sort()
+        .at(-1) ?? null;
+    const start = nextTemplateStart(template, Date.now(), last) ?? Date.now() + 3_600_000;
+    setEditor({ revision: null, draft: operationFromTemplate(template, start, () => crypto.randomUUID()) });
+    setStatus(
+      template.cadence === 'none'
+        ? 'Template loaded. Choose a start time before saving.'
+        : 'Template loaded with its next suggested start. Review it before saving; nothing is scheduled until you save.',
+    );
+  }
+  async function saveAsTemplate(operation: OperationView) {
+    const current = await loadTemplates();
+    if (!current || pending.current) return;
+    pending.current = true;
+    setSaving(true);
+    try {
+      const template = templateFromOperation(operation, crypto.randomUUID());
+      const next = templatesViewSchema.parse(
+        await guildRequest(logisticsUrl, {
+          section: 'templates',
+          input: { action: 'save', revision: current.revision, template },
+        }),
+      );
+      setTemplates(next);
+      setStatus(`Saved “${template.name}” as a reusable template. Set its schedule under Logistics.`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'The template could not be saved.');
+    } finally {
+      pending.current = false;
+      setSaving(false);
+    }
   }
   const operations =
     view?.operations.filter(
@@ -192,8 +273,58 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
               New operation
             </Button>
           )}
+          {view?.canEdit && !templates && (
+            <Button
+              type="button"
+              className="btn btn-secondary"
+              disabled={loading || saving || Boolean(editor)}
+              onClick={loadTemplates}
+            >
+              New from template
+            </Button>
+          )}
         </div>
       </div>
+      {view?.canEdit && templates && !editor && (
+        <div className="mt-4 flex min-w-0 flex-wrap items-end gap-3">
+          {templates.templates.length ? (
+            <>
+              <label className="flex min-w-0 flex-col gap-2">
+                <span className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">
+                  Operation template
+                </span>
+                <select
+                  value={templateId}
+                  onChange={(event) => setTemplateId(event.target.value)}
+                  className="w-full border border-sand-200/20 bg-obsidian-900 px-3 py-2.5 text-sm text-sand-50"
+                >
+                  <option value="">Choose a template</option>
+                  {templates.templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                type="button"
+                className="btn btn-primary"
+                disabled={!templateId || saving}
+                onClick={applyTemplate}
+              >
+                Use template
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-sand-400">
+              No templates yet. Use “Save as template” on an operation, or add one under Logistics.
+            </p>
+          )}
+          <Button type="button" className="btn btn-secondary" onClick={() => setTemplates(null)}>
+            Close templates
+          </Button>
+        </div>
+      )}
       <div className="mt-4">
         <FormMessage error={error} status={status} />
       </div>
@@ -229,8 +360,9 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
             ))}
           </div>
           <p className="mt-4 text-xs text-sand-500">
-            Up to 20 operations and 50 role slots per run. Scheduling and sign-ups do not move currency, items or
-            characters.
+            Up to 20 operations and 50 role slots per run. When a role is full, join its waitlist: a freed seat is
+            offered to the next member for two hours (or until the start) and is only taken when they accept. Scheduling
+            and sign-ups do not move currency, items or characters.
           </p>
           {!operations.length && (
             <p className="mt-5 text-sm text-sand-400">
@@ -273,7 +405,12 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                       className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
                     >
                       {operation.roles.map((slot) => {
-                        const occupied = operation.signups.filter((signup) => signup.role === slot.role).length;
+                        const occupied =
+                          operation.signups.filter((signup) => signup.role === slot.role).length +
+                          operation.invitations.filter((invite) => invite.role === slot.role).length;
+                        const invited = operation.invitations.some(
+                          (invite) => invite.isSelf && invite.role === slot.role,
+                        );
                         return (
                           <li key={slot.role} className="min-w-0 border border-sand-200/10 p-3">
                             <p className="text-sm text-sand-200">
@@ -283,7 +420,11 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                               type="button"
                               className="btn btn-secondary mt-3"
                               disabled={
-                                !open || saving || loading || own?.role === slot.role || occupied >= slot.capacity
+                                !open ||
+                                saving ||
+                                loading ||
+                                own?.role === slot.role ||
+                                (occupied >= slot.capacity && !invited)
                               }
                               onClick={() =>
                                 mutate({
@@ -298,6 +439,14 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                                 ? `Your role: ${operationRoleLabel[slot.role]}`
                                 : `Join as ${operationRoleLabel[slot.role]}`}
                             </Button>
+                            <RoleWaitlist
+                              operation={operation}
+                              role={slot.role}
+                              full={occupied >= slot.capacity}
+                              now={now}
+                              busy={saving || loading}
+                              onChange={mutate}
+                            />
                           </li>
                         );
                       })}
@@ -345,8 +494,25 @@ export function GuildOperationsPlanner({ guildId }: { guildId: string }) {
                         ))}
                       </ul>
                     </details>
+                    <OperationExtras
+                      guildId={guildId}
+                      operation={operation}
+                      canEdit={view.canEdit}
+                      now={now}
+                      busy={saving || loading}
+                      onChange={mutate}
+                      onReplace={replace}
+                    />
                     {view.canEdit && (
                       <div className="mt-5 flex flex-wrap gap-3">
+                        <Button
+                          type="button"
+                          className="btn btn-secondary"
+                          disabled={loading || saving}
+                          onClick={() => saveAsTemplate(operation)}
+                        >
+                          Save as template
+                        </Button>
                         {open && (
                           <Button
                             type="button"

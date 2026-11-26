@@ -20,6 +20,7 @@ import useMapZoom from '../hooks/use-map-zoom';
 import useMapDrag from '../hooks/use-map-drag';
 
 import styles from '../styles/map.module.css';
+import type { MapPin } from '../utils/pin';
 
 const LEGEND_STORAGE_KEY_PREFIX = 'map-legend';
 const DEFAULT_DISABLED_MARKERS = {
@@ -189,7 +190,7 @@ function isLinkedPlayerMarker(item, pawnId: string) {
   );
 }
 
-export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string }) {
+export default function MapWindow({ mapName = 'HaggaBasin', pin = null }: { mapName?: string; pin?: MapPin | null }) {
   const {
     mapConfig,
     markers: staticMarkers,
@@ -233,12 +234,13 @@ export default function MapWindow({ mapName = 'HaggaBasin' }: { mapName?: string
   const legendStorageKey = `${LEGEND_STORAGE_KEY_PREFIX}-${mapName}-v2`;
 
   const [selected, setSelected] = React.useState(null);
-  const [view3D, setView3D] = React.useState(true);
+  // A planning pin opens the 2D view, where its target ring is drawn.
+  const [view3D, setView3D] = React.useState(!pin);
   const [sceneStatus, setSceneStatus] = React.useState('Loading 3D terrain…');
   const cameraRef = React.useRef<MapCamera | null>(null);
   const [hudTarget, setHudTarget] = React.useState<HTMLDivElement | null>(null);
 
-  const target = null;
+  const target = pin;
 
   const [legendDisabled, setLegendDisabled] = React.useState<Record<string, boolean>>(() => ({
     ...DEFAULT_DISABLED_MARKERS,

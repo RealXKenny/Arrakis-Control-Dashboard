@@ -43,6 +43,8 @@
 
 [Base upkeep](base-upkeep.md) combines base-care alerts, water history, stockpile minimums, container zones, inspections, reminders, blueprint revisions and relocation plans at `/upkeep`.
 
+[Guild operations and logistics](guild-logistics.md) add waitlists, readiness, briefings, waypoints, convoys and after-action reports to guild operations, plus templates, an availability board, fleet dispatch and Landsraad campaign targets at `/guild?tab=logistics`.
+
 The [actionable inbox](actionable-inbox.md) combines authorized asset, supply and operation alerts at `/inbox`, with explicit coverage for unsupported monitoring sources.
 
 | Feature                                                    | Who uses it                          | Page                                     |

@@ -17,6 +17,7 @@ vi.mock('../../src/features/player/server/linked-player', () => ({ getLinkedPlay
 vi.mock('../../src/server/integrations/dune', () => ({ getDuneClient: () => ({ request: mocks.request }) }));
 vi.mock('../../src/features/guilds/server/operations-store', () => ({
   readGuildOperations: mocks.read,
+  readSettledOperations: mocks.read,
   mutateGuildOperation: mocks.mutate,
 }));
 vi.mock('../../src/lib/security/rate-limit', () => ({ checkRateLimit: mocks.limit }));

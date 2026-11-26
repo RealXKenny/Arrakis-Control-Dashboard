@@ -29,7 +29,8 @@ export default function MapStatusBar({ loading, error, markerCount, zoomPercent,
 
       {target && (
         <span>
-          TARGET: X {Number(target.x).toFixed(0)} Y {Number(target.y).toFixed(0)}
+          {target.label ? `${target.label} · ` : 'TARGET: '}X {Number(target.x).toFixed(0)} Y{' '}
+          {Number(target.y).toFixed(0)}
         </span>
       )}
     </div>

@@ -4,9 +4,10 @@ import { spendReadBudget } from '../../../server/read-budget';
 import { requireSession } from '../../auth/server/session';
 import { Notice, PageHeader } from '../../../components/ui/page-header';
 import { LocationReading } from './location-reading';
+import type { MapPin } from '../utils/pin';
 
 /** One page per location; uncalibrated locations display telemetry without a fabricated map. */
-export async function MapPage({ mapName }: { mapName: MapName }) {
+export async function MapPage({ mapName, pin = null }: { mapName: MapName; pin?: MapPin | null }) {
   await requireSession();
   const budget = await spendReadBudget();
   return (
@@ -17,7 +18,7 @@ export async function MapPage({ mapName }: { mapName: MapName }) {
       {budget.allowed ? (
         // The map layers sit under plain static wrappers: no ancestor of the map is ever animated.
         mapName === 'HaggaBasin' || mapName === 'DeepDesert' ? (
-          <MapWindow key={mapName} mapName={mapName} />
+          <MapWindow key={mapName} mapName={mapName} pin={pin} />
         ) : (
           <LocationReading key={mapName} mapName={mapName} />
         )
