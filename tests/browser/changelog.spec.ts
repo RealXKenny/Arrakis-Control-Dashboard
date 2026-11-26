@@ -77,11 +77,11 @@ test('bot history is separate from dashboard releases', async ({ page }) => {
   await page.goto('/changelog');
   await page.getByRole('link', { name: 'Bot releases' }).click();
   await expect(page.getByRole('heading', { name: 'Arrakis Control Bot release history' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Version 1.11.7' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Version 2.0.0' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Bot releases' })).toHaveAttribute('aria-current', 'page');
 });
 
 test('published dashboard history links resolve independently of unreleased notes', async ({ page }) => {
-  await page.goto('/changelog?project=dashboard&show=all#v1.20.6');
-  await expect(page.getByRole('heading', { name: 'Version 1.20.6' })).toBeVisible();
+  await page.goto('/changelog?project=dashboard&show=all#v2.0.0');
+  await expect(page.getByRole('heading', { name: 'Version 2.0.0' })).toBeVisible();
 });

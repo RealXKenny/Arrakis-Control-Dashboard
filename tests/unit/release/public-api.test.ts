@@ -13,8 +13,10 @@ describe('public changelog API', () => {
     expect(body.releases).toHaveLength(1);
     expect(body.releases[0]).toMatchObject({ project: 'dashboard', id: 'dashboard:2.0.1', date: '2026-11-26' });
     expect(body.releases[0].sections.map((section: { title: string }) => section.title)).toEqual([
+      'New Features',
       'Improvements',
       'Fixes',
+      'Upgrade Notes',
     ]);
   });
 
