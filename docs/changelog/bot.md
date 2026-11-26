@@ -30,10 +30,12 @@
 - Code cleanup with no change in behaviour: removed unused exports and an unused request logger, shared the duplicated canvas, record-check and ticket text-escaping helpers, dropped the redundant `@types/amqplib` (amqplib ships its own types) and declared `@sapphire/utilities`, which the bot already imported.
 - Stricter handling of untrusted data: in-game chat messages, `CHAT_BRIDGE_ROUTES` and player directory rows are checked field by field instead of being read as untyped JSON. Route IDs written as JSON numbers are now rejected; write them as strings, because 18-digit numbers lose precision in JSON. The audit-log poller's timer no longer passes a promise where Discord.js expects a plain callback, and panels share one accent-colour helper.
 - The release workflow starts only for CI runs on `main`, so pushes to pull requests and release branches no longer create a skipped release run.
+- Release history starts at 2.0.0: database migration 2 deletes the stored changelog announcement records of 1.x and older releases. No other data is touched.
 
 ### Upgrading from 2.0.0
 
-- Reinstall with `RELEASE_TAG` set to `v2.0.1` or `latest`. No database changes; the new settings are optional.
+- Reinstall with `RELEASE_TAG` set to `v2.0.1` or `latest`. The new settings are optional.
+- Database migration 2 runs on the first start and removes the changelog announcement records of 1.x releases. After it runs, 2.0.0 refuses to start against the database, so take a backup first if you might roll back.
 - After the first start, check that the log shows `Global application commands synchronized` with no `50240` error, and that `/poker` appears in Discord.
 - To get automatic updates, import the new egg (or change the startup command to `node scripts/updater/supervisor.mjs`) and follow `guides/automatic-updates.md`. Take a database backup first: a release with a database migration cannot be rolled back by the updater alone.
 - For the changelog forum, create a forum channel, set `ANNOUNCEMENT_CHANNEL_ID` to it and give the bot View Channel, Send Messages (Create Posts), Send Messages in Threads, Read Message History, Attach Files, Embed Links and Manage Channels (for the tags). The new channel gets one post for each 2.0.x release of both apps, bot first; posts in the old channel are left as they are.
