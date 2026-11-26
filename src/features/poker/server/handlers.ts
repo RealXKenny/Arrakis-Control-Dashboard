@@ -11,7 +11,7 @@ function headerRecord(request: Request): Record<string, string> {
   return Object.fromEntries(request.headers.entries());
 }
 
-/** POST /api/v2/poker/session: Embedded App SDK code in, short-lived Activity bearer token out. */
+/** POST /api/v2/poker/session: Activity authorization code in, short-lived Activity bearer token out. */
 export async function createSession(request: Request): Promise<Response> {
   requirePokerEnabled();
   assertActivityOrigin(request);

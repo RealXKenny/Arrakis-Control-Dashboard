@@ -7,6 +7,7 @@ import { PlayingCard } from '../../casino/components/playing-card';
 import { MAX_SEATS, type PokerTableResponse, type TableActionInput } from '../contracts';
 import type { Card as PokerCard } from '../engine/cards';
 import type { SeatView } from '../engine/table';
+import { DiscordActivityClient, browserChannel, readLaunchParams } from './discord-activity-client';
 import { PokerRequestError, fetchTable, sendAction, startActivitySession } from './poker-api';
 
 const POLL_MS = 1500;
@@ -43,35 +44,34 @@ export function PokerActivity({ clientId }: { clientId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    let client: DiscordActivityClient | null = null;
     async function connect() {
-      const params = new URLSearchParams(window.location.search);
-      if (!params.has('frame_id') || !params.has('instance_id')) {
+      const launch = readLaunchParams(window.location.search);
+      if (!launch) {
         setPhase({ kind: 'outside' });
         return;
       }
       try {
-        const { DiscordSDK } = await import('@discord/embedded-app-sdk');
-        const sdk = new DiscordSDK(clientId);
-        await sdk.ready();
-        const { code } = await sdk.commands.authorize({
-          client_id: clientId,
-          response_type: 'code',
-          state: '',
-          scope: ['identify', 'guilds.members.read'],
-        });
-        const session = await startActivitySession(code, sdk.instanceId);
+        client = new DiscordActivityClient(clientId, launch, browserChannel());
+        await client.ready();
+        const code = await client.authorize(['identify', 'guilds.members.read']);
+        const session = await startActivitySession(code, launch.instanceId);
         if (!cancelled) setPhase({ kind: 'ready', token: session.token, playerId: session.player.id });
       } catch (error) {
         if (cancelled) return;
         setPhase({
           kind: 'failed',
-          message: error instanceof PokerRequestError ? error.message : 'Discord did not finish signing you in.',
+          message:
+            error instanceof PokerRequestError
+              ? error.message
+              : 'Discord did not finish signing you in. Reopen the Activity.',
         });
       }
     }
     void connect();
     return () => {
       cancelled = true;
+      client?.close();
     };
   }, [clientId]);
 

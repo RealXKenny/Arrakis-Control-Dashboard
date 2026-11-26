@@ -27,7 +27,6 @@
     "workflows:check": "node scripts/maintenance/check-workflows.mjs"
   },
   "dependencies": {
-    "@discord/embedded-app-sdk": "2.5.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "amqplib": "^2.3.1",
     "dotenv": "^17.4.2",

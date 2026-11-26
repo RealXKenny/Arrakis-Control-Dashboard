@@ -41,7 +41,7 @@ const cleanName = (value: unknown): string | undefined => {
 };
 
 /**
- * Exchanges the Embedded App SDK authorization code (no redirect URI for Activities) and re-reads the
+ * Exchanges the Activity authorization code (no redirect URI for Activities) and re-reads the
  * member fresh from Discord. The access token is used once here and never stored or returned.
  */
 export async function identifyActivityPlayer(code: string): Promise<ActivityIdentity> {
