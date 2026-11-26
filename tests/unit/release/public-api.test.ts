@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { changelogApi, readProjectReleases } from '../../../src/features/changelog/server/public-api';
 
 describe('public changelog API', () => {
-  it('separates projects and serves snapshots rather than the unreleased dashboard root', async () => {
+  it('separates projects and serves the published dashboard snapshot', async () => {
     const response = await changelogApi(
       new Request('https://example.test/api/v2/changelog/latest?project=dashboard'),
       true,
@@ -11,14 +11,14 @@ describe('public changelog API', () => {
     expect(response.status).toBe(200);
     expect(body.schemaVersion).toBe(1);
     expect(body.releases).toHaveLength(1);
-    expect(body.releases[0]).toMatchObject({ project: 'dashboard', id: 'dashboard:1.20.6' });
-    expect(body.releases[0].version).not.toBe('2.0.0');
+    expect(body.releases[0]).toMatchObject({ project: 'dashboard', id: 'dashboard:2.0.0', date: '2026-11-25' });
+    expect(body.releases[0].sections.length).toBeGreaterThan(1);
   });
 
   it('orders bot versions and exposes the stable project identity', async () => {
     const response = await changelogApi(new Request('https://example.test/api/v2/changelog?project=bot'));
     const body = await response.json();
-    expect(body.releases[0]).toMatchObject({ project: 'bot', id: 'bot:1.11.7', date: '2026-11-05' });
+    expect(body.releases[0]).toMatchObject({ project: 'bot', id: 'bot:2.0.0', date: '2026-11-25' });
     expect((await readProjectReleases('bot')).length).toBeGreaterThan(1);
   });
 

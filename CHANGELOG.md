@@ -190,6 +190,7 @@
 - The browser Content Security Policy no longer allows Discord's CDN as an image origin. Profile image responses are private, no-store, protected by `nosniff` and restricted to same-origin use.
 - Security audit events are redacted and bounded, and session indexes support revocation without exposing raw session tokens. Workflow permissions, action pins and release-source checks limit privileged automation to trusted release paths.
 - Casino routes derive wallet ownership from the session and keep unrevealed game state on the server. Uncertain currency adjustments are never automatically repeated, and uncertain transfers are quarantined.
+- Startup warns when `DUNE_API_URL` uses plain HTTP on a public host, because the Console API key would travel unencrypted. Poker Activity sign-in is limited per Activity as well as per address, so players behind Discord's proxy do not share one small budget. The 2026-11-26 launch audit is in `docs/security/audit-2026-11-26.md`.
 
 ### Privacy
 
