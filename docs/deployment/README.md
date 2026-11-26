@@ -8,6 +8,7 @@
 | [Production release](production-release.md)     | How a release is cut and what it contains                                   |
 | [Migration](migration.md)                       | `redis:rekey` and `marketplace:rekey` procedures, secret rotation           |
 | [Rollback](rollback.md)                         | Code, release, data and secret rollback                                     |
+| [Automatic updates](automatic-updates.md)       | Verified self-updates on Pterodactyl, custom-file safety, migration         |
 
 Release integrity and checksum verification are explained in [Release verification](../security/release-verification.md). The standard `npm start` command automatically supervises Live Chat when enabled; see [Live game chat](../features/live-chat.md#nodejs-and-pterodactyl-deployment).
 

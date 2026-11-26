@@ -79,9 +79,11 @@ type Scenario = {
   env?: Record<string, string>;
   /** Which metadata URL the installer is expected to ask for. */
   metadataUrl?: string;
+  /** Files already in the server directory (a reinstall over an existing installation). */
+  existing?: Record<string, string>;
 };
 
-function install({ release, files = {}, env = {}, metadataUrl = `${API}/latest` }: Scenario) {
+function install({ release, files = {}, env = {}, metadataUrl = `${API}/latest`, existing = {} }: Scenario) {
   const sandbox = path.join(root, 'sandbox');
   const bin = path.join(sandbox, 'bin');
   const fixtures = path.join(sandbox, 'fixtures');
@@ -89,6 +91,12 @@ function install({ release, files = {}, env = {}, metadataUrl = `${API}/latest` 
   mkdirSync(bin, { recursive: true });
   mkdirSync(fixtures, { recursive: true });
   mkdirSync(server, { recursive: true });
+  for (const [name, content] of Object.entries(existing)) {
+    mkdirSync(path.dirname(path.join(server, name)), { recursive: true });
+    writeFileSync(path.join(server, name), content);
+  }
+  const existingContents = () =>
+    Object.fromEntries(Object.keys(existing).map((name) => [name, readFileSync(path.join(server, name), 'utf8')]));
   const shim = (name: string, body: string) => {
     const file = path.join(bin, name);
     writeFileSync(file, `#!/bin/bash\n${body}\n`);
@@ -142,6 +150,7 @@ function install({ release, files = {}, env = {}, metadataUrl = `${API}/latest` 
     commands: read('commands.log').split('\n').filter(Boolean),
     extracted: readdirSync(server, { recursive: true }).map(String),
     outside: existsSync(path.join(root, 'escape.txt')) || existsSync(path.join(sandbox, 'escape.txt')),
+    existingAfter: existingContents(),
     root,
   };
   rmSync(sandbox, { recursive: true, force: true });
@@ -180,6 +189,22 @@ suite('Pterodactyl egg installer (sandboxed, no network)', () => {
     expect(npm[0]).toContain('npm ci --ignore-scripts --no-audit --no-fund');
     expect(npm[1]).toContain('npm run build');
     expect(npm[2]).toContain('npm prune --omit=dev');
+    cleanup();
+  });
+
+  it('leaves an existing installation and its custom files untouched on reinstall', () => {
+    const existing = {
+      'package.json': '{"name":"arrakis","version":"2.0.0"}',
+      '.env': 'AUTH_SECRET=synthetic\n',
+      'certs/rabbit mq/client key.pem': 'synthetic key\n',
+      'custom dir/nested/notes.txt': 'keep\n',
+    };
+    const run = install({ ...releaseWith(goodArchive()), existing });
+    expect(run.code).toBe(0);
+    expect(run.stdout).toContain('Nothing was changed');
+    expect(run.existingAfter).toEqual(existing);
+    expect(run.curls).toEqual([]);
+    expect(run.commands).toEqual([]);
     cleanup();
   });
 

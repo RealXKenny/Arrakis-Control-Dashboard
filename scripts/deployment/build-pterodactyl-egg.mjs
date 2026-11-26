@@ -6,6 +6,14 @@ import { pathToFileURL } from 'node:url';
 const installationScript = `#!/bin/bash
 set -euo pipefail
 
+# Reinstalling over an existing installation must never overwrite, reset or re-permission the operator's files
+# (.env, certificates, custom folders). Updates of an existing install are done by the automatic updater at startup,
+# which checks every file for local changes first. To start over, empty the server's files deliberately first.
+if [ -e /mnt/server/package.json ]; then
+  echo "An existing installation was found in /home/container. Nothing was changed: the automatic updater installs new releases at startup without touching custom files."
+  exit 0
+fi
+
 apt-get update
 apt-get install --yes --no-install-recommends ca-certificates curl jq tar coreutils findutils
 rm -rf /var/lib/apt/lists/*
@@ -100,7 +108,56 @@ export const SECRET_VARIABLES = Object.freeze([
   'BOT_API_TOKEN',
   'OWNER_KEY_SECRET',
   'DISCORD_BOT_TOKEN',
+  'ROADMAP_GITHUB_TOKEN',
+  'RABBITMQ_URL',
+  'RABBITMQ_TLS_KEY',
+  'AUTO_UPDATE_GITHUB_TOKEN',
 ]);
+
+/** Automatic-update settings shared in meaning with the bot egg. RELEASE_TAG (above) doubles as the version pin. */
+const UPDATE_VARIABLES = [
+  variable(
+    'Automatic Updates',
+    'Check GitHub for verified releases and install them safely. Custom files are never overwritten.',
+    'AUTO_UPDATE_ENABLED',
+    'true',
+    { rules: 'required|string|in:true,false' },
+  ),
+  variable('Update On Startup', 'Check for an update each time the server starts.', 'AUTO_UPDATE_ON_STARTUP', 'true', {
+    rules: 'required|string|in:true,false',
+  }),
+  variable(
+    'Update Channel',
+    'stable installs normal releases only; prerelease also installs release candidates.',
+    'AUTO_UPDATE_CHANNEL',
+    'stable',
+    { rules: 'required|string|in:stable,prerelease' },
+  ),
+  variable('Update Check Interval (h)', 'Hours between background checks (1-168).', 'AUTO_UPDATE_INTERVAL_HOURS', '6', {
+    rules: 'required|integer|min:1|max:168',
+  }),
+  variable(
+    'Update Window (UTC)',
+    'Optional HH:MM-HH:MM UTC window for background installs, for example 03:00-05:00. Empty allows any time.',
+    'AUTO_UPDATE_WINDOW_UTC',
+    '',
+    { rules: 'nullable|string|regex:/^([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]$/' },
+  ),
+  variable(
+    'Update Health Period (s)',
+    'Seconds a new version must stay up after reporting ready before it is kept (30-900).',
+    'AUTO_UPDATE_HEALTH_SECONDS',
+    '120',
+    { rules: 'required|integer|min:30|max:900' },
+  ),
+  variable(
+    'Update GitHub Token',
+    'Optional read-only token for release downloads (raises the GitHub rate limit). Never needs write access.',
+    'AUTO_UPDATE_GITHUB_TOKEN',
+    '',
+    { rules: 'nullable|string|max:255' },
+  ),
+];
 
 function variable(name, description, envVariable, defaultValue = '', overrides = {}) {
   return {
@@ -128,7 +185,7 @@ function buildEgg() {
     features: null,
     docker_images: { 'Node.js 22': 'ghcr.io/pterodactyl/yolks:nodejs_22' },
     file_denylist: [],
-    startup: 'cd /home/container && exec node scripts/server-launcher.mjs start',
+    startup: 'cd /home/container && exec node scripts/deployment/updater/supervisor.mjs',
     config: {
       files: '{}',
       startup: '{"done":"Arrakis Control Dashboard is listening"}',
@@ -145,7 +202,7 @@ function buildEgg() {
     variables: [
       variable(
         'Release Tag',
-        'Version to install, such as v2.1.0. Leave as latest to install the newest release.',
+        'Version to install and stay on, such as v2.1.0. Leave as latest to follow the update channel.',
         'RELEASE_TAG',
         'latest',
         { rules: 'required|string|max:16' },
@@ -325,6 +382,235 @@ function buildEgg() {
         '',
         { rules: 'nullable|string|regex:/^[0-9]{15,25}$/' },
       ),
+      variable(
+        'Event Reviewer Role IDs',
+        'Optional comma-separated Discord roles that review and judge event submissions.',
+        'EVENT_REVIEWER_DISCORD_ROLE_IDS',
+        '',
+        { rules: 'nullable|string|max:520' },
+      ),
+      // Dune Console reads, shared caching and community pages.
+      variable(
+        'Dune API Timeout (ms)',
+        'Optional read timeout for Console requests (1000-120000). Empty uses 20000; status probes cap at 10000.',
+        'DUNE_API_TIMEOUT_MS',
+        '',
+        { rules: 'nullable|integer|min:1000|max:120000' },
+      ),
+      variable(
+        'Dungeon Leaderboard Refresh (s)',
+        'Seconds a shared dungeon leaderboard reading stays fresh before one background refresh (60-3600).',
+        'DUNGEON_LEADERBOARD_REFRESH_SECONDS',
+        '300',
+        { rules: 'required|integer|min:60|max:3600' },
+      ),
+      variable(
+        'Roadmap Repositories',
+        'Comma-separated public owner/repository list whose approved roadmap issues are shown (up to 5).',
+        'ROADMAP_REPOSITORIES',
+        'RealXKenny/Arrakis-Control-Dashboard,RealXKenny/Arrakis-Control-Bot',
+        { rules: 'required|string|max:600' },
+      ),
+      variable(
+        'Roadmap Label',
+        'Only issues carrying this label appear on the public roadmap.',
+        'ROADMAP_LABEL',
+        'roadmap',
+        { rules: 'required|string|max:50' },
+      ),
+      variable(
+        'Roadmap Refresh (s)',
+        'Seconds the shared roadmap reading stays fresh (300-86400).',
+        'ROADMAP_REFRESH_SECONDS',
+        '1200',
+        { rules: 'required|integer|min:300|max:86400' },
+      ),
+      variable(
+        'Roadmap GitHub Token',
+        'Optional read-only token (public repository access only) that raises the GitHub rate limit for the roadmap.',
+        'ROADMAP_GITHUB_TOKEN',
+        '',
+        { rules: 'nullable|string|max:255' },
+      ),
+      // Optional features, all off by default.
+      variable(
+        'Solaris Exchange Enabled',
+        'Real Solaris deposits, withdrawals and play. Read docs/features/solaris-exchange.md before enabling.',
+        'CASINO_SOLARIS_ENABLED',
+        'false',
+        { rules: 'required|string|in:true,false' },
+      ),
+      variable('Casino Max Wager', 'Largest single wager in whole Solaris.', 'CASINO_MAX_WAGER', '10000', {
+        rules: 'required|integer|min:1|max:1000000000000',
+      }),
+      variable('Casino Max Payout', 'Largest payout of one round in whole Solaris.', 'CASINO_MAX_PAYOUT', '1000000', {
+        rules: 'required|integer|min:1|max:1000000000000',
+      }),
+      variable(
+        'Poker Activity Enabled',
+        "Play-money Hold'em Discord Activity. Needs the Discord application credentials and the bot token.",
+        'POKER_ACTIVITY_ENABLED',
+        'false',
+        { rules: 'required|string|in:true,false' },
+      ),
+      variable(
+        'Live Chat Enabled',
+        'Live game chat through RabbitMQ. When true, the RabbitMQ URL, bridge ID and chat servers are required.',
+        'CHAT_ENABLED',
+        'false',
+        { rules: 'required|string|in:true,false' },
+      ),
+      variable('RabbitMQ URL', 'amqps:// URL with credentials for live chat.', 'RABBITMQ_URL', '', {
+        rules: 'nullable|string|max:2048',
+      }),
+      variable('Chat Bridge Funcom ID', 'Funcom ID the chat bridge publishes as.', 'CHAT_BRIDGE_FUNCOM_ID', '', {
+        rules: 'nullable|string|max:200',
+      }),
+      variable(
+        'Chat Discord Bot Funcom ID',
+        'Funcom ID of the Discord bot relay, so its messages show as Discord relays.',
+        'CHAT_DISCORD_BOT_FUNCOM_ID',
+        '',
+        { rules: 'nullable|string|max:200' },
+      ),
+      variable(
+        'Chat Bridge Display Name',
+        'Optional in-game display name for the bridge.',
+        'CHAT_BRIDGE_DISPLAY_NAME',
+        '',
+        {
+          rules: 'nullable|string|max:80',
+        },
+      ),
+      variable(
+        'Chat Servers',
+        'JSON list of chat servers, for example [{"id":"hagga-basin","label":"Hagga Basin","map":"HaggaBasin.0"}].',
+        'CHAT_SERVERS',
+        '',
+        { rules: 'nullable|string|max:32768' },
+      ),
+      variable(
+        'RabbitMQ TLS Enabled',
+        'Optional; empty follows the URL scheme (amqps:// uses TLS).',
+        'RABBITMQ_TLS_ENABLED',
+        '',
+        { rules: 'nullable|string|in:true,false' },
+      ),
+      variable('RabbitMQ TLS Server Name', 'Optional TLS server name override.', 'RABBITMQ_TLS_SERVERNAME', '', {
+        rules: 'nullable|string|max:253',
+      }),
+      variable('RabbitMQ CA (PEM)', 'Optional inline CA certificate PEM.', 'RABBITMQ_TLS_CA', '', {
+        rules: 'nullable|string|max:262144',
+      }),
+      variable(
+        'RabbitMQ Client Certificate (PEM)',
+        'Optional inline client certificate PEM.',
+        'RABBITMQ_TLS_CERT',
+        '',
+        {
+          rules: 'nullable|string|max:262144',
+        },
+      ),
+      variable('RabbitMQ Client Key (PEM)', 'Optional inline client private key PEM.', 'RABBITMQ_TLS_KEY', '', {
+        rules: 'nullable|string|max:65536',
+      }),
+      variable(
+        'RabbitMQ CA Path',
+        'Optional CA file path, relative to /home/container or absolute. Updates never move or change this file.',
+        'RABBITMQ_TLS_CA_PATH',
+        '',
+        { rules: 'nullable|string|max:4096' },
+      ),
+      variable(
+        'RabbitMQ Client Certificate Path',
+        'Optional client certificate file path.',
+        'RABBITMQ_TLS_CERT_PATH',
+        '',
+        {
+          rules: 'nullable|string|max:4096',
+        },
+      ),
+      variable('RabbitMQ Client Key Path', 'Optional client private key file path.', 'RABBITMQ_TLS_KEY_PATH', '', {
+        rules: 'nullable|string|max:4096',
+      }),
+      variable(
+        'RabbitMQ CA File (legacy)',
+        'Legacy CA path fallback; prefer RABBITMQ_TLS_CA_PATH.',
+        'RABBITMQ_CA_FILE',
+        '',
+        {
+          rules: 'nullable|string|max:4096',
+        },
+      ),
+      variable(
+        'RabbitMQ Verify TLS',
+        'Certificate verification cannot be disabled. Fixed at true.',
+        'RABBITMQ_TLS_REJECT_UNAUTHORIZED',
+        'true',
+        { user_editable: false, rules: 'required|string|in:true' },
+      ),
+      variable(
+        'Chat Bridge Queue (legacy)',
+        'Legacy setting; receive queues are broker-generated.',
+        'CHAT_BRIDGE_QUEUE',
+        'arrakis.dashboard.chat.v1',
+        {
+          rules: 'required|string|max:128',
+        },
+      ),
+      variable(
+        'Chat Bridge Prefetch',
+        'Unacknowledged chat messages per bridge (1-100).',
+        'CHAT_BRIDGE_PREFETCH',
+        '20',
+        {
+          rules: 'required|integer|min:1|max:100',
+        },
+      ),
+      variable(
+        'Chat Bridge Health Host',
+        'Loopback address of the bridge health endpoint.',
+        'CHAT_BRIDGE_HEALTH_HOST',
+        '127.0.0.1',
+        {
+          rules: 'required|string|max:253',
+        },
+      ),
+      variable('Chat Bridge Health Port', 'Port of the bridge health endpoint.', 'CHAT_BRIDGE_HEALTH_PORT', '2010', {
+        rules: 'required|integer|min:1|max:65535',
+      }),
+      variable(
+        'Chat History Messages',
+        'Most chat messages kept in Redis (50-100000).',
+        'CHAT_HISTORY_MAX_MESSAGES',
+        '10000',
+        {
+          rules: 'required|integer|min:50|max:100000',
+        },
+      ),
+      variable('Chat History Days', 'Days chat history is kept (1-90).', 'CHAT_HISTORY_RETENTION_DAYS', '7', {
+        rules: 'required|integer|min:1|max:90',
+      }),
+      variable('Chat Message Max Characters', 'Longest chat message (100-1800).', 'CHAT_MESSAGE_MAX_CHARS', '1000', {
+        rules: 'required|integer|min:100|max:1800',
+      }),
+      variable('Chat Send Limit', 'Messages one member may send per window.', 'CHAT_SEND_RATE_LIMIT', '10', {
+        rules: 'required|integer|min:1|max:1000',
+      }),
+      variable('Chat Server Send Limit', 'Messages per chat server per window.', 'CHAT_SERVER_SEND_RATE_LIMIT', '60', {
+        rules: 'required|integer|min:1|max:10000',
+      }),
+      variable(
+        'Chat Send Window (s)',
+        'Length of the chat rate-limit window in seconds.',
+        'CHAT_SEND_RATE_WINDOW_SECONDS',
+        '10',
+        {
+          rules: 'required|integer|min:1|max:300',
+        },
+      ),
+      // Automatic updates (see docs/deployment/automatic-updates.md).
+      ...UPDATE_VARIABLES,
     ],
   };
 }

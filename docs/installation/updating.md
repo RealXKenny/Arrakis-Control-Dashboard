@@ -14,8 +14,11 @@ Sessions that lack a verification stamp (very old ones) get no grace and sign in
 
 ## Pterodactyl
 
-Change `RELEASE_TAG` to the new `vX.Y.Z` and **Reinstall**. Leaving `latest` installs the newest release at reinstall time.
-See [Pterodactyl](pterodactyl.md).
+Servers created from the current egg update themselves: the supervisor installs verified releases at startup and on a
+schedule, never overwrites files you changed, and rolls back a version that does not start. See
+[automatic updates](../deployment/automatic-updates.md). Older servers need a one-time
+[migration](../deployment/automatic-updates.md#migrating-an-existing-server); until then, **Reinstall** no longer
+overwrites an existing installation, so update them as described there.
 
 ## Node.js on Linux or Windows
 

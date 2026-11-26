@@ -61,5 +61,55 @@
     "@typescript-eslint/typescript-estree": {
       "minimatch": "^11.0.5"
     }
+  },
+  "arrakisRelease": {
+    "repository": "RealXKenny/Arrakis-Control-Dashboard",
+    "assetPrefix": "arrakis-control-dashboard",
+    "start": [
+      "node",
+      "scripts/server-launcher.mjs",
+      "start"
+    ],
+    "readyPattern": "Arrakis Control Dashboard is listening",
+    "build": [
+      [
+        "npm",
+        "ci",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund"
+      ],
+      [
+        "npm",
+        "run",
+        "build"
+      ],
+      [
+        "npm",
+        "prune",
+        "--omit=dev",
+        "--no-audit",
+        "--no-fund"
+      ]
+    ],
+    "generatedDirectories": [
+      "node_modules",
+      ".next"
+    ],
+    "generatedFiles": [
+      "next-env.d.ts"
+    ],
+    "requiredEnv": [
+      "DUNE_API_URL",
+      "DUNE_API_KEY",
+      "DUNE_ADAPTER_TOKEN",
+      "DISCORD_GUILD_ID",
+      "VERIFIED_MEMBER_ROLE_ID",
+      "DISCORD_CLIENT_ID",
+      "DISCORD_CLIENT_SECRET",
+      "APP_URL",
+      "REDIS_URL",
+      "AUTH_SECRET"
+    ]
   }
 }

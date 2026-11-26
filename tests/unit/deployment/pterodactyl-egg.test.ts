@@ -14,9 +14,13 @@ describe('Pterodactyl dashboard egg', () => {
     expect(egg.meta.version).toBe('PTDL_v2');
     expect(Object.values(egg.docker_images)).toEqual(['ghcr.io/pterodactyl/yolks:nodejs_22']);
     expect(egg.startup).toContain('/home/container');
-    expect(egg.startup).toContain('scripts/server-launcher.mjs start');
-    // The launcher the egg starts must exist in the repository, or a fresh install cannot boot.
-    expect(existsSync(egg.startup.match(/node (\S+) start/)![1])).toBe(true);
+    expect(egg.startup).toContain('scripts/deployment/updater/supervisor.mjs');
+    // The supervisor the egg starts must exist in the repository, or a fresh install cannot boot, and it must start
+    // the same launcher and report the same ready line Wings waits for.
+    expect(existsSync(egg.startup.match(/node (\S+\.mjs)/)![1])).toBe(true);
+    const release = JSON.parse(readFileSync('package.json', 'utf8')).arrakisRelease;
+    expect(release.start).toEqual(['node', 'scripts/server-launcher.mjs', 'start']);
+    expect(release.readyPattern).toBe(JSON.parse(egg.config.startup).done);
     expect(JSON.parse(egg.config.startup)).toEqual({ done: 'Arrakis Control Dashboard is listening' });
     expect(egg.scripts.installation.script).toContain('repos/RealXKenny/Arrakis-Control-Dashboard/releases');
     expect(egg.scripts.installation.script).toContain('$api/latest');
@@ -118,6 +122,10 @@ describe('release integrity', () => {
         'DISCORD_CLIENT_SECRET',
         'OWNER_KEY_SECRET',
         'REDIS_URL',
+        'ROADMAP_GITHUB_TOKEN',
+        'RABBITMQ_URL',
+        'RABBITMQ_TLS_KEY',
+        'AUTO_UPDATE_GITHUB_TOKEN',
       ].sort(),
     );
     const byName = new Map<
@@ -144,5 +152,50 @@ describe('release integrity', () => {
     expect(script.indexOf('export NEXT_TELEMETRY_DISABLED=1')).toBeLessThan(script.indexOf('npm ci'));
     const launcher = readFileSync('scripts/server-launcher.mjs', 'utf8');
     expect(launcher).toContain("NEXT_TELEMETRY_DISABLED: '1'");
+  });
+});
+
+describe('egg and configuration stay in sync', () => {
+  const schema = readFileSync('src/config/env.ts', 'utf8');
+  const schemaKeys = [...schema.matchAll(/^ {2}([A-Z][A-Z0-9_]+):/gm)].map((match) => match[1]);
+  const eggKeys = new Set<string>(egg.variables.map((variable: { env_variable: string }) => variable.env_variable));
+  const example = readFileSync('.env.example', 'utf8');
+  /** Set by the platform, never by an operator: Wings assigns the port and the launcher sets production mode. */
+  const PLATFORM = ['NODE_ENV', 'SERVER_PORT'];
+  /** Egg-only settings read by the installer and the updater, not by the application. */
+  const DEPLOYMENT = [
+    'RELEASE_TAG',
+    'ALLOW_UNVERIFIED_RELEASE',
+    'NEXT_TELEMETRY_DISABLED',
+    'AUTO_UPDATE_ENABLED',
+    'AUTO_UPDATE_ON_STARTUP',
+    'AUTO_UPDATE_CHANNEL',
+    'AUTO_UPDATE_INTERVAL_HOURS',
+    'AUTO_UPDATE_WINDOW_UTC',
+    'AUTO_UPDATE_HEALTH_SECONDS',
+    'AUTO_UPDATE_GITHUB_TOKEN',
+  ];
+
+  it('offers every application setting in the egg', () => {
+    expect(schemaKeys.length).toBeGreaterThan(40);
+    expect(schemaKeys.filter((key) => !PLATFORM.includes(key) && !eggKeys.has(key))).toEqual([]);
+  });
+
+  it('has no egg variable that nothing reads', () => {
+    expect([...eggKeys].filter((key) => !schemaKeys.includes(key) && !DEPLOYMENT.includes(key))).toEqual([]);
+  });
+
+  it('documents every setting in .env.example', () => {
+    const documented = new Set([...example.matchAll(/^#?\s*([A-Z][A-Z0-9_]+)=/gm)].map((match) => match[1]));
+    const missing = [...schemaKeys, ...DEPLOYMENT].filter(
+      (key) => key !== 'NODE_ENV' && key !== 'NEXT_TELEMETRY_DISABLED' && !documented.has(key),
+    );
+    expect(missing).toEqual([]);
+  });
+
+  it('ships no real credentials', () => {
+    for (const variable of egg.variables)
+      if (SECRET_VARIABLES.includes(variable.env_variable))
+        expect(variable.default_value, variable.env_variable).toBe('');
   });
 });

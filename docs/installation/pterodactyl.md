@@ -26,32 +26,53 @@ starts it with the standard Node.js 22 image. It does not install the game serve
 6. Install. The installer downloads the archive and `.sha256`, refuses a missing or mismatching pair, refuses archives with
    links, special files or absolute/parent paths, extracts without the archive's owners or modes, then runs
    `npm ci --ignore-scripts`, `npm run build` and `npm prune --omit=dev` with `NEXT_TELEMETRY_DISABLED=1`.
-7. Start. Startup command: `cd /home/container && exec node scripts/server-launcher.mjs start`. The panel's "running" state is
-   the console line `Arrakis Control Dashboard is listening`. Stop uses `^C`.
+7. Start. Startup command: `cd /home/container && exec node scripts/deployment/updater/supervisor.mjs`. The supervisor
+   checks for a verified update (see [automatic updates](../deployment/automatic-updates.md)), then starts
+   `node scripts/server-launcher.mjs start` as its only child. The panel's "running" state is the console line
+   `Arrakis Control Dashboard is listening`. Stop uses `^C`, which the supervisor forwards to the dashboard.
+
+Reinstalling over an existing installation changes nothing: the installer sees `package.json` and exits, so `.env`,
+certificates and custom folders are never overwritten or re-permissioned. New releases arrive through the automatic
+updater instead.
 
 ## Variables
 
 Hidden variables are `user_viewable: false` and `user_editable: false`: the server owner and subusers cannot see or change
 them in the Startup tab; only a panel administrator can.
 
-| Variable                                                                                          | Default                          | Visibility    | Notes                                                                       |
-| ------------------------------------------------------------------------------------------------- | -------------------------------- | ------------- | --------------------------------------------------------------------------- |
-| `RELEASE_TAG`                                                                                     | `latest`                         | visible       | `latest` or exactly `vX.Y.Z`; anything else aborts the install              |
-| `ALLOW_UNVERIFIED_RELEASE`                                                                        | `false`                          | visible       | Only `true` allows an old release with _no_ checksum assets; leave `false`  |
-| `APP_URL`                                                                                         | required                         | visible       | Public HTTPS origin                                                         |
-| `DUNE_API_URL`                                                                                    | required                         | visible       | Console reachable from the container                                        |
-| `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`, `VERIFIED_MEMBER_ROLE_ID`                                | required                         | visible       | Discord application, server and role                                        |
-| `MODERATOR_DISCORD_ROLE_IDS`, `EVENT_REVIEWER_DISCORD_ROLE_IDS`, `BACKUP_VIEWER_DISCORD_ROLE_IDS` | empty                            | visible       | Separate optional role lists for moderation, event review and backup status |
-| `TRUSTED_PROXY_COUNT`                                                                             | `1`                              | visible       | Exact number of proxies (0 to 5)                                            |
-| `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN`                                                              | required                         | **hidden**    | Console API key and Discord adapter token                                   |
-| `DISCORD_CLIENT_SECRET`, `AUTH_SECRET`                                                            | required                         | **hidden**    | `AUTH_SECRET` 32 to 256 characters                                          |
-| `REDIS_URL`                                                                                       | required                         | **hidden**    | Includes the password; `rediss://` for TLS                                  |
-| `OWNER_KEY_SECRET`                                                                                | empty                            | **hidden**    | Optional dedicated marketplace owner-key secret                             |
-| `BOT_API_TOKEN`, `DISCORD_BOT_TOKEN`                                                              | empty                            | **hidden**    | Optional                                                                    |
-| `NEXT_TELEMETRY_DISABLED`                                                                         | `1`                              | hidden, fixed | Keeps Next.js telemetry off                                                 |
-| `REDIS_REQUIRE_TLS`, `REDIS_ALLOW_INSECURE`, `REDIS_CLUSTER_NODES`                                | `false`, `false`, empty          | visible       | See [Redis](../configuration/redis.md)                                      |
-| `AUDIT_LOG_STDOUT`, `AUDIT_LOG_REDIS`, `AUDIT_LOG_MAX_ENTRIES`, `AUDIT_LOG_RETENTION_DAYS`        | `true`, `true`, `10000`, `90`    | visible       | [Audit logs](../features/audit-logs.md)                                     |
-| `API_MAX_CONCURRENCY`, `API_GLOBAL_READ_LIMIT`, `LOG_LEVEL`, `SERVER_HOSTNAME`                    | `100`, `2400`, `INFO`, `0.0.0.0` | visible       |                                                                             |
+| Variable                                                                                                                                                                                 | Default                                     | Visibility    | Notes                                                                       |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------- | --------------------------------------------------------------------------- |
+| `RELEASE_TAG`                                                                                                                                                                            | `latest`                                    | visible       | `latest` or exactly `vX.Y.Z`; anything else aborts the install              |
+| `ALLOW_UNVERIFIED_RELEASE`                                                                                                                                                               | `false`                                     | visible       | Only `true` allows an old release with _no_ checksum assets; leave `false`  |
+| `APP_URL`                                                                                                                                                                                | required                                    | visible       | Public HTTPS origin                                                         |
+| `DUNE_API_URL`                                                                                                                                                                           | required                                    | visible       | Console reachable from the container                                        |
+| `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`, `VERIFIED_MEMBER_ROLE_ID`                                                                                                                       | required                                    | visible       | Discord application, server and role                                        |
+| `MODERATOR_DISCORD_ROLE_IDS`, `EVENT_REVIEWER_DISCORD_ROLE_IDS`, `BACKUP_VIEWER_DISCORD_ROLE_IDS`                                                                                        | empty                                       | visible       | Separate optional role lists for moderation, event review and backup status |
+| `TRUSTED_PROXY_COUNT`                                                                                                                                                                    | `1`                                         | visible       | Exact number of proxies (0 to 5)                                            |
+| `DUNE_API_KEY`, `DUNE_ADAPTER_TOKEN`                                                                                                                                                     | required                                    | **hidden**    | Console API key and Discord adapter token                                   |
+| `DISCORD_CLIENT_SECRET`, `AUTH_SECRET`                                                                                                                                                   | required                                    | **hidden**    | `AUTH_SECRET` 32 to 256 characters                                          |
+| `REDIS_URL`                                                                                                                                                                              | required                                    | **hidden**    | Includes the password; `rediss://` for TLS                                  |
+| `OWNER_KEY_SECRET`                                                                                                                                                                       | empty                                       | **hidden**    | Optional dedicated marketplace owner-key secret                             |
+| `BOT_API_TOKEN`, `DISCORD_BOT_TOKEN`                                                                                                                                                     | empty                                       | **hidden**    | Optional                                                                    |
+| `NEXT_TELEMETRY_DISABLED`                                                                                                                                                                | `1`                                         | hidden, fixed | Keeps Next.js telemetry off                                                 |
+| `REDIS_REQUIRE_TLS`, `REDIS_ALLOW_INSECURE`, `REDIS_CLUSTER_NODES`                                                                                                                       | `false`, `false`, empty                     | visible       | See [Redis](../configuration/redis.md)                                      |
+| `AUDIT_LOG_STDOUT`, `AUDIT_LOG_REDIS`, `AUDIT_LOG_MAX_ENTRIES`, `AUDIT_LOG_RETENTION_DAYS`                                                                                               | `true`, `true`, `10000`, `90`               | visible       | [Audit logs](../features/audit-logs.md)                                     |
+| `API_MAX_CONCURRENCY`, `API_GLOBAL_READ_LIMIT`, `LOG_LEVEL`, `SERVER_HOSTNAME`                                                                                                           | `100`, `2400`, `INFO`, `0.0.0.0`            | visible       |                                                                             |
+| `COMMUNITY_EVENTS_CHANNEL_ID`                                                                                                                                                            | empty                                       | visible       | Optional channel for event announcements                                    |
+| `DUNE_API_TIMEOUT_MS`                                                                                                                                                                    | empty (20000)                               | visible       | Console read timeout ([caching](../architecture/caching.md))                |
+| `DUNGEON_LEADERBOARD_REFRESH_SECONDS`                                                                                                                                                    | `300`                                       | visible       | [Dungeon leaderboard](../features/dungeon-leaderboard.md)                   |
+| `ROADMAP_REPOSITORIES`, `ROADMAP_LABEL`, `ROADMAP_REFRESH_SECONDS`                                                                                                                       | both repositories, `roadmap`, `1200`        | visible       | [Roadmap](../features/roadmap.md)                                           |
+| `ROADMAP_GITHUB_TOKEN`                                                                                                                                                                   | empty                                       | **hidden**    | Optional read-only GitHub token                                             |
+| `CASINO_SOLARIS_ENABLED`, `CASINO_MAX_WAGER`, `CASINO_MAX_PAYOUT`                                                                                                                        | `false`, `10000`, `1000000`                 | visible       | [Solaris Exchange](../features/solaris-exchange.md); read before enabling   |
+| `POKER_ACTIVITY_ENABLED`                                                                                                                                                                 | `false`                                     | visible       | [Poker Activity](../features/poker-activity.md)                             |
+| `CHAT_ENABLED`, `CHAT_BRIDGE_FUNCOM_ID`, `CHAT_DISCORD_BOT_FUNCOM_ID`, `CHAT_BRIDGE_DISPLAY_NAME`, `CHAT_SERVERS`                                                                        | `false`, empty                              | visible       | Live game chat                                                              |
+| `RABBITMQ_URL`, `RABBITMQ_TLS_KEY`                                                                                                                                                       | empty                                       | **hidden**    | Broker URL with credentials and inline client key                           |
+| `RABBITMQ_TLS_ENABLED`, `RABBITMQ_TLS_SERVERNAME`, `RABBITMQ_TLS_CA`, `RABBITMQ_TLS_CERT`, `RABBITMQ_TLS_CA_PATH`, `RABBITMQ_TLS_CERT_PATH`, `RABBITMQ_TLS_KEY_PATH`, `RABBITMQ_CA_FILE` | empty                                       | visible       | Certificate files stay where you put them; updates never touch them         |
+| `RABBITMQ_TLS_REJECT_UNAUTHORIZED`                                                                                                                                                       | `true`                                      | fixed         | Verification cannot be disabled                                             |
+| `CHAT_BRIDGE_QUEUE`, `CHAT_BRIDGE_PREFETCH`, `CHAT_BRIDGE_HEALTH_HOST`, `CHAT_BRIDGE_HEALTH_PORT`                                                                                        | legacy queue, `20`, `127.0.0.1`, `2010`     | visible       | Chat bridge tuning                                                          |
+| `CHAT_HISTORY_MAX_MESSAGES`, `CHAT_HISTORY_RETENTION_DAYS`, `CHAT_MESSAGE_MAX_CHARS`, `CHAT_SEND_RATE_LIMIT`, `CHAT_SERVER_SEND_RATE_LIMIT`, `CHAT_SEND_RATE_WINDOW_SECONDS`             | `10000`, `7`, `1000`, `10`, `60`, `10`      | visible       | Chat limits                                                                 |
+| `AUTO_UPDATE_ENABLED`, `AUTO_UPDATE_ON_STARTUP`, `AUTO_UPDATE_CHANNEL`, `AUTO_UPDATE_INTERVAL_HOURS`, `AUTO_UPDATE_WINDOW_UTC`, `AUTO_UPDATE_HEALTH_SECONDS`                             | `true`, `true`, `stable`, `6`, empty, `120` | visible       | [Automatic updates](../deployment/automatic-updates.md)                     |
+| `AUTO_UPDATE_GITHUB_TOKEN`                                                                                                                                                               | empty                                       | **hidden**    | Optional read-only token for release downloads                              |
 
 The egg passes only the variables it defines, so a setting that is not an egg variable cannot reach the application.
 
@@ -76,8 +97,15 @@ off the node ([monitoring](../administration/monitoring.md)).
 
 ## Update and rollback
 
-Change `RELEASE_TAG` and **Reinstall** from the panel to move forward or back. A pinned release must have its archive and
-`.sha256` published or the install refuses it by design. Take a Redis backup first ([updating](updating.md), [rollback](../deployment/rollback.md)).
+Updates are automatic by default: the supervisor checks at startup and every `AUTO_UPDATE_INTERVAL_HOURS`, verifies and
+builds the release in a staging folder, and only then stops the dashboard briefly to install it. A version that does not
+start cleanly is rolled back automatically and skipped from then on. Set `RELEASE_TAG` to stay on one version, or
+`AUTO_UPDATE_ENABLED=false` to update by hand. Downgrades are never automatic; see
+[automatic updates](../deployment/automatic-updates.md) for the full behaviour, conflicts and manual rollback, and take a
+Redis backup before major versions ([updating](updating.md), [rollback](../deployment/rollback.md)).
+
+Existing servers created from an older egg keep the old startup command until you re-import the egg; follow
+[migrating an existing server](../deployment/automatic-updates.md#migrating-an-existing-server).
 
 ## Backups
 
