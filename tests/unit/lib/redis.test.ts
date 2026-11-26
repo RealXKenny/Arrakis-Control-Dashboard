@@ -18,7 +18,7 @@ it('rejects unavailable storage and connects on a later request after recovery',
   await new Promise<void>((resolve) => reservation.close(() => resolve()));
   const client = createDashboardRedis(`redis://127.0.0.1:${port}/0`);
   cleanups.push(() => client.close());
-  await expect(client.get('session')).rejects.toThrow();
+  await expect(client.get('session')).rejects.toThrow(/ECONNREFUSED/u);
   const fixture = createRedisFixture(() => '{"user":{"id":"recovered"}}');
   fixture.server.listen(port, '127.0.0.1');
   await once(fixture.server, 'listening');

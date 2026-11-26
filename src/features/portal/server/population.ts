@@ -5,6 +5,7 @@ import { getServerEnv } from '../../../config/env';
 import { getRedisClient } from '../../../lib/redis/client';
 import { getDuneClient } from '../../../server/integrations/dune';
 import { logger } from '../../../lib/logger';
+import { describeOperationalError } from '../../../lib/errors';
 import { ACTIVITY_RETENTION_MS, summarizePopulation, type PopulationPoint } from '../population';
 
 function historyKey() {
@@ -52,8 +53,8 @@ export async function readPopulationHistory() {
         : [];
     });
     return { ...summarizePopulation(activity, now), activity };
-  } catch {
-    logger.warn('Population history unavailable');
+  } catch (error) {
+    logger.warn('Population history unavailable', { reason: describeOperationalError(error) });
     return null;
   }
 }
@@ -69,8 +70,8 @@ export function startPopulationRecorder() {
     pending = true;
     try {
       await recordPopulation();
-    } catch {
-      logger.warn('Population sample unavailable');
+    } catch (error) {
+      logger.warn('Population sample unavailable', { reason: describeOperationalError(error) });
     } finally {
       pending = false;
     }

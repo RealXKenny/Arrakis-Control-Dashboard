@@ -2,6 +2,7 @@ import '../assert-server';
 import { Redis, Cluster, ClusterOptions } from 'ioredis';
 import { getServerEnv } from '../../config/env';
 import { createLogger } from '../logger';
+import { describeOperationalError } from '../errors';
 import { clusterNodesFromEnv, parseRedisUrl } from './connection';
 
 /**
@@ -93,12 +94,14 @@ export class RedisClientPool implements RedisKeyValueLike {
     this.failures = 0;
   }
 
-  private onFailure() {
+  private onFailure(error: unknown) {
     this.failures += 1;
     if (this.breaker === 'half-open' || this.failures >= this.failureThreshold) {
       this.breaker = 'open';
       this.openedAt = Date.now();
-      log.warn('Redis circuit breaker opened; failing fast until cooldown elapses');
+      log.warn('Redis circuit breaker opened; failing fast until cooldown elapses', {
+        reason: describeOperationalError(error),
+      });
     }
   }
 
@@ -114,7 +117,7 @@ export class RedisClientPool implements RedisKeyValueLike {
       this.onSuccess();
       return value;
     } catch (error) {
-      this.onFailure();
+      this.onFailure(error);
       throw error instanceof RedisUnavailableError ? error : new RedisUnavailableError();
     }
   }

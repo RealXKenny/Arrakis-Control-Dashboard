@@ -126,6 +126,19 @@ export function resolveServerOptions(env, forwardedArgs = []) {
   return serverArgs;
 }
 
+/** Fail with an actionable message when `npm start` runs before `npm run build` produced `.next`. */
+export async function assertProductionBuild(directory = process.cwd()) {
+  try {
+    await access(resolve(directory, '.next', 'BUILD_ID'), constants.R_OK);
+  } catch {
+    // Dev note: you cannot start the spice harvester before it has been assembled.
+    throw new Error(
+      'No production build found (.next/BUILD_ID is missing). Run "npm run build" in the dashboard folder, ' +
+        'or reinstall/rebuild the Pterodactyl server so the installer builds it, then start again.',
+    );
+  }
+}
+
 /** Prepare the Next.js image-optimization cache on the writable server volume. */
 export async function prepareImageCache(directory = process.cwd()) {
   const cache = resolve(directory, '.next', 'cache');
@@ -162,7 +175,10 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
   // Dev note: load the environment before Next pitches its server tent.
   dotenv.config({ quiet: true });
   const serverArgs = resolveServerOptions(process.env, forwardedArgs);
-  if (command === 'start') await prepareImageCache();
+  if (command === 'start') {
+    await assertProductionBuild();
+    await prepareImageCache();
+  }
   const readinessUrl = resolveReadinessUrl([...serverArgs, ...forwardedArgs]);
   const nextBin = require.resolve('next/dist/bin/next');
   const { superviseChatBridge } = await import('./chat-bridge-supervisor.mjs');

@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { join } from 'node:path';
 import {
   announceReadiness,
+  assertProductionBuild,
   prepareImageCache,
   resolveReadinessUrl,
   resolveServerOptions,
@@ -44,6 +45,19 @@ describe('server launcher', () => {
       await writeFile(join(cache, 'images', 'cached-image'), 'image bytes');
       await prepareImageCache(app);
       expect(await readFile(join(target, 'images', 'cached-image'), 'utf8')).toBe('image bytes');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it('explains how to fix a missing production build', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'arrakis-build-check-'));
+    try {
+      await expect(assertProductionBuild(root)).rejects.toThrow(/npm run build/u);
+      await mkdir(join(root, '.next'));
+      await expect(assertProductionBuild(root)).rejects.toThrow(/BUILD_ID is missing/u);
+      await writeFile(join(root, '.next', 'BUILD_ID'), 'build-1');
+      await expect(assertProductionBuild(root)).resolves.toBeUndefined();
     } finally {
       await rm(root, { recursive: true, force: true });
     }

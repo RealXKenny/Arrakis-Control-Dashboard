@@ -3,11 +3,12 @@ import { test, expect } from '../helpers/browser-test';
 test('public changelog previews sections, expands notes, filters and searches the full release', async ({ page }) => {
   await page.goto('/changelog');
   await expect(page.getByRole('heading', { name: 'Changelog.', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Version 2.0.1', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Version 2.0.0', exact: true })).toBeVisible();
-  await expect(page.getByRole('status')).toHaveText('1 update to explore');
+  await expect(page.getByRole('status')).toHaveText('2 updates to explore');
   await expect(
     page.getByRole('button', { name: 'All updates', exact: true }).locator('[aria-hidden="true"]'),
-  ).toHaveText('1');
+  ).toHaveText('2');
   const features = page.getByRole('region', { name: 'New Features', exact: true });
   await expect(features.locator('li')).toHaveCount(5);
   await features.getByRole('button', { name: /View all/ }).click();

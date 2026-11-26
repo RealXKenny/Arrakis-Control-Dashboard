@@ -1,5 +1,17 @@
 # Changelog
 
+## Patch Notes v2.0.1
+
+### Improvements
+
+- Redis connection problems are now logged with their reason, such as `ECONNREFUSED`, `ETIMEDOUT` or `WRONGPASS`: one warning when the connection drops and one info line when it recovers, instead of silence. Warnings like "Community event announcements are temporarily unavailable" and "Population sample unavailable" now include that reason too. Connection strings are scrubbed from these messages.
+- Starting the dashboard before a production build exists now stops with a clear message to run `npm run build` (or rebuild the Pterodactyl server) instead of a Next.js error.
+- Dependency updates: Next.js 16.4.6, React 19.3.1, amqplib 2.4.2, and patch releases of Vitest, Playwright, Tailwind CSS, Prettier and the Next.js ESLint config.
+
+### Fixes
+
+- Guild logos that are missing or fail to load now fall back to the guild's initials on the guild page and in the guild directory, even when the image failed before the page finished loading, instead of showing a broken image.
+
 ## Patch Notes v2.0.0
 
 ### New Features

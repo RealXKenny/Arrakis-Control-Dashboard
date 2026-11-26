@@ -2,6 +2,26 @@
 
 <!-- Generated from the bot repository CHANGELOG.md; do not edit manually. -->
 
+## [2.0.1] - 2026-11-26
+
+### Fixed
+
+- Slash commands register again once Discord Activities are enabled. Discord adds an Entry Point command for the Activity and rejected the bot's global command sync without it (error 50240), so `/poker` and new or changed commands were not synchronized. The bot now keeps the Entry Point command when it syncs.
+- The release workflow's publish job names the repository for `gh release create`. It has no checkout, so the 2.0.0 release failed with "not a git repository" after a successful build.
+
+### Changed
+
+- Easier-to-read logs. Errors print as one `Name: message` line instead of a JSON block with the stack; set `LOG_LEVEL=DEBUG` to see stack traces. Discord API error messages stay visible in production.
+- The `METRICS` line prints every five minutes instead of every minute. It still prints at once when there is a warning, a Discord rate limit or a change in health (gateway, database or open circuits), and `HEALTH_FILE` still updates every interval.
+- RabbitMQ chat warns once per distinct connection problem instead of on every retry, repeats a short summary every tenth attempt, and says how many attempts the recovery took.
+- Startup logs name the server, the honeypot channel and the ticket panel channel alongside their IDs, and dotenv no longer prints its own banner.
+- Dependency updates: discord.js 14.28.1, amqplib 2.4.1, pg 8.23.1, dotenv 18, ESLint 10, Vitest 5.1, and current GitHub Actions versions.
+
+### Upgrading from 2.0.0
+
+- Reinstall with `RELEASE_TAG` set to `v2.0.1` or `latest`. No configuration or database changes.
+- After the first start, check that the log shows `Global application commands synchronized` with no `50240` error, and that `/poker` appears in Discord.
+
 ## [2.0.0] - 2026-11-25
 
 ### Highlights
