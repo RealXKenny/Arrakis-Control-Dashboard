@@ -12,9 +12,9 @@ This is a continuation record, not a claim of completion. Check an item only aft
 
 ## AI configuration
 
-- [x] Inspect tracked Claude guide and local ignored configuration; migrate relevant general guidance into `AGENTS.md`.
-- [x] Remove tracked `CLAUDE.md` and, with user consent, local `.claude/`; keep its existing ignore rule.
-- [x] Remove Claude-specific validator requirements; update root inventory, architecture test and current command/CI documentation.
+- [x] Inspect the tracked tool-specific guide and local ignored configuration; migrate relevant general guidance into `AGENTS.md`.
+- [x] Remove the tracked tool-specific guide and, with user consent, its local configuration folder; keep the existing ignore rule.
+- [x] Remove tool-specific validator requirements; update root inventory, architecture test and current command/CI documentation.
 - [x] Run `npm run ai:check`, `npm run docs:check` and `npm run workflows:check` successfully.
 - [ ] Recheck repository-local instruction paths, workflow references, tests, and ignored files before delivery; verify tool-specific instruction loading is not claimed without evidence.
 
