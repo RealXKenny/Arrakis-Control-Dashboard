@@ -69,6 +69,9 @@ describe('roadmap entries', () => {
     );
     expect(summarize('## Context\nignored\n\n## Roadmap summary\nShown text.\n\n## Notes\nHidden')).toBe('Shown text.');
     expect(summarize('```\nkey=1\n```\n\nVisible')).toBe('Visible');
+    // Removing one block must not assemble another, and no angle bracket survives.
+    expect(summarize('<scr<script>x</script>ipt>alert(1)</script> <!<!-- a -->-- b --> Safe')).not.toMatch(/[<>]/);
+    expect(summarize('1 < 2')).toBe('1 2');
   });
 
   it('filters, sorts and groups upcoming milestones', () => {

@@ -53,18 +53,21 @@ export function repositories(): string[] {
 /** Plain-text summary: a "Roadmap summary" section when present, otherwise the first paragraph. */
 export function summarize(body: unknown): string {
   if (typeof body !== 'string') return '';
-  const text = body
-    .slice(0, 20_000)
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/\r\n/g, '\n');
+  // Repeat until nothing changes, so removing one block cannot leave another behind.
+  let text = body.slice(0, 20_000);
+  for (let previous = ''; previous !== text;) {
+    previous = text;
+    text = text.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '');
+  }
+  text = text.replace(/```[\s\S]*?```/g, '').replace(/\r\n/g, '\n');
   const section = /^#{1,4}\s*roadmap summary\s*$\n([\s\S]*?)(?=^#{1,4}\s|$(?![\s\S]))/im.exec(text);
   const source = section
     ? section[1]
     : (text.split(/\n\s*\n/).find((paragraph) => paragraph.trim() && !/^\s*#/.test(paragraph)) ?? '');
+  // Strip tags, then any stray angle bracket: the summary is plain text.
   return source
     .replace(/<[^>]*>/g, '')
+    .replace(/[<>]/g, '')
     .replace(/!\[[^\]]*]\([^)]*\)/g, '')
     .replace(/\[([^\]]*)]\([^)]*\)/g, '$1')
     .replace(/[*_`>#~|]/g, '')

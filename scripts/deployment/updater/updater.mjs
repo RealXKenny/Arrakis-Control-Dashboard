@@ -150,13 +150,25 @@ async function boundedJson(response, limit) {
   return JSON.parse(text);
 }
 
+const REPOSITORY_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}$/;
+
+/** The `owner/name` the updater talks to, checked so a malformed package.json cannot steer requests elsewhere. */
+export function githubRepository(value) {
+  if (typeof value !== 'string' || !REPOSITORY_PATTERN.test(value) || value.split('/')[1].startsWith('.'))
+    throw new UpdateError('arrakisRelease.repository must look like owner/name.');
+  return value;
+}
+
 /** List releases with a conditional request. Returns `{ notModified, releases, etag }`. */
 export async function listReleases({ repository, settings, fetchImpl = globalThis.fetch, etag = null }) {
-  const response = await fetchImpl(`https://api.github.com/repos/${repository}/releases?per_page=30`, {
-    headers: githubHeaders(settings, undefined, etag),
-    redirect: 'error',
-    signal: globalThis.AbortSignal.timeout(20_000),
-  });
+  const response = await fetchImpl(
+    `https://api.github.com/repos/${githubRepository(repository)}/releases?per_page=30`,
+    {
+      headers: githubHeaders(settings, undefined, etag),
+      redirect: 'error',
+      signal: globalThis.AbortSignal.timeout(20_000),
+    },
+  );
   if (response.status === 304) return { notModified: true, releases: null, etag };
   if (!response.ok) throw new UpdateError(`GitHub answered ${response.status} while listing releases.`);
   const releases = await boundedJson(response, 8 * 1024 * 1024);
@@ -166,7 +178,7 @@ export async function listReleases({ repository, settings, fetchImpl = globalThi
 
 export async function releaseByTag({ repository, tag, settings, fetchImpl = globalThis.fetch }) {
   const response = await fetchImpl(
-    `https://api.github.com/repos/${repository}/releases/tags/${encodeURIComponent(tag)}`,
+    `https://api.github.com/repos/${githubRepository(repository)}/releases/tags/${encodeURIComponent(tag)}`,
     {
       headers: githubHeaders(settings),
       redirect: 'error',
@@ -1003,5 +1015,6 @@ export async function readProductConfig(root) {
   const config = pkg?.arrakisRelease;
   if (!config?.repository || !config.assetPrefix || !Array.isArray(config.start))
     throw new UpdateError('package.json has no arrakisRelease configuration.');
+  githubRepository(config.repository);
   return { generatedDirectories: [], generatedFiles: [], build: [], ...config };
 }

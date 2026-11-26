@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { chmod, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, lstat, mkdir, mkdtemp, open, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -11,6 +11,7 @@ import {
   checkAndUpdate,
   compareVersions,
   confirmHealthy,
+  githubRepository,
   insideWindow,
   missingConfiguration,
   readArchive,
@@ -238,11 +239,19 @@ async function snapshot(directory = root, prefix = ''): Promise<Record<string, s
     const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
     if (relative === '.arrakis') continue;
     const full = path.join(directory, entry.name);
-    const stat = await lstat(full);
     if (entry.isDirectory()) {
-      result[`${relative}/`] = (stat.mode & 0o777).toString(8);
+      result[`${relative}/`] = ((await lstat(full)).mode & 0o777).toString(8);
       Object.assign(result, await snapshot(full, relative));
-    } else result[relative] = `${sha(await readFile(full))}:${(stat.mode & 0o777).toString(8)}`;
+      continue;
+    }
+    // Read the contents and the mode through one handle, so both describe the same file.
+    const handle = await open(full, 'r');
+    try {
+      const mode = (await handle.stat()).mode & 0o777;
+      result[relative] = `${sha(await handle.readFile())}:${mode.toString(8)}`;
+    } finally {
+      await handle.close();
+    }
   }
   return result;
 }
@@ -268,6 +277,14 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   await rm(root, { recursive: true, force: true });
+});
+
+describe('release source', () => {
+  it('accepts only an owner/name repository', () => {
+    expect(githubRepository('RealXKenny/Arrakis-Control-Dashboard')).toBe('RealXKenny/Arrakis-Control-Dashboard');
+    for (const value of ['owner', 'owner/name/extra', '../x/y', 'owner/..', 'owner/name?x=1', 'evil.example/x', '', 7])
+      expect(() => githubRepository(value), String(value)).toThrow(UpdateError);
+  });
 });
 
 describe('automatic update', () => {
