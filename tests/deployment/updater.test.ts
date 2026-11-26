@@ -159,7 +159,9 @@ class FakeGitHub {
     this.releases.unshift({ tag_name: tag, draft: false, prerelease, assets });
   }
 
-  fetch = async (input: string | URL) => {
+  fetch = (input: string | URL) => Promise.resolve(this.respond(input));
+
+  respond(input: string | URL) {
     const url = String(input);
     this.calls.push(url);
     if (this.down) throw new TypeError('fetch failed');
@@ -173,7 +175,7 @@ class FakeGitHub {
     const asset = this.assets.get(url);
     if (!asset) return new Response('missing', { status: 404 });
     return new Response(new Uint8Array(asset), { headers: { 'content-length': String(asset.length) } });
-  };
+  }
 }
 
 let root: string;
@@ -199,9 +201,7 @@ const runImpl = async (_command: string, _args: string[], options: { cwd: string
   await writeFile(path.join(options.cwd, 'dist', 'built.txt'), `built ${version}\n`);
   return '';
 };
-const failingBuild = async () => {
-  throw new UpdateError('npm run build failed (exit 1).');
-};
+const failingBuild = () => Promise.reject(new UpdateError('npm run build failed (exit 1).'));
 
 async function install(files: Record<string, string>) {
   for (const [file, content] of Object.entries(files)) {
@@ -373,10 +373,10 @@ describe('automatic update', () => {
     const corrupted = Buffer.from(good);
     corrupted[corrupted.length - 12] ^= 0xff;
     await writeFile(file, corrupted);
-    await expect(readArchive(file, async () => undefined)).rejects.toThrow();
+    await expect(readArchive(file, () => Promise.resolve())).rejects.toThrow();
     const { gunzipSync } = await import('node:zlib');
     await writeFile(file, gzipSync(gunzipSync(good).subarray(0, 700)));
-    await expect(readArchive(file, async () => undefined)).rejects.toThrow(/truncated|corrupted/);
+    await expect(readArchive(file, () => Promise.resolve())).rejects.toThrow(/truncated|corrupted/);
     await rm(file);
   });
 
@@ -435,10 +435,10 @@ describe('automatic update', () => {
     const order: string[] = [];
     await writeFile(path.join(root, 'src/app.js'), 'edited\n');
     github.add({ tag: 'v1.1.0', files: V2 });
-    await expect(update({ beforeActivate: async () => void order.push('stop') })).rejects.toThrow();
+    await expect(update({ beforeActivate: () => Promise.resolve(void order.push('stop')) })).rejects.toThrow();
     expect(order).toEqual([]);
     await writeFile(path.join(root, 'src/app.js'), V1['src/app.js']);
-    await update({ beforeActivate: async () => void order.push('stop') });
+    await update({ beforeActivate: () => Promise.resolve(void order.push('stop')) });
     expect(order).toEqual(['stop']);
   });
 
@@ -562,7 +562,7 @@ describe('supervisor', () => {
 
   it('forwards the panel stop signal and exits with the application exit code', async () => {
     const graceful = await runSupervisor(
-      "console.log('App is listening'); process.on('SIGINT', () => { console.log('graceful'); process.exit(0); }); setInterval(() => {}, 1000);",
+      "process.on('SIGINT', () => { console.log('graceful'); process.exit(0); }); console.log('App is listening'); setInterval(() => {}, 1000);",
       true,
     );
     expect(graceful.code).toBe(0);

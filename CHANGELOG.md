@@ -2,7 +2,19 @@
 
 ## Patch Notes v2.0.1
 
+### New Features
+
+- **Dungeon leaderboard** (`/dungeons`, under Community): the fastest run for every dungeon and difficulty, recent runs with dungeon and difficulty filters and paging, and your own personal bests from your linked character. It reads only the Console's documented `/api/dungeons/leaderboard` and `/api/dungeons/runs` endpoints, shows when the data was last updated, refreshes automatically while the page is visible, and keeps the last good reading with a clear "Cached" label when the Console is unreachable. Party members who deleted their character stay unnamed.
+- **Public roadmap** (`/roadmap`): planned, in-progress, testing and released work from both Arrakis Control repositories. Only issues carrying the `roadmap` label appear; anything labelled security, private, internal, confidential or embargoed never does, pull requests are excluded, and a target version or due date is shown only when a maintainer set one on the issue's milestone.
+- **Automatic updates for Pterodactyl**: the egg now starts an update supervisor that installs verified releases at startup and on a schedule (stable or prerelease channel, version pin, interval, optional UTC maintenance window, optional read-only token). Every file is checked against the release's checksum, GitHub's digest and a new per-file manifest; the release is built in a staging folder before the dashboard is stopped; any file you changed or added is never overwritten, and a version that does not start is rolled back and skipped.
+
 ### Improvements
+
+- A central Redis cache now backs Console reads shared by every viewer (map layers, online count, player totals, restart history, item catalog, hub points of interest, dungeon records and the roadmap): one upstream request per refresh no matter how many people are watching, background refresh of stale data, last-known-good readings during outages, distributed refresh locks across instances, versioned and validated entries, and Redis Cluster support. Security-sensitive operations never use cached data. See `docs/architecture/caching.md`.
+- Dune Console reads now have a configurable timeout (`DUNE_API_TIMEOUT_MS`, 20 seconds by default; the status probe stays at most 10 seconds), up to two jittered retries that honour `Retry-After`, and a circuit breaker that fails fast during an outage. Writes are never retried.
+- The `Provider network failure … /api/server/status duration ms=5001` warning is gone: individual recoverable failures are logged at DEBUG, a sustained outage produces one warning (plus a short summary at most every ten minutes) and recovery one info line. Failed writes are still warned about.
+- Pages that refresh in the background pause while the tab is hidden and no longer refetch data the server already rendered.
+- The Pterodactyl egg now offers every application setting (live chat, RabbitMQ TLS, casino, Poker Activity, event reviewers, Console timeout, dungeon and roadmap settings) and hides RabbitMQ and GitHub credentials from panel users. Tests keep the egg, `.env.example` and the environment schema in sync.
 
 - Redis connection problems are now logged with their reason, such as `ECONNREFUSED`, `ETIMEDOUT` or `WRONGPASS`: one warning when the connection drops and one info line when it recovers, instead of silence. Warnings like "Community event announcements are temporarily unavailable" and "Population sample unavailable" now include that reason too. Connection strings are scrubbed from these messages.
 - Starting the dashboard before a production build exists now stops with a clear message to run `npm run build` (or rebuild the Pterodactyl server) instead of a Next.js error.
@@ -11,6 +23,11 @@
 ### Fixes
 
 - Guild logos that are missing or fail to load now fall back to the guild's initials on the guild page and in the guild directory, even when the image failed before the page finished loading, instead of showing a broken image.
+
+### Upgrade Notes
+
+- Pterodactyl servers created from an older egg keep starting the dashboard directly. To get automatic updates, import the new egg (or change the startup command to `node scripts/deployment/updater/supervisor.mjs`) as described in `docs/deployment/automatic-updates.md`. **Reinstall** no longer overwrites an existing installation.
+- New optional settings: `DUNE_API_TIMEOUT_MS`, `DUNGEON_LEADERBOARD_REFRESH_SECONDS`, `ROADMAP_REPOSITORIES`, `ROADMAP_LABEL`, `ROADMAP_REFRESH_SECONDS`, `ROADMAP_GITHUB_TOKEN` and the `AUTO_UPDATE_*` settings. All have safe defaults.
 
 ## Patch Notes v2.0.0
 

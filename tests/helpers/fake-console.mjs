@@ -12,6 +12,40 @@ import { resetOperations } from './guild-operations-redis.mjs';
  * character), so tests never share state and the server's per-member caches cannot leak between them. It never sees
  * real credentials: it records only whether a bearer token was present.
  */
+/** Fictional dungeon runs for browser tests and screenshots; the shape follows the documented Console endpoints. */
+const DUNGEON_PARTY = ['Arrakis Demo', 'Sietch Runner', 'Dune Cartographer', 'Spice Scout', 'Deep Desert Guide'];
+const DUNGEONS = ['DA_Dgn_001_SpiceRefinery', 'DA_Dgn_002_ImperialTestingStation', 'DA_Dgn_003_ShipwreckCaverns'];
+function dungeonRuns() {
+  const runs = [];
+  let id = 9000;
+  for (const [index, dungeonId] of DUNGEONS.entries())
+    for (const difficulty of [1, 2, 3])
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const size = 1 + ((index + difficulty + attempt) % 4);
+        runs.push({
+          completionId: id++,
+          dungeonId,
+          difficulty,
+          durationMs: 540_000 + index * 180_000 + difficulty * 95_000 + attempt * 41_000,
+          playerCount: size,
+          party: DUNGEON_PARTY.slice(attempt % 2, (attempt % 2) + size).map((characterName) => ({ characterName })),
+        });
+      }
+  return runs;
+}
+function dungeonRecords() {
+  const best = new Map();
+  for (const run of dungeonRuns()) {
+    const key = `${run.dungeonId}:${run.difficulty}`;
+    const current = best.get(key);
+    best.set(key, {
+      runCount: (current?.runCount ?? 0) + 1,
+      best: !current || run.durationMs < current.best.durationMs ? run : current.best,
+    });
+  }
+  return [...best.values()];
+}
+
 export const FAKE_CONSOLE_PORT = 3101;
 /** The two long-standing fixture sessions of browser-server.mjs. */
 export const MEMBER_DISCORD_ID = '123456789000000000';
@@ -355,6 +389,23 @@ export function startFakeConsole(port = FAKE_CONSOLE_PORT) {
     if (path === '/api/exchange/listings') return json(response, 200, shared.market.listings);
     if (path === '/api/admin/landsraad') return json(response, 200, {});
     if (path === '/api/realtime/objects') return json(response, 200, { rows: [] });
+    if (path === '/api/dungeons/leaderboard') return json(response, 200, { entries: dungeonRecords() });
+    if (path === '/api/dungeons/runs') {
+      const page = Number(url.searchParams.get('page') ?? 0);
+      const pageSize = Number(url.searchParams.get('pageSize') ?? 25);
+      const runs = dungeonRuns().filter(
+        (run) =>
+          (!url.searchParams.get('dungeonId') || run.dungeonId === url.searchParams.get('dungeonId')) &&
+          (!url.searchParams.get('difficulty') || String(run.difficulty) === url.searchParams.get('difficulty')),
+      );
+      return json(response, 200, {
+        page,
+        pageSize,
+        totalCount: runs.length,
+        totalRuns: runs.length,
+        runs: runs.slice(page * pageSize, page * pageSize + pageSize),
+      });
+    }
     return json(response, 404, { ok: false, error: 'not found' });
   });
 

@@ -13,11 +13,13 @@
  * isolated staging directory with a minimal environment (no panel secrets reach dependency scripts). Only a build
  * that succeeded is activated.
  */
+import { Buffer } from 'node:buffer';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createReadStream, createWriteStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import process from 'node:process';
 import { Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { createGunzip } from 'node:zlib';
@@ -149,11 +151,11 @@ async function boundedJson(response, limit) {
 }
 
 /** List releases with a conditional request. Returns `{ notModified, releases, etag }`. */
-export async function listReleases({ repository, settings, fetchImpl = fetch, etag = null }) {
+export async function listReleases({ repository, settings, fetchImpl = globalThis.fetch, etag = null }) {
   const response = await fetchImpl(`https://api.github.com/repos/${repository}/releases?per_page=30`, {
     headers: githubHeaders(settings, undefined, etag),
     redirect: 'error',
-    signal: AbortSignal.timeout(20_000),
+    signal: globalThis.AbortSignal.timeout(20_000),
   });
   if (response.status === 304) return { notModified: true, releases: null, etag };
   if (!response.ok) throw new UpdateError(`GitHub answered ${response.status} while listing releases.`);
@@ -162,13 +164,13 @@ export async function listReleases({ repository, settings, fetchImpl = fetch, et
   return { notModified: false, releases, etag: response.headers.get('etag') };
 }
 
-export async function releaseByTag({ repository, tag, settings, fetchImpl = fetch }) {
+export async function releaseByTag({ repository, tag, settings, fetchImpl = globalThis.fetch }) {
   const response = await fetchImpl(
     `https://api.github.com/repos/${repository}/releases/tags/${encodeURIComponent(tag)}`,
     {
       headers: githubHeaders(settings),
       redirect: 'error',
-      signal: AbortSignal.timeout(20_000),
+      signal: globalThis.AbortSignal.timeout(20_000),
     },
   );
   if (response.status === 404) return null;
@@ -192,7 +194,7 @@ async function download(asset, settings, destination, fetchImpl, limit) {
   const response = await fetchImpl(url, {
     headers: githubHeaders(settings, 'application/octet-stream'),
     redirect: 'follow',
-    signal: AbortSignal.timeout(10 * 60_000),
+    signal: globalThis.AbortSignal.timeout(10 * 60_000),
   });
   if (!response.ok || !response.body) throw new UpdateError(`Download of ${asset.name} failed (${response.status}).`);
   const declared = Number(response.headers.get('content-length'));
@@ -781,8 +783,8 @@ export async function checkAndUpdate({
   root,
   config,
   settings,
-  fetchImpl = fetch,
-  log = (message) => console.info(message),
+  fetchImpl = globalThis.fetch,
+  log = (message) => globalThis.console.info(message),
   runImpl = run,
   env = process.env,
   stageOnly = false,

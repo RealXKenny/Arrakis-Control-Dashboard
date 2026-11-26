@@ -9,6 +9,7 @@
  */
 import { spawn } from 'node:child_process';
 import process from 'node:process';
+import { clearTimeout, setTimeout } from 'node:timers';
 import {
   UpdateError,
   checkAndUpdate,
@@ -21,7 +22,7 @@ import {
 } from './updater.mjs';
 
 const root = process.cwd();
-const log = (message) => console.info(`[updater] ${message}`);
+const log = (message) => globalThis.console.info(`[updater] ${message}`);
 const STOP_GRACE_MS = 30_000;
 const WINDOW_RETRY_MS = 15 * 60_000;
 
