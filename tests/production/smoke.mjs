@@ -168,7 +168,10 @@ try {
     write: (message) => readinessMessages.push(message),
   });
   assert.equal(readinessMessages.length, 1);
-  assert.match(readinessMessages[0], /^Dashboard ready in \d+\.\ds \(HTTP check passed\)\.$/);
+  assert.match(
+    readinessMessages[0],
+    /^Arrakis Control Dashboard is listening \(ready in \d+\.\ds, HTTP check passed\)\.$/,
+  );
   for (const [asset, contentType] of [
     ['/favicon.ico', 'image/x-icon'],
     ['/api/assets/terrain/hagga.json.gz', 'application/gzip'],

@@ -415,6 +415,22 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             order: 22,
           },
           {
+            id: 'community-solaris',
+            label: 'Solaris leaderboard',
+            href: '/solaris',
+            icon: 'status',
+            description: 'The wealthiest characters by Solaris on hand, plus where you rank.',
+            order: 23,
+          },
+          {
+            id: 'community-unwrapped',
+            label: 'Unwrapped',
+            href: '/unwrapped',
+            icon: 'changelog',
+            description: 'The year in review: what the server built and ran, and your own highlights.',
+            order: 24,
+          },
+          {
             id: 'community-calendar',
             label: 'Community calendar',
             href: '/calendar',

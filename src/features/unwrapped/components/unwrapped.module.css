@@ -1,0 +1,127 @@
+/*
+ * Unwrapped story cards. Each tone is a dashboard palette blend (obsidian, sand, spice) so the recap stays in the
+ * dashboard's own look. Every animation is disabled under prefers-reduced-motion.
+ */
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: min(36rem, 78vh);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-sand-200) 12%, transparent);
+  box-shadow: 6px 6px 0 0 var(--color-obsidian-950);
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.stage:focus-visible {
+  outline: 2px solid var(--color-spice-400);
+  outline-offset: 3px;
+}
+
+.dawn {
+  background:
+    radial-gradient(circle at 80% 10%, color-mix(in srgb, var(--color-spice-300) 55%, transparent), transparent 55%),
+    linear-gradient(160deg, var(--color-spice-700), var(--color-obsidian-900) 75%);
+}
+
+.dune {
+  background:
+    radial-gradient(ellipse at 20% 110%, color-mix(in srgb, var(--color-sand-300) 45%, transparent), transparent 60%),
+    linear-gradient(200deg, var(--color-sand-800), var(--color-obsidian-950) 80%);
+}
+
+.night {
+  background:
+    radial-gradient(circle at 75% 20%, color-mix(in srgb, var(--color-obsidian-300) 25%, transparent), transparent 40%),
+    linear-gradient(180deg, var(--color-obsidian-800), var(--color-obsidian-950));
+}
+
+.ember {
+  background:
+    radial-gradient(circle at 15% 15%, color-mix(in srgb, var(--color-spice-400) 50%, transparent), transparent 50%),
+    linear-gradient(135deg, var(--color-spice-900), var(--color-obsidian-950) 70%);
+}
+
+.oasis {
+  background:
+    radial-gradient(circle at 85% 85%, color-mix(in srgb, var(--color-sand-200) 30%, transparent), transparent 50%),
+    linear-gradient(20deg, var(--color-obsidian-900), var(--color-sand-700));
+}
+
+.progress {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem 0;
+}
+
+.segment {
+  flex: 1;
+  height: 0.25rem;
+  background: color-mix(in srgb, var(--color-sand-50) 22%, transparent);
+}
+
+.segmentDone {
+  background: var(--color-sand-50);
+}
+
+.segmentCurrent {
+  background: var(--color-spice-300);
+}
+
+.slide {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem clamp(1.25rem, 5vw, 3rem) 2rem;
+  animation: rise 360ms ease-out both;
+}
+
+.big {
+  font-size: clamp(3rem, 11vw, 6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--color-sand-50);
+  overflow-wrap: anywhere;
+}
+
+.medium {
+  font-size: clamp(1.75rem, 6vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--color-sand-50);
+  overflow-wrap: anywhere;
+}
+
+.chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.625rem;
+}
+
+.chip {
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--color-obsidian-950) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-sand-50) 14%, transparent);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    animation: none;
+  }
+}

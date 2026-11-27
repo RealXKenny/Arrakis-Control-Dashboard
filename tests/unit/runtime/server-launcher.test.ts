@@ -6,6 +6,8 @@ import { promisify } from 'node:util';
 import { join } from 'node:path';
 import {
   announceReadiness,
+  relayOutput,
+  terminalHints,
   assertProductionBuild,
   prepareImageCache,
   resolveReadinessUrl,
@@ -95,7 +97,14 @@ describe('server launcher', () => {
     await vi.advanceTimersByTimeAsync(2000);
     await pending;
     expect(probe).toHaveBeenCalledTimes(3);
-    expect(write).toHaveBeenCalledExactlyOnceWith('Dashboard ready in 2.0s (HTTP check passed).');
+    expect(write).toHaveBeenCalledExactlyOnceWith(
+      'Arrakis Control Dashboard is listening (ready in 2.0s, HTTP check passed).',
+    );
+    // The update supervisor's health check and the Pterodactyl egg both wait for this phrase.
+    const release = JSON.parse(
+      await readFile(new URL('../../../package.json', import.meta.url), 'utf8'),
+    ).arrakisRelease;
+    expect(String(write.mock.calls[0]?.[0])).toMatch(new RegExp(release.readyPattern));
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -166,5 +175,27 @@ describe('server launcher', () => {
     [{ SERVER_PORT: 'not-a-port' }, 'Invalid SERVER_PORT'],
   ])('rejects an invalid server binding', (env, message) => {
     expect(() => resolveServerOptions(env)).toThrow(message);
+  });
+
+  it('restyles Next.js output and passes the dashboard logger lines through unchanged', async () => {
+    vi.stubEnv('NO_COLOR', '1');
+    const { PassThrough } = await import('node:stream');
+    const stream = new PassThrough();
+    const lines: string[] = [];
+    relayOutput(stream, (line: string) => lines.push(line));
+    const styled = '2026-11-27 12:00:00  ● INFO  DASHBOARD    │ Dashboard services ready';
+    stream.write('   \u001b[1m▲ Next.js 16.4.6\u001b[0m\n\n' + styled + '\n - Loc');
+    stream.end('al: http://127.0.0.1:2008');
+    await new Promise((resolve) => stream.once('end', resolve));
+    expect(lines[0]).toMatch(/● INFO {2}NEXT {9}│ ▲ Next\.js 16\.4\.6$/u);
+    expect(lines[1]).toBe(styled);
+    expect(lines[2]).toMatch(/NEXT {9}│ - Local: http:\/\/127\.0\.0\.1:2008$/u);
+    expect(lines).toHaveLength(3);
+  });
+
+  it('hands the dashboard the terminal width and colours only in a terminal', () => {
+    expect(terminalHints({}, { isTTY: false, columns: 100 })).toEqual({});
+    expect(terminalHints({}, { isTTY: true, columns: 100 })).toEqual({ COLUMNS: '100', LOG_COLOR: 'always' });
+    expect(terminalHints({ NO_COLOR: '1', COLUMNS: '80' }, { isTTY: true, columns: 100 })).toEqual({});
   });
 });

@@ -42,6 +42,7 @@ Readings survive dashboard restarts because they live in Redis.
 | Item catalog (season rewards)                            | `item-catalog`                              | 12 hours                                      | 7 days   |
 | Dungeon records board                                    | `dungeon-board`                             | `DUNGEON_LEADERBOARD_REFRESH_SECONDS` (5 min) | 7 days   |
 | Dungeon recent runs and personal bests                   | `dungeon-runs`, `dungeon-personal`          | same                                          | 1 day    |
+| Solaris leaderboard                                      | `solaris-board`                             | 10 min                                        | 7 days   |
 | Public roadmap                                           | `roadmap`                                   | `ROADMAP_REFRESH_SECONDS` (20 min)            | 30 days  |
 
 Map readings are raw Console responses kept server-side; every request still applies the member's own filtering (own bases, accessible vehicles) before anything is returned.

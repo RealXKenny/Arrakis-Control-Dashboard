@@ -111,6 +111,8 @@ describe('unified navigation configuration', () => {
       '/events',
       '/seasons',
       '/dungeons',
+      '/solaris',
+      '/unwrapped',
       '/calendar',
       '/help',
       '/chat',

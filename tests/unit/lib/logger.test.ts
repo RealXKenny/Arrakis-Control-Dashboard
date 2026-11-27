@@ -4,6 +4,8 @@ import {
   describeError,
   fitConsoleLine,
   formatConsoleEntry,
+  scopeLabel,
+  wrapMessage,
   shouldUseColor,
 } from '../../../src/lib/logger';
 
@@ -111,5 +113,29 @@ describe('console presentation', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('keeps long scopes inside the scope column and wraps long messages under their own scope', () => {
+    vi.stubEnv('NO_COLOR', '1');
+    expect(scopeLabel('SEASON CLAIMS')).toBe('CLAIMS');
+    expect(scopeLabel('A VERY LONG UNKNOWN SCOPE')).toHaveLength(12);
+    const at = new Date('2026-11-27T17:00:00Z');
+    expect(formatConsoleEntry('SHARD MANAGER', 'INFO', 'Discord shard 0 is ready.', undefined, at)).toBe(
+      '2026-11-27 12:00:00  ● INFO  SHARDS       │ Discord shard 0 is ready.',
+    );
+    const metrics =
+      'ready=yes | ping=45ms | loop p99=23ms max=307ms | heap=35MB rss=184MB | db=up (interactive 0/1 busy, 0 waiting; background 0/1 busy, 0 waiting) | archive buffer=0 | cached messages=46 | 429s=0';
+    const lines = formatConsoleEntry('METRICS', 'INFO', metrics, undefined, at, 120).split('\n');
+    expect(lines.length).toBeGreaterThan(1);
+    for (const line of lines) expect(line.length).toBeLessThan(120);
+    expect(lines[1]).toMatch(/^ {42}│ \S/);
+    expect(
+      lines
+        .map((line) => line.slice(44))
+        .join(' | ')
+        .replace(/ \| /g, '|'),
+    ).toBe(metrics.replace(/ \| /g, '|'));
+    expect(wrapMessage('short', 75)).toEqual(['short']);
+    expect(wrapMessage('x'.repeat(1000), 75).at(-1)).toMatch(/…$/);
   });
 });

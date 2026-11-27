@@ -1,5 +1,23 @@
 # Changelog
 
+## Patch Notes v2.0.3
+
+### New Features
+
+- **Solaris leaderboard** (`/solaris`, under Community next to the dungeon leaderboard): characters ranked by the Solaris they hold, with headline numbers (characters ranked, Solaris on hand, wealthiest, median), a name search and your own rank. Balances come from the Console's player routes in one refresh every 10 minutes shared through the Redis cache, never one per viewer, and only character names and balances reach the browser. Balances that could not be read are left out and counted instead of shown as zero.
+- **Unwrapped** (`/unwrapped`, under Community): the year in review as swipeable cards, one set for the server (releases shipped, biggest release, dungeon runs and the fastest clear, Solaris held, roadmap items released) and one for you (your dungeon records and server records, your Solaris rank and, if your progression journal is tracking, the levels and experience you gained). It only uses data the dashboard already keeps: a card with nothing behind it is left out instead of shown as zero, and all-time or right-now figures say so on the card.
+
+### Fixes
+
+- **Updates no longer stop on `package-lock.json`**: npm rewrites the lockfile by itself (for example during an egg reinstall), and the updater called that a local change and refused to update. The updater, shared with the bot, now always replaces `package-lock.json` and `npm-shrinkwrap.json` with the release's copy. Files you edited are still protected as before.
+
+- **Startup is detected**: the dashboard never printed the `Arrakis Control Dashboard is listening` line that the update supervisor's health check and the Pterodactyl egg wait for, so the panel could stay on "Starting" and an installed update was never confirmed as healthy. The launcher's ready line now says exactly that.
+- **Every console line keeps the shared layout**: Next.js' own startup lines and the launcher's messages (including `.env` migration notes) are printed in the same style under `NEXT` and `STARTUP`, a message longer than the console (120 columns inside Pterodactyl) continues on indented lines under its own scope instead of wrapping under the timestamp, and scopes longer than the 12-character column print a short name.
+
+### Upgrade Notes
+
+- A server stuck on 2.0.1 with `Conflict: package-lock.json` still runs the old updater. Delete `package-lock.json` in the panel's File Manager and restart once; the update then installs the newest release.
+
 ## Patch Notes v2.0.2
 
 ### New Features

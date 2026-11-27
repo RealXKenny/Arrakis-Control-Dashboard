@@ -37,7 +37,67 @@ function formatLogLine(scope, level, message) {
           ? process.env.FORCE_COLOR !== '0'
           : Boolean(process.stdout.isTTY || process.env.P_SERVER_UUID?.trim());
   const paint = (text, color) => (colour ? `\u001b[${color}m${text}\u001b[0m` : text);
-  return `${paint(timestamp, '2')}  ${paint(`● ${level.padEnd(5)}`, '32')} ${paint(scope.padEnd(12), '93')} ${paint('│', '2')} ${message}`;
+  const [icon, levelColour] = LAUNCHER_LEVELS[level] ?? LAUNCHER_LEVELS.INFO;
+  return `${paint(timestamp, '2')}  ${paint(`${icon} ${level.padEnd(5)}`, levelColour)} ${paint(scope.padEnd(12), '93')} ${paint('│', '2')} ${printable(message)}`;
+}
+
+const LAUNCHER_LEVELS = Object.freeze({ INFO: ['●', '32'], WARN: ['▲', '33'], ERROR: ['✖', '31'] });
+/** A line already in the Arrakis console style (from the dashboard's own logger) starts with its timestamp. */
+const STYLED_LINE = /^(?:\u001b\[[0-9;]*m)?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}  /u;
+const ANSI_SEQUENCE = /\u001b\[[0-9;?]*[A-Za-z]/gu;
+
+/** Control characters become spaces, so relayed text can never forge lines or terminal escapes. */
+function printable(message) {
+  return Array.from(String(message), (character) => {
+    const code = character.charCodeAt(0);
+    return code < 32 || (code >= 127 && code < 160) ? ' ' : character;
+  }).join('');
+}
+
+/**
+ * The dashboard's output is piped through the relay, so it no longer sees the terminal. In a terminal, hand it the
+ * width and keep its colours, exactly as it would have chosen them itself.
+ */
+export function terminalHints(env = process.env, stdout = process.stdout) {
+  if (!stdout.isTTY) return {};
+  const hints = {};
+  if (!env.COLUMNS && Number.isInteger(stdout.columns)) hints.COLUMNS = String(stdout.columns);
+  const mode = env.LOG_COLOR?.trim().toLowerCase() || 'auto';
+  if (mode === 'auto' && env.NO_COLOR === undefined && env.TERM !== 'dumb' && env.FORCE_COLOR === undefined) {
+    hints.LOG_COLOR = 'always';
+  }
+  return hints;
+}
+
+const launcherLog = (level, message) => {
+  const line = formatLogLine('STARTUP', level, message);
+  if (level === 'ERROR') console.error(line);
+  else if (level === 'WARN') console.warn(line);
+  else console.info(line);
+};
+
+/**
+ * Relay a child's output line by line. Lines from the dashboard's logger pass through unchanged; anything else
+ * (Next.js' own banner and notices) is restyled under the NEXT scope so the whole console reads the same.
+ */
+export function relayOutput(stream, write, level = 'INFO') {
+  let pending = '';
+  const flush = (line) => {
+    if (STYLED_LINE.test(line)) return write(line);
+    const text = line.replace(ANSI_SEQUENCE, '').trim();
+    if (text) write(formatLogLine('NEXT', /\b(error|failed)\b/iu.test(text) ? 'ERROR' : level, text));
+  };
+  stream.setEncoding?.('utf8');
+  stream.on('data', (chunk) => {
+    pending += chunk;
+    const lines = pending.split(/\r?\n/u);
+    pending = lines.pop() ?? '';
+    for (const line of lines) flush(line);
+  });
+  stream.on('end', () => {
+    if (pending) flush(pending);
+    pending = '';
+  });
 }
 
 function pause(milliseconds, signal) {
@@ -67,7 +127,7 @@ export function probeHttp(url, signal) {
 export async function announceReadiness(
   url,
   signal,
-  { probe = probeHttp, write = (message) => console.info(formatLogLine('STARTUP', 'INFO', message)) } = {},
+  { probe = probeHttp, write = (message) => launcherLog('INFO', message) } = {},
 ) {
   const started = Date.now();
   // Dev note: one roll call is enough once the HTTP listener answers.
@@ -80,7 +140,10 @@ export async function announceReadiness(
     }
     if (signal.aborted) return;
     if (ready) {
-      write(`Dashboard ready in ${((Date.now() - started) / 1000).toFixed(1)}s (HTTP check passed).`);
+      // The update supervisor and the Pterodactyl egg both wait for this exact phrase (`readyPattern` in package.json).
+      write(
+        `Arrakis Control Dashboard is listening (ready in ${((Date.now() - started) / 1000).toFixed(1)}s, HTTP check passed).`,
+      );
       return;
     }
     await pause(1000, signal);
@@ -174,12 +237,15 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
     try {
       const migrated = migrateEnvFile();
       if (migrated.applied) {
-        console.log(`Updated .env for this release (${migrated.changes.length} change(s)); backup: ${migrated.backup}`);
-        for (const change of migrated.changes) console.log(` - ${change}`);
-        for (const warning of migrated.warnings) console.log(` ! ${warning}`);
+        launcherLog(
+          'INFO',
+          `Updated .env for this release (${migrated.changes.length} change(s)); backup: ${migrated.backup}`,
+        );
+        for (const change of migrated.changes) launcherLog('INFO', `.env: ${change}`);
+        for (const warning of migrated.warnings) launcherLog('WARN', `.env: ${warning}`);
       }
     } catch {
-      console.warn('Could not migrate .env automatically; run npm run env:migrate to see why.');
+      launcherLog('WARN', 'Could not migrate .env automatically; run npm run env:migrate to see why.');
     }
   }
   // Dev note: load the environment before Next pitches its server tent.
@@ -195,9 +261,11 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
   const bridge = process.env.CHAT_ENABLED === 'true' ? superviseChatBridge() : undefined;
   const child = spawn(process.execPath, [nextBin, command, ...serverArgs, ...forwardedArgs], {
     // Anonymous Next.js telemetry is always off, whatever the environment says.
-    env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' },
-    stdio: 'inherit',
+    env: { ...process.env, ...terminalHints(), NEXT_TELEMETRY_DISABLED: '1' },
+    stdio: ['inherit', 'pipe', 'pipe'],
   });
+  relayOutput(child.stdout, (line) => process.stdout.write(`${line}\n`));
+  relayOutput(child.stderr, (line) => process.stderr.write(`${line}\n`), 'WARN');
 
   const controller = new AbortController();
   let shutdownTimer;
@@ -234,7 +302,7 @@ export async function runServer([command, ...forwardedArgs] = process.argv.slice
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   runServer().catch((error) => {
-    console.error(error instanceof Error ? error.message : 'Unable to start the server.');
+    launcherLog('ERROR', error instanceof Error ? error.message : 'Unable to start the server.');
     process.exitCode = 1;
   });
 }

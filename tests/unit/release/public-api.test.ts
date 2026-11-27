@@ -22,7 +22,7 @@ describe('public changelog API', () => {
   it('orders bot versions and exposes the stable project identity', async () => {
     const response = await changelogApi(new Request('https://example.test/api/v2/changelog?project=bot'));
     const body = await response.json();
-    expect(body.releases[0]).toMatchObject({ project: 'bot', id: 'bot:2.0.2', date: '2026-11-27' });
+    expect(body.releases[0]).toMatchObject({ project: 'bot', id: 'bot:2.0.3', date: '2026-11-27' });
     expect((await readProjectReleases('bot')).length).toBeGreaterThan(1);
   });
 

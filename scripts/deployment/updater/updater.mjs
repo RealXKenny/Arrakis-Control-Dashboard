@@ -516,6 +516,12 @@ async function assertNoLinkOnPath(root, relative) {
 }
 
 /**
+ * Files npm rewrites by itself (`npm install`, `npm ci`, `npm prune`, an egg reinstall). A local difference in them is
+ * never an operator's edit, so the release's copy always replaces them instead of stopping the update.
+ */
+export const TOOL_MANAGED_FILES = Object.freeze(['package-lock.json', 'npm-shrinkwrap.json']);
+
+/**
  * Compare what is installed, what the operator has on disk, and what the new release ships.
  * `previous` and `next` map relative paths to SHA-256 hashes. Returns operations and conflicts; changes nothing.
  */
@@ -543,6 +549,8 @@ export async function planActivation(root, previous, next, { regenerable = [] } 
         continue;
       }
       operations.push({ type: localHash === null ? 'create' : 'replace', path: relative });
+    } else if (localHash !== null && regenerable.includes(relative)) {
+      operations.push({ type: 'replace', path: relative });
     } else if (localHash !== null) {
       conflicts.push({ path: relative, reason: 'an unmanaged file already exists at a path the new release uses' });
     } else {
@@ -1007,7 +1015,9 @@ async function activateStaged({
 }) {
   const paths = statePaths(root);
   const baseline = await baselineFor({ root, config, current, settings, fetchImpl, log });
-  const plan = await planActivation(root, baseline.files, builtFiles, { regenerable: config.generatedFiles ?? [] });
+  const plan = await planActivation(root, baseline.files, builtFiles, {
+    regenerable: [...TOOL_MANAGED_FILES, ...(config.generatedFiles ?? [])],
+  });
   if (plan.conflicts.length) {
     for (const conflict of plan.conflicts.slice(0, 25)) log(`Conflict: ${conflict.path} (${conflict.reason})`);
     throw new UpdateError(
