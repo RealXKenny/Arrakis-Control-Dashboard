@@ -8,7 +8,7 @@ test('public changelog previews sections, expands notes, filters and searches th
   await expect(page.getByRole('status')).toHaveText('3 updates to explore');
   await expect(
     page.getByRole('button', { name: 'All updates', exact: true }).locator('[aria-hidden="true"]'),
-  ).toHaveText('2');
+  ).toHaveText('3');
   // 2.0.0 has more new features than the preview shows, so its section exercises the "View all" control.
   const release = page
     .getByRole('article')
