@@ -63,6 +63,7 @@ import { runChatBridge } from '../../../src/features/chat/server/worker';
 import { createChatGateway } from '../../../src/features/chat/server/gateway';
 import { readChatHistory } from '../../../src/features/chat/server/history';
 import { encodeMapChat } from '../../../src/features/chat/server/protocol';
+import { getChatConfig } from '../../../src/features/chat/server/config';
 
 const readers: ReadableStreamDefaultReader<Uint8Array>[] = [];
 let stop: (() => Promise<void>) | undefined;
@@ -191,5 +192,42 @@ describe('incoming game → persistence → Pub/Sub → SSE pipeline (Redis/AMQP
     fixture.redis.eval.mockRejectedValueOnce(new Error('Persistence unavailable'));
     await expect(fixture.receive!('HaggaBasin.0', { content: game.body })).rejects.toThrow('Persistence unavailable');
     expect(fixture.redis.command.mock.calls.filter(([args]) => args[0] === 'PUBLISH')).toHaveLength(0);
+  });
+  it('stores proximity chat with a proximity label only when it is turned on', async () => {
+    const proximityBody = (id: string, type = 'Proximity', sender = 'Player#1234', text = 'psst') => {
+      const outer = JSON.parse(encodeMapChat(sender, text, undefined, id).body.toString());
+      const payload = JSON.parse(outer.content);
+      payload.m_ChannelType = type;
+      return Buffer.from(JSON.stringify({ Type: 'TextChat', content: JSON.stringify(payload) }));
+    };
+    const config = getChatConfig() as { proximity?: boolean };
+    stop = await runChatBridge();
+    await expect(fixture.receive!('HaggaBasin.0', { content: proximityBody('PROX-OFF') })).rejects.toThrow();
+    config.proximity = true;
+    try {
+      await fixture.receive!('HaggaBasin.0', { content: proximityBody('PROX-1') });
+      await fixture.receive!('HaggaBasin.0', {
+        content: proximityBody('PROX-RELAY', 'Proximity', 'DiscordBot#0001', '[Discord] Kenny: hi'),
+      });
+      await expect(
+        fixture.receive!('HaggaBasin.0', { content: proximityBody('WHISPER', 'Whisper') }),
+      ).rejects.toThrow();
+      await fixture.receive!('HaggaBasin.0', { content: encodeMapChat('Player#1234', 'map', undefined, 'MAP-1').body });
+      const history = (await readChatHistory('hagga-basin')).messages;
+      expect(history.find((entry) => entry.id === 'PROX-1')).toMatchObject({
+        source: 'game',
+        channel: 'proximity',
+        senderName: 'Actual Player',
+        content: 'psst',
+      });
+      expect(history.find((entry) => entry.id === 'PROX-RELAY')).toMatchObject({
+        source: 'game',
+        channel: 'proximity',
+      });
+      expect(history.find((entry) => entry.id === 'MAP-1')?.channel).toBeUndefined();
+      expect(history.some((entry) => entry.id === 'WHISPER' || entry.id === 'PROX-OFF')).toBe(false);
+    } finally {
+      config.proximity = undefined;
+    }
   });
 });

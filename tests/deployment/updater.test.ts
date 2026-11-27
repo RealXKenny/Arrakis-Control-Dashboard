@@ -25,6 +25,7 @@ import {
   selectRelease,
   statePaths,
   updaterSettings,
+  waitForHealth,
 } from '../../scripts/deployment/updater/updater.mjs';
 import { buildReleaseManifest } from '../../scripts/deployment/build-release-manifest.mjs';
 
@@ -485,6 +486,18 @@ describe('automatic update', () => {
     expect(await update({ settings: settings({ AUTO_UPDATE_ENABLED: 'false' }) })).toEqual({ status: 'disabled' });
     const state = JSON.parse(await readFile(statePaths(root).state, 'utf8'));
     expect(state.etag).toBe('"1"');
+  });
+
+  it('judges a new version by its ready line and never waits forever for one', async () => {
+    const never = new Promise<never>(() => undefined);
+    // Ready and still running when the health period ends.
+    expect(await waitForHealth({ ready: Promise.resolve(), exited: never, healthMs: 20 })).toBe('healthy');
+    // Exited before the period ended.
+    expect(await waitForHealth({ ready: Promise.resolve(), exited: Promise.resolve(), healthMs: 1_000 })).toBe(
+      'exited',
+    );
+    // Running but never printed its ready line: 2.0.2 dashboards waited forever here and stopped updating.
+    expect(await waitForHealth({ ready: never, exited: never, healthMs: 20 })).toBe('unready');
   });
 
   it('rolls an unhealthy update back exactly and never offers that version again', async () => {

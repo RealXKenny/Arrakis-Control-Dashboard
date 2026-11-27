@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeMapChat, encodeMapChat } from '../../../src/features/chat/server/protocol';
+import { decodeGameChat, decodeMapChat, encodeMapChat } from '../../../src/features/chat/server/protocol';
 
 const ID = '0123456789ABCDEF0123456789ABCDEF';
 
@@ -63,5 +63,21 @@ describe('bot-compatible game chat protocol', () => {
     expect(
       decodeMapChat(Buffer.from(JSON.stringify({ Type: 'TextChat', content: JSON.stringify(payload) }))),
     ).toBeNull();
+  });
+
+  it('decodes proximity chat only when allowed and never private messages', () => {
+    const body = (type: string, recipient = '') => {
+      const outer = JSON.parse(encodeMapChat('Player#1234', 'psst', undefined, ID).body.toString());
+      const payload = JSON.parse(outer.content);
+      payload.m_ChannelType = type;
+      payload.m_UserNameTo = recipient;
+      return Buffer.from(JSON.stringify({ Type: 'TextChat', content: JSON.stringify(payload) }));
+    };
+    expect(decodeGameChat(body('Proximity'), false)).toBeNull();
+    expect(decodeGameChat(body('Proximity'), true)).toMatchObject({ id: ID, text: 'psst', proximity: true });
+    expect(decodeGameChat(body('local'), true)?.proximity).toBe(true);
+    expect(decodeGameChat(body('Map'), true)?.proximity).toBeUndefined();
+    for (const type of ['Whisper', 'Guild', 'Party']) expect(decodeGameChat(body(type), true)).toBeNull();
+    expect(decodeGameChat(body('Proximity', 'Recipient#1234'), true)).toBeNull();
   });
 });

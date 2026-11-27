@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { changelogApi, readProjectReleases } from '../../../src/features/changelog/server/public-api';
 
 describe('public changelog API', () => {
@@ -11,18 +12,19 @@ describe('public changelog API', () => {
     expect(response.status).toBe(200);
     expect(body.schemaVersion).toBe(1);
     expect(body.releases).toHaveLength(1);
-    expect(body.releases[0]).toMatchObject({ project: 'dashboard', id: 'dashboard:2.0.2', date: '2026-11-27' });
-    expect(body.releases[0].sections.map((section: { title: string }) => section.title)).toEqual([
-      'New Features',
-      'Fixes',
-      'Upgrade Notes',
-    ]);
+    // The bot posts the dashboard's Discord changelog from this snapshot, so it must carry the version being
+    // released. 2.0.3 shipped without it and was never announced.
+    const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+    expect(body.releases[0]).toMatchObject({ project: 'dashboard', id: `dashboard:${version}` });
+    const titles = body.releases[0].sections.map((section: { title: string }) => section.title);
+    expect(titles.length).toBeGreaterThan(0);
+    for (const title of titles) expect(['New Features', 'Fixes', 'Upgrade Notes']).toContain(title);
   });
 
   it('orders bot versions and exposes the stable project identity', async () => {
     const response = await changelogApi(new Request('https://example.test/api/v2/changelog?project=bot'));
     const body = await response.json();
-    expect(body.releases[0]).toMatchObject({ project: 'bot', id: 'bot:2.0.3', date: '2026-11-27' });
+    expect(body.releases[0]).toMatchObject({ project: 'bot', id: 'bot:2.0.4', date: '2026-11-27' });
     expect((await readProjectReleases('bot')).length).toBeGreaterThan(1);
   });
 

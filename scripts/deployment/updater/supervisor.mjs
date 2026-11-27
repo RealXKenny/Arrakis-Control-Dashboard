@@ -23,6 +23,7 @@ import {
   rollbackUnhealthy,
   signalWantsUpdate,
   updaterSettings,
+  waitForHealth,
 } from './updater.mjs';
 
 const root = process.cwd();
@@ -134,16 +135,13 @@ async function stopChild() {
  */
 async function superviseNewVersion(config, settings) {
   const { ready, exited } = startChild(config);
-  const deadline = new Promise((resolve) => setTimeout(() => resolve('deadline'), settings.healthMs).unref());
-  const outcome = await Promise.race([
-    exited.then(() => 'exited'),
-    Promise.all([ready, deadline]).then(() => 'healthy'),
-  ]);
+  const outcome = await waitForHealth({ ready, exited, healthMs: settings.healthMs });
   if (outcome === 'healthy' && child.exitCode === null) {
     await confirmHealthy(root, log);
     return true;
   }
   if (shuttingDown) return true;
+  if (outcome === 'unready') log('The new version did not print its ready line in time; rolling it back.');
   await stopChild();
   await rollbackUnhealthy(root, log);
   log('Starting the previous version again.');

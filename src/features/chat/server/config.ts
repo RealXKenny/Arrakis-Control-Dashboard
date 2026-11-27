@@ -83,6 +83,7 @@ export function getChatConfig() {
     discordBotFuncomId: env.CHAT_DISCORD_BOT_FUNCOM_ID,
     displayName: env.CHAT_BRIDGE_DISPLAY_NAME,
     servers: parseChatServers(env.CHAT_SERVERS!),
+    proximity: env.CHAT_PROXIMITY_ENABLED,
     caFile: env.RABBITMQ_CA_FILE,
     tlsServername: env.RABBITMQ_TLS_SERVERNAME,
     tls: loadChatTls(env, url),
@@ -107,6 +108,8 @@ export interface ChatConfig {
   discordBotFuncomId?: string;
   displayName?: string;
   servers: ChatServer[];
+  /** Store and show proximity chat heard on the configured maps. */
+  proximity?: boolean;
   caFile?: string;
   tlsServername?: string;
   tls: import('node:tls').ConnectionOptions;

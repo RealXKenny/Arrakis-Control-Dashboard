@@ -101,7 +101,9 @@ export function parseChatStreamEntries(value: unknown, serverId: string): Parsed
       if (message && message.serverId === serverId) {
         // Older retained relays predate the explicit source; upgrade presentation without rewriting Redis.
         const relay =
-          message.source === 'game' ? parseDiscordRelay(message.senderId, message.content, discordBotId) : null;
+          message.source === 'game' && message.channel !== 'proximity'
+            ? parseDiscordRelay(message.senderId, message.content, discordBotId)
+            : null;
         messages.push(
           relay
             ? { ...message, source: 'discord', senderName: relay.senderName, relayContent: relay.content }

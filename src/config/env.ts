@@ -134,6 +134,11 @@ const serverEnvSchema = z.object({
     .optional(),
   CHAT_BRIDGE_DISPLAY_NAME: z.string().min(1).max(80).optional(),
   CHAT_SERVERS: z.string().min(2).max(32_768).optional(),
+  /** Also show proximity (nearby) game chat heard on the configured maps. Read-only; off by default. */
+  CHAT_PROXIMITY_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   RABBITMQ_CA_FILE: z.string().min(1).max(4096).optional(),
   RABBITMQ_TLS_ENABLED: z
     .enum(['true', 'false'])

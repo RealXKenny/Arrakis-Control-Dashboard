@@ -7,7 +7,7 @@ import { createLogger } from '../../../lib/logger';
 import { appendChatMessage } from './history';
 import { getChatConfig } from './config';
 import { ChatPlayerNames } from './player-names';
-import { decodeMapChat } from './protocol';
+import { decodeGameChat } from './protocol';
 import { parseDiscordRelay } from '../discord-relay';
 import { PermanentChatMessageError, RabbitChatTransport } from './rabbitmq';
 import { createBridgeMetricsReporter } from './metrics-log';
@@ -30,12 +30,13 @@ export async function runChatBridge(): Promise<() => Promise<void>> {
     async (routingKey, amqpMessage) => {
       counters.received += 1;
       const server = config.servers.find((entry) => entry.map === routingKey);
-      const chat = decodeMapChat(amqpMessage.content);
+      const chat = decodeGameChat(amqpMessage.content, Boolean(config.proximity));
       if (!server || !chat) {
         counters.rejected += 1;
         throw new PermanentChatMessageError('Invalid or unconfigured map chat event.');
       }
-      const relay = parseDiscordRelay(chat.sender, chat.text, config.discordBotFuncomId);
+      // Discord relays are always map chat; a proximity message is never treated as one.
+      const relay = chat.proximity ? null : parseDiscordRelay(chat.sender, chat.text, config.discordBotFuncomId);
       if (chat.sender === config.funcomId && !relay) {
         counters.echoes += 1;
         return;
@@ -49,6 +50,7 @@ export async function runChatBridge(): Promise<() => Promise<void>> {
         senderName:
           relay?.senderName ?? (resolvedName === chat.sender ? (chat.displayName ?? chat.sender) : resolvedName),
         source: relay ? 'discord' : 'game',
+        ...(chat.proximity ? { channel: 'proximity' as const } : {}),
         content: chat.text,
         relayContent: relay?.content,
         timestamp,

@@ -49,6 +49,14 @@ Redis keeps the original text in `content`, records source `discord`, and stores
 
 The worker uses the working bot's resource permission pattern: configure/read/write access for broker-generated `amq.gen-*` queues, read access to `chat.map` for bindings, and write access to `chat.map` for outgoing publishes. It checks the existing exchange rather than declaring it. No additional named-resource permissions or broker configuration changes are required.
 
+### Proximity chat
+
+Set `CHAT_PROXIMITY_ENABLED=true` to also keep proximity (nearby) chat heard on the configured map keys. It is off by default because it shows local conversations to every dashboard member who can open Live Chat; turn it on only when that is your server's policy.
+
+Only messages on the bound `chat.map` keys whose `m_ChannelType` is `Proximity` (also `Local` or `Nearby`, matching the bot) are kept. They are stored in that map's history with `channel: "proximity"` and shown with a Proximity badge next to the source. They are read-only: the composer always sends map chat, and a proximity message is never treated as a Discord relay. Whispers, guild, party and messages with a recipient are still rejected.
+
+Whether the game publishes proximity chat on `chat.map` at all is not verified. The bot's bridge logs each chat type the first time it sees it; check its log after someone talks in proximity before relying on this. The dashboard does not listen on `chat.intercept`.
+
 ## Worker lifecycle, health, and scaling
 
 Start the dashboard normally; with `CHAT_ENABLED=true` it automatically starts the worker:
@@ -249,7 +257,7 @@ During RabbitMQ downtime or worker disconnection, the temporary receive queue pr
 
 ## Known limitations and future extensions
 
-- Only game Map chat is supported. Proximity, whisper, guild, party, moderation, muting, search, and custom channels are not implemented.
+- Map chat is supported, plus read-only proximity chat when `CHAT_PROXIMITY_ENABLED=true`. Whisper, guild, party, moderation, muting, search, and custom channels are not implemented.
 - `accepted` and `delivered` require a future game/integration acknowledgment contract; none exists in the inspected bot protocol.
 - Online player count and game-server health are not inferred from chat connectivity.
 - All verified dashboard members can use all configured destinations; finer per-member destination roles would require a new authorization policy.
