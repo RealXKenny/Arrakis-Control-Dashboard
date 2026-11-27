@@ -3,13 +3,14 @@ import { test, expect } from '../helpers/browser-test';
 test('public changelog previews sections, expands notes, filters and searches the full release', async ({ page }) => {
   await page.goto('/changelog');
   await expect(page.getByRole('heading', { name: 'Changelog.', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Version 2.0.4', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Version 2.0.3', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Version 2.0.2', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Version 2.0.0', exact: true })).toBeVisible();
-  await expect(page.getByRole('status')).toHaveText('4 updates to explore');
+  await expect(page.getByRole('status')).toHaveText('5 updates to explore');
   await expect(
     page.getByRole('button', { name: 'All updates', exact: true }).locator('[aria-hidden="true"]'),
-  ).toHaveText('4');
+  ).toHaveText('5');
   // 2.0.0 has more new features than the preview shows, so its section exercises the "View all" control.
   const release = page
     .getByRole('article')

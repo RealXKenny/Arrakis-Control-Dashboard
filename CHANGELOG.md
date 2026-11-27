@@ -1,5 +1,16 @@
 # Changelog
 
+## Patch Notes v2.0.4
+
+### Fixes
+
+- **The dashboard's 2.0.3 changelog was never posted in Discord**: the bot posts dashboard releases from the dashboard's published changelog (`docs/changelog/dashboard.md`), and 2.0.3 was left out of it. It is added now, so the bot posts the 2.0.3 notes once this version is running, and a test makes sure every release carries its own notes.
+- **Updates no longer get stuck waiting for a ready line**: the update supervisor waited forever for a new version's ready line. A dashboard that went from 2.0.1 to 2.0.2 (which never printed it) kept running but stopped checking for updates. A version that has not printed its ready line after twice `AUTO_UPDATE_HEALTH_SECONDS` is now rolled back. The updater is shared with the bot.
+
+### Upgrade Notes
+
+- A dashboard that updated from 2.0.1 to 2.0.2 may still be waiting on that ready line and not updating. Restart the dashboard server once: it returns to 2.0.1 and then installs the newest release.
+
 ## Patch Notes v2.0.3
 
 ### New Features
@@ -10,7 +21,6 @@
 ### Fixes
 
 - **Updates no longer stop on `package-lock.json`**: npm rewrites the lockfile by itself (for example during an egg reinstall), and the updater called that a local change and refused to update. The updater, shared with the bot, now always replaces `package-lock.json` and `npm-shrinkwrap.json` with the release's copy. Files you edited are still protected as before.
-
 - **Startup is detected**: the dashboard never printed the `Arrakis Control Dashboard is listening` line that the update supervisor's health check and the Pterodactyl egg wait for, so the panel could stay on "Starting" and an installed update was never confirmed as healthy. The launcher's ready line now says exactly that.
 - **Every console line keeps the shared layout**: Next.js' own startup lines and the launcher's messages (including `.env` migration notes) are printed in the same style under `NEXT` and `STARTUP`, a message longer than the console (120 columns inside Pterodactyl) continues on indented lines under its own scope instead of wrapping under the timestamp, and scopes longer than the 12-character column print a short name.
 

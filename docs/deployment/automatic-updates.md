@@ -41,7 +41,8 @@ written, replaced or removed**, plus the generated `node_modules` and `.next` fo
    is backed up to `.arrakis/backups/`, each step is journaled, files keep their existing permissions, new files get the
    release's executable bit only, and the generated folders are swapped by rename.
 8. **Health check.** The new version must print its ready line (`Arrakis Control Dashboard is listening`) and still be
-   running after `AUTO_UPDATE_HEALTH_SECONDS`. Then the journal is cleared and only the two newest backups are kept.
+   running after `AUTO_UPDATE_HEALTH_SECONDS`. Then the journal is cleared and only the two newest backups are kept. A
+   version that has not printed its ready line after twice that time counts as failed and is rolled back.
 9. **Rollback.** If it exits or never becomes ready, the journal is replayed in reverse, the previous version starts again
    and the failed version is never selected automatically again. If the container stops in the middle of an install or
    before the health check passes, the same rollback runs at the next start.

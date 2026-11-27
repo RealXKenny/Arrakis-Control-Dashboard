@@ -23,6 +23,7 @@ import { URL } from 'node:url';
 import process from 'node:process';
 import { Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
+import { clearTimeout, setTimeout } from 'node:timers';
 import { createGunzip } from 'node:zlib';
 
 export const STATE_DIR = '.arrakis';
@@ -1058,6 +1059,25 @@ async function activateStaged({
 }
 
 /** After a healthy start: forget the journal and keep only the two newest backups. */
+/**
+ * Decide whether a freshly started version is healthy: it must print its ready line and still be running when the
+ * health period ends. A version that has not printed its ready line after twice the health period is unhealthy, so a
+ * missing or changed ready line rolls the update back instead of leaving the supervisor waiting forever.
+ */
+export async function waitForHealth({ ready, exited, healthMs }) {
+  const timers = [];
+  const after = (ms, value) => new Promise((resolve) => timers.push(setTimeout(() => resolve(value), ms)));
+  try {
+    return await Promise.race([
+      exited.then(() => 'exited'),
+      Promise.all([ready, after(healthMs)]).then(() => 'healthy'),
+      after(healthMs * 2, 'unready'),
+    ]);
+  } finally {
+    for (const timer of timers) clearTimeout(timer);
+  }
+}
+
 export async function confirmHealthy(root, log) {
   const paths = statePaths(root);
   const journal = await readJson(paths.journal);
