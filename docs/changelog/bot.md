@@ -8,11 +8,12 @@
 
 - Instant updates: the update supervisor can install a new release within about 30 seconds of it being published. Set `AUTO_UPDATE_SIGNAL_URL` to the dashboard's `https://<your dashboard>/api/v2/updates/signal` (the dashboard learns of releases from a signed GitHub webhook) and it checks every `AUTO_UPDATE_SIGNAL_SECONDS` (30 by default). The signal only starts a check early: the release is still fetched from GitHub and verified, and the channel, pin, maintenance window, skipped versions and rollback still apply. Without it, the scheduled check works as before.
 - The suggestion assistant now runs itself. It reads the bot and dashboard GitHub repositories every 15 minutes (read-only, with cached requests that respect GitHub's rate limit) and moves matching suggestions forward: an open issue makes it Planned, a pull request or commit makes it In Progress, and a release makes it Implemented. Each move posts its own reply with a link to the work and lists it in the panel. Staff buttons stay as overrides: the autopilot never changes Back burner, Not doing or Added, and never moves a post backwards. Settings: `SUGGESTIONS_AUTOPILOT`, `SUGGESTIONS_GITHUB_REPOS`, `SUGGESTIONS_GITHUB_TOKEN`, `SUGGESTIONS_GITHUB_INTERVAL_MINUTES`, `SUGGESTIONS_AUTOPILOT_THRESHOLD`.
+- You can talk to the suggestion assistant. Mention it in a suggestion post and ask for an update, similar posts, a summary or its opinion in your own words; it answers from the post's status, linked GitHub work and discussion, never invents dates, and pings only the asker. New-post replies now quote the key detail of the post, name a very similar earlier post, and ask a follow-up question when a post is short. Summaries open with a plain-sentence recap.
 - Older suggestions are caught up once at startup: posts with no assistant panel get their category and Under Review tags and the panel, without pinging anyone (`SUGGESTIONS_CATCHUP`).
 
 ### Changed
 
-- The bot console now matches the dashboard's: it clears on start, shows the version in the banner, and prints `date time ● LEVEL SCOPE │ message · key = value` lines in the same colours.
+- The bot, the dashboard and the update supervisor now share one console style: the same `date time ● LEVEL SCOPE │ message · key = value` lines, scope colours and banner (with the version). The console clears on start in a terminal or Pterodactyl, and the update supervisor's lines (`UPDATES`) look like the rest instead of `[updater] ...`. Secrets in more kinds of fields are hidden, and repeated objects no longer break a log line.
 
 ### Fixed
 
