@@ -83,6 +83,8 @@ const serverEnvSchema = z.object({
     .regex(/^[A-Za-z0-9 :._-]{1,50}$/)
     .default('roadmap'),
   ROADMAP_REFRESH_SECONDS: z.coerce.number().int().min(300).max(86_400).default(1_200),
+  /** HMAC secret of the GitHub release webhook; unset turns the webhook endpoint off. */
+  UPDATE_WEBHOOK_SECRET: z.string().min(32).max(256).optional(),
   /** Optional read-only GitHub token (public repository read access only). Raises the anonymous rate limit. */
   ROADMAP_GITHUB_TOKEN: z
     .string()

@@ -61,6 +61,7 @@
     }
   },
   "arrakisRelease": {
+    "signalPath": "/api/v2/updates/signal",
     "repository": "RealXKenny/Arrakis-Control-Dashboard",
     "assetPrefix": "arrakis-control-dashboard",
     "start": [

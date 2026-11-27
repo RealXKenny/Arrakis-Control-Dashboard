@@ -155,6 +155,7 @@ export const SECRET_VARIABLES = Object.freeze([
   'RABBITMQ_URL',
   'RABBITMQ_TLS_KEY',
   'AUTO_UPDATE_GITHUB_TOKEN',
+  'UPDATE_WEBHOOK_SECRET',
 ]);
 
 /** Automatic-update settings shared in meaning with the bot egg. RELEASE_TAG (above) doubles as the version pin. */
@@ -199,6 +200,20 @@ const UPDATE_VARIABLES = [
     'AUTO_UPDATE_GITHUB_TOKEN',
     '',
     { rules: 'nullable|string|max:255' },
+  ),
+  variable(
+    'Release Webhook Secret',
+    'Secret of the GitHub release webhook (32+ characters). With it, new bot and dashboard releases install within seconds of being published.',
+    'UPDATE_WEBHOOK_SECRET',
+    '',
+    { rules: 'nullable|string|min:32|max:256' },
+  ),
+  variable(
+    'Release Signal Interval (s)',
+    'Seconds between checks of the release signal (10-3600). The dashboard listens on its own endpoint.',
+    'AUTO_UPDATE_SIGNAL_SECONDS',
+    '30',
+    { rules: 'required|integer|min:10|max:3600' },
   ),
 ];
 

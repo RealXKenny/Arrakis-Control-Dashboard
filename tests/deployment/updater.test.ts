@@ -16,6 +16,9 @@ import {
   missingConfiguration,
   readArchive,
   readProductConfig,
+  readReleaseSignal,
+  signalAddress,
+  signalWantsUpdate,
   recover,
   rollbackUnhealthy,
   safeMemberPath,
@@ -519,6 +522,46 @@ describe('automatic update', () => {
     github.add({ tag: 'v1.1.0', files: V2 }, { noManifest: true });
     expect(await update()).toMatchObject({ status: 'activated', version: '1.1.0' });
     await expectCustomFilesIntact();
+  });
+});
+
+describe('release signal', () => {
+  const repository = 'RealXKenny/Arrakis-Control-Bot';
+  const answer =
+    (body: unknown, status = 200) =>
+    async () =>
+      new Response(JSON.stringify(body), { status });
+
+  it('accepts only https, or http to this machine, without credentials', () => {
+    expect(signalAddress('https://dash.example.com/api/v2/updates/signal')).toContain('https://dash.example.com');
+    expect(signalAddress('http://127.0.0.1:2008/api/v2/updates/signal')).toContain('127.0.0.1:2008');
+    for (const bad of ['http://dash.example.com/x', 'https://user:pass@dash.example.com/x', 'ftp://x/y', 'not a url'])
+      expect(() => signalAddress(bad), bad).toThrow(UpdateError);
+    expect(() => updaterSettings({ AUTO_UPDATE_SIGNAL_URL: 'http://evil.example/x' })).toThrow(UpdateError);
+    expect(updaterSettings({}).signalUrl).toBeNull();
+    expect(updaterSettings({ AUTO_UPDATE_SIGNAL_SECONDS: '1' }).signalMs).toBe(10_000);
+  });
+
+  it('reads the announced version for this repository only', async () => {
+    const body = { releases: { [repository]: { version: '2.1.0' }, 'other/repo': { version: '9.0.0' } } };
+    const url = 'https://dash.example.com/api/v2/updates/signal';
+    expect(await readReleaseSignal({ url, repository, fetchImpl: answer(body) })).toEqual({ version: '2.1.0' });
+    expect(await readReleaseSignal({ url, repository, fetchImpl: answer({ releases: {} }) })).toBeNull();
+    expect(
+      await readReleaseSignal({ url, repository, fetchImpl: answer({ releases: { [repository]: { version: 'x' } } }) }),
+    ).toBeNull();
+    await expect(readReleaseSignal({ url, repository, fetchImpl: answer({}, 503) })).rejects.toThrow('503');
+  });
+
+  it('acts only on a newer release this install would take', () => {
+    const base = { current: '2.0.2', channel: 'stable', pin: null, bad: [] as string[] };
+    expect(signalWantsUpdate('2.0.3', base)).toBe(true);
+    expect(signalWantsUpdate('2.0.2', base)).toBe(false);
+    expect(signalWantsUpdate('2.0.1', base)).toBe(false);
+    expect(signalWantsUpdate('2.1.0-rc.1', base)).toBe(false);
+    expect(signalWantsUpdate('2.1.0-rc.1', { ...base, channel: 'prerelease' })).toBe(true);
+    expect(signalWantsUpdate('2.0.3', { ...base, pin: 'v2.0.2' })).toBe(false);
+    expect(signalWantsUpdate('2.0.3', { ...base, bad: ['2.0.3'] })).toBe(false);
   });
 });
 

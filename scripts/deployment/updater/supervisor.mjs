@@ -15,9 +15,12 @@ import {
   checkAndUpdate,
   confirmHealthy,
   insideWindow,
+  installStatus,
   readProductConfig,
+  readReleaseSignal,
   recover,
   rollbackUnhealthy,
+  signalWantsUpdate,
   updaterSettings,
 } from './updater.mjs';
 
@@ -31,6 +34,8 @@ let childExit = null;
 let shuttingDown = false;
 let updating = false;
 let timer = null;
+let signalTimer = null;
+const SIGNAL_ERROR_REPEAT_MS = 3_600_000;
 
 function describe(error) {
   const text = error instanceof UpdateError ? error.message : `${error?.name ?? 'Error'}: ${error?.message ?? error}`;
@@ -165,11 +170,56 @@ async function periodicCheck(config, settings) {
   scheduleCheck(config, settings, jittered(settings.intervalMs));
 }
 
+/** Where to hear about new releases: AUTO_UPDATE_SIGNAL_URL, or this application's own endpoint when it has one. */
+function signalUrlFor(config, settings) {
+  if (settings.signalUrl) return settings.signalUrl;
+  const port = String(process.env.SERVER_PORT ?? '').trim();
+  if (!config.signalPath || !/^\d{1,5}$/.test(port) || !String(config.signalPath).startsWith('/')) return null;
+  return `http://127.0.0.1:${port}${config.signalPath}`;
+}
+
+/**
+ * Check the release signal every few seconds and start an update check as soon as a newer release is announced,
+ * instead of waiting for the next scheduled check. The scheduled check stays as the fallback, and the maintenance
+ * window, verification and health checks apply exactly as they do to it.
+ */
+function watchReleaseSignal(config, settings) {
+  const url = signalUrlFor(config, settings);
+  if (!url) return;
+  log(`Listening for new releases at ${new URL(url).origin}.`);
+  let announced = null;
+  let lastError = { text: '', at: 0 };
+  const tick = async () => {
+    if (shuttingDown || updating) return;
+    try {
+      const signal = await readReleaseSignal({ url, repository: config.repository });
+      lastError = { text: '', at: 0 };
+      if (!signal || signal.version === announced) return;
+      const status = await installStatus(root);
+      if (!signalWantsUpdate(signal.version, { ...status, channel: settings.channel, pin: settings.pin })) return;
+      announced = signal.version;
+      log(`Release ${signal.version} was just published; checking for it now.`);
+      clearTimeout(timer);
+      await periodicCheck(config, settings);
+    } catch (error) {
+      // A dashboard that is restarting or unreachable is normal; say so once an hour at most.
+      const text = describe(error);
+      if (text !== lastError.text || Date.now() - lastError.at > SIGNAL_ERROR_REPEAT_MS) {
+        log(`Release signal unavailable (${text}); scheduled checks continue.`);
+        lastError = { text, at: Date.now() };
+      }
+    }
+  };
+  signalTimer = setInterval(() => void tick(), settings.signalMs);
+  signalTimer.unref?.();
+}
+
 function forwardSignals() {
   for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
     process.on(signal, () => {
       shuttingDown = true;
       clearTimeout(timer);
+      clearInterval(signalTimer);
       if (!child || child.exitCode !== null) process.exit(0);
       child.kill(signal === 'SIGHUP' ? 'SIGTERM' : signal);
       childExit.then(({ code }) => process.exit(code));
@@ -204,6 +254,7 @@ async function main() {
         await superviseNewVersion(config, settings);
         watchChild();
         scheduleCheck(config, settings, jittered(settings.intervalMs));
+        watchReleaseSignal(config, settings);
         return;
       }
       if (result.status === 'current') log(`Up to date (${result.version}).`);
@@ -216,7 +267,10 @@ async function main() {
 
   startChild(config);
   watchChild();
-  if (settings.enabled) scheduleCheck(config, settings, jittered(settings.intervalMs));
+  if (settings.enabled) {
+    scheduleCheck(config, settings, jittered(settings.intervalMs));
+    watchReleaseSignal(config, settings);
+  }
 }
 
 main().catch((error) => {

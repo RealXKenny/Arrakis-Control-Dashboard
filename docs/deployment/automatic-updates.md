@@ -51,16 +51,19 @@ line; the current version keeps running.
 
 ## Settings
 
-| Variable                     | Default  | Meaning                                                                              |
-| ---------------------------- | -------- | ------------------------------------------------------------------------------------ |
-| `AUTO_UPDATE_ENABLED`        | `true`   | `false` turns every check off                                                        |
-| `AUTO_UPDATE_ON_STARTUP`     | `true`   | Check (and install) before the dashboard starts                                      |
-| `AUTO_UPDATE_CHANNEL`        | `stable` | `prerelease` also installs release candidates                                        |
-| `RELEASE_TAG`                | `latest` | `vX.Y.Z` pins that version; it is installed if newer and then held                   |
-| `AUTO_UPDATE_INTERVAL_HOURS` | `6`      | 1 to 168                                                                             |
-| `AUTO_UPDATE_WINDOW_UTC`     | empty    | `HH:MM-HH:MM` (may wrap midnight). Background installs wait for it; startup does not |
-| `AUTO_UPDATE_HEALTH_SECONDS` | `120`    | 30 to 900                                                                            |
-| `AUTO_UPDATE_GITHUB_TOKEN`   | empty    | Optional fine-grained token with read-only access; only raises GitHub's rate limit   |
+| Variable                     | Default      | Meaning                                                                              |
+| ---------------------------- | ------------ | ------------------------------------------------------------------------------------ |
+| `AUTO_UPDATE_ENABLED`        | `true`       | `false` turns every check off                                                        |
+| `AUTO_UPDATE_ON_STARTUP`     | `true`       | Check (and install) before the dashboard starts                                      |
+| `AUTO_UPDATE_CHANNEL`        | `stable`     | `prerelease` also installs release candidates                                        |
+| `RELEASE_TAG`                | `latest`     | `vX.Y.Z` pins that version; it is installed if newer and then held                   |
+| `AUTO_UPDATE_INTERVAL_HOURS` | `6`          | 1 to 168                                                                             |
+| `AUTO_UPDATE_WINDOW_UTC`     | empty        | `HH:MM-HH:MM` (may wrap midnight). Background installs wait for it; startup does not |
+| `AUTO_UPDATE_HEALTH_SECONDS` | `120`        | 30 to 900                                                                            |
+| `AUTO_UPDATE_GITHUB_TOKEN`   | empty        | Optional fine-grained token with read-only access; only raises GitHub's rate limit   |
+| `UPDATE_WEBHOOK_SECRET`      | empty        | GitHub release webhook secret; see [instant updates](#instant-updates)               |
+| `AUTO_UPDATE_SIGNAL_URL`     | own endpoint | Override where the release signal is read                                            |
+| `AUTO_UPDATE_SIGNAL_SECONDS` | `30`         | 10 to 3600; how often the release signal is read                                     |
 
 A malformed setting never keeps the dashboard down: updates switch off and the console says which setting to fix.
 
@@ -75,6 +78,25 @@ it is safe while no update runs (the next update rebuilds the install record fro
 Redis data is never part of an update. Releases keep Redis changes additive, so rolling back the code leaves data the older
 version still understands; any exception is called out under **Upgrade Notes** in the changelog, and such a release should
 be installed by hand after a [Redis backup](../administration/backups.md).
+
+## Instant updates
+
+By default each app checks GitHub every `AUTO_UPDATE_INTERVAL_HOURS`. With a release webhook, both apps install a new
+release within about 30 seconds of it being published instead:
+
+1. Pick a random secret of at least 32 characters and set it as `UPDATE_WEBHOOK_SECRET` on the **dashboard** server.
+2. In each repository (the bot and the dashboard) open _Settings → Webhooks → Add webhook_ and set the payload URL to
+   `https://<your dashboard>/api/v2/updates/github`, the content type to `application/json`, the same secret, and
+   _Let me select individual events_ → **Releases** only.
+3. On the **bot** server set `AUTO_UPDATE_SIGNAL_URL` to `https://<your dashboard>/api/v2/updates/signal`. The dashboard
+   listens on its own endpoint without any setting.
+
+GitHub signs every delivery; the dashboard rejects any delivery without a valid HMAC-SHA256 signature and records only
+which version of which app was published. That record is a hint to check now, not an instruction: the updater still
+picks the release from GitHub's own list and verifies the checksum, digest and manifest as always, so a forged or replayed
+signal can at most cause an early check. The maintenance window (`AUTO_UPDATE_WINDOW_UTC`), the version pin, the channel
+and the health check apply exactly as they do to scheduled checks, and the scheduled check stays as the fallback when the
+dashboard is unreachable. `AUTO_UPDATE_SIGNAL_SECONDS` (default 30, 10 to 3600) sets how often the signal is read.
 
 ## Migrating an existing server
 
