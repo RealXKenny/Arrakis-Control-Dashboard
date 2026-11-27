@@ -2,6 +2,10 @@
 
 ## Patch Notes v2.0.3
 
+### New Features
+
+- **Solaris leaderboard** (`/solaris`, under Community next to the dungeon leaderboard): characters ranked by the Solaris they hold, with headline numbers (characters ranked, Solaris on hand, wealthiest, median), a name search and your own rank. Balances come from the Console's player routes in one refresh every 10 minutes shared through the Redis cache, never one per viewer, and only character names and balances reach the browser. Balances that could not be read are left out and counted instead of shown as zero.
+
 ### Fixes
 
 - **Updates no longer stop on `package-lock.json`**: npm rewrites the lockfile by itself (for example during an egg reinstall), and the updater called that a local change and refused to update. The updater, shared with the bot, now always replaces `package-lock.json` and `npm-shrinkwrap.json` with the release's copy. Files you edited are still protected as before.

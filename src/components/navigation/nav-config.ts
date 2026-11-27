@@ -415,6 +415,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             order: 22,
           },
           {
+            id: 'community-solaris',
+            label: 'Solaris leaderboard',
+            href: '/solaris',
+            icon: 'status',
+            description: 'The wealthiest characters by Solaris on hand, plus where you rank.',
+            order: 23,
+          },
+          {
             id: 'community-calendar',
             label: 'Community calendar',
             href: '/calendar',
