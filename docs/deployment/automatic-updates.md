@@ -78,20 +78,27 @@ be installed by hand after a [Redis backup](../administration/backups.md).
 
 ## Migrating an existing server
 
-Servers created from an egg before automatic updates start the dashboard directly and ignore the new variables.
+Servers installed before automatic updates (2.0.0) have no updater, start the application directly and ignore the new
+variables. Moving one over is a one-time change:
 
 1. Back up Redis and download a copy of `/home/container` (at least `.env` and any certificates).
 2. Import the new egg from the latest release over the old one (_Admin → Nests → Import Egg_, choosing the existing egg to
-   update it), or edit the server's startup command to
-   `cd /home/container && exec node scripts/deployment/updater/supervisor.mjs`.
-3. Add the new variables if the panel did not (defaults above), and set `AUTO_UPDATE_ENABLED=false` first if you want to
+   update it).
+3. Reinstall the server (_Settings → Reinstall Server_). On a 2.0.0 install the installer verifies the newest release and
+   adds only its updater files and `.arrakis/bootstrap.json`, which holds the release settings an old `package.json`
+   lacks. No existing file is changed, so `.env`, certificates and your own files stay as they are.
+4. Set the startup command under _Admin → Servers → (server) → Startup_ to
+   `cd /home/container && exec node scripts/deployment/updater/supervisor.mjs`. Importing an egg does not change the startup command of a server
+   that already exists.
+5. Add the new variables if the panel did not (defaults above), and set `AUTO_UPDATE_ENABLED=false` first if you want to
    watch the first update by hand.
-4. Restart. The first check reads the installed release's own checksummed archive to learn which files it manages, so
-   files you changed are detected as conflicts rather than overwritten. If your installed version has no checksummed
-   archive (very old releases), the check stops and says so; install a current release once by hand.
+6. Restart. The first check reads the installed release's own checksummed archive to learn which files it manages, so
+   files you changed are detected as conflicts rather than overwritten, and then installs the newest release. If your
+   installed version has no checksummed archive (very old releases), the check stops and says so; install a current
+   release once by hand.
 
-**Reinstall** from the panel no longer overwrites an existing installation: the installer sees `package.json` and exits
-without changing anything. To start completely fresh, back up your files, empty the server's files, then reinstall.
+**Reinstall** from the panel never overwrites an existing installation: once the updater is in place, the installer sees
+it and exits without changing anything. To start completely fresh, back up your files, empty the server's files, then reinstall.
 
 ## Resolving a conflict
 

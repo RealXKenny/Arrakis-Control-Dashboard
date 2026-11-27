@@ -31,9 +31,10 @@ starts it with the standard Node.js 22 image. It does not install the game serve
    `node scripts/server-launcher.mjs start` as its only child. The panel's "running" state is the console line
    `Arrakis Control Dashboard is listening`. Stop uses `^C`, which the supervisor forwards to the dashboard.
 
-Reinstalling over an existing installation changes nothing: the installer sees `package.json` and exits, so `.env`,
-certificates and custom folders are never overwritten or re-permissioned. New releases arrive through the automatic
-updater instead.
+Reinstalling over an existing installation never overwrites or re-permissions `.env`, certificates or custom folders.
+When the updater is already installed, the installer changes nothing. On a 2.0.0 installation it adds only the updater
+files and `.arrakis/bootstrap.json`; see [migrating an existing server](../deployment/automatic-updates.md#migrating-an-existing-server).
+New releases arrive through the automatic updater.
 
 ## Variables
 

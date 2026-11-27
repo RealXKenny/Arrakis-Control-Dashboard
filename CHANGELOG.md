@@ -1,5 +1,16 @@
 # Changelog
 
+## Patch Notes v2.0.2
+
+### Fixes
+
+- **Moving a 2.0.0 server to automatic updates**: a 2.0.0 install has no updater, and its `package.json` lacks the release settings the updater reads, so it could never update itself. Reinstalling such a server from the panel now adds only the verified updater files and `.arrakis/bootstrap.json` (the release settings), changes no existing file, and prints the startup command to set. The updater then installs the newest release at the next start, keeping `.env`, certificates and your own files.
+
+### Upgrade Notes
+
+- On a server still running 2.0.0: back up Redis, import the new egg, choose **Reinstall Server**, then set the startup command under **Admin → Servers → Startup** to `cd /home/container && exec node scripts/deployment/updater/supervisor.mjs` and restart. Importing an egg does not change the startup command of an existing server. Steps are in `docs/deployment/automatic-updates.md`.
+- Servers already on 2.0.1 with the updater update by themselves.
+
 ## Patch Notes v2.0.1
 
 ### New Features

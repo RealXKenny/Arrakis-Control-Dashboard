@@ -15,6 +15,7 @@ import {
   insideWindow,
   missingConfiguration,
   readArchive,
+  readProductConfig,
   recover,
   rollbackUnhealthy,
   safeMemberPath,
@@ -333,6 +334,43 @@ describe('automatic update', () => {
     github.add({ tag: 'v1.1.0', files: V2 });
     await expect(update()).rejects.toThrow(/Nothing was changed/);
     expect(await snapshot()).toEqual(before);
+  });
+
+  it('treats updater files the installer added to an old install as managed', async () => {
+    await mkdir(path.join(root, 'scripts'), { recursive: true });
+    await writeFile(path.join(root, 'scripts/run.sh'), '#!/bin/sh\necho bootstrapped\n');
+    await mkdir(statePaths(root).base, { recursive: true });
+    await writeFile(
+      statePaths(root).bootstrap,
+      JSON.stringify({
+        release: config,
+        files: { 'scripts/run.sh': sha('#!/bin/sh\necho bootstrapped\n'), '../escape': sha('x') },
+      }),
+    );
+    github.add({ tag: 'v1.1.0', files: V2 });
+    expect(await update()).toMatchObject({ status: 'activated', version: '1.1.0' });
+    expect(await readFile(path.join(root, 'scripts/run.sh'), 'utf8')).toBe(V2['scripts/run.sh']);
+    await expectCustomFilesIntact();
+  });
+
+  it('reads the release settings the installer left for an install whose package.json has none', async () => {
+    await writeFile(path.join(root, 'package.json'), JSON.stringify({ version: '1.0.0' }));
+    await expect(readProductConfig(root)).rejects.toThrow('no arrakisRelease configuration');
+    await mkdir(statePaths(root).base, { recursive: true });
+    await writeFile(
+      statePaths(root).bootstrap,
+      JSON.stringify({
+        release: {
+          repository: 'RealXKenny/Arrakis-Control-Dashboard',
+          assetPrefix: 'arrakis-control-dashboard',
+          start: ['node', 'x.js'],
+        },
+      }),
+    );
+    expect(await readProductConfig(root)).toMatchObject({
+      repository: 'RealXKenny/Arrakis-Control-Dashboard',
+      start: ['node', 'x.js'],
+    });
   });
 
   it('refuses to write through a symbolic link', async () => {

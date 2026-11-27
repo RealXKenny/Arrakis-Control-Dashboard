@@ -391,6 +391,7 @@ export function statePaths(root) {
   return {
     base,
     installed: path.join(base, 'installed.json'),
+    bootstrap: path.join(base, 'bootstrap.json'),
     state: path.join(base, 'state.json'),
     lock: path.join(base, 'update.lock'),
     journal: path.join(base, 'journal.json'),
@@ -922,7 +923,19 @@ async function baselineFor({ root, config, current, settings, fetchImpl, log }) 
     ? Object.fromEntries(Object.entries(fetched.manifest.files).map(([name, entry]) => [name, entry.sha256]))
     : await hashArchive(fetched.archiveFile, config.generatedDirectories);
   await fs.rm(workDir, { recursive: true, force: true });
+  // Updater files the installer added to a pre-updater install are managed too, so a newer release may replace them.
+  const added = (await readBootstrap(root))?.files ?? {};
+  for (const [name, hash] of Object.entries(added)) {
+    const safe = /^[\w.-]+(\/[\w.-]+)*$/.test(name) && !name.split('/').includes('..');
+    if (safe && !(name in files) && /^[0-9a-f]{64}$/.test(String(hash))) files[name] = hash;
+  }
   return { version: current, files };
+}
+
+/** What the installer recorded when it added the updater to an install from before automatic updates. */
+async function readBootstrap(root) {
+  const bootstrap = await readJson(statePaths(root).bootstrap);
+  return bootstrap && typeof bootstrap === 'object' && !Array.isArray(bootstrap) ? bootstrap : null;
 }
 
 async function activateStaged({
@@ -1012,7 +1025,8 @@ export async function rollbackUnhealthy(root, log) {
 
 export async function readProductConfig(root) {
   const pkg = await readJson(path.join(root, 'package.json'));
-  const config = pkg?.arrakisRelease;
+  // Releases from before the updater have no settings in package.json; the installer leaves them in bootstrap.json.
+  const config = pkg?.arrakisRelease ?? (await readBootstrap(root))?.release;
   if (!config?.repository || !config.assetPrefix || !Array.isArray(config.start))
     throw new UpdateError('package.json has no arrakisRelease configuration.');
   githubRepository(config.repository);

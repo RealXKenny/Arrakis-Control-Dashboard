@@ -2,6 +2,17 @@
 
 <!-- Generated from the bot repository CHANGELOG.md; do not edit manually. -->
 
+## [2.0.2] - 2026-11-27
+
+### Fixed
+
+- A server installed with 2.0.0 could not move to automatic updates: its files have no updater, and its `package.json` lacks the release settings the updater reads. Reinstalling such a server from the panel now adds only the verified updater files and `.arrakis/bootstrap.json` (the release settings), changes no existing file, and tells you the startup command to set. The updater then installs the newest release at the next start, keeping `.env`, certificates and your own files.
+
+### Upgrading
+
+- On a server still running 2.0.0: back up PostgreSQL, import the new egg, choose **Reinstall Server**, then set the startup command under **Admin → Servers → Startup** to `cd /home/container && exec node scripts/updater/supervisor.mjs` and restart. Importing an egg does not change the startup command of an existing server. Steps are in `guides/automatic-updates.md`.
+- Servers already on 2.0.1 with the updater update by themselves.
+
 ## [2.0.1] - 2026-11-26
 
 ### Added
@@ -9,6 +20,9 @@
 - Automatic updates for Pterodactyl. The egg now starts an update supervisor that installs verified releases at startup and on a schedule: stable or prerelease channel, a version pin through `RELEASE_TAG`, a check interval, an optional UTC maintenance window and an optional read-only GitHub token (`AUTO_UPDATE_*`). Each release is checked against its checksum, GitHub's digest and a new per-file manifest, built in a staging folder (including the native `canvas` check) before the bot is stopped, and rolled back if it does not start. Files you changed or added, such as `.env`, certificates and custom folders, are never overwritten; a conflicting update is skipped and each path is logged.
 - `CONSOLE_TIMEOUT_MS` sets the Dune Console request timeout (default 30 seconds).
 - Changelogs in a forum channel. Point `ANNOUNCEMENT_CHANNEL_ID` at a forum and every release gets its own post, titled like `Bot v2.0.1 release notes`: a short card with the version, date, summary and links, followed by the complete notes split across as many messages as needed, in order. Posts are tagged by product (`Bot`, `Dashboard`) and release type (`Major`, `Minor`, `Patch`); the bot creates missing tags on startup without duplicating existing ones. A text or announcement channel still works: it gets the short card, with the full notes in a thread on it. The bot release is still posted before the dashboard release.
+- Suggestion forum assistant: tags new suggestion posts, replies to the suggester with varied wording, lists similar posts, summarizes long discussions, and adds a staff-only status panel (Planned, Working on it, Back burner, Not doing, Added) to each post. Runs locally with no paid AI service.
+- `/suggestions` command: `similar`, `summary`, `status`, `panel`, and `feature start`, `link`, `done` and `list` to move every suggestion a piece of work covers to In Progress and then Implemented.
+- New optional settings `SUGGESTIONS_FORUM_CHANNEL_ID`, `SUGGESTIONS_AUTO_TAG`, `SUGGESTIONS_STATUS_PANEL`, `SUGGESTIONS_NOTIFY_AUTHOR`, `SUGGESTIONS_CREATE_TAGS`, `SUGGESTIONS_DUPLICATE_THRESHOLD`, `SUGGESTIONS_AUTO_SUMMARY_MESSAGES` and `SUGGESTIONS_BACKFILL_LIMIT`. See `guides/suggestions.md`.
 
 ### Fixed
 

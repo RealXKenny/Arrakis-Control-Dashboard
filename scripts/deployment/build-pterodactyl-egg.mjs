@@ -9,9 +9,17 @@ set -euo pipefail
 # Reinstalling over an existing installation must never overwrite, reset or re-permission the operator's files
 # (.env, certificates, custom folders). Updates of an existing install are done by the automatic updater at startup,
 # which checks every file for local changes first. To start over, empty the server's files deliberately first.
+updater_dir='scripts/deployment/updater'
+bootstrap=false
 if [ -e /mnt/server/package.json ]; then
-  echo "An existing installation was found in /home/container. Nothing was changed: the automatic updater installs new releases at startup without touching custom files."
-  exit 0
+  if [ -e "/mnt/server/$updater_dir/supervisor.mjs" ]; then
+    echo "An existing installation was found in /home/container. Nothing was changed: the automatic updater installs new releases at startup without touching custom files."
+    exit 0
+  fi
+  # An install from before automatic updates (2.0.0) has no updater to move it forward. Add only the updater files and
+  # its settings; every existing file stays as it is, and the updater upgrades the rest at the next start.
+  bootstrap=true
+  echo "An installation from before automatic updates was found. Adding the automatic updater only; no existing file is changed."
 fi
 
 apt-get update
@@ -73,6 +81,41 @@ fi
 if grep -Eq '(^/|(^|/)\\.\\.(/|$))' <<< "$member_names"; then
   echo "The release archive contains absolute or parent-directory paths; refusing to extract it." >&2
   exit 1
+fi
+
+if [ "$bootstrap" = true ]; then
+  release_dir="$work_dir/release"
+  mkdir -p "$release_dir"
+  tar -xzf "$archive_file" --strip-components=1 --no-same-owner --no-same-permissions -C "$release_dir"
+  if ! jq --exit-status '.arrakisRelease | objects' "$release_dir/package.json" > "$work_dir/release-config.json" || [ ! -f "$release_dir/$updater_dir/supervisor.mjs" ]; then
+    echo "This release does not include the automatic updater, so it cannot be added. Nothing was changed." >&2
+    exit 1
+  fi
+  # Nothing is written through a symbolic link: each target must resolve to itself inside the install directory.
+  for dir in "$updater_dir" .arrakis; do
+    if [ "$(readlink -m "/mnt/server/$dir")" != "$(readlink -m /mnt/server)/$dir" ]; then
+      echo "/home/container/$dir leads through a symbolic link; refusing to add the updater. Nothing was changed." >&2
+      exit 1
+    fi
+  done
+  mkdir -p "/mnt/server/$updater_dir" /mnt/server/.arrakis
+  chown 1000:1000 "/mnt/server/$updater_dir" /mnt/server/.arrakis
+  added='{}'
+  for source in "$release_dir/$updater_dir"/*; do
+    [ -f "$source" ] || continue
+    name="$updater_dir/$(basename "$source")"
+    # Never replace a file that is already there.
+    if [ -e "/mnt/server/$name" ] || [ -L "/mnt/server/$name" ]; then continue; fi
+    cp "$source" "/mnt/server/$name"
+    chown 1000:1000 "/mnt/server/$name"
+    added=$(jq --arg name "$name" --arg hash "$(sha256sum "/mnt/server/$name" | awk '{print $1}')" '. + {($name): $hash}' <<< "$added")
+  done
+  if [ ! -e /mnt/server/.arrakis/bootstrap.json ] && [ ! -L /mnt/server/.arrakis/bootstrap.json ]; then
+    jq --null-input --slurpfile release "$work_dir/release-config.json" --argjson files "$added" '{release: $release[0], files: $files}' > /mnt/server/.arrakis/bootstrap.json
+    chown 1000:1000 /mnt/server/.arrakis/bootstrap.json
+  fi
+  echo "Automatic updater added. Set the startup command to: cd /home/container && exec node $updater_dir/supervisor.mjs (Admin > Servers > Startup), then start the server. It installs the newest release at startup and keeps .env, certificates and your own files."
+  exit 0
 fi
 
 mkdir -p /mnt/server

@@ -192,12 +192,13 @@ suite('Pterodactyl egg installer (sandboxed, no network)', () => {
     cleanup();
   });
 
-  it('leaves an existing installation and its custom files untouched on reinstall', () => {
+  it('leaves an updater-managed installation and its custom files untouched on reinstall', () => {
     const existing = {
       'package.json': '{"name":"arrakis","version":"2.0.0"}',
       '.env': 'AUTH_SECRET=synthetic\n',
       'certs/rabbit mq/client key.pem': 'synthetic key\n',
       'custom dir/nested/notes.txt': 'keep\n',
+      'scripts/deployment/updater/supervisor.mjs': '// installed updater\n',
     };
     const run = install({ ...releaseWith(goodArchive()), existing });
     expect(run.code).toBe(0);
@@ -205,6 +206,48 @@ suite('Pterodactyl egg installer (sandboxed, no network)', () => {
     expect(run.existingAfter).toEqual(existing);
     expect(run.curls).toEqual([]);
     expect(run.commands).toEqual([]);
+    cleanup();
+  });
+
+  it('adds only the automatic updater to an installation from before automatic updates', () => {
+    const existing = {
+      'package.json': '{"name":"arrakis","version":"2.0.0"}',
+      '.env': 'AUTH_SECRET=synthetic\n',
+      'certs/client key.pem': 'synthetic key\n',
+    };
+    const config = {
+      repository: 'RealXKenny/Arrakis-Control-Dashboard',
+      assetPrefix: 'arrakis-control-dashboard',
+      start: ['node', 'x'],
+    };
+    const archive = tarGz([
+      {
+        name: 'arrakis-control-dashboard/package.json',
+        content: JSON.stringify({ version: '2.1.0', arrakisRelease: config }),
+      },
+      { name: 'arrakis-control-dashboard/scripts/deployment/updater/supervisor.mjs', content: '// supervisor\n' },
+      { name: 'arrakis-control-dashboard/scripts/deployment/updater/updater.mjs', content: '// updater\n' },
+      { name: 'arrakis-control-dashboard/src/app.ts', content: '// application\n' },
+    ]);
+    const sandboxServer = (name: string) => path.join('scripts', 'deployment', 'updater', name);
+    const run = install({ ...releaseWith(archive), existing });
+    expect(run.code, run.stderr).toBe(0);
+    expect(run.stdout).toContain('Automatic updater added');
+    expect(run.existingAfter).toEqual(existing);
+    expect(run.extracted).toContain(sandboxServer('supervisor.mjs'));
+    expect(run.extracted).toContain(sandboxServer('updater.mjs'));
+    expect(run.extracted).toContain(path.join('.arrakis', 'bootstrap.json'));
+    expect(run.extracted).not.toContain(path.join('src', 'app.ts'));
+    expect(run.commands.filter((line) => line.startsWith('npm '))).toEqual([]);
+    cleanup();
+  });
+
+  it('changes nothing when the release has no updater to add to an old installation', () => {
+    const existing = { 'package.json': '{"name":"arrakis","version":"2.0.0"}' };
+    const run = install({ ...releaseWith(goodArchive()), existing });
+    expect(run.code).not.toBe(0);
+    expect(run.stderr).toContain('does not include the automatic updater');
+    expect(run.extracted).toEqual(['package.json']);
     cleanup();
   });
 
