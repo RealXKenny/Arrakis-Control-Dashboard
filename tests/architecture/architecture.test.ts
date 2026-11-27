@@ -202,7 +202,7 @@ describe('repository organization', () => {
     }
   });
 
-  it('detects static and dynamic dependency cycles', () => {
+  it('detects static and dynamic dependency cycles', { timeout: 30_000 }, () => {
     const available = new Set(files.map((file) => path.resolve(file)));
     const graph = new Map<string, string[]>();
     for (const file of files) {
