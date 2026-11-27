@@ -48,6 +48,14 @@ function colourEnabled(env = process.env) {
   return Boolean(process.stdout.isTTY || env.P_SERVER_UUID?.trim());
 }
 
+/** Control characters become spaces, so a message can never forge lines or terminal escapes. */
+function printable(message) {
+  return Array.from(String(message), (character) => {
+    const code = character.charCodeAt(0);
+    return code < 32 || (code >= 127 && code < 160) ? ' ' : character;
+  }).join('');
+}
+
 /** One line in the Arrakis console style: `date time  ● LEVEL UPDATES      │ message`. */
 function formatLine(message, at = new Date()) {
   const values = Object.fromEntries(timestampFormat.formatToParts(at).map(({ type, value }) => [type, value]));
@@ -56,7 +64,7 @@ function formatLine(message, at = new Date()) {
   const colour = colourEnabled();
   const paint = (text, code) => (colour ? `\u001b[${code}m${text}\u001b[0m` : text);
   const level = warn ? '▲ WARN ' : '● INFO ';
-  return `${paint(timestamp, '2')}  ${paint(level, warn ? '33' : '32')} ${paint('UPDATES'.padEnd(12), '93')} ${paint('│', '2')} ${String(message).replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')}`;
+  return `${paint(timestamp, '2')}  ${paint(level, warn ? '33' : '32')} ${paint('UPDATES'.padEnd(12), '93')} ${paint('│', '2')} ${printable(message)}`;
 }
 
 const log = (message) => globalThis.console.info(formatLine(message));
