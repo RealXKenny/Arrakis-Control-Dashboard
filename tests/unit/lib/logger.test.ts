@@ -1,8 +1,19 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createLogger } from '../../../src/lib/logger';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  createLogger,
+  describeError,
+  fitConsoleLine,
+  formatConsoleEntry,
+  shouldUseColor,
+} from '../../../src/lib/logger';
 
 vi.mock('../../../src/lib/assert-server', () => ({}));
 vi.mock('../../../src/config/env', () => ({ getServerEnv: () => ({ LOG_LEVEL: 'INFO', NODE_ENV: 'production' }) }));
+
+beforeEach(() => {
+  // Wide enough that these tests read whole lines; fitting to the terminal has its own test.
+  vi.stubEnv('COLUMNS', '1000');
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -67,6 +78,7 @@ describe('console presentation', () => {
 
   it('bounds large payloads and uses distinct service colors', () => {
     vi.stubEnv('NO_COLOR', undefined);
+    vi.stubEnv('LOG_COLOR', 'always');
     const output = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     createLogger('REDIS').info('Connected', { nodes: 6 });
     createLogger('CHAT BRIDGE').info(
@@ -76,5 +88,28 @@ describe('console presentation', () => {
     expect(String(output.mock.calls[0][0])).toContain('\u001b[95mREDIS');
     expect(String(output.mock.calls[1][0])).toContain('\u001b[96mCHAT BRIDGE');
     expect(String(output.mock.calls[1][0]).length).toBeLessThan(24_000);
+  });
+
+  it('shares the bot console style: colour policy, one-line errors and terminal fitting', () => {
+    expect(shouldUseColor({ P_SERVER_UUID: 'uuid' }, false)).toBe(true);
+    expect(shouldUseColor({}, false)).toBe(false);
+    expect(shouldUseColor({ LOG_COLOR: 'never', P_SERVER_UUID: 'uuid' }, true)).toBe(false);
+    expect(shouldUseColor({ LOG_COLOR: 'always', NO_COLOR: '1' }, false)).toBe(true);
+    expect(shouldUseColor({ NO_COLOR: '1' }, true)).toBe(false);
+    const operational = Object.assign(new Error('Console unavailable'), { name: 'DuneConsoleApiError', code: 503 });
+    expect(describeError(operational)).toBe('DuneConsoleApiError: Console unavailable (code 503)');
+    expect(describeError(new Error('secret internals'))).toBe('Error: Internal error');
+    expect(fitConsoleLine('\u001b[32mabcdefghij\u001b[0m', 6)).toBe('\u001b[32mabcd\u001b[0m…');
+    vi.stubEnv('NO_COLOR', '1');
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-27T17:00:00Z'));
+      // The bot's test suite checks this exact line too, so both consoles stay the same.
+      expect(formatConsoleEntry('SUGGESTIONS', 'WARN', 'Autopilot paused', { resetIn: 60, repo: 'o/r' })).toBe(
+        '2026-11-27 12:00:00  ▲ WARN  SUGGESTIONS  │ Autopilot paused · reset in = 60  ·  repo = o/r',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

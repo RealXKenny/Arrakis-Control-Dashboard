@@ -319,6 +319,15 @@ function buildEgg() {
         rules: 'required|string|in:DEBUG,INFO,WARN,ERROR,FATAL',
       }),
       variable(
+        'Log Colours',
+        'Console colours: auto (terminal or Pterodactyl), always or never.',
+        'LOG_COLOR',
+        'auto',
+        {
+          rules: 'required|string|in:auto,always,never',
+        },
+      ),
+      variable(
         'Server Bind Address',
         'Bind to all interfaces so Wings can reach the dashboard.',
         'SERVER_HOSTNAME',

@@ -35,6 +35,8 @@ const redisUrlSchema = z
 
 const serverEnvSchema = z.object({
   LOG_LEVEL: z.enum(['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']).default('INFO'),
+  // Read straight from process.env by the logger, so a bad value never blocks logging; listed here for validation.
+  LOG_COLOR: z.enum(['auto', 'always', 'never']).default('auto'),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   SERVER_HOSTNAME: z
     .string()

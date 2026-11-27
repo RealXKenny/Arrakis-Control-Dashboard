@@ -29,6 +29,7 @@ Startup stops serving (HTTP 500 on every request, reason logged by variable name
 | `SERVER_HOSTNAME`                     | `127.0.0.1`                | Bind address (no whitespace). Use `0.0.0.0` in containers                                                                                 |
 | `SERVER_PORT`                         | `2008`                     | 1 to 65535 (Wings supplies it on Pterodactyl)                                                                                             |
 | `LOG_LEVEL`                           | `INFO`                     | `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`                                                                                                 |
+| `LOG_COLOR`                           | `auto`                     | `auto` (terminal or Pterodactyl), `always`, `never`. `NO_COLOR` also turns colours off                                                    |
 | `API_MAX_CONCURRENCY`                 | `100`                      | 1 to 10000 active API requests per worker; excess get 503 `SERVER_BUSY`                                                                   |
 | `API_GLOBAL_READ_LIMIT`               | `2400`                     | Reads per route per minute shared through Redis                                                                                           |
 | `TRUSTED_PROXY_COUNT`                 | `1`                        | 0 to 5 proxies in front of the app ([reverse proxy](../installation/reverse-proxy.md))                                                    |

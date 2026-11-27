@@ -47,27 +47,69 @@ const LEVEL_ICONS: Record<LogLevel, string> = Object.freeze({
   FATAL: '✖',
 });
 
+/**
+ * Arrakis console style, shared with the bot (src/client/logger.ts there). Keep the scope colours, layout, colour
+ * policy and banner identical in both repositories so the two consoles read as one product.
+ */
 const SCOPE_COLORS: Record<string, string> = Object.freeze({
+  // Products and startup
   BOT: COLORS.brightYellow,
+  DASHBOARD: COLORS.brightOrange,
+  STARTUP: COLORS.brightYellow,
+  SYSTEM: COLORS.brightYellow,
+  UPDATES: COLORS.brightYellow,
+  RELEASES: COLORS.brightOrange,
+  'VERSION ANNOUNCEMENTS': COLORS.brightOrange,
+  CONFIG: COLORS.brightBlue,
+  METRICS: COLORS.cyan,
+  WORKERS: COLORS.cyan,
+  // Discord
   DISCORD: COLORS.brightCyan,
+  GATEWAY: COLORS.brightCyan,
   'SHARD MANAGER': COLORS.brightMagenta,
-  'PLAYER PANEL': COLORS.brightGreen,
-  'BLUEPRINT PANEL': COLORS.yellow,
+  SAPPHIRE: COLORS.magenta,
   COMMANDS: COLORS.brightBlue,
   COMPONENTS: COLORS.magenta,
   EVENTS: COLORS.green,
   INTERACTIONS: COLORS.cyan,
-  'DUNE API': COLORS.yellow,
   'DISCORD ADAPTER': COLORS.brightCyan,
   'DISCORD AUDIT': COLORS.brightGreen,
   'DISCORD AUDIT LOG': COLORS.brightMagenta,
-  DASHBOARD: COLORS.brightOrange,
-  HTTP: COLORS.brightGreen,
-  STARTUP: COLORS.brightYellow,
+  // Game data
+  'DUNE API': COLORS.yellow,
+  'CONVOY API': COLORS.brightBlue,
+  PLAYERS: COLORS.brightGreen,
+  'PLAYER PANEL': COLORS.brightGreen,
+  'BLUEPRINT PANEL': COLORS.yellow,
+  MARKET: COLORS.brightOrange,
+  SERVER: COLORS.yellow,
+  'CORIOLIS STORM': COLORS.brightOrange,
+  'SEASON CLAIMS': COLORS.brightOrange,
+  // Storage and transport
+  STORAGE: COLORS.brightGreen,
   REDIS: COLORS.brightMagenta,
+  CACHE: COLORS.brightMagenta,
+  HTTP: COLORS.brightGreen,
+  GITHUB: COLORS.white,
+  BACKUPS: COLORS.brightBlue,
+  'MESSAGE ARCHIVE': COLORS.yellow,
+  // Community
+  COMMUNITY: COLORS.brightGreen,
   CHAT: COLORS.brightCyan,
   'CHAT BRIDGE': COLORS.brightCyan,
+  MUSIC: COLORS.brightMagenta,
+  LAVALINK: COLORS.magenta,
+  VOICE: COLORS.brightCyan,
+  LEVELING: COLORS.brightGreen,
+  SUGGESTIONS: COLORS.brightMagenta,
+  TICKETS: COLORS.green,
+  'TICKET PANEL': COLORS.brightGreen,
+  'TICKET ARCHIVE': COLORS.yellow,
+  // Safety
   AUDIT: COLORS.brightBlue,
+  SECURITY: COLORS.red,
+  MODERATION: COLORS.red,
+  HONEYPOT: COLORS.red,
   default: COLORS.white,
 });
 
@@ -92,15 +134,9 @@ function redact(value: unknown, key = '', seen = new WeakSet<object>(), depth = 
     if (seen.has(value)) return '[Circular]';
     seen.add(value);
   }
-  if (value instanceof Error) {
-    const operationalError = ['DuneConsoleApiError', 'DiscordAdapterApiError'].includes(value.name);
-    const production = getServerEnv().NODE_ENV === 'production';
-    return {
-      name: value.name,
-      message: production && !operationalError ? 'Internal error' : value.message,
-      stack: production || operationalError ? undefined : value.stack,
-    };
-  }
+  // Stacks are printed separately at DEBUG, so one failure never turns into a wall of text.
+  if (value instanceof Error) return describeError(value);
+
   if (Array.isArray(value)) {
     return value.slice(0, 20).map((item) => redact(item, '', seen, depth + 1));
   }
@@ -112,6 +148,88 @@ function redact(value: unknown, key = '', seen = new WeakSet<object>(), depth = 
     );
   }
   return value;
+}
+
+const OPERATIONAL_ERROR_NAMES = ['DuneConsoleApiError', 'DiscordAdapterApiError', 'DiscordAPIError', 'HTTPError'];
+
+/** Errors whose messages come from a remote API and are safe and useful to show in production. */
+function isOperationalError(error: Error): boolean {
+  return OPERATIONAL_ERROR_NAMES.some((name) => error.name === name || error.name.startsWith(`${name}[`));
+}
+
+/** One readable line for an error: `Name: message`, plus its code when the name does not already carry it. */
+export function describeError(error: Error): string {
+  const production = getServerEnv().NODE_ENV === 'production';
+  const message = production && !isOperationalError(error) ? 'Internal error' : error.message;
+  const rawCode = (error as Error & { code?: unknown }).code;
+  const code =
+    (typeof rawCode === 'string' || typeof rawCode === 'number') && !error.name.includes(String(rawCode))
+      ? String(rawCode)
+      : undefined;
+  return `${error.name}: ${message}${code ? ` (code ${code})` : ''}`;
+}
+
+/** Stack frames shown at DEBUG, without the first line because the log line already names the error. */
+function stackLines(error: Error): string[] {
+  if (getServerEnv().NODE_ENV === 'production' && !isOperationalError(error)) return [];
+  return (error.stack ?? '')
+    .split('\n')
+    .slice(1)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function findError(details: unknown): Error | undefined {
+  if (details instanceof Error) return details;
+  if (details && typeof details === 'object' && !Array.isArray(details)) {
+    const nested = (details as { error?: unknown }).error;
+    if (nested instanceof Error) return nested;
+  }
+  return undefined;
+}
+
+const ANSI_ESCAPE = String.fromCharCode(27);
+const ANSI_COLOR_PATTERN = new RegExp(`${ANSI_ESCAPE}\\[[0-9;]*m`, 'g');
+const DEFAULT_PRODUCTION_COLUMNS = 120;
+
+function visibleLength(value: string): number {
+  return Array.from(value.replace(ANSI_COLOR_PATTERN, '')).length;
+}
+
+/** Cut a line to the terminal width with an ellipsis, keeping colour codes intact, so the console never wraps. */
+export function fitConsoleLine(value: string, columns: number | undefined): string {
+  if (!columns || !Number.isInteger(columns) || columns < 2) return value;
+  // Leave the final cell unused: several PTYs wrap before processing the newline when every column is occupied.
+  const limit = columns - 1;
+  if (visibleLength(value) <= limit) return value;
+  const contentLimit = Math.max(0, limit - 1);
+  let output = '';
+  let visible = 0;
+  for (let index = 0; index < value.length && visible < contentLimit;) {
+    if (value[index] === ANSI_ESCAPE) {
+      const end = value.indexOf('m', index + 2);
+      if (value.startsWith(`${ANSI_ESCAPE}[`, index) && end !== -1 && /^[0-9;]*$/.test(value.slice(index + 2, end))) {
+        output += value.slice(index, end + 1);
+        index = end + 1;
+        continue;
+      }
+    }
+    const codePoint = value.codePointAt(index)!;
+    output += String.fromCodePoint(codePoint);
+    index += codePoint > 0xffff ? 2 : 1;
+    visible += 1;
+  }
+  return `${output}${value.includes(ANSI_ESCAPE) ? COLORS.reset : ''}…`;
+}
+
+function terminalColumns(level: LogLevel): number | undefined {
+  const primary = ['ERROR', 'FATAL', 'WARN'].includes(level) ? process.stderr.columns : process.stdout.columns;
+  const fallback = process.stdout.columns ?? process.stderr.columns;
+  const environment = Number(process.env.COLUMNS);
+  return (
+    [primary, fallback, environment].find((value) => Number.isInteger(value) && Number(value) > 1) ??
+    (getServerEnv().NODE_ENV === 'production' ? DEFAULT_PRODUCTION_COLUMNS : undefined)
+  );
 }
 
 function formatTimestamp(date: Date): string {
@@ -137,8 +255,25 @@ function cleanText(value: unknown): string {
     .slice(0, 500);
 }
 
+/**
+ * Colour policy. `LOG_COLOR=always|never` wins, then the NO_COLOR and FORCE_COLOR conventions. In `auto` mode colour is
+ * on for a terminal and inside a Pterodactyl container, whose web console renders ANSI although the update supervisor
+ * pipes our output.
+ */
+export function shouldUseColor(
+  env: Readonly<Record<string, string | undefined>> = process.env,
+  isTTY = Boolean(process.stdout.isTTY),
+): boolean {
+  const mode = env.LOG_COLOR?.trim().toLowerCase() || 'auto';
+  if (mode === 'always' || mode === 'true') return true;
+  if (mode === 'never' || mode === 'false') return false;
+  if (env.NO_COLOR !== undefined || env.TERM === 'dumb') return false;
+  if (env.FORCE_COLOR !== undefined) return env.FORCE_COLOR !== '0';
+  return isTTY || Boolean(env.P_SERVER_UUID?.trim());
+}
+
 function paint(value: string, color: string): string {
-  return process.env.NO_COLOR !== undefined ? value : `${color}${value}${COLORS.reset}`;
+  return shouldUseColor() ? `${color}${value}${COLORS.reset}` : value;
 }
 
 /** Small, readable detail rows instead of dumping transport-shaped JSON into the console. */
@@ -169,7 +304,7 @@ function formatDetails(details: unknown): string[] {
   let row: string[] = [];
   let width = 0;
   for (const field of fields) {
-    const length = field.replace(/\u001b\[[0-9;]*m/g, '').length;
+    const length = visibleLength(field);
     if (row.length && (width + length > 100 || row.length >= 4)) {
       rows.push(row.join(paint('  ·  ', COLORS.dim)));
       row = [];
@@ -187,7 +322,8 @@ export function shouldClearConsole(
   env: Readonly<Record<string, string | undefined>> = process.env,
   isTTY = Boolean(process.stdout.isTTY),
 ): boolean {
-  if (env.NO_COLOR !== undefined) return false;
+  if (env.NO_COLOR !== undefined || ['never', 'false'].includes(env.LOG_COLOR?.trim().toLowerCase() ?? ''))
+    return false;
   return isTTY || Boolean(env.P_SERVER_UUID?.trim());
 }
 
@@ -231,7 +367,11 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
   function write(level: LogLevel, message: string, details?: unknown): void {
     // Dev note: quiet logs are not shy; they simply missed the threshold.
     if (LEVELS[level] < threshold) return;
-    const formattedOutput = formatConsoleEntry(scope, level, message, details);
+    const columns = terminalColumns(level);
+    const formattedOutput = formatConsoleEntry(scope, level, message, details)
+      .split('\n')
+      .map((line) => fitConsoleLine(line, columns))
+      .join('\n');
 
     if (level === 'ERROR' || level === 'FATAL') {
       // Dev note: errors use stderr because regular output asked for boundaries.
@@ -251,6 +391,15 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
     }
 
     console.info(formattedOutput);
+  }
+
+  function writeStack(details: unknown): void {
+    if (LEVELS.DEBUG < threshold) return;
+    const error = findError(details);
+    if (!error) return;
+    const columns = terminalColumns('DEBUG');
+    // Dev note: the stack trace waits in the DEBUG lounge until someone actually asks for directions.
+    for (const frame of stackLines(error)) console.debug(fitConsoleLine(paint(`    ${frame}`, COLORS.dim), columns));
   }
 
   return Object.freeze({
@@ -285,9 +434,18 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
     },
     debug: (message: string, details?: unknown) => write('DEBUG', message, details),
     info: (message: string, details?: unknown) => write('INFO', message, details),
-    warn: (message: string, details?: unknown) => write('WARN', message, details),
-    error: (message: string, error?: unknown) => write('ERROR', message, error),
-    fatal: (message: string, error?: unknown) => write('FATAL', message, error),
+    warn: (message: string, details?: unknown) => {
+      write('WARN', message, details);
+      writeStack(details);
+    },
+    error: (message: string, error?: unknown) => {
+      write('ERROR', message, error);
+      writeStack(error);
+    },
+    fatal: (message: string, error?: unknown) => {
+      write('FATAL', message, error);
+      writeStack(error);
+    },
   });
 }
 

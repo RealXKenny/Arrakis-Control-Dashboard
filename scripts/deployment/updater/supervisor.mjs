@@ -26,7 +26,40 @@ import {
 } from './updater.mjs';
 
 const root = process.cwd();
-const log = (message) => globalThis.console.info(`[updater] ${message}`);
+const timestampFormat = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+});
+const TROUBLE = /\b(fail|failed|could not|did not|unavailable|conflict|restoring|rollback|exited|off until)\b/i;
+
+/** Colour policy shared with both applications' loggers: LOG_COLOR, NO_COLOR, FORCE_COLOR, terminal or Pterodactyl. */
+function colourEnabled(env = process.env) {
+  const mode = env.LOG_COLOR?.trim().toLowerCase() || 'auto';
+  if (mode === 'always' || mode === 'true') return true;
+  if (mode === 'never' || mode === 'false') return false;
+  if (env.NO_COLOR !== undefined || env.TERM === 'dumb') return false;
+  if (env.FORCE_COLOR !== undefined) return env.FORCE_COLOR !== '0';
+  return Boolean(process.stdout.isTTY || env.P_SERVER_UUID?.trim());
+}
+
+/** One line in the Arrakis console style: `date time  ● LEVEL UPDATES      │ message`. */
+function formatLine(message, at = new Date()) {
+  const values = Object.fromEntries(timestampFormat.formatToParts(at).map(({ type, value }) => [type, value]));
+  const timestamp = `${values.year}-${values.month}-${values.day} ${values.hour}:${values.minute}:${values.second}`;
+  const warn = TROUBLE.test(message);
+  const colour = colourEnabled();
+  const paint = (text, code) => (colour ? `\u001b[${code}m${text}\u001b[0m` : text);
+  const level = warn ? '▲ WARN ' : '● INFO ';
+  return `${paint(timestamp, '2')}  ${paint(level, warn ? '33' : '32')} ${paint('UPDATES'.padEnd(12), '93')} ${paint('│', '2')} ${String(message).replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')}`;
+}
+
+const log = (message) => globalThis.console.info(formatLine(message));
 const STOP_GRACE_MS = 30_000;
 const WINDOW_RETRY_MS = 15 * 60_000;
 
