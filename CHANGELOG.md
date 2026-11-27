@@ -10,6 +10,9 @@
 
 - **Updates no longer stop on `package-lock.json`**: npm rewrites the lockfile by itself (for example during an egg reinstall), and the updater called that a local change and refused to update. The updater, shared with the bot, now always replaces `package-lock.json` and `npm-shrinkwrap.json` with the release's copy. Files you edited are still protected as before.
 
+- **Startup is detected**: the dashboard never printed the `Arrakis Control Dashboard is listening` line that the update supervisor's health check and the Pterodactyl egg wait for, so the panel could stay on "Starting" and an installed update was never confirmed as healthy. The launcher's ready line now says exactly that.
+- **Every console line keeps the shared layout**: Next.js' own startup lines and the launcher's messages (including `.env` migration notes) are printed in the same style under `NEXT` and `STARTUP`, a message longer than the console (120 columns inside Pterodactyl) continues on indented lines under its own scope instead of wrapping under the timestamp, and scopes longer than the 12-character column print a short name.
+
 ### Upgrade Notes
 
 - A server stuck on 2.0.1 with `Conflict: package-lock.json` still runs the old updater. Delete `package-lock.json` in the panel's File Manager and restart once; the update then installs the newest release.

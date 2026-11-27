@@ -192,6 +192,49 @@ const ANSI_ESCAPE = String.fromCharCode(27);
 const ANSI_COLOR_PATTERN = new RegExp(`${ANSI_ESCAPE}\\[[0-9;]*m`, 'g');
 const DEFAULT_PRODUCTION_COLUMNS = 120;
 
+/** Short console names for scopes wider than the 12-character column. Colours stay keyed by the full scope. */
+const SCOPE_LABELS: Readonly<Record<string, string>> = Object.freeze({
+  'SHARD MANAGER': 'SHARDS',
+  'VERSION ANNOUNCEMENTS': 'RELEASE NEWS',
+  'DISCORD ADAPTER': 'DISCORD API',
+  'DISCORD AUDIT': 'AUDIT',
+  'DISCORD AUDIT LOG': 'AUDIT LOG',
+  'BLUEPRINT PANEL': 'BLUEPRINTS',
+  'CORIOLIS STORM': 'CORIOLIS',
+  'SEASON CLAIMS': 'CLAIMS',
+  'MESSAGE ARCHIVE': 'ARCHIVE',
+  'TICKET ARCHIVE': 'TRANSCRIPTS',
+});
+const SCOPE_WIDTH = 12;
+/** Visible width of `date time  ● LEVEL SCOPE        │ `, where every message line starts. */
+const MESSAGE_COLUMN = 19 + 2 + 7 + 1 + SCOPE_WIDTH + 1 + 2;
+const MAX_WRAPPED_LINES = 6;
+
+/** The scope as printed: a short label for long scopes, never wider than the column. */
+export function scopeLabel(scope: string): string {
+  return (SCOPE_LABELS[scope] ?? scope).slice(0, SCOPE_WIDTH);
+}
+
+/**
+ * Splits a long message into lines that fit beside the prefix, breaking after `|`, `·`, `,` or a space, so a narrow
+ * console shows the whole line under its own scope instead of wrapping into the next column.
+ */
+export function wrapMessage(message: string, room: number): string[] {
+  if (!Number.isFinite(room) || room < 20 || message.length <= room) return [message];
+  const lines: string[] = [];
+  let rest = message;
+  while (rest.length > room && lines.length < MAX_WRAPPED_LINES - 1) {
+    const window = rest.slice(0, room + 1);
+    const breakAt = Math.max(window.lastIndexOf(' | '), window.lastIndexOf(' · '));
+    const cut = breakAt > room / 3 ? breakAt : Math.max(window.lastIndexOf(', ') + 1, window.lastIndexOf(' '));
+    const end = cut > room / 3 ? cut : room;
+    lines.push(rest.slice(0, end).trimEnd());
+    rest = rest.slice(end).replace(/^\s*[|·]?\s*/u, '');
+  }
+  lines.push(rest.length > room ? `${rest.slice(0, room - 1)}…` : rest);
+  return lines;
+}
+
 function visibleLength(value: string): number {
   return Array.from(value.replace(ANSI_COLOR_PATTERN, '')).length;
 }
@@ -228,7 +271,9 @@ function terminalColumns(level: LogLevel): number | undefined {
   const environment = Number(process.env.COLUMNS);
   return (
     [primary, fallback, environment].find((value) => Number.isInteger(value) && Number(value) > 1) ??
-    (getServerEnv().NODE_ENV === 'production' ? DEFAULT_PRODUCTION_COLUMNS : undefined)
+    (getServerEnv().NODE_ENV === 'production' || process.env.P_SERVER_UUID?.trim()
+      ? DEFAULT_PRODUCTION_COLUMNS
+      : undefined)
   );
 }
 
@@ -343,16 +388,22 @@ export function formatConsoleEntry(
   message: string,
   details?: unknown,
   at = new Date(),
+  columns?: number,
 ): string {
   const scopeColor = SCOPE_COLORS[scope] ?? SCOPE_COLORS.default;
-  const output =
+  const room = columns && Number.isInteger(columns) ? columns - 1 - MESSAGE_COLUMN : Infinity;
+  const [first = '', ...rest] = wrapMessage(cleanText(message), room);
+  const output = [
     `${paint(formatTimestamp(at), COLORS.dim)}  ` +
-    `${paint(`${LEVEL_ICONS[level]} ${level.padEnd(5)}`, LEVEL_COLORS[level])} ` +
-    `${paint(scope.padEnd(12), scopeColor)} ${paint('│', COLORS.dim)} ` +
-    cleanText(message);
+      `${paint(`${LEVEL_ICONS[level]} ${level.padEnd(5)}`, LEVEL_COLORS[level])} ` +
+      `${paint(scopeLabel(scope).padEnd(SCOPE_WIDTH), scopeColor)} ${paint('│', COLORS.dim)} ` +
+      first,
+    ...rest.map((chunk) => `${' '.repeat(MESSAGE_COLUMN - 2)}${paint('│', COLORS.dim)} ${chunk}`),
+  ].join('\n');
   const safeDetails = redact(details);
   const rows = formatDetails(safeDetails);
-  const inline = rows.length === 1 && rows[0].replace(/\u001b\[[0-9;]*m/g, '').length <= 100;
+  const last = rest.at(-1) ?? first;
+  const inline = rows.length === 1 && visibleLength(rows[0]) <= Math.min(100, room - last.length - 3);
   return inline
     ? `${output} ${paint('·', COLORS.dim)} ${rows[0]}`
     : rows.length
@@ -368,7 +419,7 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
     // Dev note: quiet logs are not shy; they simply missed the threshold.
     if (LEVELS[level] < threshold) return;
     const columns = terminalColumns(level);
-    const formattedOutput = formatConsoleEntry(scope, level, message, details)
+    const formattedOutput = formatConsoleEntry(scope, level, message, details, new Date(), columns)
       .split('\n')
       .map((line) => fitConsoleLine(line, columns))
       .join('\n');
