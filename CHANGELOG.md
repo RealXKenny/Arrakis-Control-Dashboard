@@ -5,6 +5,7 @@
 ### New Features
 
 - **Solaris leaderboard** (`/solaris`, under Community next to the dungeon leaderboard): characters ranked by the Solaris they hold, with headline numbers (characters ranked, Solaris on hand, wealthiest, median), a name search and your own rank. Balances come from the Console's player routes in one refresh every 10 minutes shared through the Redis cache, never one per viewer, and only character names and balances reach the browser. Balances that could not be read are left out and counted instead of shown as zero.
+- **Unwrapped** (`/unwrapped`, under Community): the year in review as swipeable cards, one set for the server (releases shipped, biggest release, dungeon runs and the fastest clear, Solaris held, roadmap items released) and one for you (your dungeon records and server records, your Solaris rank and, if your progression journal is tracking, the levels and experience you gained). It only uses data the dashboard already keeps: a card with nothing behind it is left out instead of shown as zero, and all-time or right-now figures say so on the card.
 
 ### Fixes
 

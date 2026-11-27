@@ -423,6 +423,14 @@ export const NAVIGATION_ITEMS: readonly NavigationItem[] = [
             order: 23,
           },
           {
+            id: 'community-unwrapped',
+            label: 'Unwrapped',
+            href: '/unwrapped',
+            icon: 'changelog',
+            description: 'The year in review: what the server built and ran, and your own highlights.',
+            order: 24,
+          },
+          {
             id: 'community-calendar',
             label: 'Community calendar',
             href: '/calendar',

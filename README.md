@@ -61,6 +61,7 @@ _The dashboard overview in an isolated demonstration environment. All people, gu
 - **Base marketplace:** owner-verified blueprint sharing, captured front pictures, interactive previews, and checked imports.
 - **Dungeon leaderboard:** fastest run per dungeon and difficulty, recent runs with filters and paging, and your own personal bests, read only from the Console's documented dungeon endpoints and shared through the Redis cache. See [Dungeon leaderboard](docs/features/dungeon-leaderboard.md).
 - **Solaris leaderboard:** characters ranked by the Solaris they hold, with headline numbers, name search and your own rank, built from the Console's documented player routes in one coordinated refresh shared through the Redis cache. See [Solaris leaderboard](docs/features/solaris-leaderboard.md).
+- **Unwrapped:** the year in review as swipeable cards for the whole server and for each member, built only from data the dashboard already keeps. See [Unwrapped](docs/features/unwrapped.md).
 - **Public roadmap:** approved, labelled GitHub issues from both Arrakis Control repositories with status, area and confirmed milestone versions only; security and private items are never shown. See [Roadmap](docs/features/roadmap.md).
 - **Poker Activity:** optional play-money Texas Hold'em for up to four players, with AI players to fill empty seats, that members open as a Discord Activity launched by the main bot. See [Poker Activity](docs/features/poker-activity.md).
 
