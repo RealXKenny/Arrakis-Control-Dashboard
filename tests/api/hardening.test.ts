@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppError, getSafeError } from '../../src/lib/errors';
-import { createLogger, logger, logRequestAccess } from '../../src/lib/logger';
+import { createLogger, logger, logRequestAccess, shouldClearConsole } from '../../src/lib/logger';
 import { checkRateLimit } from '../../src/lib/security/rate-limit';
 import { deleteSession, saveSession } from '../../src/features/auth/server/session-store';
 import { getSession } from '../../src/features/auth/server/session';
@@ -70,11 +70,18 @@ describe('shared production hardening', () => {
 
     createLogger('DASHBOARD', 'INFO').header('ARRAKIS CONTROL', 'Dune: Awakening Dashboard');
 
-    if (process.stdout.isTTY && process.env.NO_COLOR === undefined) {
+    if ((process.stdout.isTTY || process.env.P_SERVER_UUID) && process.env.NO_COLOR === undefined) {
       expect(clear).toHaveBeenCalledWith('\u001B[2J\u001B[3J\u001B[H');
       expect(clear.mock.invocationCallOrder[0]).toBeLessThan(output.mock.invocationCallOrder[0]);
     } else expect(clear).not.toHaveBeenCalled();
     expect(output.mock.calls.map(([message]) => message).join('\n')).toContain('ARRAKIS CONTROL');
+  });
+
+  it('clears the console before the banner inside a Pterodactyl container', () => {
+    expect(shouldClearConsole({ P_SERVER_UUID: 'uuid' }, false)).toBe(true);
+    expect(shouldClearConsole({}, true)).toBe(true);
+    expect(shouldClearConsole({}, false)).toBe(false);
+    expect(shouldClearConsole({ P_SERVER_UUID: 'uuid', NO_COLOR: '1' }, true)).toBe(false);
   });
 
   it('compacts successful request logs and summarizes repeated polling', () => {

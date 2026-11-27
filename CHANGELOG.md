@@ -4,6 +4,7 @@
 
 ### Fixes
 
+- **Console clears before the banner again on Pterodactyl**: since 2.0.1 the update supervisor relays the dashboard's output, so the dashboard no longer saw a terminal and stopped clearing the console at startup. It now clears inside a Pterodactyl container as well (still never with `NO_COLOR`).
 - **Moving a 2.0.0 server to automatic updates**: a 2.0.0 install has no updater, and its `package.json` lacks the release settings the updater reads, so it could never update itself. Reinstalling such a server from the panel now adds only the verified updater files and `.arrakis/bootstrap.json` (the release settings), changes no existing file, and prints the startup command to set. The updater then installs the newest release at the next start, keeping `.env`, certificates and your own files.
 
 ### Upgrade Notes

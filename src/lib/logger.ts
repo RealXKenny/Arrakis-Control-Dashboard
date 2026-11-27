@@ -182,6 +182,15 @@ function formatDetails(details: unknown): string[] {
   return rows;
 }
 
+/** Clear before the banner in a terminal or a Pterodactyl container, never for redirected output or NO_COLOR. */
+export function shouldClearConsole(
+  env: Readonly<Record<string, string | undefined>> = process.env,
+  isTTY = Boolean(process.stdout.isTTY),
+): boolean {
+  if (env.NO_COLOR !== undefined) return false;
+  return isTTY || Boolean(env.P_SERVER_UUID?.trim());
+}
+
 export interface Logger {
   header(title: string, subtitle?: string): void;
   debug(message: string, details?: unknown): void;
@@ -250,8 +259,9 @@ export function createLogger(scope: string, minimumLevel: string = getServerEnv(
         return;
       }
 
-      // Dev note: even Pterodactyl gets a clean runway before this banner lands.
-      if (process.stdout.isTTY && process.env.NO_COLOR === undefined) process.stdout.write(CLEAR_TERMINAL);
+      // Dev note: even Pterodactyl gets a clean runway before this banner lands. Its web console renders ANSI
+      // although the update supervisor pipes our output, so a Pterodactyl container counts as a terminal here.
+      if (shouldClearConsole()) process.stdout.write(CLEAR_TERMINAL);
       const width = 64;
       const border = '─'.repeat(width);
       console.log(`\n${paint(`╭${border}╮`, COLORS.brightOrange)}`);
