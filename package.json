@@ -1,6 +1,6 @@
 {
   "name": "arrakis-control-dashboard-v2",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "type": "module",
   "scripts": {
     "dev": "node scripts/server-launcher.mjs dev",
@@ -61,6 +61,7 @@
     }
   },
   "arrakisRelease": {
+    "signalPath": "/api/v2/updates/signal",
     "repository": "RealXKenny/Arrakis-Control-Dashboard",
     "assetPrefix": "arrakis-control-dashboard",
     "start": [

@@ -19,6 +19,7 @@ import { spawn } from 'node:child_process';
 import { createReadStream, createWriteStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { URL } from 'node:url';
 import process from 'node:process';
 import { Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -63,6 +64,9 @@ export function updaterSettings(env = process.env) {
     throw new UpdateError('RELEASE_TAG must be latest or a version such as v2.1.0.');
   const token = String(env.AUTO_UPDATE_GITHUB_TOKEN ?? '').trim();
   if (token && !/^[A-Za-z0-9_]{20,255}$/.test(token)) throw new UpdateError('AUTO_UPDATE_GITHUB_TOKEN is malformed.');
+  const signalUrl = String(env.AUTO_UPDATE_SIGNAL_URL ?? '').trim();
+  if (signalUrl) signalAddress(signalUrl);
+  const signalSeconds = Number(env.AUTO_UPDATE_SIGNAL_SECONDS ?? 30);
   return {
     enabled: truthy(env.AUTO_UPDATE_ENABLED, true),
     onStartup: truthy(env.AUTO_UPDATE_ON_STARTUP, true),
@@ -72,7 +76,50 @@ export function updaterSettings(env = process.env) {
     pin: !pin || pin === 'latest' ? null : pin.startsWith('v') ? pin : `v${pin}`,
     window: window || null,
     token: token || null,
+    signalUrl: signalUrl || null,
+    signalMs: Math.min(Math.max(Number.isFinite(signalSeconds) ? signalSeconds : 30, 10), 3_600) * 1000,
   };
+}
+
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
+
+/** A release-signal URL: HTTPS, or plain HTTP only to this machine, and never with embedded credentials. */
+export function signalAddress(value) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new UpdateError('AUTO_UPDATE_SIGNAL_URL must be a full URL.');
+  }
+  const local = url.protocol === 'http:' && LOOPBACK_HOSTS.has(url.hostname);
+  if ((url.protocol !== 'https:' && !local) || url.username || url.password)
+    throw new UpdateError('AUTO_UPDATE_SIGNAL_URL must use https (or http to this machine) and carry no credentials.');
+  return url.href;
+}
+
+/**
+ * Ask the dashboard which release GitHub last announced for `repository`. The answer is only a hint to check now:
+ * whatever it says, the update itself is still chosen from GitHub's own release list and verified as always.
+ */
+export async function readReleaseSignal({ url, repository, fetchImpl = globalThis.fetch }) {
+  const response = await fetchImpl(signalAddress(url), {
+    headers: { Accept: 'application/json', 'User-Agent': 'arrakis-control-updater' },
+    redirect: 'error',
+    signal: globalThis.AbortSignal.timeout(5_000),
+  });
+  if (!response.ok) throw new UpdateError(`The release signal answered ${response.status}.`);
+  const text = await response.text();
+  if (text.length > 65_536) throw new UpdateError('The release signal response was too large.');
+  const entry = JSON.parse(text)?.releases?.[repository];
+  return entry && parseVersion(entry.version) ? { version: parseVersion(entry.version).text } : null;
+}
+
+/** True when an announced version is one this install would take: newer, on its channel, and not pinned away. */
+export function signalWantsUpdate(version, { current, channel, pin, bad = [] }) {
+  const parsed = parseVersion(version);
+  if (!parsed || !parseVersion(current) || pin || bad.includes(parsed.text)) return false;
+  if (parsed.pre && channel !== 'prerelease') return false;
+  return compareVersions(parsed.text, current) > 0;
 }
 
 /** True when `now` falls inside an `HH:MM-HH:MM` UTC window (which may wrap past midnight). */
@@ -391,6 +438,7 @@ export function statePaths(root) {
   return {
     base,
     installed: path.join(base, 'installed.json'),
+    bootstrap: path.join(base, 'bootstrap.json'),
     state: path.join(base, 'state.json'),
     lock: path.join(base, 'update.lock'),
     journal: path.join(base, 'journal.json'),
@@ -922,7 +970,26 @@ async function baselineFor({ root, config, current, settings, fetchImpl, log }) 
     ? Object.fromEntries(Object.entries(fetched.manifest.files).map(([name, entry]) => [name, entry.sha256]))
     : await hashArchive(fetched.archiveFile, config.generatedDirectories);
   await fs.rm(workDir, { recursive: true, force: true });
+  // Updater files the installer added to a pre-updater install are managed too, so a newer release may replace them.
+  const added = (await readBootstrap(root))?.files ?? {};
+  for (const [name, hash] of Object.entries(added)) {
+    const safe = /^[\w.-]+(\/[\w.-]+)*$/.test(name) && !name.split('/').includes('..');
+    if (safe && !(name in files) && /^[0-9a-f]{64}$/.test(String(hash))) files[name] = hash;
+  }
   return { version: current, files };
+}
+
+/** The installed version and the versions that failed their health check, for deciding whether a signal matters. */
+export async function installStatus(root) {
+  const pkg = await readJson(path.join(root, 'package.json'));
+  const state = await readJson(statePaths(root).state, {});
+  return { current: pkg?.version ?? null, bad: Array.isArray(state?.badVersions) ? state.badVersions : [] };
+}
+
+/** What the installer recorded when it added the updater to an install from before automatic updates. */
+async function readBootstrap(root) {
+  const bootstrap = await readJson(statePaths(root).bootstrap);
+  return bootstrap && typeof bootstrap === 'object' && !Array.isArray(bootstrap) ? bootstrap : null;
 }
 
 async function activateStaged({
@@ -1012,7 +1079,8 @@ export async function rollbackUnhealthy(root, log) {
 
 export async function readProductConfig(root) {
   const pkg = await readJson(path.join(root, 'package.json'));
-  const config = pkg?.arrakisRelease;
+  // Releases from before the updater have no settings in package.json; the installer leaves them in bootstrap.json.
+  const config = pkg?.arrakisRelease ?? (await readBootstrap(root))?.release;
   if (!config?.repository || !config.assetPrefix || !Array.isArray(config.start))
     throw new UpdateError('package.json has no arrakisRelease configuration.');
   githubRepository(config.repository);

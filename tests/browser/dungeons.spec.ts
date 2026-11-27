@@ -20,6 +20,14 @@ test('dungeon records, filters, recent runs and personal records come from the d
   await expect(table).toBeVisible();
   await expect(page.getByText('9 records · 36 runs counted')).toBeVisible();
   await expect(table.getByText('Spice Refinery').first()).toBeVisible();
+  const highlights = page.getByRole('region', { name: 'Leaderboard highlights' });
+  await expect(highlights.getByText('Fastest clear')).toBeVisible();
+  await expect(highlights.getByRole('list', { name: 'Top record holders' }).locator('li').first()).toBeVisible();
+  await page.getByLabel('Party size').selectOption('group');
+  const groupRows = await table.locator('tbody tr').count();
+  expect(groupRows).toBeLessThan(9);
+  await page.getByLabel('Party size').selectOption('any');
+  await expect(table.locator('tbody tr')).toHaveCount(9);
 
   await page.getByLabel('Search').fill('Shipwreck');
   await expect(table.locator('tbody tr')).toHaveCount(3);
@@ -35,7 +43,10 @@ test('dungeon records, filters, recent runs and personal records come from the d
   await expect(page.getByRole('list', { name: 'Recent dungeon runs' }).locator('li')).toHaveCount(11);
 
   await page.getByRole('link', { name: 'My records' }).click();
-  await expect(page.getByRole('table', { name: 'Your best run per dungeon and difficulty' })).toBeVisible();
+  const mine = page.getByRole('table', { name: 'Your best run per dungeon and difficulty' });
+  await expect(mine).toBeVisible();
+  await expect(mine.getByRole('columnheader', { name: 'Vs server record' })).toBeVisible();
+  await expect(page.getByText(/personal bests? · you hold/)).toBeVisible();
 
   const requests = await fakeConsole.requests();
   const dungeonPaths = requests.map((request) => request.path).filter((path) => path.startsWith('/api/dungeons'));

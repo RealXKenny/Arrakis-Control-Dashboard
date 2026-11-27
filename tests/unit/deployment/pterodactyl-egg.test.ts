@@ -126,6 +126,7 @@ describe('release integrity', () => {
         'RABBITMQ_URL',
         'RABBITMQ_TLS_KEY',
         'AUTO_UPDATE_GITHUB_TOKEN',
+        'UPDATE_WEBHOOK_SECRET',
       ].sort(),
     );
     const byName = new Map<
@@ -174,6 +175,7 @@ describe('egg and configuration stay in sync', () => {
     'AUTO_UPDATE_WINDOW_UTC',
     'AUTO_UPDATE_HEALTH_SECONDS',
     'AUTO_UPDATE_GITHUB_TOKEN',
+    'AUTO_UPDATE_SIGNAL_SECONDS',
   ];
 
   it('offers every application setting in the egg', () => {

@@ -2,6 +2,30 @@
 
 <!-- Generated from the bot repository CHANGELOG.md; do not edit manually. -->
 
+## [2.0.2] - 2026-11-27
+
+### Added
+
+- Instant updates: the update supervisor can install a new release within about 30 seconds of it being published. Set `AUTO_UPDATE_SIGNAL_URL` to the dashboard's `https://<your dashboard>/api/v2/updates/signal` (the dashboard learns of releases from a signed GitHub webhook) and it checks every `AUTO_UPDATE_SIGNAL_SECONDS` (30 by default). The signal only starts a check early: the release is still fetched from GitHub and verified, and the channel, pin, maintenance window, skipped versions and rollback still apply. Without it, the scheduled check works as before.
+- The suggestion assistant now runs itself. It reads the bot and dashboard GitHub repositories every 15 minutes (read-only, with cached requests that respect GitHub's rate limit) and moves matching suggestions forward: an open issue makes it Planned, a pull request or commit makes it In Progress, and a release makes it Implemented. Each move posts its own reply with a link to the work and lists it in the panel. Staff buttons stay as overrides: the autopilot never changes Back burner, Not doing or Added, and never moves a post backwards. Settings: `SUGGESTIONS_AUTOPILOT`, `SUGGESTIONS_GITHUB_REPOS`, `SUGGESTIONS_GITHUB_TOKEN`, `SUGGESTIONS_GITHUB_INTERVAL_MINUTES`, `SUGGESTIONS_AUTOPILOT_THRESHOLD`.
+- You can talk to the suggestion assistant. Mention it in a suggestion post and ask for an update, similar posts, a summary or its opinion in your own words; it answers from the post's status, linked GitHub work and discussion, never invents dates, and pings only the asker. New-post replies now quote the key detail of the post, name a very similar earlier post, and ask a follow-up question when a post is short. Summaries open with a plain-sentence recap.
+- Older suggestions are caught up once at startup: posts with no assistant panel get their category and Under Review tags and the panel, without pinging anyone (`SUGGESTIONS_CATCHUP`).
+
+### Changed
+
+- The bot, the dashboard and the update supervisor now share one console style: the same `date time ● LEVEL SCOPE │ message · key = value` lines, scope colours and banner (with the version). The console clears on start in a terminal or Pterodactyl, and the update supervisor's lines (`UPDATES`) look like the rest instead of `[updater] ...`. Secrets in more kinds of fields are hidden, and repeated objects no longer break a log line.
+
+### Fixed
+
+- Console colours are back on Pterodactyl. Since 2.0.1 the update supervisor relays the bot's output, so the bot no longer saw a terminal and turned colours off. Colours now stay on inside a Pterodactyl container; `LOG_COLOR=never` or `NO_COLOR` turns them off.
+
+- A server installed with 2.0.0 could not move to automatic updates: its files have no updater, and its `package.json` lacks the release settings the updater reads. Reinstalling such a server from the panel now adds only the verified updater files and `.arrakis/bootstrap.json` (the release settings), changes no existing file, and tells you the startup command to set. The updater then installs the newest release at the next start, keeping `.env`, certificates and your own files.
+
+### Upgrading
+
+- On a server still running 2.0.0: back up PostgreSQL, import the new egg, choose **Reinstall Server**, then set the startup command under **Admin → Servers → Startup** to `cd /home/container && exec node scripts/updater/supervisor.mjs` and restart. Importing an egg does not change the startup command of an existing server. Steps are in `guides/automatic-updates.md`.
+- Servers already on 2.0.1 with the updater update by themselves.
+
 ## [2.0.1] - 2026-11-26
 
 ### Added
@@ -9,6 +33,9 @@
 - Automatic updates for Pterodactyl. The egg now starts an update supervisor that installs verified releases at startup and on a schedule: stable or prerelease channel, a version pin through `RELEASE_TAG`, a check interval, an optional UTC maintenance window and an optional read-only GitHub token (`AUTO_UPDATE_*`). Each release is checked against its checksum, GitHub's digest and a new per-file manifest, built in a staging folder (including the native `canvas` check) before the bot is stopped, and rolled back if it does not start. Files you changed or added, such as `.env`, certificates and custom folders, are never overwritten; a conflicting update is skipped and each path is logged.
 - `CONSOLE_TIMEOUT_MS` sets the Dune Console request timeout (default 30 seconds).
 - Changelogs in a forum channel. Point `ANNOUNCEMENT_CHANNEL_ID` at a forum and every release gets its own post, titled like `Bot v2.0.1 release notes`: a short card with the version, date, summary and links, followed by the complete notes split across as many messages as needed, in order. Posts are tagged by product (`Bot`, `Dashboard`) and release type (`Major`, `Minor`, `Patch`); the bot creates missing tags on startup without duplicating existing ones. A text or announcement channel still works: it gets the short card, with the full notes in a thread on it. The bot release is still posted before the dashboard release.
+- Suggestion forum assistant: tags new suggestion posts, replies to the suggester with varied wording, lists similar posts, summarizes long discussions, and adds a staff-only status panel (Planned, Working on it, Back burner, Not doing, Added) to each post. Runs locally with no paid AI service.
+- `/suggestions` command: `similar`, `summary`, `status`, `panel`, and `feature start`, `link`, `done` and `list` to move every suggestion a piece of work covers to In Progress and then Implemented.
+- New optional settings `SUGGESTIONS_FORUM_CHANNEL_ID`, `SUGGESTIONS_AUTO_TAG`, `SUGGESTIONS_STATUS_PANEL`, `SUGGESTIONS_NOTIFY_AUTHOR`, `SUGGESTIONS_CREATE_TAGS`, `SUGGESTIONS_DUPLICATE_THRESHOLD`, `SUGGESTIONS_AUTO_SUMMARY_MESSAGES` and `SUGGESTIONS_BACKFILL_LIMIT`. See `guides/suggestions.md`.
 
 ### Fixed
 

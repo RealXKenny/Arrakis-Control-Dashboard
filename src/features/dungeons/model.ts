@@ -63,18 +63,84 @@ export function formatDuration(ms: number): string {
 }
 
 export type BoardSort = 'dungeon' | 'fastest' | 'runs' | 'party';
+export type PartySize = 'any' | 'solo' | 'duo' | 'group';
 export type BoardFilters = {
   query: string;
   dungeonId: string | null;
   difficulty: number | null;
   sort: BoardSort;
+  /** Size of the party that set the record: solo (1), duo (2) or group (3+). */
+  party?: PartySize;
 };
+
+export function partySizeMatches(playerCount: number, size: PartySize = 'any'): boolean {
+  if (size === 'solo') return playerCount === 1;
+  if (size === 'duo') return playerCount === 2;
+  if (size === 'group') return playerCount >= 3;
+  return true;
+}
+
+const recordKey = (run: Pick<DungeonRun, 'dungeonId' | 'difficulty'>) => `${run.dungeonId}:${run.difficulty}`;
+
+/** "+0:12.3" behind a record; "0:00.0" when equal. */
+export function formatGap(ms: number): string {
+  return ms > 0 ? `+${formatDuration(ms)}` : formatDuration(0);
+}
+
+export type BoardSummary = {
+  dungeons: number;
+  records: number;
+  totalRuns: number;
+  fastest: DungeonRecord | null;
+  busiest: DungeonRecord | null;
+  /** Characters holding the most server records, named members only. */
+  holders: Array<{ name: string; records: number }>;
+};
+
+/** Headline numbers for the records board, computed from the sanitized board alone. */
+export function boardSummary(records: readonly DungeonRecord[], holderLimit = 5): BoardSummary {
+  const holders = new Map<string, number>();
+  for (const record of records)
+    for (const name of new Set(record.best.party.map((member) => member.name).filter(Boolean) as string[]))
+      holders.set(name, (holders.get(name) ?? 0) + 1);
+  const pick = (better: (a: DungeonRecord, b: DungeonRecord) => boolean) =>
+    records.reduce<DungeonRecord | null>((best, record) => (!best || better(record, best) ? record : best), null);
+  return {
+    dungeons: new Set(records.map((record) => record.best.dungeonId)).size,
+    records: records.length,
+    totalRuns: records.reduce((sum, record) => sum + record.runCount, 0),
+    fastest: pick((a, b) => a.best.durationMs < b.best.durationMs),
+    busiest: pick((a, b) => a.runCount > b.runCount),
+    holders: [...holders]
+      .map(([name, count]) => ({ name, records: count }))
+      .sort((a, b) => b.records - a.records || a.name.localeCompare(b.name))
+      .slice(0, holderLimit),
+  };
+}
+
+export type RecordComparison = { recordMs: number; gapMs: number; holdsRecord: boolean };
+
+/**
+ * How a run compares with the server record for the same dungeon and difficulty. A run that is the record itself,
+ * or ties it, holds the record; otherwise the gap says how far behind it is.
+ */
+export function compareWithRecord(run: DungeonRun, board: readonly DungeonRecord[]): RecordComparison | null {
+  const record = board.find((entry) => recordKey(entry.best) === recordKey(run));
+  if (!record) return null;
+  const gapMs = Math.max(0, run.durationMs - record.best.durationMs);
+  return {
+    recordMs: record.best.durationMs,
+    gapMs,
+    holdsRecord: record.best.completionId === run.completionId || gapMs === 0,
+  };
+}
 
 export function filterBoard(records: readonly DungeonRecord[], filters: BoardFilters): DungeonRecord[] {
   const query = filters.query.trim().toLowerCase().slice(0, 64);
   const filtered = records.filter((record) => {
     if (filters.dungeonId && record.best.dungeonId !== filters.dungeonId) return false;
     if (filters.difficulty !== null && record.best.difficulty !== filters.difficulty) return false;
+    if (!partySizeMatches(record.best.playerCount, filters.party)) return false;
     if (!query) return true;
     return (
       dungeonName(record.best.dungeonId).toLowerCase().includes(query) ||

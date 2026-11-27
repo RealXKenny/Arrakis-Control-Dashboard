@@ -92,6 +92,7 @@ describe('recordAudit', () => {
 
   it('colors denied events amber and keeps them on stdout with safe terminal text', async () => {
     vi.stubEnv('NO_COLOR', undefined);
+    vi.stubEnv('LOG_COLOR', 'always');
     const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const { recordAudit } = await import('../../../src/lib/security/audit');
     await recordAudit({

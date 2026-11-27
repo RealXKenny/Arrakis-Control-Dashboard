@@ -24,6 +24,17 @@ member key. Prices keep full precision; seller IDs never reach the browser.
 
 `GET /api/changelog` — public release notes parsed from `CHANGELOG.md`.
 
+## Release updates
+
+`POST /api/v2/updates/github` — the GitHub **Releases** webhook. Off (404) until `UPDATE_WEBHOOK_SECRET` is set; a
+delivery without a valid `X-Hub-Signature-256` gets 401, a body over 2 MB gets 413. Only published, non-draft releases
+of the bot and dashboard repositories with a `vX.Y.Z` tag are recorded; anything else answers 202 and is ignored.
+
+`GET /api/v2/updates/signal` — public and read-only:
+`{ "schemaVersion": 1, "releases": { "RealXKenny/Arrakis-Control-Bot": { "version", "prerelease", "publishedAt" } } }`.
+The update supervisors read it as a hint to check GitHub right away; see
+[instant updates](../deployment/automatic-updates.md#instant-updates).
+
 ## Assets
 
 `GET`/`HEAD /api/assets/[...path]` — read-only, allowlisted paths under `src/assets` (terrain bundles at `/api/assets/terrain/*`); `/items/*`,

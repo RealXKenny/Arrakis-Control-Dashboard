@@ -15,6 +15,10 @@ import {
   insideWindow,
   missingConfiguration,
   readArchive,
+  readProductConfig,
+  readReleaseSignal,
+  signalAddress,
+  signalWantsUpdate,
   recover,
   rollbackUnhealthy,
   safeMemberPath,
@@ -335,6 +339,43 @@ describe('automatic update', () => {
     expect(await snapshot()).toEqual(before);
   });
 
+  it('treats updater files the installer added to an old install as managed', async () => {
+    await mkdir(path.join(root, 'scripts'), { recursive: true });
+    await writeFile(path.join(root, 'scripts/run.sh'), '#!/bin/sh\necho bootstrapped\n');
+    await mkdir(statePaths(root).base, { recursive: true });
+    await writeFile(
+      statePaths(root).bootstrap,
+      JSON.stringify({
+        release: config,
+        files: { 'scripts/run.sh': sha('#!/bin/sh\necho bootstrapped\n'), '../escape': sha('x') },
+      }),
+    );
+    github.add({ tag: 'v1.1.0', files: V2 });
+    expect(await update()).toMatchObject({ status: 'activated', version: '1.1.0' });
+    expect(await readFile(path.join(root, 'scripts/run.sh'), 'utf8')).toBe(V2['scripts/run.sh']);
+    await expectCustomFilesIntact();
+  });
+
+  it('reads the release settings the installer left for an install whose package.json has none', async () => {
+    await writeFile(path.join(root, 'package.json'), JSON.stringify({ version: '1.0.0' }));
+    await expect(readProductConfig(root)).rejects.toThrow('no arrakisRelease configuration');
+    await mkdir(statePaths(root).base, { recursive: true });
+    await writeFile(
+      statePaths(root).bootstrap,
+      JSON.stringify({
+        release: {
+          repository: 'RealXKenny/Arrakis-Control-Dashboard',
+          assetPrefix: 'arrakis-control-dashboard',
+          start: ['node', 'x.js'],
+        },
+      }),
+    );
+    expect(await readProductConfig(root)).toMatchObject({
+      repository: 'RealXKenny/Arrakis-Control-Dashboard',
+      start: ['node', 'x.js'],
+    });
+  });
+
   it('refuses to write through a symbolic link', async () => {
     const outside = await mkdtemp(path.join(tmpdir(), 'arrakis outside '));
     try {
@@ -481,6 +522,46 @@ describe('automatic update', () => {
     github.add({ tag: 'v1.1.0', files: V2 }, { noManifest: true });
     expect(await update()).toMatchObject({ status: 'activated', version: '1.1.0' });
     await expectCustomFilesIntact();
+  });
+});
+
+describe('release signal', () => {
+  const repository = 'RealXKenny/Arrakis-Control-Bot';
+  const answer =
+    (body: unknown, status = 200) =>
+    async () =>
+      new Response(JSON.stringify(body), { status });
+
+  it('accepts only https, or http to this machine, without credentials', () => {
+    expect(signalAddress('https://dash.example.com/api/v2/updates/signal')).toContain('https://dash.example.com');
+    expect(signalAddress('http://127.0.0.1:2008/api/v2/updates/signal')).toContain('127.0.0.1:2008');
+    for (const bad of ['http://dash.example.com/x', 'https://user:pass@dash.example.com/x', 'ftp://x/y', 'not a url'])
+      expect(() => signalAddress(bad), bad).toThrow(UpdateError);
+    expect(() => updaterSettings({ AUTO_UPDATE_SIGNAL_URL: 'http://evil.example/x' })).toThrow(UpdateError);
+    expect(updaterSettings({}).signalUrl).toBeNull();
+    expect(updaterSettings({ AUTO_UPDATE_SIGNAL_SECONDS: '1' }).signalMs).toBe(10_000);
+  });
+
+  it('reads the announced version for this repository only', async () => {
+    const body = { releases: { [repository]: { version: '2.1.0' }, 'other/repo': { version: '9.0.0' } } };
+    const url = 'https://dash.example.com/api/v2/updates/signal';
+    expect(await readReleaseSignal({ url, repository, fetchImpl: answer(body) })).toEqual({ version: '2.1.0' });
+    expect(await readReleaseSignal({ url, repository, fetchImpl: answer({ releases: {} }) })).toBeNull();
+    expect(
+      await readReleaseSignal({ url, repository, fetchImpl: answer({ releases: { [repository]: { version: 'x' } } }) }),
+    ).toBeNull();
+    await expect(readReleaseSignal({ url, repository, fetchImpl: answer({}, 503) })).rejects.toThrow('503');
+  });
+
+  it('acts only on a newer release this install would take', () => {
+    const base = { current: '2.0.2', channel: 'stable', pin: null, bad: [] as string[] };
+    expect(signalWantsUpdate('2.0.3', base)).toBe(true);
+    expect(signalWantsUpdate('2.0.2', base)).toBe(false);
+    expect(signalWantsUpdate('2.0.1', base)).toBe(false);
+    expect(signalWantsUpdate('2.1.0-rc.1', base)).toBe(false);
+    expect(signalWantsUpdate('2.1.0-rc.1', { ...base, channel: 'prerelease' })).toBe(true);
+    expect(signalWantsUpdate('2.0.3', { ...base, pin: 'v2.0.2' })).toBe(false);
+    expect(signalWantsUpdate('2.0.3', { ...base, bad: ['2.0.3'] })).toBe(false);
   });
 });
 

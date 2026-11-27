@@ -3,6 +3,10 @@
 ## Application log
 
 Written to the console (stdout/stderr) in colour, controlled by `LOG_LEVEL` (`DEBUG`, `INFO` default, `WARN`, `ERROR`, `FATAL`).
+The bot, the dashboard and the update supervisor share one console style: `date time  ● LEVEL SCOPE │ message · key = value`,
+the same scope colours and the same startup banner. `LOG_COLOR=auto` (default) keeps colours on in a terminal and inside
+Pterodactyl; `always` and `never` override it, and `NO_COLOR` turns colours off. Errors print as one `Name: message` line;
+their stack frames follow at `DEBUG`. Lines are cut to the terminal width instead of wrapping.
 There are **no log files and no Sentry**. Details are recursively redacted for secret-looking keys before printing; operational
 provider errors omit stacks. `DEBUG` adds redacted metadata and compact background-poll diagnostics; successful polling is
 omitted at `INFO`, warnings and failures always show. Every request carries an `X-Request-ID` (a valid incoming one is kept,

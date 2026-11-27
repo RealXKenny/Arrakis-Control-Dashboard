@@ -26,7 +26,17 @@ function formatLogLine(scope, level, message) {
   }).formatToParts(new Date());
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   const timestamp = `${values.year}-${values.month}-${values.day} ${values.hour}:${values.minute}:${values.second}`;
-  const paint = (text, color) => (process.env.NO_COLOR !== undefined ? text : `\u001b[${color}m${text}\u001b[0m`);
+  // Same colour policy as the application logger (LOG_COLOR, NO_COLOR, FORCE_COLOR, terminal or Pterodactyl).
+  const mode = process.env.LOG_COLOR?.trim().toLowerCase() || 'auto';
+  const colour =
+    mode === 'always' || mode === 'true'
+      ? true
+      : mode === 'never' || mode === 'false' || process.env.NO_COLOR !== undefined || process.env.TERM === 'dumb'
+        ? false
+        : process.env.FORCE_COLOR !== undefined
+          ? process.env.FORCE_COLOR !== '0'
+          : Boolean(process.stdout.isTTY || process.env.P_SERVER_UUID?.trim());
+  const paint = (text, color) => (colour ? `\u001b[${color}m${text}\u001b[0m` : text);
   return `${paint(timestamp, '2')}  ${paint(`● ${level.padEnd(5)}`, '32')} ${paint(scope.padEnd(12), '93')} ${paint('│', '2')} ${message}`;
 }
 

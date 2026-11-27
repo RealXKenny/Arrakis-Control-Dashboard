@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import * as prettier from 'prettier';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const baseSha = process.env.CI_BASE_SHA;
+// The first push of a new branch reports an all-zero "before" commit; compare that push with the default branch.
+const baseSha = /^0+$/.test(process.env.CI_BASE_SHA ?? '') ? defaultBranch() : process.env.CI_BASE_SHA;
 const diffArguments = baseSha
   ? ['diff', '--name-only', '--diff-filter=ACMR', '-z', `${baseSha}...HEAD`]
   : ['diff', '--name-only', '--diff-filter=ACMR', '-z', 'HEAD'];
@@ -33,4 +34,13 @@ if (unformatted.length) {
   process.exitCode = 1;
 } else {
   console.log(`Markdown formatting check passed: ${markdownFiles.length} changed documentation file(s).`);
+}
+
+function defaultBranch() {
+  try {
+    execFileSync('git', ['rev-parse', '--verify', '--quiet', 'origin/main'], { cwd: root, stdio: 'ignore' });
+    return 'origin/main';
+  } catch {
+    return undefined;
+  }
 }
