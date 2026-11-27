@@ -10,12 +10,15 @@ import { useSharedReading } from '../../../lib/ui/use-shared-reading';
 import {
   BOARD_PAGE_SIZE,
   RUNS_PAGE_SIZE,
+  boardSummary,
+  compareWithRecord,
   difficultyLabel,
   difficultyOptions,
   dungeonName,
   dungeonOptions,
   filterBoard,
   formatDuration,
+  formatGap,
   freshnessLabel,
   paginate,
   type BoardResponse,
@@ -24,7 +27,9 @@ import {
   type DungeonRecord,
   type DungeonRun,
   type Freshness,
+  type PartySize,
   type PersonalResponse,
+  type RecordComparison,
   type RunsResponse,
 } from '../model';
 
@@ -82,7 +87,78 @@ function Freshness({ freshness, now }: { freshness: Freshness | null; now: numbe
   );
 }
 
-function RecordsTable({ records, caption }: { records: DungeonRecord[]; caption: string }) {
+function VersusRecord({ comparison }: { comparison: RecordComparison | null | undefined }) {
+  if (!comparison) return <span className="text-sand-500">—</span>;
+  if (comparison.holdsRecord) return <StatusBadge tone="success">Server record</StatusBadge>;
+  return (
+    <span className="font-mono text-sand-300" title={`Server record ${formatDuration(comparison.recordMs)}`}>
+      {formatGap(comparison.gapMs)}
+    </span>
+  );
+}
+
+function Stat({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return (
+    <Card as="div" className="ui-card min-w-0 p-4">
+      <p className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">{label}</p>
+      <p className="mt-1 truncate text-lg font-semibold text-sand-50">{value}</p>
+      {detail && <p className="mt-0.5 truncate text-xs text-sand-400">{detail}</p>}
+    </Card>
+  );
+}
+
+function BoardHighlights({ records }: { records: readonly DungeonRecord[] }) {
+  const summary = boardSummary(records);
+  if (!summary.records) return null;
+  return (
+    <section aria-label="Leaderboard highlights" className="mb-5 grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Dungeons" value={summary.dungeons.toLocaleString()} detail={`${summary.records} records`} />
+        <Stat label="Runs counted" value={summary.totalRuns.toLocaleString()} />
+        {summary.fastest && (
+          <Stat
+            label="Fastest clear"
+            value={formatDuration(summary.fastest.best.durationMs)}
+            detail={`${dungeonName(summary.fastest.best.dungeonId)} · ${difficultyLabel(summary.fastest.best.difficulty)}`}
+          />
+        )}
+        {summary.busiest && (
+          <Stat
+            label="Most run"
+            value={dungeonName(summary.busiest.best.dungeonId)}
+            detail={`${summary.busiest.runCount.toLocaleString()} runs · ${difficultyLabel(summary.busiest.best.difficulty)}`}
+          />
+        )}
+      </div>
+      {summary.holders.length > 0 && (
+        <Card as="div" className="ui-card p-4">
+          <h2 className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">Top record holders</h2>
+          <ol className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm" aria-label="Top record holders">
+            {summary.holders.map((holder, index) => (
+              <li key={holder.name} className="text-sand-200">
+                <span className="font-mono text-sand-500">{index + 1}.</span> {holder.name}{' '}
+                <span className="text-sand-400">
+                  ({holder.records} {holder.records === 1 ? 'record' : 'records'})
+                </span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+    </section>
+  );
+}
+
+function RecordsTable({
+  records,
+  caption,
+  versus,
+}: {
+  records: DungeonRecord[];
+  caption: string;
+  /** Server records to compare with, for personal bests. */
+  versus?: readonly DungeonRecord[];
+}) {
   return (
     <>
       <div className="hidden overflow-x-auto md:block">
@@ -105,6 +181,11 @@ function RecordsTable({ records, caption }: { records: DungeonRecord[]; caption:
               <th scope="col" className="px-3 py-2 text-right">
                 Runs
               </th>
+              {versus && (
+                <th scope="col" className="px-3 py-2 text-right">
+                  Vs server record
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -124,6 +205,11 @@ function RecordsTable({ records, caption }: { records: DungeonRecord[]; caption:
                   <Party run={record.best} />
                 </td>
                 <td className="px-3 py-3 text-right font-mono text-sand-300">{record.runCount.toLocaleString()}</td>
+                {versus && (
+                  <td className="px-3 py-3 text-right">
+                    <VersusRecord comparison={compareWithRecord(record.best, versus)} />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -146,6 +232,11 @@ function RecordsTable({ records, caption }: { records: DungeonRecord[]; caption:
               <p className="mt-2 text-sm">
                 <Party run={record.best} />
               </p>
+              {versus && (
+                <p className="mt-2 text-xs text-sand-400">
+                  Vs server record: <VersusRecord comparison={compareWithRecord(record.best, versus)} />
+                </p>
+              )}
             </Card>
           </li>
         ))}
@@ -154,7 +245,7 @@ function RecordsTable({ records, caption }: { records: DungeonRecord[]; caption:
   );
 }
 
-function RunsList({ runs }: { runs: DungeonRun[] }) {
+function RunsList({ runs, board }: { runs: DungeonRun[]; board: readonly DungeonRecord[] }) {
   return (
     <ol className="grid gap-2" aria-label="Recent dungeon runs">
       {runs.map((run) => (
@@ -171,7 +262,10 @@ function RunsList({ runs }: { runs: DungeonRun[] }) {
             <p className="text-sm">
               <Party run={run} />
             </p>
-            <p className="font-mono text-spice-300">{formatDuration(run.durationMs)}</p>
+            <p className="flex items-center gap-3">
+              <VersusRecord comparison={compareWithRecord(run, board)} />
+              <span className="font-mono text-spice-300">{formatDuration(run.durationMs)}</span>
+            </p>
           </Card>
         </li>
       ))}
@@ -215,6 +309,7 @@ export function DungeonLeaderboard({ tab, initialBoard }: { tab: DungeonTab; ini
   const [dungeonId, setDungeonId] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<number | null>(null);
   const [sort, setSort] = useState<BoardSort>('dungeon');
+  const [party, setParty] = useState<PartySize>('any');
   const [boardPage, setBoardPage] = useState(0);
   const [runPage, setRunPage] = useState(0);
 
@@ -248,13 +343,13 @@ export function DungeonLeaderboard({ tab, initialBoard }: { tab: DungeonTab; ini
   useEffect(() => {
     setBoardPage(0);
     setRunPage(0);
-  }, [query, dungeonId, difficulty, sort]);
+  }, [query, dungeonId, difficulty, sort, party]);
 
   const records = useMemo(() => board.data?.board.records ?? [], [board.data]);
   const supported = board.data?.board.supported ?? true;
   const filtered = useMemo(
-    () => filterBoard(records, { query, dungeonId, difficulty, sort }),
-    [records, query, dungeonId, difficulty, sort],
+    () => filterBoard(records, { query, dungeonId, difficulty, sort, party }),
+    [records, query, dungeonId, difficulty, sort, party],
   );
   const pageOfRecords = paginate(filtered, boardPage, BOARD_PAGE_SIZE);
   const dungeons = useMemo(() => dungeonOptions(records), [records]);
@@ -262,7 +357,7 @@ export function DungeonLeaderboard({ tab, initialBoard }: { tab: DungeonTab; ini
   const totalRuns = records.reduce((sum, record) => sum + record.runCount, 0);
 
   const filters = (
-    <Card as="section" className="ui-card mb-5 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Filters">
+    <Card as="section" className="ui-card mb-5 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-5" aria-label="Filters">
       {tab !== 'runs' && (
         <Field label="Search">
           <input
@@ -303,6 +398,16 @@ export function DungeonLeaderboard({ tab, initialBoard }: { tab: DungeonTab; ini
           ))}
         </select>
       </Field>
+      {tab !== 'runs' && (
+        <Field label="Party size">
+          <select className={inputClass} value={party} onChange={(event) => setParty(event.target.value as PartySize)}>
+            <option value="any">Any party</option>
+            <option value="solo">Solo</option>
+            <option value="duo">Duo</option>
+            <option value="group">Group (3+)</option>
+          </select>
+        </Field>
+      )}
       {tab !== 'runs' && (
         <Field label="Sort by">
           <select className={inputClass} value={sort} onChange={(event) => setSort(event.target.value as BoardSort)}>
@@ -356,6 +461,7 @@ export function DungeonLeaderboard({ tab, initialBoard }: { tab: DungeonTab; ini
         <StatePanel title="Dungeon records are not available on this server">{unsupportedText}</StatePanel>
       ) : (
         <>
+          {tab === 'records' && <BoardHighlights records={records} />}
           {filters}
           {tab === 'records' &&
             (filtered.length === 0 ? (
@@ -393,7 +499,7 @@ export function DungeonLeaderboard({ tab, initialBoard }: { tab: DungeonTab; ini
                   {runs.data.runs.totalRuns.toLocaleString()} runs. The game records no completion time, so runs are
                   ordered by completion.
                 </p>
-                <RunsList runs={runs.data.runs.runs} />
+                <RunsList runs={runs.data.runs.runs} board={records} />
                 <Pager
                   page={runPage}
                   pages={Math.min(200, Math.max(1, Math.ceil(runs.data.runs.totalCount / RUNS_PAGE_SIZE)))}
@@ -419,13 +525,24 @@ export function DungeonLeaderboard({ tab, initialBoard }: { tab: DungeonTab; ini
               <StatePanel title="Dungeon records are not available on this server">{unsupportedText}</StatePanel>
             ) : (
               (() => {
-                const mine = filterBoard(personal.data.board.records, { query, dungeonId, difficulty, sort });
+                const all = personal.data.board.records;
+                const mine = filterBoard(all, { query, dungeonId, difficulty, sort, party });
+                const held = all.filter((record) => compareWithRecord(record.best, records)?.holdsRecord).length;
                 return mine.length === 0 ? (
-                  <StatePanel title="No personal records yet">
-                    Complete a dungeon with your linked character and your best times appear here.
+                  <StatePanel title={all.length ? 'No records match these filters' : 'No personal records yet'}>
+                    {all.length
+                      ? 'Clear a filter to see all of your best times.'
+                      : 'Complete a dungeon with your linked character and your best times appear here.'}
                   </StatePanel>
                 ) : (
-                  <RecordsTable records={mine} caption="Your best run per dungeon and difficulty" />
+                  <>
+                    <p className="mb-3 text-sm text-sand-300">
+                      {all.length.toLocaleString()} personal {all.length === 1 ? 'best' : 'bests'} · you hold{' '}
+                      <span className="font-semibold text-spice-300">{held.toLocaleString()}</span> server{' '}
+                      {held === 1 ? 'record' : 'records'}
+                    </p>
+                    <RecordsTable records={mine} caption="Your best run per dungeon and difficulty" versus={records} />
+                  </>
                 );
               })()
             ))}

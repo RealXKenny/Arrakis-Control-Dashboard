@@ -6,6 +6,7 @@
 
 ### Added
 
+- Instant updates: the update supervisor can install a new release within about 30 seconds of it being published. Set `AUTO_UPDATE_SIGNAL_URL` to the dashboard's `https://<your dashboard>/api/v2/updates/signal` (the dashboard learns of releases from a signed GitHub webhook) and it checks every `AUTO_UPDATE_SIGNAL_SECONDS` (30 by default). The signal only starts a check early: the release is still fetched from GitHub and verified, and the channel, pin, maintenance window, skipped versions and rollback still apply. Without it, the scheduled check works as before.
 - The suggestion assistant now runs itself. It reads the bot and dashboard GitHub repositories every 15 minutes (read-only, with cached requests that respect GitHub's rate limit) and moves matching suggestions forward: an open issue makes it Planned, a pull request or commit makes it In Progress, and a release makes it Implemented. Each move posts its own reply with a link to the work and lists it in the panel. Staff buttons stay as overrides: the autopilot never changes Back burner, Not doing or Added, and never moves a post backwards. Settings: `SUGGESTIONS_AUTOPILOT`, `SUGGESTIONS_GITHUB_REPOS`, `SUGGESTIONS_GITHUB_TOKEN`, `SUGGESTIONS_GITHUB_INTERVAL_MINUTES`, `SUGGESTIONS_AUTOPILOT_THRESHOLD`.
 - Older suggestions are caught up once at startup: posts with no assistant panel get their category and Under Review tags and the panel, without pinging anyone (`SUGGESTIONS_CATCHUP`).
 

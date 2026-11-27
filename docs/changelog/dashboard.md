@@ -6,6 +6,13 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [2.0.2] - 2026-11-27
 
+### New Features
+
+- **Instant updates**: the dashboard and the bot can now install a new release within about 30 seconds of it being published, instead of waiting for the next scheduled check. Add a GitHub webhook for release events to both repositories, pointing at `/api/v2/updates/github` and signed with `UPDATE_WEBHOOK_SECRET`; the dashboard checks the signature and keeps a note of the new version, and the update supervisors of the dashboard and the bot (`AUTO_UPDATE_SIGNAL_URL`) look at it every `AUTO_UPDATE_SIGNAL_SECONDS`. The note only starts a check early: the release is still fetched from GitHub and verified file by file, and the channel, pin, maintenance window, skipped versions and rollback all still apply. The scheduled check stays on as a fallback.
+- **Dungeon leaderboard highlights**: a row of headline numbers (dungeons with a record, runs counted, fastest clear, most run) and the characters holding the most server records.
+- **Party size filter** on the records and personal tabs: solo, duo or group (3+).
+- **Gap to the server record**: recent runs and personal bests show a "Server record" badge or how far behind the record they are, and the personal tab counts the server records you hold.
+
 ### Fixes
 
 - **Moving a 2.0.0 server to automatic updates**: a 2.0.0 install has no updater, and its `package.json` lacks the release settings the updater reads, so it could never update itself. Reinstalling such a server from the panel now adds only the verified updater files and `.arrakis/bootstrap.json` (the release settings), changes no existing file, and prints the startup command to set. The updater then installs the newest release at the next start, keeping `.env`, certificates and your own files.
@@ -14,6 +21,7 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 - On a server still running 2.0.0: back up Redis, import the new egg, choose **Reinstall Server**, then set the startup command under **Admin → Servers → Startup** to `cd /home/container && exec node scripts/deployment/updater/supervisor.mjs` and restart. Importing an egg does not change the startup command of an existing server. Steps are in `docs/deployment/automatic-updates.md`.
 - Servers already on 2.0.1 with the updater update by themselves.
+- To turn on instant updates, set `UPDATE_WEBHOOK_SECRET` (32 characters or more) on the dashboard, add a webhook to both GitHub repositories with the payload URL `https://<your dashboard>/api/v2/updates/github`, content type `application/json`, the same secret and only the **Releases** event, then set `AUTO_UPDATE_SIGNAL_URL=https://<your dashboard>/api/v2/updates/signal` on the bot. Without these, updates keep their usual schedule. Steps are in `docs/deployment/automatic-updates.md`.
 
 ## [2.0.1] - 2026-11-26
 

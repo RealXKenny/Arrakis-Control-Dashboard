@@ -2,6 +2,12 @@
 
 `/dungeons` shows the fastest completion for every dungeon and difficulty on the server, the most recent runs, and the signed-in member's own records. It is listed under **Community → Events & seasons**.
 
+## What the page shows
+
+- **Highlights**: how many dungeons have a record, the runs counted across the board, the fastest clear, the most run dungeon and difficulty, and the characters holding the most server records. All of it is computed in the browser from the cached records board, so it costs no extra Console request.
+- **Party size filter**: the records and my records tabs can be narrowed to records set solo, as a duo, or by a group of three or more.
+- **Gap to the server record**: recent runs and personal bests show a "Server record" badge when the run holds or ties the record for that dungeon and difficulty, or how far behind it is (for example `+0:12.3`). The personal tab also says how many server records the member holds.
+
 ## Data source
 
 Only the Console's documented dungeon routes are used (both need the `players:read` key scope):

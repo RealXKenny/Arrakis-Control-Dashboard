@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  boardSummary,
+  compareWithRecord,
   difficultyOptions,
   dungeonName,
   dungeonOptions,
   filterBoard,
   formatDuration,
+  formatGap,
   freshnessLabel,
   paginate,
   type DungeonRecord,
@@ -77,5 +80,35 @@ describe('dungeon model', () => {
     expect(freshnessLabel({ fetchedAt: 0, state: 'stale', refreshFailed: true }, now)).toContain(
       'last good reading from 10 minutes ago',
     );
+  });
+
+  it('filters records by the size of the party that set them', () => {
+    const base = { query: '', dungeonId: null, difficulty: null, sort: 'dungeon' as const };
+    expect(filterBoard(records, { ...base, party: 'solo' })).toHaveLength(2);
+    expect(filterBoard(records, { ...base, party: 'duo' })).toHaveLength(1);
+    expect(filterBoard(records, { ...base, party: 'group' })).toHaveLength(0);
+    expect(filterBoard(records, { ...base, party: 'any' })).toHaveLength(3);
+  });
+
+  it('summarises the board: coverage, fastest clear, most run and top record holders', () => {
+    const summary = boardSummary(records);
+    expect(summary).toMatchObject({ dungeons: 2, records: 3, totalRuns: 14 });
+    expect(summary.fastest?.best.dungeonId).toBe('DA_Dgn_012_OldCistern');
+    expect(summary.busiest?.runCount).toBe(9);
+    expect(summary.holders).toEqual([
+      { name: 'Chani', records: 2 },
+      { name: 'Jessica', records: 1 },
+      { name: 'Stilgar', records: 1 },
+    ]);
+    expect(boardSummary([])).toMatchObject({ records: 0, fastest: null, busiest: null, holders: [] });
+  });
+
+  it('compares a run with the server record for the same dungeon and difficulty', () => {
+    const own = { ...records[1].best, completionId: 'mine', durationMs: 612_300 };
+    expect(compareWithRecord(own, records)).toEqual({ recordMs: 600_000, gapMs: 12_300, holdsRecord: false });
+    expect(compareWithRecord(records[1].best, records)?.holdsRecord).toBe(true);
+    expect(compareWithRecord({ ...own, dungeonId: 'DA_Dgn_999_Unknown' }, records)).toBeNull();
+    expect(formatGap(12_300)).toBe('+0:12.3');
+    expect(formatGap(0)).toBe('0:00.0');
   });
 });
