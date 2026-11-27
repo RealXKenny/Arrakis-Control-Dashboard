@@ -329,6 +329,24 @@ describe('automatic update', () => {
     expect(messages.some((line) => line.includes('Conflict: src/app.js'))).toBe(true);
   });
 
+  it('replaces package-lock.json that npm rewrote instead of calling it a local change', async () => {
+    // An egg reinstall or npm run on the server rewrites the lockfile; that must never block an update.
+    await writeFile(path.join(root, 'package-lock.json'), '{"rewritten":"by npm on the server"}\n');
+    github.add({ tag: 'v1.1.0', files: { ...V2, 'package-lock.json': '{"lock":"1.1.0"}\n' } });
+    await expect(update()).resolves.toMatchObject({ status: 'activated', version: '1.1.0' });
+    expect(await readFile(path.join(root, 'package-lock.json'), 'utf8')).toBe('{"lock":"1.1.0"}\n');
+    await confirmHealthy(root, log);
+
+    await writeFile(path.join(root, 'package-lock.json'), '{"rewritten":"again"}\n');
+    github.add({
+      tag: 'v1.2.0',
+      files: { ...V2, 'package.json': pkg('1.2.0'), 'package-lock.json': '{"lock":"1.2.0"}\n' },
+    });
+    await expect(update()).resolves.toMatchObject({ status: 'activated', version: '1.2.0' });
+    expect(await readFile(path.join(root, 'package-lock.json'), 'utf8')).toBe('{"lock":"1.2.0"}\n');
+    await expectCustomFilesIntact();
+  });
+
   it('refuses to overwrite an unmanaged file at a path the new release introduces', async () => {
     await writeFile(path.join(root, 'scripts-placeholder'), 'x');
     await mkdir(path.join(root, 'scripts'), { recursive: true });

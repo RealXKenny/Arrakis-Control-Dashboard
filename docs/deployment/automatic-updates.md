@@ -32,6 +32,7 @@ written, replaced or removed**, plus the generated `node_modules` and `.next` fo
    - **changed locally**: conflict;
    - **an unmanaged file already at a path the release now uses**: conflict;
    - reached through a symbolic link: conflict;
+   - `package-lock.json` and `npm-shrinkwrap.json`: always replaced, because npm rewrites them by itself;
    - a file the new release no longer ships: removed only if unchanged, otherwise kept and logged.
 
    Any conflict stops the update **before anything is touched**, and every conflicting path is logged.
@@ -130,6 +131,8 @@ The console lists each path, for example `Conflict: src/app/page.tsx (modified l
 - To accept the release: move your file somewhere outside the managed paths (or restore it from the release archive),
   then restart.
 - An unmanaged file at a new path: rename or move it; the release needs that path.
+- `Conflict: package-lock.json` on 2.0.2 or older: npm rewrote the lockfile, which is not your change. Delete
+  `package-lock.json` in the File Manager and restart; 2.0.3 and later replace it automatically.
 
 ## Manual rollback
 

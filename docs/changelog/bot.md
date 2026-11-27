@@ -2,6 +2,16 @@
 
 <!-- Generated from the bot repository CHANGELOG.md; do not edit manually. -->
 
+## [2.0.3] - 2026-11-27
+
+### Fixed
+
+- An automatic update could stop with `Conflict: package-lock.json (modified locally since it was installed)`. npm rewrites that file by itself (for example during an egg reinstall), so it is not a change you made. The updater now always replaces `package-lock.json` and `npm-shrinkwrap.json` with the release's copy instead of stopping. Your own edited files are still protected as before.
+
+### Upgrading
+
+- A server stuck on 2.0.1 with this conflict runs the 2.0.1 updater, which does not have this fix yet. Delete `package-lock.json` in the panel's File Manager and restart the server once; the update then installs the newest release and its lockfile.
+
 ## [2.0.2] - 2026-11-27
 
 ### Added

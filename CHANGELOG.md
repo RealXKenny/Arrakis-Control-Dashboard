@@ -1,5 +1,15 @@
 # Changelog
 
+## Patch Notes v2.0.3
+
+### Fixes
+
+- **Updates no longer stop on `package-lock.json`**: npm rewrites the lockfile by itself (for example during an egg reinstall), and the updater called that a local change and refused to update. The updater, shared with the bot, now always replaces `package-lock.json` and `npm-shrinkwrap.json` with the release's copy. Files you edited are still protected as before.
+
+### Upgrade Notes
+
+- A server stuck on 2.0.1 with `Conflict: package-lock.json` still runs the old updater. Delete `package-lock.json` in the panel's File Manager and restart once; the update then installs the newest release.
+
 ## Patch Notes v2.0.2
 
 ### New Features
