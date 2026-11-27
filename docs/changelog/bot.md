@@ -4,7 +4,18 @@
 
 ## [2.0.2] - 2026-11-27
 
+### Added
+
+- The suggestion assistant now runs itself. It reads the bot and dashboard GitHub repositories every 15 minutes (read-only, with cached requests that respect GitHub's rate limit) and moves matching suggestions forward: an open issue makes it Planned, a pull request or commit makes it In Progress, and a release makes it Implemented. Each move posts its own reply with a link to the work and lists it in the panel. Staff buttons stay as overrides: the autopilot never changes Back burner, Not doing or Added, and never moves a post backwards. Settings: `SUGGESTIONS_AUTOPILOT`, `SUGGESTIONS_GITHUB_REPOS`, `SUGGESTIONS_GITHUB_TOKEN`, `SUGGESTIONS_GITHUB_INTERVAL_MINUTES`, `SUGGESTIONS_AUTOPILOT_THRESHOLD`.
+- Older suggestions are caught up once at startup: posts with no assistant panel get their category and Under Review tags and the panel, without pinging anyone (`SUGGESTIONS_CATCHUP`).
+
+### Changed
+
+- The bot console now matches the dashboard's: it clears on start, shows the version in the banner, and prints `date time ● LEVEL SCOPE │ message · key = value` lines in the same colours.
+
 ### Fixed
+
+- Console colours are back on Pterodactyl. Since 2.0.1 the update supervisor relays the bot's output, so the bot no longer saw a terminal and turned colours off. Colours now stay on inside a Pterodactyl container; `LOG_COLOR=never` or `NO_COLOR` turns them off.
 
 - A server installed with 2.0.0 could not move to automatic updates: its files have no updater, and its `package.json` lacks the release settings the updater reads. Reinstalling such a server from the panel now adds only the verified updater files and `.arrakis/bootstrap.json` (the release settings), changes no existing file, and tells you the startup command to set. The updater then installs the newest release at the next start, keeping `.env`, certificates and your own files.
 
