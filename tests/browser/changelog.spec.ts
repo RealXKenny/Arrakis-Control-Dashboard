@@ -5,7 +5,7 @@ test('public changelog previews sections, expands notes, filters and searches th
   await expect(page.getByRole('heading', { name: 'Changelog.', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Version 2.0.2', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Version 2.0.0', exact: true })).toBeVisible();
-  await expect(page.getByRole('status')).toHaveText('2 updates to explore');
+  await expect(page.getByRole('status')).toHaveText('3 updates to explore');
   await expect(
     page.getByRole('button', { name: 'All updates', exact: true }).locator('[aria-hidden="true"]'),
   ).toHaveText('2');
