@@ -6,6 +6,10 @@ All notable changes to Arrakis Control Dashboard are documented here.
 
 ## [2.0.4] - 2026-11-27
 
+### New Features
+
+- **Proximity chat in Live Chat**: set `CHAT_PROXIMITY_ENABLED=true` and nearby game chat heard on your chat servers shows in Live Chat with a Proximity badge. It is read-only and off by default; whispers, guild and party chat are never shown. Whether your game sends proximity chat through RabbitMQ still needs a live check (the bot's chat bridge logs which chat types it sees).
+
 ### Fixes
 
 - **The dashboard's 2.0.3 changelog was never posted in Discord**: the bot posts dashboard releases from the dashboard's published changelog (`docs/changelog/dashboard.md`), and 2.0.3 was left out of it. It is added now, so the bot posts the 2.0.3 notes once this version is running, and a test makes sure every release carries its own notes.

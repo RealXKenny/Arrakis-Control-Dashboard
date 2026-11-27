@@ -6,6 +6,15 @@ export interface DecodedMapChat {
   text: string;
   displayName?: string;
   timestamp?: string;
+  /** True for proximity (nearby) chat; only returned when proximity decoding is allowed. */
+  proximity?: boolean;
+}
+
+/** Channel-type spellings treated as proximity chat, matching the bot's bridge. */
+const PROXIMITY_TYPES = new Set(['proximity', 'local', 'nearby']);
+
+export function isProximityChannelType(value: unknown): boolean {
+  return typeof value === 'string' && PROXIMITY_TYPES.has(value.toLowerCase());
 }
 
 function gameTimestamp(date: Date): string {
@@ -51,6 +60,11 @@ export function encodeMapChat(
 }
 
 export function decodeMapChat(body: Buffer): DecodedMapChat | null {
+  return decodeGameChat(body, false);
+}
+
+/** Decodes public game chat: map chat, plus proximity chat when allowed. Private messages are always rejected. */
+export function decodeGameChat(body: Buffer, allowProximity: boolean): DecodedMapChat | null {
   if (body.length > 64 * 1024) return null;
   try {
     const envelope: unknown = JSON.parse(body.toString('utf8'));
@@ -67,7 +81,7 @@ export function decodeMapChat(body: Buffer): DecodedMapChat | null {
     const sender = payload.m_FuncomIdFrom;
     const text = message?.m_UnlocalizedMessage;
     if (
-      payload.m_ChannelType !== 'Map' ||
+      (payload.m_ChannelType !== 'Map' && !(allowProximity && isProximityChannelType(payload.m_ChannelType))) ||
       payload.m_UserNameTo ||
       typeof id !== 'string' ||
       !id ||
@@ -88,6 +102,7 @@ export function decodeMapChat(body: Buffer): DecodedMapChat | null {
       displayName:
         typeof displayName === 'string' && displayName.trim() && displayName.length <= 200 ? displayName : undefined,
       timestamp: parseGameTimestamp(payload.m_Timestamp),
+      ...(payload.m_ChannelType === 'Map' ? {} : { proximity: true }),
     };
   } catch {
     return null;

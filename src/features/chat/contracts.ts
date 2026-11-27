@@ -23,6 +23,8 @@ export const chatMessageSchema = z.object({
     .regex(/^(a_)?[a-f0-9]{32}$/)
     .optional(),
   source: z.enum(['game', 'dashboard', 'discord']),
+  /** Game chat channel; absent means map chat. Proximity is nearby chat and is never sent from the dashboard. */
+  channel: z.enum(['map', 'proximity']).optional(),
   /** Display body of an identity-verified Discord relay; content retains the original game text. */
   relayContent: z
     .string()

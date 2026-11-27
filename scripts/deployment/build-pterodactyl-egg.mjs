@@ -557,6 +557,13 @@ function buildEgg() {
         { rules: 'nullable|string|max:32768' },
       ),
       variable(
+        'Chat Proximity Enabled',
+        'Also show proximity (nearby) game chat from the chat servers, labelled Proximity. Read-only.',
+        'CHAT_PROXIMITY_ENABLED',
+        'false',
+        { rules: 'required|string|in:true,false' },
+      ),
+      variable(
         'RabbitMQ TLS Enabled',
         'Optional; empty follows the URL scheme (amqps:// uses TLS).',
         'RABBITMQ_TLS_ENABLED',

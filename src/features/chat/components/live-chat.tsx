@@ -99,6 +99,14 @@ function ChatMessageRow({
           >
             {{ game: 'Game', discord: 'Discord', dashboard: 'Dashboard' }[message.source]}
           </span>
+          {message.channel === 'proximity' && (
+            <span
+              className="border border-sand-200/25 border-dashed px-1.5 py-0.5 font-mono text-[0.625rem] uppercase tracking-wider text-sand-300"
+              title="Proximity chat: said to players nearby in game"
+            >
+              Proximity
+            </span>
+          )}
           <time
             className="font-mono text-[0.625rem] text-sand-500"
             dateTime={message.timestamp}
