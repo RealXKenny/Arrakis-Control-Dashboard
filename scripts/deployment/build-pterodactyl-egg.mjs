@@ -472,6 +472,13 @@ function buildEgg() {
         { rules: 'required|integer|min:60|max:3600' },
       ),
       variable(
+        'Weekly Solaris Prizes',
+        'Solaris paid to the weekly leaderboard winners, one amount per place, e.g. 500000,250000,100000. Empty turns prizes off.',
+        'SOLARIS_WEEKLY_PRIZES',
+        '',
+        { rules: 'nullable|string|max:120' },
+      ),
+      variable(
         'Roadmap Repositories',
         'Comma-separated public owner/repository list whose approved roadmap issues are shown (up to 5).',
         'ROADMAP_REPOSITORIES',

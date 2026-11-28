@@ -2,6 +2,30 @@
 
 <!-- Generated from the bot repository CHANGELOG.md; do not edit manually. -->
 
+## [2.0.5] - 2026-11-27
+
+### Added
+
+- `/leaderboard dungeons`: the fastest run for every dungeon and difficulty, with the party and how many runs were counted, from the same Console records as the dashboard's dungeon leaderboard. The Solari ranking is now `/leaderboard solaris`.
+
+### Changed
+
+- Changelog posts now go out version by version, so the bot and dashboard posts for each release sit side by side: Bot 2.0.0, Dashboard 2.0.0, Bot 2.0.1, Dashboard 2.0.1, and so on. If a post fails, the bot stops and retries from there, so a newer release is never posted above an older one. The changelog forum is sorted by creation date to keep that order.
+- Changelog posts look cleaner: the title carries the release headline, the card shows the release type and date on one line, the headline as a quote and a short "In this release" overview (for example `✨ Added 3 · 🐛 Fixed 2`), and links to the full changelog and the GitHub release. Note sections get icons, and single-part notes no longer say "part 1 of 1".
+- On its first start, 2.0.5 deletes the release posts it made earlier in the changelog channel and posts every release again in the new order and layout. It only removes its own release posts; posts by members and its other posts are never touched. It needs Manage Threads (forum) or Manage Messages (text channel) for this; until it can delete the old posts it posts nothing new and logs what is missing.
+- The chatbot's AI model is now downloaded (if it isn't there yet) and loaded as soon as the bot starts, instead of on the first message, so it is ready before anyone asks. The bot is online and answers with its rules while it downloads.
+
+### Fixed
+
+- Proximity chat is now picked up the way the game actually sends it. The game redirects proximity chat to `chat.proximity`, and the bridge now taps the broker's `chat.intercept` feed through a private headers exchange that only lets copies headed for `chat.proximity` through, so whispers, guild and party chat never reach the bot. The speaker comes from the broker-authenticated user, copies are merged so each message is posted once, and the listener is on by default once `CHAT_BRIDGE_PROXIMITY=on`. **The bot's RabbitMQ user needs new permissions** for the `arrakis-chat-filter-*` exchange and `chat.intercept`; the command is under "Proximity chat" in `guides/rabbitmq-discord.md`.
+- The chatbot's AI model is kept fully in memory while the bot runs (it is no longer read from disk on demand, so the system can't page it out while the bot is idle). A message that arrives while the model is still loading waits for it (up to 45 seconds, with "typing…" showing) instead of skipping the AI. Before loading, the bot now checks the memory that is actually free next to everything it already uses, so loading the model can't push the server out of memory and restart it.
+- `/leaderboard` showed nobody: it looked for a `player_id` in the Console's player list, which names the character id `actor_id`, so every player was skipped. It reads the right id now, and a player list without usable ids is reported as an error instead of an empty ranking.
+- `/leaderboard solaris` (and the chatbot's "who's the richest?") now counts Solari kept in the bank. A player's total is their banked Solari Credit plus the Solaris coins they carry, and each row shows both.
+- The chatbot's AI model answered from its own out-of-date memory ("I'm not aware of a release date for Dune Part 3"). It now searches first, for any message that isn't small talk (not only questions with a question mark): it reads the opening of the best few Wikipedia articles and the game wiki's best hits, is told to trust those over its memory, and lists the sources under its reply. It only says it doesn't know when the sources don't have the answer.
+
+- 2.0.4 could fail to start (and the updater rolled back to 2.0.3) when `CHATBOT_AI` was on and `CHATBOT_AI_MODEL` had a value it didn't recognise, such as a quoted `"small"`. A mistake in any chatbot AI setting now only turns the AI model off, with a warning in the console that names the setting; the bot and the rest of the chatbot start normally.
+- AI settings are read the way panels and `.env` files write them: surrounding quotes and a trailing `# comment` are ignored, `CHATBOT_AI` also accepts `1`/`0`, `yes`/`no` and `on`/`off`, and `CHATBOT_AI_MODEL` also accepts `3b`/`8b`, `hf:owner/repo:quant` and a huggingface.co file link.
+
 ## [2.0.4] - 2026-11-27
 
 ### Added

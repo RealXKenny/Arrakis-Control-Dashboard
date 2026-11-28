@@ -13,13 +13,13 @@ vi.mock('../../../src/features/solaris/server/leaderboard', async (original) => 
   ...(await original<typeof import('../../../src/features/solaris/server/leaderboard')>()),
   readSolarisBoard: mocks.board,
 }));
-import { GET } from '../../../src/app/api/v2/solaris/route';
+import { GET, POST } from '../../../src/app/api/v2/solaris/route';
 import { CacheUnavailableError } from '../../../src/lib/cache/shared-cache';
 
 const stored = {
   rows: [
-    { id: '11', name: 'Chani', balance: '900' },
-    { id: '22', name: 'Stilgar', balance: '400' },
+    { id: '11', name: 'Chani', bank: '800', coins: '100', balance: '900' },
+    { id: '22', name: 'Stilgar', bank: '400', coins: '0', balance: '400' },
   ],
   players: 2,
   unreadable: 0,
@@ -78,5 +78,25 @@ describe('Solaris leaderboard API', () => {
     const response = await GET(request('view=board'));
     expect(response.status).toBe(503);
     expect(await response.json()).not.toHaveProperty('board');
+  });
+});
+
+describe('Solaris prize claims', () => {
+  const post = (body: unknown, origin = 'https://dashboard.test') =>
+    new Request('https://dashboard.test/api/v2/solaris', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin, host: 'dashboard.test', 'x-forwarded-proto': 'https' },
+      body: JSON.stringify(body),
+    });
+
+  it('refuses cross-site requests and malformed weeks before touching anything', async () => {
+    expect((await POST(post({ action: 'claim', weekId: '2026-11-23' }, 'https://evil.test'))).status).toBe(403);
+    expect((await POST(post({ action: 'claim', weekId: '../../x' }))).status).toBe(400);
+    expect(mocks.linked).not.toHaveBeenCalled();
+  });
+
+  it('serves the weekly view', async () => {
+    const body = await (await GET(request('view=weekly'))).json();
+    expect(body).toMatchObject({ ok: true, week: { standings: [] }, prizes: [], last: null });
   });
 });

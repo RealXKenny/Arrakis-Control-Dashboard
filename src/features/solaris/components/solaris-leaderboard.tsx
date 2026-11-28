@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Field, inputClass } from '../../../components/ui/form-controls';
@@ -16,12 +16,18 @@ import {
   formatSolaris,
   freshnessLabel,
   paginate,
+  placeLabel,
+  timeLeft,
   type BoardResponse,
   type Freshness,
   type PersonalResponse,
   type SolarisBoard,
   type SolarisEntry,
+  type WeeklyPrize,
+  type WeeklyResponse,
 } from '../model';
+
+export type SolarisTab = 'richest' | 'weekly';
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -43,10 +49,19 @@ const parseBoardResponse = (body: unknown): BoardResponse | null =>
     : null;
 const parsePersonalResponse = (body: unknown): PersonalResponse | null =>
   isObject(body) && body.ok === true && typeof body.linked === 'boolean' ? (body as PersonalResponse) : null;
+const parseWeeklyResponse = (body: unknown): WeeklyResponse | null =>
+  isObject(body) &&
+  body.ok === true &&
+  isObject(body.week) &&
+  Array.isArray(body.week.standings) &&
+  Array.isArray(body.prizes)
+    ? (body as WeeklyResponse)
+    : null;
 
-const name = (entry: SolarisEntry) => entry.name ?? 'Unknown character';
+const name = (entry: { name: string | null }) => entry.name ?? 'Unknown character';
+const label = 'font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400';
 
-function Freshness({ freshness, now }: { freshness: Freshness | null; now: number }) {
+function FreshnessLine({ freshness, now }: { freshness: Freshness | null; now: number }) {
   if (!freshness) return null;
   const tone = freshness.refreshFailed ? 'warning' : freshness.state === 'stale' ? 'neutral' : 'success';
   return (
@@ -70,11 +85,11 @@ function Rank({ rank }: { rank: number }) {
   );
 }
 
-function Stat({ label, value, detail, title }: { label: string; value: string; detail?: string; title?: string }) {
+function Stat({ title, value, detail, hint }: { title: string; value: string; detail?: string; hint?: string }) {
   return (
     <Card as="div" className="ui-card min-w-0 p-4">
-      <p className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">{label}</p>
-      <p className="mt-1 truncate text-lg font-semibold text-sand-50" title={title}>
+      <p className={label}>{title}</p>
+      <p className="mt-1 truncate text-lg font-semibold text-sand-50" title={hint}>
         {value}
       </p>
       {detail && <p className="mt-0.5 truncate text-xs text-sand-400">{detail}</p>}
@@ -87,33 +102,35 @@ function Highlights({ entries }: { entries: readonly SolarisEntry[] }) {
   if (!summary.ranked) return null;
   return (
     <section aria-label="Leaderboard highlights" className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Stat label="Characters ranked" value={summary.ranked.toLocaleString()} />
+      <Stat title="Characters ranked" value={summary.ranked.toLocaleString()} />
       <Stat
-        label="Solaris on hand"
+        title="Solaris held"
         value={compactSolaris(summary.total)}
-        title={`${formatSolaris(summary.total)} Solaris`}
-        detail={summary.topTenShare === null ? undefined : `Top 10 hold ${summary.topTenShare}%`}
+        hint={`${formatSolaris(summary.total)} Solaris`}
+        detail={summary.topTenShare === null ? 'Bank and coins' : `Top 10 hold ${summary.topTenShare}%`}
       />
       {summary.top && (
-        <Stat label="Wealthiest" value={name(summary.top)} detail={`${formatSolaris(summary.top.balance)} Solaris`} />
+        <Stat title="Wealthiest" value={name(summary.top)} detail={`${formatSolaris(summary.top.balance)} Solaris`} />
       )}
       {summary.median !== null && (
         <Stat
-          label="Median balance"
+          title="Median balance"
           value={compactSolaris(summary.median)}
-          title={`${formatSolaris(summary.median)} Solaris`}
+          hint={`${formatSolaris(summary.median)} Solaris`}
         />
       )}
     </section>
   );
 }
 
-function Standing({
+function YourStanding({
   personal,
   ranked,
+  children,
 }: {
-  personal: ReturnType<typeof useSharedReading<PersonalResponse>>;
+  personal: { data: PersonalResponse | null; loading: boolean };
   ranked: number;
+  children?: ReactNode;
 }) {
   let body: ReactNode;
   if (!personal.data)
@@ -122,19 +139,22 @@ function Standing({
       : 'Your linked character could not be checked right now.';
   else if (!personal.data.linked) body = 'Link a character on the Character page to see where you rank.';
   else if (!personal.data.entry) body = 'Your character is not on the board yet. It appears after the next refresh.';
-  else
+  else {
+    const entry = personal.data.entry;
     body = (
       <>
-        <span className="font-semibold text-sand-50">{name(personal.data.entry)}</span> is ranked{' '}
-        <span className="font-semibold text-spice-300">#{personal.data.entry.rank.toLocaleString()}</span> of{' '}
-        {ranked.toLocaleString()} with{' '}
-        <span className="font-mono text-spice-300">{formatSolaris(personal.data.entry.balance)}</span> Solaris.
+        <span className="font-semibold text-sand-50">{name(entry)}</span> is ranked{' '}
+        <span className="font-semibold text-spice-300">#{entry.rank.toLocaleString()}</span> of{' '}
+        {ranked.toLocaleString()} with <span className="font-mono text-spice-300">{formatSolaris(entry.balance)}</span>{' '}
+        Solaris ({formatSolaris(entry.bank)} banked, {formatSolaris(entry.coins)} in coins).
       </>
     );
+  }
   return (
     <Card as="section" aria-label="Your standing" className="ui-card mb-5 p-4">
-      <h2 className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">Your standing</h2>
+      <h2 className={label}>Your standing</h2>
       <p className="mt-1 text-sm text-sand-200">{body}</p>
+      {children}
     </Card>
   );
 }
@@ -148,12 +168,13 @@ function share(balance: string, total: bigint): string {
 function Ranking({ entries, total, mine }: { entries: SolarisEntry[]; total: bigint; mine: SolarisEntry | null }) {
   const isMine = (entry: SolarisEntry) =>
     mine !== null && entry.rank === mine.rank && entry.name === mine.name && entry.balance === mine.balance;
+  const caption = 'Characters ranked by Solaris held';
   return (
     <>
       <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
-          <caption className="sr-only">Characters ranked by Solaris on hand</caption>
-          <thead className="font-mono text-[0.6875rem] uppercase tracking-widest text-sand-400">
+          <caption className="sr-only">{caption}</caption>
+          <thead className={label}>
             <tr className="border-b border-sand-200/10">
               <th scope="col" className="w-16 px-3 py-2">
                 Rank
@@ -162,7 +183,13 @@ function Ranking({ entries, total, mine }: { entries: SolarisEntry[]; total: big
                 Character
               </th>
               <th scope="col" className="px-3 py-2 text-right">
-                Solaris
+                Bank
+              </th>
+              <th scope="col" className="px-3 py-2 text-right">
+                Coins
+              </th>
+              <th scope="col" className="px-3 py-2 text-right">
+                Total
               </th>
               <th scope="col" className="px-3 py-2 text-right">
                 Share
@@ -183,14 +210,16 @@ function Ranking({ entries, total, mine }: { entries: SolarisEntry[]; total: big
                   {name(entry)}
                   {isMine(entry) && <span className="ml-2 text-xs font-normal text-spice-300">(you)</span>}
                 </th>
+                <td className="px-3 py-3 text-right font-mono text-sand-300">{formatSolaris(entry.bank)}</td>
+                <td className="px-3 py-3 text-right font-mono text-sand-300">{formatSolaris(entry.coins)}</td>
                 <td className="px-3 py-3 text-right font-mono text-spice-300">{formatSolaris(entry.balance)}</td>
-                <td className="px-3 py-3 text-right font-mono text-sand-300">{share(entry.balance, total)}</td>
+                <td className="px-3 py-3 text-right font-mono text-sand-400">{share(entry.balance, total)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <ol className="grid gap-2 md:hidden" aria-label="Characters ranked by Solaris on hand">
+      <ol className="grid gap-2 md:hidden" aria-label={caption}>
         {entries.map((entry, index) => (
           <li key={`${entry.rank}:${index}:${entry.name}`}>
             <Card
@@ -201,7 +230,10 @@ function Ranking({ entries, total, mine }: { entries: SolarisEntry[]; total: big
                 <Rank rank={entry.rank} />
                 <span className="truncate font-semibold text-sand-50">{name(entry)}</span>
               </p>
-              <p className="font-mono text-spice-300">{formatSolaris(entry.balance)}</p>
+              <p className="text-right">
+                <span className="block font-mono text-spice-300">{formatSolaris(entry.balance)}</span>
+                <span className="block text-xs text-sand-400">{formatSolaris(entry.bank)} banked</span>
+              </p>
             </Card>
           </li>
         ))}
@@ -227,24 +259,229 @@ function Pager({ page, pages, onChange }: { page: number; pages: number; onChang
   );
 }
 
-export function SolarisLeaderboard({ initialBoard }: { initialBoard: BoardResponse | null }) {
+const PRIZE_TEXT: Record<WeeklyPrize['state'], string> = {
+  available: 'Ready to collect',
+  sending: 'Being paid…',
+  claimed: 'Paid to your bank',
+  uncertain: 'Waiting for an administrator to confirm the payment',
+};
+
+function Prizes({ prizes, onClaimed }: { prizes: WeeklyPrize[]; onClaimed: () => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const claim = useCallback(
+    async (prize: WeeklyPrize) => {
+      setBusy(prize.weekId);
+      setMessage(null);
+      try {
+        const response = await fetch('/api/v2/solaris', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'claim', weekId: prize.weekId }),
+        });
+        const body: unknown = await response.json().catch(() => null);
+        const result = isObject(body) ? body : {};
+        if (response.ok && result.state === 'claimed')
+          setMessage(`${formatSolaris(prize.amount)} Solaris were added to your bank.`);
+        else if (response.ok && result.state === 'uncertain')
+          setMessage('The game server did not confirm the payment. An administrator will check it; nothing is resent.');
+        else
+          setMessage(typeof result.error === 'string' ? result.error : 'The prize could not be collected right now.');
+      } catch {
+        setMessage('The prize could not be collected right now. Nothing was sent.');
+      } finally {
+        setBusy(null);
+        onClaimed();
+      }
+    },
+    [onClaimed],
+  );
+  if (!prizes.length) return null;
+  return (
+    <div className="mt-3 grid gap-2" aria-label="Your weekly prizes">
+      {prizes.map((prize) => (
+        <div
+          key={prize.weekId}
+          className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-spice-500 bg-spice-500/10 px-3 py-2"
+        >
+          <p className="text-sm text-sand-100">
+            🏆 {placeLabel(prize.place)} place, week of {prize.weekId}:{' '}
+            <span className="font-mono text-spice-300">{formatSolaris(prize.amount)}</span> Solaris ·{' '}
+            <span className="text-sand-300">{PRIZE_TEXT[prize.state]}</span>
+          </p>
+          {prize.state === 'available' && (
+            <Button type="button" disabled={busy !== null} onClick={() => void claim(prize)}>
+              {busy === prize.weekId ? 'Collecting…' : 'Collect prize'}
+            </Button>
+          )}
+        </div>
+      ))}
+      {prizes.some((prize) => prize.state === 'available') && (
+        <p className="text-xs text-sand-400">
+          Log out of the game first: Solaris can only be added safely while your character is offline.
+        </p>
+      )}
+      {message && (
+        <p role="status" className="text-sm text-sand-100">
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Weekly({
+  weekly,
+  personal,
+  now,
+  onClaimed,
+}: {
+  weekly: ReturnType<typeof useSharedReading<WeeklyResponse>>;
+  personal: { data: PersonalResponse | null; loading: boolean };
+  now: number;
+  onClaimed: () => void;
+}) {
+  if (!weekly.data) {
+    if (weekly.loading) return <StatePanel kind="loading" title="Loading this week…" />;
+    return (
+      <StatePanel kind="error" title="The weekly leaderboard is unavailable" onRetry={weekly.retry}>
+        The page retries on its own.
+      </StatePanel>
+    );
+  }
+  const { week, prizes, last } = weekly.data;
+  const mine = personal.data?.weekly ?? null;
+  return (
+    <div>
+      <section aria-label="This week" className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat title="Week ends in" value={timeLeft(week.endsAt, now)} detail="Mondays 00:00 UTC" />
+        <Stat
+          title="Prizes"
+          value={prizes.length ? `${compactSolaris(prizes[0]!)} for 1st` : 'Ranking only'}
+          detail={
+            prizes.length
+              ? prizes.map((prize, index) => `${placeLabel(index + 1)} ${compactSolaris(prize)}`).join(' · ')
+              : 'No prizes are set for this week'
+          }
+        />
+        <Stat title="Characters gaining" value={week.standings.length.toLocaleString()} />
+        <Stat
+          title="Your gain"
+          value={mine ? `+${formatSolaris(mine.gain)}` : '—'}
+          detail={mine ? `Rank #${mine.rank}` : 'Earn Solaris this week to place'}
+        />
+      </section>
+      <Card as="section" aria-label="How the weekly board works" className="ui-card mb-5 p-4 text-sm text-sand-300">
+        <h2 className={label}>How it works</h2>
+        <p className="mt-1">
+          Every Monday at 00:00 UTC a new week starts. Whoever adds the most Solaris to their bank and pockets during
+          the week wins. Sell at the exchange, run contracts, clear dungeons and trade: everything you earn counts, and
+          spending lowers your gain. The week closes automatically and winners collect their prize here.
+        </p>
+      </Card>
+      {personal.data?.prizes && personal.data.prizes.length > 0 && (
+        <Card as="section" aria-label="Your prizes" className="ui-card mb-5 p-4">
+          <h2 className={label}>Your prizes</h2>
+          <Prizes prizes={personal.data.prizes} onClaimed={onClaimed} />
+        </Card>
+      )}
+      {last && last.winners.length > 0 && (
+        <Card as="section" aria-label="Last week's winners" className="ui-card mb-5 p-4">
+          <h2 className={label}>Last week&apos;s winners · week of {last.id}</h2>
+          <ol className="mt-2 grid gap-1 text-sm">
+            {last.winners.map((winner) => (
+              <li key={winner.place} className="flex flex-wrap items-center gap-x-3 text-sand-200">
+                <Rank rank={winner.place} />
+                <span className="font-semibold text-sand-50">{name(winner)}</span>
+                <span className="font-mono text-spice-300">+{formatSolaris(winner.gain)}</span>
+                {BigInt(winner.prize) > 0n && (
+                  <span className="text-sand-400">won {formatSolaris(winner.prize)} Solaris</span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+      {week.standings.length === 0 ? (
+        <StatePanel title="No gains recorded yet this week">
+          The board updates every few minutes. Earn some Solaris and you will show up here.
+        </StatePanel>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Solaris gained this week</caption>
+            <thead className={label}>
+              <tr className="border-b border-sand-200/10">
+                <th scope="col" className="w-16 px-3 py-2">
+                  Rank
+                </th>
+                <th scope="col" className="px-3 py-2">
+                  Character
+                </th>
+                <th scope="col" className="px-3 py-2 text-right">
+                  Gained this week
+                </th>
+                <th scope="col" className="px-3 py-2 text-right">
+                  Prize
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {week.standings.map((row, index) => (
+                <tr key={`${row.rank}:${index}`} className="border-b border-sand-200/5">
+                  <td className="px-3 py-3">
+                    <Rank rank={row.rank} />
+                  </td>
+                  <th scope="row" className="px-3 py-3 font-semibold text-sand-50">
+                    {name(row)}
+                  </th>
+                  <td className="px-3 py-3 text-right font-mono text-spice-300">+{formatSolaris(row.gain)}</td>
+                  <td className="px-3 py-3 text-right font-mono text-sand-300">
+                    {prizes[index] ? formatSolaris(prizes[index]!) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {week.updatedAt && (
+        <p className="mt-3 text-xs text-sand-400">Last recorded {new Date(week.updatedAt).toLocaleString()}.</p>
+      )}
+    </div>
+  );
+}
+
+export function SolarisLeaderboard({ tab, initialBoard }: { tab: SolarisTab; initialBoard: BoardResponse | null }) {
   const [now, setNow] = useState(() => Date.now());
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
+  const [stale, setStale] = useState(initialBoard?.freshness.state === 'stale');
 
   const refreshMs = Math.max(60_000, (initialBoard?.refreshSeconds ?? 600) * 1000);
+  // While a refresh is on its way, check back every minute so new numbers appear soon after it lands.
   const board = useSharedReading('/api/v2/solaris?view=board', {
     initial: initialBoard,
-    intervalMs: refreshMs,
+    intervalMs: stale ? 60_000 : refreshMs,
     parse: parseBoardResponse,
     initialMatchesUrl: true,
   });
-  const personal = useSharedReading('/api/v2/solaris?view=personal', {
+  const [personalKey, setPersonalKey] = useState(0);
+  const personal = useSharedReading(`/api/v2/solaris?view=personal&r=${personalKey}`, {
     initial: null,
     intervalMs: refreshMs,
     parse: parsePersonalResponse,
   });
+  const weekly = useSharedReading(tab === 'weekly' ? '/api/v2/solaris?view=weekly' : null, {
+    initial: null,
+    intervalMs: 120_000,
+    parse: parseWeeklyResponse,
+  });
+  const reloadPersonal = useCallback(() => setPersonalKey((key) => key + 1), []);
 
+  useEffect(() => {
+    setStale(board.data?.freshness.state === 'stale');
+  }, [board.data]);
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(timer);
@@ -255,6 +492,9 @@ export function SolarisLeaderboard({ initialBoard }: { initialBoard: BoardRespon
   const total = useMemo(() => entries.reduce((sum, entry) => sum + BigInt(entry.balance), 0n), [entries]);
   const filtered = useMemo(() => filterEntries(entries, query), [entries, query]);
   const pageOfEntries = paginate(filtered, page, BOARD_PAGE_SIZE);
+  const prizes = personal.data?.prizes ?? [];
+
+  if (tab === 'weekly') return <Weekly weekly={weekly} personal={personal} now={now} onClaimed={reloadPersonal} />;
 
   if (!board.data) {
     if (board.loading) return <StatePanel kind="loading" title="Counting Solaris…" />;
@@ -269,7 +509,7 @@ export function SolarisLeaderboard({ initialBoard }: { initialBoard: BoardRespon
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Freshness freshness={board.data.freshness} now={now} />
+        <FreshnessLine freshness={board.data.freshness} now={now} />
         <p className="text-xs text-sand-400">
           {entries.length.toLocaleString()} of {players.toLocaleString()} characters ranked
         </p>
@@ -290,7 +530,9 @@ export function SolarisLeaderboard({ initialBoard }: { initialBoard: BoardRespon
         </p>
       )}
       <Highlights entries={entries} />
-      <Standing personal={personal} ranked={entries.length} />
+      <YourStanding personal={personal} ranked={entries.length}>
+        <Prizes prizes={prizes} onClaimed={reloadPersonal} />
+      </YourStanding>
       <Card as="section" className="ui-card mb-5 grid gap-4 p-4 sm:grid-cols-2" aria-label="Filters">
         <Field label="Search">
           <input

@@ -73,6 +73,15 @@ const serverEnvSchema = z.object({
   DUNE_API_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).optional(),
   /** How long a shared dungeon leaderboard reading counts as fresh before one background refresh is allowed. */
   DUNGEON_LEADERBOARD_REFRESH_SECONDS: z.coerce.number().int().min(60).max(3_600).default(300),
+  /**
+   * Weekly Solaris leaderboard prizes, one whole amount per place ("500000,250000,100000"). Empty turns prizes off; the
+   * weekly ranking still runs. Winners collect their prize from the Solaris leaderboard page.
+   */
+  SOLARIS_WEEKLY_PRIZES: z
+    .string()
+    .trim()
+    .regex(/^(?:[1-9]\d{0,9}(?:\s*,\s*[1-9]\d{0,9}){0,9})?$/, 'Up to ten whole amounts, comma separated')
+    .default(''),
   /** Public roadmap: GitHub issues carrying ROADMAP_LABEL in these public repositories, refreshed at this interval. */
   ROADMAP_REPOSITORIES: z
     .string()

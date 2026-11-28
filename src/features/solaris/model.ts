@@ -3,7 +3,8 @@
  * player ids stay on the server. Balances are whole-number decimal strings because the Console stores them as
  * BIGINT, so every comparison and sum goes through `BigInt` and never through floating point.
  */
-export type SolarisEntry = { rank: number; name: string | null; balance: string };
+/** `bank` is banked Solari Credit, `coins` the Solaris coins carried, `balance` their sum (what the ranking uses). */
+export type SolarisEntry = { rank: number; name: string | null; bank: string; coins: string; balance: string };
 export type SolarisBoard = {
   entries: SolarisEntry[];
   /** Characters on the server, including any whose balance could not be read. */
@@ -19,13 +20,38 @@ export type Freshness = {
   refreshFailed: boolean;
 };
 export type BoardResponse = { ok: true; board: SolarisBoard; freshness: Freshness; refreshSeconds: number };
+export type WeeklyStanding = { rank: number; name: string | null; gain: string };
+export type PrizeState = 'available' | 'sending' | 'claimed' | 'uncertain';
+export type WeeklyPrize = { weekId: string; place: number; amount: string; state: PrizeState };
+export type WeeklyWinner = { place: number; name: string | null; gain: string; prize: string };
+export type WeeklyResponse = {
+  ok: true;
+  week: { id: string; startsAt: number; endsAt: number; updatedAt: number | null; standings: WeeklyStanding[] };
+  /** Prize per place for the running week, as configured now. Empty when weekly prizes are off. */
+  prizes: string[];
+  last: { id: string; winners: WeeklyWinner[] } | null;
+};
 export type PersonalResponse = {
   ok: true;
   linked: boolean;
   /** The member's own entry, or null when their character is not on the board (yet). */
   entry: SolarisEntry | null;
   freshness: Freshness | null;
+  /** This week's rank and gain, or null without a gain yet. */
+  weekly?: { rank: number; gain: string } | null;
+  prizes?: WeeklyPrize[];
 };
+
+const PLACE = ['1st', '2nd', '3rd'];
+export const placeLabel = (place: number) => PLACE[place - 1] ?? `${place}th`;
+
+/** "3 days 4 h" until a timestamp; "less than an hour" near the end. */
+export function timeLeft(until: number, now: number): string {
+  const hours = Math.max(0, Math.floor((until - now) / 3_600_000));
+  const days = Math.floor(hours / 24);
+  if (days > 0) return `${days} ${days === 1 ? 'day' : 'days'} ${hours % 24} h`;
+  return hours > 0 ? `${hours} h` : 'less than an hour';
+}
 
 export const BOARD_PAGE_SIZE = 25;
 export const MAX_NAME_LENGTH = 64;

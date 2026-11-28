@@ -20,10 +20,10 @@ describe('Solaris model', () => {
 
   it('ranks ties together and summarises the board', () => {
     const entries = assignRanks([
-      { name: 'A', balance: '600' },
-      { name: 'B', balance: '300' },
-      { name: 'C', balance: '300' },
-      { name: null, balance: '100' },
+      { name: 'A', balance: '600', bank: '0', coins: '600' },
+      { name: 'B', balance: '300', bank: '0', coins: '300' },
+      { name: 'C', balance: '300', bank: '0', coins: '300' },
+      { name: null, balance: '100', bank: '0', coins: '100' },
     ]);
     expect(entries.map((entry) => entry.rank)).toEqual([1, 2, 2, 4]);
     const summary = boardSummary(entries);
