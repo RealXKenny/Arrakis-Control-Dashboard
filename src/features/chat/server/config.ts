@@ -1,7 +1,7 @@
 import '../../../lib/assert-server';
 import { z } from 'zod';
 import { getServerEnv, requireServerEnv } from '../../../config/env';
-import type { ChatServer } from '../contracts';
+import { PROXIMITY_CHAT_SERVER, type ChatServer } from '../contracts';
 import { loadChatTls } from './tls';
 
 let cachedConfig: { env: ReturnType<typeof getServerEnv>; config: ChatConfig } | undefined;
@@ -76,13 +76,18 @@ export function getChatConfig() {
   if (!url.pathname || url.pathname === '/') url.pathname = '/%2F';
   url.searchParams.set('heartbeat', '30');
 
+  const servers = parseChatServers(env.CHAT_SERVERS!);
+  if (env.CHAT_PROXIMITY_ENABLED && servers.some((server) => server.id === PROXIMITY_CHAT_SERVER.id))
+    throw new Error(
+      `CHAT_SERVERS cannot use the ID "${PROXIMITY_CHAT_SERVER.id}" while CHAT_PROXIMITY_ENABLED is true.`,
+    );
   const config = {
     url: url.toString(),
     username,
     funcomId: env.CHAT_BRIDGE_FUNCOM_ID!,
     discordBotFuncomId: env.CHAT_DISCORD_BOT_FUNCOM_ID,
     displayName: env.CHAT_BRIDGE_DISPLAY_NAME,
-    servers: parseChatServers(env.CHAT_SERVERS!),
+    servers,
     proximity: env.CHAT_PROXIMITY_ENABLED,
     caFile: env.RABBITMQ_CA_FILE,
     tlsServername: env.RABBITMQ_TLS_SERVERNAME,
@@ -108,7 +113,7 @@ export interface ChatConfig {
   discordBotFuncomId?: string;
   displayName?: string;
   servers: ChatServer[];
-  /** Store and show proximity chat heard on the configured maps. */
+  /** Pick up proximity chat from chat.intercept and show it under the listen-only Proximity destination. */
   proximity?: boolean;
   caFile?: string;
   tlsServername?: string;
@@ -124,6 +129,11 @@ export interface ChatConfig {
   sendRateWindowMs: number;
 }
 
+/** Every Live Chat destination: the configured map servers, plus the listen-only Proximity one when enabled. */
+export function listChatServers(config: Pick<ChatConfig, 'servers' | 'proximity'>): ChatServer[] {
+  return config.proximity ? [...config.servers, PROXIMITY_CHAT_SERVER] : [...config.servers];
+}
+
 export function getChatServer(serverId: string, config = getChatConfig()): ChatServer | null {
-  return config?.servers.find((server) => server.id === serverId) ?? null;
+  return config ? (listChatServers(config).find((server) => server.id === serverId) ?? null) : null;
 }

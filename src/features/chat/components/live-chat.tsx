@@ -401,49 +401,56 @@ function ChatConversation({
         </div>
       )}
 
-      <form className="border-t border-sand-200/10 bg-obsidian-900/80 p-4 sm:p-5" onSubmit={submit}>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="font-mono text-[0.625rem] uppercase tracking-[0.12em] text-sand-400">Join the conversation</p>
-          <p className="text-xs text-sand-500">
-            Posting as <span className="font-semibold text-sand-200">{senderName}</span>
-          </p>
+      {server.readOnly ? (
+        <div className="border-t border-sand-200/10 bg-obsidian-900/80 p-4 text-sm text-sand-400 sm:p-5">
+          Proximity chat is what players say to whoever is near them in game. It is listen-only here: pick a map to send
+          a message.
         </div>
-        <label htmlFor="chat-message" className="sr-only">
-          Message {server.label}
-        </label>
-        <div className="flex items-end gap-2 border border-sand-200/15 bg-obsidian-950/80 p-2 focus-within:border-spice-400 sm:gap-3">
-          <textarea
-            ref={composer}
-            id="chat-message"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={composerKeyDown}
-            rows={2}
-            maxLength={maxChars}
-            placeholder={`Message ${server.label}…`}
-            aria-describedby="chat-composer-help"
-            className="max-h-44 min-h-16 min-w-0 flex-1 resize-y bg-transparent px-2 py-2 text-sm leading-relaxed text-sand-100 placeholder:text-sand-600 focus:outline-none"
-          />
-          <Button
-            type="submit"
-            className="btn min-h-11 shrink-0 gap-2 border border-spice-300 bg-spice-500 px-4 text-obsidian-950 shadow-[3px_3px_0_0_#8d370d] hover:bg-spice-400 disabled:border-sand-200/15 disabled:bg-sand-200/10 disabled:text-sand-600 disabled:shadow-none sm:px-6"
-            disabled={!draft.trim()}
-          >
-            Send <ArrowRightIcon className="size-4" />
-          </Button>
-        </div>
-        <div id="chat-composer-help" className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-sand-500">
-          <span>
-            <span className="hidden sm:inline">
-              Enter to send · Shift+Enter for a new line<span className="mx-2 text-sand-600">/</span>
+      ) : (
+        <form className="border-t border-sand-200/10 bg-obsidian-900/80 p-4 sm:p-5" onSubmit={submit}>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="font-mono text-[0.625rem] uppercase tracking-[0.12em] text-sand-400">Join the conversation</p>
+            <p className="text-xs text-sand-500">
+              Posting as <span className="font-semibold text-sand-200">{senderName}</span>
+            </p>
+          </div>
+          <label htmlFor="chat-message" className="sr-only">
+            Message {server.label}
+          </label>
+          <div className="flex items-end gap-2 border border-sand-200/15 bg-obsidian-950/80 p-2 focus-within:border-spice-400 sm:gap-3">
+            <textarea
+              ref={composer}
+              id="chat-message"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={composerKeyDown}
+              rows={2}
+              maxLength={maxChars}
+              placeholder={`Message ${server.label}…`}
+              aria-describedby="chat-composer-help"
+              className="max-h-44 min-h-16 min-w-0 flex-1 resize-y bg-transparent px-2 py-2 text-sm leading-relaxed text-sand-100 placeholder:text-sand-600 focus:outline-none"
+            />
+            <Button
+              type="submit"
+              className="btn min-h-11 shrink-0 gap-2 border border-spice-300 bg-spice-500 px-4 text-obsidian-950 shadow-[3px_3px_0_0_#8d370d] hover:bg-spice-400 disabled:border-sand-200/15 disabled:bg-sand-200/10 disabled:text-sand-600 disabled:shadow-none sm:px-6"
+              disabled={!draft.trim()}
+            >
+              Send <ArrowRightIcon className="size-4" />
+            </Button>
+          </div>
+          <div id="chat-composer-help" className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-sand-500">
+            <span>
+              <span className="hidden sm:inline">
+                Enter to send · Shift+Enter for a new line<span className="mx-2 text-sand-600">/</span>
+              </span>
+              Visible in game as [Dashboard]
             </span>
-            Visible in game as [Dashboard]
-          </span>
-          <span className="font-mono">
-            {[...draft].length}/{maxChars}
-          </span>
-        </div>
-      </form>
+            <span className="font-mono">
+              {[...draft].length}/{maxChars}
+            </span>
+          </div>
+        </form>
+      )}
     </Card>
   );
 }

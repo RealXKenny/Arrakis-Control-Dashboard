@@ -1,5 +1,23 @@
 # Changelog
 
+## Patch Notes v2.0.5
+
+### New Features
+
+- **Weekly Solaris leaderboard with prizes**: a new **This week** tab on `/solaris` ranks characters by how much Solaris they earned since Monday 00:00 UTC, so everyone has a fresh shot every week. It runs by itself: the board is recorded every few minutes, the week closes automatically and last week's winners are shown. Set `SOLARIS_WEEKLY_PRIZES` (for example `500000,250000,100000`) to pay prizes to the top places; winners collect theirs on the page with **Collect prize** while logged out of the game, using the same checked Solaris payment as the casino (never paid twice, never resent when the game doesn't confirm it). Prizes are off until you set the amounts.
+- **Banked Solari on the Solaris leaderboard**: a character's total is now their banked Solari Credit (the Character page's "Personal reserves") plus the Solaris coins they carry, and the table shows bank, coins and total.
+
+### Fixes
+
+- **Proximity chat is picked up the way the game sends it**: the game redirects proximity chat to `chat.proximity`, and the Chat Bridge now taps the broker's `chat.intercept` feed through a private headers exchange that only lets copies headed for `chat.proximity` through, so whispers, guild and party chat never reach the dashboard. Proximity chat shows under a new listen-only **Proximity (nearby)** destination in Live Chat, each message is stored once, and the speaker comes from the broker-authenticated user. Turn it on with `CHAT_PROXIMITY_ENABLED=true`.
+- **The Solaris leaderboard showed 0 characters**: it looked for a `player_id` in the Console's player list, but the Console names the character id `actor_id`, so every character was skipped and an empty board was cached. It reads the right id now, and a player list without usable ids is rejected instead of being cached as an empty board.
+- **A stale Solaris board now refreshes when you open the page**, and the page checks back every minute until the new numbers arrive, instead of sitting on an old reading.
+
+### Upgrade Notes
+
+- **Proximity chat needs new RabbitMQ permissions**: the chat user needs configure, write and read on `arrakis-chat-filter-.*` and read on `chat.intercept`. The command is under "Proximity chat" in `docs/features/live-chat.md`. Without it, map chat keeps working and the bridge logs which step was refused.
+- Optional: set `SOLARIS_WEEKLY_PRIZES` to turn on weekly prizes. Paying prizes needs the Console API key to have write access to players and an HTTPS Console address, like season reward delivery. The first week starts counting as soon as 2.0.5 runs.
+
 ## Patch Notes v2.0.4
 
 ### New Features

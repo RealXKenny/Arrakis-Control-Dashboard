@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 export interface DecodedMapChat {
   id: string;
@@ -104,6 +104,76 @@ export function decodeGameChat(body: Buffer, allowProximity: boolean): DecodedMa
       timestamp: parseGameTimestamp(payload.m_Timestamp),
       ...(payload.m_ChannelType === 'Map' ? {} : { proximity: true }),
     };
+  } catch {
+    return null;
+  }
+}
+
+/** The exchange the game redirects proximity chat to; chat.intercept copies carry it in `redirect_exchange`. */
+export const PROXIMITY_EXCHANGE = 'chat.proximity';
+
+export interface DecodedProximityChat {
+  /** Hash of the broker-authenticated sender, native message ID and channel, shared by every copy. */
+  id: string;
+  /** Broker-authenticated AMQP user ID of the speaker. */
+  sender: string;
+  text: string;
+  /** Funcom ID from the payload, used only to look up the character name. */
+  funcomId?: string;
+  /** Name the game put in the payload, used when no character name is found. */
+  displayName?: string;
+  timestamp?: string;
+}
+
+function headerText(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  if (Buffer.isBuffer(value)) return value.toString('utf8');
+  return undefined;
+}
+
+function clean(value: unknown, limit: number): string {
+  if (typeof value !== 'string') return '';
+  return [...value]
+    .map((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code === 127 ? ' ' : character;
+    })
+    .join('')
+    .slice(0, limit);
+}
+
+/**
+ * Decodes a proximity copy from chat.intercept: only `text_chat` messages redirected to chat.proximity
+ * with `m_ChannelType: "Proximity"`. The speaker is the AMQP user ID, never a payload field.
+ */
+export function decodeProximityChat(
+  body: Buffer,
+  properties: { type?: unknown; userId?: unknown; headers?: Record<string, unknown> } | undefined,
+): DecodedProximityChat | null {
+  if (body.length > 16 * 1024 || !properties || properties.type !== 'text_chat') return null;
+  if (headerText(properties.headers?.redirect_exchange) !== PROXIMITY_EXCHANGE) return null;
+  try {
+    const envelope: unknown = JSON.parse(body.toString('utf8'));
+    if (!envelope || typeof envelope !== 'object') return null;
+    const outer = envelope as Record<string, unknown>;
+    if (outer.Type !== 'TextChat') return null;
+    const raw = outer.content ?? outer.Content;
+    const parsed: unknown = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!parsed || typeof parsed !== 'object') return null;
+    const payload = parsed as Record<string, unknown>;
+    if (payload.m_ChannelType !== 'Proximity') return null;
+    const message = payload.m_Message as Record<string, unknown> | undefined;
+    const spoofed = payload.m_SpoofedUserNameFrom as Record<string, unknown> | undefined;
+    const nativeId = clean(payload.m_Id, 128);
+    const sender = clean(properties.userId, 180);
+    const text = clean(message?.m_UnlocalizedMessage, 2_000);
+    if (!nativeId || !sender || !text.trim()) return null;
+    const funcomId = clean(payload.m_FuncomIdFrom, 180) || undefined;
+    const displayName = clean(spoofed?.m_UnlocalizedName, 180) || funcomId;
+    const id = createHash('sha256')
+      .update(JSON.stringify([sender, nativeId, 'Proximity', '']))
+      .digest('hex');
+    return { id, sender, text, funcomId, displayName, timestamp: parseGameTimestamp(payload.m_Timestamp) };
   } catch {
     return null;
   }

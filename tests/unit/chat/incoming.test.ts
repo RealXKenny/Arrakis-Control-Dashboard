@@ -4,6 +4,8 @@ import type { ChatMessage } from '../../../src/features/chat/contracts';
 
 const fixture = vi.hoisted(() => ({
   receive: undefined as ((route: string, message: { content: Buffer }) => Promise<void>) | undefined,
+  interceptReceive: undefined as
+    ((route: string, message: { content: Buffer; properties?: Record<string, unknown> }) => Promise<void>) | undefined,
   notify: undefined as ((channel: string, payload: string) => void) | undefined,
   redis: { command: vi.fn(), eval: vi.fn(), close: vi.fn() },
   transportStop: vi.fn(),
@@ -17,6 +19,7 @@ vi.mock('../../../src/lib/redis/subscriber', () => ({
 }));
 vi.mock('../../../src/features/chat/server/config', () => {
   const config = {
+    username: '5E121CE000000001',
     funcomId: 'Dashboard#0001',
     discordBotFuncomId: 'DiscordBot#0001',
     servers: [
@@ -41,8 +44,9 @@ vi.mock('../../../src/features/chat/server/player-names', () => ({
 vi.mock('../../../src/features/chat/server/rabbitmq', () => ({
   PermanentChatMessageError: class extends Error {},
   RabbitChatTransport: class {
-    constructor(_config: unknown, receive: typeof fixture.receive) {
-      fixture.receive = receive;
+    constructor(_config: unknown, receive: typeof fixture.receive, _state?: unknown, intercept?: unknown) {
+      if (intercept) fixture.interceptReceive = receive;
+      else fixture.receive = receive;
     }
     start = vi.fn();
     stop = fixture.transportStop;
@@ -226,6 +230,40 @@ describe('incoming game → persistence → Pub/Sub → SSE pipeline (Redis/AMQP
       });
       expect(history.find((entry) => entry.id === 'MAP-1')?.channel).toBeUndefined();
       expect(history.some((entry) => entry.id === 'WHISPER' || entry.id === 'PROX-OFF')).toBe(false);
+    } finally {
+      config.proximity = undefined;
+    }
+  });
+  it('stores chat.proximity copies from chat.intercept under the listen-only Proximity destination once', async () => {
+    const config = getChatConfig() as { proximity?: boolean };
+    config.proximity = true;
+    try {
+      stop = await runChatBridge();
+      const copy = (id: string, type = 'Proximity', redirect = 'chat.proximity', userId = '5E121CE000000099') => {
+        const outer = JSON.parse(encodeMapChat('Player#1234', 'psst', undefined, id).body.toString());
+        const payload = JSON.parse(outer.content);
+        payload.m_ChannelType = type;
+        return {
+          content: Buffer.from(JSON.stringify({ Type: 'TextChat', content: JSON.stringify(payload) })),
+          properties: { type: 'text_chat', userId, headers: { redirect_exchange: Buffer.from(redirect) } },
+        };
+      };
+      await fixture.interceptReceive!('player.key', copy('NEAR-1'));
+      await fixture.interceptReceive!('other.key', copy('NEAR-1'));
+      await fixture.interceptReceive!('player.key', copy('WHISPER-1', 'Whisper', 'chat.whisper'));
+      await fixture.interceptReceive!('player.key', copy('MAP-COPY', 'Map', 'chat.map'));
+      await fixture.interceptReceive!('player.key', copy('OWN-1', 'Proximity', 'chat.proximity', '5E121CE000000001'));
+      const history = (await readChatHistory('proximity')).messages;
+      expect(history).toHaveLength(1);
+      expect(history[0]).toMatchObject({
+        serverId: 'proximity',
+        source: 'game',
+        channel: 'proximity',
+        senderName: 'Actual Player',
+        content: 'psst',
+      });
+      expect(history[0].id).toMatch(/^[a-f0-9]{64}$/);
+      expect((await readChatHistory('hagga-basin')).messages).toEqual([]);
     } finally {
       config.proximity = undefined;
     }

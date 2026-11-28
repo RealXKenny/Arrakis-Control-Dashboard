@@ -14,27 +14,34 @@ test('Solaris leaderboard ranks characters from the player routes and shows the 
   const pawn = (member: { discordId: string }) => `1${member.discordId.slice(-7)}`;
   await fakeConsole.setShared({
     players: {
-      rows: [rich, me, poor].map((member) => ({ player_id: pawn(member), character_name: member.characterName })),
+      rows: [rich, me, poor].map((member) => ({
+        actor_id: Number(pawn(member)),
+        character_name: member.characterName,
+      })),
       totalCount: 3,
     },
   });
   await page.context().setExtraHTTPHeaders({ Cookie: me.cookie });
   await page.goto('/solaris');
   await expect(page.getByRole('heading', { level: 1, name: 'Solaris leaderboard' })).toBeVisible();
-  const table = page.getByRole('table', { name: 'Characters ranked by Solaris on hand' });
+  const table = page.getByRole('table', { name: 'Characters ranked by Solaris held' });
   await expect(table.locator('tbody tr')).toHaveCount(3);
   await expect(table.locator('tbody tr').first()).toContainText('Solaris Baron');
-  await expect(table.locator('tbody tr').first()).toContainText('9,000,000');
+  await expect(table.locator('tbody tr').first()).toContainText('18,000,000');
   await expect(page.getByText('3 of 3 characters ranked')).toBeVisible();
   const standing = page.getByRole('region', { name: 'Your standing' });
   await expect(standing).toContainText('#2');
-  await expect(standing).toContainText('250,000');
+  await expect(standing).toContainText('500,000');
   await expect(table.locator('tr[aria-current="true"]')).toContainText('Water Seller');
 
   await page.getByLabel('Search').fill('sand');
   await expect(table.locator('tbody tr')).toHaveCount(1);
   await page.getByLabel('Search').fill('nobody');
   await expect(page.getByText('No characters match this search')).toBeVisible();
+
+  await page.getByRole('link', { name: 'This week' }).click();
+  await expect(page.getByRole('region', { name: 'How the weekly board works' })).toBeVisible();
+  await expect(page.getByText('Week ends in')).toBeVisible();
 
   const requests = await fakeConsole.requests();
   expect(requests.some((entry) => entry.path.startsWith('/api/players?') && entry.path.includes('status=all'))).toBe(

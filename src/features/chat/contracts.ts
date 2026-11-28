@@ -50,7 +50,17 @@ export interface ChatServer {
   readonly id: string;
   readonly label: string;
   readonly map: string;
+  /** A listen-only destination (proximity chat): history and live messages, no composer. */
+  readonly readOnly?: boolean;
 }
+
+/** Listen-only Live Chat destination holding proximity chat picked up from chat.intercept. */
+export const PROXIMITY_CHAT_SERVER: ChatServer = Object.freeze({
+  id: 'proximity',
+  label: 'Proximity (nearby)',
+  map: '',
+  readOnly: true,
+});
 
 export interface ChatHistoryPage {
   messages: ChatMessage[];

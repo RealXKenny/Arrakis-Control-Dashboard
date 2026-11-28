@@ -61,6 +61,20 @@ const WORKERS: ReadonlyArray<WorkerDefinition> = [
     },
   },
   {
+    name: 'solaris-weekly',
+    scope:
+      'Keeps the shared Solaris leaderboard fresh, records it in the running week and closes finished weeks. Reads the Console only; prizes are paid solely when a winner collects one.',
+    intervalMs: 60_000,
+    // A full crawl reads two routes per character; the coordinated refresh may take a few minutes on a big server.
+    timeoutMs: 240_000,
+    retryBudget: 5,
+    cooldownMs: 15 * 60_000,
+    async run() {
+      const { tickWeekly } = await import('../../features/solaris/server/weekly');
+      return tickWeekly();
+    },
+  },
+  {
     name: 'health-observations',
     scope: 'Records bounded, sanitized Console health observations in Redis. Never changes game or Console state.',
     intervalMs: 60_000,

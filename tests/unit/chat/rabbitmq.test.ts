@@ -36,6 +36,7 @@ function mockBroker() {
     assertExchange: vi.fn().mockResolvedValue({}),
     assertQueue: vi.fn().mockResolvedValue({ queue: 'amq.gen-dashboard-test' }),
     bindQueue: vi.fn().mockResolvedValue({}),
+    bindExchange: vi.fn().mockResolvedValue({}),
     prefetch: vi.fn().mockResolvedValue({}),
     consume: vi.fn().mockResolvedValue({}),
     publish: vi.fn().mockImplementation((_exchange, _key, _body, _options, callback) => {
@@ -219,6 +220,37 @@ describe('persistent RabbitMQ chat transport', () => {
       return true;
     });
     await expect(transport.publish('HaggaBasin.0', 'message-id', Buffer.from('{}'))).rejects.toMatchObject({ outcome });
+    await transport.stop();
+  });
+});
+
+describe('chat.intercept proximity listener', () => {
+  it('filters inside RabbitMQ so only chat.proximity copies reach its queue, and never publishes', async () => {
+    const receive = vi.fn().mockResolvedValue(undefined);
+    const state = vi.fn();
+    const transport = new RabbitChatTransport(config, receive, state, { exchanges: ['chat.proximity'] });
+    transport.start();
+    await vi.waitFor(() => expect(broker.channel.consume).toHaveBeenCalled());
+    expect(broker.channel.checkExchange).toHaveBeenCalledWith('chat.intercept');
+    const [filter, type, options] = broker.channel.assertExchange.mock.calls[0];
+    expect(filter).toMatch(/^arrakis-chat-filter-[0-9a-f-]{36}$/);
+    expect(type).toBe('headers');
+    expect(options).toEqual({ durable: false, autoDelete: true, internal: true });
+    expect(broker.channel.bindQueue.mock.calls).toEqual([
+      ['amq.gen-dashboard-test', filter, '', { 'x-match': 'all', redirect_exchange: 'chat.proximity' }],
+    ]);
+    expect(broker.channel.bindExchange).toHaveBeenCalledWith(filter, 'chat.intercept', '#');
+    expect(broker.channel.bindQueue.mock.invocationCallOrder[0]).toBeLessThan(
+      broker.channel.bindExchange.mock.invocationCallOrder[0],
+    );
+    expect(state).toHaveBeenCalledWith('info', expect.stringContaining('only chat.proximity copies'));
+    const copy = { fields: { routingKey: 'any' }, content: Buffer.from('x'), properties: {} };
+    broker.channel.consume.mock.calls[0][1](copy);
+    await vi.waitFor(() => expect(broker.channel.ack).toHaveBeenCalledWith(copy));
+    receive.mockRejectedValueOnce(new Error('boom'));
+    broker.channel.consume.mock.calls[0][1](copy);
+    await vi.waitFor(() => expect(broker.channel.nack).toHaveBeenCalledWith(copy, false, false));
+    await expect(transport.publish('HaggaBasin.0', 'ID', Buffer.from('x'))).rejects.toThrow('receive-only');
     await transport.stop();
   });
 });

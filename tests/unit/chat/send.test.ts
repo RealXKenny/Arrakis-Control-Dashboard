@@ -30,7 +30,11 @@ vi.mock('../../../src/features/chat/server/config', async () => {
     serverSendRateLimit: 60,
     sendRateWindowMs: 10_000,
   };
-  return { getChatConfig: () => config, getChatServer: (id: string) => servers.find((server) => server.id === id) };
+  const proximity = { id: 'proximity', label: 'Proximity (nearby)', map: '', readOnly: true };
+  return {
+    getChatConfig: () => config,
+    getChatServer: (id: string) => [...servers, proximity].find((server) => server.id === id),
+  };
 });
 
 import { chatMessageIdFor, sendChatMessage } from '../../../src/features/chat/server/send';
@@ -211,6 +215,10 @@ describe('dashboard chat sending', () => {
     mocks.limit.mockResolvedValue({ allowed: false, remaining: 0, retryAfter: 4 });
     await expect(sendChatMessage(session, 'hagga-basin', 'hello')).rejects.toMatchObject({ statusCode: 429 });
     await expect(sendChatMessage(session, 'another-server', 'hello')).rejects.toMatchObject({ statusCode: 404 });
+    await expect(sendChatMessage(session, 'proximity', 'hello')).rejects.toMatchObject({
+      statusCode: 400,
+      code: 'CHAT_SERVER_READ_ONLY',
+    });
     expect(mocks.publish).not.toHaveBeenCalled();
   });
 });

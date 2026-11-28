@@ -1,5 +1,5 @@
 import '../../../lib/assert-server';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { connect, type ChannelModel, type ConfirmChannel, type ConsumeMessage, type Options } from 'amqplib';
 import type { ChatConfig } from './config';
 import { describeChatConnectionError } from './errors';
@@ -16,6 +16,17 @@ export class ChatPublishError extends Error {
 
 type PendingPublish = { finish: (error?: ChatPublishError) => void; timer: NodeJS.Timeout };
 type Receive = (routingKey: string, message: ConsumeMessage) => Promise<void>;
+
+/**
+ * Listen-only tap on the broker's chat.intercept feed. A private headers exchange only passes copies whose
+ * `redirect_exchange` header is one of `exchanges` (for example chat.proximity), so whispers never reach the queue.
+ */
+export interface ChatInterceptSubscription {
+  exchanges: readonly string[];
+}
+
+/** Prefix of the private filter exchanges; the broker user needs configure/write/read on it. */
+export const CHAT_FILTER_EXCHANGE_PREFIX = 'arrakis-chat-filter-';
 
 export class RabbitChatTransport {
   private connection?: ChannelModel;
@@ -34,6 +45,7 @@ export class RabbitChatTransport {
     private readonly config: ChatConfig,
     private readonly receive?: Receive,
     private readonly onState: (level: 'info' | 'warn', message: string) => void = () => undefined,
+    private readonly intercept?: ChatInterceptSubscription,
   ) {}
 
   start(): void {
@@ -109,9 +121,49 @@ export class RabbitChatTransport {
         const pending = this.pending.get(message.properties.messageId);
         pending?.finish(new ChatPublishError('RabbitMQ returned an unroutable message.', 'failed'));
       });
-      stage = 'checking chat.map';
-      await channel.checkExchange('chat.map');
-      if (this.receive) {
+      const source = this.intercept ? 'chat.intercept' : 'chat.map';
+      stage = `checking ${source}`;
+      await channel.checkExchange(source);
+      if (this.receive && this.intercept) {
+        stage = 'declaring broker-generated receive queue';
+        const queue = await channel.assertQueue('', {
+          exclusive: true,
+          autoDelete: true,
+          durable: false,
+          arguments: { 'x-max-length': 500, 'x-message-ttl': 60_000 },
+        });
+        // Filter inside RabbitMQ: a bare '#' tap on our queue would also carry whispers.
+        const filter = `${CHAT_FILTER_EXCHANGE_PREFIX}${randomUUID()}`;
+        stage = 'creating the private chat filter exchange';
+        await channel.assertExchange(filter, 'headers', { durable: false, autoDelete: true, internal: true });
+        stage = 'binding the chat filter to the receive queue';
+        for (const name of new Set(this.intercept.exchanges)) {
+          await channel.bindQueue(queue.queue, filter, '', { 'x-match': 'all', redirect_exchange: name });
+        }
+        stage = 'binding chat.intercept to the chat filter';
+        await channel.bindExchange(filter, source, '#');
+        stage = 'setting consumer prefetch';
+        await channel.prefetch(this.config.prefetch);
+        stage = 'starting chat.intercept consumer';
+        await channel.consume(queue.queue, (message) => {
+          if (!message) {
+            void current.close().catch(() => undefined);
+            return;
+          }
+          // Listen-only and live: a copy that fails is dropped instead of retried.
+          void this.receive!(message.fields.routingKey, message).then(
+            () => channel.ack(message),
+            () => {
+              this.onState('warn', 'chat.intercept copy discarded after a processing failure.');
+              try {
+                channel.nack(message, false, false);
+              } catch {
+                // The connection closing already owns recovery.
+              }
+            },
+          );
+        });
+      } else if (this.receive) {
         stage = 'declaring broker-generated receive queue';
         // Match the working bot's permissions: each connection owns its own amq.gen-* queue.
         // Redis remains durable history; no named queues or custom exchanges are required.
@@ -171,7 +223,14 @@ export class RabbitChatTransport {
       }
       this.channel = channel;
       this.delay = 1_000;
-      this.onState('info', this.receive ? 'Chat Bridge consumer ready.' : 'RabbitMQ chat publisher ready.');
+      this.onState(
+        'info',
+        this.intercept
+          ? `chat.intercept listener ready; only ${this.intercept.exchanges.join(', ')} copies are let through.`
+          : this.receive
+            ? 'Chat Bridge consumer ready.'
+            : 'RabbitMQ chat publisher ready.',
+      );
     } catch (error: unknown) {
       this.onState('warn', `RabbitMQ unavailable while ${stage}: ${describeChatConnectionError(error)}`);
       if (connection) await connection.close().catch(() => undefined);
@@ -192,6 +251,8 @@ export class RabbitChatTransport {
   }
 
   publish(map: string, id: string, body: Buffer): Promise<void> {
+    if (this.intercept)
+      return Promise.reject(new ChatPublishError('The chat.intercept listener is receive-only.', 'failed'));
     const properties: Options.Publish = {
       contentType: 'Content',
       type: 'text_chat',

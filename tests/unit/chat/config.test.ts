@@ -34,6 +34,28 @@ describe('chat configuration', () => {
     expect(config.servers[0].map).toBe('HaggaBasin.0');
   });
 
+  it('adds the listen-only Proximity destination only when proximity is on', async () => {
+    vi.stubEnv('CHAT_ENABLED', 'true');
+    vi.stubEnv('RABBITMQ_URL', 'amqps://5E121CE000000001:secret@remote.example.com:31982/');
+    vi.stubEnv('CHAT_BRIDGE_FUNCOM_ID', 'ArrakisControl#0001');
+    vi.stubEnv('CHAT_SERVERS', '[{"id":"hagga-basin","label":"Hagga Basin","map":"HaggaBasin.0"}]');
+    const off = await import('../../../src/features/chat/server/config');
+    expect(off.listChatServers(off.getChatConfig()!).map((server) => server.id)).toEqual(['hagga-basin']);
+    expect(off.getChatServer('proximity')).toBeNull();
+    vi.resetModules();
+    vi.stubEnv('CHAT_PROXIMITY_ENABLED', 'true');
+    const on = await import('../../../src/features/chat/server/config');
+    expect(on.listChatServers(on.getChatConfig()!)).toEqual([
+      { id: 'hagga-basin', label: 'Hagga Basin', map: 'HaggaBasin.0' },
+      { id: 'proximity', label: 'Proximity (nearby)', map: '', readOnly: true },
+    ]);
+    expect(on.getChatServer('proximity')?.readOnly).toBe(true);
+    vi.resetModules();
+    vi.stubEnv('CHAT_SERVERS', '[{"id":"proximity","label":"Mine","map":"HaggaBasin.0"}]');
+    const clash = await import('../../../src/features/chat/server/config');
+    expect(clash.getChatConfig).toThrow('CHAT_SERVERS cannot use the ID "proximity"');
+  });
+
   it('fails closed for an invalid persona or TLS identity', async () => {
     vi.stubEnv('CHAT_ENABLED', 'true');
     vi.stubEnv('RABBITMQ_URL', 'amqp://not-a-persona:secret@remote.example.com/');

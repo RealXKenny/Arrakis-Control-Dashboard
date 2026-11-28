@@ -89,6 +89,13 @@ export async function sendChatMessage(
   const server = getChatServer(serverId, config);
   if (!config || !server)
     throw new AppError('This chat destination is unavailable.', 404, 'CHAT_SERVER_NOT_FOUND', true);
+  if (server.readOnly)
+    throw new AppError(
+      'Proximity chat is listen-only. Pick a map to send a message.',
+      400,
+      'CHAT_SERVER_READ_ONLY',
+      true,
+    );
   let content: string;
   try {
     content = validateChatContent(contentValue, config.messageMaxChars);
