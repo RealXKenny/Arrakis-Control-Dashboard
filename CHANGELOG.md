@@ -1,5 +1,15 @@
 # Changelog
 
+## Patch Notes v2.0.5
+
+### Fixes
+
+- **Proximity chat is picked up the way the game sends it**: the game redirects proximity chat to `chat.proximity`, and the Chat Bridge now taps the broker's `chat.intercept` feed through a private headers exchange that only lets copies headed for `chat.proximity` through, so whispers, guild and party chat never reach the dashboard. Proximity chat shows under a new listen-only **Proximity (nearby)** destination in Live Chat, each message is stored once, and the speaker comes from the broker-authenticated user. Turn it on with `CHAT_PROXIMITY_ENABLED=true`.
+
+### Upgrade Notes
+
+- **Proximity chat needs new RabbitMQ permissions**: the chat user needs configure, write and read on `arrakis-chat-filter-.*` and read on `chat.intercept`. The command is under "Proximity chat" in `docs/features/live-chat.md`. Without it, map chat keeps working and the bridge logs which step was refused.
+
 ## Patch Notes v2.0.4
 
 ### New Features

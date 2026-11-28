@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Notice, PageHeader } from '../../../components/ui/page-header';
 import { requireSession } from '../../../features/auth/server/session';
 import { discordAvatarUrl } from '../../../features/auth/identity';
-import { getChatConfig } from '../../../features/chat/server/config';
+import { getChatConfig, listChatServers } from '../../../features/chat/server/config';
 import { LiveChat } from '../../../features/chat/components/live-chat';
 import { loadChatViewer } from '../../../features/chat/server/viewer';
 
@@ -22,7 +22,7 @@ export default async function ChatPage() {
       </PageHeader>
       {config ? (
         <LiveChat
-          servers={config.servers}
+          servers={listChatServers(config)}
           maxChars={config.messageMaxChars}
           senderName={senderName}
           senderId={session.user.id}

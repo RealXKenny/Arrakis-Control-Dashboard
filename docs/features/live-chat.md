@@ -51,11 +51,26 @@ The worker uses the working bot's resource permission pattern: configure/read/wr
 
 ### Proximity chat
 
-Set `CHAT_PROXIMITY_ENABLED=true` to also keep proximity (nearby) chat heard on the configured map keys. It is off by default because it shows local conversations to every dashboard member who can open Live Chat; turn it on only when that is your server's policy.
+Set `CHAT_PROXIMITY_ENABLED=true` to show proximity (nearby) chat. It is off by default because it shows local conversations to every dashboard member who can open Live Chat; turn it on only when that is your server's policy.
 
-Only messages on the bound `chat.map` keys whose `m_ChannelType` is `Proximity` (also `Local` or `Nearby`, matching the bot) are kept. They are stored in that map's history with `channel: "proximity"` and shown with a Proximity badge next to the source. They are read-only: the composer always sends map chat, and a proximity message is never treated as a Discord relay. Whispers, guild, party and messages with a recipient are still rejected.
+The game redirects proximity chat to the `chat.proximity` exchange, and the broker's `chat.intercept` topic exchange gets a copy of every chat message with that destination in the `redirect_exchange` header. The Chat Bridge opens a second connection that taps this feed without ever receiving whispers:
 
-Whether the game publishes proximity chat on `chat.map` at all is not verified. The bot's bridge logs each chat type the first time it sees it; check its log after someone talks in proximity before relying on this. The dashboard does not listen on `chat.intercept`.
+1. Its own temporary `amq.gen-*` queue.
+2. A private, auto-deleting, internal **headers** exchange named `arrakis-chat-filter-<random>`.
+3. The queue bound to that filter with `x-match: all` and `redirect_exchange: chat.proximity`, so only proximity copies reach it.
+4. The filter bound to `chat.intercept` with `#`.
+
+Filtering happens inside RabbitMQ. Whispers, guild and party copies never enter the dashboard's queue. On arrival the worker checks again: only `text_chat` messages redirected to `chat.proximity` with `m_ChannelType: "Proximity"` are kept. The speaker is the broker-authenticated AMQP user ID, the shown name is the character looked up from the payload's Funcom ID (falling back to the payload's name), and the stored ID is a SHA-256 of sender, game message ID and channel, so every copy of one message is stored once. The dashboard's own persona is skipped.
+
+Proximity copies carry no map, so they appear under a listen-only **Proximity (nearby)** destination in the Live Chat picker, with a Proximity badge on each message. It has no composer: the send API refuses it with `CHAT_SERVER_READ_ONLY`. `proximity` is reserved as a destination ID while proximity is on. A failing intercept listener retries on its own and does not affect map chat; its warning names the step that failed.
+
+The broker user needs permission for the filter exchange and read access to `chat.intercept`, in addition to the map-chat permissions:
+
+```bash
+rabbitmqctl set_permissions -p / '<persona hex ID>' '^(amq\.gen-.*|arrakis-chat-filter-.*)$' '^(chat\.map|amq\.gen-.*|arrakis-chat-filter-.*)$' '^(chat\.map|chat\.intercept|amq\.gen-.*|arrakis-chat-filter-.*)$'
+```
+
+This replaces the user's permissions. The bot's chat bridge uses the same filter and permission pattern.
 
 ## Worker lifecycle, health, and scaling
 
@@ -257,7 +272,7 @@ During RabbitMQ downtime or worker disconnection, the temporary receive queue pr
 
 ## Known limitations and future extensions
 
-- Map chat is supported, plus read-only proximity chat when `CHAT_PROXIMITY_ENABLED=true`. Whisper, guild, party, moderation, muting, search, and custom channels are not implemented.
+- Map chat is supported, plus listen-only proximity chat (from `chat.intercept`, filtered to `chat.proximity`) when `CHAT_PROXIMITY_ENABLED=true`. Whisper, guild, party, moderation, muting, search, and custom channels are not implemented.
 - `accepted` and `delivered` require a future game/integration acknowledgment contract; none exists in the inspected bot protocol.
 - Online player count and game-server health are not inferred from chat connectivity.
 - All verified dashboard members can use all configured destinations; finer per-member destination roles would require a new authorization policy.

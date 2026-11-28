@@ -558,7 +558,7 @@ function buildEgg() {
       ),
       variable(
         'Chat Proximity Enabled',
-        'Also show proximity (nearby) game chat from the chat servers, labelled Proximity. Read-only.',
+        'Show proximity (nearby) chat under a listen-only Proximity destination. Needs broker permissions for chat.intercept.',
         'CHAT_PROXIMITY_ENABLED',
         'false',
         { rules: 'required|string|in:true,false' },

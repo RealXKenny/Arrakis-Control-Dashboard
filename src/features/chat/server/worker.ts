@@ -7,7 +7,8 @@ import { createLogger } from '../../../lib/logger';
 import { appendChatMessage } from './history';
 import { getChatConfig } from './config';
 import { ChatPlayerNames } from './player-names';
-import { decodeGameChat } from './protocol';
+import { decodeGameChat, decodeProximityChat, PROXIMITY_EXCHANGE } from './protocol';
+import { PROXIMITY_CHAT_SERVER } from '../contracts';
 import { parseDiscordRelay } from '../discord-relay';
 import { PermanentChatMessageError, RabbitChatTransport } from './rabbitmq';
 import { createBridgeMetricsReporter } from './metrics-log';
@@ -64,6 +65,40 @@ export async function runChatBridge(): Promise<() => Promise<void>> {
     (level, message) => log[level](message),
   );
 
+  // Proximity chat lives on chat.proximity; pick it up from chat.intercept through a filter that passes nothing else.
+  const proximityTransport = config.proximity
+    ? new RabbitChatTransport(
+        config,
+        async (_routingKey, amqpMessage) => {
+          const chat = decodeProximityChat(amqpMessage.content, amqpMessage.properties);
+          if (!chat) return;
+          if (chat.sender === config.username || chat.funcomId === config.funcomId) {
+            counters.echoes += 1;
+            return;
+          }
+          counters.received += 1;
+          const resolved = chat.funcomId ? await names.resolve(chat.funcomId) : undefined;
+          const result = await appendChatMessage({
+            id: chat.id,
+            serverId: PROXIMITY_CHAT_SERVER.id,
+            senderId: chat.funcomId ?? chat.sender,
+            senderName: resolved && resolved !== chat.funcomId ? resolved : (chat.displayName ?? chat.sender),
+            source: 'game',
+            channel: 'proximity',
+            content: chat.text,
+            timestamp: chat.timestamp ?? new Date().toISOString(),
+            correlationId: chat.id,
+            externalEventId: chat.id,
+          });
+          if (result.inserted) counters.persisted += 1;
+          else counters.duplicates += 1;
+          counters.lastMessageAt = Date.now();
+        },
+        (level, message) => log[level](message),
+        { exchanges: [PROXIMITY_EXCHANGE] },
+      )
+    : undefined;
+
   let closing = false;
   const healthServer: Server = createServer((request, response) => {
     response.setHeader('Cache-Control', 'no-store');
@@ -100,6 +135,7 @@ export async function runChatBridge(): Promise<() => Promise<void>> {
     healthServer.listen(config.healthPort, config.healthHost, () => resolve());
   });
   transport.start();
+  proximityTransport?.start();
   const reportMetrics = createBridgeMetricsReporter(log);
   const metricsTimer = setInterval(() => {
     reportMetrics({
@@ -119,7 +155,7 @@ export async function runChatBridge(): Promise<() => Promise<void>> {
     if (closing) return;
     closing = true;
     clearInterval(metricsTimer);
-    await transport.stop();
+    await Promise.all([transport.stop(), proximityTransport?.stop()]);
     await new Promise<void>((resolve) => healthServer.close(() => resolve()));
     redis.close();
     log.info('Chat Bridge stopped cleanly.');
