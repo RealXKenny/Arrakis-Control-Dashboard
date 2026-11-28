@@ -7,6 +7,8 @@
 ### Added
 
 - `/leaderboard dungeons`: the fastest run for every dungeon and difficulty, with the party and how many runs were counted, from the same Console records as the dashboard's dungeon leaderboard. The Solari ranking is now `/leaderboard solaris`.
+- Finished suggestions are locked. When a suggestion is marked Added, its update in the thread says the post is now locked, and the bot then locks and closes the post. This works the same whether staff use a button, a command or the Added tag by hand, or the GitHub autopilot moves it. On startup the bot does this once for older posts that were already Added. A post staff locked themselves is left alone, and moving a post back from Added reopens it. Turn it off with `SUGGESTIONS_LOCK_ADDED=false`.
+- A staff panel channel for suggestions. Set `SUGGESTIONS_STAFF_CHANNEL_ID` to a private channel, and every suggestion gets a panel there with its title, author, status, the start of the post and the status buttons, so staff can change a suggestion without opening it. A change from that panel posts in the thread exactly like the buttons inside the post do. The panel also follows every change made in the thread or by the autopilot. Older suggestions get their panels at startup, and a deleted post's panel is removed.
 
 ### Changed
 
